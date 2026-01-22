@@ -90,7 +90,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       y: orderedRowLabels,
       colorscale: 'RdBu',
       reversescale: true, // Red usually up/hot
-      zmid: 0, // Assuming centered data often, but maybe not? 
+      // zmid: 0, // Assuming centered data often, but maybe not? 
       // Actually standard count matrices are not centered.
       // We might need an option to standardize rows (Z-score) in frontend or backend.
       // Usually clustering visualizers show Z-scores.
@@ -98,7 +98,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       // or assume raw values. For raw counts, RdBu is bad. Viridis or Magma is better.
       // But usually people want Z-scores for heatmaps of expression.
       colorbar: {
-        title: 'Value',
+        title: { text: 'Value' },
         thickness: 20
       }
     };
@@ -258,7 +258,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                         layout={{
                             autosize: true,
                             margin: { t: 50, r: 50, b: 100, l: 150 }, // More space for labels
-                            title: `Heatmap (${result.row_labels.length} genes x ${result.col_labels.length} samples)`,
+                            title: { text: `Heatmap (${result.row_labels.length} genes x ${result.col_labels.length} samples)` },
                             xaxis: { 
                                 automargin: true,
                                 tickangle: -45

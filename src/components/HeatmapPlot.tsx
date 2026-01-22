@@ -269,7 +269,7 @@ export default function HeatmapPlot({ degDataset, matrixDataset, sampleIds, comp
                     zmax: 1,
                     showscale: true,
                     colorbar: {
-                        title: 'Rel. Expr',
+                        title: { text: 'Rel. Expr' },
                         thickness: 15,
                         len: 0.5,
                         x: 1.1 // Move main colorbar right
@@ -288,7 +288,7 @@ export default function HeatmapPlot({ degDataset, matrixDataset, sampleIds, comp
                         showticklabels: false, 
                         ticks: '' 
                     },
-                    title: `Clustered Heatmap (${params.top_n_genes === 5000 ? 'All' : 'Top ' + params.top_n_genes} DEGs)`
+                    title: { text: `Clustered Heatmap (${params.top_n_genes === 5000 ? 'All' : 'Top ' + params.top_n_genes} DEGs)` }
                 }}
                 useResizeHandler={true}
                 className="w-full h-full"
@@ -314,7 +314,7 @@ export default function HeatmapPlot({ degDataset, matrixDataset, sampleIds, comp
                          margin: { l: 0, r: 0, b: 100, t: 50 },
                          xaxis: { side: 'top', tickangle: -90 },
                          yaxis: { autorange: 'reversed', showticklabels: false, ticks: '' },
-                         title: 'LFC'
+                         title: { text: 'LFC' }
                     }}
                     useResizeHandler={true}
                     className="w-full h-full"

@@ -83,7 +83,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     }, [allResults, categoryFilter, regulationFilter]);
 
     // Prepare Radar Plot Data
-    const radarPlotData: { data: PlotData[], layout: Partial<Layout> } | null = useMemo(() => {
+    const radarPlotData: { data: Partial<PlotData>[], layout: Partial<Layout> } | null = useMemo(() => {
         if (viewMode !== 'radar') return null;
         
         // Filter by category if selected, otherwise take top categories or mixed
@@ -128,7 +128,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             return match ? -Math.log10(match.padj) : 0;
         };
 
-        const traces: PlotData[] = [];
+        const traces: Partial<PlotData>[] = [];
 
         if (upPathways.length > 0) {
             const vals = ids.map(id => getValue(id, upPathways));
@@ -189,7 +189,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     }
                 },
                 showlegend: true,
-                title: categoryFilter ? `Enrichment: ${categoryFilter}` : 'Top Enriched Pathways',
+                title: { text: categoryFilter ? `Enrichment: ${categoryFilter}` : 'Top Enriched Pathways' },
                 margin: { t: 50, b: 50, l: 50, r: 50 },
                 height: 500,
                 paper_bgcolor: 'rgba(0,0,0,0)',
