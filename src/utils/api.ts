@@ -1,8 +1,20 @@
 import axios from 'axios';
 import { createClient } from '@/utils/supabase/client';
 
+// Sanitize baseURL to prevent double slashes or path duplication issues
+const getBaseUrl = () => {
+  let url = process.env.NEXT_PUBLIC_API_URL || '';
+  // Remove trailing slash if present
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  // Safe-guard: if somehow the url ends with double /api/v1, fix it (though unlikely)
+  // But more importantly, ensure we don't end up with empty string
+  return url || 'http://localhost:8000/api/v1';
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

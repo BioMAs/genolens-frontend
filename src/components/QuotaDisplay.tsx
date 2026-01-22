@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Sparkles, AlertCircle, Loader2 } from 'lucide-react'
 import { UserProfile } from '@/types'
+import api from '@/utils/api'
 
 export default function QuotaDisplay() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -22,16 +23,8 @@ export default function QuotaDisplay() {
         return
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      })
-      
-      if (res.ok) {
-        const data = await res.json()
-        setProfile(data)
-      }
+      const res = await api.get<UserProfile>('/users/me')
+      setProfile(res.data)
     } catch (error) {
       console.error('Error fetching profile:', error)
     } finally {
