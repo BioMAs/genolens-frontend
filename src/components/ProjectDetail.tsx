@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState } from 'react';
 import api from '@/utils/api';
-import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
+import { Dataset, DatasetType, DatasetStatus } from '@/types';
+import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
 import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCircle, Clock, Edit2, Eye, RefreshCw, GitCompare, Star, List, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePrefetchComparisons } from '@/hooks/useComparisons';
@@ -14,9 +15,8 @@ import GeneListManager from './GeneListManager';
 import ProjectMembersModal from './ProjectMembersModal';
 import PCAPlot from './PCAPlot';
 import UMAPPlot from './UMAPPlot';
-import LibrarySizePlot from './LibrarySizePlot';
 import QCDashboard from './QCDashboard';
-import { TableSkeleton, ComparisonCardSkeleton, QCDashboardSkeleton } from './Skeletons';
+import { TableSkeleton, ComparisonCardSkeleton, QCDashboardSkeleton, ProjectDetailSkeleton } from './Skeletons';
 import { deslugComparisonName, formatDate } from '@/utils/formatters';
 import ProjectHistory from './ProjectHistory';
 import ProjectStatsDashboard from './ProjectStatsDashboard';
@@ -27,15 +27,18 @@ interface ProjectDetailProps {
 
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [activeTab, setActiveTab] = useState<'qc' | 'pca' | 'comparisons' | 'data' | 'history' | 'stats'>('comparisons');
-  const [project, setProject] = useState<Project | null>(null);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [datasetsLoading, setDatasetsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+
   // Get current authenticated user
   const { user: currentUser } = useCurrentUser();
-  
+
+  // React Query: un seul appel pour le projet + comparaisons + stats agrégées
+  const { data: summary, isLoading: summaryLoading } = useProjectSummary(projectId);
+  const project = summary?.project;
+  const summaryComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
+
+  // React Query: datasets complets pour les onglets QC, PCA, Data Management
+  const { data: datasets = [], isLoading: datasetsLoading, refetch: refetchDatasets } = useProjectDatasets(projectId);
+
   // Hooks de prefetch pour optimiser la navigation
   const { prefetchComparisonData } = usePrefetchComparisons();
   const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
@@ -61,166 +64,6 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     file: null as File | null
   });
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // Helper to extract all comparisons from datasets - must be before early returns
-  const comparisons = useMemo(() => {
-      const comps: Record<string, { id: string, type: 'SINGLE' | 'GLOBAL', dataset: Dataset, hasEnrichment: boolean }> = {};
-
-      datasets.forEach(d => {
-          console.log(`[DATASET] Processing "${d.name}" (type: ${d.type})`);
-          console.log(`  - has comparisons array:`, !!d.dataset_metadata?.comparisons);
-          console.log(`  - comparison_name:`, d.dataset_metadata?.comparison_name);
-
-          // 2. Global DEG File (New way) - Check this FIRST
-          if (d.dataset_metadata?.comparisons) {
-              const comparisons = d.dataset_metadata.comparisons;
-              const compNames = Array.isArray(comparisons) ? comparisons : Object.keys(comparisons);
-              
-              console.log(`  - Found ${compNames.length} comparisons`);
-              const datasetNameNormalized = d.name.toLowerCase().trim().replace(/\s+/g, '');
-
-              compNames.forEach(compName => {
-                  const compNameNormalized = compName.toLowerCase().trim().replace(/\s+/g, '');
-
-                  // Skip if comparison name matches the dataset name (e.g., "Global analysis")
-                  // Compare normalized versions (no spaces, lowercase)
-                  if (compNameNormalized === datasetNameNormalized) {
-                      console.log(`  [FILTER] Skipping "${compName}" (matches dataset "${d.name}")`);
-                      return;
-                  }
-
-                  console.log(`  [ADD] Adding comparison "${compName}" from dataset "${d.name}"`);
-                  comps[compName] = {
-                      id: d.id,
-                      type: 'GLOBAL',
-                      dataset: d,
-                      hasEnrichment: false
-                  };
-              });
-          }
-          // 1. Single File per Comparison (Old way) - Only if no comparisons array
-          else if (d.type === DatasetType.DEG) {
-              // Use comparison_name from metadata, or fallback to dataset name
-              const compName = d.dataset_metadata?.comparison_name || d.name;
-
-              console.log(`  [OLD WAY] Using comparison name: "${compName}"`);
-
-              // Skip if comparison name matches the dataset name (avoid duplicates)
-              if (compName === d.name) {
-                  console.log(`  [FILTER] Skipping old-style comparison (matches dataset name)`);
-                  return;
-              }
-
-              console.log(`  [ADD] Adding old-style comparison "${compName}"`);
-              comps[compName] = {
-                  id: d.id,
-                  type: 'SINGLE',
-                  dataset: d,
-                  hasEnrichment: false
-              };
-          }
-      });
-
-      // 3. Check for enrichment datasets and mark comparisons
-      datasets.forEach(d => {
-          if (d.type === DatasetType.ENRICHMENT && d.dataset_metadata?.enrichment_comparisons) {
-              d.dataset_metadata.enrichment_comparisons.forEach((compName: string) => {
-                  if (comps[compName]) {
-                      comps[compName].hasEnrichment = true;
-                  }
-              });
-          }
-      });
-
-      console.log(`[COMPARISONS] Found ${Object.keys(comps).length} comparisons from ${datasets.length} datasets`);
-      return comps;
-  }, [datasets]);
-
-  // Get original files (datasets with raw_file_path)
-  const originalFiles = useMemo(() => {
-    return datasets.filter(d => d.raw_file_path);
-  }, [datasets]);
-
-  // Get matrix dataset for stats
-  const matrixDataset = useMemo(() => {
-    return datasets.find(d => d.type === DatasetType.MATRIX && d.status === DatasetStatus.READY);
-  }, [datasets]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setDatasetsLoading(true);
-
-      // Parallel fetch: Project and Datasets
-      const [projResp, dsResp] = await Promise.all([
-        api.get(`/projects/${projectId}`),
-        api.get(`/datasets/project/${projectId}`)
-      ]);
-
-      setProject(projResp.data);
-      setDatasets(dsResp.data);
-      setError(null);
-    } catch (err: any) {
-      // Ignore aborted requests
-      if (err.code === 'ECONNABORTED' || err.message === 'Request aborted') {
-        return;
-      }
-      console.error('Failed to fetch data:', err);
-      setError('Failed to load project details.');
-    } finally {
-      setLoading(false);
-      setDatasetsLoading(false);
-    }
-  };
-
-  const refreshDatasets = async () => {
-    try {
-      const dsResp = await api.get(`/datasets/project/${projectId}`);
-      setDatasets(dsResp.data);
-      setDatasetsLoading(false);
-    } catch (err: any) {
-      // Ignore aborted requests during polling
-      if (err.code === 'ECONNABORTED' || err.message === 'Request aborted') {
-        return;
-      }
-      console.error('Failed to refresh datasets:', err);
-    }
-  };
-
-  // Initial data load
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      if (isMounted) {
-        await fetchData();
-      }
-    };
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [projectId]);
-
-  // Count processing datasets for polling dependency
-  const processingCount = datasets.filter(d => d.status === DatasetStatus.PROCESSING).length;
-
-  // Smart polling: Only when there are processing datasets
-  useEffect(() => {
-    if (processingCount === 0) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      refreshDatasets();
-    }, 10000); // Poll every 10 seconds
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [processingCount]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -256,7 +99,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const handleReprocess = async (datasetId: string) => {
     try {
       await api.post(`/datasets/${datasetId}/reprocess`);
-      await refreshDatasets();
+      await refetchDatasets();
     } catch (err: any) {
       console.error('Reprocess failed:', err);
       alert(err.response?.data?.detail || 'Failed to reprocess dataset.');
@@ -282,11 +125,11 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       );
       
       alert(`Started reprocessing ${datasetsToReprocess.length} dataset(s). Please wait for completion.`);
-      await refreshDatasets();
+      await refetchDatasets();
     } catch (err: any) {
       console.error('Reprocess all failed:', err);
       alert('Failed to reprocess all datasets. Some may have started successfully.');
-      await refreshDatasets();
+      await refetchDatasets();
     }
   };
 
@@ -329,7 +172,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         contains_all_genes: true,
         file: null
       });
-      await fetchData();
+      await refetchDatasets();
       
     } catch (err: any) {
       console.error('Upload failed:', err);
@@ -348,9 +191,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
-  if (!project) return <div className="p-8 text-center">Project not found</div>;
+  if (summaryLoading) return <ProjectDetailSkeleton />;
+  if (!project) return <div className="p-8 text-center text-gray-500">Project not found.</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -372,7 +214,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               <p className="mt-2 text-xs text-gray-500">Created {formatDate(project.created_at)}</p>
             </div>
             <div className="flex gap-2">
-              {Object.keys(comparisons).length >= 2 && (
+              {summaryComparisons.length >= 2 && (
                 <Link
                   href={`/projects/${projectId}/multi-comparison`}
                   className="inline-flex items-center px-3 py-1.5 border border-brand-primary text-sm font-medium rounded-md text-brand-primary bg-white hover:bg-brand-primary/5"
@@ -422,7 +264,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-blue-600 uppercase">Comparisons</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">{Object.keys(comparisons).length}</p>
+                  <p className="mt-1 text-2xl font-semibold text-gray-900">{summary?.stats.total_comparisons ?? 0}</p>
                 </div>
                 <Activity className="h-8 w-8 text-blue-600 opacity-20" />
               </div>
@@ -432,7 +274,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-green-600 uppercase">Datasets</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">{datasets.length}</p>
+                  <p className="mt-1 text-2xl font-semibold text-gray-900">{summary?.stats.total_datasets ?? 0}</p>
                 </div>
                 <FileText className="h-8 w-8 text-green-600 opacity-20" />
               </div>
@@ -442,7 +284,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-purple-600 uppercase">Original Files</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">{originalFiles.length}</p>
+                  <p className="mt-1 text-2xl font-semibold text-gray-900">{summary?.stats.original_files_count ?? 0}</p>
                 </div>
                 <Upload className="h-8 w-8 text-purple-600 opacity-20" />
               </div>
@@ -453,10 +295,10 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                 <div>
                   <p className="text-xs font-medium text-amber-600 uppercase">Status</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {datasets.filter(d => d.status === DatasetStatus.PROCESSING).length > 0 ? 'Processing' : 'Ready'}
+                    {(summary?.stats.processing_count ?? 0) > 0 ? 'Processing' : 'Ready'}
                   </p>
                 </div>
-                {datasets.filter(d => d.status === DatasetStatus.PROCESSING).length > 0 ? (
+                {(summary?.stats.processing_count ?? 0) > 0 ? (
                   <Clock className="h-8 w-8 text-amber-600 opacity-20 animate-pulse" />
                 ) : (
                   <CheckCircle className="h-8 w-8 text-amber-600 opacity-20" />
@@ -466,17 +308,17 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           </div>
 
           {/* Original Files List */}
-          {originalFiles.length > 0 && (
+          {(summary?.original_files?.length ?? 0) > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-xs font-medium text-gray-500 uppercase mb-2">Original Files</p>
               <div className="flex flex-wrap gap-2">
-                {originalFiles.map(file => (
+                {(summary?.original_files ?? []).map(fileName => (
                   <span
-                    key={file.id}
+                    key={fileName}
                     className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
                   >
                     <FileText className="h-3 w-3 mr-1" />
-                    {file.name}
+                    {fileName}
                   </span>
                 ))}
               </div>
@@ -536,7 +378,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Historique
+                History
               </button>
               <button
                 onClick={() => setActiveTab('stats')}
@@ -546,7 +388,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Statistiques
+                Statistics
               </button>
             </nav>
           </div>
@@ -555,8 +397,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           <div className="p-6">
             {activeTab === 'comparisons' && (
               <ComparisonsTab
-                comparisons={comparisons}
-                datasetsLoading={datasetsLoading}
+                comparisons={summaryComparisons}
+                loading={summaryLoading}
                 projectId={projectId}
               />
             )}
@@ -824,7 +666,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           dataset={editingDataset}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onSuccess={fetchData}
+          onSuccess={() => { refetchDatasets(); }}
         />
       )}
 
@@ -897,78 +739,17 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 // Comparisons Tab Component
 function ComparisonsTab({
   comparisons,
-  datasetsLoading,
+  loading,
   projectId
 }: {
-  comparisons: Record<string, { id: string, type: 'SINGLE' | 'GLOBAL', dataset: Dataset, hasEnrichment: boolean }>,
-  datasetsLoading: boolean,
+  comparisons: ComparisonSummary[],
+  loading: boolean,
   projectId: string
 }) {
-  const [comparisonStats, setComparisonStats] = useState<Record<string, { up: number, down: number }>>({});
-  const [statsLoading, setStatsLoading] = useState(false);
-
-  // Hooks de prefetch pour optimiser la navigation
   const { prefetchComparisonData } = usePrefetchComparisons();
   const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (Object.keys(comparisons).length === 0) return;
-
-      setStatsLoading(true);
-      const stats: Record<string, { up: number, down: number }> = {};
-
-      // Group comparisons by dataset ID to fetch stats efficiently
-      const datasetGroups: Record<string, string[]> = {};
-      Object.entries(comparisons).forEach(([compName, info]) => {
-        if (!datasetGroups[info.id]) {
-          datasetGroups[info.id] = [];
-        }
-        datasetGroups[info.id].push(compName);
-      });
-
-      // Fetch stats for each dataset using the aggregated endpoint
-      const promises = Object.entries(datasetGroups).map(async ([datasetId, compNames]) => {
-        try {
-          const response = await api.get(`/datasets/${datasetId}/comparisons/stats`);
-          
-          // Map the response to our stats structure
-          // Backend returns { stats: { comp_name: { up, down, total } } }
-          if (response.data && response.data.stats) {
-            compNames.forEach(compName => {
-              const compStats = response.data.stats[compName];
-              if (compStats) {
-                stats[compName] = {
-                  up: compStats.up || 0,
-                  down: compStats.down || 0
-                };
-              } else {
-                // Comparison not found in response
-                stats[compName] = { up: 0, down: 0 };
-              }
-            });
-          }
-        } catch (err: any) {
-          console.error(`[STATS] Failed to fetch for dataset ${datasetId}:`, err.response?.data || err.message);
-          // Set 0 stats for all comparisons of this dataset
-          compNames.forEach(compName => {
-            stats[compName] = { up: 0, down: 0 };
-          });
-        }
-      });
-
-      // Wait for all promises to settle (not fail on first error)
-      await Promise.allSettled(promises);
-
-      console.log(`[STATS] Loaded stats for ${Object.keys(stats).length} comparisons from aggregated endpoint`);
-      setComparisonStats(stats);
-      setStatsLoading(false);
-    };
-
-    fetchStats();
-  }, [comparisons]);
-
-  if (datasetsLoading) {
+  if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -978,7 +759,7 @@ function ComparisonsTab({
     );
   }
 
-  if (Object.keys(comparisons).length === 0) {
+  if (comparisons.length === 0) {
     return (
       <div className="text-center py-12">
         <Activity className="mx-auto h-12 w-12 text-gray-400" />
@@ -1014,80 +795,67 @@ function ComparisonsTab({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {Object.entries(comparisons).map(([compName, info]) => {
-            const stats = comparisonStats[compName];
-
-            return (
-              <tr key={compName} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <Activity className="h-5 w-5 text-brand-primary mr-3" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {deslugComparisonName(compName)}
-                      </div>
-                      <div className="text-xs text-gray-500 font-mono">{compName}</div>
+          {comparisons.map((comp) => (
+            <tr key={comp.name} className="hover:bg-gray-50">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center">
+                  <Activity className="h-5 w-5 text-brand-primary mr-3" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {deslugComparisonName(comp.name)}
                     </div>
+                    <div className="text-xs text-gray-500 font-mono">{comp.name}</div>
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                    {info.type === 'GLOBAL' ? 'Global Analysis' : 'Individual File'}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                  {comp.dataset_type === 'GLOBAL' ? 'Global Analysis' : 'Individual File'}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-center">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-red-100 text-red-800">
+                  {comp.deg_up}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-center">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-blue-100 text-blue-800">
+                  {comp.deg_down}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    DEG
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  {statsLoading ? (
-                    <span className="text-gray-400">-</span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-red-100 text-red-800">
-                      {stats?.up || 0}
+                  {comp.has_enrichment && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                      Enrichment
                     </span>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  {statsLoading ? (
-                    <span className="text-gray-400">-</span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-blue-100 text-blue-800">
-                      {stats?.down || 0}
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                      DEG
-                    </span>
-                    {info.hasEnrichment && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        Enrichment
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link
-                    href={info.type === 'GLOBAL'
-                      ? `/projects/${projectId}/comparisons/${encodeURIComponent(compName)}?datasetId=${info.id}`
-                      : `/projects/${projectId}/comparisons/${encodeURIComponent(compName)}`
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <Link
+                  href={comp.dataset_type === 'GLOBAL'
+                    ? `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}?datasetId=${comp.dataset_id}`
+                    : `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`
+                  }
+                  onMouseEnter={() => {
+                    prefetchComparisonData(comp.dataset_id, comp.name);
+                    prefetchVolcano(comp.dataset_id, comp.name);
+                    if (comp.has_enrichment) {
+                      prefetchEnrichment(comp.dataset_id, comp.name);
                     }
-                    onMouseEnter={() => {
-                      // Précharge les données de la comparaison au survol pour navigation instantanée
-                      prefetchComparisonData(info.id, compName);
-                      prefetchVolcano(info.id, compName);
-                      if (info.hasEnrichment) {
-                        prefetchEnrichment(info.id, compName);
-                      }
-                    }}
-                    className="text-brand-primary hover:text-brand-primary/80 inline-flex items-center"
-                  >
-                    View Details
-                    <Eye className="ml-1 h-4 w-4" />
-                  </Link>
-                </td>
-              </tr>
-            );
-          })}
+                  }}
+                  className="text-brand-primary hover:text-brand-primary/80 inline-flex items-center"
+                >
+                  View Details
+                  <Eye className="ml-1 h-4 w-4" />
+                </Link>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

@@ -3,6 +3,8 @@ import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { ClusteringParams, HeatmapData } from './types';
 
+const PREVIEW_GENES = 25; // genes per group (UP + DOWN) for instant preview
+
 interface UseHeatmapDataProps {
   degDataset: Dataset;
   matrixDataset: Dataset;
@@ -16,6 +18,7 @@ interface UseHeatmapDataReturn {
   error: string | null;
   plotData: HeatmapData | null;
   geneMetadata: Map<string, { logFC: number; padj: number }>;
+  isPreview: boolean;
   refetch: () => void;
 }
 
@@ -29,6 +32,7 @@ export function useHeatmapData({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [plotData, setPlotData] = useState<HeatmapData | null>(null);
+  const [isPreview, setIsPreview] = useState(false);
   const [geneMetadata, setGeneMetadata] = useState<Map<string, { logFC: number; padj: number }>>(
     new Map()
   );
@@ -38,11 +42,7 @@ export function useHeatmapData({
       setLoading(true);
       setError(null);
 
-      // 1. Fetch DEGs with backend filtering
-      let targetGenes: string[] | undefined = undefined;
-      let degRows: any[] = [];
-      let significant: any[] = [];
-
+      // --- 1. Fetch significant DEGs ---
       const columnsInfo =
         degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
         degDataset.dataset_metadata?.comparisons?.[comparisonName];
@@ -54,7 +54,6 @@ export function useHeatmapData({
       const pValCol = columnsInfo.padj;
       const logFCCol = columnsInfo.logFC;
 
-      // Fetch significant DEGs with backend filtering
       const degResponse = await api.post(`/datasets/${degDataset.id}/query`, {
         limit: 5000,
         padj_max: 0.05,
@@ -63,8 +62,13 @@ export function useHeatmapData({
         sort_desc: true,
       });
 
-      degRows = degResponse.data.data;
-      significant = degRows;
+      const degRows: any[] = degResponse.data.data;
+
+      if (!degRows || degRows.length === 0) {
+        setError('No significant DEGs found.');
+        setLoading(false);
+        return;
+      }
 
       // Store gene metadata for tooltips
       const metadata = new Map<string, { logFC: number; padj: number }>();
@@ -76,131 +80,84 @@ export function useHeatmapData({
       });
       setGeneMetadata(metadata);
 
-      // Select top N genes
-      if (params.top_n_genes === 0) {
-        targetGenes = significant.map((r: any) => r['gene_id']);
-      } else {
-        targetGenes = significant.slice(0, params.top_n_genes).map((r: any) => r['gene_id']);
-      }
+      // Split into UP / DOWN
+      const limit = params.top_n_genes > 0 ? params.top_n_genes : degRows.length;
+      const upAll = degRows.filter((r: any) => parseFloat(r[logFCCol]) > 0);
+      const downAll = degRows.filter((r: any) => parseFloat(r[logFCCol]) < 0);
 
-      // 2. Split genes into UP and DOWN for better visual grouping
-      let upGenes: string[] = [];
-      let downGenes: string[] = [];
+      const upFull = upAll.slice(0, Math.ceil(limit / 2)).map((r: any) => r['gene_id'] as string);
+      const downFull = downAll.slice(0, Math.floor(limit / 2)).map((r: any) => r['gene_id'] as string);
 
-      if (targetGenes) {
-        upGenes = significant
-          .filter((r: any) => parseFloat(r[logFCCol]) > 0)
-          .slice(0, Math.ceil(params.top_n_genes / 2) + 1000)
-          .map((r: any) => r['gene_id']);
-
-        downGenes = significant
-          .filter((r: any) => parseFloat(r[logFCCol]) < 0)
-          .slice(0, Math.ceil(params.top_n_genes / 2) + 1000)
-          .map((r: any) => r['gene_id']);
-
-        // Limit total count to requested top_n_genes
-        const limit = params.top_n_genes;
-        if (upGenes.length + downGenes.length > limit) {
-          upGenes = upGenes.slice(0, limit / 2);
-          downGenes = downGenes.slice(0, limit / 2);
-        }
-      }
-
-      if (upGenes.length === 0 && downGenes.length === 0) {
+      if (upFull.length === 0 && downFull.length === 0) {
         setError('No significant DEGs found.');
         setLoading(false);
         return;
       }
 
-      // 3. Request clustering from backend (parallel for UP and DOWN)
-      const [upResult, downResult] = await Promise.all([
-        upGenes.length > 0
-          ? api.post(`/datasets/${matrixDataset.id}/cluster`, {
-              ...params,
-              gene_ids: upGenes,
-              top_n_genes: upGenes.length,
-            })
-          : Promise.resolve({ data: null }),
-        downGenes.length > 0
-          ? api.post(`/datasets/${matrixDataset.id}/cluster`, {
-              ...params,
-              gene_ids: downGenes,
-              top_n_genes: downGenes.length,
-            })
-          : Promise.resolve({ data: null }),
-      ]);
+      // LogFC sidebar lookup
+      const geneLogFCMap = new Map<string, number>();
+      degRows.forEach((r: any) => geneLogFCMap.set(r['gene_id'], parseFloat(r[logFCCol])));
 
-      // 4. Merge and align results
-      const primaryResult = upResult.data || downResult.data;
-      if (!primaryResult) {
-        setError('Failed to cluster data');
-        setLoading(false);
-        return;
-      }
-
-      const colOrder = primaryResult.col_order;
-      const colLabels = primaryResult.col_labels;
-
-      // Helper to process and align a clustering chunk
-      const processChunk = (res: any) => {
-        if (!res || !res.data) return { z: [], y: [] };
-
-        const currentCols = res.col_labels;
-        const primaryColLabels = colOrder.map((i: number) => colLabels[i]);
-
-        // Map sample names to their indices in this chunk
-        const colMap = new Map();
-        currentCols.forEach((c: string, i: number) => colMap.set(c, i));
-
-        // Align columns to match primary result order
-        const alignIndices = primaryColLabels.map((name: string) => colMap.get(name));
-
-        const z = res.data;
-        const y = res.row_labels;
-        const row_order = res.row_order;
-
-        // Reorder rows and align columns
-        const alignedRows = row_order.map((i: number) => {
-          return alignIndices.map((j: number) => z[i][j]);
+      // --- Helper: call combined endpoint and convert response to HeatmapData ---
+      const callClusterHeatmap = async (
+        upGenes: string[],
+        downGenes: string[]
+      ): Promise<HeatmapData> => {
+        const res = await api.post(`/datasets/${matrixDataset.id}/cluster-heatmap`, {
+          up_gene_ids: upGenes,
+          down_gene_ids: downGenes,
+          method: params.method,
+          metric: params.metric,
+          cluster_rows: params.cluster_rows,
+          cluster_cols: params.cluster_cols,
+          max_genes_for_clustering: 2000,
         });
 
-        const orderedY = row_order.map((i: number) => y[i]);
+        const data = res.data;
+        const x: string[] = data.x ?? [];
 
-        return { z: alignedRows, y: orderedY };
+        // Concatenate UP then DOWN rows (already z-scored by backend)
+        const upZ: number[][] = data.up?.z ?? [];
+        const upY: string[] = data.up?.y ?? [];
+        const downZ: number[][] = data.down?.z ?? [];
+        const downY: string[] = data.down?.y ?? [];
+
+        const finalZ = [...upZ, ...downZ];
+        const finalY = [...upY, ...downY];
+        const logFCs = finalY.map((gene: string) => geneLogFCMap.get(gene) ?? 0);
+
+        return { z: finalZ, x, y: finalY, logFCs, type: 'clustering' };
       };
 
-      const upData = processChunk(upResult.data);
-      const downData = processChunk(downResult.data);
+      // --- 2. Preview pass: first 25 UP + 25 DOWN for instant display ---
+      const upPreview = upFull.slice(0, PREVIEW_GENES);
+      const downPreview = downFull.slice(0, PREVIEW_GENES);
 
-      // Concatenate: UP genes first, then DOWN genes
-      const finalZRaw = [...upData.z, ...downData.z];
-      const finalY = [...upData.y, ...downData.y];
-      const finalX = colOrder.map((i: number) => colLabels[i]);
+      const previewData = await callClusterHeatmap(upPreview, downPreview);
+      setPlotData(previewData);
+      setIsPreview(true);
+      setLoading(false);
 
-      // 5. Compute normalized relative expression (range -1 to 1)
-      const orderedZ = finalZRaw.map((row: number[]) => {
-        const mean = row.reduce((a, b) => a + b, 0) / row.length;
-        const centered = row.map((v) => v - mean);
-        const maxAbs = Math.max(...centered.map(Math.abs)) || 1;
-        return centered.map((v) => v / maxAbs);
-      });
+      // --- 3. Full pass in background (only if there are more genes) ---
+      const needsFullLoad =
+        upFull.length > PREVIEW_GENES || downFull.length > PREVIEW_GENES;
 
-      // 6. Extract LogFC for each gene (for sidebar)
-      const geneLogFCMap = new Map();
-      degRows.forEach((r: any) => geneLogFCMap.set(r['gene_id'], parseFloat(r[logFCCol])));
-      const logFCs = finalY.map((gene: string) => geneLogFCMap.get(gene) || 0);
-
-      setPlotData({
-        z: orderedZ,
-        x: finalX,
-        y: finalY,
-        logFCs: logFCs,
-        type: 'clustering',
-      });
+      if (needsFullLoad) {
+        try {
+          const fullData = await callClusterHeatmap(upFull, downFull);
+          setPlotData(fullData);
+        } catch (fullErr) {
+          // Keep showing the preview; only log the error
+          console.warn('Full heatmap load failed, keeping preview:', fullErr);
+        } finally {
+          setIsPreview(false);
+        }
+      } else {
+        setIsPreview(false);
+      }
     } catch (err: any) {
       console.error('Heatmap error:', err);
       setError(err.message || 'Failed to load heatmap');
-    } finally {
       setLoading(false);
     }
   }, [degDataset, matrixDataset, sampleIds, comparisonName, params]);
@@ -214,6 +171,7 @@ export function useHeatmapData({
     error,
     plotData,
     geneMetadata,
+    isPreview,
     refetch: fetchHeatmapData,
   };
 }

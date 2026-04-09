@@ -133,7 +133,7 @@ export default function MultipleTestingPanel({
       );
       setResult(response.data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur lors du chargement';
+      const msg = err instanceof Error ? err.message : 'Error loading data';
       setError(msg);
     } finally {
       setLoading(false);
@@ -223,10 +223,10 @@ export default function MultipleTestingPanel({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Correction pour tests multiples
+            Multiple Testing Correction
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Compare les méthodes de correction appliquées aux p-values brutes de{' '}
+            Compares correction methods applied to the raw p-values of{' '}
             <span className="font-mono font-medium">{comparisonName}</span>.
           </p>
         </div>
@@ -237,7 +237,7 @@ export default function MultipleTestingPanel({
         {/* Methods selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Méthodes à comparer
+            Methods to compare
           </label>
           <div className="flex flex-wrap gap-2">
             {(['bh', 'bonferroni', 'holm', 'by'] as const).map((m) => (
@@ -264,7 +264,7 @@ export default function MultipleTestingPanel({
         {/* Threshold */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Seuil de significativité :{' '}
+            Significance threshold:{' '}
             <span className="font-mono font-bold text-indigo-600">{threshold}</span>
           </label>
           <input
@@ -308,7 +308,7 @@ export default function MultipleTestingPanel({
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Calcul en cours…' : 'Calculer'}
+          {loading ? 'Computing…' : 'Calculate'}
         </button>
       </div>
 
@@ -326,17 +326,17 @@ export default function MultipleTestingPanel({
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Info className="h-4 w-4 flex-shrink-0" />
             <span>
-              <strong className="text-gray-800 dark:text-gray-200">{result.n_tested.toLocaleString()}</strong> gènes
-              avec une p-value valide sur{' '}
+              <strong className="text-gray-800 dark:text-gray-200">{result.n_tested.toLocaleString()}</strong> genes
+              with a valid p-value out of{' '}
               <strong className="text-gray-800 dark:text-gray-200">{result.n_total.toLocaleString()}</strong> total —
-              Seuil : <strong className="text-indigo-600">{result.threshold}</strong>
+              Threshold: <strong className="text-indigo-600">{result.threshold}</strong>
             </span>
           </div>
 
           {/* Bar chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-              Nombre de gènes significatifs par méthode (seuil {result.threshold})
+              Number of significant genes per method (threshold {result.threshold})
             </h4>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -372,12 +372,12 @@ export default function MultipleTestingPanel({
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700/50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Méthode</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Method</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-300">
-                    Gènes sig. (p &lt; {result.threshold})
+                    Sig. genes (p &lt; {result.threshold})
                   </th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-300">
-                    % du total testé
+                    % of total tested
                   </th>
                   <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Type</th>
                   <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Description</th>
@@ -413,7 +413,7 @@ export default function MultipleTestingPanel({
                             </span>
                             {isOriginal && (
                               <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded">
-                                référence
+                                reference
                               </span>
                             )}
                           </div>
@@ -449,12 +449,12 @@ export default function MultipleTestingPanel({
 
           {/* Method explanation card */}
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4 text-sm text-blue-800 dark:text-blue-200 space-y-1">
-            <p className="font-semibold">💡 Quelle méthode choisir ?</p>
+            <p className="font-semibold">💡 Which method to choose?</p>
             <ul className="list-disc list-inside space-y-0.5 text-xs leading-relaxed">
-              <li><strong>BH (Benjamini-Hochberg)</strong> — Standard en génomique. Contrôle le FDR, moins conservatrice.</li>
-              <li><strong>Holm</strong> — Plus puissante que Bonferroni, contrôle le FWER. Recommandée si vous cherchez une alternative FWER.</li>
-              <li><strong>Bonferroni</strong> — La plus conservatrice. Adapté pour un très faible nombre de tests.</li>
-              <li><strong>BY</strong> — Comme BH mais valide même sous dépendance arbitraire entre tests.</li>
+              <li><strong>BH (Benjamini-Hochberg)</strong> — Standard in genomics. Controls FDR, less conservative.</li>
+              <li><strong>Holm</strong> — More powerful than Bonferroni, controls FWER. Recommended as a FWER alternative.</li>
+              <li><strong>Bonferroni</strong> — The most conservative. Suitable for a very small number of tests.</li>
+              <li><strong>BY</strong> — Like BH but valid under arbitrary dependency between tests.</li>
             </ul>
           </div>
 
@@ -462,7 +462,7 @@ export default function MultipleTestingPanel({
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Résultats par gène
+                Per-gene results
               </h4>
               <div className="flex items-center gap-2">
                 {geneResults.length > 0 && (
@@ -486,7 +486,7 @@ export default function MultipleTestingPanel({
                   ) : (
                     <ChevronDown className="h-3 w-3" />
                   )}
-                  {showGenes ? 'Masquer' : `Afficher ${result.n_total.toLocaleString()} gènes`}
+                  {showGenes ? 'Hide' : `Show ${result.n_total.toLocaleString()} genes`}
                 </button>
               </div>
             </div>
@@ -496,7 +496,7 @@ export default function MultipleTestingPanel({
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="text-left px-3 py-2 font-medium text-gray-600 dark:text-gray-300">Gène</th>
+                      <th className="text-left px-3 py-2 font-medium text-gray-600 dark:text-gray-300">Gene</th>
                       <th className="text-right px-3 py-2 font-medium text-gray-600 dark:text-gray-300">p-value</th>
                       <th className="text-right px-3 py-2 font-medium text-gray-600 dark:text-gray-300">Original padj</th>
                       {Array.from(selectedMethods).map((m) => (
@@ -532,7 +532,7 @@ export default function MultipleTestingPanel({
                 </table>
                 {geneResults.length > 500 && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-2">
-                    Affichage limité aux 500 premiers gènes. Utilisez l&#39;export CSV pour la liste complète.
+                    Display limited to the first 500 genes. Use CSV export for the full list.
   </p>
                 )}
               </div>
@@ -545,7 +545,7 @@ export default function MultipleTestingPanel({
       {!result && !loading && !error && (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-lg mb-2">📊</p>
-          <p className="text-sm">Sélectionnez les méthodes et cliquez sur <strong>Calculer</strong></p>
+          <p className="text-sm">Select methods and click <strong>Calculate</strong></p>
         </div>
       )}
     </div>

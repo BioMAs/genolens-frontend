@@ -250,7 +250,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
       });
       setNetwork(data);
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Erreur lors de la requête STRING DB');
+      setError(e?.response?.data?.detail || 'Error fetching from STRING DB');
     } finally {
       setLoading(false);
     }
@@ -287,7 +287,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Liste de gènes <span className="text-gray-400">(un par ligne, virgules, ou espaces)</span>
+            Gene list <span className="text-gray-400">(one per line, commas, or spaces)</span>
           </label>
           <textarea
             value={genesInput}
@@ -296,12 +296,12 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
             placeholder="TP53&#10;BRCA1&#10;MYC&#10;EGFR"
             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono resize-y"
           />
-          <p className="mt-1 text-xs text-gray-500">{parseGenes().length} gène(s) · max 100</p>
+          <p className="mt-1 text-xs text-gray-500">{parseGenes().length} gene(s) · max 100</p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organisme</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organism</label>
             <select
               value={species}
               onChange={(e) => setSpecies(Number(e.target.value))}
@@ -315,7 +315,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Score minimum : <strong>{score}</strong>
+              Minimum score: <strong>{score}</strong>
             </label>
             <div className="flex gap-2 flex-wrap">
               {SCORE_PRESETS.map((p) => (
@@ -336,7 +336,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Partenaires max par gène : <strong>{limit}</strong>
+              Max partners per gene: <strong>{limit}</strong>
             </label>
             <input
               type="range"
@@ -356,7 +356,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
         >
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Network className="w-4 h-4" />}
-          {loading ? 'Chargement…' : 'Charger le réseau STRING'}
+          {loading ? 'Loading…' : 'Load STRING network'}
         </button>
       </div>
 
@@ -370,12 +370,12 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
         <div className="space-y-4">
           {/* Stats bar */}
           <div className="flex flex-wrap gap-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
-            <Stat label="Nœuds" value={network.nodes.length} color="text-indigo-700 dark:text-indigo-300" />
+            <Stat label="Nodes" value={network.nodes.length} color="text-indigo-700 dark:text-indigo-300" />
             <Stat label="Interactions" value={network.count} color="text-indigo-700 dark:text-indigo-300" />
             {network.count === 0 && (
               <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <Info className="w-4 h-4" />
-                Aucune interaction trouvée avec ce score minimum. Essayez un score plus bas.
+                No interactions found with this minimum score. Try a lower score.
               </p>
             )}
           </div>
@@ -383,7 +383,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
           {/* Export buttons */}
           {network.count > 0 && (
             <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400 self-center">Exporter&nbsp;:</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 self-center">Export:</span>
               {[
                 { fmt: 'cx2' as const, label: 'CX2 (Cytoscape)' },
                 { fmt: 'graphml' as const, label: 'GraphML' },
@@ -406,7 +406,7 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-400 transition-colors"
               >
                 <ExternalLink className="w-3 h-3" />
-                Voir sur STRING
+                View on STRING
               </a>
             </div>
           )}
@@ -415,14 +415,14 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
           {network.count > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Visualisation (layout circulaire · 40 nœuds max)
+                Visualisation (circular layout · max 40 nodes)
               </h3>
               <NetworkGraph network={network} />
               <p className="text-xs text-gray-400 mt-1">
-                Taille des nœuds = degré · Couleur&nbsp;: <span className="text-red-500">●</span> hub  
+                Node size = degree · Color: <span className="text-red-500">●</span> hub  
                 <span className="text-amber-500"> ●</span> semi-hub 
-                <span className="text-indigo-500"> ●</span> périphérique 
-                · Largeur des arêtes = score
+                <span className="text-indigo-500"> ●</span> peripheral 
+                · Edge width = score
               </p>
             </div>
           )}
@@ -431,16 +431,16 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
           {network.count > 0 && (
             <details>
               <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600">
-                Tableau des interactions ({network.edges.length})
+                Interaction table ({network.edges.length})
               </summary>
               <div className="mt-2 overflow-auto max-h-64 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full text-xs">
                   <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                     <tr>
-                      <th className="px-3 py-2 text-left">Protéine A</th>
-                      <th className="px-3 py-2 text-left">Protéine B</th>
+                      <th className="px-3 py-2 text-left">Protein A</th>
+                      <th className="px-3 py-2 text-left">Protein B</th>
                       <th className="px-3 py-2 text-right">Score</th>
-                      <th className="px-3 py-2 text-left">Confiance</th>
+                      <th className="px-3 py-2 text-left">Confidence</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -495,7 +495,7 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
       });
       setEnrichments(data.enrichments || []);
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Erreur STRING enrichment');
+      setError(e?.response?.data?.detail || 'STRING enrichment error');
     } finally {
       setLoading(false);
     }
@@ -524,7 +524,7 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Liste de gènes
+            Gene list
           </label>
           <textarea
             value={genesInput}
@@ -533,10 +533,10 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
             placeholder="TP53&#10;BRCA1&#10;MYC"
             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono resize-y"
           />
-          <p className="mt-1 text-xs text-gray-500">{parseGenes().length} gène(s) · max 500</p>
+          <p className="mt-1 text-xs text-gray-500">{parseGenes().length} gene(s) · max 500</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organisme</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organism</label>
           <select
             value={species}
             onChange={(e) => setSpecies(Number(e.target.value))}
@@ -547,8 +547,8 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
             ))}
           </select>
           <p className="mt-3 text-xs text-gray-500 bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded border border-indigo-100 dark:border-indigo-800">
-            <strong>Note :</strong> STRING utilise les mêmes données biologiques que les bases GO/KEGG/Reactome
-            mais applique ses propres enrichissements statistiques. Complémentaire à l&apos;analyse GO locale.
+            <strong>Note:</strong> STRING uses the same biological data as GO/KEGG/Reactome
+            but applies its own statistical enrichments. Complementary to local GO analysis.
           </p>
         </div>
       </div>
@@ -559,7 +559,7 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
       >
         {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
-        {loading ? 'Analyse en cours…' : 'Lancer l\'enrichissement STRING'}
+        {loading ? 'Analyzing…' : 'Run STRING enrichment'}
       </button>
 
       {error && (
@@ -571,10 +571,10 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
       {enrichments.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
-            <Stat label="Termes enrichis" value={enrichments.length} color="text-indigo-700 dark:text-indigo-300" />
+            <Stat label="Enriched terms" value={enrichments.length} color="text-indigo-700 dark:text-indigo-300" />
             <input
               type="text"
-              placeholder="Filtrer par terme…"
+              placeholder="Filter by term…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="flex-1 min-w-48 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
@@ -584,7 +584,7 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
               onChange={(e) => setCatFilter(e.target.value)}
               className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
-              <option value="">Toutes catégories</option>
+              <option value="">All categories</option>
               {allCats.map((c) => (
                 <option key={c} value={c}>{ENRICH_CATEGORIES[c]?.label || c}</option>
               ))}
@@ -601,9 +601,9 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
             <table className="min-w-full text-xs">
               <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left">Catégorie</th>
+                  <th className="px-3 py-2 text-left">Category</th>
                   <th className="px-3 py-2 text-left">Description</th>
-                  <th className="px-3 py-2 text-right">Gènes</th>
+                  <th className="px-3 py-2 text-right">Genes</th>
                   <th className="px-3 py-2 text-right">P-value</th>
                   <th className="px-3 py-2 text-right">FDR</th>
                 </tr>
@@ -631,7 +631,7 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
             </table>
           </div>
           {visible.length > 200 && (
-            <p className="text-xs text-gray-400">Affichage limité à 200 résultats. Utilisez l&apos;export CSV pour tout récupérer.</p>
+            <p className="text-xs text-gray-400">Display limited to 200 results. Use CSV export to retrieve all.</p>
           )}
         </div>
       )}
@@ -660,7 +660,7 @@ function GEOSearchTab() {
       });
       setResult(data);
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Erreur lors de la recherche NCBI GEO');
+      setError(e?.response?.data?.detail || 'Error searching NCBI GEO');
     } finally {
       setLoading(false);
     }
@@ -689,9 +689,9 @@ function GEOSearchTab() {
           value={maxResults}
           onChange={(e) => setMaxResults(Number(e.target.value))}
           className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-          title="Nombre maximum de résultats"
+          title="Maximum number of results"
         >
-          {[5, 10, 20, 50].map((n) => <option key={n} value={n}>{n} résultats</option>)}
+          {[5, 10, 20, 50].map((n) => <option key={n} value={n}>{n} results</option>)}
         </select>
         <button
           onClick={search}
@@ -699,17 +699,17 @@ function GEOSearchTab() {
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
         >
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          {loading ? 'Recherche…' : 'Rechercher'}
+          {loading ? 'Searching…' : 'Search'}
         </button>
       </div>
 
       {/* Tips */}
       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-300 space-y-1">
-        <p><strong>Conseils de recherche :</strong></p>
+        <p><strong>Search tips:</strong></p>
         <ul className="list-disc ml-4 space-y-0.5">
-          <li>Incluez le type de données : <em>RNA-seq</em>, <em>microarray</em>, <em>scRNA-seq</em></li>
-          <li>Précisez l&apos;organisme : <em>Homo sapiens</em>, <em>Mus musculus</em></li>
-          <li>Cherchez par accession directe : <em>GSE223547</em></li>
+          <li>Include the data type: <em>RNA-seq</em>, <em>microarray</em>, <em>scRNA-seq</em></li>
+          <li>Specify the organism: <em>Homo sapiens</em>, <em>Mus musculus</em></li>
+          <li>Search by direct accession: <em>GSE223547</em></li>
         </ul>
       </div>
 
@@ -722,11 +722,11 @@ function GEOSearchTab() {
       {result && (
         <div className="space-y-3">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            <strong>{result.total.toLocaleString()}</strong> résultats trouvés · affichage des {result.datasets.length} premiers
+            <strong>{result.total.toLocaleString()}</strong> results found · displaying the first {result.datasets.length}
           </p>
           {result.datasets.length === 0 && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              Aucun dataset correspondant. Essayez des termes plus généraux.
+              No matching datasets. Try broader terms.
             </p>
           )}
           <div className="space-y-3">
@@ -755,7 +755,7 @@ function GEOCard({ ds }: { ds: GEODataset }) {
               <span className="text-xs text-gray-500 dark:text-gray-400">· {ds.organism}</span>
             )}
             {ds.samples_n > 0 && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">· {ds.samples_n} échantillons</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">· {ds.samples_n} samples</span>
             )}
             {ds.pub_date && (
               <span className="text-xs text-gray-400">· {ds.pub_date}</span>
@@ -785,14 +785,14 @@ function GEOCard({ ds }: { ds: GEODataset }) {
               onClick={() => setExpanded((v) => !v)}
               className="mt-1 text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-0.5"
             >
-              {expanded ? <><ChevronUp className="w-3 h-3" /> Réduire</> : <><ChevronDown className="w-3 h-3" /> Lire la suite</>}
+              {expanded ? <><ChevronUp className="w-3 h-3" /> Collapse</> : <><ChevronDown className="w-3 h-3" /> Read more</>}
             </button>
           )}
         </>
       )}
 
       {ds.platform && (
-        <p className="mt-2 text-xs text-gray-400">Plateforme : {ds.platform}</p>
+        <p className="mt-2 text-xs text-gray-400">Platform: {ds.platform}</p>
       )}
     </div>
   );
@@ -829,9 +829,9 @@ export default function ExternalIntegrationsPanel({
   const initialGenes = genesToPreload.slice(0, 50).join('\n');
 
   const tabs: { id: SubTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'ppi', label: 'Réseau PPI (STRING)', icon: <Share2 className="w-4 h-4" /> },
-    { id: 'enrich', label: 'Enrichissement STRING', icon: <FlaskConical className="w-4 h-4" /> },
-    { id: 'geo', label: 'Datasets GEO publics', icon: <Database className="w-4 h-4" /> },
+    { id: 'ppi', label: 'PPI Network (STRING)', icon: <Share2 className="w-4 h-4" /> },
+    { id: 'enrich', label: 'STRING Enrichment', icon: <FlaskConical className="w-4 h-4" /> },
+    { id: 'geo', label: 'Public GEO Datasets', icon: <Database className="w-4 h-4" /> },
   ];
 
   return (
@@ -840,10 +840,10 @@ export default function ExternalIntegrationsPanel({
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <Network className="w-5 h-5 text-indigo-500" />
-          Intégrations externes
+          External Integrations
         </h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Interrogez des bases de données publiques (STRING&nbsp;DB, NCBI&nbsp;GEO) et exportez vos réseaux vers Cytoscape.
+          Query public databases (STRING&nbsp;DB, NCBI&nbsp;GEO) and export your networks to Cytoscape.
         </p>
       </div>
 

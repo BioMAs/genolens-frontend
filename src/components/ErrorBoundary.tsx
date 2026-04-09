@@ -103,7 +103,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </h1>
             
             <p className="text-gray-600 text-center mb-6">
-              Une erreur inattendue s'est produite. Nos équipes ont été notifiées et travaillent sur une solution.
+              An unexpected error occurred. Our teams have been notified and are working on a solution.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -141,7 +141,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-6">
-              Si le problème persiste, contactez le support technique.
+              If the problem persists, please contact support.
             </p>
           </div>
         </div>

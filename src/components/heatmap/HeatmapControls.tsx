@@ -60,10 +60,10 @@ export default function HeatmapControls({
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center gap-1 text-xs text-gray-600 hover:text-purple-600 px-2 py-1 rounded hover:bg-gray-50 transition-colors"
-            title="Paramètres avancés"
+            title="Advanced settings"
           >
             <Settings2 className="w-3.5 h-3.5" />
-            <span>Avancé</span>
+            <span>Advanced</span>
           </button>
         </div>
 
@@ -75,7 +75,7 @@ export default function HeatmapControls({
               onClick={() => setShowExportMenu(!showExportMenu)}
               disabled={isLoading}
               className="p-2 text-gray-600 hover:bg-gray-50 rounded-md hover:text-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Exporter la heatmap"
+              title="Export heatmap"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -115,7 +115,7 @@ export default function HeatmapControls({
             onClick={onFullscreen}
             disabled={isLoading}
             className="p-2 text-gray-600 hover:bg-gray-50 rounded-md hover:text-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Afficher en plein écran"
+            title="Show fullscreen"
           >
             <Maximize2 className="w-4 h-4" />
           </button>
@@ -125,7 +125,7 @@ export default function HeatmapControls({
             onClick={onRefresh}
             disabled={isLoading}
             className="p-2 text-gray-600 hover:bg-gray-50 rounded-md hover:text-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Actualiser"
+            title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -139,7 +139,7 @@ export default function HeatmapControls({
             {/* Clustering Method */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Méthode de clustering
+                Clustering method
               </label>
               <select
                 value={params.method}
@@ -155,13 +155,13 @@ export default function HeatmapControls({
                 disabled={isLoading}
                 className="w-full text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 disabled:opacity-50"
               >
-                <optgroup label="Hiérarchique">
-                  <option value="ward">Ward (Euclidean uniquement)</option>
+                <optgroup label="Hierarchical">
+                  <option value="ward">Ward (Euclidean only)</option>
                   <option value="complete">Complete</option>
                   <option value="average">Average</option>
                   <option value="single">Single</option>
                 </optgroup>
-                <optgroup label="Partitionnement">
+                <optgroup label="Partitioning">
                   <option value="kmeans">K-means</option>
                 </optgroup>
               </select>
@@ -170,7 +170,7 @@ export default function HeatmapControls({
             {/* Distance Metric */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Métrique de distance
+                Distance metric
               </label>
               <select
                 value={params.metric}
@@ -179,9 +179,9 @@ export default function HeatmapControls({
                 className="w-full text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 disabled:opacity-50"
                 title={
                   params.method === 'ward' 
-                    ? 'Ward nécessite la métrique Euclidean'
+                    ? 'Ward requires Euclidean metric'
                     : params.method === 'kmeans'
-                    ? 'K-means utilise toujours Euclidean'
+                    ? 'K-means always uses Euclidean'
                     : ''
                 }
               >
@@ -195,7 +195,7 @@ export default function HeatmapControls({
             {/* Clustering Options */}
             <div className="flex flex-col gap-2">
               <label className="block text-xs font-medium text-gray-700">
-                Options de clustering
+                Clustering options
               </label>
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
@@ -207,7 +207,7 @@ export default function HeatmapControls({
                   disabled={isLoading}
                   className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
                 />
-                <span className="text-xs">Clustering gènes</span>
+                <span className="text-xs">Gene clustering</span>
               </label>
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
@@ -219,7 +219,7 @@ export default function HeatmapControls({
                   disabled={isLoading}
                   className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
                 />
-                <span className="text-xs">Clustering échantillons</span>
+                <span className="text-xs">Sample clustering</span>
               </label>
             </div>
           </div>

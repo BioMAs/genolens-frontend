@@ -50,12 +50,12 @@ export default function HeatmapModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h2 className="text-lg font-bold text-gray-900">
-            {title || 'Expression Heatmap - Plein écran'}
+            {title || 'Expression Heatmap - Fullscreen'}
           </h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-600 hover:bg-gray-200 rounded-full hover:text-gray-900 transition-colors"
-            title="Fermer (ESC)"
+            title="Close (ESC)"
           >
             <X className="w-5 h-5" />
           </button>
@@ -77,8 +77,8 @@ export default function HeatmapModal({
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 text-center text-sm text-gray-600">
           <p>
-            💡 Utilisez les contrôles Plotly pour zoomer, déplacer ou sauvegarder l'image. 
-            Appuyez sur <kbd className="px-2 py-1 bg-white border border-gray-300 rounded">ESC</kbd> pour fermer.
+            💡 Use the Plotly controls to zoom, pan or save the image.
+            Press <kbd className="px-2 py-1 bg-white border border-gray-300 rounded">ESC</kbd> to close.
           </p>
         </div>
       </div>

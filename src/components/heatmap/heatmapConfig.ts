@@ -25,12 +25,12 @@ export const MOBILE_HEATMAP_CONFIG: HeatmapConfig = {
 };
 
 export const TOP_N_OPTIONS: TopNOption[] = [
-  { value: 50, label: 'Top 50 Genes', description: 'Rapide - Vue d\'ensemble' },
-  { value: 100, label: 'Top 100 Genes', description: 'Par défaut - Équilibré' },
-  { value: 500, label: 'Top 500 Genes', description: 'Détaillé - Patterns principaux' },
-  { value: 1000, label: 'Top 1000 Genes', description: 'Très détaillé' },
-  { value: 2000, label: 'Top 2000 Genes', description: 'Complet - Tous les patterns' },
-  { value: 5000, label: 'All DEGs', description: 'Maximum (peut être lent)' },
+  { value: 50, label: 'Top 50 Genes', description: 'Fast - Overview' },
+  { value: 100, label: 'Top 100 Genes', description: 'Default - Balanced' },
+  { value: 500, label: 'Top 500 Genes', description: 'Detailed - Main patterns' },
+  { value: 1000, label: 'Top 1000 Genes', description: 'Very detailed' },
+  { value: 2000, label: 'Top 2000 Genes', description: 'Complete - All patterns' },
+  { value: 5000, label: 'All DEGs', description: 'Maximum (may be slow)' },
 ];
 
 export const DEFAULT_CLUSTERING_PARAMS = {

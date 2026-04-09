@@ -15,7 +15,7 @@ export default function PowerAnalysisPage() {
                         className="inline-flex items-center text-gray-500 hover:text-gray-700 mb-4 text-sm"
                     >
                         <ArrowLeft className="h-4 w-4 mr-1" />
-                        Retour aux outils
+                        Back to tools
                     </Link>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-purple-100 rounded-lg">
@@ -23,12 +23,12 @@ export default function PowerAnalysisPage() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">
-                                Analyse de puissance
+                                Power Analysis
                             </h1>
                             <p className="mt-1 text-gray-600">
-                                Calculez la taille d&apos;échantillon requise ou évaluez la puissance
-                                statistique d&apos;un test selon l&apos;effet attendu, le seuil α et le
-                                risque β.
+                                Calculate the required sample size or evaluate the statistical
+                                power of a test based on the expected effect, threshold α, and
+                                risk β.
                             </p>
                         </div>
                     </div>

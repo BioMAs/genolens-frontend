@@ -72,7 +72,7 @@ function buildDescription(entry: ActivityLogEntry): string {
   if (entry.event_type === 'bookmark_batch_created') {
     const created = entry.extra_metadata?.created ?? 0;
     const skipped = entry.extra_metadata?.skipped ?? 0;
-    return `${base} (${created} créé(s), ${skipped} ignoré(s))`;
+    return `${base} (${created} created, ${skipped} skipped)`;
   }
 
   return base;
@@ -123,7 +123,7 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
             className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {expanded ? 'Masquer les détails' : 'Voir les détails'}
+            {expanded ? 'Hide details' : 'View details'}
           </button>
         )}
 
@@ -162,15 +162,15 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
   const hasPrev = page > 0;
 
   const filterOptions: Array<{ value: ActivityEventType | ''; label: string }> = [
-    { value: '', label: 'Tous les événements' },
+    { value: '', label: 'All events' },
     { value: 'dataset_uploaded', label: 'Datasets' },
-    { value: 'comparison_created', label: 'Comparaisons' },
-    { value: 'enrichment_run', label: 'Enrichissement' },
+    { value: 'comparison_created', label: 'Comparisons' },
+    { value: 'enrichment_run', label: 'Enrichment' },
     { value: 'clustering_run', label: 'Clustering' },
     { value: 'gsea_run', label: 'GSEA' },
-    { value: 'go_enrichment_run', label: 'GO Enrichissement' },
+    { value: 'go_enrichment_run', label: 'GO Enrichment' },
     { value: 'bookmark_created', label: 'Bookmarks' },
-    { value: 'comment_added', label: 'Commentaires' },
+    { value: 'comment_added', label: 'Comments' },
   ];
 
   return (
@@ -178,9 +178,9 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Historique du projet</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Project history</h2>
           <p className="mt-1 text-sm text-gray-500">
-            {total > 0 ? `${total} événement${total > 1 ? 's' : ''} enregistré${total > 1 ? 's' : ''}` : 'Aucun événement pour l\'instant'}
+            {total > 0 ? `${total} event${total > 1 ? 's' : ''} recorded` : 'No events yet'}
           </p>
         </div>
         <button
@@ -189,7 +189,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-          Actualiser
+          Refresh
         </button>
       </div>
 
@@ -226,12 +226,12 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
         </div>
       ) : isError ? (
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-          Impossible de charger l&apos;historique. Veuillez réessayer.
+          Failed to load history. Please try again.
         </div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center text-sm text-gray-500">
           <Clock className="mx-auto mb-3 h-8 w-8 text-gray-300" />
-          Aucun événement enregistré pour le moment.
+          No events recorded yet.
         </div>
       ) : (
         <ul className="space-y-5">
@@ -249,7 +249,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
             disabled={!hasPrev}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Précédent
+            Previous
           </button>
           <span className="text-xs text-gray-500">
             Page {page + 1} / {Math.ceil(total / limit)}
@@ -259,7 +259,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
             disabled={!hasNext}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Suivant
+            Next
           </button>
         </div>
       )}

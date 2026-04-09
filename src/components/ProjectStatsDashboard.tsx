@@ -26,12 +26,12 @@ function formatRelativeDate(iso: string | null): string {
   if (!iso) return '—';
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'à l\'instant';
-  if (diffMin < 60) return `il y a ${diffMin} min`;
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `il y a ${diffH} h`;
+  if (diffH < 24) return `${diffH} h ago`;
   const diffD = Math.floor(diffH / 24);
-  return `il y a ${diffD} j`;
+  return `${diffD} d ago`;
 }
 
 // ============================================================================
@@ -74,34 +74,34 @@ function DatasetStatusBar({ stats }: { stats: StatsType }) {
   return (
     <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
       <p className="mb-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-        Datasets par statut
+        Datasets by status
       </p>
       <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
         {readyPct > 0 && (
-          <div className="bg-emerald-500" style={{ width: `${readyPct}%` }} title={`Prêts: ${stats.datasets_ready}`} />
+          <div className="bg-emerald-500" style={{ width: `${readyPct}%` }} title={`Ready: ${stats.datasets_ready}`} />
         )}
         {processingPct > 0 && (
-          <div className="bg-blue-400" style={{ width: `${processingPct}%` }} title={`En traitement: ${stats.datasets_processing}`} />
+          <div className="bg-blue-400" style={{ width: `${processingPct}%` }} title={`Processing: ${stats.datasets_processing}`} />
         )}
         {failedPct > 0 && (
-          <div className="bg-red-400" style={{ width: `${failedPct}%` }} title={`Erreur: ${stats.datasets_failed}`} />
+          <div className="bg-red-400" style={{ width: `${failedPct}%` }} title={`Error: ${stats.datasets_failed}`} />
         )}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <CheckCircle className="h-3 w-3 text-emerald-500" />
-          {stats.datasets_ready} prêt{stats.datasets_ready > 1 ? 's' : ''}
+          {stats.datasets_ready} ready
         </span>
         {stats.datasets_processing > 0 && (
           <span className="flex items-center gap-1">
             <Loader2 className="h-3 w-3 text-blue-400" />
-            {stats.datasets_processing} en cours
+            {stats.datasets_processing} processing
           </span>
         )}
         {stats.datasets_failed > 0 && (
           <span className="flex items-center gap-1">
             <AlertCircle className="h-3 w-3 text-red-400" />
-            {stats.datasets_failed} erreur{stats.datasets_failed > 1 ? 's' : ''}
+            {stats.datasets_failed} error{stats.datasets_failed > 1 ? 's' : ''}
           </span>
         )}
       </div>
@@ -114,7 +114,7 @@ function ActivityWeekCard({ stats }: { stats: StatsType }) {
   const items = [
     { label: 'Datasets', value: a.datasets_uploaded, color: 'bg-blue-500' },
     { label: 'Bookmarks', value: a.bookmarks_created, color: 'bg-yellow-500' },
-    { label: 'Commentaires', value: a.comments_added, color: 'bg-pink-500' },
+    { label: 'Comments', value: a.comments_added, color: 'bg-pink-500' },
     { label: 'Analyses', value: a.analyses_run, color: 'bg-purple-500' },
   ];
   const total = items.reduce((s, i) => s + i.value, 0);
@@ -122,7 +122,7 @@ function ActivityWeekCard({ stats }: { stats: StatsType }) {
   return (
     <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
       <p className="mb-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-        Activité (7 derniers jours) — {total} événements
+        Activity (last 7 days) — {total} events
       </p>
       <div className="space-y-2">
         {items.map((item) => (
@@ -170,7 +170,7 @@ export default function ProjectStatsDashboard({ projectId }: ProjectStatsDashboa
   if (isError || !stats) {
     return (
       <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Impossible de charger les statistiques du projet.
+        Failed to load project statistics.
       </div>
     );
   }
@@ -181,11 +181,11 @@ export default function ProjectStatsDashboard({ projectId }: ProjectStatsDashboa
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-4 py-2.5">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Clock className="h-3.5 w-3.5" />
-          Dernière activité : <span className="font-medium text-gray-700">{formatRelativeDate(stats.last_activity_at)}</span>
+          Last activity: <span className="font-medium text-gray-700">{formatRelativeDate(stats.last_activity_at)}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Activity className="h-3.5 w-3.5" />
-          <span className="font-medium text-gray-700">{stats.total_activity_events.toLocaleString('fr-FR')}</span> événements au total
+          <span className="font-medium text-gray-700">{stats.total_activity_events.toLocaleString()}</span> total events
         </div>
       </div>
 
@@ -201,21 +201,21 @@ export default function ProjectStatsDashboard({ projectId }: ProjectStatsDashboa
         />
         <StatCard
           icon={GitCompare}
-          label="Comparaisons"
+          label="Comparisons"
           value={stats.total_comparisons}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
         />
         <StatCard
           icon={TrendingUp}
-          label="Gènes DEG"
+          label="DEG Genes"
           value={stats.total_deg_genes}
           iconBg="bg-indigo-50"
           iconColor="text-indigo-600"
         />
         <StatCard
           icon={BarChart2}
-          label="Pathways enrichis"
+          label="Enriched Pathways"
           value={stats.total_enrichment_pathways}
           iconBg="bg-orange-50"
           iconColor="text-orange-600"
@@ -229,21 +229,21 @@ export default function ProjectStatsDashboard({ projectId }: ProjectStatsDashboa
         />
         <StatCard
           icon={List}
-          label="Listes de gènes"
+          label="Gene Lists"
           value={stats.total_gene_lists}
           iconBg="bg-cyan-50"
           iconColor="text-cyan-600"
         />
         <StatCard
           icon={MessageSquare}
-          label="Commentaires"
+          label="Comments"
           value={stats.total_comments}
           iconBg="bg-pink-50"
           iconColor="text-pink-600"
         />
         <StatCard
           icon={Users}
-          label="Membres"
+          label="Members"
           value={stats.total_members}
           iconBg="bg-teal-50"
           iconColor="text-teal-600"

@@ -115,9 +115,9 @@ type Mode = 'sample-size' | 'power';
 const ALPHA_PRESETS = [0.001, 0.01, 0.05, 0.1];
 const POWER_PRESETS = [0.7, 0.8, 0.9, 0.95];
 const EFFECT_PRESETS = [
-  { label: 'Petit (0.2)', value: 0.2, desc: 'Effet difficilement perceptible' },
-  { label: 'Moyen (0.5)', value: 0.5, desc: 'Effet modéré' },
-  { label: 'Grand (0.8)', value: 0.8, desc: 'Effet important' },
+  { label: 'Small (0.2)', value: 0.2, desc: 'Barely perceptible effect' },
+  { label: 'Medium (0.5)', value: 0.5, desc: 'Moderate effect' },
+  { label: 'Large (0.8)', value: 0.8, desc: 'Large effect' },
 ];
 
 function powerColor(p: number) {
@@ -183,7 +183,7 @@ export default function PowerAnalysis() {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
           <Calculator className="h-5 w-5 text-purple-600" />
-          <h2 className="text-base font-semibold text-gray-900">Mode de calcul</h2>
+          <h2 className="text-base font-semibold text-gray-900">Calculation mode</h2>
         </div>
         <div className="flex rounded-lg border border-gray-200 overflow-hidden">
           <button
@@ -194,7 +194,7 @@ export default function PowerAnalysis() {
             }`}
             onClick={() => setMode('sample-size')}
           >
-            Calculer la taille d&apos;échantillon
+            Calculate sample size
           </button>
           <button
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
@@ -204,7 +204,7 @@ export default function PowerAnalysis() {
             }`}
             onClick={() => setMode('power')}
           >
-            Calculer la puissance
+            Calculate power
           </button>
         </div>
       </div>
@@ -214,15 +214,15 @@ export default function PowerAnalysis() {
         <div className="lg:col-span-1 space-y-4">
           {/* Test type */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Type de test</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Test type</h3>
             <select
               value={testType}
               onChange={(e) => setTestType(e.target.value as TestType)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-              <option value="two-sample">Test t — deux échantillons indépendants</option>
-              <option value="paired">Test t — échantillons appariés</option>
-              <option value="one-sample">Test t — un échantillon</option>
+              <option value="two-sample">t-test — two independent samples</option>
+              <option value="paired">t-test — paired samples</option>
+              <option value="one-sample">t-test — one sample</option>
             </select>
             <label className="mt-3 flex items-center gap-2 cursor-pointer">
               <input
@@ -231,16 +231,16 @@ export default function PowerAnalysis() {
                 onChange={(e) => setTwoTailed(e.target.checked)}
                 className="h-4 w-4 accent-purple-600 rounded"
               />
-              <span className="text-sm text-gray-600">Test bilatéral (recommandé)</span>
+              <span className="text-sm text-gray-600">Two-tailed test (recommended)</span>
             </label>
           </div>
 
           {/* Alpha */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
             <label className="text-sm font-semibold text-gray-700 block mb-1">
-              Seuil de signification α
+              Significance threshold α
             </label>
-            <p className="text-xs text-gray-400 mb-2">Risque d&apos;erreur de type I (faux positif)</p>
+            <p className="text-xs text-gray-400 mb-2">Type I error risk (false positive)</p>
             <div className="flex gap-2 flex-wrap mb-2">
               {ALPHA_PRESETS.map((a) => (
                 <button
@@ -270,9 +270,9 @@ export default function PowerAnalysis() {
           {/* Effect size */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
             <label className="text-sm font-semibold text-gray-700 block mb-1">
-              Taille d&apos;effet (Cohen&apos;s d)
+              Effect size (Cohen&apos;s d)
             </label>
-            <p className="text-xs text-gray-400 mb-2">Différence standardisée entre les groupes</p>
+            <p className="text-xs text-gray-400 mb-2">Standardized difference between groups</p>
             <div className="flex gap-2 flex-wrap mb-2">
               {EFFECT_PRESETS.map((p) => (
                 <button
@@ -313,9 +313,9 @@ export default function PowerAnalysis() {
           {mode === 'sample-size' && (
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <label className="text-sm font-semibold text-gray-700 block mb-1">
-                Puissance cible (1 – β)
+                Target power (1 – β)
               </label>
-              <p className="text-xs text-gray-400 mb-2">Probabilité de détecter un effet réel</p>
+              <p className="text-xs text-gray-400 mb-2">Probability of detecting a real effect</p>
               <div className="flex gap-2 flex-wrap mb-2">
                 {POWER_PRESETS.map((p) => (
                   <button
@@ -350,7 +350,7 @@ export default function PowerAnalysis() {
           {mode === 'power' && (
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <label className="text-sm font-semibold text-gray-700 block mb-1">
-                {testType === 'two-sample' ? 'n par groupe' : "Taille d'échantillon (n)"}
+                {testType === 'two-sample' ? 'n per group' : "Sample size (n)"}
               </label>
               <input
                 type="number"
@@ -380,16 +380,16 @@ export default function PowerAnalysis() {
               className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 w-full text-left"
             >
               <Info className="h-4 w-4 shrink-0" />
-              Convertisseur RNA-seq → Cohen&apos;s d
+              RNA-seq → Cohen&apos;s d converter
             </button>
             {showConverter && (
               <div className="mt-3 space-y-3">
                 <p className="text-xs text-gray-500">
-                  Formule : d = |log₂(FC)| / CV, où CV est le coefficient de variation
-                  intra-groupe (écart-type / moyenne des comptes normalisés).
+                  Formula: d = |log₂(FC)| / CV, where CV is the intra-group coefficient
+                  of variation (standard deviation / mean of normalized counts).
                 </p>
                 <div>
-                  <label className="text-xs text-gray-600 block mb-1">Fold change attendu (FC)</label>
+                  <label className="text-xs text-gray-600 block mb-1">Expected fold change (FC)</label>
                   <input
                     type="number"
                     value={foldChange}
@@ -414,7 +414,7 @@ export default function PowerAnalysis() {
                 </div>
                 {computedD !== null && (
                   <div className="flex items-center justify-between bg-purple-50 rounded-md px-3 py-2">
-                    <span className="text-xs text-purple-700">Cohen&apos;s d estimé :</span>
+                    <span className="text-xs text-purple-700">Estimated Cohen&apos;s d:</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-purple-800">
                         {computedD.toFixed(3)}
@@ -425,7 +425,7 @@ export default function PowerAnalysis() {
                         }
                         className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded hover:bg-purple-700 transition-colors"
                       >
-                        Utiliser
+                        Use
                       </button>
                     </div>
                   </div>
@@ -444,33 +444,33 @@ export default function PowerAnalysis() {
             >
               <div className="flex items-center gap-3 mb-5">
                 <TrendingUp className={`h-6 w-6 ${powerColor(result.power)}`} />
-                <h3 className="text-lg font-bold text-gray-900">Résultats</h3>
+                <h3 className="text-lg font-bold text-gray-900">Results</h3>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-5">
                 <div className="text-center">
                   <div className="text-xs uppercase tracking-widest text-gray-500 mb-1">
-                    {testType === 'two-sample' ? 'n par groupe' : "Taille d'échantillon"}
+                    {testType === 'two-sample' ? 'n per group' : "Sample size"}
                   </div>
                   <div className="text-5xl font-extrabold text-gray-900">{result.n}</div>
                   {testType === 'two-sample' && (
                     <div className="text-xs text-gray-400 mt-1">
-                      Total : {result.n * 2} participants
+                      Total: {result.n * 2} participants
                     </div>
                   )}
                 </div>
                 <div className="text-center">
                   <div className="text-xs uppercase tracking-widest text-gray-500 mb-1">
-                    Puissance
+                    Power
                   </div>
                   <div className={`text-5xl font-extrabold ${powerColor(result.power)}`}>
                     {(result.power * 100).toFixed(1)}%
                   </div>
                   <div className={`text-xs mt-1 font-medium ${powerColor(result.power)}`}>
                     {result.power >= 0.8
-                      ? '✓ Adéquate'
+                      ? '✓ Adequate'
                       : result.power >= 0.5
-                      ? '⚠ Insuffisante'
-                      : '✗ Très faible'}
+                      ? '⚠ Insufficient'
+                      : '✗ Very low'}
                   </div>
                 </div>
               </div>
@@ -497,7 +497,7 @@ export default function PowerAnalysis() {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-purple-600" />
-              <h3 className="text-sm font-semibold text-gray-700">Courbe de puissance</h3>
+              <h3 className="text-sm font-semibold text-gray-700">Power curve</h3>
               <span className="text-xs text-gray-400">
                 — α = {alpha}, d = {effectSize.toFixed(2)}
               </span>
@@ -511,7 +511,7 @@ export default function PowerAnalysis() {
                 <XAxis
                   dataKey="n"
                   label={{
-                    value: testType === 'two-sample' ? 'n par groupe' : 'n',
+                    value: testType === 'two-sample' ? 'n per group' : 'n',
                     position: 'insideBottom',
                     offset: -12,
                     fontSize: 11,
@@ -527,11 +527,11 @@ export default function PowerAnalysis() {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(val: any) => [
                     typeof val === 'number' ? `${(val * 100).toFixed(1)}%` : String(val ?? ''),
-                    'Puissance',
+                    'Power',
                   ]}
                   labelFormatter={(label) =>
                     testType === 'two-sample'
-                      ? `n = ${label} par groupe`
+                      ? `n = ${label} per group`
                       : `n = ${label}`
                   }
                 />
@@ -576,32 +576,32 @@ export default function PowerAnalysis() {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="h-5 w-5 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-700">Guide d&apos;interprétation</h3>
+              <h3 className="text-sm font-semibold text-gray-700">Interpretation guide</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="bg-red-50 rounded-md p-3 border border-red-100">
-                <p className="font-semibold text-red-700 mb-1">Faible (&lt; 50%)</p>
+                <p className="font-semibold text-red-700 mb-1">Low (&lt; 50%)</p>
                 <p className="text-red-600">
-                  Risque élevé de manquer un effet réel. Revoir la conception de l&apos;étude.
+                  High risk of missing a real effect. Review the study design.
                 </p>
               </div>
               <div className="bg-yellow-50 rounded-md p-3 border border-yellow-100">
-                <p className="font-semibold text-yellow-700 mb-1">Modéré (50 – 79%)</p>
+                <p className="font-semibold text-yellow-700 mb-1">Moderate (50 – 79%)</p>
                 <p className="text-yellow-600">
-                  Acceptable mais sous-optimal. Augmenter n si possible.
+                  Acceptable but sub-optimal. Increase n if possible.
                 </p>
               </div>
               <div className="bg-green-50 rounded-md p-3 border border-green-100">
-                <p className="font-semibold text-green-700 mb-1">Adéquat (≥ 80%)</p>
+                <p className="font-semibold text-green-700 mb-1">Adequate (≥ 80%)</p>
                 <p className="text-green-600">
-                  Standard recommandé. 90% souhaitable pour les études critiques.
+                  Recommended standard. 90% is desirable for critical studies.
                 </p>
               </div>
             </div>
             <p className="mt-3 text-xs text-gray-400">
-              * Ces calculs reposent sur l&apos;approximation normale (test z). Pour les études
-              RNA-seq avec corrections FDR multiples ou modèles mixtes, des outils dédiés
-              (RNASeqPower, PROPER, pwr sous R) sont recommandés.
+              * These calculations are based on the normal approximation (z-test). For RNA-seq
+              studies with multiple FDR corrections or mixed models, dedicated tools
+              (RNASeqPower, PROPER, pwr in R) are recommended.
             </p>
           </div>
         </div>

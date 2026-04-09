@@ -13,8 +13,8 @@ const tools = [
         bgColor: "bg-indigo-50"
     },
     {
-        name: "Analyse de puissance",
-        description: "Calculez la taille d'échantillon requise ou la puissance statistique d'un test. Supporte les tests t (deux échantillons, apparié, un échantillon) avec convertisseur RNA-seq fold-change → Cohen's d.",
+        name: "Power Analysis",
+        description: "Calculate the required sample size or the statistical power of a test. Supports t-tests (two-sample, paired, one-sample) with RNA-seq fold-change → Cohen's d converter.",
         icon: FlaskConical,
         href: "/tools/power-analysis",
         color: "text-purple-600",
