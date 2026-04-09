@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import api from '@/utils/api';
 import { Dataset, DatasetType, DatasetStatus } from '@/types';
-import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
+import { useProjectSummary, useProjectDatasets, useProjectComparisons } from '@/hooks/useProjectData';
 import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCircle, Clock, Edit2, Eye, RefreshCw, GitCompare, Star, List, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePrefetchComparisons } from '@/hooks/useComparisons';
@@ -31,17 +31,12 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   // Get current authenticated user
   const { user: currentUser } = useCurrentUser();
 
-  // React Query: un seul appel pour le projet + comparaisons + stats agrégées
+  // React Query: un seul appel pour le projet + stats agrégées
   const { data: summary, isLoading: summaryLoading } = useProjectSummary(projectId);
   const project = summary?.project;
-  const summaryComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
 
   // React Query: datasets complets pour les onglets QC, PCA, Data Management
   const { data: datasets = [], isLoading: datasetsLoading, refetch: refetchDatasets } = useProjectDatasets(projectId);
-
-  // Hooks de prefetch pour optimiser la navigation
-  const { prefetchComparisonData } = usePrefetchComparisons();
-  const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
   // Edit State
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
@@ -214,7 +209,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               <p className="mt-2 text-xs text-gray-500">Created {formatDate(project.created_at)}</p>
             </div>
             <div className="flex gap-2">
-              {summaryComparisons.length >= 2 && (
+              {(summary?.stats.total_comparisons ?? 0) >= 2 && (
                 <Link
                   href={`/projects/${projectId}/multi-comparison`}
                   className="inline-flex items-center px-3 py-1.5 border border-brand-primary text-sm font-medium rounded-md text-brand-primary bg-white hover:bg-brand-primary/5"
@@ -396,11 +391,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           {/* Tab Content */}
           <div className="p-6">
             {activeTab === 'comparisons' && (
-              <ComparisonsTab
-                comparisons={summaryComparisons}
-                loading={summaryLoading}
-                projectId={projectId}
-              />
+              <ComparisonsTab projectId={projectId} />
             )}
 
             {activeTab === 'qc' && (
@@ -737,19 +728,23 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 }
 
 // Comparisons Tab Component
+const PAGE_SIZE = 20;
+
 function ComparisonsTab({
-  comparisons,
-  loading,
   projectId
 }: {
-  comparisons: ComparisonSummary[],
-  loading: boolean,
   projectId: string
 }) {
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useProjectComparisons(projectId, page, PAGE_SIZE);
   const { prefetchComparisonData } = usePrefetchComparisons();
   const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
-  if (loading) {
+  const comparisons = data?.comparisons ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.total_pages ?? 1;
+
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -759,7 +754,7 @@ function ComparisonsTab({
     );
   }
 
-  if (comparisons.length === 0) {
+  if (total === 0) {
     return (
       <div className="text-center py-12">
         <Activity className="mx-auto h-12 w-12 text-gray-400" />
@@ -769,95 +764,128 @@ function ComparisonsTab({
     );
   }
 
+  const firstItem = (page - 1) * PAGE_SIZE + 1;
+  const lastItem = Math.min(page * PAGE_SIZE, total);
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Comparison Name
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Source
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              UP
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              DOWN
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Features
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {comparisons.map((comp) => (
-            <tr key={comp.name} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-brand-primary mr-3" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {deslugComparisonName(comp.name)}
-                    </div>
-                    <div className="text-xs text-gray-500 font-mono">{comp.name}</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                  {comp.dataset_type === 'GLOBAL' ? 'Global Analysis' : 'Individual File'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-red-100 text-red-800">
-                  {comp.deg_up}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-blue-100 text-blue-800">
-                  {comp.deg_down}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                    DEG
-                  </span>
-                  {comp.has_enrichment && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                      Enrichment
-                    </span>
-                  )}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <Link
-                  href={comp.dataset_type === 'GLOBAL'
-                    ? `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}?datasetId=${comp.dataset_id}`
-                    : `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`
-                  }
-                  onMouseEnter={() => {
-                    prefetchComparisonData(comp.dataset_id, comp.name);
-                    prefetchVolcano(comp.dataset_id, comp.name);
-                    if (comp.has_enrichment) {
-                      prefetchEnrichment(comp.dataset_id, comp.name);
-                    }
-                  }}
-                  className="text-brand-primary hover:text-brand-primary/80 inline-flex items-center"
-                >
-                  View Details
-                  <Eye className="ml-1 h-4 w-4" />
-                </Link>
-              </td>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Comparison Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Source
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                UP
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                DOWN
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Features
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {comparisons.map((comp) => (
+              <tr key={comp.name} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <Activity className="h-5 w-5 text-brand-primary mr-3" />
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {deslugComparisonName(comp.name)}
+                      </div>
+                      <div className="text-xs text-gray-500 font-mono">{comp.name}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                    {comp.dataset_type === 'GLOBAL' ? 'Global Analysis' : 'Individual File'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-red-100 text-red-800">
+                    {comp.deg_up}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold bg-blue-100 text-blue-800">
+                    {comp.deg_down}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex gap-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      DEG
+                    </span>
+                    {comp.has_enrichment && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                        Enrichment
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <Link
+                    href={comp.dataset_type === 'GLOBAL'
+                      ? `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}?datasetId=${comp.dataset_id}`
+                      : `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`
+                    }
+                    onMouseEnter={() => {
+                      prefetchComparisonData(comp.dataset_id, comp.name);
+                      prefetchVolcano(comp.dataset_id, comp.name);
+                      if (comp.has_enrichment) {
+                        prefetchEnrichment(comp.dataset_id, comp.name);
+                      }
+                    }}
+                    className="text-brand-primary hover:text-brand-primary/80 inline-flex items-center"
+                  >
+                    View Details
+                    <Eye className="ml-1 h-4 w-4" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 mt-2">
+          <p className="text-sm text-gray-700">
+            {firstItem}–{lastItem} sur {total} comparaisons
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page <= 1}
+              className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Précédent
+            </button>
+            <span className="px-3 py-1.5 text-sm text-gray-600">
+              Page {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -28,6 +28,14 @@ export interface ProjectSummary {
   original_files: string[];
 }
 
+export interface PaginatedComparisonsResponse {
+  comparisons: ComparisonSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export function useProject(projectId: string) {
   return useQuery({
     queryKey: ['project', projectId],
@@ -56,6 +64,21 @@ export function useProjectSummary(projectId: string) {
       }
       return false; // Don't poll
     },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectComparisons(projectId: string, page: number = 1, pageSize: number = 20) {
+  return useQuery({
+    queryKey: ['project', projectId, 'comparisons', page, pageSize],
+    queryFn: async () => {
+      const response = await api.get<PaginatedComparisonsResponse>(
+        `/projects/${projectId}/comparisons`,
+        { params: { page, page_size: pageSize } }
+      );
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
     enabled: !!projectId,
   });
 }
