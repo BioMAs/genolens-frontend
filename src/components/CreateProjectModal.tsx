@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { X } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   if (!isOpen) return null;
 
@@ -28,6 +30,8 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
         name,
         description,
       });
+      // Invalider le cache React Query pour forcer le rechargement de la liste
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
       setName('');
       setDescription('');
       onSuccess();

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
-import api from '@/utils/api';
-import { Dataset, DatasetQueryResponse } from '@/types';
+import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
+import { Dataset } from '@/types';
 import DatasetVisualizer from './DatasetVisualizer';
 
 interface DatasetExplorerProps {
@@ -13,110 +13,67 @@ interface DatasetExplorerProps {
 }
 
 export default function DatasetExplorer({ projectId, datasetId }: DatasetExplorerProps) {
-  const [dataset, setDataset] = useState<Dataset | null>(null);
-  const [data, setData] = useState<DatasetQueryResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Utilise React Query pour récupérer les métadonnées et colonnes
+  const { data: dataset, isLoading: datasetLoading } = useDataset(datasetId);
+  const { data: columnsData } = useDatasetColumns(datasetId);
+  
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table');
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
-  const [availableColumns, setAvailableColumns] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
+  // Colonnes disponibles depuis l'endpoint optimisé
+  const availableColumns = columnsData?.columns || [];
+
+  // Initialise selectedColumns quand les colonnes sont disponibles
   useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const resp = await api.get(`/datasets/${datasetId}`);
-        setDataset(resp.data);
-      } catch (err) {
-        console.error('Failed to fetch dataset metadata:', err);
-        setError('Failed to load dataset metadata.');
-      }
-    };
-    fetchMetadata();
-  }, [datasetId]);
+    if (availableColumns.length > 0 && selectedColumns.length === 0) {
+      setSelectedColumns(availableColumns);
+    }
+  }, [availableColumns, selectedColumns.length]);
 
-  // Initial fetch to get columns
-  useEffect(() => {
-    if (!dataset || availableColumns.length > 0) return;
+  // Prépare les filtres pour l'endpoint optimisé
+  const filters = {
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    columns: selectedColumns.length > 0 && selectedColumns.length < availableColumns.length 
+      ? selectedColumns 
+      : undefined,
+  };
 
-    const fetchColumns = async () => {
-      try {
-        const resp = await api.post(`/datasets/${datasetId}/query`, {
-          limit: 1,
-          offset: 0
-        });
-        setAvailableColumns(resp.data.columns);
-        setSelectedColumns(resp.data.columns);
-      } catch (err) {
-        console.error('Failed to fetch initial columns:', err);
-      }
-    };
-    fetchColumns();
-  }, [dataset, datasetId, availableColumns.length]);
+  // Ajoute le filtre de recherche si applicable
+  if (searchQuery.trim()) {
+    const ids = searchQuery.split(/[\s,]+/).filter(Boolean);
+    if (ids.length > 0) {
+      // Note: l'API doit supporter un paramètre gene_ids ou équivalent
+      (filters as any).gene_ids = ids;
+    }
+  }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!dataset) return;
-      
-      try {
-        setLoading(true);
-        const offset = (page - 1) * pageSize;
-        
-        const params: any = {
-          limit: pageSize,
-          offset: offset
-        };
+  // Utilise l'endpoint optimisé avec filtrage backend
+  const { data, isLoading, error } = useDatasetData(datasetId, filters);
 
-        if (searchQuery.trim()) {
-          // Split by comma or space and clean up
-          const ids = searchQuery.split(/[\s,]+/).filter(Boolean);
-          if (ids.length > 0) {
-            params.gene_ids = ids;
-          }
-        }
-
-        if (selectedColumns.length > 0 && selectedColumns.length < availableColumns.length) {
-          params.sample_ids = selectedColumns;
-        }
-
-        const resp = await api.post(`/datasets/${datasetId}/query`, params);
-        
-        setData(resp.data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-        setError('Failed to load data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loading = datasetLoading || isLoading;
 
     // Debounce search
-    const timeoutId = setTimeout(() => {
-      if (dataset) {
-        fetchData();
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [datasetId, dataset, page, searchQuery, selectedColumns, availableColumns.length]);
-
   const toggleColumn = (col: string) => {
     setSelectedColumns(prev => 
       prev.includes(col) 
         ? prev.filter(c => c !== col)
         : [...prev, col]
     );
+    // Réinitialise la page quand on change les colonnes
+    setPage(1);
   };
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to load data. Please try again.';
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="mx-auto max-w-7xl">
@@ -125,7 +82,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">Error</h3>
                 <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
+                  <p>{errorMessage}</p>
                 </div>
                 <div className="mt-4">
                   <Link

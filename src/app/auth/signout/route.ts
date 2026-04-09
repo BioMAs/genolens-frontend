@@ -8,5 +8,5 @@ export async function POST(request: Request) {
   await supabase.auth.signOut()
 
   revalidatePath('/', 'layout')
-  redirect('/login')
+  redirect('/')
 }

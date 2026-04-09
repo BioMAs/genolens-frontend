@@ -27,7 +27,7 @@ export default function AdminPage() {
         if (err.response?.status === 403) {
           setError('Access denied. Admin privileges required.');
         } else if (err.response?.status === 401) {
-          router.push('/login');
+          router.push('/');
         } else {
           setError('Failed to verify admin access.');
         }

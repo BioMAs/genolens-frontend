@@ -12,6 +12,7 @@ import {
   Legend,
   Cell
 } from 'recharts';
+import { useUMAPData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 
@@ -27,38 +28,23 @@ interface UMAPResult {
 }
 
 export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
-  const [umapData, setUmapData] = useState<UMAPResult | null>(null);
+  // Utilise React Query pour gérer le cache UMAP
+  const { data: umapData, isLoading, error: umapError } = useUMAPData(
+    dataset.id,
+    {},
+    dataset.status === 'READY'
+  );
+  
   const [metadata, setMetadata] = useState<any[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch UMAP Data
-  useEffect(() => {
-    const fetchUMAP = async () => {
-      try {
-        setLoading(true);
-        const resp = await api.get(`/datasets/${dataset.id}/umap`);
-        setUmapData(resp.data);
-        setError(null);
-      } catch (err: any) {
-        console.error('Failed to fetch UMAP:', err);
-        if (err.response?.data?.detail?.includes('UMAP is not installed')) {
-          setError('UMAP is not available on the server. Please install umap-learn.');
-        } else {
-          setError('Failed to calculate UMAP. Ensure the dataset is a valid expression matrix.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (dataset.status === 'READY') {
-      fetchUMAP();
-    }
-  }, [dataset.id, dataset.status]);
+  const error = umapError 
+    ? (umapError instanceof Error && umapError.message.includes('UMAP is not installed')
+      ? 'UMAP is not available on the server. Please install umap-learn.'
+      : 'Failed to calculate UMAP. Ensure the dataset is a valid expression matrix.')
+    : null;
 
   // Fetch Metadata if available and UMAP is ready
   useEffect(() => {
@@ -83,7 +69,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
         const cols = resp.data.columns;
 
         // 1. Find the best column to join on (Sample ID)
-        const umapSamples = new Set(umapData.data.map(d => d.sample));
+        const umapSamples = new Set(umapData.data.map((d: any) => d.sample));
         let bestJoinCol = '';
         let maxOverlap = 0;
 
@@ -120,8 +106,8 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       if (!umapData) return [];
       if (!selectedColorColumn || metadata.length === 0 || !joinColumn) return umapData.data;
 
-      return umapData.data.map(point => {
-          const metaRow = metadata.find(m => String(m[joinColumn]) === point.sample);
+      return umapData.data.map((point: any) => {
+          const metaRow = metadata.find((m: any) => String(m[joinColumn]) === point.sample);
           
           return {
               ...point,
@@ -146,7 +132,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       return map;
   }, [uniqueCategories]);
 
-  if (loading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating UMAP...</div>;
+  if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating UMAP...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
   if (!umapData) return null;
 

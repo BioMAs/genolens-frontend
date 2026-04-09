@@ -3,31 +3,51 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCircle, Clock, Edit2, Eye, RefreshCw, GitCompare } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCircle, Clock, Edit2, Eye, RefreshCw, GitCompare, Star, List, Users } from 'lucide-react';
 import Link from 'next/link';
+import { usePrefetchComparisons } from '@/hooks/useComparisons';
+import { usePrefetchVisualizations } from '@/hooks/useVisualizations';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import EditDatasetModal from './EditDatasetModal';
+import BookmarkManager from './BookmarkManager';
+import GeneListManager from './GeneListManager';
+import ProjectMembersModal from './ProjectMembersModal';
 import PCAPlot from './PCAPlot';
 import UMAPPlot from './UMAPPlot';
 import LibrarySizePlot from './LibrarySizePlot';
 import QCDashboard from './QCDashboard';
 import { TableSkeleton, ComparisonCardSkeleton, QCDashboardSkeleton } from './Skeletons';
 import { deslugComparisonName, formatDate } from '@/utils/formatters';
+import ProjectHistory from './ProjectHistory';
+import ProjectStatsDashboard from './ProjectStatsDashboard';
 
 interface ProjectDetailProps {
   projectId: string;
 }
 
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
-  const [activeTab, setActiveTab] = useState<'qc' | 'pca' | 'comparisons' | 'data'>('comparisons');
+  const [activeTab, setActiveTab] = useState<'qc' | 'pca' | 'comparisons' | 'data' | 'history' | 'stats'>('comparisons');
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [datasetsLoading, setDatasetsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get current authenticated user
+  const { user: currentUser } = useCurrentUser();
+  
+  // Hooks de prefetch pour optimiser la navigation
+  const { prefetchComparisonData } = usePrefetchComparisons();
+  const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
   // Edit State
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Bookmark & Gene List Modals State
+  const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false);
+  const [isGeneListModalOpen, setIsGeneListModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 
   // Upload State
   const [isUploading, setIsUploading] = useState(false);
@@ -361,6 +381,27 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                   Multi-Comparison
                 </Link>
               )}
+              <button
+                onClick={() => setIsBookmarkModalOpen(true)}
+                className="inline-flex items-center px-3 py-1.5 border border-yellow-500 text-sm font-medium rounded-md text-yellow-600 bg-white hover:bg-yellow-50"
+              >
+                <Star className="h-4 w-4 mr-1.5" />
+                My Bookmarks
+              </button>
+              <button
+                onClick={() => setIsGeneListModalOpen(true)}
+                className="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50"
+              >
+                <List className="h-4 w-4 mr-1.5" />
+                Gene Lists
+              </button>
+              <button
+                onClick={() => setIsMembersModalOpen(true)}
+                className="inline-flex items-center px-3 py-1.5 border border-green-500 text-sm font-medium rounded-md text-green-600 bg-white hover:bg-green-50"
+              >
+                <Users className="h-4 w-4 mr-1.5" />
+                Members
+              </button>
               <Link
                 href={`/projects/${projectId}?tab=data`}
                 onClick={(e) => {
@@ -486,6 +527,26 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                 }`}
               >
                 Data Management
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'history'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Historique
+              </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'stats'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Statistiques
               </button>
             </nav>
           </div>
@@ -746,6 +807,14 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             </div>
             </div>
             )}
+
+            {activeTab === 'history' && (
+              <ProjectHistory projectId={projectId} />
+            )}
+
+            {activeTab === 'stats' && (
+              <ProjectStatsDashboard projectId={projectId} />
+            )}
           </div>
         </div>
       </div>
@@ -756,6 +825,69 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={fetchData}
+        />
+      )}
+
+      {/* Bookmark Manager Modal */}
+      {isBookmarkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-4xl h-[80vh] rounded-lg bg-white shadow-xl flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Star className="h-5 w-5 mr-2 text-yellow-500" />
+                My Bookmarked Genes
+              </h2>
+              <button
+                onClick={() => setIsBookmarkModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <BookmarkManager projectId={projectId} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gene List Manager Modal */}
+      {isGeneListModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-4xl h-[80vh] rounded-lg bg-white shadow-xl flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <List className="h-5 w-5 mr-2 text-indigo-600" />
+                My Gene Lists
+              </h2>
+              <button
+                onClick={() => setIsGeneListModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <GeneListManager projectId={projectId} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Members Modal */}
+      {isMembersModalOpen && project && currentUser && (
+        <ProjectMembersModal
+          projectId={projectId}
+          projectOwnerId={project.owner_id}
+          currentUserId={currentUser.id}
+          isOpen={isMembersModalOpen}
+          onClose={() => setIsMembersModalOpen(false)}
         />
       )}
     </div>
@@ -774,6 +906,10 @@ function ComparisonsTab({
 }) {
   const [comparisonStats, setComparisonStats] = useState<Record<string, { up: number, down: number }>>({});
   const [statsLoading, setStatsLoading] = useState(false);
+
+  // Hooks de prefetch pour optimiser la navigation
+  const { prefetchComparisonData } = usePrefetchComparisons();
+  const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -935,6 +1071,14 @@ function ComparisonsTab({
                       ? `/projects/${projectId}/comparisons/${encodeURIComponent(compName)}?datasetId=${info.id}`
                       : `/projects/${projectId}/comparisons/${encodeURIComponent(compName)}`
                     }
+                    onMouseEnter={() => {
+                      // Précharge les données de la comparaison au survol pour navigation instantanée
+                      prefetchComparisonData(info.id, compName);
+                      prefetchVolcano(info.id, compName);
+                      if (info.hasEnrichment) {
+                        prefetchEnrichment(info.id, compName);
+                      }
+                    }}
                     className="text-brand-primary hover:text-brand-primary/80 inline-flex items-center"
                   >
                     View Details

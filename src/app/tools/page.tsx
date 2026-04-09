@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Network, Database, Activity, FileText } from 'lucide-react';
+import { Network, FlaskConical } from 'lucide-react';
 
 const tools = [
     {
@@ -12,7 +12,14 @@ const tools = [
         color: "text-indigo-600",
         bgColor: "bg-indigo-50"
     },
-    // We can add placeholders for other potential tools or link to existing features if they fit here
+    {
+        name: "Analyse de puissance",
+        description: "Calculez la taille d'échantillon requise ou la puissance statistique d'un test. Supporte les tests t (deux échantillons, apparié, un échantillon) avec convertisseur RNA-seq fold-change → Cohen's d.",
+        icon: FlaskConical,
+        href: "/tools/power-analysis",
+        color: "text-purple-600",
+        bgColor: "bg-purple-50"
+    },
 ];
 
 export default function ToolsIndexPage() {

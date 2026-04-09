@@ -12,6 +12,15 @@
 
 # testing
 /coverage
+/e2e
+/src/__tests__
+jest.config.ts
+jest.setup.tsx
+playwright.config.ts
+/playwright
+/playwright-report
+/test-results
+/tmp-test-data
 
 # next.js
 /.next/

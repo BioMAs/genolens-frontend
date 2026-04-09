@@ -9,11 +9,14 @@ import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
 import EnrichmentRadarPlot from './EnrichmentRadarPlot';
-import HeatmapPlot from './HeatmapPlot';
+import HeatmapPlot from './heatmap';
 import GeneExpressionViewer from './GeneExpressionViewer';
 import DEGTable from './DEGTable';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
+import ExportMenu from './ExportMenu';
+import MultipleTestingPanel from './MultipleTestingPanel';
+import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import { formatDate } from '@/utils/formatters';
 
 interface ComparisonDetailProps {
@@ -21,7 +24,7 @@ interface ComparisonDetailProps {
   comparisonName: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'enrichment' | 'stats' | 'integrations' | 'custom-viz';
 
 export default function ComparisonDetail({ projectId, comparisonName }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
@@ -254,28 +257,36 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
     const fetchAllGenes = async () => {
       try {
-        // Query matrix with limit 1 to get column names (all genes)
-        const response = await api.post(`/datasets/${matrixDataset.id}/query`, {
-          limit: 1
+        // OPTIMIZATION: Use new /genes/list endpoint instead of querying 100K rows
+        // Old: Fetch 100K rows just to get gene IDs (5-10 MB transfer)
+        // New: Use specialized endpoint (20-50 KB transfer)
+        const response = await api.get(`/datasets/${matrixDataset.id}/genes/list`, {
+          params: {
+            gene_column: 'gene_id',
+            // no limit - get all genes
+          }
         });
 
-        // Extract gene_id column which contains all genes
-        const geneIdColumn = 'gene_id';
-        if (response.data.columns.includes(geneIdColumn)) {
-          // Fetch all gene IDs from the dataset
+        const genes = response.data.genes || [];
+        setAllMatrixGenes(genes);
+      } catch (err) {
+        console.error('Failed to fetch all matrix genes:', err);
+        
+        // Fallback to old method if new endpoint fails
+        try {
           const allGenesResponse = await api.post(`/datasets/${matrixDataset.id}/query`, {
-            limit: 100000, // High limit to get all genes
-            columns: [geneIdColumn]
+            limit: 100000,
+            columns: ['gene_id']
           });
 
           const genes = allGenesResponse.data.data
-            .map((row: any) => row[geneIdColumn])
+            .map((row: any) => row['gene_id'])
             .filter(Boolean);
           
           setAllMatrixGenes(genes);
+        } catch (fallbackErr) {
+          console.error('Fallback also failed:', fallbackErr);
         }
-      } catch (err) {
-        console.error('Failed to fetch all matrix genes:', err);
       }
     };
 
@@ -312,8 +323,63 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
       }
     }
 
-    // Stats don't exist - compute them
-    const computeAndSaveStats = async () => {
+    // Stats don't exist - fetch them using optimized endpoint
+    const fetchStatsFromAPI = async () => {
+      setStatsLoading(true);
+      try {
+        // OPTIMIZATION: Use new /stats endpoint instead of fetching 100K rows
+        // Old: Fetch 100K rows + calculate in JavaScript (5-15 MB + 1-2s CPU)
+        // New: Backend calculates stats (<1 KB, <500ms)
+        const response = await api.get(`/datasets/${degDataset.id}/stats`, {
+          params: globalDatasetId ? { comparison_name: decodedName } : {}
+        });
+
+        const { up_genes, down_genes, total_genes, significant_genes } = response.data;
+        
+        // Convert to expected format
+        const newStats = {
+          degUp: up_genes || 0,
+          degDown: down_genes || 0,
+          degTotal: significant_genes || total_genes || 0
+        };
+        
+        setStats(newStats);
+
+        // Save statistics back to database metadata for future use
+        const updatedMetadata = globalDatasetId
+          ? {
+              comparisons: {
+                ...metadata?.comparisons,
+                [decodedName]: {
+                  ...metadata?.comparisons?.[decodedName],
+                  deg_up: newStats.degUp,
+                  deg_down: newStats.degDown,
+                  deg_total: newStats.degTotal
+                }
+              }
+            }
+          : {
+              ...metadata,
+              deg_up: newStats.degUp,
+              deg_down: newStats.degDown,
+              deg_total: newStats.degTotal
+            };
+
+        await api.patch(`/datasets/${degDataset.id}`, {
+          dataset_metadata: updatedMetadata
+        });
+
+        console.log('DEG statistics fetched and saved:', newStats);
+        setStatsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch DEG statistics from API:', err);
+        // Fallback to old computation method
+        await computeAndSaveStatsLegacy();
+      }
+    };
+
+    // Legacy fallback computation method (kept for compatibility)
+    const computeAndSaveStatsLegacy = async () => {
       setStatsLoading(true);
       try {
         // Query the dataset to get all DEG data
@@ -436,7 +502,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
       }
     };
 
-    computeAndSaveStats();
+    fetchStatsFromAPI();
   }, [degDataset, decodedName, globalDatasetId]);
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
@@ -562,6 +628,16 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               >
                 DEG Analysis
               </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`${
+                  activeTab === 'stats'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Statistiques
+              </button>
               {enrichmentDataset && (
                 <button
                   onClick={() => setActiveTab('enrichment')}
@@ -574,6 +650,16 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   Enrichment
                 </button>
               )}
+              <button
+                onClick={() => setActiveTab('integrations')}
+                className={`${
+                  activeTab === 'integrations'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Intégrations
+              </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
                 <button
@@ -603,40 +689,35 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   />
                 </div>
 
-                {/* Heatmap and Volcano Plot - Side by side on large screens */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Heatmap */}
-                  {matrixDataset && (
-                    <div className="lg:col-span-1">
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <HeatmapPlot
-                          degDataset={degDataset}
-                          matrixDataset={matrixDataset}
-                          sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                          comparisonName={decodedName}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Volcano Plot */}
-                  <div className="lg:col-span-1">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-xl font-bold text-gray-900">Volcano Plot</h2>
-                      <Link
-                        href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                        className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
-                      >
-                        View Full Dataset &rarr;
-                      </Link>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <VolcanoPlot
-                        dataset={degDataset}
-                        comparisonName={decodedName}
-                      />
-                    </div>
+                {/* Heatmap - Full Width */}
+                {matrixDataset && (
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
+                    <HeatmapPlot
+                      degDataset={degDataset}
+                      matrixDataset={matrixDataset}
+                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                      comparisonName={decodedName}
+                    />
+                  </div>
+                )}
+
+                {/* Volcano Plot - Below Heatmap */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Volcano Plot</h2>
+                    <Link
+                      href={`/projects/${projectId}/datasets/${degDataset.id}`}
+                      className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
+                    >
+                      View Full Dataset &rarr;
+                    </Link>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <VolcanoPlot
+                      dataset={degDataset}
+                      comparisonName={decodedName}
+                    />
                   </div>
                 </div>
 
@@ -709,6 +790,21 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   <EnrichmentTable dataset={enrichmentDataset} comparisonName={decodedName} />
                 </div>
               </div>
+            )}
+
+            {/* Statistics / Multiple Testing Tab */}
+            {activeTab === 'stats' && (
+              <MultipleTestingPanel
+                datasetId={degDataset.id}
+                comparisonName={decodedName}
+              />
+            )}
+
+            {/* External Integrations Tab */}
+            {activeTab === 'integrations' && (
+              <ExternalIntegrationsPanel
+                genesToPreload={allMatrixGenes.slice(0, 50)}
+              />
             )}
 
             {/* Custom Visualizations Tab */}
@@ -958,29 +1054,6 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
         return matchesText && matchesCategory && matchesPadj;
     });
 
-    // Export function
-    const handleExport = (format: 'csv' | 'tsv') => {
-        const separator = format === 'csv' ? ',' : '\t';
-        const headers = ['Pathway', 'Category', 'Gene Ratio', 'Count', 'adj.p-value', 'Genes'];
-        const rows = filteredData.map(row => [
-            row.term || '',
-            row.category || '',
-            row.geneRatio || '',
-            row.count || '',
-            row.padj ? row.padj.toExponential(2) : (row.pvalue ? row.pvalue.toExponential(2) : ''),
-            Array.isArray(row.genes) ? row.genes.join(';') : ''
-        ]);
-        
-        const content = [headers.join(separator), ...rows.map(r => r.join(separator))].join('\n');
-        const blob = new Blob([content], { type: `text/${format}` });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `enrichment_${comparisonName}_${new Date().toISOString().split('T')[0]}.${format}`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
     return (
         <div className="space-y-4">
           {/* Filters - Compact Bar */}
@@ -1094,27 +1167,46 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
               </select>
             </div>
             
-            {/* Export Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleExport('csv')}
-                className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-sm text-gray-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                CSV
-              </button>
-              <button
-                onClick={() => handleExport('tsv')}
-                className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-sm text-gray-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                TSV
-              </button>
-            </div>
+            {/* Export Menu */}
+            {filteredData.length > 0 && (
+              <ExportMenu
+                data={filteredData.map(row => ({
+                  pathway_id: row.pathway_id || '',
+                  pathway: row.term || '',
+                  category: row.category || '',
+                  gene_ratio: row.geneRatio || '',
+                  count: row.count || '',
+                  pvalue: row.pvalue ? row.pvalue.toExponential(3) : '',
+                  padj: row.padj ? row.padj.toExponential(3) : '',
+                  genes: Array.isArray(row.genes) ? row.genes.join('; ') : ''
+                }))}
+                filename={`enrichment_${comparisonName}_${new Date().toISOString().split('T')[0]}`}
+                formats={['csv', 'json', 'html']}
+                csvColumns={[
+                  { key: 'pathway_id', label: 'Pathway ID' },
+                  { key: 'pathway', label: 'Pathway' },
+                  { key: 'category', label: 'Category' },
+                  { key: 'gene_ratio', label: 'Gene Ratio' },
+                  { key: 'count', label: 'Count' },
+                  { key: 'pvalue', label: 'P-value' },
+                  { key: 'padj', label: 'adj. P-value' },
+                  { key: 'genes', label: 'Genes' }
+                ]}
+                htmlConfig={{
+                  title: `Enrichment Results - ${comparisonName}`,
+                  metadata: {
+                    'Comparison': comparisonName,
+                    'Total Pathways': data.length,
+                    'Filtered Pathways': filteredData.length,
+                    'Regulation': regulationFilter,
+                    'adj. p-value threshold': `≤ ${padjThreshold}`,
+                    'Generated': new Date().toLocaleString()
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              />
+            )}
             
             {/* Results Count */}
             <div className="text-xs text-gray-500 whitespace-nowrap">

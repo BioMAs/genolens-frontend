@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronUp, ChevronDown, Download, Eye, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, Eye, TrendingUp, TrendingDown } from 'lucide-react';
+import ExportMenu from './ExportMenu';
 
 interface GSEAResult {
   gene_set_name: string;
@@ -161,13 +162,43 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
             <option value="negative">Negative NES ({negativeCount})</option>
           </select>
 
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </button>
+          <ExportMenu
+            data={getFilteredAndSortedData().map(row => ({
+              gene_set_name: row.gene_set_name,
+              gene_set_size: row.gene_set_size,
+              enrichment_score: row.enrichment_score.toFixed(3),
+              normalized_enrichment_score: row.normalized_enrichment_score.toFixed(3),
+              p_value: row.p_value.toExponential(2),
+              fdr_q_value: row.fdr_q_value.toFixed(3),
+              leading_edge_genes: row.leading_edge_genes.join('; '),
+              num_leading_edge: row.leading_edge_genes.length,
+            }))}
+            filename="gsea_results"
+            formats={['csv', 'json', 'html']}
+            csvColumns={['gene_set_name', 'gene_set_size', 'enrichment_score', 'normalized_enrichment_score', 'p_value', 'fdr_q_value', 'leading_edge_genes']}
+            htmlConfig={{
+              title: 'GSEA Enrichment Results',
+              description: `Gene Set Enrichment Analysis results. ${sortedData.length} gene sets analyzed.`,
+              tables: [{
+                title: 'Enrichment Results',
+                data: getFilteredAndSortedData().map(row => ({
+                  'Gene Set': row.gene_set_name,
+                  'Size': row.gene_set_size,
+                  'NES': row.normalized_enrichment_score.toFixed(3),
+                  'P-value': row.p_value.toExponential(2),
+                  'FDR q-value': row.fdr_q_value.toFixed(3),
+                }))
+              }],
+              metadata: {
+                'Total Gene Sets': sortedData.length,
+                'Positive NES': positiveCount,
+                'Negative NES': negativeCount,
+                'Generated': new Date().toLocaleString(),
+              }
+            }}
+            variant="outline"
+            size="sm"
+          />
         </div>
       </div>
 

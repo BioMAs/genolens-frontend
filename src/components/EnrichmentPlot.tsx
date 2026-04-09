@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from 'recharts';
-import api from '@/utils/api';
+import { useDatasetQuery } from '@/hooks/useDatasets';
 import { Dataset } from '@/types';
 
 interface EnrichmentPlotProps {
@@ -11,130 +11,114 @@ interface EnrichmentPlotProps {
 }
 
 export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPlotProps) {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Utilise React Query pour gérer le cache
+  const { data: queryData, isLoading, error: queryError } = useDatasetQuery(dataset.id, 1000);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await api.post(`/datasets/${dataset.id}/query`, {
-          limit: 1000 // Get more rows to filter
-        });
-        
-        let rawData = response.data.data;
-        const cols = response.data.columns;
+  // Traite les données avec useMemo pour éviter recalculs inutiles
+  const { data, error } = useMemo(() => {
+    if (!queryData) return { data: [], error: null };
+    
+    try {
+      let rawData = queryData.data;
+      const cols = queryData.columns;
 
-        // If comparisonName is provided, filter by gene_cluster column
-        if (comparisonName) {
-            const clusterCol = cols.find((c: string) => 
-                c.toLowerCase() === 'gene_cluster' || 
-                c.toLowerCase() === 'genecluster' || 
-                c.toLowerCase() === 'gene.cluster' ||
-                c.toLowerCase() === 'cluster' ||
-                c.toLowerCase() === 'comparison'
-            );
-            
-            if (clusterCol) {
-                rawData = rawData.filter((row: any) => {
-                    const clusterValue = String(row[clusterCol] || '');
-                    // Match comparison name with or without _up/_down suffix
-                    return clusterValue.includes(comparisonName) || 
-                           clusterValue.replace(/_up|_down|_upregulated|_downregulated/gi, '') === comparisonName;
-                });
-            }
-        }
-
-        // Identify columns
-        const descCol = cols.find((c: string) => 
-            c.toLowerCase().includes('description') || 
-            c.toLowerCase().includes('term') ||
-            c.toLowerCase() === 'term'
+      // If comparisonName is provided, filter by gene_cluster column
+      if (comparisonName) {
+        const clusterCol = cols.find((c: string) => 
+          c.toLowerCase() === 'gene_cluster' || 
+          c.toLowerCase() === 'genecluster' || 
+          c.toLowerCase() === 'gene.cluster' ||
+          c.toLowerCase() === 'cluster' ||
+          c.toLowerCase() === 'comparison'
         );
         
-        // P-value column: adj.p.hyper.enri
-        const pValCol = cols.find((c: string) => 
-            c === 'adj.p.hyper.enri' ||
-            c.toLowerCase().includes('adj.p.hyper') ||
-            c.toLowerCase().includes('p.adjust') || 
-            c.toLowerCase().includes('padj') || 
-            c.toLowerCase().includes('fdr') ||
-            c.toLowerCase().includes('adj.p')
-        );
-        
-        // Gene ratio: r/rExpected
-        const rCol = cols.find((c: string) => c === 'r');
-        const rExpectedCol = cols.find((c: string) => c === 'rExpected');
-        
-        // Count column for bubble size
-        const countCol = cols.find((c: string) => 
-            c === 'r' || // Number of genes in category
-            c.toLowerCase().includes('count')
-        );
-
-        if (!descCol || !pValCol || !rCol || !rExpectedCol) {
-             setError(`Missing required columns. Found: ${cols.join(', ')}. Need: term, adj.p.hyper.enri, r, rExpected`);
-             return;
+        if (clusterCol) {
+          rawData = rawData.filter((row: any) => {
+            const clusterValue = String(row[clusterCol] || '');
+            // Match comparison name with or without _up/_down suffix
+            return clusterValue.includes(comparisonName) || 
+                   clusterValue.replace(/_up|_down|_upregulated|_downregulated/gi, '') === comparisonName;
+          });
         }
-
-        console.log('Columns detected:', { descCol, pValCol, rCol, rExpectedCol, countCol });
-        console.log('First row sample:', rawData[0]);
-
-        const processedData = rawData
-            .map((row: any) => {
-                const pval = parseFloat(row[pValCol]);
-                const r = parseFloat(row[rCol]);
-                const rExpected = parseFloat(row[rExpectedCol]);
-                
-                // Validate values
-                if (isNaN(pval) || pval <= 0 || isNaN(r) || isNaN(rExpected) || rExpected === 0) {
-                    return null;
-                }
-                
-                const geneRatio = r / rExpected;
-                const count = countCol && row[countCol] != null ? parseFloat(row[countCol]) : r;
-                
-                return {
-                    name: row[descCol],
-                    x: geneRatio, // r/rExpected
-                    y: row[descCol],
-                    size: count,
-                    pvalue: pval,
-                    z: count,
-                    negLogP: -Math.log10(pval) // For color scale
-                };
-            })
-            .filter((d: any) => d !== null)
-            .sort((a: any, b: any) => {
-                // Sort by p-value (most significant first)
-                return a.pvalue - b.pvalue;
-            })
-            .slice(0, 20); // Top 20 most significant
-
-        console.log('Processed enrichment data sample:', processedData.slice(0, 3));
-        console.log('Total processed entries:', processedData.length);
-        
-        if (processedData.length === 0) {
-            setError('No valid enrichment data found after processing.');
-            return;
-        }
-        
-        setData(processedData);
-      } catch (err) {
-        console.error('Failed to fetch enrichment data:', err);
-        setError('Failed to load data.');
-      } finally {
-        setLoading(false);
       }
-    };
 
-    if (dataset) {
-        fetchData();
+      // Identify columns
+      const descCol = cols.find((c: string) => 
+        c.toLowerCase().includes('description') || 
+        c.toLowerCase().includes('term') ||
+        c.toLowerCase() === 'term'
+      );
+      
+      // P-value column: adj.p.hyper.enri
+      const pValCol = cols.find((c: string) => 
+        c === 'adj.p.hyper.enri' ||
+        c.toLowerCase().includes('adj.p.hyper') ||
+        c.toLowerCase().includes('p.adjust') || 
+        c.toLowerCase().includes('padj') || 
+        c.toLowerCase().includes('fdr') ||
+        c.toLowerCase().includes('adj.p')
+      );
+      
+      // Gene ratio: r/rExpected
+      const rCol = cols.find((c: string) => c === 'r');
+      const rExpectedCol = cols.find((c: string) => c === 'rExpected');
+      
+      // Count column for bubble size
+      const countCol = cols.find((c: string) => 
+        c === 'r' || // Number of genes in category
+        c.toLowerCase().includes('count')
+      );
+
+      if (!descCol || !pValCol || !rCol || !rExpectedCol) {
+        return {
+          data: [],
+          error: `Missing required columns. Found: ${cols.join(', ')}. Need: term, adj.p.hyper.enri, r, rExpected`
+        };
+      }
+
+      const processedData = rawData
+        .map((row: any) => {
+          const pval = parseFloat(row[pValCol]);
+          const r = parseFloat(row[rCol]);
+          const rExpected = parseFloat(row[rExpectedCol]);
+          
+          // Validate values
+          if (isNaN(pval) || pval <= 0 || isNaN(r) || isNaN(rExpected) || rExpected === 0) {
+            return null;
+          }
+          
+          const geneRatio = r / rExpected;
+          const count = countCol && row[countCol] != null ? parseFloat(row[countCol]) : r;
+          
+          return {
+            name: row[descCol],
+            x: geneRatio, // r/rExpected
+            y: row[descCol],
+            size: count,
+            pvalue: pval,
+            z: count,
+            negLogP: -Math.log10(pval) // For color scale
+          };
+        })
+        .filter((d: any): d is { name: string, x: number, y: string, size: number, pvalue: number, z: number, negLogP: number } => d !== null)
+        .sort((a: any, b: any) => {
+          // Sort by p-value (most significant first)
+          return a.pvalue - b.pvalue;
+        })
+        .slice(0, 20); // Top 20 most significant
+      
+      if (processedData.length === 0) {
+        return { data: [], error: 'No valid enrichment data found after processing.' };
+      }
+      
+      return { data: processedData, error: null };
+    } catch (err) {
+      console.error('Failed to process enrichment data:', err);
+      return { data: [], error: 'Failed to process data.' };
     }
-  }, [dataset, comparisonName]);
+  }, [queryData, comparisonName]);
 
-  if (loading) return <div>Loading enrichment data...</div>;
+  if (isLoading) return <div>Loading enrichment data...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
   // Color scale based on -log10(p-value): gray to red gradient
@@ -151,7 +135,10 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
   };
   
   // Get min and max negLogP for color scale
-  const negLogPValues = data.map(d => d.negLogP).filter(v => v !== undefined);
+  const negLogPValues = data
+    .filter(Boolean)
+    .map((d: any) => d.negLogP)
+    .filter((v: number) => v !== undefined);
   const minNegLogP = Math.min(...negLogPValues, 0);
   const maxNegLogP = Math.max(...negLogPValues, 10);
 

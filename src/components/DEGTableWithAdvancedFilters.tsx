@@ -6,6 +6,7 @@ import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Download, Settings, Filter } from 'lucide-react';
 import AdvancedFilterBuilder, { AdvancedFilter } from './AdvancedFilterBuilder';
 import { useSavedFilters } from '@/hooks/useSavedFilters';
+import BookmarkButton from './BookmarkButton';
 
 interface DEGTableWithAdvancedFiltersProps {
   dataset: Dataset;
@@ -43,6 +44,7 @@ export default function DEGTableWithAdvancedFilters({
   const { savedFilters, saveFilter, deleteFilter } = useSavedFilters(projectId);
 
   const [visibleColumns, setVisibleColumns] = useState({
+    bookmark: true,
     gene_id: true,
     logFC: true,
     padj: true,
@@ -350,6 +352,11 @@ export default function DEGTableWithAdvancedFilters({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {visibleColumns.bookmark && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ⭐
+                </th>
+              )}
               {visibleColumns.gene_id && (
                 <th
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -404,6 +411,16 @@ export default function DEGTableWithAdvancedFilters({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredData.map((row, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
+                {visibleColumns.bookmark && (
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <BookmarkButton
+                      projectId={dataset.project_id}
+                      geneSymbol={row.gene_id}
+                      size="sm"
+                      variant="icon"
+                    />
+                  </td>
+                )}
                 {visibleColumns.gene_id && (
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {row.gene_id}

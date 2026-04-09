@@ -7,10 +7,10 @@ import { Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleProjectCreated = () => {
-    setRefreshKey((prev) => prev + 1);
+    // La création invalide le cache React Query dans CreateProjectModal
+    // → ProjectList se rafraîchit automatiquement, pas besoin de remount
   };
 
   return (
@@ -33,7 +33,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <ProjectList key={refreshKey} onCreateClick={() => setIsModalOpen(true)} />
+      <ProjectList onCreateClick={() => setIsModalOpen(true)} />
 
       <CreateProjectModal
         isOpen={isModalOpen}

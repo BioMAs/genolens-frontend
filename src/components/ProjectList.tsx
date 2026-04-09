@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import api from '@/utils/api';
-import { Project } from '@/types';
+import { useProjects, usePrefetchProject } from '@/hooks/useProjects';
 import { Folder, Plus, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,45 +9,13 @@ interface ProjectListProps {
 }
 
 export default function ProjectList({ onCreateClick }: ProjectListProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Utilise React Query pour gérer le cache et les requêtes
+  const { data, isLoading, error } = useProjects();
+  const { prefetchProject } = usePrefetchProject();
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/projects/');
-      setProjects(response.data.items);
-      setError(null);
-    } catch (err: any) {
-      // Ignore aborted requests (they happen during strict mode or hot reload)
-      if (err.code === 'ECONNABORTED' || err.message === 'Request aborted') {
-        return;
-      }
-      console.error('Failed to fetch projects:', err);
-      setError('Failed to load projects. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const projects = data?.items || [];
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadProjects = async () => {
-      if (isMounted) {
-        await fetchProjects();
-      }
-    };
-
-    loadProjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => (
@@ -64,7 +30,9 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
       <div className="rounded-md bg-red-50 p-4">
         <div className="flex">
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            <h3 className="text-sm font-medium text-red-800">
+              {error instanceof Error ? error.message : 'Failed to load projects. Please try again.'}
+            </h3>
           </div>
         </div>
       </div>
@@ -96,6 +64,7 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
         <Link
           key={project.id}
           href={`/projects/${project.id}`}
+          onMouseEnter={() => prefetchProject(project.id)}
           className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-6 hover:border-indigo-500 hover:shadow-md transition-all"
         >
           <div className="flex items-center justify-between">

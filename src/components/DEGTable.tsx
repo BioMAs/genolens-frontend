@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { ChevronUp, ChevronDown, Download, Settings } from 'lucide-react';
+import { ChevronUp, ChevronDown, Settings } from 'lucide-react';
+import BookmarkButton from './BookmarkButton';
+import ExportMenu from './ExportMenu';
 
 interface DEGTableProps {
   dataset: Dataset;
@@ -41,6 +43,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const [padjThreshold, setPadjThreshold] = useState(0.05); // Default standard threshold
 
   const [visibleColumns, setVisibleColumns] = useState({
+    bookmark: true,
     gene_id: true,
     logFC: true,
     padj: true,
@@ -132,6 +135,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const handleExport = () => {
     const filteredData = getFilteredAndSortedData();
     const headers = [];
+    // Skip bookmark column in export
     if (visibleColumns.gene_id) headers.push('Gene ID');
     if (visibleColumns.logFC) headers.push('Log2 Fold Change');
     if (visibleColumns.padj) headers.push('Adjusted P-value');
@@ -336,13 +340,20 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             )}
           </div>
           
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </button>
+          <ExportMenu
+            data={getFilteredAndSortedData().map(row => ({
+              gene_id: row.gene_id,
+              log2_fold_change: row.logFC.toFixed(3),
+              adjusted_p_value: row.padj.toExponential(2),
+              regulation: row.regulation,
+              gene_name: row.gene_name || '',
+            }))}
+            filename={`${comparisonName}_DEGs`}
+            formats={['csv', 'json']}
+            csvColumns={['gene_id', 'log2_fold_change', 'adjusted_p_value', 'regulation', 'gene_name']}
+            variant="outline"
+            size="sm"
+          />
         </div>
       </div>
 
@@ -350,6 +361,11 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {visibleColumns.bookmark && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ⭐
+                </th>
+              )}
               {visibleColumns.gene_id && (
                 <th 
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -399,6 +415,16 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.map((row, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
+                {visibleColumns.bookmark && (
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <BookmarkButton
+                      projectId={dataset.project_id}
+                      geneSymbol={row.gene_id}
+                      size="sm"
+                      variant="icon"
+                    />
+                  </td>
+                )}
                 {visibleColumns.gene_id && (
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {row.gene_id}

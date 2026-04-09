@@ -12,6 +12,8 @@ import {
   Legend,
   Cell
 } from 'recharts';
+import { usePCAData } from '@/hooks/useVisualizations';
+import { useDatasetQuery } from '@/hooks/useDatasets';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 
@@ -27,34 +29,19 @@ interface PCAResult {
 }
 
 export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
-  const [pcaData, setPcaData] = useState<PCAResult | null>(null);
+  // Utilise React Query pour gérer le cache PCA
+  const { data: pcaData, isLoading, error: pcaError } = usePCAData(
+    dataset.id,
+    {},
+    dataset.status === 'READY'
+  );
+  
   const [metadata, setMetadata] = useState<any[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch PCA Data
-  useEffect(() => {
-    const fetchPCA = async () => {
-      try {
-        setLoading(true);
-        const resp = await api.get(`/datasets/${dataset.id}/pca`);
-        setPcaData(resp.data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch PCA:', err);
-        setError('Failed to calculate PCA. Ensure the dataset is a valid expression matrix.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (dataset.status === 'READY') {
-      fetchPCA();
-    }
-  }, [dataset.id, dataset.status]);
+  const error = pcaError ? 'Failed to calculate PCA. Ensure the dataset is a valid expression matrix.' : null;
 
   // Fetch Metadata if available and PCA is ready
   useEffect(() => {
@@ -79,7 +66,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         const cols = resp.data.columns;
 
         // 1. Find the best column to join on (Sample ID)
-        const pcaSamples = new Set(pcaData.data.map(d => d.sample));
+        const pcaSamples = new Set(pcaData.data.map((d: any) => d.sample));
         let bestJoinCol = '';
         let maxOverlap = 0;
 
@@ -118,9 +105,9 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       if (!pcaData) return [];
       if (!selectedColorColumn || metadata.length === 0 || !joinColumn) return pcaData.data;
 
-      return pcaData.data.map(point => {
+      return pcaData.data.map((point: any) => {
           // Find matching metadata row using the detected join column
-          const metaRow = metadata.find(m => String(m[joinColumn]) === point.sample);
+          const metaRow = metadata.find((m: any) => String(m[joinColumn]) === point.sample);
           
           return {
               ...point,
@@ -145,7 +132,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       return map;
   }, [uniqueCategories]);
 
-  if (loading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating PCA...</div>;
+  if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating PCA...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
   if (!pcaData) return null;
 
