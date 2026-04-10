@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { User, Mail, Calendar, Shield } from 'lucide-react'
-import SubscriptionDetails from '@/components/profile/SubscriptionDetails'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -77,8 +76,6 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <SubscriptionDetails />
-        
         <div className="mt-8 flex justify-center">
            <form action="/auth/signout" method="post">
               <button
