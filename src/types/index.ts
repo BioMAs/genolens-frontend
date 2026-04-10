@@ -43,6 +43,7 @@ export interface Dataset {
   error_message?: string;
   dataset_metadata?: any;
   raw_file_path?: string;
+  column_mapping?: Record<string, string>;
 }
 
 export interface DatasetQueryResponse {

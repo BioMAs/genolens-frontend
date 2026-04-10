@@ -9,7 +9,7 @@ import {
   ProjectMemberListResponse,
 } from "@/types/project-member";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(/\/$/, "");
 
 /**
  * Fetch all members of a project.

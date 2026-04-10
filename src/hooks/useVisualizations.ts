@@ -281,12 +281,15 @@ export function usePrefetchVisualizations() {
      * Précharge volcano plot au survol d'une comparaison
      */
     prefetchVolcano: (datasetId: string, comparisonName: string, params: VolcanoPlotParams = {}) => {
+      const padjThreshold = params.padj_threshold ?? 0.05;
+      const logfcThreshold = params.logfc_threshold ?? 0.58;
+      const maxPoints = params.top_n ?? 5000;
       queryClient.prefetchQuery({
-        queryKey: ['visualization', 'volcano', datasetId, comparisonName, params],
+        queryKey: ['visualization', 'volcano', datasetId, comparisonName, padjThreshold, logfcThreshold, maxPoints],
         queryFn: async () => {
-          const response = await api.post<VolcanoPlotData>(
-            `/datasets/${datasetId}/visualizations/volcano`,
-            { comparison_name: comparisonName, ...params }
+          const response = await api.get<VolcanoPlotData>(
+            `/datasets/${datasetId}/volcano-plot/${encodeURIComponent(comparisonName)}`,
+            { params: { max_points: maxPoints, padj_threshold: padjThreshold, logfc_threshold: logfcThreshold } }
           );
           return response.data;
         },
