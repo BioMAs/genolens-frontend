@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/utils/api';
-import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap } from 'lucide-react';
+import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, FlaskConical } from 'lucide-react';
 
 interface User {
   id: string;
@@ -54,6 +54,9 @@ export default function UserManagement() {
 
   // Delete
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  // Assign demo
+  const [assigningDemo, setAssigningDemo] = useState<string | null>(null);
 
   const roles = ['admin', 'user', 'analyst', 'viewer'];
   const plans = ['BASIC', 'PREMIUM', 'ADVANCED'];
@@ -159,6 +162,26 @@ export default function UserManagement() {
       alert('Failed to add tokens');
     } finally {
       setAddingTokens(false);
+    }
+  };
+
+  const handleAssignDemo = async (userId: string, userName: string) => {
+    if (!confirm(`Assign demo data to "${userName || userId}"?\n\nThis will create a project with 2 synthetic DEG comparisons (KO_vs_WT and Treatment_vs_Control).`)) {
+      return;
+    }
+
+    try {
+      setAssigningDemo(userId);
+      const response = await api.post(`/admin/users/${userId}/assign-demo`, {});
+      alert(`✓ ${response.data.message}`);
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        alert('This user already has a demo project. Delete it first to re-assign.');
+      } else {
+        alert(err.response?.data?.detail || 'Failed to assign demo data.');
+      }
+    } finally {
+      setAssigningDemo(null);
     }
   };
 
@@ -314,6 +337,18 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
+                        disabled={assigningDemo === user.id}
+                        className="text-emerald-600 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Assign Demo Data"
+                      >
+                        {assigningDemo === user.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <FlaskConical className="h-5 w-5" />
+                        )}
+                      </button>
                        <button
                         onClick={() => {
                           setTokenUser(user);
