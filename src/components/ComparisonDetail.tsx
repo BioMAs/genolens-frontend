@@ -176,22 +176,38 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     }
   }, [datasets, globalDatasetId, decodedName]);
 
+  // Derive the actual comparison name from dataset metadata.
+  // When the URL contains the dataset display name (e.g. "DEG Analysis — KO vs WT")
+  // instead of the stored comparison key (e.g. "KO_vs_WT"), extract the correct key.
+  const actualComparisonName = useMemo(() => {
+    if (!degDataset) return decodedName;
+    const meta = degDataset.dataset_metadata;
+    if (meta?.comparison_name) return meta.comparison_name;
+    if (Array.isArray(meta?.comparisons) && meta.comparisons.length > 0) return meta.comparisons[0];
+    return decodedName;
+  }, [degDataset, decodedName]);
+
   const enrichmentDataset = useMemo(() => {
     if (!datasets || datasets.length === 0) return undefined;
 
-    // First try to find by comparison_name or name
-    let enrichment = datasets.find(d => d.type === DatasetType.ENRICHMENT && (d.dataset_metadata?.comparison_name === decodedName || d.name === decodedName));
+    // First try to find by comparison_name or name (check both decoded and actual)
+    let enrichment = datasets.find(d => d.type === DatasetType.ENRICHMENT && (
+      d.dataset_metadata?.comparison_name === actualComparisonName ||
+      d.dataset_metadata?.comparison_name === decodedName ||
+      d.name === decodedName
+    ));
 
     // Also check for enrichment files with enrichment_comparisons metadata
     if (!enrichment) {
       enrichment = datasets.find(d =>
         d.type === DatasetType.ENRICHMENT &&
-        d.dataset_metadata?.enrichment_comparisons?.includes(decodedName)
+        (d.dataset_metadata?.enrichment_comparisons?.includes(actualComparisonName) ||
+         d.dataset_metadata?.enrichment_comparisons?.includes(decodedName))
       );
     }
 
     return enrichment;
-  }, [datasets, decodedName]);
+  }, [datasets, decodedName, actualComparisonName]);
 
   const matrixDataset = useMemo(() => {
     if (!datasets || datasets.length === 0) return undefined;
@@ -616,7 +632,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
           )}
 
           {/* Top DEG Preview - Compact */}
-          <TopDEGPreview dataset={degDataset} comparisonName={decodedName} />
+          <TopDEGPreview dataset={degDataset} comparisonName={actualComparisonName} />
         </div>
 
         {/* Tabs */}
@@ -700,7 +716,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                 <div>
                   <AIInterpretationPanel 
                     datasetId={degDataset.id} 
-                    comparisonName={decodedName} 
+                    comparisonName={actualComparisonName} 
                   />
                 </div>
 
@@ -712,7 +728,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                       degDataset={degDataset}
                       matrixDataset={matrixDataset}
                       sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                      comparisonName={decodedName}
+                      comparisonName={actualComparisonName}
                     />
                   </div>
                 )}
@@ -731,7 +747,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   <div className="bg-gray-50 rounded-lg p-4">
                     <VolcanoPlot
                       dataset={degDataset}
-                      comparisonName={decodedName}
+                      comparisonName={actualComparisonName}
                     />
                   </div>
                 </div>
@@ -744,7 +760,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                       <GeneExpressionViewer
                         matrixDataset={matrixDataset}
                         sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                        comparisonName={decodedName}
+                        comparisonName={actualComparisonName}
                         allGenes={allMatrixGenes}
                       />
                     </div>
@@ -761,7 +777,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Differentially Expressed Genes</h2>
                   <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <DEGTable dataset={degDataset} comparisonName={decodedName} />
+                    <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>
               </div>
@@ -782,7 +798,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                     </Link>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <EnrichmentPlot dataset={enrichmentDataset} comparisonName={decodedName} />
+                    <EnrichmentPlot dataset={enrichmentDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>
 
@@ -794,7 +810,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   </h2>
                   <EnrichmentRadarPlot 
                     datasetId={enrichmentDataset.id} 
-                    comparisonName={decodedName}
+                    comparisonName={actualComparisonName}
                     maxTerms={10}
                   />
                 </div>
@@ -802,7 +818,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                 {/* Enrichment Table */}
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Enriched Pathways</h2>
-                  <EnrichmentTable dataset={enrichmentDataset} comparisonName={decodedName} />
+                  <EnrichmentTable dataset={enrichmentDataset} comparisonName={actualComparisonName} />
                 </div>
               </div>
             )}
@@ -811,7 +827,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             {activeTab === 'stats' && (
               <MultipleTestingPanel
                 datasetId={degDataset.id}
-                comparisonName={decodedName}
+                comparisonName={actualComparisonName}
               />
             )}
 
@@ -827,7 +843,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               <div>
                 <CustomVisualizationPanel 
                   datasetId={degDataset.id} 
-                  comparisonName={decodedName}
+                  comparisonName={actualComparisonName}
                   allGenes={allMatrixGenes}
                 />
               </div>
