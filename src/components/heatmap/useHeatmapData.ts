@@ -43,16 +43,23 @@ export function useHeatmapData({
       setError(null);
 
       // --- 1. Fetch significant DEGs ---
+      const _comparisons = degDataset.dataset_metadata?.comparisons;
       const columnsInfo =
         degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
-        degDataset.dataset_metadata?.comparisons?.[comparisonName];
+        (_comparisons && typeof _comparisons === 'object' && !Array.isArray(_comparisons)
+          ? _comparisons[comparisonName]
+          : undefined);
 
-      if (!columnsInfo) {
-        throw new Error('Comparison metadata not found');
-      }
-
-      const pValCol = columnsInfo.padj;
-      const logFCCol = columnsInfo.logFC;
+      // Fallback to column_mapping for single-comparison datasets (list format)
+      const logFCCol: string =
+        columnsInfo?.logFC ||
+        degDataset.column_mapping?.log_fc ||
+        degDataset.column_mapping?.log2FoldChange ||
+        'log2FoldChange';
+      const pValCol: string =
+        columnsInfo?.padj ||
+        degDataset.column_mapping?.padj ||
+        'padj';
 
       const degResponse = await api.post(`/datasets/${degDataset.id}/query`, {
         limit: 5000,
