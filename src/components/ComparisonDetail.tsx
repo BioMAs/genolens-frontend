@@ -721,7 +721,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                 </div>
 
                 {/* Heatmap - Full Width */}
-                {matrixDataset && (
+                {matrixDataset ? (
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
                     <HeatmapPlot
@@ -730,6 +730,14 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                       sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
                       comparisonName={actualComparisonName}
                     />
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+                      <p className="text-sm">No expression matrix available for this project.</p>
+                      <p className="text-xs mt-1 text-gray-400">Upload a count/expression matrix dataset to enable the heatmap.</p>
+                    </div>
                   </div>
                 )}
 
