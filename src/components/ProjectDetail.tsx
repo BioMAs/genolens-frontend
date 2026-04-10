@@ -4,6 +4,7 @@ import { useState } from 'react';
 import api from '@/utils/api';
 import { Dataset, DatasetType, DatasetStatus } from '@/types';
 import { useProjectSummary, useProjectDatasets, useProjectComparisons } from '@/hooks/useProjectData';
+import { useProjectMembers } from '@/hooks/useProjectMembers';
 import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCircle, Clock, Edit2, Eye, RefreshCw, GitCompare, Star, List, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePrefetchComparisons } from '@/hooks/useComparisons';
@@ -34,6 +35,12 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   // React Query: un seul appel pour le projet + stats agrégées
   const { data: summary, isLoading: summaryLoading } = useProjectSummary(projectId);
   const project = summary?.project;
+
+  // Derive current user's admin status on this project
+  const { data: membersData } = useProjectMembers(projectId);
+  const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
+  const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
+  const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
 
   // React Query: datasets complets pour les onglets QC, PCA, Data Management
   const { data: datasets = [], isLoading: datasetsLoading, refetch: refetchDatasets } = useProjectDatasets(projectId);
@@ -477,6 +484,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                                     <Eye className="h-4 w-4" />
                                 </Link>
                                 )}
+                                {canManageData && (
                                 <button
                                 onClick={() => handleReprocess(ds.id)}
                                 className="text-gray-400 hover:text-brand-primary"
@@ -484,6 +492,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                                 >
                                 <RefreshCw className="h-4 w-4" />
                                 </button>
+                                )}
+                                {canManageData && (
                                 <button
                                 onClick={() => {
                                     setEditingDataset(ds);
@@ -494,6 +504,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                                 >
                                 <Edit2 className="h-4 w-4" />
                                 </button>
+                                )}
                             </div>
                             </div>
                         </div>
@@ -506,6 +517,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             </div>
 
             {/* Right Column: Upload Form */}
+            {canManageData && (
             <div>
                 <div className="bg-white shadow sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -638,6 +650,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                 </div>
                 </div>
             </div>
+            )}
             </div>
             )}
 

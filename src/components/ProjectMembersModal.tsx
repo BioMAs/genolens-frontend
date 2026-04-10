@@ -48,6 +48,8 @@ export default function ProjectMembersModal({
   const removeMember = useRemoveProjectMember(projectId);
 
   const isOwner = currentUserId === projectOwnerId;
+  const currentMember = membersData?.members?.find((m) => m.user_id === currentUserId);
+  const isProjectAdmin = isOwner || currentMember?.access_level === UserRole.ADMIN;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +103,8 @@ export default function ProjectMembersModal({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Invite Section - Owner Only */}
-          {isOwner && (
+          {/* Invite Section - Project Admins Only */}
+          {isProjectAdmin && (
             <div className="border-b pb-4">
               <h3 className="text-lg font-semibold mb-3">Invite Member</h3>
               <form onSubmit={handleInvite} className="space-y-3">
@@ -160,7 +162,7 @@ export default function ProjectMembersModal({
                     key={member.user_id}
                     member={member}
                     projectId={projectId}
-                    isOwner={isOwner}
+                    isOwner={isProjectAdmin}
                     projectOwnerId={projectOwnerId}
                     onRemove={handleRemove}
                   />
