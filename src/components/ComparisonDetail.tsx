@@ -165,7 +165,14 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     if (globalDatasetId) {
       return datasets.find(d => d.id === globalDatasetId);
     } else {
-      return datasets.find(d => d.type === DatasetType.DEG && (d.dataset_metadata?.comparison_name === decodedName || d.name === decodedName));
+      return datasets.find(d =>
+        d.type === DatasetType.DEG && (
+          d.dataset_metadata?.comparison_name === decodedName ||
+          d.name === decodedName ||
+          (Array.isArray(d.dataset_metadata?.comparisons) && d.dataset_metadata.comparisons.includes(decodedName)) ||
+          (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in d.dataset_metadata.comparisons)
+        )
+      );
     }
   }, [datasets, globalDatasetId, decodedName]);
 
@@ -192,12 +199,20 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   }, [datasets]);
 
   const { logFCColumn, pValColumn } = useMemo(() => {
-    if (!degDataset || !degDataset.dataset_metadata?.comparisons?.[decodedName]) {
-      return { logFCColumn: undefined, pValColumn: undefined };
+    if (!degDataset) return { logFCColumn: undefined, pValColumn: undefined };
+    const comparisons = degDataset.dataset_metadata?.comparisons;
+    // Global multi-comparison dataset: comparisons is a dict with column mappings
+    if (comparisons && typeof comparisons === 'object' && !Array.isArray(comparisons) && comparisons[decodedName]) {
+      return {
+        logFCColumn: comparisons[decodedName].logFC,
+        pValColumn: comparisons[decodedName].padj
+      };
     }
+    // Single-comparison dataset (demo or standard): fall back to column_mapping
+    const cm = degDataset.column_mapping;
     return {
-      logFCColumn: degDataset.dataset_metadata.comparisons[decodedName].logFC,
-      pValColumn: degDataset.dataset_metadata.comparisons[decodedName].padj
+      logFCColumn: cm?.log_fc ?? cm?.log2FoldChange ?? 'log2FoldChange',
+      pValColumn: cm?.padj ?? 'padj'
     };
   }, [degDataset, decodedName]);
 
