@@ -119,6 +119,16 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                 const metaResp = await api.post(`/datasets/${metadataDataset.id}/query`, { limit: 500 });
                 const metaData = metaResp.data.data;
 
+                // Resolve actual column names from column_mapping (fallback to common alternatives)
+                const cm = metadataDataset.column_mapping ?? {};
+                const sampleCol: string = cm.sample_id || cm.sample || 'sample_id';
+                const conditionCol: string = cm.condition || 'condition';
+
+                const getSample = (row: any): string | undefined =>
+                    row[sampleCol] || row.sample || row['ini.sample.name'] || undefined;
+                const getCondition = (row: any): string | undefined =>
+                    row[conditionCol] || row.condition || undefined;
+
                 // Parse comparison name to find relevant samples
                 // Expected format: ConditionA_vs_ConditionB
                 const decodedName = decodeURIComponent(comparisonName);
@@ -126,29 +136,34 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
                 if (parts.length === 2) {
                     const [cond1, cond2] = parts;
-                    const filteredMeta = metaData.filter((row: any) =>
-                        row.condition === cond1 || row.condition === cond2
-                    );
-                    const relevant = filteredMeta.map((row: any) => row.sample || row['ini.sample.name']);
+                    const filteredMeta = metaData.filter((row: any) => {
+                        const cond = getCondition(row);
+                        return cond === cond1 || cond === cond2;
+                    });
+                    const relevant = filteredMeta.map(getSample).filter(Boolean) as string[];
                     setRelevantSamples(relevant);
 
                     // Build sample→condition map for GeneExpressionViewer
                     const condMap: Record<string, string> = {};
                     filteredMeta.forEach((row: any) => {
-                        const sampleName: string = row.sample || row['ini.sample.name'];
-                        if (sampleName) condMap[sampleName] = row.condition;
+                        const sampleName = getSample(row);
+                        const cond = getCondition(row);
+                        if (sampleName && cond) condMap[sampleName] = cond;
                     });
                     setSampleConditionMap(condMap);
                 } else {
-                    const filteredMeta = metaData.filter((row: any) =>
-                        row.condition && decodedName.includes(row.condition)
-                    );
-                    const relevant = filteredMeta.map((row: any) => row.sample);
+                    const filteredMeta = metaData.filter((row: any) => {
+                        const cond = getCondition(row);
+                        return cond && decodedName.includes(cond);
+                    });
+                    const relevant = filteredMeta.map(getSample).filter(Boolean) as string[];
                     setRelevantSamples(relevant);
 
                     const condMap: Record<string, string> = {};
                     filteredMeta.forEach((row: any) => {
-                        if (row.sample) condMap[row.sample] = row.condition;
+                        const sampleName = getSample(row);
+                        const cond = getCondition(row);
+                        if (sampleName && cond) condMap[sampleName] = cond;
                     });
                     setSampleConditionMap(condMap);
                 }
