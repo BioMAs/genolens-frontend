@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Loader2, Dna, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { Loader2, ArrowRight } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -92,16 +93,16 @@ export default function Home() {
         />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.14)' }}
-          >
-            <Dna className="h-4.5 w-4.5 text-white" />
-          </div>
-          <span className="font-display font-bold text-white text-base tracking-tight">
-            GenoLens
-          </span>
+        <div className="relative z-10">
+          <Image
+            src="/logo.png"
+            alt="GenoLens"
+            height={32}
+            width={150}
+            priority
+            className="object-contain"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
         </div>
 
         {/* Hero copy */}
@@ -147,16 +148,15 @@ export default function Home() {
         <div className="w-full max-w-[360px]">
 
           {/* Mobile-only logo */}
-          <div className="lg:hidden flex items-center gap-2.5 mb-8">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl"
-              style={{ background: 'var(--sl-purple)' }}
-            >
-              <Dna className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
-              GenoLens
-            </span>
+          <div className="lg:hidden mb-8">
+            <Image
+              src="/logo.png"
+              alt="GenoLens"
+              height={28}
+              width={130}
+              priority
+              className="object-contain"
+            />
           </div>
 
           {/* Heading */}
