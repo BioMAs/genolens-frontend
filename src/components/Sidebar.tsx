@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
@@ -11,7 +12,6 @@ import {
   LogOut,
   Moon,
   Sun,
-  Dna,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import QuotaDisplay from './QuotaDisplay';
@@ -40,21 +40,17 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
     <aside className="app-sidebar">
       {/* ── Brand / Logo ── */}
       <div
-        className="flex items-center gap-2.5 px-4 flex-shrink-0"
+        className="flex items-center px-4 shrink-0"
         style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--sidebar-border)' }}
       >
-        <div
-          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: 'var(--sl-teal-light)' }}
-        >
-          <Dna className="h-4 w-4" style={{ color: 'var(--sl-teal-dark)' }} />
-        </div>
-        <span
-          className="font-display font-bold tracking-tight text-sm"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          GenoLens
-        </span>
+        <Image
+          src="/logo.png"
+          alt="GenoLens"
+          height={28}
+          width={130}
+          priority
+          className="object-contain"
+        />
       </div>
 
       {/* ── Primary Navigation ── */}
