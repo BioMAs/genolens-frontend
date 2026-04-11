@@ -61,12 +61,12 @@ export function useHeatmapData({
         degDataset.column_mapping?.padj ||
         'padj';
 
+      const safeLogFCCol = /^[a-zA-Z0-9_.:/\-]+$/.test(logFCCol) ? logFCCol : undefined;
       const degResponse = await api.post(`/datasets/${degDataset.id}/query`, {
         limit: 5000,
         padj_max: 0.05,
         logfc_min: 1.0,
-        sort_by: logFCCol,
-        sort_desc: true,
+        ...(safeLogFCCol ? { sort_by: safeLogFCCol, sort_desc: true } : {}),
       });
 
       const degRows: any[] = degResponse.data.data;
