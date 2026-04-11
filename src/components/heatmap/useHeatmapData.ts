@@ -122,6 +122,7 @@ export function useHeatmapData({
         const res = await api.post(`/datasets/${matrixDataset.id}/cluster-heatmap`, {
           up_gene_ids: upGenes,
           down_gene_ids: downGenes,
+          ...(sampleIds && sampleIds.length > 0 ? { sample_ids: sampleIds } : {}),
           method: params.method,
           metric: params.metric,
           cluster_rows: params.cluster_rows,
@@ -173,7 +174,8 @@ export function useHeatmapData({
       }
     } catch (err: any) {
       console.error('Heatmap error:', err);
-      setError(err.message || 'Failed to load heatmap');
+      const detail = err?.response?.data?.detail;
+      setError(detail || err.message || 'Failed to load heatmap');
       setLoading(false);
     }
   }, [degDataset, matrixDataset, sampleIds, comparisonName, params]);
