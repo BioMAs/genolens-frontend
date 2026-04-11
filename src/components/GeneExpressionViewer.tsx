@@ -12,13 +12,15 @@ interface GeneExpressionViewerProps {
   sampleIds?: string[];
   comparisonName: string;
   allGenes: string[];
+  sampleConditionMap?: Record<string, string>;
 }
 
 export default function GeneExpressionViewer({ 
   matrixDataset, 
   sampleIds, 
   comparisonName,
-  allGenes 
+  allGenes,
+  sampleConditionMap,
 }: GeneExpressionViewerProps) {
   const [selectedGene, setSelectedGene] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -76,15 +78,29 @@ export default function GeneExpressionViewer({
         // Group samples by condition
         const condition1Samples: { sample: string; value: number }[] = [];
         const condition2Samples: { sample: string; value: number }[] = [];
-        
-        columns.forEach((sample: string) => {
-          const value = parseFloat(row[sample]);
-          if (conditions[0] && sample.toLowerCase().includes(conditions[0].toLowerCase())) {
-            condition1Samples.push({ sample, value });
-          } else if (conditions[1] && sample.toLowerCase().includes(conditions[1].toLowerCase())) {
-            condition2Samples.push({ sample, value });
-          }
-        });
+
+        if (sampleConditionMap && Object.keys(sampleConditionMap).length > 0) {
+          // Preferred: use explicit sample→condition mapping from metadata
+          columns.forEach((sample: string) => {
+            const value = parseFloat(row[sample]);
+            const cond = sampleConditionMap[sample];
+            if (cond === conditions[0]) {
+              condition1Samples.push({ sample, value });
+            } else if (cond === conditions[1]) {
+              condition2Samples.push({ sample, value });
+            }
+          });
+        } else {
+          // Fallback: match by sample name containing condition string
+          columns.forEach((sample: string) => {
+            const value = parseFloat(row[sample]);
+            if (conditions[0] && sample.toLowerCase().includes(conditions[0].toLowerCase())) {
+              condition1Samples.push({ sample, value });
+            } else if (conditions[1] && sample.toLowerCase().includes(conditions[1].toLowerCase())) {
+              condition2Samples.push({ sample, value });
+            }
+          });
+        }
         
         // Calculate statistics for boxplot
         const calculateBoxplotStats = (values: number[]) => {

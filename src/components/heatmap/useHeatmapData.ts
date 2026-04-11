@@ -77,33 +77,42 @@ export function useHeatmapData({
         return;
       }
 
+      // Detect the actual column names returned by the backend (may differ from metadata)
+      const returnedColumns: string[] = degResponse.data.columns || [];
+      const detectedLogFCCol: string =
+        ['logFC', 'log2FoldChange', 'log2fc', 'log_fc'].find(c => returnedColumns.includes(c)) ||
+        logFCCol;
+      const detectedPadjCol: string =
+        ['padj', 'FDR', 'adj.P.Val'].find(c => returnedColumns.includes(c)) ||
+        pValCol;
+
       // Store gene metadata for tooltips
       const metadata = new Map<string, { logFC: number; padj: number }>();
       degRows.forEach((row: any) => {
         metadata.set(row['gene_id'], {
-          logFC: parseFloat(row[logFCCol]),
-          padj: parseFloat(row[pValCol]),
+          logFC: parseFloat(row[detectedLogFCCol]),
+          padj: parseFloat(row[detectedPadjCol]),
         });
       });
       setGeneMetadata(metadata);
 
       // Split into UP / DOWN
       const limit = params.top_n_genes > 0 ? params.top_n_genes : degRows.length;
-      const upAll = degRows.filter((r: any) => parseFloat(r[logFCCol]) > 0);
-      const downAll = degRows.filter((r: any) => parseFloat(r[logFCCol]) < 0);
+      const upAll = degRows.filter((r: any) => parseFloat(r[detectedLogFCCol]) > 0);
+      const downAll = degRows.filter((r: any) => parseFloat(r[detectedLogFCCol]) < 0);
 
       const upFull = upAll.slice(0, Math.ceil(limit / 2)).map((r: any) => r['gene_id'] as string);
       const downFull = downAll.slice(0, Math.floor(limit / 2)).map((r: any) => r['gene_id'] as string);
 
       if (upFull.length === 0 && downFull.length === 0) {
-        setError('No significant DEGs found.');
+        setError('No significant DEGs found (could not detect logFC column in response).');
         setLoading(false);
         return;
       }
 
       // LogFC sidebar lookup
       const geneLogFCMap = new Map<string, number>();
-      degRows.forEach((r: any) => geneLogFCMap.set(r['gene_id'], parseFloat(r[logFCCol])));
+      degRows.forEach((r: any) => geneLogFCMap.set(r['gene_id'], parseFloat(r[detectedLogFCCol])));
 
       // --- Helper: call combined endpoint and convert response to HeatmapData ---
       const callClusterHeatmap = async (

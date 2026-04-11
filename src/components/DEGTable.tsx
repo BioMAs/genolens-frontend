@@ -45,6 +45,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const [visibleColumns, setVisibleColumns] = useState({
     bookmark: true,
     gene_id: true,
+    gene_name: true,
     logFC: true,
     padj: true,
     regulation: true
@@ -318,6 +319,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                 <div className="space-y-2">
                   {Object.entries({
                     gene_id: 'Gene ID',
+                    gene_name: 'Gene Symbol',
                     logFC: 'Log2 Fold Change',
                     padj: 'Adjusted P-value',
                     regulation: 'Regulation'
@@ -343,14 +345,14 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           <ExportMenu
             data={getFilteredAndSortedData().map(row => ({
               gene_id: row.gene_id,
+              gene_symbol: row.gene_name || '',
               log2_fold_change: row.logFC.toFixed(3),
               adjusted_p_value: row.padj.toExponential(2),
               regulation: row.regulation,
-              gene_name: row.gene_name || '',
             }))}
             filename={`${comparisonName}_DEGs`}
             formats={['csv', 'json']}
-            csvColumns={['gene_id', 'log2_fold_change', 'adjusted_p_value', 'regulation', 'gene_name']}
+            csvColumns={['gene_id', 'gene_symbol', 'log2_fold_change', 'adjusted_p_value', 'regulation']}
             variant="outline"
             size="sm"
           />
@@ -377,6 +379,11 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                       sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
                     )}
                   </div>
+                </th>
+              )}
+              {visibleColumns.gene_name && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Gene Symbol
                 </th>
               )}
               {visibleColumns.logFC && (
@@ -428,6 +435,11 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                 {visibleColumns.gene_id && (
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {row.gene_id}
+                  </td>
+                )}
+                {visibleColumns.gene_name && (
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-mono">
+                    {row.gene_name || <span className="text-gray-400">–</span>}
                   </td>
                 )}
                 {visibleColumns.logFC && (

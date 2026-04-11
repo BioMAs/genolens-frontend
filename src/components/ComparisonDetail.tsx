@@ -37,6 +37,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   const [error, setError] = useState<string | null>(null);
 
   const [relevantSamples, setRelevantSamples] = useState<string[]>([]);
+  const [sampleConditionMap, setSampleConditionMap] = useState<Record<string, string>>({});
   const [reprocessing, setReprocessing] = useState(false);
 
   // State for statistics - must be declared before any conditional returns
@@ -125,21 +126,31 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
                 if (parts.length === 2) {
                     const [cond1, cond2] = parts;
-                    // Filter samples that match these conditions
-                    // Assuming 'condition' column exists and 'sample' column exists
-                    const relevant = metaData.filter((row: any) =>
+                    const filteredMeta = metaData.filter((row: any) =>
                         row.condition === cond1 || row.condition === cond2
-                    ).map((row: any) => row.sample || row['ini.sample.name']); // Fallback to other common names
+                    );
+                    const relevant = filteredMeta.map((row: any) => row.sample || row['ini.sample.name']);
+                    setRelevantSamples(relevant);
 
-                    setRelevantSamples(relevant);
+                    // Build sample→condition map for GeneExpressionViewer
+                    const condMap: Record<string, string> = {};
+                    filteredMeta.forEach((row: any) => {
+                        const sampleName: string = row.sample || row['ini.sample.name'];
+                        if (sampleName) condMap[sampleName] = row.condition;
+                    });
+                    setSampleConditionMap(condMap);
                 } else {
-                    // If format doesn't match, maybe show all? or try to match single condition?
-                    // For now, if we can't parse, we might not filter or filter nothing.
-                    // Let's try to find any sample whose condition is contained in the comparison name
-                    const relevant = metaData.filter((row: any) =>
+                    const filteredMeta = metaData.filter((row: any) =>
                         row.condition && decodedName.includes(row.condition)
-                    ).map((row: any) => row.sample);
+                    );
+                    const relevant = filteredMeta.map((row: any) => row.sample);
                     setRelevantSamples(relevant);
+
+                    const condMap: Record<string, string> = {};
+                    filteredMeta.forEach((row: any) => {
+                        if (row.sample) condMap[row.sample] = row.condition;
+                    });
+                    setSampleConditionMap(condMap);
                 }
 
             } catch (err) {
@@ -770,6 +781,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                         sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
                         comparisonName={actualComparisonName}
                         allGenes={allMatrixGenes}
+                        sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
                       />
                     </div>
                   </div>
