@@ -8,27 +8,34 @@ import { Plus } from 'lucide-react';
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleProjectCreated = () => {
-    // La création invalide le cache React Query dans CreateProjectModal
-    // → ProjectList se rafraîchit automatiquement, pas besoin de remount
-  };
-
   return (
     <>
-      <div className="mb-8 flex items-center justify-between">
+      {/* Page header */}
+      <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+          <h2
+            className="font-display font-bold tracking-tight"
+            style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}
+          >
             Projects
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
             Manage your transcriptomics analysis projects.
           </p>
         </div>
+
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all"
+          style={{ background: 'var(--sl-purple)' }}
+          onMouseEnter={(e) =>
+            ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')
+          }
+          onMouseLeave={(e) =>
+            ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')
+          }
         >
-          <Plus className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+          <Plus className="h-4 w-4" />
           New Project
         </button>
       </div>
@@ -38,7 +45,9 @@ export default function Dashboard() {
       <CreateProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={handleProjectCreated}
+        onSuccess={() => {
+          // Cache invalidation happens inside CreateProjectModal via React Query
+        }}
       />
     </>
   );

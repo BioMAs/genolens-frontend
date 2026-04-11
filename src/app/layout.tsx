@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Syne, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "GenoLens Next",
-  description: "Advanced genomic data visualization and analysis platform",
+  title: "GenoLens — Transcriptomics Platform",
+  description: "Advanced transcriptomics data visualization and analysis powered by AI",
 };
 
 export default async function RootLayout({
@@ -34,7 +43,6 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Get user role if user is authenticated
   let userRole: string | null = null;
   if (user) {
     userRole = await getUserRole(user.id);
@@ -43,16 +51,18 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${syne.variable} ${dmSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
           <QueryProvider>
             <ThemeProvider>
-              <Navbar user={user} userRole={userRole} />
-              <main className="grow">
-                {children}
-              </main>
-              <Footer user={user} />
+              {user ? (
+                <AppShell user={user} userRole={userRole}>
+                  {children}
+                </AppShell>
+              ) : (
+                <main>{children}</main>
+              )}
             </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>

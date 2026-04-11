@@ -1,21 +1,65 @@
 import * as React from 'react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
+  variant?: 'default' | 'teal' | 'purple' | 'secondary' | 'destructive' | 'outline' | 'success';
 }
 
-function Badge({ className = '', variant = 'default', ...props }: BadgeProps) {
-  const variantClasses = {
-    default: 'bg-brand-primary/10 text-brand-primary border-transparent',
-    secondary: 'bg-gray-100 text-gray-900 border-transparent',
-    destructive: 'bg-red-100 text-red-800 border-transparent',
-    outline: 'text-gray-950 border-gray-300',
-    success: 'bg-green-100 text-green-800 border-transparent'
+/**
+ * Badge — inline label for status, category, or metadata.
+ * SciLicium palette: teal for success/active, purple for info/type, red for alert.
+ */
+function Badge({ className = '', variant = 'default', style, ...props }: BadgeProps) {
+  const base =
+    'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors';
+
+  const variants: Record<NonNullable<BadgeProps['variant']>, React.CSSProperties> = {
+    // purple — info, type label (uses brand purple)
+    default: {
+      background: 'var(--sl-purple-light)',
+      color: 'var(--sl-purple)',
+      borderColor: 'var(--sl-purple-muted)',
+    },
+    // teal — interactive, selected, in-use
+    teal: {
+      background: 'var(--sl-teal-light)',
+      color: 'var(--sl-teal-dark)',
+      borderColor: 'var(--sl-teal-muted)',
+    },
+    purple: {
+      background: 'var(--sl-purple-light)',
+      color: 'var(--sl-purple)',
+      borderColor: 'var(--sl-purple-muted)',
+    },
+    // success = alias for teal
+    success: {
+      background: 'var(--sl-teal-light)',
+      color: 'var(--sl-teal-dark)',
+      borderColor: 'var(--sl-teal-muted)',
+    },
+    // red — alerts, warnings, destructive
+    destructive: {
+      background: 'var(--sl-red-light)',
+      color: 'var(--sl-red)',
+      borderColor: 'var(--sl-red-muted)',
+    },
+    // neutral secondary
+    secondary: {
+      background: 'var(--surface-secondary)',
+      color: 'var(--text-secondary)',
+      borderColor: 'var(--border)',
+    },
+    // outline only
+    outline: {
+      background: 'transparent',
+      color: 'var(--text-primary)',
+      borderColor: 'var(--border)',
+    },
   };
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${variantClasses[variant]} ${className}`}
+      className={`${base} ${className}`}
+      style={{ ...variants[variant], ...style }}
       {...props}
     />
   );
