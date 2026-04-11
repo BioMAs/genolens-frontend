@@ -40,17 +40,19 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
     <aside className="app-sidebar">
       {/* ── Brand / Logo ── */}
       <div
-        className="flex items-center px-4 shrink-0"
+        className="flex items-center px-3 shrink-0"
         style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--sidebar-border)' }}
       >
-        <Image
-          src="/logo.png"
-          alt="GenoLens"
-          height={28}
-          width={130}
-          priority
-          className="object-contain"
-        />
+        <div style={{ background: 'white', borderRadius: '6px', padding: '3px 8px', lineHeight: 0 }}>
+          <Image
+            src="/logo.png"
+            alt="GenoLens"
+            height={22}
+            width={110}
+            priority
+            className="object-contain block"
+          />
+        </div>
       </div>
 
       {/* ── Primary Navigation ── */}

@@ -148,15 +148,17 @@ export default function Home() {
         <div className="w-full max-w-[360px]">
 
           {/* Mobile-only logo */}
-          <div className="lg:hidden mb-8">
-            <Image
-              src="/logo.png"
-              alt="GenoLens"
-              height={28}
-              width={130}
-              priority
-              className="object-contain"
-            />
+          <div className="lg:hidden mb-8" style={{ lineHeight: 0 }}>
+            <div style={{ background: 'white', borderRadius: '6px', padding: '3px 8px', display: 'inline-block' }}>
+              <Image
+                src="/logo.png"
+                alt="GenoLens"
+                height={22}
+                width={110}
+                priority
+                className="object-contain block"
+              />
+            </div>
           </div>
 
           {/* Heading */}
