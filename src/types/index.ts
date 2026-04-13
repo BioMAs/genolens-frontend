@@ -79,4 +79,24 @@ export interface EnrichmentResult {
   genes?: string[];
 }
 
+export interface DailyLoginCount {
+  date: string;
+  count: number;
+}
+
+export interface RecentLoginEvent {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string;
+}
+
+export interface LoginStatsResponse {
+  daily_counts: DailyLoginCount[];
+  active_today: number;
+  active_7_days: number;
+  active_30_days: number;
+  recent_events: RecentLoginEvent[];
+}
+
 

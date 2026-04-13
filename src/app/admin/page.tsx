@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
-import { Users, Database, Activity, BarChart3, Shield, AlertCircle, Bot } from 'lucide-react';
+import { Users, Database, Activity, BarChart3, Shield, AlertCircle, Bot, LogIn } from 'lucide-react';
 import UserManagement from '@/components/admin/UserManagement';
 import SystemStats from '@/components/admin/SystemStats';
 import ProjectManagement from '@/components/admin/ProjectManagement';
 import AIUsageLogs from '@/components/admin/AIUsageLogs';
+import UserConnections from '@/components/admin/UserConnections';
 
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'projects' | 'ai'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'projects' | 'ai' | 'connections'>('stats');
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
@@ -134,6 +135,17 @@ export default function AdminPage() {
               <Bot className="h-5 w-5" />
               AI Activity
             </button>
+            <button
+              onClick={() => setActiveTab('connections')}
+              className={`${
+                activeTab === 'connections'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+            >
+              <LogIn className="h-5 w-5" />
+              Connexions
+            </button>
           </nav>
         </div>
 
@@ -143,6 +155,7 @@ export default function AdminPage() {
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'projects' && <ProjectManagement />}
           {activeTab === 'ai' && <AIUsageLogs />}
+          {activeTab === 'connections' && <UserConnections />}
         </div>
       </div>
     </div>
