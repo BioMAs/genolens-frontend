@@ -90,7 +90,7 @@ const PLANS: PlanConfig[] = [
 
 export default function PricingPage() {
   const router = useRouter();
-  const { startCheckout, openPortal, loading: billingLoading, error: billingError, clearError } = useBilling();
+  const { initiateCheckout, getBillingPortal, loading: billingLoading, error: billingError, clearError } = useBilling();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -120,7 +120,7 @@ export default function PricingPage() {
   }, []);
 
   const isLoggedIn = !!profile;
-  const currentPlan = profile?.subscription_plan as PlanKey | undefined;
+  const currentPlan = (profile?.subscription_plan as string | undefined)?.toUpperCase() as PlanKey | undefined;
 
   const handleCta = async (plan: PlanConfig) => {
     // Not logged in — redirect to login with return hint
@@ -141,10 +141,12 @@ export default function PricingPage() {
 
     if (currentPlan === 'BASIC') {
       // User is on free plan — open Stripe checkout
-      await startCheckout(plan.key);
+      const url = await initiateCheckout(plan.key);
+      window.location.href = url;
     } else {
       // User already has a paid plan — open billing portal to manage/upgrade
-      await openPortal();
+      const url = await getBillingPortal();
+      window.location.href = url;
     }
 
     setActivePlan(null);

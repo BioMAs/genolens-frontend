@@ -4,6 +4,7 @@
 'use client';
 
 import { useState } from 'react';
+import axios from 'axios';
 import api from '@/utils/api';
 
 interface CheckoutResponse {
@@ -18,41 +19,45 @@ export function useBilling() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const startCheckout = async (plan: string): Promise<void> => {
+  const initiateCheckout = async (plan: string): Promise<string> => {
     setLoading(true);
     setError(null);
     try {
       const res = await api.post<CheckoutResponse>('/billing/checkout', { plan });
-      window.location.href = res.data.checkout_url;
+      return res.data.checkout_url;
     } catch (err) {
-      const e = err as { response?: { data?: { detail?: string } }; message?: string };
-      const msg =
-        e?.response?.data?.detail ||
-        e?.message ||
-        'Failed to start checkout. Please try again.';
-      setError(msg);
+      let message = 'Failed to start checkout. Please try again.';
+      if (axios.isAxiosError(err)) {
+        message = err.response?.data?.detail ?? err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const openPortal = async (): Promise<void> => {
+  const getBillingPortal = async (): Promise<string> => {
     setLoading(true);
     setError(null);
     try {
       const res = await api.get<PortalResponse>('/billing/portal');
-      window.location.href = res.data.portal_url;
+      return res.data.portal_url;
     } catch (err) {
-      const e = err as { response?: { data?: { detail?: string } }; message?: string };
-      const msg =
-        e?.response?.data?.detail ||
-        e?.message ||
-        'Failed to open billing portal. Please try again.';
-      setError(msg);
+      let message = 'Failed to open billing portal. Please try again.';
+      if (axios.isAxiosError(err)) {
+        message = err.response?.data?.detail ?? err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  return { startCheckout, openPortal, loading, error, clearError: () => setError(null) };
+  return { initiateCheckout, getBillingPortal, loading, error, clearError: () => setError(null) };
 }
