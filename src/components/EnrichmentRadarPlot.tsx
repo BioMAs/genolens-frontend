@@ -214,7 +214,7 @@ export default function EnrichmentRadarPlot({
 
   const handleAiSelection = async () => {
     if (!aiPrompt.trim()) {
-      alert('Please enter instructions for AI term selection');
+      setError('Please enter AI instructions before running term selection.');
       return;
     }
 
