@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
 import api from '@/utils/api';
 
@@ -70,7 +70,7 @@ export function useBilling() {
     }
   };
 
-  const getSubscription = async (): Promise<SubscriptionInfo> => {
+  const getSubscription = useCallback(async (): Promise<SubscriptionInfo> => {
     setLoading(true);
     setError(null);
     try {
@@ -88,7 +88,7 @@ export function useBilling() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // no deps — api is a module-level singleton
 
   return { initiateCheckout, getBillingPortal, getSubscription, loading, error, clearError: () => setError(null) };
 }

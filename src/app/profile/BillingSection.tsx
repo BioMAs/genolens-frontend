@@ -60,13 +60,15 @@ export default function BillingSection() {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
+    setIsFetching(true);
     getSubscription()
       .then(setSubscription)
-      .catch((err: Error) => setFetchError(err.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      .catch((err: Error) => setFetchError(err.message))
+      .finally(() => setIsFetching(false));
+  }, [getSubscription]);
 
   const handleManageBilling = async () => {
     setPortalLoading(true);
@@ -111,7 +113,7 @@ export default function BillingSection() {
           </div>
         )}
 
-        {loading && !subscription && (
+        {isFetching && (
           <div className="px-6 py-8 text-sm text-gray-500 text-center animate-pulse">
             Loading subscription info…
           </div>
@@ -133,7 +135,7 @@ export default function BillingSection() {
             {/* Projects */}
             <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <FolderOpen className="h-4 w-4" /> Projects
+                <FolderOpen className="h-4 w-4" /> Max projects
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {limits.projects === Infinity ? 'Unlimited' : limits.projects}
