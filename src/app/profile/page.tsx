@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { User, Mail, Calendar, Shield } from 'lucide-react'
+import BillingSection from './BillingSection'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -75,6 +76,8 @@ export default async function ProfilePage() {
             </dl>
           </div>
         </div>
+
+        <BillingSection />
 
         <div className="mt-8 flex justify-center">
            <form action="/auth/signout" method="post">
