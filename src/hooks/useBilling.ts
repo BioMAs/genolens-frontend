@@ -15,6 +15,17 @@ interface PortalResponse {
   portal_url: string;
 }
 
+export interface SubscriptionInfo {
+  plan: string;
+  is_active: boolean;
+  subscription_starts_at: string | null;
+  subscription_ends_at: string | null;
+  stripe_customer_id: string | null;
+  ai_interpretations_used: number;
+  ai_tokens_purchased: number;
+  ai_tokens_used: number;
+}
+
 export function useBilling() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,5 +70,25 @@ export function useBilling() {
     }
   };
 
-  return { initiateCheckout, getBillingPortal, loading, error, clearError: () => setError(null) };
+  const getSubscription = async (): Promise<SubscriptionInfo> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<SubscriptionInfo>('/billing/subscription');
+      return res.data;
+    } catch (err) {
+      let message = 'Failed to load subscription info. Please try again.';
+      if (axios.isAxiosError(err)) {
+        message = err.response?.data?.detail ?? err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { initiateCheckout, getBillingPortal, getSubscription, loading, error, clearError: () => setError(null) };
 }
