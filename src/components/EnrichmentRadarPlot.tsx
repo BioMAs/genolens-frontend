@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock, Info } from 'lucide-react';
@@ -219,7 +220,7 @@ export default function EnrichmentRadarPlot({
 
     // Check subscription
     if (!userProfile || (userProfile.subscription_plan === 'BASIC' && userProfile.role !== 'ADMIN')) {
-      alert('AI term selection requires a PREMIUM or ADVANCED subscription');
+      setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
       return;
     }
 
@@ -368,9 +369,18 @@ export default function EnrichmentRadarPlot({
   }
 
   if (error) {
+    const isPlanError = error.includes('PREMIUM') || error.includes('ADVANCED') || error.includes('subscription');
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-sm text-red-700">{error}</p>
+      <div className={`border rounded-lg p-4 ${isPlanError ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200'}`}>
+        <p className={`text-sm ${isPlanError ? 'text-purple-800' : 'text-red-700'}`}>{error}</p>
+        {isPlanError && (
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-purple-700 hover:text-purple-900 underline underline-offset-2"
+          >
+            View Plans →
+          </Link>
+        )}
       </div>
     );
   }
@@ -407,7 +417,7 @@ export default function EnrichmentRadarPlot({
                   setShowAiPrompt(true);
                   setShowTermSelector(false);
                 } else {
-                  alert('AI term selection requires a PREMIUM or ADVANCED subscription');
+                  setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
                 }
               }}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
