@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { EnrichmentResult } from '@/types';
 import Link from 'next/link';
-import { Filter, ArrowUpRight, ExternalLink, BarChart2, Table as TableIcon, Activity } from 'lucide-react';
+import { Filter, ArrowUpRight, ExternalLink, BarChart2, Table as TableIcon, Activity, Play, RefreshCw } from 'lucide-react';
+import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
 
 // Dynamically import Plotly (SSR not supported)
@@ -30,6 +31,13 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     const [maxPadj, setMaxPadj] = useState<number>(0.05);
     const [viewMode, setViewMode] = useState<'table' | 'radar'>('table');
 
+    // GO Enrichment runner
+    const [degComparisons, setDegComparisons] = useState<string[]>([]);
+    const [selectedDegComparison, setSelectedDegComparison] = useState<string>("");
+    const [isRunning, setIsRunning] = useState(false);
+    const [runError, setRunError] = useState<string | null>(null);
+    const [runSuccess, setRunSuccess] = useState<string | null>(null);
+
     // Fetch comparisons on mount
     useEffect(() => {
         const fetchComparisons = async () => {
@@ -44,6 +52,21 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
              }
         };
         fetchComparisons();
+    }, [datasetId]);
+
+    // Fetch DEG comparisons available for GO enrichment
+    useEffect(() => {
+        const fetchDegComparisons = async () => {
+            try {
+                const res = await api.get(`/datasets/${datasetId}/comparisons`);
+                const names: string[] = res.data?.comparisons ?? [];
+                setDegComparisons(names);
+                if (names.length > 0) setSelectedDegComparison(names[0]);
+            } catch (err: any) {
+                console.error("Failed to fetch DEG comparisons", err);
+            }
+        };
+        fetchDegComparisons();
     }, [datasetId]);
 
     // Fetch ALL results when comparison or maxPadj changes
@@ -72,6 +95,35 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
         fetchResults();
     }, [datasetId, selectedComparison, maxPadj]);
+
+    // Run GO enrichment on demand
+    const runGoEnrichment = async () => {
+        if (!selectedDegComparison) return;
+        setIsRunning(true);
+        setRunError(null);
+        setRunSuccess(null);
+        try {
+            const res = await api.post(
+                `/datasets/${datasetId}/comparisons/${encodeURIComponent(selectedDegComparison)}/go-enrichment`,
+                {}
+            );
+            const n = res.data?.enriched_terms?.length ?? 0;
+            setRunSuccess(`GO enrichment completed: ${n} terms found for "${selectedDegComparison}".`);
+            // Re-fetch enrichment comparisons so the new comparison appears in the dropdown
+            const compsRes = await api.get(`/enrichment/${datasetId}/comparisons`);
+            setComparisons(compsRes.data);
+            if (compsRes.data.includes(selectedDegComparison)) {
+                setSelectedComparison(selectedDegComparison);
+            } else if (compsRes.data.length > 0) {
+                setSelectedComparison(compsRes.data[0]);
+            }
+        } catch (err: any) {
+            const detail = err?.response?.data?.detail ?? err?.message ?? "Unknown error";
+            setRunError(`GO enrichment failed: ${detail}`);
+        } finally {
+            setIsRunning(false);
+        }
+    };
 
     // Derived filtered results for TABLE
     const filteredResults = useMemo(() => {
@@ -203,6 +255,41 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
     return (
         <div className="space-y-6">
+            {/* GO Enrichment Runner */}
+            {degComparisons.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <Play className="h-4 w-4 text-indigo-600" />
+                        Run GO Enrichment on DEGs
+                    </h3>
+                    <div className="flex flex-wrap gap-3 items-end">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">DEG Comparison</label>
+                            <select
+                                className="block rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                value={selectedDegComparison}
+                                onChange={(e) => setSelectedDegComparison(e.target.value)}
+                                disabled={isRunning}
+                            >
+                                {degComparisons.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                        <button
+                            onClick={runGoEnrichment}
+                            disabled={isRunning || !selectedDegComparison}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isRunning
+                                ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Running...</>
+                                : <><Play className="h-4 w-4 mr-2" />Run GO Enrichment</>
+                            }
+                        </button>
+                    </div>
+                    {runError && <p className="mt-2 text-sm text-red-600">{runError}</p>}
+                    {runSuccess && <p className="mt-2 text-sm text-green-600">{runSuccess}</p>}
+                </div>
+            )}
+
             {/* Controls */}
             <div className="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
@@ -289,6 +376,28 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             {loading && <div className="text-center py-12 text-gray-500">Loading enrichment data...</div>}
             
             {error && <div className="p-4 bg-red-50 text-red-700 rounded-md">{error}</div>}
+
+            {/* AI Assistant */}
+            {!loading && !error && allResults.length > 0 && (
+                <div className="mb-3">
+                    <AIChartAssistant
+                        datasetId={datasetId}
+                        chartType="enrichment"
+                        contextKey={`${categoryFilter || 'ALL'}-${selectedComparison || 'all'}`}
+                        context={{
+                            category: categoryFilter || 'ALL',
+                            comparison_name: selectedComparison || 'all',
+                            regulation: regulationFilter,
+                            top_terms: filteredResults.slice(0, 8).map((t: any) => ({
+                                name: t.pathway_name,
+                                pvalue: t.padj,
+                                gene_count: t.gene_count ?? 0,
+                            })),
+                        }}
+                        label="Enrichment"
+                    />
+                </div>
+            )}
 
             {/* Category Filter - Always visible as it affects both views logically */}
             {!loading && !error && allResults.length > 0 && (
