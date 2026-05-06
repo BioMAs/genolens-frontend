@@ -48,6 +48,7 @@ api.interceptors.response.use(
         document.cookie = `account_status=${accountStatus}; path=/; max-age=3600`;
         window.location.href = '/suspended';
       }
+      return Promise.reject(error);
     }
 
     if (error.response?.status === 401) {

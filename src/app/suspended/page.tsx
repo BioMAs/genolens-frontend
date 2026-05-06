@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
 type AccountStatus = "suspended" | "cancelled" | "pending" | null;
 
@@ -46,10 +47,18 @@ export default function SuspendedPage() {
         >
           {current.cta.label}
         </Link>
-        <div className="mt-5">
-          <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600 hover:underline">
-            Sign in with a different account
-          </Link>
+        <div className="mt-5 flex flex-col gap-2 items-center">
+          <button
+            onClick={async () => {
+              document.cookie = "account_status=; path=/; max-age=0";
+              const supabase = createClient();
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="text-sm text-gray-400 hover:text-gray-600 hover:underline"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </div>

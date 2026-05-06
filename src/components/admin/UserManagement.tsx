@@ -364,9 +364,10 @@ export default function UserManagement() {
                           const newStatus = user.status === "active" ? "suspended" : "active";
                           try {
                             await api.patch(`/admin/users/${user.id}/status`, { status: newStatus });
-                            fetchUsers();
+                            await fetchUsers();
                           } catch (e) {
                             console.error("Status update failed", e);
+                            alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
                           }
                         }}
                         className="text-xs text-gray-500 hover:text-gray-800 underline"
