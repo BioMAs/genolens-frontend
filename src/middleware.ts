@@ -56,6 +56,20 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Guard: redirect inactive accounts to /suspended (cookie set by API interceptor)
+  const { pathname } = request.nextUrl;
+  const accountStatus = request.cookies.get('account_status')?.value;
+  if (
+    accountStatus &&
+    accountStatus !== 'active' &&
+    pathname !== '/suspended' &&
+    pathname !== '/login' &&
+    !pathname.startsWith('/_next') &&
+    !pathname.startsWith('/api')
+  ) {
+    return NextResponse.redirect(new URL('/suspended', request.url));
+  }
+
   // Redirect authenticated users from home page to dashboard
   if (user && request.nextUrl.pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
