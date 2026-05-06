@@ -62,6 +62,16 @@ export default function UserManagement() {
     subscription_plan: ''
   });
 
+  // Invite Modal
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: '',
+    full_name: '',
+    plan: 'BASIC',
+    subscription_ends_at: '',
+  });
+
   // Token Modal
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenUser, setTokenUser] = useState<User | null>(null);
@@ -109,6 +119,27 @@ export default function UserManagement() {
       alert(err.response?.data?.detail || 'Failed to create user.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setInviting(true);
+      await api.post('/admin/users/invite', {
+        email: inviteForm.email,
+        full_name: inviteForm.full_name || undefined,
+        plan: inviteForm.plan,
+        subscription_ends_at: inviteForm.subscription_ends_at || undefined,
+      });
+      await fetchUsers();
+      setShowInviteModal(false);
+      setInviteForm({ email: '', full_name: '', plan: 'BASIC', subscription_ends_at: '' });
+    } catch (err: any) {
+      console.error('Failed to invite user:', err);
+      alert(err.response?.data?.detail || 'Failed to send invitation.');
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -263,13 +294,22 @@ export default function UserManagement() {
               Manage user roles and permissions. Total users: {users.length}
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Add User
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-md hover:bg-brand-primary/5 transition-colors gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              Invite User
+            </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              Add User
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -424,6 +464,85 @@ export default function UserManagement() {
           </table>
         </div>
       </div>
+
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Invite User</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Creates a pending account and sends an invitation email.</p>
+              </div>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleInvite} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={inviteForm.full_name}
+                  onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  placeholder="Jane Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <select
+                  value={inviteForm.plan}
+                  onChange={(e) => setInviteForm({ ...inviteForm, plan: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                >
+                  {plans.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Access expires on <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={inviteForm.subscription_ends_at}
+                  onChange={(e) => setInviteForm({ ...inviteForm, subscription_ends_at: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                >
+                  {inviting ? 'Sending...' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateModal && (
