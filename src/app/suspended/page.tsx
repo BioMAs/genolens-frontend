@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 type AccountStatus = "suspended" | "cancelled" | "pending" | null;
@@ -30,11 +30,7 @@ const CONTENT: Record<NonNullable<AccountStatus>, { title: string; description: 
 };
 
 export default function SuspendedPage() {
-  const [status, setStatus] = useState<AccountStatus>(null);
-
-  useEffect(() => {
-    setStatus(getCookieValue("account_status") as AccountStatus);
-  }, []);
+  const [status] = useState<AccountStatus>(() => getCookieValue("account_status") as AccountStatus);
 
   const current = status ? CONTENT[status] ?? CONTENT.cancelled : CONTENT.cancelled;
 
