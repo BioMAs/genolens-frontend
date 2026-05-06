@@ -15,9 +15,12 @@ interface PortalResponse {
   portal_url: string;
 }
 
+export type UserStatus = "pending" | "active" | "suspended" | "cancelled";
+
 export interface SubscriptionInfo {
   plan: string;
   is_active: boolean;
+  status: UserStatus;
   subscription_starts_at: string | null;
   subscription_ends_at: string | null;
   stripe_customer_id: string | null;
