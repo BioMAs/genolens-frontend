@@ -51,16 +51,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401) {
-      // Handle unauthorized access (e.g., redirect to login)
-      console.error('Unauthorized access');
-    }
-
-    // Log other errors for debugging
-    if (error.response?.status !== 401) {
-      console.error('API Error:', error.message, error.response?.data);
-    }
-
+    // Propagate the error — callers handle their own feedback (alert, toast, etc.)
     return Promise.reject(error);
   }
 );
