@@ -10,6 +10,7 @@ interface User {
   full_name: string | null;
   avatar_url: string | null;
   role: string;
+  status?: string;
   subscription_plan?: string;
   ai_interpretations_used?: number;
   ai_interpretations_remaining?: number;
@@ -19,6 +20,21 @@ interface User {
   updated_at: string;
   last_sign_in_at: string | null;
   confirmed_at: string | null;
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  const styles: Record<string, string> = {
+    active:    "bg-green-100 text-green-700",
+    pending:   "bg-yellow-100 text-yellow-700",
+    suspended: "bg-orange-100 text-orange-700",
+    cancelled: "bg-red-100 text-red-700",
+  };
+  const s = status ?? "active";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[s] ?? "bg-gray-100 text-gray-700"}`}>
+      {s}
+    </span>
+  );
 }
 
 export default function UserManagement() {
@@ -270,6 +286,9 @@ export default function UserManagement() {
                   AI Usage
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -325,6 +344,9 @@ export default function UserManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <StatusBadge status={user.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
@@ -337,6 +359,20 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          const newStatus = user.status === "active" ? "suspended" : "active";
+                          try {
+                            await api.patch(`/admin/users/${user.id}/status`, { status: newStatus });
+                            fetchUsers();
+                          } catch (e) {
+                            console.error("Status update failed", e);
+                          }
+                        }}
+                        className="text-xs text-gray-500 hover:text-gray-800 underline"
+                      >
+                        {user.status === "active" ? "Suspend" : "Activate"}
+                      </button>
                       <button
                         onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
                         disabled={assigningDemo === user.id}
