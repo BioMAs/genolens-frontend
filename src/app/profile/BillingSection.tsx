@@ -119,6 +119,22 @@ export default function BillingSection() {
           </div>
         )}
 
+        {subscription?.status === "pending" && (
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 mb-4 mx-4 mt-4">
+            <p className="text-yellow-800 text-sm">
+              <strong>Account pending activation.</strong> Check your email for an invitation link.
+            </p>
+          </div>
+        )}
+        {subscription?.status === "cancelled" && (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 mb-4 mx-4 mt-4">
+            <p className="text-red-800 text-sm">
+              <strong>Subscription expired.</strong>{" "}
+              <a href="/pricing" className="underline font-medium">Renew now</a> to continue using GenoLens.
+            </p>
+          </div>
+        )}
+
         {subscription && (
           <dl className="sm:divide-y sm:divide-gray-200">
             {/* Current plan */}
