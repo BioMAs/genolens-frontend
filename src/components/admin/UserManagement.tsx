@@ -126,18 +126,26 @@ export default function UserManagement() {
     e.preventDefault();
     try {
       setInviting(true);
+      // Convert date-only string (YYYY-MM-DD) to full ISO datetime expected by the backend
+      const endsAt = inviteForm.subscription_ends_at
+        ? new Date(inviteForm.subscription_ends_at).toISOString()
+        : undefined;
+
       await api.post('/admin/users/invite', {
         email: inviteForm.email,
         full_name: inviteForm.full_name || undefined,
         plan: inviteForm.plan,
-        subscription_ends_at: inviteForm.subscription_ends_at || undefined,
+        subscription_ends_at: endsAt,
       });
       await fetchUsers();
       setShowInviteModal(false);
       setInviteForm({ email: '', full_name: '', plan: 'BASIC', subscription_ends_at: '' });
     } catch (err: any) {
-      console.error('Failed to invite user:', err);
-      alert(err.response?.data?.detail || 'Failed to send invitation.');
+      const detail = err.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map((e: any) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join('\n')
+        : detail ?? 'Failed to send invitation.';
+      alert(message);
     } finally {
       setInviting(false);
     }
