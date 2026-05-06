@@ -39,6 +39,17 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.detail?.error === 'account_inactive'
+    ) {
+      const accountStatus = error.response.data.detail.status as string;
+      if (typeof document !== 'undefined') {
+        document.cookie = `account_status=${accountStatus}; path=/; max-age=3600`;
+        window.location.href = '/suspended';
+      }
+    }
+
     if (error.response?.status === 401) {
       // Handle unauthorized access (e.g., redirect to login)
       console.error('Unauthorized access');
