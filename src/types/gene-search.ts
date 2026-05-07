@@ -11,6 +11,10 @@ export interface GeneSearchResult {
   dataset_name: string;
   dataset_type: string;
   comparison_name?: string;
+  log_fc?: number;
+  padj?: number;
+  regulation?: string;
+  base_mean?: number;
 }
 
 export interface GeneSearchResponse {
