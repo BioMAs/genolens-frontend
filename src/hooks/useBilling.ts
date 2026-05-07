@@ -27,6 +27,11 @@ export interface SubscriptionInfo {
   ai_interpretations_used: number;
   ai_tokens_purchased: number;
   ai_tokens_used: number;
+  // Usage metrics (populated by /billing/subscription)
+  project_count?: number;
+  max_projects?: number | null;
+  storage_used_bytes?: number;
+  max_storage_bytes?: number | null;
 }
 
 export function useBilling() {
