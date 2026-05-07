@@ -2,12 +2,17 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // `turbopack: {}` silences the Next.js 16 error that fires when a webpack
+  // `turbopack` silences the Next.js 16 error that fires when a webpack
   // plugin (injected by withSentryConfig) is present without a matching
   // turbopack config. Production builds are forced to webpack via the
-  // `--webpack` flag in the `build` npm script; this declaration has no effect
-  // on those builds.
-  turbopack: {},
+  // `--webpack` flag in the `build` npm script.
+  // resolveAlias mirrors the webpack alias below so react-plotly.js can
+  // resolve plotly.js/dist/plotly in Turbopack dev mode.
+  turbopack: {
+    resolveAlias: {
+      "plotly.js/dist/plotly": "plotly.js-dist-min",
+    },
+  },
 
   webpack(config) {
     // react-plotly.js@2 does `require("plotly.js/dist/plotly")` at runtime but
