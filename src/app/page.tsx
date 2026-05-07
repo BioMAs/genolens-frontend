@@ -94,15 +94,24 @@ export default function Home() {
 
         {/* Logo */}
         <div className="relative z-10">
-          <Image
-            src="/logo.png"
-            alt="GenoLens"
-            height={32}
-            width={150}
-            priority
-            className="object-contain"
-            style={{ filter: 'brightness(0) invert(1)' }}
-          />
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '4px 10px',
+              display: 'inline-block',
+              lineHeight: 0,
+            }}
+          >
+            <Image
+              src="/logo.png"
+              alt="GenoLens"
+              height={32}
+              width={150}
+              priority
+              className="object-contain block"
+            />
+          </div>
         </div>
 
         {/* Hero copy */}
