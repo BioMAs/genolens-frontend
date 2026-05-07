@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dataset } from '@/types';
 import api from '@/utils/api';
 import { Play, Settings, X } from 'lucide-react';
@@ -54,6 +54,29 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
   const [selectedGeneSet, setSelectedGeneSet] = useState<string | null>(null);
   const [enrichmentPlotData, setEnrichmentPlotData] = useState<any | null>(null);
   const [loadingPlot, setLoadingPlot] = useState(false);
+  const [isCached, setIsCached] = useState(false);
+
+  // Auto-load persisted GSEA results on mount
+  useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const response = await api.get(
+          `/datasets/${dataset.id}/comparisons/${encodeURIComponent(comparisonName)}/gsea-results`
+        );
+        if (response.data?.results) {
+          setResults(response.data);
+          setIsCached(true);
+          // Restore parameters from saved run
+          if (response.data.parameters) {
+            setParameters((prev) => ({ ...prev, ...response.data.parameters }));
+          }
+        }
+      } catch {
+        // 404 = no cached results yet — silent
+      }
+    };
+    loadCached();
+  }, [dataset.id, comparisonName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // GSEA parameters
   const [parameters, setParameters] = useState({
@@ -76,6 +99,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       });
 
       setResults(response.data);
+      setIsCached(false);
     } catch (err: any) {
       console.error('GSEA analysis failed:', err);
       setError(err.response?.data?.detail || 'Failed to run GSEA analysis');
@@ -118,6 +142,11 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
             <p className="text-sm text-gray-600 mt-1">
               Identify significantly enriched gene sets in your ranked gene list
             </p>
+            {isCached && (
+              <span className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5">
+                ✓ Loaded from cache
+              </span>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -135,7 +164,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
-              {loading ? 'Running GSEA...' : 'Run GSEA'}
+              {loading ? 'Running GSEA...' : results ? 'Re-run GSEA' : 'Run GSEA'}
             </button>
           </div>
         </div>

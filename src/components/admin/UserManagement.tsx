@@ -363,7 +363,7 @@ export default function UserManagement() {
                       )}
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.full_name || 'Unnamed User'}
+                          {user.full_name || user.email || 'Unnamed User'}
                         </div>
                         <div className="text-xs text-gray-400 truncate max-w-[150px]" title={user.id}>
                           {user.id.substring(0, 8)}...
@@ -407,21 +407,38 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={async () => {
-                          const newStatus = user.status === "active" ? "suspended" : "active";
-                          try {
-                            await api.patch(`/admin/users/${user.id}/status`, { status: newStatus });
-                            await fetchUsers();
-                          } catch (e) {
-                            console.error("Status update failed", e);
-                            alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
-                          }
-                        }}
-                        className="text-xs text-gray-500 hover:text-gray-800 underline"
-                      >
-                        {user.status === "active" ? "Suspend" : "Activate"}
-                      </button>
+                      {user.status === "pending" ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.post(`/admin/users/${user.id}/resend-invite`);
+                              alert(`Invitation resent to ${user.email}`);
+                            } catch (e) {
+                              console.error("Resend invite failed", e);
+                              alert("Failed to resend invitation. Please try again.");
+                            }
+                          }}
+                          className="text-xs text-yellow-600 hover:text-yellow-800 underline"
+                        >
+                          Resend invite
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const newStatus = user.status === "active" ? "suspended" : "active";
+                            try {
+                              await api.patch(`/admin/users/${user.id}/status`, { status: newStatus });
+                              await fetchUsers();
+                            } catch (e) {
+                              console.error("Status update failed", e);
+                              alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
+                            }
+                          }}
+                          className="text-xs text-gray-500 hover:text-gray-800 underline"
+                        >
+                          {user.status === "active" ? "Suspend" : "Activate"}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
                         disabled={assigningDemo === user.id}

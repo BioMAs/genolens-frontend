@@ -12,6 +12,7 @@ interface AIChartAssistantProps {
   contextKey: string;
   context: Record<string, unknown>;
   label?: string;
+  panelClassName?: string;
 }
 
 export default function AIChartAssistant({
@@ -20,6 +21,7 @@ export default function AIChartAssistant({
   contextKey,
   context,
   label,
+  panelClassName,
 }: AIChartAssistantProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
@@ -152,7 +154,7 @@ export default function AIChartAssistant({
           </div>
 
           {/* Messages */}
-          <div className="max-h-72 overflow-y-auto p-4 flex flex-col gap-3">
+          <div className={`${panelClassName ?? 'max-h-72'} overflow-y-auto p-4 flex flex-col gap-3`}>
             {isInterpreting && !interpretation && (
               <div className="flex gap-2">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px]">

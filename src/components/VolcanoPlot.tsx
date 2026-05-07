@@ -62,25 +62,6 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
             >
               {showControls ? '− Hide' : '+ Threshold Settings'}
             </button>
-            <AIChartAssistant
-              datasetId={dataset.id}
-              chartType="volcano"
-              contextKey={comparisonName}
-              context={{
-                comparison_name: comparisonName,
-                up_count: data.filter((p: any) => p.is_significant && p.x > 0).length,
-                down_count: data.filter((p: any) => p.is_significant && p.x < 0).length,
-                top_up_genes: data
-                  .filter((p: any) => p.is_significant && p.x > 0)
-                  .slice(0, 5)
-                  .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
-                top_down_genes: data
-                  .filter((p: any) => p.is_significant && p.x < 0)
-                  .slice(0, 5)
-                  .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
-              }}
-              label="Volcano Plot"
-            />
           </div>
         </div>
 
@@ -119,6 +100,28 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
           </div>
         )}
       </div>
+
+      {/* Ask AI assistant — below controls */}
+      <AIChartAssistant
+        datasetId={dataset.id}
+        chartType="volcano"
+        contextKey={comparisonName}
+        context={{
+          comparison_name: comparisonName,
+          up_count: data.filter((p: any) => p.is_significant && p.x > 0).length,
+          down_count: data.filter((p: any) => p.is_significant && p.x < 0).length,
+          top_up_genes: data
+            .filter((p: any) => p.is_significant && p.x > 0)
+            .slice(0, 5)
+            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+          top_down_genes: data
+            .filter((p: any) => p.is_significant && p.x < 0)
+            .slice(0, 5)
+            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+        }}
+        label="Volcano Plot"
+        panelClassName="max-h-[500px]"
+      />
 
       {/* Plot */}
       <div className="h-96 w-full">

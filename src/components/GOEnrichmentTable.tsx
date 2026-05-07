@@ -32,6 +32,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
   const [sortBy, setSortBy] = useState<'fdr' | 'pvalue' | 'ratio'>('fdr');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Filter and sort
   const filteredTerms = useMemo(() => {
@@ -66,6 +68,9 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
     return filtered;
   }, [terms, searchQuery, sortBy, sortOrder]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredTerms.length / pageSize));
+  const pagedTerms = filteredTerms.slice((page - 1) * pageSize, page * pageSize);
+
   const toggleSort = (column: 'fdr' | 'pvalue' | 'ratio') => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -73,6 +78,21 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
       setSortBy(column);
       setSortOrder('asc');
     }
+    setPage(1);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+  };
+
+  const pageNumbers = () => {
+    const delta = 2;
+    const range: number[] = [];
+    for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
+      range.push(i);
+    }
+    return range;
   };
 
   const toggleRowExpansion = (goId: string) => {
@@ -120,7 +140,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
           <Input
             placeholder="Search GO terms or IDs..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -197,7 +217,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
               </tr>
             </thead>
             <tbody>
-              {filteredTerms.map((term) => {
+              {pagedTerms.map((term) => {
                 const isExpanded = expandedRows.has(term.go_id);
                 return (
                   <>
@@ -293,8 +313,50 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
       )}
 
       {filteredTerms.length > 0 && (
-        <div className="text-sm text-muted-foreground text-center">
-          Showing {filteredTerms.length} of {terms.length} terms
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Showing {Math.min((page - 1) * pageSize + 1, filteredTerms.length)}–{Math.min(page * pageSize, filteredTerms.length)} of {filteredTerms.length} terms
+          </span>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              ‹
+            </Button>
+            {pageNumbers().map(n => (
+              <Button
+                key={n}
+                variant={n === page ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setPage(n)}
+                className="w-8"
+              >
+                {n}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              ›
+            </Button>
+          </div>
+
+          <select
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="border rounded px-2 py-1 text-sm bg-background"
+          >
+            {[10, 25, 50, 100].map(s => (
+              <option key={s} value={s}>{s} / page</option>
+            ))}
+          </select>
         </div>
       )}
     </div>

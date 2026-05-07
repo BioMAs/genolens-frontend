@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { HeatmapData, HeatmapConfig } from './types';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { getColorscale, getLogFCColorscale } from './heatmapConfig';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -25,6 +27,9 @@ export default function HeatmapVisualization({
 }: HeatmapVisualizationProps) {
   const mainPlotRef = useRef<HTMLDivElement>(null);
   const sidebarPlotRef = useRef<HTMLDivElement>(null);
+  const [colorblindMode, setColorblindMode] = useState(false);
+  const activeColorscale = getColorscale(colorblindMode);
+  const activeLogFCColorscale = getLogFCColorscale(colorblindMode);
 
   useEffect(() => {
     if (mainPlotRef.current && onPlotReady) {
@@ -68,7 +73,11 @@ export default function HeatmapVisualization({
   const defaultTitle = title || `Clustered Heatmap (${plotData.y.length} DEGs)`;
 
   return (
-    <div className="w-full h-full flex overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden">
+      <div className="flex justify-end px-2 pt-1">
+        <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+      </div>
+      <div className="flex-1 flex overflow-hidden">
       {/* Main Heatmap */}
       <div ref={mainPlotRef} className="flex-1 min-w-0">
         <Plot
@@ -78,7 +87,7 @@ export default function HeatmapVisualization({
               x: plotData.x,
               y: plotData.y,
               type: 'heatmap',
-              colorscale: config.colorscale,
+              colorscale: activeColorscale,
               reversescale: true,
               zmin: config.zmin,
               zmax: config.zmax,
@@ -185,7 +194,7 @@ export default function HeatmapVisualization({
                 x: ['LogFC'],
                 y: plotData.y,
                 type: 'heatmap',
-                colorscale: config.logFCColorscale,
+                colorscale: activeLogFCColorscale,
                 showscale: false,
                 zmin: config.logFCmin,
                 zmax: config.logFCmax,
@@ -224,6 +233,7 @@ export default function HeatmapVisualization({
           />
         </div>
       )}
+      </div>
     </div>
   );
 }

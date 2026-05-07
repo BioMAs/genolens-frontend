@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { Info, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '@/utils/api';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,12 +63,20 @@ interface MultipleTestingResult {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const METHOD_COLORS: Record<string, string> = {
+const METHOD_COLORS_STANDARD: Record<string, string> = {
   original: '#6366f1',
   bh: '#22c55e',
   bonferroni: '#ef4444',
   holm: '#f59e0b',
   by: '#8b5cf6',
+};
+
+const METHOD_COLORS_COLORBLIND: Record<string, string> = {
+  original: '#0072B2',
+  bh: '#009E73',
+  bonferroni: '#D55E00',
+  holm: '#E69F00',
+  by: '#CC79A7',
 };
 
 const METHOD_LABELS: Record<string, string> = {
@@ -120,6 +129,8 @@ export default function MultipleTestingPanel({
   const [showGenes, setShowGenes] = useState(false);
   const [geneResults, setGeneResults] = useState<GeneResult[]>([]);
   const [loadingGenes, setLoadingGenes] = useState(false);
+  const [colorblindMode, setColorblindMode] = useState(false);
+  const METHOD_COLORS = colorblindMode ? METHOD_COLORS_COLORBLIND : METHOD_COLORS_STANDARD;
 
   // ── Fetch summary ──────────────────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -230,6 +241,7 @@ export default function MultipleTestingPanel({
             <span className="font-mono font-medium">{comparisonName}</span>.
           </p>
         </div>
+        <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
       </div>
 
       {/* Controls */}

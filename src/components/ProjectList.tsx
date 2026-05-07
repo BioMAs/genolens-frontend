@@ -1,8 +1,32 @@
 'use client';
 
 import { useProjects, usePrefetchProject } from '@/hooks/useProjects';
-import { Folder, Plus, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
+import { useProjectDashboardStats } from '@/hooks/useProjectDashboardStats';
+import { Folder, Plus, Calendar, ChevronRight, AlertCircle, Database, GitCompare } from 'lucide-react';
 import Link from 'next/link';
+import { Project } from '@/types';
+
+function ProjectCardStats({ project }: { project: Project }) {
+  const { data: stats } = useProjectDashboardStats(project.id);
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className="inline-flex items-center gap-1 text-xs"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        <Database className="h-3 w-3" />
+        {stats?.total_datasets ?? '—'}
+      </span>
+      <span
+        className="inline-flex items-center gap-1 text-xs"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        <GitCompare className="h-3 w-3" />
+        {stats?.total_comparisons ?? '—'}
+      </span>
+    </div>
+  );
+}
 
 interface ProjectListProps {
   onCreateClick: () => void;
@@ -128,18 +152,20 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
 
           {/* Footer */}
           <div
-            className="mt-3 pt-3 flex items-center gap-1.5 text-xs"
+            className="mt-3 pt-3 flex items-center justify-between gap-2"
             style={{
               borderTop: '1px solid var(--border-subtle)',
-              color: 'var(--text-muted)',
             }}
           >
-            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-            {new Date(project.created_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+              {new Date(project.created_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </div>
+            <ProjectCardStats project={project} />
           </div>
         </Link>
       ))}

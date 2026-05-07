@@ -46,7 +46,7 @@ export default function Navbar({ user, userRole }: NavbarProps) {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+              title={theme === 'light' ? 'Enable dark mode' : 'Enable light mode'}
             >
               {theme === 'light' ? (
                 <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
@@ -54,7 +54,7 @@ export default function Navbar({ user, userRole }: NavbarProps) {
                 <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300" />
               )}
             </button>
-            
+
             <Link
               href="/dashboard"
               className="text-gray-600 dark:text-gray-300 hover:text-brand-primary dark:hover:text-brand-secondary px-3 py-2 rounded-md text-sm font-medium"
@@ -99,7 +99,7 @@ export default function Navbar({ user, userRole }: NavbarProps) {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+              title={theme === 'light' ? 'Enable dark mode' : 'Enable light mode'}
             >
               {theme === 'light' ? (
                 <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />

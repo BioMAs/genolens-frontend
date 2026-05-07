@@ -13,6 +13,7 @@ interface GeneExpressionViewerProps {
   comparisonName: string;
   allGenes: string[];
   sampleConditionMap?: Record<string, string>;
+  geneNameMap?: Record<string, string>;
 }
 
 export default function GeneExpressionViewer({ 
@@ -21,6 +22,7 @@ export default function GeneExpressionViewer({
   comparisonName,
   allGenes,
   sampleConditionMap,
+  geneNameMap,
 }: GeneExpressionViewerProps) {
   const [selectedGene, setSelectedGene] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -47,22 +49,30 @@ export default function GeneExpressionViewer({
     if (allGenes.length > 0 && !selectedGene) {
       const topGene = allGenes[0];
       setSelectedGene(topGene);
-      setSearchTerm(topGene);
+      setSearchTerm(geneNameMap?.[topGene] ?? topGene);
       fetchGeneExpression(topGene);
     }
-  }, [allGenes]);
+  }, [allGenes, geneNameMap]);
 
-  // Filter genes based on search term
+  // Filter genes based on search term (matches symbol OR Ensembl ID)
   const filteredGenes = useMemo(() => {
     if (!searchTerm) return [];
+    const term = searchTerm.toLowerCase();
     return allGenes
-      .filter(gene => gene.toLowerCase().includes(searchTerm.toLowerCase()))
-      .slice(0, 50); // Limit to 50 results
-  }, [searchTerm, allGenes]);
+      .filter(geneId => {
+        const symbol = geneNameMap?.[geneId] ?? '';
+        return (
+          geneId.toLowerCase().includes(term) ||
+          symbol.toLowerCase().includes(term)
+        );
+      })
+      .slice(0, 50);
+  }, [searchTerm, allGenes, geneNameMap]);
 
   const fetchGeneExpression = async (gene: string) => {
     if (!gene) return;
     
+    setExpressionData(null);
     try {
       setLoading(true);
       const response = await api.post(`/datasets/${matrixDataset.id}/query`, {
@@ -73,7 +83,11 @@ export default function GeneExpressionViewer({
 
       if (response.data.data.length > 0) {
         const row = response.data.data[0];
-        const columns = response.data.columns.filter((c: string) => c !== 'gene_id');
+        // Accept any common gene ID column name
+        const geneColNames = ['gene_id', 'gene', 'gene_name', 'geneid'];
+        const columns = response.data.columns.filter(
+          (c: string) => !geneColNames.includes(c.toLowerCase())
+        );
         
         // Group samples by condition
         const condition1Samples: { sample: string; value: number }[] = [];
@@ -83,6 +97,7 @@ export default function GeneExpressionViewer({
           // Preferred: use explicit sample→condition mapping from metadata
           columns.forEach((sample: string) => {
             const value = parseFloat(row[sample]);
+            if (isNaN(value)) return;
             const cond = sampleConditionMap[sample];
             if (cond === conditions[0]) {
               condition1Samples.push({ sample, value });
@@ -94,11 +109,20 @@ export default function GeneExpressionViewer({
           // Fallback: match by sample name containing condition string
           columns.forEach((sample: string) => {
             const value = parseFloat(row[sample]);
+            if (isNaN(value)) return;
             if (conditions[0] && sample.toLowerCase().includes(conditions[0].toLowerCase())) {
               condition1Samples.push({ sample, value });
             } else if (conditions[1] && sample.toLowerCase().includes(conditions[1].toLowerCase())) {
               condition2Samples.push({ sample, value });
             }
+          });
+        }
+
+        // If neither condition matched any sample, show all samples as a single group
+        if (condition1Samples.length === 0 && condition2Samples.length === 0) {
+          columns.forEach((sample: string) => {
+            const value = parseFloat(row[sample]);
+            if (!isNaN(value)) condition1Samples.push({ sample, value });
           });
         }
         
@@ -129,12 +153,12 @@ export default function GeneExpressionViewer({
         setExpressionData({
           gene,
           condition1: {
-            name: conditions[0],
+            name: conditions[0] || 'All samples',
             samples: condition1Samples,
             stats: calculateBoxplotStats(cond1Values)
           },
           condition2: {
-            name: conditions[1],
+            name: conditions[1] || '',
             samples: condition2Samples,
             stats: calculateBoxplotStats(cond2Values)
           }
@@ -149,7 +173,7 @@ export default function GeneExpressionViewer({
 
   const handleGeneSelect = (gene: string) => {
     setSelectedGene(gene);
-    setSearchTerm(gene);
+    setSearchTerm(geneNameMap?.[gene] ?? gene);
     setShowDropdown(false);
     fetchGeneExpression(gene);
   };
@@ -168,22 +192,32 @@ export default function GeneExpressionViewer({
             setShowDropdown(true);
           }}
           onFocus={() => setShowDropdown(true)}
-          placeholder="Search for a gene (e.g., GAPDH, TP53, ACTB)..."
+          placeholder="Search for a gene (symbol or Ensembl ID, e.g. TP53, ENSG00000141510)..."
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary placeholder:text-gray-400"
         />
         
         {/* Dropdown */}
         {showDropdown && filteredGenes.length > 0 && (
           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-            {filteredGenes.map((gene) => (
-              <button
-                key={gene}
-                onClick={() => handleGeneSelect(gene)}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-              >
-                {gene}
-              </button>
-            ))}
+            {filteredGenes.map((geneId) => {
+              const symbol = geneNameMap?.[geneId];
+              return (
+                <button
+                  key={geneId}
+                  onClick={() => handleGeneSelect(geneId)}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                >
+                  {symbol ? (
+                    <span>
+                      <span className="font-medium">{symbol}</span>
+                      <span className="ml-2 text-xs text-gray-400">{geneId}</span>
+                    </span>
+                  ) : (
+                    geneId
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -192,41 +226,48 @@ export default function GeneExpressionViewer({
       {loading && <div className="text-center py-4">Loading expression data...</div>}
 
       {/* Expression data display */}
-      {!loading && expressionData && expressionData.condition1.stats && expressionData.condition2.stats && (
+      {!loading && expressionData && (expressionData.condition1.stats || expressionData.condition2.stats) && (
         <div>
           <div className="mb-6 p-4 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded-lg border border-brand-primary/20">
             <span className="text-base font-semibold text-gray-700">Gene: </span>
-            <span className="text-lg text-brand-primary font-mono font-bold">{expressionData.gene}</span>
+            {geneNameMap?.[expressionData.gene] ? (
+              <>
+                <span className="text-lg text-brand-primary font-mono font-bold">{geneNameMap[expressionData.gene]}</span>
+                <span className="ml-2 text-sm text-gray-400">{expressionData.gene}</span>
+              </>
+            ) : (
+              <span className="text-lg text-brand-primary font-mono font-bold">{expressionData.gene}</span>
+            )}
           </div>
           
           {/* Boxplot visualization */}
           <div className="mb-6">
             <Plot
               data={[
-                {
+                ...(expressionData.condition1.stats ? [{
                   y: expressionData.condition1.stats.values,
-                  type: 'box',
+                  type: 'box' as const,
                   name: expressionData.condition1.name,
                   marker: { color: '#3b82f6' },
-                  boxmean: 'sd',
-                  boxpoints: 'all',
+                  boxmean: 'sd' as const,
+                  boxpoints: 'all' as const,
                   jitter: 0.3,
                   pointpos: -1.8,
-                },
-                {
+                }] : []),
+                ...(expressionData.condition2.stats ? [{
                   y: expressionData.condition2.stats.values,
-                  type: 'box',
+                  type: 'box' as const,
                   name: expressionData.condition2.name,
                   marker: { color: '#ef4444' },
-                  boxmean: 'sd',
-                  boxpoints: 'all',
+                  boxmean: 'sd' as const,
+                  boxpoints: 'all' as const,
                   jitter: 0.3,
                   pointpos: -1.8,
-                },
-              ]}
+                }] : []),
+              ] as any[]}
               layout={{
                 title: {
-                  text: `Expression of ${expressionData.gene}`,
+                  text: `Expression of ${geneNameMap?.[expressionData.gene] ?? expressionData.gene}`,
                   font: { size: 16, weight: 600 }
                 },
                 yaxis: {
@@ -259,6 +300,7 @@ export default function GeneExpressionViewer({
           </div>
 
           {/* Fold change */}
+          {expressionData.condition1.stats && expressionData.condition2.stats && (
           <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
             <div className="text-base">
               <span className="font-bold text-gray-900">Fold Change: </span>
@@ -271,6 +313,7 @@ export default function GeneExpressionViewer({
               </span>
             </div>
           </div>
+          )}
         </div>
       )}
 
