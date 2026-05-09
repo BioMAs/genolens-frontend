@@ -21,11 +21,17 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
 
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    }
+  } catch (err) {
+    // Supabase client failed to initialise (e.g. missing NEXT_PUBLIC_SUPABASE_URL env var).
+    // Log the issue but let the request proceed without auth — the backend will return 401/403.
+    console.error('[api] Supabase client error in request interceptor:', err);
   }
 
   return config;
