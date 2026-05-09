@@ -97,25 +97,16 @@ export default function AnalysisStatusCard({ analysis, projectId }: Props) {
       )}
 
       {/* Results */}
-      {analysis.status === SelfServiceAnalysisStatus.DONE &&
-        analysis.result_dataset_ids.length > 0 && (
-          <div className="mt-3">
-            <p className="text-xs font-medium text-gray-700 mb-1">
-              Results ({analysis.result_dataset_ids.length} dataset(s)):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {analysis.result_dataset_ids.map((id) => (
-                <Link
-                  key={id}
-                  href={`/projects/${projectId}/datasets/${id}`}
-                  className="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-                >
-                  View dataset →
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+      {analysis.status === SelfServiceAnalysisStatus.DONE && (
+        <div className="mt-3">
+          <Link
+            href={`/projects/${projectId}/analyses/${analysis.id}`}
+            className="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-sm"
+          >
+            View comparisons & results →
+          </Link>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="mt-3 flex justify-end">

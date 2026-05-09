@@ -61,10 +61,15 @@ export default function AnalysisLauncher({ projectId }: Props) {
 
     try {
       setIsPending(true);
-      await api.post('/analyses/upload', formData, {
+      const res = await api.post('/analyses/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      router.push(`/projects/${projectId}/analyses`);
+      const analysisId: string = res.data?.id;
+      if (analysisId) {
+        router.push(`/projects/${projectId}/analyses/${analysisId}`);
+      } else {
+        router.push(`/projects/${projectId}/analyses`);
+      }
     } catch (err: any) {
       setError(err?.response?.data?.detail ?? err?.message ?? 'Launch failed.');
     } finally {
