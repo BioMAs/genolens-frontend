@@ -3,8 +3,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
-import { Settings, Play, Download, Maximize2, Loader2, AlertCircle } from 'lucide-react';
+import { Settings, Play, Download, Maximize2, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-react';
 import { PlotData, Layout } from 'plotly.js';
+import { getColorscale } from '@/components/heatmap/heatmapConfig';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import AIChartAssistant from '@/components/AIChartAssistant';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ReferenceLine, ResponsiveContainer
+} from 'recharts';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -21,6 +28,19 @@ interface ClusteringParams {
   cluster_cols: boolean;
   method: string;
   metric: string;
+  n_clusters?: number;
+}
+
+interface SilhouettePoint {
+  k: number;
+  silhouette_score: number;
+  inertia: number;
+}
+
+interface SilhouetteResult {
+  profile: SilhouettePoint[];
+  recommended_k: number;
+  recommended_score: number;
 }
 
 interface ClusteringResult {
@@ -47,12 +67,42 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
   });
 
   const [plotHeight, setPlotHeight] = useState(800);
+  const [colorblindMode, setColorblindMode] = useState(false);
 
-  const runClustering = async () => {
+  // Silhouette / K-means
+  const [silhouetteData, setSilhouetteData] = useState<SilhouetteResult | null>(null);
+  const [loadingSilhouette, setLoadingSilhouette] = useState(false);
+  const [silhouetteError, setSilhouetteError] = useState<string | null>(null);
+  const [showSilhouette, setShowSilhouette] = useState(false);
+
+  const fetchSilhouette = async () => {
+    setLoadingSilhouette(true);
+    setSilhouetteError(null);
+    setShowSilhouette(true);
+    try {
+      const response = await api.get(`/datasets/${datasetId}/clustering-quality`, {
+        params: { top_n_genes: params.top_n_genes, metric: params.metric, k_min: 2, k_max: 10 }
+      });
+      setSilhouetteData(response.data);
+    } catch (err: any) {
+      setSilhouetteError(err.response?.data?.detail || 'Failed to compute silhouette scores');
+    } finally {
+      setLoadingSilhouette(false);
+    }
+  };
+
+  const applyRecommendedK = (k: number) => {
+    const newParams = { ...params, method: 'kmeans', n_clusters: k };
+    setParams(newParams);
+    runClustering(newParams);
+  };
+
+  const runClustering = async (overrideParams?: Partial<ClusteringParams>) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post(`/datasets/${datasetId}/cluster`, params);
+      const effectiveParams = overrideParams ? { ...params, ...overrideParams } : params;
+      const response = await api.post(`/datasets/${datasetId}/cluster`, effectiveParams);
       setResult(response.data);
     } catch (err: any) {
       console.error("Clustering error:", err);
@@ -88,7 +138,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       z: finalZ,
       x: orderedColLabels,
       y: orderedRowLabels,
-      colorscale: 'RdBu',
+      colorscale: getColorscale(colorblindMode),
       reversescale: true, // Red usually up/hot
       // zmid: 0, // Assuming centered data often, but maybe not? 
       // Actually standard count matrices are not centered.
@@ -127,11 +177,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
   const finalPlotData = useMemo(() => {
       if (!result) return [];
       
-      let processedZ = result.z;
+      const processedZ = result.z;
       
       // 1. Reorder Rows first
       let orderedRows = result.row_order.map(i => processedZ[i]);
-      let orderedRowLabels = result.row_order.map(i => result.row_labels[i]);
+      const orderedRowLabels = result.row_order.map(i => result.row_labels[i]);
       
       // 2. Standardize if requested (Calc Z-score per row)
       if (standardize) {
@@ -147,14 +197,14 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           z: finalZ,
           x: orderedColLabels,
           y: orderedRowLabels,
-          colorscale: 'RdBu', 
+          colorscale: getColorscale(colorblindMode), 
           reversescale: true,
           zmin: standardize ? -2 : undefined,
           zmax: standardize ? 2 : undefined,
           colorbar: { title: standardize ? 'Z-Score' : 'Expression' }
       } as Partial<PlotData>];
 
-  }, [result, standardize]);
+  }, [result, standardize, colorblindMode]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
@@ -196,8 +246,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
              <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600">Method:</label>
-                <select 
-                    value={params.method} 
+                <select
+                    value={params.method}
                     onChange={e => setParams({...params, method: e.target.value})}
                     className="text-sm border rounded px-2 py-1"
                 >
@@ -205,11 +255,35 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                     <option value="average">Average</option>
                     <option value="complete">Complete</option>
                     <option value="single">Single</option>
+                    <option value="kmeans">K-means</option>
                 </select>
             </div>
 
-            <button 
-                onClick={runClustering}
+            {params.method === 'kmeans' && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">k:</label>
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  value={params.n_clusters ?? 8}
+                  onChange={e => setParams({ ...params, n_clusters: Number(e.target.value) })}
+                  className="text-sm border rounded px-2 py-1 w-16"
+                />
+                <button
+                  onClick={fetchSilhouette}
+                  disabled={loadingSilhouette}
+                  className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+                  title="Compute silhouette scores to find the optimal k"
+                >
+                  {loadingSilhouette ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  Find optimal k
+                </button>
+              </div>
+            )}
+
+            <button
+                onClick={() => runClustering()}
                 disabled={loading}
                 className="flex items-center gap-2 bg-brand-primary text-white px-3 py-1.5 rounded text-sm hover:bg-brand-primary/90 disabled:opacity-50"
             >
@@ -220,17 +294,109 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <div className="flex-grow"></div>
              
              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input 
-                    type="checkbox" 
-                    checked={standardize} 
+                <input
+                    type="checkbox"
+                    checked={standardize}
                     onChange={e => setStandardize(e.target.checked)}
                     className="rounded text-brand-primary"
                 />
                 Scale Rows (Z-score)
             </label>
 
+            <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+
+            <AIChartAssistant
+              datasetId={datasetId}
+              chartType="heatmap"
+              contextKey="heatmap-default"
+              context={{
+                n_genes: result?.row_labels?.length ?? 0,
+                n_samples: result?.col_labels?.length ?? 0,
+                n_clusters: params.n_clusters ?? null,
+                top_varying_genes: (result?.row_labels ?? []).slice(0, 5),
+                sample_groups: result?.col_labels ?? [],
+                method: params.method,
+              }}
+              label="Heatmap"
+            />
+
         </div>
       </div>
+
+      {/* Silhouette Panel */}
+      {showSilhouette && (
+        <div className="bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Silhouette Score by k</span>
+            <div className="flex items-center gap-3">
+              {silhouetteData && (
+                <span className="text-xs text-gray-500">
+                  Recommended: <strong className="text-amber-600">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
+                </span>
+              )}
+              <button onClick={() => setShowSilhouette(false)} className="text-gray-400 hover:text-gray-600">
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {silhouetteError && (
+            <p className="text-sm text-red-600 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
+          )}
+
+          {loadingSilhouette && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+              <Loader2 className="h-4 w-4 animate-spin" /> Computing silhouette scores…
+            </div>
+          )}
+
+          {silhouetteData && !loadingSilhouette && (
+            <div className="flex items-end gap-6">
+              <div className="flex-1" style={{ height: 180 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={silhouetteData.profile} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']}
+                      labelFormatter={k => `k = ${k}`}
+                    />
+                    <ReferenceLine y={0.5} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: '#94a3b8' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="silhouette_score"
+                      stroke="#2A2E5B"
+                      strokeWidth={2}
+                      dot={(props: any) => {
+                        const isRec = props.payload.k === silhouetteData.recommended_k;
+                        return (
+                          <circle
+                            key={props.index}
+                            cx={props.cx}
+                            cy={props.cy}
+                            r={isRec ? 7 : 4}
+                            fill={isRec ? '#d97706' : '#2A2E5B'}
+                            stroke={isRec ? '#fff' : 'none'}
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <button
+                onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
+                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm font-medium mb-2"
+              >
+                Use k={silhouetteData.recommended_k}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 bg-gray-50 p-4 overflow-hidden relative">

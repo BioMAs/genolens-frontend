@@ -10,6 +10,7 @@ interface User {
   full_name: string | null;
   avatar_url: string | null;
   role: string;
+  status?: string;
   subscription_plan?: string;
   ai_interpretations_used?: number;
   ai_interpretations_remaining?: number;
@@ -19,6 +20,21 @@ interface User {
   updated_at: string;
   last_sign_in_at: string | null;
   confirmed_at: string | null;
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  const styles: Record<string, string> = {
+    active:    "bg-green-100 text-green-700",
+    pending:   "bg-yellow-100 text-yellow-700",
+    suspended: "bg-orange-100 text-orange-700",
+    cancelled: "bg-red-100 text-red-700",
+  };
+  const s = status ?? "active";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[s] ?? "bg-gray-100 text-gray-700"}`}>
+      {s}
+    </span>
+  );
 }
 
 export default function UserManagement() {
@@ -44,6 +60,16 @@ export default function UserManagement() {
     full_name: '',
     role: '',
     subscription_plan: ''
+  });
+
+  // Invite Modal
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: '',
+    full_name: '',
+    plan: 'BASIC',
+    subscription_ends_at: '',
   });
 
   // Token Modal
@@ -93,6 +119,35 @@ export default function UserManagement() {
       alert(err.response?.data?.detail || 'Failed to create user.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setInviting(true);
+      // Convert date-only string (YYYY-MM-DD) to full ISO datetime expected by the backend
+      const endsAt = inviteForm.subscription_ends_at
+        ? new Date(inviteForm.subscription_ends_at).toISOString()
+        : undefined;
+
+      await api.post('/admin/users/invite', {
+        email: inviteForm.email,
+        full_name: inviteForm.full_name || undefined,
+        plan: inviteForm.plan,
+        subscription_ends_at: endsAt,
+      });
+      await fetchUsers();
+      setShowInviteModal(false);
+      setInviteForm({ email: '', full_name: '', plan: 'BASIC', subscription_ends_at: '' });
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map((e: any) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join('\n')
+        : detail ?? 'Failed to send invitation.';
+      alert(message);
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -247,13 +302,22 @@ export default function UserManagement() {
               Manage user roles and permissions. Total users: {users.length}
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Add User
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-md hover:bg-brand-primary/5 transition-colors gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              Invite User
+            </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              Add User
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -268,6 +332,9 @@ export default function UserManagement() {
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   AI Usage
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
@@ -296,7 +363,7 @@ export default function UserManagement() {
                       )}
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.full_name || 'Unnamed User'}
+                          {user.full_name || user.email || 'Unnamed User'}
                         </div>
                         <div className="text-xs text-gray-400 truncate max-w-[150px]" title={user.id}>
                           {user.id.substring(0, 8)}...
@@ -325,6 +392,9 @@ export default function UserManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <StatusBadge status={user.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
@@ -337,6 +407,38 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
+                      {user.status === "pending" ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.post(`/admin/users/${user.id}/resend-invite`);
+                              alert(`Invitation resent to ${user.email}`);
+                            } catch (e) {
+                              console.error("Resend invite failed", e);
+                              alert("Failed to resend invitation. Please try again.");
+                            }
+                          }}
+                          className="text-xs text-yellow-600 hover:text-yellow-800 underline"
+                        >
+                          Resend invite
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const newStatus = user.status === "active" ? "suspended" : "active";
+                            try {
+                              await api.patch(`/admin/users/${user.id}/status`, { status: newStatus });
+                              await fetchUsers();
+                            } catch (e) {
+                              console.error("Status update failed", e);
+                              alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
+                            }
+                          }}
+                          className="text-xs text-gray-500 hover:text-gray-800 underline"
+                        >
+                          {user.status === "active" ? "Suspend" : "Activate"}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
                         disabled={assigningDemo === user.id}
@@ -387,6 +489,85 @@ export default function UserManagement() {
           </table>
         </div>
       </div>
+
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Invite User</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Creates a pending account and sends an invitation email.</p>
+              </div>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleInvite} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={inviteForm.full_name}
+                  onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  placeholder="Jane Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <select
+                  value={inviteForm.plan}
+                  onChange={(e) => setInviteForm({ ...inviteForm, plan: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                >
+                  {plans.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Access expires on <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={inviteForm.subscription_ends_at}
+                  onChange={(e) => setInviteForm({ ...inviteForm, subscription_ends_at: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                >
+                  {inviting ? 'Sending...' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateModal && (

@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { useVolcanoPlot } from '@/hooks/useVisualizations';
 import { Dataset } from '@/types';
+import { getPalette } from '@/utils/chartPalettes';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import AIChartAssistant from '@/components/AIChartAssistant';
 
 interface VolcanoPlotProps {
   dataset: Dataset;
@@ -15,6 +18,8 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
   const [padjThreshold, setPadjThreshold] = useState(0.05);
   const [logfcThreshold, setLogfcThreshold] = useState(0.58);
   const [showControls, setShowControls] = useState(false);
+  const [colorblindMode, setColorblindMode] = useState(false);
+  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
 
   // Utilise React Query pour gérer le cache et les requêtes
   const { data: volcanoData, isLoading, error, isFetching } = useVolcanoPlot(
@@ -49,12 +54,15 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
               <span className="text-xs text-green-600">✓ Cached</span>
             )}
           </div>
-          <button
-            onClick={() => setShowControls(!showControls)}
-            className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-          >
-            {showControls ? '− Hide' : '+ Threshold Settings'}
-          </button>
+          <div className="flex items-center gap-2">
+            <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+            <button
+              onClick={() => setShowControls(!showControls)}
+              className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+            >
+              {showControls ? '− Hide' : '+ Threshold Settings'}
+            </button>
+          </div>
         </div>
 
         {showControls && (
@@ -93,6 +101,28 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
         )}
       </div>
 
+      {/* Ask AI assistant — below controls */}
+      <AIChartAssistant
+        datasetId={dataset.id}
+        chartType="volcano"
+        contextKey={comparisonName}
+        context={{
+          comparison_name: comparisonName,
+          up_count: data.filter((p: any) => p.is_significant && p.x > 0).length,
+          down_count: data.filter((p: any) => p.is_significant && p.x < 0).length,
+          top_up_genes: data
+            .filter((p: any) => p.is_significant && p.x > 0)
+            .slice(0, 5)
+            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+          top_down_genes: data
+            .filter((p: any) => p.is_significant && p.x < 0)
+            .slice(0, 5)
+            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+        }}
+        label="Volcano Plot"
+        panelClassName="max-h-[500px]"
+      />
+
       {/* Plot */}
       <div className="h-96 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -119,7 +149,7 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
             <ReferenceLine y={-Math.log10(padjThreshold)} stroke="#fbbf24" strokeDasharray="2 2" label={`p=${padjThreshold}`} />
             <Scatter name="Genes" data={data} fill="#8884d8" shape="circle" r={1.5}>
               {data.map((entry: any, index: number) => (
-                <Cell key={`cell-${index}`} fill={entry.is_significant ? (entry.x > 0 ? '#ef4444' : '#00BFA5') : '#d1d5db'} />
+                <Cell key={`cell-${index}`} fill={entry.is_significant ? (entry.x > 0 ? palette.up : palette.down) : palette.ns} />
               ))}
             </Scatter>
           </ScatterChart>
@@ -136,15 +166,15 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
             <span className="text-sm font-semibold text-gray-700">Significance:</span>
             <div className="flex items-center gap-2">
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded bg-red-500 mr-1.5"></div>
+                <div className="w-6 h-6 rounded mr-1.5" style={{ backgroundColor: palette.up }}></div>
                 <span className="text-sm text-gray-600">Upregulated</span>
               </div>
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded mr-1.5" style={{backgroundColor: '#00BFA5'}}></div>
+                <div className="w-6 h-6 rounded mr-1.5" style={{ backgroundColor: palette.down }}></div>
                 <span className="text-sm text-gray-600">Downregulated</span>
               </div>
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded bg-gray-300 mr-1.5"></div>
+                <div className="w-6 h-6 rounded mr-1.5" style={{ backgroundColor: palette.ns }}></div>
                 <span className="text-sm text-gray-600">Not Significant</span>
               </div>
             </div>

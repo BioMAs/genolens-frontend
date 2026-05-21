@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Download, Settings, Filter } from 'lucide-react';
-import AdvancedFilterBuilder, { AdvancedFilter } from './AdvancedFilterBuilder';
+import AdvancedFilterBuilder, { AdvancedFilter, PathwayOption } from './AdvancedFilterBuilder';
 import { useSavedFilters } from '@/hooks/useSavedFilters';
 import BookmarkButton from './BookmarkButton';
 
@@ -42,6 +42,22 @@ export default function DEGTableWithAdvancedFilters({
   const [filterActive, setFilterActive] = useState(false);
 
   const { savedFilters, saveFilter, deleteFilter } = useSavedFilters(projectId);
+  const [availablePathways, setAvailablePathways] = useState<PathwayOption[]>([]);
+
+  useEffect(() => {
+    api.get(`/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`, {
+      params: { page_size: 500 }
+    }).then(res => {
+      const pathways: PathwayOption[] = (res.data.pathways || []).map((p: any) => ({
+        pathway_id: p.pathway_id,
+        pathway_name: p.pathway_name,
+        category: p.category,
+      }));
+      setAvailablePathways(pathways);
+    }).catch(() => {
+      // Silently ignore — enrichment may not have been run yet
+    });
+  }, [dataset.id, comparisonName]);
 
   const [visibleColumns, setVisibleColumns] = useState({
     bookmark: true,
@@ -250,6 +266,7 @@ export default function DEGTableWithAdvancedFilters({
             onSaveFilter={saveFilter}
             onLoadFilter={handleApplyFilter}
             onDeleteFilter={deleteFilter}
+            pathways={availablePathways}
           />
         </div>
       )}

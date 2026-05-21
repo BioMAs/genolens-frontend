@@ -21,11 +21,17 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
 
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    }
+  } catch (err) {
+    // Supabase client failed to initialise (e.g. missing NEXT_PUBLIC_SUPABASE_URL env var).
+    // Log the issue but let the request proceed without auth — the backend will return 401/403.
+    console.error('[api] Supabase client error in request interceptor:', err);
   }
 
   return config;
@@ -39,16 +45,19 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401) {
-      // Handle unauthorized access (e.g., redirect to login)
-      console.error('Unauthorized access');
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.detail?.error === 'account_inactive'
+    ) {
+      const accountStatus = error.response.data.detail.status as string;
+      if (typeof document !== 'undefined') {
+        document.cookie = `account_status=${accountStatus}; path=/; max-age=3600`;
+        window.location.href = '/suspended';
+      }
+      return Promise.reject(error);
     }
 
-    // Log other errors for debugging
-    if (error.response?.status !== 401) {
-      console.error('API Error:', error.message, error.response?.data);
-    }
-
+    // Propagate the error — callers handle their own feedback (alert, toast, etc.)
     return Promise.reject(error);
   }
 );

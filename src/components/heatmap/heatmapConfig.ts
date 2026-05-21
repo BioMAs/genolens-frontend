@@ -1,5 +1,21 @@
 import { HeatmapConfig, TopNOption } from './types';
 
+// Wong (2011) colorblind-safe diverging scale for Plotly
+const COLORBLIND_DIVERGING_SCALE: [number, string][] = [
+  [0, '#0072B2'],
+  [0.5, '#f7f7f7'],
+  [1, '#D55E00'],
+];
+
+export function getColorscale(colorblind: boolean): string | [number, string][] {
+  return colorblind ? COLORBLIND_DIVERGING_SCALE : 'RdBu';
+}
+
+export function getLogFCColorscale(colorblind: boolean): string | [number, string][] {
+  // PiYG → Wong blue/vermillion for colorblind
+  return colorblind ? COLORBLIND_DIVERGING_SCALE : 'PiYG';
+}
+
 export const DEFAULT_HEATMAP_CONFIG: HeatmapConfig = {
   height: 700,
   mainMargin: { l: 120, r: 50, b: 150, t: 60 },

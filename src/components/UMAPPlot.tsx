@@ -15,6 +15,9 @@ import {
 import { useUMAPData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
+import { getPalette } from '@/utils/chartPalettes';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import AIChartAssistant from '@/components/AIChartAssistant';
 
 interface UMAPPlotProps {
   dataset: Dataset;
@@ -38,6 +41,8 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
   const [metadata, setMetadata] = useState<any[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
+  const [colorblindMode, setColorblindMode] = useState(false);
+  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
   const [joinColumn, setJoinColumn] = useState<string>('');
 
   const error = umapError 
@@ -122,39 +127,53 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       return Array.from(new Set(plotData.map((d: any) => d.category))).filter(Boolean);
   }, [plotData, selectedColorColumn]);
 
-  const colors = ['#2A2E5B', '#00BFA5', '#7C3AED', '#ffc658', '#ff7300', '#0088fe', '#00c49f', '#ffbb28', '#ff8042', '#a4de6c'];
   const categoryColorMap = useMemo(() => {
       const map: Record<string, string> = {};
       uniqueCategories.forEach((cat, i) => {
-          map[cat as string] = colors[i % colors.length];
+          map[cat as string] = palette.categorical[i % palette.categorical.length];
       });
       map['Unknown'] = '#d1d5db';
       return map;
-  }, [uniqueCategories]);
+  }, [uniqueCategories, palette]);
 
   if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating UMAP...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
   if (!umapData) return null;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4 flex-shrink-0">
+    <div className="bg-white p-4 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium text-gray-900">Sample UMAP</h3>
-        {metadataColumns.length > 0 && (
-            <select 
-                value={selectedColorColumn} 
-                onChange={(e) => setSelectedColorColumn(e.target.value)}
-                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
-            >
-                {metadataColumns.map(col => (
-                    <option key={col} value={col}>Color by: {col}</option>
-                ))}
-            </select>
-        )}
+        <div className="flex items-center gap-2">
+          {metadataColumns.length > 0 && (
+              <select
+                  value={selectedColorColumn}
+                  onChange={(e) => setSelectedColorColumn(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
+              >
+                  {metadataColumns.map(col => (
+                      <option key={col} value={col}>Color by: {col}</option>
+                  ))}
+              </select>
+          )}
+          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <AIChartAssistant
+            datasetId={dataset.id}
+            chartType="umap"
+            contextKey="umap-default"
+            context={{
+              n_samples: umapData?.data?.length ?? 0,
+              n_clusters: Array.from(new Set((umapData?.data ?? []).map((d: any) => d.cluster ?? 0))).length,
+              cluster_sizes: [],
+              sample_groups: Array.from(new Set((umapData?.data ?? []).map((d: any) => d[selectedColorColumn] ?? 'Unknown'))),
+            }}
+            label="UMAP"
+          />
+        </div>
       </div>
-      
-      <div className="flex-grow min-h-0 w-full flex flex-col">
-        <ResponsiveContainer width="100%" height="100%">
+
+      <div>
+        <ResponsiveContainer width="100%" height={420}>
           <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis 

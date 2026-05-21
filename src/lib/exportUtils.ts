@@ -269,7 +269,7 @@ export function exportToHTML(
   const { title, description, tables, metadata } = data;
 
   // Build HTML content
-  let html = `
+  const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>

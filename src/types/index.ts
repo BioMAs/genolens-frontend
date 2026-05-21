@@ -3,6 +3,7 @@ export interface Project {
   name: string;
   description?: string;
   owner_id: string;
+  species: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +80,26 @@ export interface EnrichmentResult {
   genes?: string[];
 }
 
+export interface GOTreeNode {
+  go_id: string;
+  go_name: string;
+  namespace: string;
+  level: number | null;
+  is_enriched: boolean;
+  pvalue?: number | null;
+  fdr?: number | null;
+  enrichment_ratio?: number | null;
+  gene_count?: number | null;
+  genes?: string[];
+  children: GOTreeNode[];
+}
+
+export interface GOHierarchyResponse {
+  biological_process: GOTreeNode[];
+  molecular_function: GOTreeNode[];
+  cellular_component: GOTreeNode[];
+}
+
 export interface DailyLoginCount {
   date: string;
   count: number;
@@ -97,6 +118,71 @@ export interface LoginStatsResponse {
   active_7_days: number;
   active_30_days: number;
   recent_events: RecentLoginEvent[];
+}
+
+// ---------------------------------------------------------------------------
+// Self-service DESeq2 analyses
+// ---------------------------------------------------------------------------
+
+export enum SelfServiceAnalysisStatus {
+  PENDING = 'PENDING',
+  RUNNING = 'RUNNING',
+  DONE = 'DONE',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export interface AnalysisParams {
+  design: 'auto' | 'condition' | 'batch_condition';
+  fdr: number;
+  min_log2fc: number;
+  min_reads: number;
+  min_genes: number;
+  min_count: number;
+  min_reps: number;
+  threads: number;
+  enrichment_databases?: string[] | null;
+  species?: string;
+}
+
+export interface ProgressLogEntry {
+  step: string;
+  message?: string;
+  timestamp: string;
+}
+
+export interface SelfServiceAnalysis {
+  id: string;
+  project_id: string;
+  name: string;
+  status: SelfServiceAnalysisStatus;
+  matrix_dataset_id: string | null;
+  samples_dataset_id: string | null;
+  comparisons_dataset_id: string | null;
+  params: AnalysisParams;
+  result_dataset_ids: string[];
+  intermediate_dataset_ids: { vst?: string; normalized?: string; umap?: string };
+  celery_task_id: string | null;
+  current_step: string | null;
+  progress_log: ProgressLogEntry[];
+  error_message: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SelfServiceAnalysisCreate {
+  project_id: string;
+  name: string;
+  matrix_dataset_id: string;
+  samples_dataset_id: string;
+  comparisons_dataset_id: string;
+  params: AnalysisParams;
+}
+
+export interface SelfServiceAnalysisListResponse {
+  items: SelfServiceAnalysis[];
+  total: number;
 }
 
 

@@ -16,6 +16,9 @@ import { usePCAData } from '@/hooks/useVisualizations';
 import { useDatasetQuery } from '@/hooks/useDatasets';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
+import { getPalette } from '@/utils/chartPalettes';
+import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import AIChartAssistant from '@/components/AIChartAssistant';
 
 interface PCAPlotProps {
   dataset: Dataset;
@@ -40,6 +43,8 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
+  const [colorblindMode, setColorblindMode] = useState(false);
+  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
 
   const error = pcaError ? 'Failed to calculate PCA. Ensure the dataset is a valid expression matrix.' : null;
 
@@ -122,15 +127,14 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       return Array.from(new Set(plotData.map((d: any) => d.category))).filter(Boolean);
   }, [plotData, selectedColorColumn]);
 
-  const colors = ['#2A2E5B', '#00BFA5', '#7C3AED', '#ffc658', '#ff7300', '#0088fe', '#00c49f', '#ffbb28', '#ff8042', '#a4de6c'];
   const categoryColorMap = useMemo(() => {
       const map: Record<string, string> = {};
       uniqueCategories.forEach((cat, i) => {
-          map[cat as string] = colors[i % colors.length];
+          map[cat as string] = palette.categorical[i % palette.categorical.length];
       });
       map['Unknown'] = '#d1d5db';
       return map;
-  }, [uniqueCategories]);
+  }, [uniqueCategories, palette]);
 
   if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating PCA...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
@@ -140,24 +144,41 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   const yLabel = `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)`;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4 flex-shrink-0">
+    <div className="bg-white p-4 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium text-gray-900">Sample PCA</h3>
-        {metadataColumns.length > 0 && (
-            <select 
-                value={selectedColorColumn} 
-                onChange={(e) => setSelectedColorColumn(e.target.value)}
-                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
-            >
-                {metadataColumns.map(col => (
-                    <option key={col} value={col}>Color by: {col}</option>
-                ))}
-            </select>
-        )}
+        <div className="flex items-center gap-2">
+          {metadataColumns.length > 0 && (
+              <select
+                  value={selectedColorColumn}
+                  onChange={(e) => setSelectedColorColumn(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
+              >
+                  {metadataColumns.map(col => (
+                      <option key={col} value={col}>Color by: {col}</option>
+                  ))}
+              </select>
+          )}
+          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <AIChartAssistant
+            datasetId={dataset.id}
+            chartType="pca"
+            contextKey="pca-default"
+            context={{
+              variance_pc1: pcaData ? +(pcaData.explained_variance[0] * 100).toFixed(1) : 0,
+              variance_pc2: pcaData ? +(pcaData.explained_variance[1] * 100).toFixed(1) : 0,
+              n_samples: pcaData?.data?.length ?? 0,
+              n_genes: 0,
+              sample_groups: Array.from(new Set((pcaData?.data ?? []).map((d: any) => d[selectedColorColumn] ?? 'Unknown'))),
+              group_separation: true,
+            }}
+            label="PCA Plot"
+          />
+        </div>
       </div>
-      
-      <div className="flex-grow min-h-0 w-full flex flex-col">
-        <ResponsiveContainer width="100%" height="100%">
+
+      <div>
+        <ResponsiveContainer width="100%" height={420}>
           <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis 

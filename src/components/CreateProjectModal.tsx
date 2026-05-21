@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import Link from 'next/link';
 import api from '@/utils/api';
-import { X } from 'lucide-react';
+import { X, ArrowUpCircle } from 'lucide-react';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -16,7 +19,9 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLimitError, setIsLimitError] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   if (!isOpen) return null;
 
@@ -24,20 +29,31 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setIsLimitError(false);
 
     try {
-      await api.post('/projects/', {
+      const res = await api.post<{ id: string }>('/projects/', {
         name,
         description,
       });
-      // Invalider le cache React Query pour forcer le rechargement de la liste
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['subscription'] });
       setName('');
       setDescription('');
       onSuccess();
       onClose();
+      // Redirect to guided setup wizard
+      router.push(`/projects/${res.data.id}/setup`);
     } catch (err) {
       console.error('Failed to create project:', err);
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        const detail = err.response.data?.detail;
+        if (detail?.error === 'project_limit_reached') {
+          setIsLimitError(true);
+          setError(`Project limit reached (${detail.current_count}/${detail.max_projects}). Upgrade your plan to create more projects.`);
+          return;
+        }
+      }
       setError('Failed to create project. Please try again.');
     } finally {
       setLoading(false);
@@ -59,8 +75,18 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
-              {error}
+            <div className={`mb-4 rounded-md p-3 text-sm ${isLimitError ? 'bg-amber-50 border border-amber-200' : 'bg-red-50'}`}>
+              <p className={isLimitError ? 'text-amber-800 font-medium' : 'text-red-700'}>{error}</p>
+              {isLimitError && (
+                <Link
+                  href="/pricing"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white rounded-md px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700"
+                  onClick={onClose}
+                >
+                  <ArrowUpCircle className="h-3.5 w-3.5" />
+                  Upgrade Plan
+                </Link>
+              )}
             </div>
           )}
 

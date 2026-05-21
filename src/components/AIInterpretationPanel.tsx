@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 
@@ -30,6 +31,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     const [data, setData] = useState<InterpretationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
     const [aiStatus, setAiStatus] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [expanded, setExpanded] = useState(false);
@@ -132,7 +134,8 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     const generateInterpretation = async (forceRegenerate: boolean = false) => {
         setLoading(true);
         setError(null);
-        
+        setErrorType(null);
+
         try {
             const response = await api.post(
                 `/datasets/${datasetId}/comparisons/${encodeURIComponent(comparisonName)}/interpret`,
@@ -144,21 +147,24 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     }
                 }
             );
-            
+
             setData(response.data);
             setExpanded(true);
         } catch (err: any) {
             console.error('AI interpretation error:', err);
-            
+
             if (err.response?.status === 403) {
-                setError("AI features require a PREMIUM or ADVANCED subscription.");
+                setError("AI interpretation requires a Pro or Advanced plan.");
+                setErrorType('plan');
             } else if (err.response?.status === 402) {
-                setError("AI quota exceeded. Buy extra tokens or upgrade to ADVANCED plan for unlimited access.");
+                setError("You've used all your AI interpretations for this month.");
+                setErrorType('quota');
             } else {
                 setError(
-                    err.response?.data?.detail || 
+                    err.response?.data?.detail ||
                     "Error generating interpretation. Please check if Ollama is running."
                 );
+                setErrorType('generic');
             }
         } finally {
             setLoading(false);
@@ -200,9 +206,9 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             let errorMsg = "Sorry, I couldn't answer your question. Please check if Ollama is running.";
             
             if (err.response?.status === 403) {
-                errorMsg = "AI features require a PREMIUM or ADVANCED subscription. Please upgrade your account to continue.";
+                errorMsg = "AI interpretation requires a Pro or Advanced plan. Visit /pricing to upgrade.";
             } else if (err.response?.status === 402) {
-                errorMsg = "AI quota exceeded. Buy extra tokens or upgrade to ADVANCED plan for unlimited access.";
+                errorMsg = "You've used all your AI interpretations for this month. Visit /pricing to upgrade or /profile to buy more tokens.";
             } else if (err.response?.data?.detail) {
                 errorMsg = err.response.data.detail;
             }
@@ -277,15 +283,15 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <a
-                                href="/profile"
+                            <Link
+                                href="/pricing"
                                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg hover:from-purple-600 hover:to-blue-600 shadow-sm transition-all"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
-                                Upgrade to unlock AI features
-                            </a>
+                                View Plans →
+                            </Link>
                             <span className="text-xs text-gray-500">
                                 Starting at $29/month
                             </span>
@@ -392,16 +398,63 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             )}
 
             {/* Error State */}
-            {error && (
+            {error && errorType === 'plan' && (
+                <div className="p-4 bg-purple-50 border-t border-purple-200">
+                    <div className="flex items-start gap-2">
+                        <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-purple-900">Plan Required</p>
+                            <p className="text-sm text-purple-800 mt-1">{error}</p>
+                            <div className="mt-3">
+                                <Link
+                                    href="/pricing"
+                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                    View Plans →
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {error && errorType === 'quota' && (
+                <div className="p-4 bg-amber-50 border-t border-amber-200">
+                    <div className="flex items-start gap-2">
+                        <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-amber-900">Monthly Quota Reached</p>
+                            <p className="text-sm text-amber-800 mt-1">{error}</p>
+                            <p className="text-sm text-amber-700 mt-0.5">Purchase more tokens or upgrade your plan.</p>
+                            <div className="mt-3 flex items-center gap-2">
+                                <Link
+                                    href="/pricing"
+                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                    Upgrade Plan
+                                </Link>
+                                <Link
+                                    href="/profile#billing"
+                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                                >
+                                    Buy More Tokens
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {error && errorType === 'generic' && (
                 <div className="p-4 bg-red-50 border-t border-red-200">
                     <div className="flex items-start gap-2">
                         <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="flex-1">
-                            <p className="text-sm font-medium text-red-800">
-                                {error.includes('subscription') || error.includes('upgrade') ? 'Subscription Required' : 'Error'}
-                            </p>
+                            <p className="text-sm font-medium text-red-800">Error</p>
                             <p className="text-sm text-red-700 mt-1">{error}</p>
                             {error.includes('memory') && (
                                 <div className="mt-2 text-xs text-red-600 bg-red-100 rounded p-2">

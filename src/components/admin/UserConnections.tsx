@@ -14,9 +14,9 @@ import { Users, Activity, Calendar } from 'lucide-react';
 import { useLoginStats } from '@/hooks/useLoginStats';
 
 const PERIOD_OPTIONS = [
-  { label: '7 jours', value: 7 },
-  { label: '30 jours', value: 30 },
-  { label: '90 jours', value: 90 },
+  { label: '7 days', value: 7 },
+  { label: '30 days', value: 30 },
+  { label: '90 days', value: 90 },
 ];
 
 export default function UserConnections() {
@@ -48,26 +48,26 @@ export default function UserConnections() {
   if (isError || !data) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Impossible de charger les statistiques de connexion.</p>
+        <p className="text-red-800">Failed to load connection statistics.</p>
       </div>
     );
   }
 
   const kpis = [
     {
-      label: "Actifs aujourd'hui",
+      label: 'Active today',
       value: data.active_today,
       icon: Activity,
       color: 'bg-green-500',
     },
     {
-      label: 'Actifs 7 derniers jours',
+      label: 'Active last 7 days',
       value: data.active_7_days,
       icon: Calendar,
       color: 'bg-blue-500',
     },
     {
-      label: 'Actifs 30 derniers jours',
+      label: 'Active last 30 days',
       value: data.active_30_days,
       icon: Users,
       color: 'bg-indigo-500',
@@ -98,7 +98,7 @@ export default function UserConnections() {
       {/* Chart */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Connexions par jour</h2>
+          <h2 className="text-lg font-medium text-gray-900">Daily connections</h2>
           <div className="flex gap-2">
             {PERIOD_OPTIONS.map((opt) => (
               <button
@@ -130,9 +130,9 @@ export default function UserConnections() {
             />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip
-                formatter={(value: number | undefined) => [value ?? 0, 'Connexions']}
+                formatter={(value: number | undefined) => [value ?? 0, 'Connections']}
               labelFormatter={(label: string) =>
-                new Date(label).toLocaleDateString('fr-FR', {
+                new Date(label).toLocaleDateString('en-US', {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'short',
@@ -154,8 +154,8 @@ export default function UserConnections() {
       {/* Recent connections table */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Connexions récentes</h2>
-          <p className="text-sm text-gray-500 mt-0.5">50 dernières entrées</p>
+          <h2 className="text-lg font-medium text-gray-900">Recent connections</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Last 50 entries</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -163,13 +163,13 @@ export default function UserConnections() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Utilisateur
+                  User
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date &amp; heure
+                  Date &amp; time
                 </th>
               </tr>
             </thead>
@@ -177,7 +177,7 @@ export default function UserConnections() {
               {data.recent_events.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">
-                    Aucune connexion enregistrée pour le moment.
+                    No connections recorded yet.
                   </td>
                 </tr>
               ) : (
@@ -185,7 +185,7 @@ export default function UserConnections() {
                   <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {event.full_name ?? (
-                        <span className="text-gray-400 italic">Inconnu</span>
+                        <span className="text-gray-400 italic">Unknown</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -196,7 +196,7 @@ export default function UserConnections() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(event.created_at).toLocaleString('fr-FR', {
+                      {new Date(event.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',

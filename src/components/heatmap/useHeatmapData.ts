@@ -43,66 +43,119 @@ export function useHeatmapData({
       setError(null);
 
       // --- 1. Fetch significant DEGs ---
-      const _comparisons = degDataset.dataset_metadata?.comparisons;
-      const columnsInfo =
-        degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
-        (_comparisons && typeof _comparisons === 'object' && !Array.isArray(_comparisons)
-          ? _comparisons[comparisonName]
-          : undefined);
+      // Strategy A: use the /deg-genes/{comparison} DB endpoint (handles prefixed columns,
+      // multi-comparison datasets, and self-service analyses reliably).
+      // Strategy B: fall back to /query (Parquet) for legacy single-comparison datasets
+      // where deg_genes table may be empty.
 
-      // Fallback to column_mapping for single-comparison datasets (list format)
-      const logFCCol: string =
-        columnsInfo?.logFC ||
-        degDataset.column_mapping?.log_fc ||
-        degDataset.column_mapping?.log2FoldChange ||
-        'log2FoldChange';
-      const pValCol: string =
-        columnsInfo?.padj ||
-        degDataset.column_mapping?.padj ||
-        'padj';
+      let degRows: Array<{ gene_id: string; logFC: number; padj: number }> = [];
 
-      const safeLogFCCol = /^[a-zA-Z0-9_.:/\-]+$/.test(logFCCol) ? logFCCol : undefined;
-      const degResponse = await api.post(`/datasets/${degDataset.id}/query`, {
-        limit: 5000,
-        padj_max: 0.05,
-        logfc_min: 1.0,
-        ...(safeLogFCCol ? { sort_by: safeLogFCCol, sort_desc: true } : {}),
-      });
+      // --- Strategy A: DB deg-genes endpoint ---
+      try {
+        const dbResp = await api.get(
+          `/datasets/${degDataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+          {
+            params: {
+              padj_max: 0.05,
+              logfc_min: 1.0,
+              sort_by: 'padj',
+              sort_order: 'asc',
+              page: 1,
+              page_size: 5000,
+            },
+          }
+        );
+        const genes: any[] = dbResp.data.genes ?? [];
+        if (genes.length > 0) {
+          degRows = genes.map((g: any) => ({
+            gene_id: g.gene_id,
+            // The DB stores the field as log_fc; normalise to logFC here
+            logFC: parseFloat(g.log_fc ?? g.logFC ?? g.log2FoldChange ?? 0),
+            padj: parseFloat(g.padj ?? 1),
+          }));
+        }
+      } catch {
+        // Endpoint absent or no data → fall through to Strategy B
+      }
 
-      const degRows: any[] = degResponse.data.data;
+      // --- Strategy B: Parquet /query fallback ---
+      if (degRows.length === 0) {
+        const _comparisons = degDataset.dataset_metadata?.comparisons;
+        const columnsInfo =
+          degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
+          (_comparisons && typeof _comparisons === 'object' && !Array.isArray(_comparisons)
+            ? _comparisons[comparisonName]
+            : undefined);
 
-      if (!degRows || degRows.length === 0) {
+        const logFCCol: string =
+          columnsInfo?.logFC ||
+          degDataset.column_mapping?.log_fc ||
+          degDataset.column_mapping?.log2FoldChange ||
+          'log2FoldChange';
+        const pValCol: string =
+          columnsInfo?.padj ||
+          degDataset.column_mapping?.padj ||
+          'padj';
+
+        const safeLogFCCol = /^[a-zA-Z0-9_.:/\-]+$/.test(logFCCol) ? logFCCol : undefined;
+        const queryResp = await api.post(`/datasets/${degDataset.id}/query`, {
+          limit: 5000,
+          padj_max: 0.05,
+          logfc_min: 1.0,
+          ...(safeLogFCCol ? { sort_by: safeLogFCCol, sort_desc: true } : {}),
+        });
+
+        const rawRows: any[] = queryResp.data.data ?? [];
+        const returnedColumns: string[] = queryResp.data.columns ?? [];
+
+        // Detect prefixed column names (e.g. logFC:comparisonName, padj:comparisonName)
+        const prefixedLogFCCol = returnedColumns.find(
+          c => c.startsWith('logFC:') || c.startsWith('log2FoldChange:')
+        );
+        const prefixedPadjCol = returnedColumns.find(c => c.startsWith('padj:'));
+
+        const detectedLogFCCol =
+          ['logFC', 'log2FoldChange', 'log2fc', 'log_fc'].find(c => returnedColumns.includes(c)) ||
+          prefixedLogFCCol ||
+          logFCCol;
+        const detectedPadjCol =
+          ['padj', 'FDR', 'adj.P.Val'].find(c => returnedColumns.includes(c)) ||
+          prefixedPadjCol ||
+          pValCol;
+
+        degRows = rawRows
+          .filter((r: any) => {
+            const lfc = parseFloat(r[detectedLogFCCol]);
+            const p = parseFloat(r[detectedPadjCol]);
+            return !isNaN(lfc) && !isNaN(p);
+          })
+          .map((r: any) => ({
+            gene_id: r.gene_id,
+            logFC: parseFloat(r[detectedLogFCCol]),
+            padj: parseFloat(r[detectedPadjCol]),
+          }));
+      }
+
+      if (degRows.length === 0) {
         setError('No significant DEGs found.');
         setLoading(false);
         return;
       }
 
-      // Detect the actual column names returned by the backend (may differ from metadata)
-      const returnedColumns: string[] = degResponse.data.columns || [];
-      const detectedLogFCCol: string =
-        ['logFC', 'log2FoldChange', 'log2fc', 'log_fc'].find(c => returnedColumns.includes(c)) ||
-        logFCCol;
-      const detectedPadjCol: string =
-        ['padj', 'FDR', 'adj.P.Val'].find(c => returnedColumns.includes(c)) ||
-        pValCol;
-
       // Store gene metadata for tooltips
       const metadata = new Map<string, { logFC: number; padj: number }>();
-      degRows.forEach((row: any) => {
-        metadata.set(row['gene_id'], {
-          logFC: parseFloat(row[detectedLogFCCol]),
-          padj: parseFloat(row[detectedPadjCol]),
-        });
+      degRows.forEach(row => {
+        metadata.set(row.gene_id, { logFC: row.logFC, padj: row.padj });
       });
       setGeneMetadata(metadata);
 
       // Split into UP / DOWN
       const limit = params.top_n_genes > 0 ? params.top_n_genes : degRows.length;
-      const upAll = degRows.filter((r: any) => parseFloat(r[detectedLogFCCol]) > 0);
-      const downAll = degRows.filter((r: any) => parseFloat(r[detectedLogFCCol]) < 0);
+      const upAll = degRows.filter(r => r.logFC > 0);
+      const downAll = degRows.filter(r => r.logFC < 0);
 
-      const upFull = upAll.slice(0, Math.ceil(limit / 2)).map((r: any) => r['gene_id'] as string);
-      const downFull = downAll.slice(0, Math.floor(limit / 2)).map((r: any) => r['gene_id'] as string);
+      const upFull = upAll.slice(0, Math.ceil(limit / 2)).map(r => r.gene_id);
+      const downFull = downAll.slice(0, Math.floor(limit / 2)).map(r => r.gene_id);
 
       if (upFull.length === 0 && downFull.length === 0) {
         setError('No significant DEGs found (could not detect logFC column in response).');
@@ -112,7 +165,7 @@ export function useHeatmapData({
 
       // LogFC sidebar lookup
       const geneLogFCMap = new Map<string, number>();
-      degRows.forEach((r: any) => geneLogFCMap.set(r['gene_id'], parseFloat(r[detectedLogFCCol])));
+      degRows.forEach(r => geneLogFCMap.set(r.gene_id, r.logFC));
 
       // --- Helper: call combined endpoint and convert response to HeatmapData ---
       const callClusterHeatmap = async (

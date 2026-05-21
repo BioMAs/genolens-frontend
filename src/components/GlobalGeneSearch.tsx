@@ -100,17 +100,13 @@ export default function GlobalGeneSearch() {
   const handleSelectResult = (result: GeneSearchResult) => {
     setIsOpen(false);
     setQuery("");
-    
-    // Build navigation URL
+
     let url = `/projects/${result.project_id}`;
-    
+
     if (result.comparison_name) {
-      // Navigate to comparison detail with gene search
-      url += `/datasets/${result.dataset_id}/comparisons/${encodeURIComponent(
-        result.comparison_name
-      )}`;
+      url += `/comparisons/${encodeURIComponent(result.comparison_name)}`;
     }
-    
+
     router.push(url);
   };
 
@@ -186,6 +182,30 @@ export default function GlobalGeneSearch() {
                           </>
                         )}
                       </div>
+
+                      {(result.regulation || result.log_fc != null || result.padj != null) && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          {result.regulation && result.regulation !== "NS" && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                              result.regulation === "UP"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            }`}>
+                              {result.regulation}
+                            </span>
+                          )}
+                          {result.log_fc != null && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              logFC {result.log_fc > 0 ? "+" : ""}{result.log_fc.toFixed(2)}
+                            </span>
+                          )}
+                          {result.padj != null && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              padj {result.padj < 0.001 ? "< 0.001" : result.padj.toFixed(3)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 ml-2" />

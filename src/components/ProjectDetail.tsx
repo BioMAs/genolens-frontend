@@ -876,7 +876,7 @@ function ComparisonsTab({
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 mt-2">
           <p className="text-sm text-gray-700">
-            {firstItem}–{lastItem} sur {total} comparaisons
+            {firstItem}–{lastItem} of {total} comparisons
           </p>
           <div className="flex gap-2">
             <button
@@ -884,17 +884,17 @@ function ComparisonsTab({
               disabled={page <= 1}
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Précédent
+              Previous
             </button>
             <span className="px-3 py-1.5 text-sm text-gray-600">
-              Page {page} / {totalPages}
+              Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={page >= totalPages}
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Suivant
+              Next
             </button>
           </div>
         </div>

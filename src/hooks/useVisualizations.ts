@@ -230,7 +230,7 @@ export function useEnrichmentData(
     queryKey: ['visualization', 'enrichment', datasetId, comparisonName, params],
     queryFn: async () => {
       const response = await api.get<EnrichmentData[]>(
-        `/datasets/${datasetId}/enrichment/${comparisonName}`,
+        `/enrichment/${datasetId}/${comparisonName}`,
         { params }
       );
       return response.data;
@@ -305,7 +305,7 @@ export function usePrefetchVisualizations() {
         queryKey: ['visualization', 'enrichment', datasetId, comparisonName, {}],
         queryFn: async () => {
           const response = await api.get<EnrichmentData[]>(
-            `/datasets/${datasetId}/enrichment/${comparisonName}`
+            `/enrichment/${datasetId}/${comparisonName}`
           );
           return response.data;
         },

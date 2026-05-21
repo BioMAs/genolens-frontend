@@ -9,10 +9,16 @@ export type ComparisonOperator = '>' | '<' | '>=' | '<=' | '=' | '!=';
 
 export interface FilterCondition {
   id: string;
-  field: 'logFC' | 'padj' | 'gene_id' | 'regulation' | 'gene_name';
-  operator: ComparisonOperator | 'contains' | 'not_contains' | 'in_list';
+  field: 'logFC' | 'padj' | 'gene_id' | 'regulation' | 'gene_name' | 'pathway';
+  operator: ComparisonOperator | 'contains' | 'not_contains' | 'in_list' | 'in_pathway';
   value: string | number;
   displayValue?: string;
+}
+
+export interface PathwayOption {
+  pathway_id: string;
+  pathway_name: string;
+  category?: string;
 }
 
 export interface FilterGroup {
@@ -34,6 +40,7 @@ interface AdvancedFilterBuilderProps {
   onSaveFilter?: (filter: AdvancedFilter, name: string) => void;
   onLoadFilter?: (filter: AdvancedFilter) => void;
   onDeleteFilter?: (name: string) => void;
+  pathways?: PathwayOption[];
 }
 
 const fieldOptions = [
@@ -41,7 +48,8 @@ const fieldOptions = [
   { value: 'padj', label: 'Adjusted P-value', type: 'number' },
   { value: 'gene_id', label: 'Gene ID', type: 'text' },
   { value: 'gene_name', label: 'Gene Name', type: 'text' },
-  { value: 'regulation', label: 'Regulation', type: 'select' }
+  { value: 'regulation', label: 'Regulation', type: 'select' },
+  { value: 'pathway', label: 'Pathway', type: 'pathway' },
 ];
 
 const numberOperators = [
@@ -67,7 +75,8 @@ export default function AdvancedFilterBuilder({
   savedFilters = [],
   onSaveFilter,
   onLoadFilter,
-  onDeleteFilter
+  onDeleteFilter,
+  pathways = [],
 }: AdvancedFilterBuilderProps) {
   const [filter, setFilter] = useState<AdvancedFilter>({
     groups: [{
@@ -225,6 +234,30 @@ export default function AdvancedFilterBuilder({
   ) => {
     const fieldDef = fieldOptions.find(f => f.value === condition.field);
 
+    if (condition.field === 'pathway') {
+      if (!pathways.length) {
+        return (
+          <span className="px-3 py-2 text-sm text-gray-400 italic flex-1">
+            No enrichment results — run enrichment analysis first
+          </span>
+        );
+      }
+      return (
+        <select
+          value={condition.value}
+          onChange={(e) => updateCondition(groupId, condition.id, { value: e.target.value })}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm flex-1"
+        >
+          <option value="">Select a pathway...</option>
+          {pathways.map(p => (
+            <option key={p.pathway_id} value={p.pathway_id}>
+              {p.category ? `[${p.category}] ` : ''}{p.pathway_name}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
     if (condition.field === 'regulation') {
       return (
         <select
@@ -337,7 +370,10 @@ export default function AdvancedFilterBuilder({
                       onChange={(e) => {
                         const newField = e.target.value as FilterCondition['field'];
                         const fieldDef = fieldOptions.find(f => f.value === newField);
-                        const defaultOp = fieldDef?.type === 'number' ? '>' : '=';
+                        const defaultOp =
+                          newField === 'pathway' ? 'in_pathway' :
+                          newField === 'regulation' ? '=' :
+                          fieldDef?.type === 'number' ? '>' : '=';
                         updateCondition(group.id, condition.id, {
                           field: newField,
                           operator: defaultOp as any,
@@ -351,8 +387,8 @@ export default function AdvancedFilterBuilder({
                       ))}
                     </select>
 
-                    {/* Operator selector */}
-                    {condition.field !== 'regulation' && (
+                    {/* Operator selector — hidden for pathway and regulation */}
+                    {condition.field !== 'regulation' && condition.field !== 'pathway' && (
                       <select
                         value={condition.operator}
                         onChange={(e) => updateCondition(group.id, condition.id, {

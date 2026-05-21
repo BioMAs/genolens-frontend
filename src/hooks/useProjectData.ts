@@ -94,10 +94,10 @@ export function useProjectDatasets(projectId: string, page: number = 1, pageSize
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchInterval: (query) => {
-      // Smart refetch: only poll if there are processing datasets
+      // Smart refetch: only poll if there are pending or processing datasets
       const datasets = query.state.data;
-      if (datasets?.some(d => d.status === 'PROCESSING')) {
-        return 10000; // Poll every 10 seconds
+      if (datasets?.some(d => d.status === 'PENDING' || d.status === 'PROCESSING')) {
+        return 3000; // Poll every 3 seconds
       }
       return false; // Don't poll
     },

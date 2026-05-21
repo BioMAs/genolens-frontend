@@ -5,11 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
 import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity } from 'lucide-react';
+import DEGBarChart from './DEGBarChart';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
 import EnrichmentRadarPlot from './EnrichmentRadarPlot';
-import HeatmapPlot from './heatmap';
 import GeneExpressionViewer from './GeneExpressionViewer';
 import DEGTable from './DEGTable';
 import AIInterpretationPanel from './AIInterpretationPanel';
@@ -17,6 +17,10 @@ import CustomVisualizationPanel from './CustomVisualizationPanel';
 import ExportMenu from './ExportMenu';
 import MultipleTestingPanel from './MultipleTestingPanel';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
+import ClusteringAnalysis from './analysis/ClusteringAnalysis';
+import DEGClusteringView from './analysis/DEGClusteringView';
+import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
+import GSEAAnalysis from './GSEAAnalysis';
 import { formatDate } from '@/utils/formatters';
 
 interface ComparisonDetailProps {
@@ -24,13 +28,14 @@ interface ComparisonDetailProps {
   comparisonName: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'stats' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'stats' | 'integrations' | 'custom-viz';
 
 export default function ComparisonDetail({ projectId, comparisonName }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'gsea' | 'legacy'>('go');
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,11 +49,10 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   const [stats, setStats] = useState<{degUp: number, degDown: number, degTotal: number} | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   
-  // State for top DEGs (sorted by padj)
-  const [topDEGGenes, setTopDEGGenes] = useState<string[]>([]);
-  
   // State for all genes from matrix dataset (for gene expression query)
   const [allMatrixGenes, setAllMatrixGenes] = useState<string[]>([]);
+  // Map ensemblId -> gene symbol (populated when matrix has a gene_name column)
+  const [geneNameMap, setGeneNameMap] = useState<Record<string, string>>({});
 
   const handleReprocessDEG = async () => {
     if (!degDataset) return;
@@ -258,92 +262,72 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     };
   }, [degDataset, decodedName]);
 
-  // Fetch top DEGs sorted by padj for Gene Expression Viewer
-  useEffect(() => {
-    if (!degDataset) return;
-
-    const fetchTopDEGs = async () => {
-      try {
-        const metadata = degDataset.dataset_metadata;
-        
-        // First, check if top genes are stored in metadata
-        let storedTopGenes = null;
-        if (globalDatasetId && metadata?.comparisons?.[decodedName]?.top_genes) {
-          storedTopGenes = metadata.comparisons[decodedName].top_genes;
-        } else if (metadata?.top_genes) {
-          storedTopGenes = metadata.top_genes;
-        }
-
-        if (storedTopGenes && storedTopGenes.length > 0) {
-          // Extract gene names from stored top genes
-          const geneNames = storedTopGenes.map((g: any) => 
-            g.gene || g.gene_id || g.Gene || g.symbol || ''
-          ).filter(Boolean);
-          setTopDEGGenes(geneNames);
-          return;
-        }
-
-        // If not in metadata, fetch from dataset sorted by padj
-        const response = await api.post(`/datasets/${degDataset.id}/query`, {
-          limit: 100,
-          sort_by: 'padj',
-          sort_order: 'asc'
-        });
-
-        const geneColumn = response.data.columns.find((c: string) => 
-          c.toLowerCase().includes('gene') || c.toLowerCase().includes('symbol')
-        );
-
-        if (geneColumn) {
-          const geneNames = response.data.data
-            .map((row: any) => row[geneColumn])
-            .filter(Boolean);
-          setTopDEGGenes(geneNames);
-        }
-      } catch (err) {
-        console.error('Failed to fetch top DEGs:', err);
-      }
-    };
-
-    fetchTopDEGs();
-  }, [degDataset, decodedName, globalDatasetId]);
-
   // Fetch all genes from matrix dataset for gene expression query
   useEffect(() => {
     if (!matrixDataset) return;
 
     const fetchAllGenes = async () => {
+      // Strategy 1: use /genes/map endpoint (new backend) — fast, alignment-safe
       try {
-        // OPTIMIZATION: Use new /genes/list endpoint instead of querying 100K rows
-        // Old: Fetch 100K rows just to get gene IDs (5-10 MB transfer)
-        // New: Use specialized endpoint (20-50 KB transfer)
-        const response = await api.get(`/datasets/${matrixDataset.id}/genes/list`, {
-          params: {
-            gene_column: 'gene_id',
-            // no limit - get all genes
-          }
+        const mapResp = await api.get(`/datasets/${matrixDataset.id}/genes/map`, {
+          params: { primary_column: 'gene_id', secondary_column: 'gene_name' }
         });
-
-        const genes = response.data.genes || [];
-        setAllMatrixGenes(genes);
-      } catch (err) {
-        console.error('Failed to fetch all matrix genes:', err);
-        
-        // Fallback to old method if new endpoint fails
-        try {
-          const allGenesResponse = await api.post(`/datasets/${matrixDataset.id}/query`, {
-            limit: 100000,
-            columns: ['gene_id']
-          });
-
-          const genes = allGenesResponse.data.data
-            .map((row: any) => row['gene_id'])
-            .filter(Boolean);
-          
-          setAllMatrixGenes(genes);
-        } catch (fallbackErr) {
-          console.error('Fallback also failed:', fallbackErr);
+        const geneMap: Record<string, string> = mapResp.data.gene_map || {};
+        if (Object.keys(geneMap).length > 0) {
+          setAllMatrixGenes(Object.keys(geneMap));
+          setGeneNameMap(geneMap);
+          return;
         }
+      } catch {
+        // endpoint absent or columns missing — fall through
+      }
+
+      // Strategy 2: query endpoint with gene_id + gene_name columns — works with any
+      // backend version; builds the map row-by-row to avoid alignment issues.
+      try {
+        const queryResp = await api.post(`/datasets/${matrixDataset.id}/query`, {
+          limit: 100000,
+          columns: ['gene_id', 'gene_name'],
+        });
+        const rows: any[] = queryResp.data.data || [];
+        const availableCols: string[] = queryResp.data.columns || [];
+
+        const hasGeneId = availableCols.includes('gene_id');
+        const hasGeneName = availableCols.includes('gene_name');
+
+        if (hasGeneId) {
+          const geneIds: string[] = [];
+          const map: Record<string, string> = {};
+          rows.forEach((row: any) => {
+            const id = row['gene_id'];
+            if (!id) return;
+            geneIds.push(String(id));
+            const name = row['gene_name'];
+            if (name) map[String(id)] = String(name);
+          });
+          setAllMatrixGenes(geneIds);
+          if (Object.keys(map).length > 0) setGeneNameMap(map);
+          return;
+        }
+
+        // No gene_id column — matrix uses gene_name as primary key
+        if (hasGeneName) {
+          const geneNames = rows.map((r: any) => r['gene_name']).filter(Boolean).map(String);
+          setAllMatrixGenes(geneNames);
+          return;
+        }
+      } catch {
+        // query endpoint failed — fall through to /genes/list
+      }
+
+      // Strategy 3: last resort — gene_id list only (no symbol search)
+      try {
+        const listResp = await api.get(`/datasets/${matrixDataset.id}/genes/list`, {
+          params: { gene_column: 'gene_id' }
+        });
+        setAllMatrixGenes(listResp.data.genes || []);
+      } catch (err) {
+        console.error('Failed to fetch matrix genes:', err);
       }
     };
 
@@ -657,8 +641,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             </div>
           )}
 
-          {/* Top DEG Preview - Compact */}
-          <TopDEGPreview dataset={degDataset} comparisonName={actualComparisonName} />
         </div>
 
         {/* Tabs */}
@@ -695,18 +677,32 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               >
                 Statistics
               </button>
-              {enrichmentDataset && (
-                <button
-                  onClick={() => setActiveTab('enrichment')}
-                  className={`${
-                    activeTab === 'enrichment'
-                      ? 'border-brand-primary text-brand-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
-                >
-                  Enrichment
-                </button>
-              )}
+              <button
+                onClick={() => setActiveTab('enrichment')}
+                className={`${
+                  activeTab === 'enrichment'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Enrichissement
+                {!enrichmentDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('clustering')}
+                className={`${
+                  activeTab === 'clustering'
+                    ? 'border-brand-primary text-brand-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Clustering
+                {!matrixDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
+              </button>
               <button
                 onClick={() => setActiveTab('integrations')}
                 className={`${
@@ -746,28 +742,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   />
                 </div>
 
-                {/* Heatmap - Full Width */}
-                {matrixDataset ? (
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
-                    <HeatmapPlot
-                      degDataset={degDataset}
-                      matrixDataset={matrixDataset}
-                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                      comparisonName={actualComparisonName}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Expression Heatmap</h2>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-                      <p className="text-sm">No expression matrix available for this project.</p>
-                      <p className="text-xs mt-1 text-gray-400">Upload a count/expression matrix dataset to enable the heatmap.</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Volcano Plot - Below Heatmap */}
+                {/* Volcano Plot */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-gray-900">Volcano Plot</h2>
@@ -796,6 +771,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                         sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
                         comparisonName={actualComparisonName}
                         allGenes={allMatrixGenes}
+                        geneNameMap={Object.keys(geneNameMap).length > 0 ? geneNameMap : undefined}
                         sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
                       />
                     </div>
@@ -807,6 +783,11 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             {/* DEG Tab */}
             {activeTab === 'deg' && (
               <div className="space-y-6">
+                {/* Top DEG Bar Chart */}
+                <div>
+                  <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
+                </div>
+
                 {/* DEG Table */}
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Differentially Expressed Genes</h2>
@@ -819,43 +800,143 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             )}
 
             {/* Enrichment Tab */}
-            {activeTab === 'enrichment' && enrichmentDataset && (
-              <div className="space-y-6">
-                {/* Dot Plot */}
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Pathway Enrichment Plot</h2>
-                    <Link
-                      href={`/projects/${projectId}/datasets/${enrichmentDataset.id}`}
-                      className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
+            {activeTab === 'enrichment' && (
+              degDataset ? (
+                <div className="space-y-4">
+                  {/* Sub-tab navigation */}
+                  <div className="flex border-b border-gray-200">
+                    <button
+                      onClick={() => setEnrichSubTab('go')}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        enrichSubTab === 'go'
+                          ? 'border-brand-primary text-brand-primary'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
                     >
-                      View Full Dataset &rarr;
-                    </Link>
+                      GO Enrichment
+                    </button>
+                    <button
+                      onClick={() => setEnrichSubTab('gsea')}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        enrichSubTab === 'gsea'
+                          ? 'border-brand-primary text-brand-primary'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      GSEA
+                    </button>
+                    {enrichmentDataset && (
+                      <button
+                        onClick={() => setEnrichSubTab('legacy')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          enrichSubTab === 'legacy'
+                            ? 'border-brand-primary text-brand-primary'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        Héritage
+                      </button>
+                    )}
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <EnrichmentPlot dataset={enrichmentDataset} comparisonName={actualComparisonName} />
+
+                  {/* GO Enrichment sub-tab */}
+                  {enrichSubTab === 'go' && (
+                    <div className="space-y-6">
+                      <GOEnrichmentAnalysis
+                        dataset={degDataset}
+                        comparisonName={actualComparisonName}
+                      />
+                    </div>
+                  )}
+
+                  {/* GSEA sub-tab */}
+                  {enrichSubTab === 'gsea' && (
+                    <GSEAAnalysis
+                      dataset={degDataset}
+                      comparisonName={actualComparisonName}
+                    />
+                  )}
+
+                  {/* Legacy sub-tab (Parquet-based enrichment data) */}
+                  {enrichSubTab === 'legacy' && enrichmentDataset && (
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex justify-between items-center mb-4">
+                          <h2 className="text-xl font-bold text-gray-900">Pathway Enrichment Plot</h2>
+                          <Link
+                            href={`/projects/${projectId}/datasets/${enrichmentDataset.id}`}
+                            className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
+                          >
+                            View Full Dataset &rarr;
+                          </Link>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <EnrichmentPlot dataset={enrichmentDataset} comparisonName={actualComparisonName} />
+                        </div>
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                          <Activity className="w-5 h-5 text-purple-600" />
+                          Enrichment Radar Plot
+                        </h2>
+                        <EnrichmentRadarPlot
+                          datasetId={enrichmentDataset.id}
+                          comparisonName={actualComparisonName}
+                          maxTerms={10}
+                        />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Enriched Pathways</h2>
+                        <EnrichmentTable dataset={enrichmentDataset} comparisonName={actualComparisonName} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune donnée DEG</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    L&apos;enrichissement nécessite un jeu de données DEG associé à cette comparaison.
+                  </p>
+                </div>
+              )
+            )}
+
+            {/* Clustering Tab */}
+            {activeTab === 'clustering' && (
+              matrixDataset && degDataset ? (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — Gènes DEG</h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Visualisation de l&apos;expression des gènes différentiellement exprimés (DEGs) pour les échantillons de cette comparaison uniquement.
+                    </p>
+                    <DEGClusteringView
+                      degDataset={degDataset}
+                      matrixDataset={matrixDataset}
+                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                      comparisonName={actualComparisonName}
+                      sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                    />
                   </div>
                 </div>
-
-                {/* Enrichment Radar Plot */}
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-purple-600" />
-                    Enrichment Radar Plot
-                  </h2>
-                  <EnrichmentRadarPlot 
-                    datasetId={enrichmentDataset.id} 
-                    comparisonName={actualComparisonName}
-                    maxTerms={10}
-                  />
+              ) : matrixDataset ? (
+                <ClusteringAnalysis
+                  projectId={projectId}
+                  datasetId={matrixDataset.id}
+                  datasetName={matrixDataset.name}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune matrice d&apos;expression</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Le clustering nécessite une matrice d&apos;expression (count matrix).
+                    Uploadez une matrice de type &quot;Expression Matrix&quot; pour activer cette vue.
+                  </p>
                 </div>
-
-                {/* Enrichment Table */}
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Enriched Pathways</h2>
-                  <EnrichmentTable dataset={enrichmentDataset} comparisonName={actualComparisonName} />
-                </div>
-              </div>
+              )
             )}
 
             {/* Statistics / Multiple Testing Tab */}
@@ -885,73 +966,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// Component for Top DEG Preview (compact in header)
-function TopDEGPreview({ dataset, comparisonName }: { dataset: Dataset, comparisonName: string }) {
-  const [topGenes, setTopGenes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTopGenes = async () => {
-      try {
-        // First, check if top genes are stored in metadata
-        const metadata = dataset.dataset_metadata;
-        let storedTopGenes = null;
-
-        // Check in comparisons metadata (for global DEG files)
-        if (metadata?.comparisons?.[comparisonName]?.top_genes) {
-          storedTopGenes = metadata.comparisons[comparisonName].top_genes;
-        }
-        // Check at top level (for individual comparison datasets)
-        else if (metadata?.top_genes) {
-          storedTopGenes = metadata.top_genes;
-        }
-
-        if (storedTopGenes && storedTopGenes.length > 0) {
-          // Use stored top genes
-          setTopGenes(storedTopGenes.slice(0, 5));
-          setLoading(false);
-          return;
-        }
-
-        // If not in metadata, fetch from dataset
-        const response = await api.post(`/datasets/${dataset.id}/query`, {
-          limit: 5,
-          sort_by: 'padj',
-          sort_order: 'asc'
-        });
-
-        setTopGenes(response.data.data.slice(0, 5));
-      } catch (err) {
-        console.error('Failed to fetch top genes:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTopGenes();
-  }, [dataset, comparisonName]);
-
-  if (loading || topGenes.length === 0) return null;
-
-  return (
-    <div className="mt-6 pt-6 border-t border-gray-200">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">Top 5 DEGs (by adj. p-value)</h3>
-      <div className="grid grid-cols-5 gap-2">
-        {topGenes.map((gene, idx) => (
-          <div key={idx} className="bg-gray-50 rounded px-3 py-2 border border-gray-200">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {gene.gene || gene.gene_id || gene.Gene || 'N/A'}
-            </p>
-            <p className="text-xs text-gray-500">
-              log2FC: {gene.log2FoldChange?.toFixed(2) || gene.logFC?.toFixed(2) || 'N/A'}
-            </p>
-          </div>
-        ))}
       </div>
     </div>
   );
