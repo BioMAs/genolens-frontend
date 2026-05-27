@@ -38,11 +38,11 @@ export function useBilling() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initiateCheckout = async (plan: string): Promise<string> => {
+  const initiateCheckout = async (plan: string, billingCycle: 'monthly' | 'annual' = 'monthly'): Promise<string> => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post<CheckoutResponse>('/billing/checkout', { plan });
+      const res = await api.post<CheckoutResponse>('/billing/checkout', { plan, billing_cycle: billingCycle });
       return res.data.checkout_url;
     } catch (err) {
       let message = 'Failed to start checkout. Please try again.';
