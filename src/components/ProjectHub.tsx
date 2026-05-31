@@ -17,6 +17,7 @@ import {
   FlaskConical, ChevronDown, ChevronUp,
   GitCompare, Layers, Activity, Database, Eye,
 } from 'lucide-react';
+import GenerateReportButton from '@/components/GenerateReportButton';
 import api from '@/utils/api';
 
 interface ProjectHubProps {
@@ -123,6 +124,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                   <Users className="h-3.5 w-3.5" /> Members
                 </button>
               )}
+              <GenerateReportButton projectId={projectId} />
             </div>
           </div>
 
