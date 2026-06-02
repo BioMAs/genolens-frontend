@@ -124,7 +124,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         setGenes([...upGenes, ...downGenes]);
       } catch (err) {
         console.error('DEGBarChart fetch error:', err);
-        setError('Impossible de charger les données DEG.');
+        setError('Failed to load DEG data.');
       } finally {
         setLoading(false);
       }
@@ -138,7 +138,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-          Chargement du graphique DEG…
+          Loading DEG chart…
         </div>
       </div>
     );
@@ -158,7 +158,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
   if (upGenes.length === 0 && downGenes.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <p className="text-sm text-gray-500">Aucun gène différentiellement exprimé trouvé.</p>
+        <p className="text-sm text-gray-500">No differentially expressed genes found.</p>
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Top DEGs régulés</h2>
+        <h2 className="text-xl font-bold text-gray-900">Top Regulated DEGs</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Top</span>
           {([5, 10, 15, 20] as TopN[]).map((n) => (
@@ -200,11 +200,11 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
       <div className="flex gap-4 mb-3 text-xs">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-sm bg-red-500" />
-          Surexprimés ({upGenes.length})
+          Up-regulated ({upGenes.length})
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-sm bg-blue-500" />
-          Sous-exprimés ({downGenes.length})
+          Down-regulated ({downGenes.length})
         </span>
       </div>
 

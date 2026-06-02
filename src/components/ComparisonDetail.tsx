@@ -711,7 +711,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
               >
-                Intégrations
+                Integrations
               </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
@@ -834,7 +834,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                       >
-                        Héritage
+                        Inheritance
                       </button>
                     )}
                   </div>
@@ -895,9 +895,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune donnée DEG</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG data</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    L&apos;enrichissement nécessite un jeu de données DEG associé à cette comparaison.
+                    Enrichment requires a DEG dataset associated with this comparison.
                   </p>
                 </div>
               )
@@ -908,9 +908,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               matrixDataset && degDataset ? (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — Gènes DEG</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — DEG Genes</h2>
                     <p className="text-sm text-gray-600 mb-4">
-                      Visualisation de l&apos;expression des gènes différentiellement exprimés (DEGs) pour les échantillons de cette comparaison uniquement.
+                      Visualization of differentially expressed genes (DEGs) for the samples in this comparison only.
                     </p>
                     <DEGClusteringView
                       degDataset={degDataset}
@@ -930,10 +930,10 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune matrice d&apos;expression</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Le clustering nécessite une matrice d&apos;expression (count matrix).
-                    Uploadez une matrice de type &quot;Expression Matrix&quot; pour activer cette vue.
+                    Clustering requires an expression matrix (count matrix).
+                    Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
                   </p>
                 </div>
               )

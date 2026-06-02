@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { EnrichmentResult } from '@/types';
 import Link from 'next/link';
-import { Filter, ArrowUpRight, ExternalLink, BarChart2, Table as TableIcon, Activity, Play, RefreshCw } from 'lucide-react';
+import { ExternalLink, TableIcon, Activity, Loader2 } from 'lucide-react';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+const POLL_INTERVAL_MS = 5000;
+const POLL_MAX_RETRIES = 12; // 1 minute total
 
 interface EnrichmentAnalysisProps {
     datasetId: string;
@@ -19,7 +22,10 @@ interface EnrichmentAnalysisProps {
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
-    
+    const [isPolling, setIsPolling] = useState(false);
+    const pollRetries = useRef(0);
+    const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // We store ALL results here
     const [allResults, setAllResults] = useState<EnrichmentResult[]>([]);
     const [loading, setLoading] = useState(false);
@@ -31,42 +37,61 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     const [maxPadj, setMaxPadj] = useState<number>(0.05);
     const [viewMode, setViewMode] = useState<'table' | 'radar'>('table');
 
-    // GO Enrichment runner
-    const [degComparisons, setDegComparisons] = useState<string[]>([]);
-    const [selectedDegComparison, setSelectedDegComparison] = useState<string>("");
-    const [isRunning, setIsRunning] = useState(false);
-    const [runError, setRunError] = useState<string | null>(null);
-    const [runSuccess, setRunSuccess] = useState<string | null>(null);
+    const fetchComparisons = async (): Promise<string[]> => {
+        try {
+            const res = await api.get(`/enrichment/${datasetId}/comparisons`);
+            return res.data as string[];
+        } catch {
+            return [];
+        }
+    };
 
-    // Fetch comparisons on mount
+    // Fetch comparisons on mount; poll if none found yet
     useEffect(() => {
-        const fetchComparisons = async () => {
-             try {
-                 const res = await api.get(`/enrichment/${datasetId}/comparisons`);
-                 setComparisons(res.data);
-                 if (res.data.length > 0) {
-                     setSelectedComparison(res.data[0]);
-                 }
-             } catch (err: any) {
-                 console.error("Failed to fetch comparisons", err);
-             }
-        };
-        fetchComparisons();
-    }, [datasetId]);
+        let cancelled = false;
 
-    // Fetch DEG comparisons available for GO enrichment
-    useEffect(() => {
-        const fetchDegComparisons = async () => {
-            try {
-                const res = await api.get(`/datasets/${datasetId}/comparisons`);
-                const names: string[] = res.data?.comparisons ?? [];
-                setDegComparisons(names);
-                if (names.length > 0) setSelectedDegComparison(names[0]);
-            } catch (err: any) {
-                console.error("Failed to fetch DEG comparisons", err);
+        const init = async () => {
+            const data = await fetchComparisons();
+            if (cancelled) return;
+
+            if (data.length > 0) {
+                setComparisons(data);
+                setSelectedComparison(data[0]);
+            } else {
+                // Enrichment may still be computing — start polling
+                setIsPolling(true);
+                pollRetries.current = 0;
+                schedulePoll();
             }
         };
-        fetchDegComparisons();
+
+        const schedulePoll = () => {
+            if (pollTimer.current) clearTimeout(pollTimer.current);
+            pollTimer.current = setTimeout(async () => {
+                if (cancelled) return;
+                pollRetries.current += 1;
+                const data = await fetchComparisons();
+                if (cancelled) return;
+
+                if (data.length > 0) {
+                    setComparisons(data);
+                    setSelectedComparison(data[0]);
+                    setIsPolling(false);
+                } else if (pollRetries.current < POLL_MAX_RETRIES) {
+                    schedulePoll();
+                } else {
+                    setIsPolling(false);
+                }
+            }, POLL_INTERVAL_MS);
+        };
+
+        init();
+
+        return () => {
+            cancelled = true;
+            if (pollTimer.current) clearTimeout(pollTimer.current);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [datasetId]);
 
     // Fetch ALL results when comparison or maxPadj changes
@@ -95,35 +120,6 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
         fetchResults();
     }, [datasetId, selectedComparison, maxPadj]);
-
-    // Run GO enrichment on demand
-    const runGoEnrichment = async () => {
-        if (!selectedDegComparison) return;
-        setIsRunning(true);
-        setRunError(null);
-        setRunSuccess(null);
-        try {
-            const res = await api.post(
-                `/datasets/${datasetId}/comparisons/${encodeURIComponent(selectedDegComparison)}/go-enrichment`,
-                {}
-            );
-            const n = res.data?.enriched_terms?.length ?? 0;
-            setRunSuccess(`GO enrichment completed: ${n} terms found for "${selectedDegComparison}".`);
-            // Re-fetch enrichment comparisons so the new comparison appears in the dropdown
-            const compsRes = await api.get(`/enrichment/${datasetId}/comparisons`);
-            setComparisons(compsRes.data);
-            if (compsRes.data.includes(selectedDegComparison)) {
-                setSelectedComparison(selectedDegComparison);
-            } else if (compsRes.data.length > 0) {
-                setSelectedComparison(compsRes.data[0]);
-            }
-        } catch (err: any) {
-            const detail = err?.response?.data?.detail ?? err?.message ?? "Unknown error";
-            setRunError(`GO enrichment failed: ${detail}`);
-        } finally {
-            setIsRunning(false);
-        }
-    };
 
     // Derived filtered results for TABLE
     const filteredResults = useMemo(() => {
@@ -255,38 +251,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
     return (
         <div className="space-y-6">
-            {/* GO Enrichment Runner */}
-            {degComparisons.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <Play className="h-4 w-4 text-indigo-600" />
-                        Run GO Enrichment on DEGs
-                    </h3>
-                    <div className="flex flex-wrap gap-3 items-end">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">DEG Comparison</label>
-                            <select
-                                className="block rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                value={selectedDegComparison}
-                                onChange={(e) => setSelectedDegComparison(e.target.value)}
-                                disabled={isRunning}
-                            >
-                                {degComparisons.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <button
-                            onClick={runGoEnrichment}
-                            disabled={isRunning || !selectedDegComparison}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isRunning
-                                ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Running...</>
-                                : <><Play className="h-4 w-4 mr-2" />Run GO Enrichment</>
-                            }
-                        </button>
+            {/* Polling / computing indicator */}
+            {isPolling && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 text-blue-500 animate-spin shrink-0" />
+                    <div>
+                        <p className="text-sm font-medium text-blue-800">Enrichment is being computed in the background…</p>
+                        <p className="text-xs text-blue-600 mt-0.5">GO term analysis runs automatically after dataset processing. This page will refresh when results are ready.</p>
                     </div>
-                    {runError && <p className="mt-2 text-sm text-red-600">{runError}</p>}
-                    {runSuccess && <p className="mt-2 text-sm text-green-600">{runSuccess}</p>}
                 </div>
             )}
 
@@ -447,9 +419,11 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
 
-            {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && (
+            {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && !isPolling && (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    No enrichment pathways found for these settings.
+                    {comparisons.length === 0
+                        ? "No enrichment data available for this dataset."
+                        : "No enrichment pathways found for these settings."}
                 </div>
             )}
 
