@@ -68,7 +68,12 @@ export function useProjectSummary(projectId: string) {
   });
 }
 
-export function useProjectComparisons(projectId: string, page: number = 1, pageSize: number = 20) {
+export function useProjectComparisons(
+  projectId: string,
+  page: number = 1,
+  pageSize: number = 20,
+  processingCount: number = 0,
+) {
   return useQuery({
     queryKey: ['project', projectId, 'comparisons', page, pageSize],
     queryFn: async () => {
@@ -79,6 +84,7 @@ export function useProjectComparisons(projectId: string, page: number = 1, pageS
       return response.data;
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: processingCount > 0 ? 10000 : false,
     enabled: !!projectId,
   });
 }

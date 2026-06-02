@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // `turbopack` silences the Next.js 16 error that fires when a webpack
   // plugin (injected by withSentryConfig) is present without a matching
   // turbopack config. Production builds are forced to webpack via the

@@ -50,6 +50,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     ) {
       queryClient.invalidateQueries({ queryKey: ['datasets', 'project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId, 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId, 'comparisons'] });
     }
   }, [analysis?.status, projectId, queryClient]);
 

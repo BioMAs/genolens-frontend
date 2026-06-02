@@ -5,6 +5,7 @@ import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppShell from "@/components/AppShell";
+import LicenseExpiredBanner from "@/components/LicenseExpiredBanner";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 
@@ -58,6 +59,7 @@ export default async function RootLayout({
             <ThemeProvider>
               {user ? (
                 <AppShell user={user} userRole={userRole}>
+                  <LicenseExpiredBanner />
                   {children}
                 </AppShell>
               ) : (

@@ -398,7 +398,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           {/* Tab Content */}
           <div className="p-6">
             {activeTab === 'comparisons' && (
-              <ComparisonsTab projectId={projectId} />
+              <ComparisonsTab projectId={projectId} processingCount={summary?.stats.processing_count ?? 0} />
             )}
 
             {activeTab === 'qc' && (
@@ -744,12 +744,14 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 const PAGE_SIZE = 20;
 
 function ComparisonsTab({
-  projectId
+  projectId,
+  processingCount,
 }: {
-  projectId: string
+  projectId: string;
+  processingCount: number;
 }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useProjectComparisons(projectId, page, PAGE_SIZE);
+  const { data, isLoading } = useProjectComparisons(projectId, page, PAGE_SIZE, processingCount);
   const { prefetchComparisonData } = usePrefetchComparisons();
   const { prefetchVolcano, prefetchEnrichment } = usePrefetchVisualizations();
 
