@@ -28,14 +28,14 @@ interface ComparisonDetailProps {
   comparisonName: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'stats' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'integrations' | 'custom-viz';
 
 export default function ComparisonDetail({ projectId, comparisonName }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'gsea' | 'legacy'>('go');
+  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'legacy'>('go');
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -668,16 +668,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                 DEG Analysis
               </button>
               <button
-                onClick={() => setActiveTab('stats')}
-                className={`${
-                  activeTab === 'stats'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
-              >
-                Statistics
-              </button>
-              <button
                 onClick={() => setActiveTab('enrichment')}
                 className={`${
                   activeTab === 'enrichment'
@@ -685,11 +675,17 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
               >
-                Enrichissement
-                {!enrichmentDataset && (
-                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
-                )}
+                Enrichment
               </button>
+              <span
+                className="whitespace-nowrap py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-300 cursor-not-allowed flex items-center gap-1"
+                title="Coming soon"
+              >
+                Claims
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </span>
               <button
                 onClick={() => setActiveTab('clustering')}
                 className={`${
@@ -815,16 +811,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                     >
                       Pathway Enrichment
                     </button>
-                    <button
-                      onClick={() => setEnrichSubTab('gsea')}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        enrichSubTab === 'gsea'
-                          ? 'border-brand-primary text-brand-primary'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      GSEA
-                    </button>
                     {enrichmentDataset && (
                       <button
                         onClick={() => setEnrichSubTab('legacy')}
@@ -847,14 +833,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                         comparisonName={actualComparisonName}
                       />
                     </div>
-                  )}
-
-                  {/* GSEA sub-tab */}
-                  {enrichSubTab === 'gsea' && (
-                    <GSEAAnalysis
-                      dataset={degDataset}
-                      comparisonName={actualComparisonName}
-                    />
                   )}
 
                   {/* Legacy sub-tab (Parquet-based enrichment data) */}
@@ -937,14 +915,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                   </p>
                 </div>
               )
-            )}
-
-            {/* Statistics / Multiple Testing Tab */}
-            {activeTab === 'stats' && (
-              <MultipleTestingPanel
-                datasetId={degDataset.id}
-                comparisonName={actualComparisonName}
-              />
             )}
 
             {/* External Integrations Tab */}
