@@ -119,9 +119,8 @@ export default function EnrichmentRadarPlot({
         const group = groupedMap.get(term)!;
         const bestP = Math.min(...group.map((p) => p.padj || p.pvalue || 1));
         return {
-          term: term,
-          pathway_id: group[0].pathway_id || '',
-          category: group[0].category,
+          term,
+          category: group[0].category || 'Unknown',
           pValue: bestP
         };
       }));
@@ -206,7 +205,7 @@ export default function EnrichmentRadarPlot({
         }
 
         // Store available terms
-        setAvailableTerms(parquetPathways.map((p) => ({
+        setAvailableTerms(parquetPathways.map((p: EnrichmentPathway) => ({
           term: p.pathway_name || '',
           category: p.category || 'Unknown',
           pValue: p.pvalue || 1

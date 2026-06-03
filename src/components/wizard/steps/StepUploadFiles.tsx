@@ -200,8 +200,8 @@ function UploadCardWithProjectId({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
-    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!ALLOWED_EXT.includes(ext)) {
+    const ext = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
+    if (!ALLOWED_EXT.some((allowedExt) => allowedExt === ext)) {
       setError(`Unsupported file type. Use: ${ALLOWED_EXT.join(', ')}`);
       return;
     }

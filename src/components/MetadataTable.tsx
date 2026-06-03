@@ -45,6 +45,18 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
   if (error) return <div className="p-4 text-red-500">{error}</div>;
   if (!data.length) return <div className="p-4 text-gray-500">No metadata available.</div>;
 
+  const formatCellValue = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  };
+
   return (
     <div className="bg-white shadow sm:rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -73,7 +85,7 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
               <tr key={idx} className="hover:bg-gray-50">
                 {columns.map((col) => (
                   <td key={`${idx}-${col}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {row[col]}
+                    {formatCellValue(row[col])}
                   </td>
                 ))}
               </tr>

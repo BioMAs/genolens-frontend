@@ -46,16 +46,20 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         const columns: string[] = response.data.columns ?? [];
 
         // Resolve column names
-        const meta = dataset.dataset_metadata;
+        const meta = dataset.dataset_metadata as Record<string, unknown> | undefined;
         let logFCCol: string | null = null;
         let padjCol: string | null = null;
+        const comparisons =
+          meta?.comparisons && typeof meta.comparisons === 'object' && !Array.isArray(meta.comparisons)
+            ? (meta.comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
 
         // Global multi-comparison dataset
-        if (meta?.comparisons && typeof meta.comparisons === 'object' && !Array.isArray(meta.comparisons)) {
-          const compData = meta.comparisons[comparisonName];
+        if (comparisons) {
+          const compData = comparisons[comparisonName];
           if (compData) {
-            logFCCol = compData.logFC ?? null;
-            padjCol = compData.padj ?? null;
+            logFCCol = typeof compData.logFC === 'string' ? compData.logFC : null;
+            padjCol = typeof compData.padj === 'string' ? compData.padj : null;
           }
         }
 

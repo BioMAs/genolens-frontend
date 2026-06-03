@@ -5,6 +5,7 @@ import { HeatmapData, HeatmapConfig } from './types';
 import { useRef, useEffect, useState } from 'react';
 import { getColorscale, getLogFCColorscale } from './heatmapConfig';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import type { PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -100,7 +101,7 @@ export default function HeatmapVisualization({
                 len: 0.5,
                 x: 1.02,
               },
-            },
+            } as unknown as Partial<PlotData>,
           ]}
           layout={{
             autosize: true,
@@ -200,7 +201,7 @@ export default function HeatmapVisualization({
                 zmax: config.logFCmax,
                 hovertemplate:
                   '<b>%{y}</b><br>LogFC: %{z:.2f}<extra></extra>',
-              },
+              } as unknown as Partial<PlotData>,
             ]}
             layout={{
               autosize: true,

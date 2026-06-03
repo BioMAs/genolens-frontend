@@ -32,8 +32,15 @@ export default function ProjectDetailWithQuery({ projectId }: ProjectDetailProps
     const comps: Record<string, { id: string, type: 'SINGLE' | 'GLOBAL', dataset: Dataset, hasEnrichment: boolean }> = {};
 
     datasets.forEach(d => {
+      const metadata = d.dataset_metadata as Record<string, unknown> | undefined;
+      const comparisonsMap =
+        metadata?.comparisons && typeof metadata.comparisons === 'object' && !Array.isArray(metadata.comparisons)
+          ? (metadata.comparisons as Record<string, unknown>)
+          : undefined;
+
       if (d.type === DatasetType.DEG) {
-        const compName = d.dataset_metadata?.comparison_name || d.name;
+        const metadataComparisonName = metadata?.comparison_name;
+        const compName = (typeof metadataComparisonName === 'string' ? metadataComparisonName : '') || d.name;
         comps[compName] = {
           id: d.id,
           type: 'SINGLE',
@@ -42,8 +49,8 @@ export default function ProjectDetailWithQuery({ projectId }: ProjectDetailProps
         };
       }
 
-      if (d.dataset_metadata?.comparisons) {
-        Object.keys(d.dataset_metadata.comparisons).forEach(compName => {
+      if (comparisonsMap) {
+        Object.keys(comparisonsMap).forEach(compName => {
           comps[compName] = {
             id: d.id,
             type: 'GLOBAL',
@@ -55,8 +62,14 @@ export default function ProjectDetailWithQuery({ projectId }: ProjectDetailProps
     });
 
     datasets.forEach(d => {
-      if (d.type === DatasetType.ENRICHMENT && d.dataset_metadata?.enrichment_comparisons) {
-        d.dataset_metadata.enrichment_comparisons.forEach((compName: string) => {
+      const metadata = d.dataset_metadata as Record<string, unknown> | undefined;
+      const enrichmentComparisons = Array.isArray(metadata?.enrichment_comparisons)
+        ? metadata.enrichment_comparisons
+        : undefined;
+
+      if (d.type === DatasetType.ENRICHMENT && enrichmentComparisons) {
+        enrichmentComparisons.forEach((compName: unknown) => {
+          if (typeof compName !== 'string') return;
           if (comps[compName]) {
             comps[compName].hasEnrichment = true;
           }

@@ -252,8 +252,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     if (!enrichment) {
       enrichment = datasets.find(d =>
         d.type === DatasetType.ENRICHMENT &&
-        (d.dataset_metadata?.enrichment_comparisons?.includes(actualComparisonName) ||
-         d.dataset_metadata?.enrichment_comparisons?.includes(decodedName))
+        Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
+        (d.dataset_metadata.enrichment_comparisons.includes(actualComparisonName) ||
+         d.dataset_metadata.enrichment_comparisons.includes(decodedName))
       );
     }
 
@@ -341,27 +342,43 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   useEffect(() => {
     if (!degDataset) return;
 
-    const metadata = degDataset.dataset_metadata;
+    const metadata = degDataset.dataset_metadata as Record<string, unknown> | undefined;
+    const toNumber = (value: unknown): number => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    };
+    const comparisons =
+      metadata?.comparisons && typeof metadata.comparisons === 'object' && !Array.isArray(metadata.comparisons)
+        ? (metadata.comparisons as Record<string, Record<string, unknown>>)
+        : undefined;
 
     // Check if stats already exist in metadata
     if (metadata?.deg_up !== undefined && metadata?.deg_down !== undefined) {
+      const degUp = toNumber(metadata.deg_up);
+      const degDown = toNumber(metadata.deg_down);
+      const degTotal = metadata.deg_total !== undefined ? toNumber(metadata.deg_total) : degUp + degDown;
+
       // Stats exist at top level (for individual comparison datasets)
       setStats({
-        degUp: metadata.deg_up,
-        degDown: metadata.deg_down,
-        degTotal: metadata.deg_total || metadata.deg_up + metadata.deg_down
+        degUp,
+        degDown,
+        degTotal,
       });
       return;
     }
 
-    if (globalDatasetId && metadata?.comparisons?.[decodedName]) {
-      const compData = metadata.comparisons[decodedName];
+    if (globalDatasetId && comparisons?.[decodedName]) {
+      const compData = comparisons[decodedName];
       if (compData.deg_up !== undefined && compData.deg_down !== undefined) {
         // Stats exist in comparisons metadata (for global DEG files)
         setStats({
-          degUp: compData.deg_up || 0,
-          degDown: compData.deg_down || 0,
-          degTotal: compData.deg_total || 0
+          degUp: toNumber(compData.deg_up),
+          degDown: toNumber(compData.deg_down),
+          degTotal: toNumber(compData.deg_total)
         });
         return;
       }
@@ -393,9 +410,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         const updatedMetadata = globalDatasetId
           ? {
               comparisons: {
-                ...metadata?.comparisons,
+                ...comparisons,
                 [decodedName]: {
-                  ...metadata?.comparisons?.[decodedName],
+                  ...comparisons?.[decodedName],
                   deg_up: newStats.degUp,
                   deg_down: newStats.degDown,
                   deg_total: newStats.degTotal
@@ -440,9 +457,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
         // For global dataset, find columns for this comparison
         if (globalDatasetId) {
-          const compData = metadata?.comparisons?.[decodedName];
-          logFCCol = compData?.logFC || null;
-          padjCol = compData?.padj || null;
+          const compData = comparisons?.[decodedName];
+          logFCCol = typeof compData?.logFC === 'string' ? compData.logFC : null;
+          padjCol = typeof compData?.padj === 'string' ? compData.padj : null;
         } else {
           // For individual comparison dataset, find any logFC/padj columns
           logFCCol = columns.find((c: string) =>
@@ -525,9 +542,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         const updatedMetadata = globalDatasetId
           ? {
               comparisons: {
-                ...metadata?.comparisons,
+                ...comparisons,
                 [decodedName]: {
-                  ...metadata?.comparisons?.[decodedName],
+                  ...comparisons?.[decodedName],
                   deg_up: degUp,
                   deg_down: degDown,
                   deg_total: degTotal

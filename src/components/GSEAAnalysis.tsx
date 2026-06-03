@@ -52,7 +52,7 @@ interface EnrichmentPlotData {
   running_enrichment_scores: number[];
   gene_positions: number[];
   ranked_genes: string[];
-  metrics: Record<string, unknown>;
+  metrics: number[];
   gene_set_size: number;
 }
 
