@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import EnrichmentAnalysis from '@/components/analysis/EnrichmentAnalysis';
-import { ArrowLeft, Database, Grid } from 'lucide-react';
+import { ArrowLeft, Grid } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import api from '@/utils/api';

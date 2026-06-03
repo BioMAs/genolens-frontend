@@ -69,6 +69,12 @@ const textOperators = [
   { value: 'in_list', label: 'in list' }
 ];
 
+function isValidConditionOperator(value: string): value is FilterCondition['operator'] {
+  return [
+    '>', '<', '>=', '<=', '=', '!=', 'contains', 'not_contains', 'in_list', 'in_pathway'
+  ].includes(value);
+}
+
 export default function AdvancedFilterBuilder({
   onApplyFilter,
   onClearFilter,
@@ -376,7 +382,7 @@ export default function AdvancedFilterBuilder({
                           fieldDef?.type === 'number' ? '>' : '=';
                         updateCondition(group.id, condition.id, {
                           field: newField,
-                          operator: defaultOp as any,
+                          operator: defaultOp,
                           value: newField === 'regulation' ? 'up' : ''
                         });
                       }}
@@ -391,9 +397,14 @@ export default function AdvancedFilterBuilder({
                     {condition.field !== 'regulation' && condition.field !== 'pathway' && (
                       <select
                         value={condition.operator}
-                        onChange={(e) => updateCondition(group.id, condition.id, {
-                          operator: e.target.value as any
-                        })}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (isValidConditionOperator(value)) {
+                            updateCondition(group.id, condition.id, {
+                              operator: value
+                            });
+                          }
+                        }}
                         className="px-3 py-2 border border-gray-300 rounded-md text-sm min-w-[120px]"
                       >
                         {getOperatorsForField(condition.field).map(op => (

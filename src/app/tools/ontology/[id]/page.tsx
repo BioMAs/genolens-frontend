@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, GitCommit, GitBranch, ArrowUpCircle, ArrowDownCircle, Network } from 'lucide-react';
+import { ArrowLeft, GitBranch, ArrowUpCircle, ArrowDownCircle, Network } from 'lucide-react';
 import api from '@/utils/api';
 
 interface GoTermDetail {
@@ -14,6 +14,14 @@ interface GoTermDetail {
     level: number;
     parents: {id: string, name: string}[];
     children: {id: string, name: string}[];
+}
+
+interface ApiErrorShape {
+    response?: {
+        data?: {
+            detail?: unknown;
+        };
+    };
 }
 
 export default function GoTermPage() {
@@ -31,8 +39,9 @@ export default function GoTermPage() {
                 setLoading(true);
                 const res = await api.get(`/ontology/term/${termId}`);
                 setTerm(res.data);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || "Failed to load term");
+            } catch (err: unknown) {
+                const detail = (err as ApiErrorShape)?.response?.data?.detail;
+                setError(typeof detail === 'string' ? detail : 'Failed to load term');
             } finally {
                 setLoading(false);
             }

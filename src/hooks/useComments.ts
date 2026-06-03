@@ -18,7 +18,7 @@ import type {
 export const commentKeys = {
   all: ['comments'] as const,
   lists: () => [...commentKeys.all, 'list'] as const,
-  list: (projectId: string, filters?: Record<string, any>) =>
+  list: (projectId: string, filters?: Record<string, unknown>) =>
     [...commentKeys.lists(), projectId, filters] as const,
   detail: (commentId: string) => [...commentKeys.all, 'detail', commentId] as const,
   thread: (commentId: string) => [...commentKeys.all, 'thread', commentId] as const,

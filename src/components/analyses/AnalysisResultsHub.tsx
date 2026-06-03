@@ -2,12 +2,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
-import { SelfServiceAnalysisStatus, Dataset, DatasetType, DatasetStatus } from '@/types';
+import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
 import PreprocessingResults from './PreprocessingResults';
 import PCAResults from './PCAResults';
 import UMAPResults from './UMAPResults';
@@ -29,7 +28,6 @@ interface Props {
 }
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('comparisons');
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
@@ -52,19 +50,19 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
       queryClient.invalidateQueries({ queryKey: ['project', projectId, 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId, 'comparisons'] });
     }
-  }, [analysis?.status, projectId, queryClient]);
+  }, [analysis, projectId, queryClient]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
   // Comparisons linked to this analysis (via result_dataset_ids)
-  const allComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
   const analysisComparisons = useMemo(() => {
+    const allComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
     if (!analysis) return allComparisons;
     const resultIds = new Set(analysis.result_dataset_ids ?? []);
     const filtered = allComparisons.filter((c) => resultIds.has(c.dataset_id));
     // If no match via dataset_id, show all (fallback for older analyses)
     return filtered.length > 0 ? filtered : allComparisons;
-  }, [analysis, allComparisons]);
+  }, [analysis, summary?.comparisons]);
 
   // VST dataset (for PCA data embedded in metadata)
   const vstDataset = useMemo<Dataset | undefined>(() => {
@@ -140,7 +138,6 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }
 
-  const isDone = analysis.status === SelfServiceAnalysisStatus.DONE;
   const projectName = summary?.project?.name ?? 'Project';
 
   return (
@@ -282,7 +279,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
   const rows: { label: string; value: string }[] = [
     { label: 'DESeq2 design',        value: String(params.design ?? 'auto') },
     { label: 'FDR threshold',        value: String(params.fdr ?? 0.05) },
-    { label: 'Min |log2FC|',         value: String(params.min_log2fc ?? 1.0) },
+    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.5) },
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },

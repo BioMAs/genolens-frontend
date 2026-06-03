@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '@/utils/api';
-import { Loader2, Sparkles, ChevronDown, Send, Lock, Info } from 'lucide-react';
+import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
   comparisonName: string;
-  selectedTerms?: string[];
   maxTerms?: number;
 }
 
@@ -29,10 +28,23 @@ interface RadarDataPoint {
   geneRatio_DOWN: number;
 }
 
+interface EnrichmentPathway {
+  pathway_id?: string;
+  pathway_name?: string;
+  term?: string;
+  category?: string;
+  pvalue?: number;
+  p_value?: number;
+  padj?: number;
+  gene_ratio?: number | string;
+  regulation?: string;
+  genes?: string[];
+  [key: string]: unknown;
+}
+
 export default function EnrichmentRadarPlot({ 
   datasetId, 
   comparisonName, 
-  selectedTerms,
   maxTerms = 10
 }: EnrichmentRadarPlotProps) {
   const [data, setData] = useState<RadarDataPoint[]>([]);
@@ -61,11 +73,7 @@ export default function EnrichmentRadarPlot({
     fetchProfile();
   }, []);
 
-  useEffect(() => {
-    fetchRadarData();
-  }, [datasetId, comparisonName, selectionMode, customSelected]);
-
-  const fetchRadarData = async () => {
+  const fetchRadarData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -91,24 +99,25 @@ export default function EnrichmentRadarPlot({
       }
 
       // Group by Term to handle ALL/UP/DOWN
-      const groupedMap = new Map<string, any[]>();
-      pathwaysRaw.forEach((p: any) => {
+        const groupedMap = new Map<string, EnrichmentPathway[]>();
+        pathwaysRaw.forEach((p: EnrichmentPathway) => {
           const term = p.pathway_name;
+          if (!term) return;
           if (!groupedMap.has(term)) groupedMap.set(term, []);
           groupedMap.get(term)?.push(p);
       });
 
       // Sort terms by significance (min padj in group)
       const sortedTerms = Array.from(groupedMap.keys()).sort((a, b) => {
-          const minP_a = Math.min(...(groupedMap.get(a)?.map((p:any) => p.padj || p.pvalue || 1) || [1]));
-          const minP_b = Math.min(...(groupedMap.get(b)?.map((p:any) => p.padj || p.pvalue || 1) || [1]));
+            const minP_a = Math.min(...(groupedMap.get(a)?.map((p) => p.padj || p.pvalue || 1) || [1]));
+            const minP_b = Math.min(...(groupedMap.get(b)?.map((p) => p.padj || p.pvalue || 1) || [1]));
           return minP_a - minP_b;
       });
 
       // Store available terms
       setAvailableTerms(sortedTerms.map((term) => {
         const group = groupedMap.get(term)!;
-        const bestP = Math.min(...group.map((p:any) => p.padj || p.pvalue || 1));
+        const bestP = Math.min(...group.map((p) => p.padj || p.pvalue || 1));
         return {
           term: term,
           pathway_id: group[0].pathway_id || '',
@@ -134,7 +143,7 @@ export default function EnrichmentRadarPlot({
       const selectedPathways = termsToKeep.flatMap(term => groupedMap.get(term) || []);
       transformAndSetData(selectedPathways);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[RadarPlot] Database failed, trying Parquet fallback:', err);
       
       // Parquet fallback
@@ -155,7 +164,7 @@ export default function EnrichmentRadarPlot({
         );
 
         if (clusterCol) {
-          rawData = rawData.filter((row: any) => {
+          rawData = rawData.filter((row: Record<string, unknown>) => {
             const clusterValue = String(row[clusterCol] || '');
             const cleanCluster = clusterValue.includes(':') ? clusterValue.split(':').pop() : clusterValue;
             return cleanCluster?.includes(comparisonName);
@@ -172,16 +181,19 @@ export default function EnrichmentRadarPlot({
 
         // Process Parquet data
         const parquetPathways = rawData
-          .filter((row: any) => row[pvalCol] && row[pvalCol] > 0)
-          .sort((a: any, b: any) => parseFloat(a[pvalCol]) - parseFloat(b[pvalCol]))
+          .filter((row: Record<string, unknown>) => {
+            const value = row[pvalCol] as number | string | undefined;
+            return value !== undefined && Number(value) > 0;
+          })
+          .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a[pvalCol]) - Number(b[pvalCol]))
           .slice(0, 100) // Take top 100
-          .map((row: any) => ({
-            pathway_name: row[termCol],
-            pvalue: parseFloat(row[pvalCol]),
-            padj: parseFloat(row[pvalCol]),
-            category: categoryCol ? row[categoryCol] : 'Unknown',
-            genes: genesCol ? String(row[genesCol]).split('|') : [],
-            gene_ratio: rCol && RCol ? parseFloat(row[rCol]) / parseFloat(row[RCol]) : 0,
+          .map((row: Record<string, unknown>): EnrichmentPathway => ({
+            pathway_name: String(row[termCol] || ''),
+            pvalue: Number(row[pvalCol]),
+            padj: Number(row[pvalCol]),
+            category: categoryCol ? String(row[categoryCol] || 'Unknown') : 'Unknown',
+            genes: genesCol ? String(row[genesCol] || '').split('|') : [],
+            gene_ratio: rCol && RCol ? Number(row[rCol]) / Number(row[RCol]) : 0,
             regulation: 'ALL' // Default for parquet
           }));
 
@@ -194,10 +206,10 @@ export default function EnrichmentRadarPlot({
         }
 
         // Store available terms
-        setAvailableTerms(parquetPathways.map((p: any) => ({
-          term: p.pathway_name,
-          category: p.category,
-          pValue: p.pvalue
+        setAvailableTerms(parquetPathways.map((p) => ({
+          term: p.pathway_name || '',
+          category: p.category || 'Unknown',
+          pValue: p.pvalue || 1
         })));
 
         // Select top terms
@@ -210,7 +222,11 @@ export default function EnrichmentRadarPlot({
         setLoading(false);
       }
     }
-  };
+  }, [comparisonName, customSelected, datasetId, maxTerms, selectionMode]);
+
+  useEffect(() => {
+    fetchRadarData();
+  }, [fetchRadarData]);
 
   const handleAiSelection = async () => {
     if (!aiPrompt.trim()) {
@@ -240,21 +256,22 @@ export default function EnrichmentRadarPlot({
       transformAndSetData(selectedTerms);
       setShowAiPrompt(false);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('AI selection failed:', err);
-      if (err.response?.status === 403) {
+      const apiError = err as { response?: { status?: number; data?: { detail?: string } } };
+      if (apiError.response?.status === 403) {
         setError('AI features require a PREMIUM or ADVANCED subscription');
       } else {
-        setError(err.response?.data?.detail || 'AI selection failed');
+        setError(apiError.response?.data?.detail || 'AI selection failed');
       }
     } finally {
       setAiLoading(false);
     }
   };
 
-  const transformAndSetData = (selectedPathways: any[]) => {
+  const transformAndSetData = (selectedPathways: EnrichmentPathway[]) => {
     // Group by term to handle multiple regulations
-    const groups = new Map<string, any[]>();
+    const groups = new Map<string, EnrichmentPathway[]>();
     selectedPathways.forEach(p => {
        const term = p.pathway_name || p.term;
        if (!term) return;
@@ -320,7 +337,7 @@ export default function EnrichmentRadarPlot({
 
   const canUseAI = userProfile && (userProfile.role === 'ADMIN' || ['PREMIUM', 'ADVANCED'].includes(userProfile.subscription_plan));
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: RadarDataPoint }> }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -463,12 +480,12 @@ export default function EnrichmentRadarPlot({
             <div className="flex-1">
               <h4 className="text-sm font-semibold text-gray-900 mb-1">AI-Powered Term Selection</h4>
               <p className="text-xs text-gray-600 mb-3">
-                Describe what biological processes you're interested in, and AI will select the most relevant terms
+                Describe what biological processes you&apos;re interested in, and AI will select the most relevant terms
               </p>
               <textarea
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Example: 'focus on liver metabolism and lipid pathways' or 'immune response related to hepatocytes'"
+                placeholder="Example: &apos;focus on liver metabolism and lipid pathways&apos; or &apos;immune response related to hepatocytes&apos;"
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                 rows={3}
                 disabled={aiLoading}
@@ -581,9 +598,9 @@ export default function EnrichmentRadarPlot({
               fill="#8b5cf6"
               fillOpacity={0.2}
               strokeWidth={2}
-              dot={(props: any) => {
+                dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
-                 const r = 3 + ((payload.geneRatio_ALL || 0) / 10);
+                  const r = 3 + (((payload?.geneRatio_ALL) || 0) / 10);
                  return <circle cx={cx} cy={cy} r={r} fill="#7c3aed" stroke="#fff" strokeWidth={1} />;
               }}
             />
@@ -595,9 +612,9 @@ export default function EnrichmentRadarPlot({
               fill="#ef4444"
               fillOpacity={0.2}
               strokeWidth={2}
-              dot={(props: any) => {
+                dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
-                 const r = 3 + ((payload.geneRatio_UP || 0) / 10);
+                  const r = 3 + (((payload?.geneRatio_UP) || 0) / 10);
                  return <circle cx={cx} cy={cy} r={r} fill="#ef4444" stroke="#fff" strokeWidth={1} />;
               }}
             />
@@ -609,9 +626,9 @@ export default function EnrichmentRadarPlot({
               fill="#3b82f6"
               fillOpacity={0.2}
               strokeWidth={2}
-              dot={(props: any) => {
+                dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
-                 const r = 3 + ((payload.geneRatio_DOWN || 0) / 10);
+                  const r = 3 + (((payload?.geneRatio_DOWN) || 0) / 10);
                  return <circle cx={cx} cy={cy} r={r} fill="#3b82f6" stroke="#fff" strokeWidth={1} />;
               }}
             />

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -22,6 +23,8 @@ interface PCAData {
   samples: PCAPoint[];
 }
 
+type PCAAxisKey = 'PC1' | 'PC2' | 'PC3' | 'PC4';
+
 interface PCAResultsProps {
   pcaData: PCAData | null;
   datasetId?: string;
@@ -33,11 +36,21 @@ const CONDITION_COLORS = [
 ];
 
 export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
-  const [xAxis, setXAxis] = useState<string>('PC1');
-  const [yAxis, setYAxis] = useState<string>('PC2');
+  const [xAxis, setXAxis] = useState<PCAAxisKey>('PC1');
+  const [yAxis, setYAxis] = useState<PCAAxisKey>('PC2');
   const [colorBy, setColorBy] = useState<'condition' | 'batch'>('condition');
 
-  const availablePCs = pcaData?.pc_labels ?? [];
+  const availablePCs = useMemo(() => {
+    const labels = pcaData?.pc_labels ?? [];
+    return labels.filter((pc): pc is PCAAxisKey => ['PC1', 'PC2', 'PC3', 'PC4'].includes(pc));
+  }, [pcaData?.pc_labels]);
+
+  const getPCValue = (point: PCAPoint, axis: PCAAxisKey): number => {
+    if (axis === 'PC1') return point.PC1 ?? 0;
+    if (axis === 'PC2') return point.PC2 ?? 0;
+    if (axis === 'PC3') return point.PC3 ?? 0;
+    return point.PC4 ?? 0;
+  };
 
   const { traces, layout } = useMemo(() => {
     if (!pcaData || pcaData.samples.length === 0) return { traces: [], layout: {} };
@@ -56,12 +69,12 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
     const xVar = pcaData.variance_explained[xIdx] ?? 0;
     const yVar = pcaData.variance_explained[yIdx] ?? 0;
 
-    const traces = Object.entries(groups).map(([groupName, points], i) => ({
+    const traces: Partial<PlotData>[] = Object.entries(groups).map(([groupName, points], i) => ({
       type: 'scatter' as const,
       mode: 'markers+text' as const,
       name: groupName,
-      x: points.map((p) => (p as any)[xAxis] ?? 0),
-      y: points.map((p) => (p as any)[yAxis] ?? 0),
+      x: points.map((p) => getPCValue(p, xAxis)),
+      y: points.map((p) => getPCValue(p, yAxis)),
       text: points.map((p) => p.sample_id),
       textposition: 'top center' as const,
       textfont: { size: 9, color: '#6b7280' },
@@ -73,7 +86,7 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       },
     }));
 
-    const layout = {
+    const layout: Partial<Layout> = {
       autosize: true,
       height: 520,
       xaxis: {
@@ -194,8 +207,8 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       {/* Scatter plot */}
       <div className="rounded-xl border border-gray-200 bg-white p-2">
         <Plot
-          data={traces as any}
-          layout={layout as any}
+          data={traces}
+          layout={layout}
           useResizeHandler
           style={{ width: '100%' }}
           config={{ displayModeBar: true, responsive: true }}

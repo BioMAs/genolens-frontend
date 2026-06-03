@@ -5,8 +5,9 @@ import dynamic from 'next/dynamic';
 import { Dataset } from '@/types';
 import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData } from '@/components/heatmap/useHeatmapData';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -244,7 +245,7 @@ export default function DEGClusteringView({
               customdata: degStatus.map(v => [v === 1 ? 'UP ▲' : 'DOWN ▼']),
               xaxis: 'x2',
               yaxis: 'y',
-            } as any,
+            } as Partial<PlotData>,
 
             // ── Main expression / log2FC heatmap ─────────────────────────
             {
@@ -269,7 +270,7 @@ export default function DEGClusteringView({
               },
               xaxis: 'x',
               yaxis: 'y',
-            } as any,
+            } as Partial<PlotData>,
           ]}
           layout={{
             autosize: true,
@@ -304,7 +305,7 @@ export default function DEGClusteringView({
             margin: { l: 55, r: 90, b: 120, t: 140 },
             paper_bgcolor: 'white',
             plot_bgcolor: 'white',
-          } as any}
+          } as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}
           config={{

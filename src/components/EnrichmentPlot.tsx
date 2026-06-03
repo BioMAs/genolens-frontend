@@ -10,16 +10,29 @@ interface EnrichmentPlotProps {
   comparisonName?: string;
 }
 
+type QueryValue = string | number | null | undefined;
+type QueryRow = Record<string, QueryValue>;
+
+interface EnrichmentPoint {
+  name: string;
+  x: number;
+  y: string;
+  size: number;
+  pvalue: number;
+  z: number;
+  negLogP: number;
+}
+
 export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPlotProps) {
   // Utilise React Query pour gérer le cache
-  const { data: queryData, isLoading, error: queryError } = useDatasetQuery(dataset.id, 1000);
+  const { data: queryData, isLoading } = useDatasetQuery(dataset.id, 1000);
 
   // Traite les données avec useMemo pour éviter recalculs inutiles
   const { data, error } = useMemo(() => {
     if (!queryData) return { data: [], error: null };
     
     try {
-      let rawData = queryData.data;
+      let rawData = queryData.data as QueryRow[];
       const cols = queryData.columns;
 
       // If comparisonName is provided, filter by gene_cluster column
@@ -33,7 +46,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
         );
         
         if (clusterCol) {
-          rawData = rawData.filter((row: any) => {
+          rawData = rawData.filter((row: QueryRow) => {
             const clusterValue = String(row[clusterCol] || '');
             // Match comparison name with or without _up/_down suffix
             return clusterValue.includes(comparisonName) || 
@@ -77,7 +90,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
       }
 
       const processedData = rawData
-        .map((row: any) => {
+        .map((row: QueryRow): EnrichmentPoint | null => {
           const pval = parseFloat(row[pValCol]);
           const r = parseFloat(row[rCol]);
           const rExpected = parseFloat(row[rExpectedCol]);
@@ -100,8 +113,8 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
             negLogP: -Math.log10(pval) // For color scale
           };
         })
-        .filter((d: any): d is { name: string, x: number, y: string, size: number, pvalue: number, z: number, negLogP: number } => d !== null)
-        .sort((a: any, b: any) => {
+        .filter((d): d is EnrichmentPoint => d !== null)
+        .sort((a, b) => {
           // Sort by p-value (most significant first)
           return a.pvalue - b.pvalue;
         })
@@ -134,14 +147,6 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
       return '#9ca3af'; // Gray - not significant
   };
   
-  // Get min and max negLogP for color scale
-  const negLogPValues = data
-    .filter(Boolean)
-    .map((d: any) => d.negLogP)
-    .filter((v: number) => v !== undefined);
-  const minNegLogP = Math.min(...negLogPValues, 0);
-  const maxNegLogP = Math.max(...negLogPValues, 10);
-
   return (
     <div className="space-y-4">
       {/* Color scale legend */}
@@ -185,7 +190,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
             <ZAxis type="number" dataKey="z" range={[50, 400]} name="Count" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                 if (active && payload && payload.length) {
-                    const d = payload[0].payload;
+                const d = payload[0].payload as EnrichmentPoint;
                     return (
                         <div className="bg-white p-2 border border-gray-200 shadow-sm rounded text-sm">
                             <p className="font-bold">{d.name}</p>

@@ -100,7 +100,7 @@ export default function HeatmapVisualization({
                 len: 0.5,
                 x: 1.02,
               },
-            } as any,
+            },
           ]}
           layout={{
             autosize: true,
@@ -200,7 +200,7 @@ export default function HeatmapVisualization({
                 zmax: config.logFCmax,
                 hovertemplate:
                   '<b>%{y}</b><br>LogFC: %{z:.2f}<extra></extra>',
-              } as any,
+              },
             ]}
             layout={{
               autosize: true,

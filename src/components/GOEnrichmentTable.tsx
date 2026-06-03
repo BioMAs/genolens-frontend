@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -43,8 +43,6 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   const [pageSize, setPageSize] = useState(25);
 
   // Filter and sort
@@ -159,10 +157,12 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     );
   };
 
+  const canUsePortal = typeof document !== 'undefined';
+
   return (
     <div className="space-y-4">
       {/* Gene hover tooltip portal */}
-      {mounted && hoveredGene && (() => {
+      {canUsePortal && hoveredGene && (() => {
         const info = degGeneMap?.[hoveredGene.gene.toUpperCase()];
         if (!info) return null;
         const isUp = info.regulation === 'UP';
@@ -274,7 +274,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
               {pagedTerms.map((term) => {
                 const isExpanded = expandedRows.has(term.go_id);
                 return (
-                  <>
+                  <Fragment key={term.go_id}>
                     <tr key={term.go_id} className="border-t hover:bg-muted/50 transition-colors">
                       <td className="p-3">
                         <div className="space-y-1">
@@ -353,7 +353,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

@@ -19,7 +19,7 @@ export default function GenerateReportButton({ projectId }: Props) {
   const isRunning = job?.status === "PENDING" || job?.status === "RUNNING";
 
   const apiBase =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v1";
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v2";
   const downloadUrl = isDone
     ? `${apiBase}/projects/${projectId}/report/download`
     : null;

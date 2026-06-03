@@ -166,7 +166,6 @@ export default function GSEAEnrichmentPlot({
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
 
     // Calculate margins (must match drawing logic)
     const margin = { top: 40, right: 40, bottom: 80, left: 60 };

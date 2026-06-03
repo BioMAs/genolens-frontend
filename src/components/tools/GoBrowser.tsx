@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Network, Search, ArrowRight, ChevronRight, GitBranch } from 'lucide-react';
+import { Network, Search } from 'lucide-react';
 import api from '@/utils/api';
 
 interface GoTerm {

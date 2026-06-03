@@ -30,7 +30,7 @@ export interface CSVColumn {
  * @param filename - Name of the file (without extension)
  * @param columns - Optional array of column names (string[]) or column definitions (CSVColumn[])
  */
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, unknown>>(
   data: T[],
   filename: string,
   columns?: string[] | CSVColumn[]
@@ -261,8 +261,8 @@ export function exportToHTML(
   data: {
     title: string;
     description?: string;
-    tables?: Array<{ title: string; data: any[]; columns?: string[] }>;
-    metadata?: Record<string, any>;
+    tables?: Array<{ title: string; data: Record<string, unknown>[]; columns?: string[] }>;
+    metadata?: Record<string, unknown>;
   },
   filename: string
 ): void {

@@ -11,6 +11,12 @@ import AIUsageLogs from '@/components/admin/AIUsageLogs';
 import UserConnections from '@/components/admin/UserConnections';
 import LicenseManagement from '@/components/admin/LicenseManagement';
 
+interface ApiErrorShape {
+  response?: {
+    status?: number;
+  };
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -25,10 +31,11 @@ export default function AdminPage() {
         await api.get('/admin/stats');
         setHasAccess(true);
         setLoading(false);
-      } catch (err: any) {
-        if (err.response?.status === 403) {
+      } catch (err: unknown) {
+        const apiError = err as ApiErrorShape;
+        if (apiError.response?.status === 403) {
           setError('Access denied. Admin privileges required.');
-        } else if (err.response?.status === 401) {
+        } else if (apiError.response?.status === 401) {
           router.push('/');
         } else {
           setError('Failed to verify admin access.');

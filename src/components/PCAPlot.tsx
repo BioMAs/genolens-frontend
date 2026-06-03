@@ -9,11 +9,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-  Cell
+  Legend
 } from 'recharts';
 import { usePCAData } from '@/hooks/useVisualizations';
-import { useDatasetQuery } from '@/hooks/useDatasets';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { getPalette } from '@/utils/chartPalettes';
@@ -25,10 +23,14 @@ interface PCAPlotProps {
   metadataDataset?: Dataset;
 }
 
-interface PCAResult {
-  data: { sample: string; x: number; y: number; z: number }[];
-  explained_variance: number[];
-  total_variance: number;
+type MetadataRow = Record<string, string | number | boolean | null>;
+
+interface PCADataPoint {
+  sample: string;
+  x: number;
+  y: number;
+  z: number;
+  category?: string | number | boolean | null;
 }
 
 export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
@@ -39,7 +41,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
     dataset.status === 'READY'
   );
   
-  const [metadata, setMetadata] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<MetadataRow[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
@@ -51,6 +53,8 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   // Fetch Metadata if available and PCA is ready
   useEffect(() => {
     if (!metadataDataset || metadataDataset.status !== 'READY') {
+        // Reset state when metadata dataset is unavailable.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
         setMetadata([]);
         setMetadataColumns([]);
         setJoinColumn('');
@@ -71,13 +75,13 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         const cols = resp.data.columns;
 
         // 1. Find the best column to join on (Sample ID)
-        const pcaSamples = new Set(pcaData.data.map((d: any) => d.sample));
+        const pcaSamples = new Set((pcaData.data as PCADataPoint[]).map((d) => d.sample));
         let bestJoinCol = '';
         let maxOverlap = 0;
 
         cols.forEach((col: string) => {
-            const metaValues = metaData.map((row: any) => row[col]);
-            const overlap = metaValues.filter((v: any) => pcaSamples.has(String(v))).length;
+          const metaValues = (metaData as MetadataRow[]).map((row) => row[col]);
+          const overlap = metaValues.filter((v) => pcaSamples.has(String(v))).length;
             if (overlap > maxOverlap) {
                 maxOverlap = overlap;
                 bestJoinCol = col;
@@ -89,7 +93,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         // Exclude the join column itself if it's unique per sample (likely)
         const suitableCols = cols.filter((col: string) => {
             if (col === bestJoinCol) return false;
-            const uniqueValues = new Set(metaData.map((row: any) => row[col]));
+          const uniqueValues = new Set((metaData as MetadataRow[]).map((row) => row[col]));
             return uniqueValues.size > 1 && uniqueValues.size < 20;
         });
         setMetadataColumns(suitableCols);
@@ -103,16 +107,16 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
     };
 
     fetchMetadata();
-  }, [metadataDataset, pcaData]);
+  }, [metadataDataset, pcaData, selectedColorColumn]);
 
   // Merge PCA with Metadata
   const plotData = useMemo(() => {
       if (!pcaData) return [];
       if (!selectedColorColumn || metadata.length === 0 || !joinColumn) return pcaData.data;
 
-      return pcaData.data.map((point: any) => {
+        return (pcaData.data as PCADataPoint[]).map((point) => {
           // Find matching metadata row using the detected join column
-          const metaRow = metadata.find((m: any) => String(m[joinColumn]) === point.sample);
+          const metaRow = metadata.find((m) => String(m[joinColumn]) === point.sample);
           
           return {
               ...point,
@@ -124,7 +128,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   // Generate Colors
   const uniqueCategories = useMemo(() => {
       if (!selectedColorColumn) return [];
-      return Array.from(new Set(plotData.map((d: any) => d.category))).filter(Boolean);
+      return Array.from(new Set((plotData as PCADataPoint[]).map((d) => d.category))).filter(Boolean);
   }, [plotData, selectedColorColumn]);
 
   const categoryColorMap = useMemo(() => {
@@ -169,7 +173,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
               variance_pc2: pcaData ? +(pcaData.explained_variance[1] * 100).toFixed(1) : 0,
               n_samples: pcaData?.data?.length ?? 0,
               n_genes: 0,
-              sample_groups: Array.from(new Set((pcaData?.data ?? []).map((d: any) => d[selectedColorColumn] ?? 'Unknown'))),
+              sample_groups: Array.from(new Set((plotData as PCADataPoint[]).map((d) => String(d.category ?? 'Unknown')))),
               group_separation: true,
             }}
             label="PCA Plot"
@@ -226,7 +230,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
                     <Scatter 
                         key={cat as string} 
                         name={cat as string} 
-                        data={plotData.filter((d: any) => d.category === cat)} 
+                        data={(plotData as PCADataPoint[]).filter((d) => d.category === cat)} 
                         fill={categoryColorMap[cat as string]} 
                     />
                 ))

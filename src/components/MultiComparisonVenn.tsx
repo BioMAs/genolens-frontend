@@ -17,6 +17,18 @@ interface ComparisonOption {
   degCount: number;
 }
 
+interface ComparisonMeta {
+  deg_total?: number;
+}
+
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: unknown;
+    };
+  };
+}
+
 interface VennData {
   sets: string[];
   intersections: {
@@ -26,7 +38,7 @@ interface VennData {
   }[];
 }
 
-export default function MultiComparisonVenn({ projectId, degDataset }: MultiComparisonVennProps) {
+export default function MultiComparisonVenn({ degDataset }: MultiComparisonVennProps) {
   const [availableComparisons, setAvailableComparisons] = useState<ComparisonOption[]>([]);
   const [selectedComparisons, setSelectedComparisons] = useState<string[]>([]);
   const [vennData, setVennData] = useState<VennData | null>(null);
@@ -36,9 +48,10 @@ export default function MultiComparisonVenn({ projectId, degDataset }: MultiComp
   // Extract available comparisons from metadata
   useEffect(() => {
     const metadata = degDataset.dataset_metadata;
-    if (metadata?.comparisons) {
-      const comparisons: ComparisonOption[] = Object.entries(metadata.comparisons).map(
-        ([name, data]: [string, any]) => ({
+    const comparisonsMap = metadata?.comparisons as Record<string, ComparisonMeta> | undefined;
+    if (comparisonsMap) {
+      const comparisons: ComparisonOption[] = Object.entries(comparisonsMap).map(
+        ([name, data]) => ({
           name,
           label: name,
           degCount: (data.deg_total || 0)
@@ -81,8 +94,9 @@ export default function MultiComparisonVenn({ projectId, degDataset }: MultiComp
       });
 
       setVennData(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to generate Venn diagram');
+    } catch (err: unknown) {
+      const detail = (err as ApiErrorShape)?.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Failed to generate Venn diagram');
       console.error('Venn analysis error:', err);
     } finally {
       setLoading(false);

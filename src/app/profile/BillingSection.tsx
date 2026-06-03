@@ -56,7 +56,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 }
 
 export default function BillingSection() {
-  const { getSubscription, getBillingPortal, loading, error } = useBilling();
+  const { getSubscription, getBillingPortal, error } = useBilling();
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);

@@ -7,7 +7,6 @@ import { ArrowLeft, Upload, FileText, Database, Activity, AlertCircle, CheckCirc
 import Link from 'next/link';
 import EditDatasetModal from './EditDatasetModal';
 import PCAPlot from './PCAPlot';
-import LibrarySizePlot from './LibrarySizePlot';
 import QCDashboard from './QCDashboard';
 import { TableSkeleton, ComparisonCardSkeleton, QCDashboardSkeleton } from './Skeletons';
 import { deslugComparisonName, formatDate } from '@/utils/formatters';
@@ -27,19 +26,6 @@ export default function ProjectDetailWithQuery({ projectId }: ProjectDetailProps
   // Edit State
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Upload State
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
-    name: '',
-    type: DatasetType.MATRIX,
-    description: '',
-    comparison_name: '',
-    is_normalized: false,
-    contains_all_genes: true,
-    file: null as File | null
-  });
-  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Memoized computations
   const comparisons = useMemo(() => {
@@ -85,94 +71,13 @@ export default function ProjectDetailWithQuery({ projectId }: ProjectDetailProps
     return datasets.filter(d => d.raw_file_path);
   }, [datasets]);
 
-  const matrixDataset = useMemo(() => {
-    return datasets.find(d => d.type === DatasetType.MATRIX && d.status === DatasetStatus.READY);
-  }, [datasets]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadForm({ ...uploadForm, file: e.target.files[0] });
-      setUploadError(null);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      const validExtensions = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'];
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-
-      if (validExtensions.includes(fileExtension)) {
-        setUploadForm({ ...uploadForm, file });
-        setUploadError(null);
-      } else {
-        setUploadError('Invalid file type. Please upload CSV, TSV, or Excel files.');
-      }
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const handleReprocess = async (datasetId: string) => {
     try {
       await api.post(`/datasets/${datasetId}/reprocess`);
       await refetchDatasets();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Reprocess failed:', err);
       alert('Failed to reprocess dataset');
-    }
-  };
-
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!uploadForm.file) {
-      setUploadError('Please select a file to upload');
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadError(null);
-
-      const formData = new FormData();
-      formData.append('file', uploadForm.file);
-      formData.append('project_id', projectId);
-      formData.append('name', uploadForm.name);
-      formData.append('dataset_type', uploadForm.type);
-      formData.append('description', uploadForm.description || '');
-      formData.append('comparison_name', uploadForm.comparison_name || '');
-      formData.append('is_normalized', uploadForm.is_normalized.toString());
-      formData.append('contains_all_genes', uploadForm.contains_all_genes.toString());
-
-      await api.post('/datasets/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setUploadForm({
-        name: '',
-        type: DatasetType.MATRIX,
-        description: '',
-        comparison_name: '',
-        is_normalized: false,
-        contains_all_genes: true,
-        file: null
-      });
-
-      await refetchDatasets();
-    } catch (err: any) {
-      console.error('Upload failed:', err);
-      setUploadError(err.response?.data?.detail || 'Failed to upload dataset');
-    } finally {
-      setIsUploading(false);
     }
   };
 

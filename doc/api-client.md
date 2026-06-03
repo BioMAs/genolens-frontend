@@ -20,7 +20,7 @@ const getBaseUrl = () => {
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
-  return url || 'http://localhost:8000/api/v1';
+  return url || 'http://localhost:8000/api/v2';
 };
 
 const api = axios.create({
@@ -35,7 +35,7 @@ const api = axios.create({
 
 | Variable | Description | Défaut |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | URL de l'API backend | `http://localhost:8000/api/v1` |
+| `NEXT_PUBLIC_API_URL` | URL de l'API backend | `http://localhost:8000/api/v2` |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL Supabase | — |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anon Supabase | — |
 
@@ -68,7 +68,7 @@ Composant → api.get('/projects')
             │   └─► config.headers.Authorization = "Bearer <token>"
             │
             ├─► Requête HTTP vers backend
-            │   GET /api/v1/projects
+            │   GET /api/v2/projects
             │   Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
             │
             └─► Backend valide le JWT via Supabase

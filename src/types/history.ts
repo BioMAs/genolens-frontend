@@ -25,7 +25,7 @@ export interface ActivityLogEntry {
   entity_type?: string;
   entity_id?: string;
   entity_name?: string;
-  extra_metadata: Record<string, any>;
+  extra_metadata: Record<string, unknown>;
   created_at: string;
 }
 

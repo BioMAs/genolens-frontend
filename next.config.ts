@@ -22,7 +22,6 @@ const nextConfig: NextConfig = {
     // can resolve it without needing a second Plotly install.
     config.resolve.alias = {
       ...config.resolve.alias,
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       "plotly.js/dist/plotly": require.resolve("plotly.js-dist-min"),
     };
     return config;

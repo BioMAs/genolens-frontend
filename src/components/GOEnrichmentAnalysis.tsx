@@ -170,7 +170,7 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnrichmentAnalysisProps) {
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [terms, setTerms] = useState<GOTerm[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +195,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
   // On mount: load all cached enrichment results from DB (all databases)
   const loadCached = useCallback(async (): Promise<boolean> => {
     try {
+      setError(null);
       const res = await api.get(
         `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
         { params: { page_size: 1000 } }
@@ -206,7 +207,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
         return true;
       }
     } catch {
-      // No cached results — silent fail
+      setError('Failed to load enrichment cache.');
     }
     return false;
   }, [dataset.id, comparisonName]);
@@ -260,14 +261,11 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
   // Initial load: load from cache only
   useEffect(() => {
     let cancelled = false;
-    setIsInitialLoad(true);
-    setIsRunning(true);
     (async () => {
       await loadCached();
       if (!cancelled) setIsRunning(false);
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadCached]);
 
   const hasResults = terms.length > 0;

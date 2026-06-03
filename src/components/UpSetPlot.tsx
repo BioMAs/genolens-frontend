@@ -36,7 +36,6 @@ export default function UpSetPlot({ data, onSetClick }: UpSetPlotProps) {
 
   const maxSize = Math.max(...sortedIntersections.map(i => i.size));
   const barWidth = 40;
-  const barGap = 10;
   const matrixSize = 20;
 
   return (

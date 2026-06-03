@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import api from '@/utils/api';
-import { Project, Dataset, DatasetType } from '@/types';
+import { Project, Dataset } from '@/types';
 import MultiComparisonVenn from '@/components/MultiComparisonVenn';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {

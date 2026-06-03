@@ -13,7 +13,7 @@ export interface ProjectComment {
   content: string;
   parent_id?: string;
   is_resolved: boolean;
-  extra_metadata: Record<string, any>;
+  extra_metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   replies?: ProjectComment[];
@@ -24,13 +24,13 @@ export interface ProjectCommentCreate {
   comment_type?: CommentType;
   target_id?: string;
   parent_id?: string;
-  extra_metadata?: Record<string, any>;
+  extra_metadata?: Record<string, unknown>;
 }
 
 export interface ProjectCommentUpdate {
   content?: string;
   is_resolved?: boolean;
-  extra_metadata?: Record<string, any>;
+  extra_metadata?: Record<string, unknown>;
 }
 
 export interface CommentThread {

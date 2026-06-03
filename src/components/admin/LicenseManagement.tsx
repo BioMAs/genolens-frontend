@@ -20,6 +20,14 @@ interface LicenseRecord {
   created_by: string | null;
 }
 
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
 function StatusBadge({ record }: { record: LicenseRecord }) {
   if (record.is_revoked) {
     return (
@@ -96,7 +104,7 @@ export default function LicenseManagement() {
       setForm({ client_id: '', plan: 'professional', expires_at_date: '', notes: '' });
       setFormError(null);
     },
-    onError: (err: any) => {
+    onError: (err: ApiErrorShape) => {
       setFormError(err.response?.data?.detail || 'Erreur lors de la génération de la clé.');
     },
   });

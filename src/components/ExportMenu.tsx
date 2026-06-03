@@ -24,6 +24,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Download, FileText, FileJson, File, FileImage, Loader2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   exportToCSV,
   exportToJSON,
@@ -36,7 +37,7 @@ export type ExportFormat = "csv" | "json" | "pdf" | "html";
 
 interface ExportMenuProps {
   /** Data to export (for CSV/JSON/HTML) */
-  data?: any[];
+  data?: Record<string, unknown>[];
   
   /** Base filename (without extension) */
   filename: string;
@@ -60,8 +61,8 @@ interface ExportMenuProps {
   htmlConfig?: {
     title: string;
     description?: string;
-    tables?: Array<{ title: string; data: any[] }>;
-    metadata?: Record<string, any>;
+    tables?: Array<{ title: string; data: Record<string, unknown>[] }>;
+    metadata?: Record<string, unknown>;
   };
   
   /** Button variant */
@@ -188,7 +189,7 @@ export default function ExportMenu({
   }`;
 
   // Format metadata
-  const formatMeta: Record<ExportFormat, { icon: any; label: string; description: string }> = {
+  const formatMeta: Record<ExportFormat, { icon: LucideIcon; label: string; description: string }> = {
     csv: {
       icon: FileText,
       label: "Export CSV",

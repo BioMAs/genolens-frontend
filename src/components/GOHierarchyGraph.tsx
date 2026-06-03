@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -28,7 +28,6 @@ export default function GOHierarchyGraph({
   selectedTerm, 
   onTermSelect 
 }: GOHierarchyGraphProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
   const [hoveredTerm, setHoveredTerm] = useState<GOTerm | null>(null);
 
   // Group terms by namespace
