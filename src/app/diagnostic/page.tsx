@@ -54,6 +54,15 @@ interface DiagnosticResult {
   };
 }
 
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: unknown;
+    };
+    status?: number;
+  };
+}
+
 export default function DiagnosticPage() {
   const [datasetId, setDatasetId] = useState('64d46ac5-42d2-4d4f-b705-0dd81e95cbc0');
   const [comparisonName, setComparisonName] = useState('M1_pos_24h_vs_M1_neg_24h');
@@ -74,11 +83,12 @@ export default function DiagnosticPage() {
       const response = await api.get(`/datasets/${datasetId}/diagnose-deg/${comparisonName}`);
       console.log('Diagnostic response:', response.data);
       setResult(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiErrorShape;
       console.error('Diagnostic failed:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
-      const errorDetail = err.response?.data?.detail;
+      console.error('Error response:', apiError.response?.data);
+      console.error('Error status:', apiError.response?.status);
+      const errorDetail = apiError.response?.data?.detail;
       setError(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail) || 'Failed to run diagnostic');
     } finally {
       setLoading(false);

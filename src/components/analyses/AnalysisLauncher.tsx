@@ -10,10 +10,19 @@ interface Props {
   projectId: string;
 }
 
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+  message?: string;
+}
+
 const DEFAULT_PARAMS: AnalysisParams = {
   design: 'auto',
   fdr: 0.05,
-  min_log2fc: 1.0,
+  min_log2fc: 1.5,
   min_reads: 100_000,
   min_genes: 500,
   min_count: 10,
@@ -70,8 +79,9 @@ export default function AnalysisLauncher({ projectId }: Props) {
       } else {
         router.push(`/projects/${projectId}/analyses`);
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? err?.message ?? 'Launch failed.');
+    } catch (err: unknown) {
+      const apiError = err as ApiErrorShape;
+      setError(apiError.response?.data?.detail ?? apiError.message ?? 'Launch failed.');
     } finally {
       setIsPending(false);
     }
@@ -146,7 +156,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
             onChange={(v) => setParams((p) => ({ ...p, fdr: v }))}
           />
           <NumberParam
-            label="Min |log2FC|"
+            label="log2FC"
             value={params.min_log2fc}
             step={0.1}
             min={0}

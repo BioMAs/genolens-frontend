@@ -1,35 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AdvancedFilter } from '@/components/AdvancedFilterBuilder';
 
 const STORAGE_KEY = 'genolens_saved_filters';
 
+type StoredFilters = Record<string, AdvancedFilter[]>;
+
+function readStoredFilters(): StoredFilters {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as StoredFilters) : {};
+  } catch (error) {
+    console.error('Failed to load saved filters:', error);
+    return {};
+  }
+}
+
+function getFiltersForProject(projectId?: string): AdvancedFilter[] {
+  const allFilters = readStoredFilters();
+  if (projectId) {
+    return allFilters[projectId] || [];
+  }
+  return Object.values(allFilters).flat();
+}
+
 export function useSavedFilters(projectId?: string) {
-  const [savedFilters, setSavedFilters] = useState<AdvancedFilter[]>([]);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const allFilters = JSON.parse(stored);
-
-        // If projectId is provided, filter by project
-        if (projectId && allFilters[projectId]) {
-          setSavedFilters(allFilters[projectId] || []);
-        } else if (!projectId) {
-          // Return all filters across all projects
-          setSavedFilters(Object.values(allFilters).flat() as AdvancedFilter[]);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load saved filters:', error);
-    }
-  }, [projectId]);
+  const [revision, setRevision] = useState(0);
+  void revision;
+  const savedFilters = getFiltersForProject(projectId);
 
   const saveFilter = (filter: AdvancedFilter, name: string) => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const allFilters = stored ? JSON.parse(stored) : {};
+      const allFilters = readStoredFilters();
 
       const filterWithName = { ...filter, name };
 
@@ -53,7 +54,6 @@ export function useSavedFilters(projectId?: string) {
         }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allFilters));
-        setSavedFilters(allFilters[projectId]);
       } else {
         // Global filter (no project context)
         if (!allFilters.global) {
@@ -61,8 +61,8 @@ export function useSavedFilters(projectId?: string) {
         }
         allFilters.global.push(filterWithName);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allFilters));
-        setSavedFilters(allFilters.global);
       }
+      setRevision((r) => r + 1);
     } catch (error) {
       console.error('Failed to save filter:', error);
     }
@@ -70,24 +70,20 @@ export function useSavedFilters(projectId?: string) {
 
   const deleteFilter = (name: string) => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
-
-      const allFilters = JSON.parse(stored);
+      const allFilters = readStoredFilters();
 
       if (projectId && allFilters[projectId]) {
         allFilters[projectId] = allFilters[projectId].filter(
           (f: AdvancedFilter) => f.name !== name
         );
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allFilters));
-        setSavedFilters(allFilters[projectId] || []);
       } else if (!projectId && allFilters.global) {
         allFilters.global = allFilters.global.filter(
           (f: AdvancedFilter) => f.name !== name
         );
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allFilters));
-        setSavedFilters(allFilters.global || []);
       }
+      setRevision((r) => r + 1);
     } catch (error) {
       console.error('Failed to delete filter:', error);
     }
@@ -100,10 +96,7 @@ export function useSavedFilters(projectId?: string) {
 
   const clearAllFilters = () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
-
-      const allFilters = JSON.parse(stored);
+      const allFilters = readStoredFilters();
 
       if (projectId) {
         delete allFilters[projectId];
@@ -112,7 +105,7 @@ export function useSavedFilters(projectId?: string) {
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allFilters));
-      setSavedFilters([]);
+      setRevision((r) => r + 1);
     } catch (error) {
       console.error('Failed to clear filters:', error);
     }

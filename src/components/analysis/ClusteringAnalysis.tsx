@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
-import { Settings, Play, Download, Maximize2, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-react';
-import { PlotData, Layout } from 'plotly.js';
+import { Settings, Play, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-react';
+import { PlotData } from 'plotly.js';
 import { getColorscale } from '@/components/heatmap/heatmapConfig';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
@@ -53,6 +53,25 @@ interface ClusteringResult {
   col_dendrogram?: number[][];
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
+interface SilhouetteDotProps {
+  cx?: number;
+  cy?: number;
+  index?: number;
+  payload?: SilhouettePoint;
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  return (error as ApiError).response?.data?.detail ?? fallback;
+}
+
 export default function ClusteringAnalysis({ projectId, datasetId, datasetName }: ClusteringAnalysisProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +85,6 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
     metric: 'euclidean'
   });
 
-  const [plotHeight, setPlotHeight] = useState(800);
   const [colorblindMode, setColorblindMode] = useState(false);
 
   // Silhouette / K-means
@@ -84,8 +102,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
         params: { top_n_genes: params.top_n_genes, metric: params.metric, k_min: 2, k_max: 10 }
       });
       setSilhouetteData(response.data);
-    } catch (err: any) {
-      setSilhouetteError(err.response?.data?.detail || 'Failed to compute silhouette scores');
+    } catch (err: unknown) {
+      setSilhouetteError(getApiErrorMessage(err, 'Failed to compute silhouette scores'));
     } finally {
       setLoadingSilhouette(false);
     }
@@ -104,9 +122,9 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       const effectiveParams = overrideParams ? { ...params, ...overrideParams } : params;
       const response = await api.post(`/datasets/${datasetId}/cluster`, effectiveParams);
       setResult(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Clustering error:", err);
-      setError(err.response?.data?.detail || "Failed to perform clustering");
+      setError(getApiErrorMessage(err, "Failed to perform clustering"));
     } finally {
       setLoading(false);
     }
@@ -115,46 +133,9 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
   // Initial run
   useEffect(() => {
     runClustering();
+    // Run only on dataset change; manual "Run" handles parameter changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetId]);
-
-  // Construct Plotly Data
-  const plotData = useMemo(() => {
-    if (!result) return null;
-
-    // Reorder data based on clustering result
-    // result.z is list of rows (genes).
-    // We want to reorder rows by row_order and cols by col_order.
-    
-    // 1. Reorder Rows
-    const orderedRows = result.row_order.map(i => result.z[i]);
-    const orderedRowLabels = result.row_order.map(i => result.row_labels[i]);
-
-    // 2. Reorder Cols (within each row)
-    const finalZ = orderedRows.map(row => result.col_order.map(j => row[j]));
-    const orderedColLabels = result.col_order.map(j => result.col_labels[j]);
-
-    const heatmapTrace: Partial<PlotData> = {
-      type: 'heatmap',
-      z: finalZ,
-      x: orderedColLabels,
-      y: orderedRowLabels,
-      colorscale: getColorscale(colorblindMode),
-      reversescale: true, // Red usually up/hot
-      // zmid: 0, // Assuming centered data often, but maybe not? 
-      // Actually standard count matrices are not centered.
-      // We might need an option to standardize rows (Z-score) in frontend or backend.
-      // Usually clustering visualizers show Z-scores.
-      // Let's implement client-side Z-score normalization for visualization if needed, 
-      // or assume raw values. For raw counts, RdBu is bad. Viridis or Magma is better.
-      // But usually people want Z-scores for heatmaps of expression.
-      colorbar: {
-        title: { text: 'Value' },
-        thickness: 20
-      }
-    };
-
-    return [heatmapTrace];
-  }, [result]);
 
   // If showing Z-scores is critical (it is for expression heatmaps),
   // we should probably normalize in the backend or frontend.
@@ -310,6 +291,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               chartType="heatmap"
               contextKey="heatmap-default"
               context={{
+                project_id: projectId,
+                dataset_name: datasetName,
                 n_genes: result?.row_labels?.length ?? 0,
                 n_samples: result?.col_labels?.length ?? 0,
                 n_clusters: params.n_clusters ?? null,
@@ -368,8 +351,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                       dataKey="silhouette_score"
                       stroke="#2A2E5B"
                       strokeWidth={2}
-                      dot={(props: any) => {
-                        const isRec = props.payload.k === silhouetteData.recommended_k;
+                      dot={(props: SilhouetteDotProps) => {
+                        const isRec = props.payload?.k === silhouetteData.recommended_k;
                         return (
                           <circle
                             key={props.index}

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import { Sparkles, AlertCircle } from 'lucide-react'
 import { UserProfile } from '@/types'
 import api from '@/utils/api'
 
@@ -11,11 +11,7 @@ export default function QuotaDisplay() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -30,7 +26,11 @@ export default function QuotaDisplay() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
 
   if (loading) return (
     <div className="animate-pulse bg-gray-200 h-6 w-20 rounded-full"></div>

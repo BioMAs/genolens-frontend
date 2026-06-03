@@ -13,6 +13,14 @@ interface VolcanoPlotProps {
   comparisonName: string;
 }
 
+interface VolcanoPoint {
+  gene: string;
+  x: number;
+  y: number;
+  padj: number;
+  is_significant: boolean;
+}
+
 export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProps) {
   // Threshold controls
   const [padjThreshold, setPadjThreshold] = useState(0.05);
@@ -32,7 +40,7 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
     }
   );
 
-  const data = volcanoData?.points || [];
+  const data = (volcanoData?.points || []) as VolcanoPoint[];
   const totalGenes = volcanoData?.total_genes || 0;
   const significantGenes = volcanoData?.significant_genes || 0;
   const isCached = volcanoData?.cached || false;
@@ -108,16 +116,16 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
         contextKey={comparisonName}
         context={{
           comparison_name: comparisonName,
-          up_count: data.filter((p: any) => p.is_significant && p.x > 0).length,
-          down_count: data.filter((p: any) => p.is_significant && p.x < 0).length,
+          up_count: data.filter((p) => p.is_significant && p.x > 0).length,
+          down_count: data.filter((p) => p.is_significant && p.x < 0).length,
           top_up_genes: data
-            .filter((p: any) => p.is_significant && p.x > 0)
+            .filter((p) => p.is_significant && p.x > 0)
             .slice(0, 5)
-            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+            .map((p) => ({ gene_id: p.gene, log_fc: p.x })),
           top_down_genes: data
-            .filter((p: any) => p.is_significant && p.x < 0)
+            .filter((p) => p.is_significant && p.x < 0)
             .slice(0, 5)
-            .map((p: any) => ({ gene_id: p.gene, log_fc: p.x })),
+            .map((p) => ({ gene_id: p.gene, log_fc: p.x })),
         }}
         label="Volcano Plot"
         panelClassName="max-h-[500px]"
@@ -148,7 +156,7 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
             <ReferenceLine x={-logfcThreshold} stroke="#fbbf24" strokeDasharray="2 2" />
             <ReferenceLine y={-Math.log10(padjThreshold)} stroke="#fbbf24" strokeDasharray="2 2" label={`p=${padjThreshold}`} />
             <Scatter name="Genes" data={data} fill="#8884d8" shape="circle" r={1.5}>
-              {data.map((entry: any, index: number) => (
+              {data.map((entry, index: number) => (
                 <Cell key={`cell-${index}`} fill={entry.is_significant ? (entry.x > 0 ? palette.up : palette.down) : palette.ns} />
               ))}
             </Scatter>

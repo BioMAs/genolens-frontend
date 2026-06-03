@@ -45,6 +45,8 @@ const SUB_STEPS: SubStepConfig[] = [
   },
 ];
 
+const ALLOWED_EXT = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'] as const;
+
 // ─── Props ───────────────────────────────────────────────────────────────────
 interface StepUploadFilesProps {
   projectId: string;
@@ -53,154 +55,6 @@ interface StepUploadFilesProps {
   samplesDatasetId: string | null;
   contrastsDatasetId: string | null;
   onComplete: (ids: { matrixDatasetId: string; samplesDatasetId: string; contrastsDatasetId: string }) => void;
-}
-
-// ─── Upload card for a single sub-step ───────────────────────────────────────
-interface UploadCardProps {
-  config: SubStepConfig;
-  dataset: Dataset | undefined;
-  isActive: boolean;
-  onUploaded: (dataset: Dataset) => void;
-}
-
-function UploadCard({ config, dataset, isActive, onUploaded }: UploadCardProps) {
-  const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const ALLOWED_EXT = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'];
-
-  const uploadFile = useCallback(async (file: File) => {
-    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!ALLOWED_EXT.includes(ext)) {
-      setError(`Unsupported file type. Use: ${ALLOWED_EXT.join(', ')}`);
-      return;
-    }
-    setError(null);
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('name', config.datasetName);
-      form.append('dataset_type', config.type);
-      const res = await api.post<Dataset>('/datasets/upload', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      onUploaded(res.data);
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-      const msg = Array.isArray(detail)
-        ? detail.map((d: { msg?: string }) => d.msg ?? JSON.stringify(d)).join('; ')
-        : typeof detail === 'string'
-          ? detail
-          : 'Upload failed. Please try again.';
-      setError(msg);
-    } finally {
-      setUploading(false);
-    }
-  }, [config, onUploaded]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) uploadFile(file);
-  }, [uploadFile]);
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadFile(file);
-  }, [uploadFile]);
-
-  const status = dataset?.status;
-
-  if (status === DatasetStatus.READY) {
-    return (
-      <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-green-800">{config.label}</p>
-          <p className="text-xs text-green-600 truncate">{dataset?.name}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === DatasetStatus.PROCESSING || status === DatasetStatus.PENDING) {
-    return (
-      <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-        <Clock className="h-5 w-5 text-blue-400 animate-spin shrink-0" />
-        <div>
-          <p className="text-sm font-semibold text-blue-800">{config.label}</p>
-          <p className="text-xs text-blue-600">Processing… this may take a moment.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === DatasetStatus.FAILED) {
-    return (
-      <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-        <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-        <div>
-          <p className="text-sm font-semibold text-red-800">{config.label} — failed</p>
-          <p className="text-xs text-red-600">{dataset?.error_message ?? 'Unknown error'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not uploaded yet
-  return (
-    <div
-      className={`rounded-lg border-2 transition-colors ${
-        isActive
-          ? dragging
-            ? 'border-indigo-400 bg-indigo-50'
-            : 'border-dashed border-indigo-300 bg-white hover:border-indigo-400 hover:bg-indigo-50/40'
-          : 'border-dashed border-gray-200 bg-gray-50 opacity-60'
-      } p-5`}
-      onDragOver={(e) => { if (isActive) { e.preventDefault(); setDragging(true); }}}
-      onDragLeave={() => setDragging(false)}
-      onDrop={isActive ? handleDrop : undefined}
-    >
-      <div className="flex flex-col items-center text-center gap-2">
-        <div className={`rounded-full p-2 ${isActive ? 'bg-indigo-100' : 'bg-gray-100'}`}>
-          {uploading
-            ? <Clock className="h-5 w-5 text-indigo-400 animate-spin" />
-            : <Upload className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />}
-        </div>
-        <div>
-          <p className={`text-sm font-semibold ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>
-            {config.label}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{config.description}</p>
-        </div>
-        {isActive && !uploading && (
-          <>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="mt-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-            >
-              Choose file
-            </button>
-            <p className="text-[10px] text-gray-400">{config.hint}</p>
-          </>
-        )}
-        {uploading && <p className="text-xs text-indigo-500">Uploading…</p>}
-        {error && <p className="text-xs text-red-600">{error}</p>}
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".csv,.tsv,.txt,.xlsx,.xls"
-        className="hidden"
-        onChange={handleChange}
-      />
-    </div>
-  );
 }
 
 // ─── Main step component ──────────────────────────────────────────────────────
@@ -238,11 +92,6 @@ export default function StepUploadFiles({
     if (key === 'samples')   setLocalSamples(datasetId);
     if (key === 'contrasts') setLocalContrasts(datasetId);
     refetch();
-  };
-
-  // Also need to upload with project_id — wrap the API call
-  const uploadForProject = (config: SubStepConfig) => async (datasetId: string) => {
-    handleUploaded(config.key)(datasetId);
   };
 
   return (
@@ -349,8 +198,6 @@ function UploadCardWithProjectId({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const ALLOWED_EXT = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'];
 
   const uploadFile = useCallback(async (file: File) => {
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();

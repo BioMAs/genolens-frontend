@@ -10,7 +10,7 @@ const MODE_KEY = 'genolens:analysis-mode';
 export const DEFAULT_DESEQ2_PARAMS: AnalysisParams = {
   design:     'auto',
   fdr:        0.05,
-  min_log2fc: 1.0,
+  min_log2fc: 1.5,
   min_reads:  100_000,
   min_genes:  500,
   min_count:  10,
@@ -180,7 +180,7 @@ export default function StepAnalysisSettings({
               title="Analysis"
               items={[
                 `FDR threshold: ${deseq2Params.fdr}`,
-                `Min |log2FC|: ${deseq2Params.min_log2fc}`,
+                `log2FC: ${deseq2Params.min_log2fc}`,
                 `Design: ${deseq2Params.design}`,
               ]}
             />
@@ -240,11 +240,11 @@ export default function StepAnalysisSettings({
                 hint="Typically 0.05. Lower = more stringent."
               />
               <NumberField
-                label="Min |log2FC|"
+                label="log2FC"
                 value={deseq2Params.min_log2fc}
                 min={0} max={5} step={0.1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_log2fc: v })}
-                hint="1.0 = 2-fold change minimum."
+                hint="1.5 = ~2.8× fold change minimum."
               />
               <NumberField
                 label="Min reads / sample"

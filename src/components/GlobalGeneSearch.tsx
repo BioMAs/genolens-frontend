@@ -15,8 +15,13 @@ import { useRouter } from "next/navigation";
 import { Search, ChevronRight } from "lucide-react";
 import { useGeneSearch } from "@/hooks/useGeneSearch";
 import { GeneSearchResult } from "@/types/gene-search";
+import { KbdHint } from "@/components/ui/kbd-hint";
 
-export default function GlobalGeneSearch() {
+interface GlobalGeneSearchProps {
+  variant?: "default" | "topbar";
+}
+
+export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSearchProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +30,7 @@ export default function GlobalGeneSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const isTopBar = variant === "topbar";
 
   // Debounce search query
   useEffect(() => {
@@ -42,16 +48,7 @@ export default function GlobalGeneSearch() {
   });
 
   const results = data?.results || [];
-
-  // Show dropdown when query is active and results exist
-  useEffect(() => {
-    setIsOpen(debouncedQuery.trim().length >= 2 && (isLoading || results.length > 0));
-  }, [debouncedQuery, isLoading, results.length]);
-
-  // Reset selected index when results change
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [results]);
+  const safeSelectedIndex = Math.min(selectedIndex, Math.max(results.length - 1, 0));
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -85,8 +82,8 @@ export default function GlobalGeneSearch() {
         break;
       case "Enter":
         e.preventDefault();
-        if (results[selectedIndex]) {
-          handleSelectResult(results[selectedIndex]);
+        if (results[safeSelectedIndex]) {
+          handleSelectResult(results[safeSelectedIndex]);
         }
         break;
       case "Escape":
@@ -95,6 +92,21 @@ export default function GlobalGeneSearch() {
         break;
     }
   };
+
+  // Focus search on Cmd/Ctrl+K
+  useEffect(() => {
+    if (!isTopBar) return;
+
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [isTopBar]);
 
   // Navigate to gene location
   const handleSelectResult = (result: GeneSearchResult) => {
@@ -111,31 +123,63 @@ export default function GlobalGeneSearch() {
   };
 
   return (
-    <div className="relative w-full max-w-md">
-      {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    <div className={`relative w-full ${isTopBar ? "max-w-none" : "max-w-md"}`}>
+      <div
+        className={
+          isTopBar
+            ? "flex items-center gap-2 rounded-[8px] border px-2.5 py-1.5"
+            : "relative"
+        }
+        style={
+          isTopBar
+            ? {
+                borderColor: "var(--border)",
+                background: "var(--surface-raised)",
+                color: "var(--text-muted)",
+              }
+            : undefined
+        }
+      >
+        <Search
+          className={
+            isTopBar
+              ? "h-3.5 w-3.5 text-[var(--text-muted)]"
+              : "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400"
+          }
+        />
         <input
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const nextValue = e.target.value;
+            setQuery(nextValue);
+            setIsOpen(nextValue.trim().length >= 2);
+            if (nextValue.trim().length < 2) {
+              setSelectedIndex(0);
+            }
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (debouncedQuery.trim().length >= 2) {
+            if (query.trim().length >= 2) {
               setIsOpen(true);
             }
           }}
-          placeholder="Search genes across projects..."
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+          placeholder={isTopBar ? "Search genes — TP53, BRCA1..." : "Search genes across projects..."}
+          className={
+            isTopBar
+              ? "w-full bg-transparent text-[12.5px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
+              : "w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          }
         />
+        {isTopBar && <KbdHint>⌘K</KbdHint>}
       </div>
 
       {/* Results Dropdown */}
       {isOpen && (
         <div
           ref={resultsRef}
-          className="absolute z-50 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-96 overflow-y-auto"
+          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
         >
           {isLoading ? (
             <div className="p-4 text-center text-gray-500">
@@ -143,7 +187,7 @@ export default function GlobalGeneSearch() {
             </div>
           ) : results.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              No results found for "{debouncedQuery}"
+              No results found for &quot;{debouncedQuery}&quot;
             </div>
           ) : (
             <div className="py-2">
@@ -152,7 +196,7 @@ export default function GlobalGeneSearch() {
                   key={`${result.project_id}-${result.dataset_id}-${result.comparison_name || "none"}`}
                   onClick={() => handleSelectResult(result)}
                   className={`w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                    index === selectedIndex ? "bg-gray-100 dark:bg-gray-700" : ""
+                    index === safeSelectedIndex ? "bg-gray-100 dark:bg-gray-700" : ""
                   }`}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >

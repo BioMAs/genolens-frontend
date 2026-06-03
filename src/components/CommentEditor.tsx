@@ -22,10 +22,6 @@ interface CommentEditorProps {
 }
 
 export default function CommentEditor({
-  projectId,
-  commentType = 'GENERAL',
-  targetId,
-  parentId,
   initialContent = '',
   placeholder = 'Write a comment... (Markdown supported)',
   onSubmit,

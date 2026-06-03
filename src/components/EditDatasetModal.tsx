@@ -12,6 +12,13 @@ interface EditDatasetModalProps {
   onSuccess: () => void;
 }
 
+interface UpdateDatasetPayload {
+  name: string;
+  description: string;
+  type: DatasetType;
+  dataset_metadata: Record<string, boolean>;
+}
+
 export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }: EditDatasetModalProps) {
   const [name, setName] = useState(dataset.name);
   const [description, setDescription] = useState(dataset.description || '');
@@ -43,7 +50,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
     setError(null);
 
     try {
-      const updateData: any = {
+      const updateData: UpdateDatasetPayload = {
         name,
         description,
         type,

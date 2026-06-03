@@ -117,7 +117,7 @@ export default function VennDiagram({ data, onSetClick }: VennDiagramProps) {
 }
 
 // Layout for 2 sets
-function get2SetLayout(sets: string[], intersections: any[]) {
+function get2SetLayout(sets: string[], intersections: VennData['intersections']) {
   const totalA = intersections.find(i => i.sets.length === 1 && i.sets[0] === sets[0])?.size || 0;
   const totalB = intersections.find(i => i.sets.length === 1 && i.sets[0] === sets[1])?.size || 0;
   const common = intersections.find(i => i.sets.length === 2)?.size || 0;
@@ -155,7 +155,7 @@ function get2SetLayout(sets: string[], intersections: any[]) {
 }
 
 // Layout for 3 sets
-function get3SetLayout(sets: string[], intersections: any[]) {
+function get3SetLayout(sets: string[], intersections: VennData['intersections']) {
   // Find all intersection sizes
   const getSize = (targetSets: string[]) => {
     const sorted = [...targetSets].sort();

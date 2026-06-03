@@ -9,8 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-  Cell
+  Legend
 } from 'recharts';
 import { useUMAPData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
@@ -24,10 +23,20 @@ interface UMAPPlotProps {
   metadataDataset?: Dataset;
 }
 
-interface UMAPResult {
-  data: { sample: string; x: number; y: number; z: number }[];
-  n_neighbors: number;
-  min_dist: number;
+type MetadataValue = string | number | boolean | null;
+type MetadataRow = Record<string, MetadataValue>;
+
+interface UmapDataPoint {
+  sample: string;
+  x: number;
+  y: number;
+  z?: number;
+  cluster?: string | number;
+  category?: MetadataValue;
+}
+
+interface UmapDataResponse {
+  data: UmapDataPoint[];
 }
 
 export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
@@ -37,8 +46,9 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
     {},
     dataset.status === 'READY'
   );
+  const typedUmapData = umapData as UmapDataResponse | undefined;
   
-  const [metadata, setMetadata] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<MetadataRow[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [colorblindMode, setColorblindMode] = useState(false);
@@ -54,6 +64,8 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
   // Fetch Metadata if available and UMAP is ready
   useEffect(() => {
     if (!metadataDataset || metadataDataset.status !== 'READY') {
+        // Intentional reset when metadata is unavailable.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMetadata([]);
         setMetadataColumns([]);
         setJoinColumn('');
@@ -62,25 +74,25 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
     }
 
     const fetchMetadata = async () => {
-      if (!umapData) return;
+      if (!typedUmapData) return;
 
       try {
         const resp = await api.post(`/datasets/${metadataDataset.id}/query`, {
           limit: 1000 // Assume < 1000 samples
         });
-        const metaData = resp.data.data;
+        const metaData = resp.data.data as MetadataRow[];
         setMetadata(metaData);
         
-        const cols = resp.data.columns;
+        const cols = resp.data.columns as string[];
 
         // 1. Find the best column to join on (Sample ID)
-        const umapSamples = new Set(umapData.data.map((d: any) => d.sample));
+        const umapSamples = new Set(typedUmapData.data.map((d) => d.sample));
         let bestJoinCol = '';
         let maxOverlap = 0;
 
         cols.forEach((col: string) => {
-            const metaValues = metaData.map((row: any) => row[col]);
-            const overlap = metaValues.filter((v: any) => umapSamples.has(String(v))).length;
+            const metaValues = metaData.map((row) => row[col]);
+            const overlap = metaValues.filter((v) => umapSamples.has(String(v))).length;
             if (overlap > maxOverlap) {
                 maxOverlap = overlap;
                 bestJoinCol = col;
@@ -91,7 +103,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
         // 2. Filter columns suitable for coloring (categorical, < 20 unique values)
         const suitableCols = cols.filter((col: string) => {
             if (col === bestJoinCol) return false;
-            const uniqueValues = new Set(metaData.map((row: any) => row[col]));
+          const uniqueValues = new Set(metaData.map((row) => row[col]));
             return uniqueValues.size > 1 && uniqueValues.size < 20;
         });
         setMetadataColumns(suitableCols);
@@ -104,27 +116,29 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
     };
 
     fetchMetadata();
-  }, [metadataDataset, umapData]);
+  }, [metadataDataset, typedUmapData, selectedColorColumn]);
 
   // Merge UMAP with Metadata
-  const plotData = useMemo(() => {
-      if (!umapData) return [];
-      if (!selectedColorColumn || metadata.length === 0 || !joinColumn) return umapData.data;
-
-      return umapData.data.map((point: any) => {
-          const metaRow = metadata.find((m: any) => String(m[joinColumn]) === point.sample);
-          
-          return {
-              ...point,
-              category: metaRow ? metaRow[selectedColorColumn] : 'Unknown'
-          };
-      });
-  }, [umapData, metadata, selectedColorColumn, joinColumn]);
+  const plotData: UmapDataPoint[] = useMemo(() => {
+    if (!typedUmapData) {
+      return [];
+    }
+    if (!selectedColorColumn || metadata.length === 0 || !joinColumn) {
+      return typedUmapData.data;
+    }
+    return typedUmapData.data.map((point) => {
+      const metaRow = metadata.find((m) => String(m[joinColumn]) === point.sample);
+      return {
+        ...point,
+        category: metaRow ? metaRow[selectedColorColumn] : 'Unknown'
+      };
+    });
+  }, [typedUmapData, selectedColorColumn, metadata, joinColumn]);
 
   // Generate Colors
   const uniqueCategories = useMemo(() => {
       if (!selectedColorColumn) return [];
-      return Array.from(new Set(plotData.map((d: any) => d.category))).filter(Boolean);
+      return Array.from(new Set(plotData.map((d) => d.category))).filter(Boolean);
   }, [plotData, selectedColorColumn]);
 
   const categoryColorMap = useMemo(() => {
@@ -138,7 +152,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
 
   if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating UMAP...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
-  if (!umapData) return null;
+  if (!typedUmapData) return null;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -162,10 +176,10 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             chartType="umap"
             contextKey="umap-default"
             context={{
-              n_samples: umapData?.data?.length ?? 0,
-              n_clusters: Array.from(new Set((umapData?.data ?? []).map((d: any) => d.cluster ?? 0))).length,
+              n_samples: typedUmapData.data.length,
+              n_clusters: Array.from(new Set(plotData.map((d) => d.cluster ?? 0))).length,
               cluster_sizes: [],
-              sample_groups: Array.from(new Set((umapData?.data ?? []).map((d: any) => d[selectedColorColumn] ?? 'Unknown'))),
+              sample_groups: Array.from(new Set(plotData.map((d) => d.category ?? 'Unknown'))),
             }}
             label="UMAP"
           />
@@ -196,7 +210,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
                 cursor={{ strokeDasharray: '3 3' }} 
                 content={({ active, payload }) => {
               if (active && payload && payload.length) {
-                const data = payload[0].payload;
+                const data = payload[0].payload as UmapDataPoint;
                 return (
                   <div className="bg-white p-2 border border-gray-200 shadow-sm rounded">
                     <p className="font-medium text-gray-900">{data.sample}</p>
@@ -221,12 +235,12 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
                     <Scatter 
                         key={cat as string} 
                         name={cat as string} 
-                        data={plotData.filter((d: any) => d.category === cat)} 
+                  data={plotData.filter((d) => d.category === cat)} 
                         fill={categoryColorMap[cat as string]} 
                     />
                 ))
             ) : (
-                <Scatter name="Samples" data={umapData.data} fill="#2A2E5B" />
+              <Scatter name="Samples" data={typedUmapData.data} fill="#2A2E5B" />
             )}
           </ScatterChart>
         </ResponsiveContainer>

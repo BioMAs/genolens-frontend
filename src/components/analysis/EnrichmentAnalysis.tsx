@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { EnrichmentResult } from '@/types';
@@ -21,6 +21,14 @@ interface DegGeneInfo {
 
 interface EnrichmentAnalysisProps {
     datasetId: string;
+}
+
+interface ApiErrorShape {
+    response?: {
+        data?: {
+            detail?: unknown;
+        };
+    };
 }
 
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
@@ -125,8 +133,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
                 const res = await api.get(`/enrichment/${datasetId}/${selectedComparison}?${params.toString()}`);
                 setAllResults(res.data);
-            } catch (err: any) {
-                setError("Failed to load enrichment results");
+            } catch (err: unknown) {
+                const detail = (err as ApiErrorShape)?.response?.data?.detail;
+                setError(typeof detail === 'string' ? detail : 'Failed to load enrichment results');
                 console.error(err);
             } finally {
                 setLoading(false);
@@ -417,7 +426,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                             category: categoryFilter || 'ALL',
                             comparison_name: selectedComparison || 'all',
                             regulation: regulationFilter,
-                            top_terms: filteredResults.slice(0, 8).map((t: any) => ({
+                            top_terms: filteredResults.slice(0, 8).map((t) => ({
                                 name: t.pathway_name,
                                 pvalue: t.padj,
                                 gene_count: t.gene_count ?? 0,
@@ -513,7 +522,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                 {filteredResults.map((r) => {
                                     const isExpanded = expandedRows.has(r.id);
                                     return (
-                                        <>
+                                        <Fragment key={r.id}>
                                             <tr key={r.id} className="hover:bg-gray-50">
                                                 <td className="px-2 py-3 text-center">
                                                     {r.genes && r.genes.length > 0 && (
@@ -583,7 +592,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                     </td>
                                                 </tr>
                                             )}
-                                        </>
+                                        </Fragment>
                                     );
                                 })}
                             </tbody>

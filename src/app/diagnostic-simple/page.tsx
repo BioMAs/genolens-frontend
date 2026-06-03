@@ -10,7 +10,7 @@ interface Dataset {
   dataset_type: string;
   dataset_metadata?: {
     columns_info?: {
-      comparisons?: Record<string, any>;
+      comparisons?: Record<string, unknown>;
     };
   };
 }
@@ -19,6 +19,14 @@ interface Project {
   id: string;
   name: string;
   datasets: Dataset[];
+}
+
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: unknown;
+    };
+  };
 }
 
 export default function DiagnosticSimplePage() {
@@ -50,7 +58,7 @@ export default function DiagnosticSimplePage() {
 
         // Fetch datasets for each project
         const projectsWithDatasets = await Promise.all(
-          projectsData.map(async (project: any) => {
+          projectsData.map(async (project: Project) => {
             try {
               console.log(`Fetching datasets for project ${project.id} (${project.name})`);
               const datasetsResponse = await api.get(`/datasets/project/${project.id}`);
@@ -71,9 +79,10 @@ export default function DiagnosticSimplePage() {
 
         console.log('Projects with datasets:', projectsWithDatasets);
         setProjects(projectsWithDatasets);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch projects:', err);
-        setError(err.response?.data?.detail || 'Failed to load projects');
+        const detail = (err as ApiErrorShape)?.response?.data?.detail;
+        setError(typeof detail === 'string' ? detail : 'Failed to load projects');
       } finally {
         setLoading(false);
       }

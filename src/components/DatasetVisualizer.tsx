@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
   ScatterChart,
   Scatter,
-  ZAxis
 } from 'recharts';
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
 

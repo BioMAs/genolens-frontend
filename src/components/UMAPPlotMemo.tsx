@@ -1,11 +1,5 @@
 import React from 'react';
 import UMAPPlot from './UMAPPlot';
-import { Dataset } from '@/types';
-
-interface UMAPPlotMemoProps {
-  dataset: Dataset;
-  metadataDataset?: Dataset;
-}
 
 /**
  * Version mémoïsée d'UMAPPlot pour éviter les re-renders inutiles

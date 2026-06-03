@@ -5,12 +5,11 @@ import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import {
   SelfServiceAnalysisStatus,
-  AnalysisParams,
   OmicsDataType,
 } from '@/types';
 import { AnalysisParams as AP } from '@/types';
 import {
-  Play, X, CheckCircle, AlertCircle, Clock, ChevronRight, Loader,
+  Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
 
 interface StepLaunchProps {
@@ -97,7 +96,7 @@ export default function StepLaunch({
     if (!analysisId || !confirm('Cancel this analysis?')) return;
     try {
       // The delete endpoint acts as cancel for running jobs
-      await fetch(`/api/v1/analyses/${analysisId}`, { method: 'DELETE' });
+      await fetch(`/api/v2/analyses/${analysisId}`, { method: 'DELETE' });
     } catch {
       // Ignore cancel errors
     }

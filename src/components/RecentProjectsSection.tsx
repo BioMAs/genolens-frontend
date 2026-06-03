@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Folder, Database, GitCompare, Clock, ChevronRight } from 'lucide-react';
 import { Project } from '@/types';
 import { ProjectDashboardStats } from '@/types/project-stats';
+import { Chip } from '@/components/ui/chip';
+import { Dot } from '@/components/ui/dot';
+import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
 
 interface RecentProjectsSectionProps {
   projects: Project[];
@@ -30,6 +33,14 @@ export default function RecentProjectsSection({
   statsLoading,
   onCreateClick,
 }: RecentProjectsSectionProps) {
+  const resolveProjectStatus = (stats?: ProjectDashboardStats) => {
+    if (!stats) return { label: 'Pending', variant: 'pending' as const };
+    if (stats.datasets_failed > 0) return { label: `${stats.datasets_failed} failed`, variant: 'failed' as const };
+    if (stats.datasets_processing > 0) return { label: 'Processing', variant: 'processing' as const };
+    if (stats.datasets_ready > 0) return { label: 'Ready', variant: 'ready' as const };
+    return { label: 'Pending', variant: 'pending' as const };
+  };
+
   // Sort by updated_at desc and take top 3
   const recent = [...projects]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -37,36 +48,21 @@ export default function RecentProjectsSection({
 
   if (projects.length === 0) {
     return (
-      <div
-        className="gl-card flex flex-col items-center justify-center py-12 text-center animate-fade-up"
+      <EmptyStateHelix
+        className="animate-fade-up"
         style={{ animationDelay: '60ms' }}
-      >
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-2xl mb-3"
-          style={{ background: 'var(--sl-teal-light)' }}
-        >
-          <Folder className="h-6 w-6" style={{ color: 'var(--sl-teal-dark)' }} />
-        </div>
-        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-          No projects yet
-        </p>
-        <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
-          Create your first project to get started.
-        </p>
-        <button
-          onClick={onCreateClick}
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all"
-          style={{ background: 'var(--sl-purple)' }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')
-          }
-        >
-          New Project
-        </button>
-      </div>
+        title="No projects yet"
+        description="Create your first project to start decoding your transcriptomics data."
+        action={
+          <button
+            onClick={onCreateClick}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all"
+            style={{ background: 'var(--sl-purple)' }}
+          >
+            New Project
+          </button>
+        }
+      />
     );
   }
 
@@ -74,6 +70,7 @@ export default function RecentProjectsSection({
     <div className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: '60ms' }}>
       {recent.map((project, i) => {
         const stats = statsMap[project.id];
+        const status = resolveProjectStatus(stats);
         return (
           <Link
             key={project.id}
@@ -98,35 +95,27 @@ export default function RecentProjectsSection({
                 {project.name}
               </p>
 
-              {/* Mini stats badges */}
-              <div className="flex items-center gap-3 mt-1">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 {statsLoading && !stats ? (
                   <div className="skeleton rounded" style={{ height: '14px', width: '80px' }} />
                 ) : (
                   <>
-                    <span
-                      className="inline-flex items-center gap-1 text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      <Database className="h-3 w-3" />
-                      {stats?.total_datasets ?? 0}
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1 text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      <GitCompare className="h-3 w-3" />
-                      {stats?.total_comparisons ?? 0}
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1 text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      <Clock className="h-3 w-3" />
+                    <Chip icon={<Database className="h-3 w-3" />} value={stats?.total_datasets ?? 0}>
+                      datasets
+                    </Chip>
+                    <Chip icon={<GitCompare className="h-3 w-3" />} value={stats?.total_comparisons ?? 0}>
+                      comparisons
+                    </Chip>
+                    <Chip icon={<Clock className="h-3 w-3" />}>
                       {formatRelativeDate(stats?.last_activity_at ?? project.updated_at)}
-                    </span>
+                    </Chip>
                   </>
                 )}
+              </div>
+
+              <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <Dot variant={status.variant} size={7} />
+                {status.label}
               </div>
             </div>
 

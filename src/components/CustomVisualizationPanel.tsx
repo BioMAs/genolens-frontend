@@ -53,6 +53,19 @@ interface BoxplotData {
     n_samples: number;
 }
 
+interface ApiError {
+    response?: {
+        data?: {
+            detail?: string;
+        };
+    };
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+    const maybeApiError = error as ApiError;
+    return maybeApiError.response?.data?.detail ?? fallback;
+}
+
 export default function CustomVisualizationPanel({ 
     datasetId, 
     comparisonName,
@@ -114,8 +127,8 @@ export default function CustomVisualizationPanel({
                 }
             );
             setPcaData(response.data);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to calculate PCA');
+        } catch (err: unknown) {
+            setError(getApiErrorMessage(err, 'Failed to calculate PCA'));
         } finally {
             setLoading(false);
         }
@@ -136,8 +149,8 @@ export default function CustomVisualizationPanel({
                 }
             );
             setUmapData(response.data);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to calculate UMAP');
+        } catch (err: unknown) {
+            setError(getApiErrorMessage(err, 'Failed to calculate UMAP'));
         } finally {
             setLoading(false);
         }
@@ -159,8 +172,8 @@ export default function CustomVisualizationPanel({
                 }
             );
             setBoxplotData(response.data);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to load box plot data');
+        } catch (err: unknown) {
+            setError(getApiErrorMessage(err, 'Failed to load box plot data'));
         } finally {
             setLoading(false);
         }
@@ -198,14 +211,14 @@ export default function CustomVisualizationPanel({
 
             return (
                 <Plot
-                    data={traces as any}
+                    data={traces}
                     layout={{
                         title: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)`,
                         xaxis: { title: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` },
                         yaxis: { title: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` },
                         hovermode: 'closest',
                         height: 500
-                    } as any}
+                    }}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -227,7 +240,7 @@ export default function CustomVisualizationPanel({
 
             return (
                 <Plot
-                    data={traces as any}
+                    data={traces}
                     layout={{
                         title: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)`,
                         scene: {
@@ -236,7 +249,7 @@ export default function CustomVisualizationPanel({
                             zaxis: { title: `PC3 (${(pcaData.explained_variance[2] * 100).toFixed(1)}%)` }
                         },
                         height: 600
-                    } as any}
+                    }}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -266,14 +279,14 @@ export default function CustomVisualizationPanel({
 
             return (
                 <Plot
-                    data={traces as any}
+                    data={traces}
                     layout={{
                         title: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})`,
                         xaxis: { title: 'UMAP1' },
                         yaxis: { title: 'UMAP2' },
                         hovermode: 'closest',
                         height: 500
-                    } as any}
+                    }}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -295,7 +308,7 @@ export default function CustomVisualizationPanel({
 
             return (
                 <Plot
-                    data={traces as any}
+                    data={traces}
                     layout={{
                         title: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})`,
                         scene: {
@@ -304,7 +317,7 @@ export default function CustomVisualizationPanel({
                             zaxis: { title: 'UMAP3' }
                         },
                         height: 600
-                    } as any}
+                    }}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -331,14 +344,14 @@ export default function CustomVisualizationPanel({
 
         return (
             <Plot
-                data={traces as any}
+                data={traces}
                 layout={{
                     title: `Expression Distribution - ${boxplotData.n_genes} gene(s)`,
                     yaxis: { title: 'Expression Level' },
                     xaxis: { title: '' },
                     height: 500,
                     showlegend: true
-                } as any}
+                }}
                 config={{ responsive: true, displayModeBar: true }}
                 style={{ width: '100%' }}
             />

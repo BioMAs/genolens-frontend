@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'teal' | 'outline' | 'ghost' | 'destructive' | 'secondary' | 'link';
+  variant?: 'default' | 'teal' | 'outline' | 'ghost' | 'destructive' | 'secondary' | 'link' | 'ai';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
@@ -44,6 +44,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
       // Link: inline text link
       link: 'text-brand-teal-dark underline-offset-4 hover:underline hover:text-brand-teal',
+
+      // AI: secondary surface with purple icon accent (mockup `.btn-ai`)
+      ai:
+        'bg-[var(--surface-secondary)] text-[var(--text-primary)] ' +
+        'border border-[var(--border)] hover:bg-[var(--hover-overlay)] ' +
+        '[&_svg]:text-[var(--sl-purple-dark)]',
     };
 
     const sizes: Record<NonNullable<ButtonProps['size']>, string> = {

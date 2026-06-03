@@ -12,7 +12,7 @@ export interface GeneBookmark {
   tags: string[];
   color?: string;
   is_favorite: boolean;
-  extra_data: Record<string, any>;
+  extra_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -44,7 +44,7 @@ export interface GeneList {
   color?: string;
   is_public: boolean;
   tags: string[];
-  extra_data: Record<string, any>;
+  extra_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

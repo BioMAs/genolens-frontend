@@ -8,8 +8,10 @@ interface MetadataTableProps {
   dataset: Dataset;
 }
 
+type MetadataRow = Record<string, unknown>;
+
 export default function MetadataTable({ dataset }: MetadataTableProps) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<MetadataRow[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -22,6 +22,14 @@ interface DEGRow {
   pathways?: string;
 }
 
+interface DEGApiRow {
+  gene_id: string;
+  log_fc: number;
+  padj: number;
+  regulation?: string;
+  gene_name?: string;
+}
+
 export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const [data, setData] = useState<DEGRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +40,6 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  
-  // Total counts from backend (actual database totals)
-  const [totalUpCount, setTotalUpCount] = useState(0);
-  const [totalDownCount, setTotalDownCount] = useState(0);
-  const [totalGenes, setTotalGenes] = useState(0);
   
   // Filter options
   const [logFCThreshold, setLogFCThreshold] = useState(0.58); // Default to match original analysis
@@ -83,17 +86,14 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           }
         );
 
-        const genes = response.data.genes || [];
+        const genes = (response.data.genes || []) as DEGApiRow[];
         const total = response.data.pagination?.total || 0;
-        const backendUpCount = response.data.total_up || 0;
-        const backendDownCount = response.data.total_down || 0;
 
         console.log('[DEGTable] Fetched from database:', genes.length, 'genes');
         console.log('[DEGTable] Total matching genes:', total);
-        console.log('[DEGTable] Backend totals - Up:', backendUpCount, 'Down:', backendDownCount);
 
         // Transform database format to component format
-        const degs: DEGRow[] = genes.map((gene: any) => ({
+        const degs: DEGRow[] = genes.map((gene) => ({
           gene_id: gene.gene_id,
           logFC: gene.log_fc,
           padj: gene.padj,
@@ -106,10 +106,6 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
         console.log('[DEGTable] Processed DEGs:', degs.length);
         console.log('[DEGTable] First 5 DEGs:', degs.slice(0, 5));
 
-        // Store backend totals (actual database counts)
-        setTotalUpCount(backendUpCount);
-        setTotalDownCount(backendDownCount);
-        setTotalGenes(total);
         setData(degs);
       } catch (err) {
         console.error('Failed to fetch DEG data:', err);
@@ -131,35 +127,6 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
       setSortField(field);
       setSortDirection(field === 'padj' ? 'asc' : 'desc');
     }
-  };
-
-  const handleExport = () => {
-    const filteredData = getFilteredAndSortedData();
-    const headers = [];
-    // Skip bookmark column in export
-    if (visibleColumns.gene_id) headers.push('Gene ID');
-    if (visibleColumns.logFC) headers.push('Log2 Fold Change');
-    if (visibleColumns.padj) headers.push('Adjusted P-value');
-    if (visibleColumns.regulation) headers.push('Regulation');
-    
-    const rows = filteredData.map(row => {
-      const values = [];
-      if (visibleColumns.gene_id) values.push(row.gene_id);
-      if (visibleColumns.logFC) values.push(row.logFC.toFixed(3));
-      if (visibleColumns.padj) values.push(row.padj.toExponential(2));
-      if (visibleColumns.regulation) values.push(row.regulation);
-      return values.join(',');
-    });
-    
-    const csv = [headers.join(','), ...rows].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${comparisonName}_DEGs.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const getFilteredAndSortedData = () => {
@@ -185,9 +152,6 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   if (error) return <div className="text-red-500 py-4">{error}</div>;
 
   const sortedData = getFilteredAndSortedData();
-  // Use backend totals (actual database counts) instead of counting local data
-  const upCount = totalUpCount;
-  const downCount = totalDownCount;
   
   // Pagination
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
@@ -240,7 +204,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           <select
             value={filterRegulation}
             onChange={(e) => {
-              setFilterRegulation(e.target.value as any);
+              setFilterRegulation(e.target.value as 'all' | 'up' | 'down');
               setCurrentPage(1);
             }}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"

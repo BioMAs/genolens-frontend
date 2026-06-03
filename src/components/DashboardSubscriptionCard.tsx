@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, AlertCircle, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen } from 'lucide-react';
+import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen } from 'lucide-react';
 import type { SubscriptionInfo } from '@/hooks/useBilling';
 import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
+import { Meter } from '@/components/ui/meter';
 
 const FREE_QUOTA = 15;
 
@@ -75,18 +76,10 @@ function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInf
           {count} / {max} used
         </span>
       </div>
-      <div
-        className="w-full rounded-full overflow-hidden"
-        style={{ height: '6px', background: 'var(--border)' }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${pct}%`,
-            background: isAtLimit ? 'var(--sl-red)' : isNearLimit ? 'var(--sl-orange, #f97316)' : 'var(--sl-teal)',
-          }}
-        />
-      </div>
+      <Meter
+        value={pct / 100}
+        tone={isAtLimit ? 'red' : isNearLimit ? 'purple' : 'teal'}
+      />
       {isAtLimit && (
         <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>
           Limit reached — upgrade to create more projects.
@@ -128,18 +121,7 @@ function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionIn
             {freeRemaining} / {FREE_QUOTA} remaining
           </span>
         </div>
-        <div
-          className="w-full rounded-full overflow-hidden"
-          style={{ height: '6px', background: 'var(--border)' }}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${freePct}%`,
-              background: freePct >= 90 ? 'var(--sl-red)' : 'var(--sl-teal)',
-            }}
-          />
-        </div>
+        <Meter value={freePct / 100} tone={freePct >= 90 ? 'red' : 'teal'} />
       </div>
 
       {/* Purchased tokens (only show if any purchased) */}
@@ -149,18 +131,7 @@ function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionIn
             <span>Purchased tokens</span>
             <span>{tokensRemaining} / {tokensPurchased} remaining</span>
           </div>
-          <div
-            className="w-full rounded-full overflow-hidden"
-            style={{ height: '6px', background: 'var(--border)' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${Math.min(100, (tokensUsed / tokensPurchased) * 100)}%`,
-                background: 'var(--sl-purple)',
-              }}
-            />
-          </div>
+          <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" />
         </div>
       )}
     </div>
@@ -223,7 +194,7 @@ export default function DashboardSubscriptionCard({
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4" style={{ color: 'var(--sl-purple)' }} />
           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Subscription
+            My Plan
           </span>
         </div>
         <PlanBadge plan={plan} role={role} />

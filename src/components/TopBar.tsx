@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import GlobalGeneSearch from './GlobalGeneSearch';
 
@@ -21,29 +22,27 @@ function resolvePageTitle(pathname: string): string {
   return 'GenoLens';
 }
 
-export default function TopBar() {
+interface TopBarProps {
+  rightSlot?: ReactNode;
+}
+
+export default function TopBar({ rightSlot }: TopBarProps) {
   const pathname = usePathname();
   const pageTitle = resolvePageTitle(pathname);
 
   return (
     <header className="app-topbar">
-      {/* Page title */}
-      <h1
-        className="font-display font-semibold text-sm flex-shrink-0"
-        style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}
-      >
+      <h1 className="page-title !text-[1rem] !font-semibold !tracking-[-0.01em] !leading-none">
         {pageTitle}
       </h1>
 
-      {/* Push search to center */}
       <div className="flex-1" />
 
-      {/* Gene search — centered in content area */}
-      <div className="w-full max-w-[360px] flex-shrink-0">
-        <GlobalGeneSearch />
+      <div className="w-[248px] shrink-0">
+        <GlobalGeneSearch variant="topbar" />
       </div>
 
-      <div className="flex-1" />
+      <div className="flex flex-1 justify-end">{rightSlot}</div>
     </header>
   );
 }

@@ -26,6 +26,19 @@ interface ProjectDetailProps {
   projectId: string;
 }
 
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: unknown;
+    };
+  };
+}
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  const detail = (err as ApiErrorShape)?.response?.data?.detail;
+  return typeof detail === 'string' ? detail : fallback;
+}
+
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [activeTab, setActiveTab] = useState<'qc' | 'pca' | 'comparisons' | 'data' | 'history' | 'stats'>('comparisons');
 
@@ -102,36 +115,9 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     try {
       await api.post(`/datasets/${datasetId}/reprocess`);
       await refetchDatasets();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Reprocess failed:', err);
-      alert(err.response?.data?.detail || 'Failed to reprocess dataset.');
-    }
-  };
-
-  const handleReprocessAll = async () => {
-    if (!confirm('This will regenerate all datasets in this project. This may take several minutes. Continue?')) {
-      return;
-    }
-    
-    try {
-      const datasetsToReprocess = datasets.filter(ds => ds.raw_file_path && ds.status === DatasetStatus.READY);
-      
-      if (datasetsToReprocess.length === 0) {
-        alert('No datasets available to reprocess.');
-        return;
-      }
-
-      // Trigger reprocessing for all datasets
-      await Promise.all(
-        datasetsToReprocess.map(ds => api.post(`/datasets/${ds.id}/reprocess`))
-      );
-      
-      alert(`Started reprocessing ${datasetsToReprocess.length} dataset(s). Please wait for completion.`);
-      await refetchDatasets();
-    } catch (err: any) {
-      console.error('Reprocess all failed:', err);
-      alert('Failed to reprocess all datasets. Some may have started successfully.');
-      await refetchDatasets();
+      alert(getApiErrorMessage(err, 'Failed to reprocess dataset.'));
     }
   };
 
@@ -176,9 +162,9 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       });
       await refetchDatasets();
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Upload failed:', err);
-      setUploadError(err.response?.data?.detail || 'Failed to upload dataset.');
+      setUploadError(getApiErrorMessage(err, 'Failed to upload dataset.'));
     } finally {
       setIsUploading(false);
     }

@@ -26,6 +26,24 @@ interface ProjectMember {
   user_full_name: string | null;
 }
 
+interface UserOption {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  return (error as ApiError).response?.data?.detail ?? fallback;
+}
+
 export default function ProjectManagement() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +65,7 @@ export default function ProjectManagement() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<UserOption[]>([]);
   const [addingMember, setAddingMember] = useState(false);
   const [newMember, setNewMember] = useState({
     user_id: '',
@@ -60,7 +78,7 @@ export default function ProjectManagement() {
       const response = await api.get('/admin/projects');
       setProjects(response.data);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch projects:', err);
       setError('Failed to load projects.');
     } finally {
@@ -104,9 +122,9 @@ export default function ProjectManagement() {
       await fetchProjects();
       setShowEditModal(false);
       setEditingProject(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update project:', err);
-      alert(err.response?.data?.detail || 'Failed to update project.');
+      alert(getApiErrorMessage(err, 'Failed to update project.'));
     } finally {
       setUpdating(false);
     }
@@ -121,9 +139,9 @@ export default function ProjectManagement() {
       setDeleting(projectId);
       await api.delete(`/admin/projects/${projectId}`);
       await fetchProjects();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete project:', err);
-      alert(err.response?.data?.detail || 'Failed to delete project.');
+      alert(getApiErrorMessage(err, 'Failed to delete project.'));
     } finally {
       setDeleting(null);
     }
@@ -142,9 +160,9 @@ export default function ProjectManagement() {
       // Fetch project members
       const membersResponse = await api.get(`/admin/projects/${project.id}/members`);
       setProjectMembers(membersResponse.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch members:', err);
-      alert(err.response?.data?.detail || 'Failed to load members.');
+      alert(getApiErrorMessage(err, 'Failed to load members.'));
     } finally {
       setLoadingMembers(false);
     }
@@ -164,9 +182,9 @@ export default function ProjectManagement() {
 
       // Reset form
       setNewMember({ user_id: '', access_level: 'VIEWER' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to add member:', err);
-      alert(err.response?.data?.detail || 'Failed to add member.');
+      alert(getApiErrorMessage(err, 'Failed to add member.'));
     } finally {
       setAddingMember(false);
     }
@@ -181,9 +199,9 @@ export default function ProjectManagement() {
       // Refresh members list
       const membersResponse = await api.get(`/admin/projects/${selectedProject.id}/members`);
       setProjectMembers(membersResponse.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to remove member:', err);
-      alert(err.response?.data?.detail || 'Failed to remove member.');
+      alert(getApiErrorMessage(err, 'Failed to remove member.'));
     }
   };
 
@@ -358,7 +376,7 @@ export default function ProjectManagement() {
                   ))}
                 </select>
                 <p className="mt-1 text-xs text-red-500">
-                    ⚠ Warning: Changing ownership will remove the current owner's access unless they are a member.
+                  ⚠ Warning: Changing ownership will remove the current owner&apos;s access unless they are a member.
                 </p>
               </div>
 

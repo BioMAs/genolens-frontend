@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { ChevronUp, ChevronDown, Eye, TrendingUp, TrendingDown } from 'lucide-react';
 import ExportMenu from './ExportMenu';
 
@@ -68,29 +68,6 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
     });
   };
 
-  const handleExport = () => {
-    const sortedData = getFilteredAndSortedData();
-    const headers = ['Gene Set', 'Size', 'ES', 'NES', 'P-value', 'FDR q-value', 'Leading Edge'];
-    const rows = sortedData.map(row => [
-      row.gene_set_name,
-      row.gene_set_size,
-      row.enrichment_score.toFixed(3),
-      row.normalized_enrichment_score.toFixed(3),
-      row.p_value.toExponential(2),
-      row.fdr_q_value.toFixed(3),
-      row.leading_edge_genes.slice(0, 5).join('; ')
-    ].join(','));
-
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'gsea_results.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   if (loading) {
     return <div className="py-8 text-center text-gray-600">Running GSEA analysis...</div>;
   }
@@ -152,7 +129,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
           <select
             value={filterEnrichment}
             onChange={(e) => {
-              setFilterEnrichment(e.target.value as any);
+              const value = e.target.value;
+              if (value === 'all' || value === 'positive' || value === 'negative') {
+                setFilterEnrichment(value);
+              }
               setCurrentPage(1);
             }}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"

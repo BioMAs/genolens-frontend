@@ -35,7 +35,7 @@ Create a `.env.local` file based on the example (or required variables):
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v2
 ```
 
 ### 3. Running Development Server

@@ -41,7 +41,6 @@ export default function ProjectMembersModal({
 }: ProjectMembersModalProps) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>(UserRole.USER);
-  const [editingMember, setEditingMember] = useState<string | null>(null);
 
   const { data: membersData, isLoading } = useProjectMembers(projectId);
   const inviteMember = useInviteProjectMember(projectId);

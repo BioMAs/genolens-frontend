@@ -2,12 +2,6 @@
 
 import { memo } from 'react';
 import DEGTable from './DEGTable';
-import { Dataset } from '@/types';
-
-interface DEGTableMemoProps {
-  dataset: Dataset;
-  comparisonName: string;
-}
 
 // Memoized version of DEGTable for performance
 // Only re-renders if dataset ID or comparison name changes

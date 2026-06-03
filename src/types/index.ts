@@ -42,14 +42,14 @@ export interface Dataset {
   created_at: string;
   updated_at: string;
   error_message?: string;
-  dataset_metadata?: any;
+  dataset_metadata?: Record<string, unknown>;
   raw_file_path?: string;
   column_mapping?: Record<string, string>;
 }
 
 export interface DatasetQueryResponse {
   columns: string[];
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   total_rows: number;
   returned_rows: number;
 }

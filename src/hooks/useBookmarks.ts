@@ -162,7 +162,7 @@ export function useDeleteBookmark() {
     mutationFn: async (bookmarkId: string) => {
       await api.delete(`/bookmarks/${bookmarkId}`);
     },
-    onSuccess: (_, bookmarkId) => {
+    onSuccess: () => {
       // Invalidate all bookmark queries
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
       queryClient.invalidateQueries({ queryKey: ['bookmark-check'] });

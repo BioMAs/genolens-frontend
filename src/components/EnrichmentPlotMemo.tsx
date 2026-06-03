@@ -1,11 +1,5 @@
 import React from 'react';
 import EnrichmentPlot from './EnrichmentPlot';
-import { Dataset } from '@/types';
-
-interface EnrichmentPlotMemoProps {
-  dataset: Dataset;
-  comparisonName?: string;
-}
 
 /**
  * Version mémoïsée d'EnrichmentPlot pour éviter les re-renders inutiles

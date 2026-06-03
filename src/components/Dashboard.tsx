@@ -41,23 +41,33 @@ export default function Dashboard() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const recentProject = [...projects]
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+  const aiInterpretationsUsed =
+    subscription?.ai_interpretations_used ?? userProfile?.ai_interpretations_used ?? 0;
+
   return (
     <>
-      {/* Welcome banner */}
-      <DashboardWelcomeBanner userName={user?.name ?? user?.email} />
+      <DashboardWelcomeBanner
+        userName={user?.name ?? user?.email}
+        recentProjectName={recentProject?.name}
+        totalComparisons={aggregated.total_comparisons}
+        activityLast7Days={aggregated.activity_last_7_days}
+        aiInterpretationsUsed={aiInterpretationsUsed}
+        resumeHref={recentProject ? `/projects/${recentProject.id}` : undefined}
+      />
 
       {/* Global KPI bar */}
       <DashboardKpiBar stats={aggregated} isLoading={statsLoading && projects.length === 0} />
 
-      {/* Recent projects + Subscription — 2-col grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
-        {/* Recent projects */}
         <div className="lg:col-span-8">
           <h3
             className="font-display text-sm font-semibold mb-3"
             style={{ color: 'var(--text-primary)' }}
           >
-            Recent Projects
+            Recent projects
           </h3>
           <RecentProjectsSection
             projects={projects}
@@ -67,13 +77,12 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Subscription card */}
         <div className="lg:col-span-4">
           <h3
             className="font-display text-sm font-semibold mb-3"
             style={{ color: 'var(--text-primary)' }}
           >
-            My Plan
+            My plan
           </h3>
           <DashboardSubscriptionCard
             subscription={subscription}

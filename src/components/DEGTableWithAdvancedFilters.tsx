@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Download, Settings, Filter } from 'lucide-react';
@@ -19,6 +19,20 @@ interface DEGRow {
   logFC: number;
   padj: number;
   regulation: 'up' | 'down';
+  gene_name?: string;
+}
+
+interface EnrichmentPathwayRow {
+  pathway_id: string;
+  pathway_name: string;
+  category?: string;
+}
+
+interface DEGApiRow {
+  gene_id: string;
+  log_fc: number;
+  padj: number;
+  regulation?: string;
   gene_name?: string;
 }
 
@@ -44,35 +58,17 @@ export default function DEGTableWithAdvancedFilters({
   const { savedFilters, saveFilter, deleteFilter } = useSavedFilters(projectId);
   const [availablePathways, setAvailablePathways] = useState<PathwayOption[]>([]);
 
-  useEffect(() => {
-    api.get(`/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`, {
-      params: { page_size: 500 }
-    }).then(res => {
-      const pathways: PathwayOption[] = (res.data.pathways || []).map((p: any) => ({
-        pathway_id: p.pathway_id,
-        pathway_name: p.pathway_name,
-        category: p.category,
-      }));
-      setAvailablePathways(pathways);
-    }).catch(() => {
-      // Silently ignore — enrichment may not have been run yet
-    });
-  }, [dataset.id, comparisonName]);
+  const transformGenes = useCallback((genes: DEGApiRow[]): DEGRow[] => {
+    return genes.map((gene) => ({
+      gene_id: gene.gene_id,
+      logFC: gene.log_fc,
+      padj: gene.padj,
+      regulation: gene.regulation?.toLowerCase() === 'up' ? 'up' : 'down',
+      gene_name: gene.gene_name
+    }));
+  }, []);
 
-  const [visibleColumns, setVisibleColumns] = useState({
-    bookmark: true,
-    gene_id: true,
-    logFC: true,
-    padj: true,
-    regulation: true,
-    gene_name: true
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, [dataset, comparisonName, currentPage, itemsPerPage, filterRegulation, activeFilter, filterActive]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -85,7 +81,7 @@ export default function DEGTableWithAdvancedFilters({
           page_size: itemsPerPage
         });
 
-        const genes = response.data.genes || [];
+        const genes = (response.data.genes || []) as DEGApiRow[];
         setData(transformGenes(genes));
         setTotalGenes(response.data.pagination?.total || 0);
       } else {
@@ -104,7 +100,7 @@ export default function DEGTableWithAdvancedFilters({
           }
         );
 
-        const genes = response.data.genes || [];
+        const genes = (response.data.genes || []) as DEGApiRow[];
         setData(transformGenes(genes));
         setTotalGenes(response.data.pagination?.total || 0);
       }
@@ -114,17 +110,46 @@ export default function DEGTableWithAdvancedFilters({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    activeFilter,
+    comparisonName,
+    currentPage,
+    dataset.id,
+    filterActive,
+    itemsPerPage,
+    sortDirection,
+    sortField,
+    transformGenes,
+  ]);
 
-  const transformGenes = (genes: any[]): DEGRow[] => {
-    return genes.map((gene: any) => ({
-      gene_id: gene.gene_id,
-      logFC: gene.log_fc,
-      padj: gene.padj,
-      regulation: gene.regulation?.toLowerCase() === 'up' ? 'up' : 'down',
-      gene_name: gene.gene_name
-    }));
-  };
+  useEffect(() => {
+    api.get(`/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`, {
+      params: { page_size: 500 }
+    }).then(res => {
+      const pathways = (res.data.pathways || []) as EnrichmentPathwayRow[];
+      const options: PathwayOption[] = pathways.map((p) => ({
+        pathway_id: p.pathway_id,
+        pathway_name: p.pathway_name,
+        category: p.category,
+      }));
+      setAvailablePathways(options);
+    }).catch(() => {
+      // Silently ignore — enrichment may not have been run yet
+    });
+  }, [dataset.id, comparisonName]);
+
+  const [visibleColumns, setVisibleColumns] = useState({
+    bookmark: true,
+    gene_id: true,
+    logFC: true,
+    padj: true,
+    regulation: true,
+    gene_name: true
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSort = (field: 'gene_id' | 'logFC' | 'padj') => {
     if (sortField === field) {
@@ -306,7 +331,7 @@ export default function DEGTableWithAdvancedFilters({
           <select
             value={filterRegulation}
             onChange={(e) => {
-              setFilterRegulation(e.target.value as any);
+              setFilterRegulation(e.target.value as 'all' | 'up' | 'down');
               setCurrentPage(1);
             }}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
