@@ -33,8 +33,11 @@ export default function HeatmapPlot({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const plotDivRef = useRef<HTMLDivElement | null>(null);
 
+  const metadataComparisonName = degDataset.dataset_metadata?.comparison_name;
   const comparisonName =
-    propComparisonName || degDataset.dataset_metadata?.comparison_name || degDataset.name;
+    propComparisonName ||
+    (typeof metadataComparisonName === 'string' ? metadataComparisonName : '') ||
+    degDataset.name;
 
   const { loading, error, plotData, geneMetadata, isPreview, refetch } = useHeatmapData({
     degDataset,

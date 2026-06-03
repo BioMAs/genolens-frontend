@@ -3,7 +3,7 @@
 import React from 'react';
 import { CheckCircle, XCircle, AlertCircle, Users, Dna } from 'lucide-react';
 
-interface QCReport {
+export interface QCReport {
   total_input_samples: number;
   samples_passed: number;
   samples_removed: number;

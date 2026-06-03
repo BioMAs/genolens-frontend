@@ -17,7 +17,7 @@ interface PCAPoint {
   batch?: string;
 }
 
-interface PCAData {
+export interface PCAData {
   variance_explained: number[];
   pc_labels: string[];
   samples: PCAPoint[];
@@ -71,7 +71,7 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
 
     const traces: Partial<PlotData>[] = Object.entries(groups).map(([groupName, points], i) => ({
       type: 'scatter' as const,
-      mode: 'markers+text' as const,
+      mode: 'text+markers' as const,
       name: groupName,
       x: points.map((p) => getPCValue(p, xAxis)),
       y: points.map((p) => getPCValue(p, yAxis)),
@@ -90,13 +90,13 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       autosize: true,
       height: 520,
       xaxis: {
-        title: `${xAxis} (${(xVar * 100).toFixed(1)}% variance)`,
+        title: { text: `${xAxis} (${(xVar * 100).toFixed(1)}% variance)` },
         zeroline: true,
         zerolinecolor: '#e5e7eb',
         gridcolor: '#f3f4f6',
       },
       yaxis: {
-        title: `${yAxis} (${(yVar * 100).toFixed(1)}% variance)`,
+        title: { text: `${yAxis} (${(yVar * 100).toFixed(1)}% variance)` },
         zeroline: true,
         zerolinecolor: '#e5e7eb',
         gridcolor: '#f3f4f6',
@@ -135,7 +135,7 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
           <label className="text-xs font-medium text-gray-600">X axis</label>
           <select
             value={xAxis}
-            onChange={(e) => setXAxis(e.target.value)}
+            onChange={(e) => setXAxis(e.target.value as PCAAxisKey)}
             className="rounded-md border border-gray-300 px-2 py-1 text-xs"
           >
             {availablePCs.map((pc) => <option key={pc} value={pc}>{pc}</option>)}
@@ -145,7 +145,7 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
           <label className="text-xs font-medium text-gray-600">Y axis</label>
           <select
             value={yAxis}
-            onChange={(e) => setYAxis(e.target.value)}
+            onChange={(e) => setYAxis(e.target.value as PCAAxisKey)}
             className="rounded-md border border-gray-300 px-2 py-1 text-xs"
           >
             {availablePCs.map((pc) => <option key={pc} value={pc}>{pc}</option>)}

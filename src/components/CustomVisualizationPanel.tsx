@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
+import type { Data, Layout } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -196,60 +197,64 @@ export default function CustomVisualizationPanel({
         const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
         if (nComponents === 2) {
-            const traces = groups.map((group, idx) => ({
+            const traces: Data[] = groups.map((group, idx) => ({
                 x: pcaData.data.filter(d => d.group === group).map(d => d.pc1),
                 y: pcaData.data.filter(d => d.group === group).map(d => d.pc2),
                 text: pcaData.data.filter(d => d.group === group).map(d => d.sample),
                 name: group,
-                mode: 'markers',
-                type: 'scatter',
+                mode: 'markers' as const,
+                type: 'scatter' as const,
                 marker: {
                     size: 10,
                     color: colors[idx % colors.length]
                 }
-            }));
+            } as Data));
+
+            const layout: Partial<Layout> = {
+                title: { text: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
+                xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
+                yaxis: { title: { text: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` } },
+                hovermode: 'closest',
+                height: 500
+            };
 
             return (
                 <Plot
                     data={traces}
-                    layout={{
-                        title: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)`,
-                        xaxis: { title: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` },
-                        yaxis: { title: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` },
-                        hovermode: 'closest',
-                        height: 500
-                    }}
+                    layout={layout}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
             );
         } else {
-            const traces = groups.map((group, idx) => ({
+            const traces: Data[] = groups.map((group, idx) => ({
                 x: pcaData.data.filter(d => d.group === group).map(d => d.pc1),
                 y: pcaData.data.filter(d => d.group === group).map(d => d.pc2),
                 z: pcaData.data.filter(d => d.group === group).map(d => d.pc3),
                 text: pcaData.data.filter(d => d.group === group).map(d => d.sample),
                 name: group,
-                mode: 'markers',
-                type: 'scatter3d',
+                mode: 'markers' as const,
+                type: 'scatter3d' as const,
                 marker: {
                     size: 8,
                     color: colors[idx % colors.length]
                 }
-            }));
+            } as Data));
+
+            const layout: Partial<Layout> = {
+                title: { text: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
+                scene: {
+                    xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
+                    yaxis: { title: { text: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` } },
+                    zaxis: { title: { text: `PC3 (${(pcaData.explained_variance[2] * 100).toFixed(1)}%)` } }
+                },
+                height: 600
+            };
 
             return (
                 <Plot
                     data={traces}
-                    layout={{
-                        title: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)`,
-                        scene: {
-                            xaxis: { title: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` },
-                            yaxis: { title: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` },
-                            zaxis: { title: `PC3 (${(pcaData.explained_variance[2] * 100).toFixed(1)}%)` }
-                        },
-                        height: 600
-                    }}
+                    layout={layout}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -264,60 +269,64 @@ export default function CustomVisualizationPanel({
         const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
         if (nComponents === 2) {
-            const traces = groups.map((group, idx) => ({
+            const traces: Data[] = groups.map((group, idx) => ({
                 x: umapData.data.filter(d => d.group === group).map(d => d.umap1),
                 y: umapData.data.filter(d => d.group === group).map(d => d.umap2),
                 text: umapData.data.filter(d => d.group === group).map(d => d.sample),
                 name: group,
-                mode: 'markers',
-                type: 'scatter',
+                mode: 'markers' as const,
+                type: 'scatter' as const,
                 marker: {
                     size: 10,
                     color: colors[idx % colors.length]
                 }
-            }));
+            } as Data));
+
+            const layout: Partial<Layout> = {
+                title: { text: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
+                xaxis: { title: { text: 'UMAP1' } },
+                yaxis: { title: { text: 'UMAP2' } },
+                hovermode: 'closest',
+                height: 500
+            };
 
             return (
                 <Plot
                     data={traces}
-                    layout={{
-                        title: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})`,
-                        xaxis: { title: 'UMAP1' },
-                        yaxis: { title: 'UMAP2' },
-                        hovermode: 'closest',
-                        height: 500
-                    }}
+                    layout={layout}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
             );
         } else {
-            const traces = groups.map((group, idx) => ({
+            const traces: Data[] = groups.map((group, idx) => ({
                 x: umapData.data.filter(d => d.group === group).map(d => d.umap1),
                 y: umapData.data.filter(d => d.group === group).map(d => d.umap2),
                 z: umapData.data.filter(d => d.group === group).map(d => d.umap3),
                 text: umapData.data.filter(d => d.group === group).map(d => d.sample),
                 name: group,
-                mode: 'markers',
-                type: 'scatter3d',
+                mode: 'markers' as const,
+                type: 'scatter3d' as const,
                 marker: {
                     size: 8,
                     color: colors[idx % colors.length]
                 }
-            }));
+            } as Data));
+
+            const layout: Partial<Layout> = {
+                title: { text: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
+                scene: {
+                    xaxis: { title: { text: 'UMAP1' } },
+                    yaxis: { title: { text: 'UMAP2' } },
+                    zaxis: { title: { text: 'UMAP3' } }
+                },
+                height: 600
+            };
 
             return (
                 <Plot
                     data={traces}
-                    layout={{
-                        title: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})`,
-                        scene: {
-                            xaxis: { title: 'UMAP1' },
-                            yaxis: { title: 'UMAP2' },
-                            zaxis: { title: 'UMAP3' }
-                        },
-                        height: 600
-                    }}
+                    layout={layout}
                     config={{ responsive: true, displayModeBar: true }}
                     style={{ width: '100%' }}
                 />
@@ -328,30 +337,32 @@ export default function CustomVisualizationPanel({
     const renderBoxplot = () => {
         if (!boxplotData) return null;
 
-        const traces = boxplotData.genes.map(geneData => {
+        const traces: Data[] = boxplotData.genes.map(geneData => {
             const groups = Array.from(new Set(geneData.values.map(v => v.group)));
             
             return groups.map(group => ({
                 y: geneData.values.filter(v => v.group === group).map(v => v.value),
                 name: `${geneData.gene} - ${group}`,
-                type: 'box',
+                type: 'box' as const,
                 boxmean: 'sd',
                 boxpoints: 'all',
                 jitter: 0.3,
                 pointpos: -1.8
-            }));
+            } as Data));
         }).flat();
+
+        const layout: Partial<Layout> = {
+            title: { text: `Expression Distribution - ${boxplotData.n_genes} gene(s)` },
+            yaxis: { title: { text: 'Expression Level' } },
+            xaxis: { title: { text: '' } },
+            height: 500,
+            showlegend: true
+        };
 
         return (
             <Plot
                 data={traces}
-                layout={{
-                    title: `Expression Distribution - ${boxplotData.n_genes} gene(s)`,
-                    yaxis: { title: 'Expression Level' },
-                    xaxis: { title: '' },
-                    height: 500,
-                    showlegend: true
-                }}
+                layout={layout}
                 config={{ responsive: true, displayModeBar: true }}
                 style={{ width: '100%' }}
             />

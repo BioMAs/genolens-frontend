@@ -91,22 +91,23 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
 
       const processedData = rawData
         .map((row: QueryRow): EnrichmentPoint | null => {
-          const pval = parseFloat(row[pValCol]);
-          const r = parseFloat(row[rCol]);
-          const rExpected = parseFloat(row[rExpectedCol]);
+          const pval = Number(row[pValCol]);
+          const r = Number(row[rCol]);
+          const rExpected = Number(row[rExpectedCol]);
+          const pathwayName = String(row[descCol] ?? 'Unknown pathway');
           
           // Validate values
-          if (isNaN(pval) || pval <= 0 || isNaN(r) || isNaN(rExpected) || rExpected === 0) {
+          if (!Number.isFinite(pval) || pval <= 0 || !Number.isFinite(r) || !Number.isFinite(rExpected) || rExpected === 0) {
             return null;
           }
           
           const geneRatio = r / rExpected;
-          const count = countCol && row[countCol] != null ? parseFloat(row[countCol]) : r;
+          const count = countCol && row[countCol] != null ? Number(row[countCol]) : r;
           
           return {
-            name: row[descCol],
+            name: pathwayName,
             x: geneRatio, // r/rExpected
-            y: row[descCol],
+            y: pathwayName,
             size: count,
             pvalue: pval,
             z: count,

@@ -100,20 +100,33 @@ export function useHeatmapData({
 
       // --- Strategy B: Parquet /query fallback ---
       if (degRows.length === 0) {
-        const _comparisons = degDataset.dataset_metadata?.comparisons;
-        const columnsInfo =
-          degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
-          (_comparisons && typeof _comparisons === 'object' && !Array.isArray(_comparisons)
-            ? _comparisons[comparisonName]
-            : undefined);
+        const datasetMetadata = degDataset.dataset_metadata as Record<string, unknown> | undefined;
+        const comparisons =
+          datasetMetadata?.comparisons &&
+          typeof datasetMetadata.comparisons === 'object' &&
+          !Array.isArray(datasetMetadata.comparisons)
+            ? (datasetMetadata.comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
+
+        const columnsInfoComparisons =
+          datasetMetadata?.columns_info &&
+          typeof datasetMetadata.columns_info === 'object' &&
+          !Array.isArray(datasetMetadata.columns_info) &&
+          (datasetMetadata.columns_info as Record<string, unknown>).comparisons &&
+          typeof (datasetMetadata.columns_info as Record<string, unknown>).comparisons === 'object' &&
+          !Array.isArray((datasetMetadata.columns_info as Record<string, unknown>).comparisons)
+            ? ((datasetMetadata.columns_info as Record<string, unknown>).comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
+
+        const columnsInfo = columnsInfoComparisons?.[comparisonName] || comparisons?.[comparisonName];
 
         const logFCCol: string =
-          columnsInfo?.logFC ||
+          (typeof columnsInfo?.logFC === 'string' ? columnsInfo.logFC : undefined) ||
           degDataset.column_mapping?.log_fc ||
           degDataset.column_mapping?.log2FoldChange ||
           'log2FoldChange';
         const pValCol: string =
-          columnsInfo?.padj ||
+          (typeof columnsInfo?.padj === 'string' ? columnsInfo.padj : undefined) ||
           degDataset.column_mapping?.padj ||
           'padj';
 

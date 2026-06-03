@@ -8,8 +8,11 @@ import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
 import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
 import PreprocessingResults from './PreprocessingResults';
+import type { QCReport } from './PreprocessingResults';
 import PCAResults from './PCAResults';
+import type { PCAData } from './PCAResults';
 import UMAPResults from './UMAPResults';
+import type { UMAPPoint } from './UMAPResults';
 import ComparisonGrid from './ComparisonGrid';
 
 type Tab = 'preprocessing' | 'pca' | 'umap' | 'comparisons' | 'params';
@@ -25,6 +28,42 @@ const TAB_LABELS: Record<Tab, string> = {
 interface Props {
   projectId: string;
   analysisId: string;
+}
+
+function isQCReport(value: unknown): value is QCReport {
+  if (!value || typeof value !== 'object') return false;
+  const report = value as Partial<QCReport>;
+  return (
+    typeof report.total_input_samples === 'number' &&
+    typeof report.samples_passed === 'number' &&
+    typeof report.samples_removed === 'number' &&
+    typeof report.genes_before_filter === 'number' &&
+    typeof report.genes_after_filter === 'number'
+  );
+}
+
+function isPCAData(value: unknown): value is PCAData {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Partial<PCAData>;
+  return (
+    Array.isArray(data.variance_explained) &&
+    Array.isArray(data.pc_labels) &&
+    Array.isArray(data.samples)
+  );
+}
+
+function isUMAPPoint(value: unknown): value is UMAPPoint {
+  if (!value || typeof value !== 'object') return false;
+  const point = value as Partial<UMAPPoint>;
+  return (
+    typeof point.sample_id === 'string' &&
+    typeof point.UMAP1 === 'number' &&
+    typeof point.UMAP2 === 'number'
+  );
+}
+
+function isUMAPData(value: unknown): value is UMAPPoint[] {
+  return Array.isArray(value) && value.every(isUMAPPoint);
 }
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
@@ -78,7 +117,10 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   }, [datasets, analysis, analysisId]);
 
   // PCA data embedded in the VST dataset metadata
-  const pcaData = vstDataset?.dataset_metadata?.pca_data ?? null;
+  const pcaData = useMemo<PCAData | null>(() => {
+    const rawPcaData = vstDataset?.dataset_metadata?.pca_data;
+    return isPCAData(rawPcaData) ? rawPcaData : null;
+  }, [vstDataset]);
 
   // UMAP dataset
   const umapDataset = useMemo<Dataset | undefined>(() => {
@@ -92,17 +134,22 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }, [datasets, analysis, analysisId]);
 
-  const umapData = umapDataset?.dataset_metadata?.umap_data ?? null;
+  const umapData = useMemo<UMAPPoint[] | null>(() => {
+    const rawUmapData = umapDataset?.dataset_metadata?.umap_data;
+    return isUMAPData(rawUmapData) ? rawUmapData : null;
+  }, [umapDataset]);
 
   // QC report embedded in VST dataset metadata (or normalized dataset)
-  const qcReport = useMemo(() => {
-    if (vstDataset?.dataset_metadata?.qc_report) {
-      return vstDataset.dataset_metadata.qc_report;
+  const qcReport = useMemo<QCReport | null>(() => {
+    const vstQcReport = vstDataset?.dataset_metadata?.qc_report;
+    if (isQCReport(vstQcReport)) {
+      return vstQcReport;
     }
     const normId = analysis?.intermediate_dataset_ids?.normalized;
     if (normId) {
       const normDs = datasets.find((d) => d.id === normId);
-      return normDs?.dataset_metadata?.qc_report ?? null;
+      const normQcReport = normDs?.dataset_metadata?.qc_report;
+      return isQCReport(normQcReport) ? normQcReport : null;
     }
     return null;
   }, [vstDataset, analysis, datasets]);

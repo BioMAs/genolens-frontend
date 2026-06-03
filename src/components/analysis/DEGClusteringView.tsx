@@ -270,7 +270,7 @@ export default function DEGClusteringView({
               },
               xaxis: 'x',
               yaxis: 'y',
-            } as Partial<PlotData>,
+            } as unknown as Partial<PlotData>,
           ]}
           layout={{
             autosize: true,
