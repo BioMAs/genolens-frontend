@@ -197,7 +197,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     try {
       const res = await api.get(
         `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
-        { params: { page_size: 2000 } }
+        { params: { page_size: 1000 } }
       );
       const rows: Record<string, unknown>[] = res.data?.pathways ?? res.data?.results ?? res.data ?? [];
       if (rows.length > 0) {
@@ -218,7 +218,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       try {
         const res = await api.get(
           `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
-          { params: { page_size: 5000 } }
+          { params: { page_size: 1000 } }
         );
         if (cancelled) return;
         const genes: Array<{gene_id: string; regulation: string; log_fc: number; padj: number; gene_name: string}> = res.data?.genes ?? [];

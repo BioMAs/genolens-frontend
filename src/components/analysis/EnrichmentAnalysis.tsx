@@ -72,7 +72,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             try {
                 const res = await api.get(
                     `/datasets/${datasetId}/deg-genes/${encodeURIComponent(selectedComparison)}`,
-                    { params: { page_size: 5000, regulation: undefined } }
+                    { params: { page_size: 1000, regulation: undefined } }
                 );
                 if (cancelled) return;
                 const genes: Array<{ gene_id: string; regulation: string; log_fc: number | null; padj: number | null; gene_name: string | null }> =
