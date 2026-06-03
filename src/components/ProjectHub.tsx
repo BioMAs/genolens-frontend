@@ -15,7 +15,7 @@ import { ProjectDetailSkeleton } from '@/components/Skeletons';
 import {
   ArrowLeft, Plus, Upload, Users, Star, List,
   FlaskConical, ChevronDown, ChevronUp,
-  GitCompare, Layers, Activity, Database, Eye,
+  GitCompare, Activity, Database, Eye, ArrowRight, Layers,
 } from 'lucide-react';
 import GenerateReportButton from '@/components/GenerateReportButton';
 import api from '@/utils/api';
@@ -224,8 +224,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                           comparisons={comparisons.filter(c =>
                             a.result_dataset_ids.some(id => c.dataset_id === id)
                           )}
-                          matrixDatasetId={a.matrix_dataset_id}
-                          firstResultDatasetId={a.result_dataset_ids[0] ?? null}
                         />
                       ))}
                     </div>
@@ -473,89 +471,42 @@ function CompletedAnalysisRow({
   analysis,
   projectId,
   comparisons,
-  matrixDatasetId,
-  firstResultDatasetId,
 }: {
   analysis: { id: string; name: string; created_at: string };
   projectId: string;
   comparisons: { name: string; deg_up: number; deg_down: number }[];
-  matrixDatasetId: string | null;
-  firstResultDatasetId: string | null;
 }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-100"
-      >
-        <div>
-          <p className="text-sm font-semibold text-gray-900">{analysis.name}</p>
-          <p className="text-xs text-gray-400">
-            {new Date(analysis.created_at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'short', year: 'numeric',
-            })}
-            {comparisons.length > 0 && ` · ${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Done</span>
-          {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="border-t border-gray-200 px-4 py-3 space-y-3">
-          {/* Quick links */}
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/projects/${projectId}/analyses/${analysis.id}`}
-              className="flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-            >
-              <FlaskConical className="h-3.5 w-3.5" /> Analysis results
-            </Link>
-            {matrixDatasetId && (
-              <Link
-                href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering`}
-                className="flex items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100"
-              >
-                <Layers className="h-3.5 w-3.5" /> Clustering
-              </Link>
-            )}
-            {firstResultDatasetId && (
-              <Link
-                href={`/projects/${projectId}/datasets/${firstResultDatasetId}/enrichment`}
-                className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-700 hover:bg-teal-100"
-              >
-                <FlaskConical className="h-3.5 w-3.5" /> Enrichment
-              </Link>
-            )}
-          </div>
-
-          {/* Comparisons */}
-          {comparisons.length > 0 && (
-            <div className="space-y-1.5">
-              {comparisons.map(c => (
-                <Link
-                  key={c.name}
-                  href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                  className="flex items-center justify-between rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs hover:border-indigo-300 hover:bg-indigo-50/40"
-                >
-                  <span className="font-medium text-gray-800 truncate">{c.name}</span>
-                  <span className="ml-3 shrink-0 font-medium">
-                    <span className="text-red-500">↑{c.deg_up}</span>
-                    {' '}
-                    <span className="text-blue-500">↓{c.deg_down}</span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+    <Link
+      href={`/projects/${projectId}/analyses/${analysis.id}`}
+      className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors group"
+    >
+      <div>
+        <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">
+          {analysis.name}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {new Date(analysis.created_at).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric',
+          })}
+          {comparisons.length > 0 && ` · ${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''}`}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {comparisons.length > 0 && (
+          <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="text-red-500 font-medium">
+              ↑{comparisons.reduce((s, c) => s + c.deg_up, 0)}
+            </span>
+            <span className="text-blue-500 font-medium">
+              ↓{comparisons.reduce((s, c) => s + c.deg_down, 0)}
+            </span>
+          </span>
+        )}
+        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Done</span>
+        <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-indigo-400 transition-colors" />
+      </div>
+    </Link>
   );
 }
 
