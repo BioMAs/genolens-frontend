@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dataset } from '@/types';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings2, RefreshCw, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
 import GOEnrichmentTable from './GOEnrichmentTable';
 import EnrichmentHistogram from './EnrichmentHistogram';
 import GOTreePanel from './GOTreePanel';
@@ -38,6 +38,7 @@ interface GOTerm {
   go_id: string;
   go_name: string;
   namespace: string;
+  description?: string;
   pvalue: number;
   fdr: number;
   enrichment_ratio: number;
@@ -47,14 +48,14 @@ interface GOTerm {
   level?: number;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+interface DegGeneInfo {
+  regulation: string;
+  log_fc: number;
+  padj: number;
+  gene_name: string;
+}
 
-const NS_FROM_CATEGORY: Record<string, string> = {
-  'GO:BP': 'biological_process',
-  'GO:MF': 'molecular_function',
-  'GO:CC': 'cellular_component',
-  'GO:ALL': 'biological_process',
-};
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function transformCachedRow(row: Record<string, unknown>): GOTerm {
   const geneRatioStr = (row.gene_ratio as string) ?? '0/1';
@@ -64,7 +65,8 @@ function transformCachedRow(row: Record<string, unknown>): GOTerm {
   return {
     go_id: (row.pathway_id as string) ?? '',
     go_name: (row.pathway_name as string) ?? '',
-    namespace: NS_FROM_CATEGORY[(row.category as string) ?? ''] ?? 'biological_process',
+    namespace: (row.category as string) ?? '',
+    description: (row.description as string) ?? undefined,
     pvalue: (row.pvalue as number) ?? 0,
     fdr: (row.padj as number) ?? 0,
     enrichment_ratio: (row.enrichment_ratio as number) ?? 0,
@@ -167,17 +169,15 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const DEBOUNCE_MS = 800;
-
 export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnrichmentAnalysisProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [terms, setTerms] = useState<GOTerm[]>([]);
-  const [meta, setMeta] = useState<{ study_size: number; background_size: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('dotplot');
   const [showSettings, setShowSettings] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [degGeneMap, setDegGeneMap] = useState<Record<string, DegGeneInfo>>({});
 
   const [params, setParams] = useState<GOEnrichmentParams>({
     namespace: null,
@@ -190,108 +190,58 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     propagateAnnotations: true,
   });
 
-  // Track whether params have changed since last run (to show "pending" indicator)
-  const [paramsDirty, setParamsDirty] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isInitialMount = useRef(true);
+  const updateParams = (next: GOEnrichmentParams) => setParams(next);
 
-  const runGOEnrichment = useCallback(async (currentParams: GOEnrichmentParams) => {
-    setIsRunning(true);
-    setError(null);
-    setParamsDirty(false);
-
-    try {
-      const response = await api.post(
-        `/datasets/${dataset.id}/comparisons/${encodeURIComponent(comparisonName)}/go-enrichment`,
-        {
-          namespace: currentParams.namespace,
-          regulation: currentParams.regulation,
-          padj_threshold: currentParams.padjThreshold,
-          log_fc_threshold: currentParams.logFcThreshold,
-          min_term_size: currentParams.minTermSize,
-          max_term_size: currentParams.maxTermSize,
-          pvalue_threshold: currentParams.pvalueThreshold,
-          fdr_method: 'fdr_bh',
-          propagate_annotations: currentParams.propagateAnnotations,
-          organism: 'Homo sapiens',
-        }
-      );
-
-      const data = response.data;
-      const enrichedTerms: GOTerm[] = (data.enriched_terms ?? []).map((r: Record<string, unknown>) => ({
-        go_id: (r.go_id as string) ?? '',
-        go_name: (r.go_name as string) ?? '',
-        namespace: (r.namespace as string) ?? '',
-        pvalue: (r.pvalue as number) ?? 0,
-        fdr: (r.fdr as number) ?? 0,
-        enrichment_ratio: (r.enrichment_ratio as number) ?? 0,
-        study_count: (r.study_count as number) ?? 0,
-        study_genes: (r.study_genes as string[]) ?? [],
-        background_count: (r.background_count as number) ?? 0,
-        level: r.level as number | undefined,
-      }));
-
-      setTerms(enrichedTerms);
-      setMeta({ study_size: data.study_size, background_size: data.background_size });
-    } catch (err: unknown) {
-      const anyErr = err as { response?: { data?: { detail?: string } }; message?: string };
-      setError(anyErr?.response?.data?.detail ?? anyErr?.message ?? 'Failed to run GO enrichment');
-    } finally {
-      setIsRunning(false);
-      setIsInitialLoad(false);
-    }
-  }, [dataset.id, comparisonName]);
-
-  // On mount: check for cached GO enrichment results, auto-run if none found
+  // On mount: load all cached enrichment results from DB (all databases)
   const loadCached = useCallback(async (): Promise<boolean> => {
     try {
       const res = await api.get(
         `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
-        { params: { page_size: 500 } }
+        { params: { page_size: 2000 } }
       );
       const rows: Record<string, unknown>[] = res.data?.pathways ?? res.data?.results ?? res.data ?? [];
-      const goRows = rows.filter((r) => String(r.category ?? '').startsWith('GO:'));
-      if (goRows.length > 0) {
-        setTerms(goRows.map(transformCachedRow));
+      if (rows.length > 0) {
+        setTerms(rows.map(transformCachedRow));
         setIsInitialLoad(false);
         return true;
       }
     } catch {
-      // No cached results — silent fail, will auto-run fresh
+      // No cached results — silent fail
     }
     return false;
   }, [dataset.id, comparisonName]);
 
-  // Initial load: try cache first, then fresh run
+  // Fetch DEG gene map for UP/DOWN coloring
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const hasCached = await loadCached();
-      if (!hasCached && !cancelled) {
-        runGOEnrichment(params);
-      }
+      try {
+        const res = await api.get(
+          `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+          { params: { page_size: 5000 } }
+        );
+        if (cancelled) return;
+        const genes: Array<{gene_id: string; regulation: string; log_fc: number; padj: number; gene_name: string}> = res.data?.genes ?? [];
+        const map: Record<string, DegGeneInfo> = {};
+        genes.forEach(g => { map[g.gene_id.toUpperCase()] = { regulation: g.regulation, log_fc: g.log_fc, padj: g.padj, gene_name: g.gene_name }; });
+        setDegGeneMap(map);
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [dataset.id, comparisonName]);
+
+  // Initial load: load from cache only
+  useEffect(() => {
+    let cancelled = false;
+    setIsInitialLoad(true);
+    setIsRunning(true);
+    (async () => {
+      await loadCached();
+      if (!cancelled) setIsRunning(false);
     })();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadCached]);
-
-  // When params change (after initial mount): debounced auto-run
-  const updateParams = useCallback((next: GOEnrichmentParams) => {
-    setParams(next);
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    setParamsDirty(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      runGOEnrichment(next);
-    }, DEBOUNCE_MS);
-  }, [runGOEnrichment]);
-
-  useEffect(() => () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-  }, []);
 
   const hasResults = terms.length > 0;
 
@@ -301,19 +251,14 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       {/* ── Header bar ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-gray-900">GO Enrichment</h3>
+          <h3 className="font-semibold text-gray-900">Pathway Enrichment</h3>
           {isRunning && (
             <span className="flex items-center gap-1.5 text-xs text-indigo-600">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              {isInitialLoad ? 'Loading…' : 'Updating…'}
+              Loading…
             </span>
           )}
-          {!isRunning && paramsDirty && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-              Applying filters…
-            </span>
-          )}
-          {!isRunning && hasResults && !paramsDirty && (
+          {!isRunning && hasResults && (
             <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
               {terms.length} enriched terms
             </span>
@@ -328,18 +273,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
             onClick={() => setShowSettings(s => !s)}
           >
             <Settings2 className="w-3.5 h-3.5" />
-            Settings
+            Filter
             {showSettings ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => runGOEnrichment(params)}
-            disabled={isRunning}
-          >
-            <RefreshCw className={`w-3 h-3 mr-1 ${isRunning ? 'animate-spin' : ''}`} />
-            Re-run
           </Button>
         </div>
       </div>
@@ -454,13 +389,15 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       {hasResults && (
         <>
           {/* Stats bar */}
-          {meta && (
+          {terms.length > 0 && (
             <div className="flex items-center gap-5 px-4 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground flex-wrap">
-              <span>{meta.study_size} study genes / {meta.background_size} background</span>
-              <span className="text-gray-300">·</span>
-              <span>{terms.filter(t => t.namespace === 'biological_process').length} BP</span>
-              <span>{terms.filter(t => t.namespace === 'molecular_function').length} MF</span>
-              <span>{terms.filter(t => t.namespace === 'cellular_component').length} CC</span>
+              {['GO:BP', 'GO:MF', 'GO:CC', 'KEGG', 'REACTOME', 'HALLMARK'].map(cat => {
+                const count = terms.filter(t => t.namespace === cat).length;
+                return count > 0 ? <span key={cat}>{count} {cat}</span> : null;
+              })}
+              {terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length > 0 && (
+                <span>{terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length} other</span>
+              )}
             </div>
           )}
 
@@ -491,7 +428,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
                 />
               )}
               {activeTab === 'table' && (
-                <GOEnrichmentTable terms={terms} />
+                <GOEnrichmentTable terms={terms} degGeneMap={degGeneMap} />
               )}
             </CardContent>
           </Card>
@@ -508,8 +445,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       {/* ── Empty state (loaded but no results) ─────────────────────────── */}
       {!isRunning && !error && !isInitialLoad && !hasResults && (
         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
-          <p className="text-sm font-medium mb-1">No enriched GO terms found</p>
-          <p className="text-xs">Try relaxing the p-value threshold or including more DEGs via the Settings panel.</p>
+          <p className="text-sm font-medium mb-1">No enriched terms found</p>
+          <p className="text-xs">Enrichment analysis has not been computed yet for this comparison.</p>
         </div>
       )}
     </div>
