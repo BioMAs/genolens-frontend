@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
@@ -42,6 +43,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [pageSize, setPageSize] = useState(25);
 
   // Filter and sort
@@ -132,6 +135,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     return ns || '—';
   };
 
+  const [hoveredGene, setHoveredGene] = useState<{ gene: string; x: number; y: number } | null>(null);
+
   const renderGeneChip = (gene: string) => {
     const key = gene.toUpperCase();
     const info = degGeneMap?.[key];
@@ -142,14 +147,12 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       : isDown
         ? 'bg-blue-100 text-blue-800 border-blue-200'
         : 'bg-gray-100 text-gray-700 border-gray-200';
-    const tooltip = info
-      ? `${gene}${info.gene_name && info.gene_name !== gene ? ` (${info.gene_name})` : ''}\nlogFC: ${info.log_fc?.toFixed(3)}\nAdj.P: ${info.padj?.toExponential(2)}\n${info.regulation}`
-      : gene;
     return (
       <span
         key={gene}
-        title={tooltip}
-        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border cursor-help ${chipClass}`}
+        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border cursor-help ${chipClass}`}
+        onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
+        onMouseLeave={() => setHoveredGene(null)}
       >
         {isUp ? '↑ ' : isDown ? '↓ ' : ''}{gene}
       </span>
@@ -158,6 +161,32 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
 
   return (
     <div className="space-y-4">
+      {/* Gene hover tooltip portal */}
+      {mounted && hoveredGene && (() => {
+        const info = degGeneMap?.[hoveredGene.gene.toUpperCase()];
+        if (!info) return null;
+        const isUp = info.regulation === 'UP';
+        const isDown = info.regulation === 'DOWN';
+        return createPortal(
+          <div
+            className="fixed z-[9999] pointer-events-none bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs max-w-xs"
+            style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
+          >
+            <div className="font-semibold text-gray-900">{hoveredGene.gene}</div>
+            {info.gene_name && info.gene_name !== hoveredGene.gene && (
+              <div className="text-gray-500 mb-1">{info.gene_name}</div>
+            )}
+            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-gray-600'}`}>
+              {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-gray-600">
+              <span>logFC</span><span className="font-semibold text-gray-900">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
+              <span>Adj. P-value</span><span className="font-semibold text-gray-900">{info.padj?.toExponential(2) ?? 'N/A'}</span>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
       {/* Search and Export */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">

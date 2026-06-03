@@ -211,19 +211,46 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     return false;
   }, [dataset.id, comparisonName]);
 
-  // Fetch DEG gene map for UP/DOWN coloring
+  // Fetch DEG gene map for UP/DOWN coloring — paginate through all pages
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get(
+        const PAGE_SIZE = 1000;
+        const map: Record<string, DegGeneInfo> = {};
+
+        // Fetch first page to get total_pages
+        const first = await api.get(
           `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
-          { params: { page_size: 1000 } }
+          { params: { page_size: PAGE_SIZE, page: 1 } }
         );
         if (cancelled) return;
-        const genes: Array<{gene_id: string; regulation: string; log_fc: number; padj: number; gene_name: string}> = res.data?.genes ?? [];
-        const map: Record<string, DegGeneInfo> = {};
-        genes.forEach(g => { map[g.gene_id.toUpperCase()] = { regulation: g.regulation, log_fc: g.log_fc, padj: g.padj, gene_name: g.gene_name }; });
+
+        const addGenes = (genes: Array<{gene_id: string; regulation: string; log_fc: number; padj: number; gene_name: string}>) => {
+          genes.forEach(g => {
+            const info: DegGeneInfo = { regulation: g.regulation, log_fc: g.log_fc, padj: g.padj, gene_name: g.gene_name };
+            // Index by both Ensembl ID and gene symbol for broad matching
+            if (g.gene_id) map[g.gene_id.toUpperCase()] = info;
+            if (g.gene_name) map[g.gene_name.toUpperCase()] = info;
+          });
+        };
+
+        addGenes(first.data?.genes ?? []);
+        const totalPages: number = first.data?.pagination?.total_pages ?? 1;
+
+        // Fetch remaining pages in parallel (max 5 extra = 6000 genes total)
+        const remainingPages = Math.min(totalPages, 6);
+        const requests = [];
+        for (let p = 2; p <= remainingPages; p++) {
+          requests.push(api.get(
+            `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+            { params: { page_size: PAGE_SIZE, page: p } }
+          ));
+        }
+        const results = await Promise.all(requests);
+        if (cancelled) return;
+        results.forEach(r => addGenes(r.data?.genes ?? []));
+
         setDegGeneMap(map);
       } catch { /* silent */ }
     })();
