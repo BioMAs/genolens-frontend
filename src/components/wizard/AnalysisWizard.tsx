@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import WizardStepBar from './WizardStepBar';
+import StepDataType, { DataType } from './steps/StepDataType';
 import StepUploadFiles from './steps/StepUploadFiles';
 import StepDataValidation from './steps/StepDataValidation';
 import StepAnalysisSettings, {
@@ -52,6 +53,7 @@ interface AnalysisWizardProps {
 }
 
 export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
+  const [selectedDataType, setSelectedDataType] = useState<DataType | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
   const { data: summary } = useProjectSummary(projectId);
@@ -77,6 +79,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
   // ── Reset for "Run New Analysis" ─────────────────────────────────────────────
   const handleRunNew = () => {
     setState(INITIAL_STATE);
+    setSelectedDataType(null);
     setCurrentStep(1);
   };
 
@@ -96,83 +99,98 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">New Analysis</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Follow the steps below to configure and launch your transcriptomics analysis.
+            {selectedDataType
+              ? 'Follow the steps below to configure and launch your transcriptomics analysis.'
+              : 'Select a data type to get started.'}
           </p>
         </div>
 
-        {/* Step bar */}
-        <WizardStepBar currentStep={currentStep} />
+        {/* Data type selection (pre-wizard) */}
+        {!selectedDataType && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+            <StepDataType onSelect={setSelectedDataType} />
+          </div>
+        )}
 
-        {/* Step content */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
-          {currentStep === 1 && (
-            <StepUploadFiles
-              projectId={projectId}
-              matrixDatasetId={state.matrixDatasetId}
-              samplesDatasetId={state.samplesDatasetId}
-              contrastsDatasetId={state.contrastsDatasetId}
-              onComplete={handleUploadComplete}
-            />
-          )}
+        {/* Step bar + step content (shown after data type is selected) */}
+        {selectedDataType && (
+          <>
+            {/* Step bar */}
+            <WizardStepBar currentStep={currentStep} />
 
-          {currentStep === 2 && state.matrixDatasetId && state.samplesDatasetId && (
-            <StepDataValidation
-              projectId={projectId}
-              matrixDatasetId={state.matrixDatasetId}
-              samplesDatasetId={state.samplesDatasetId}
-              onContinue={() => goTo(3)}
-              onBack={() => goTo(1)}
-            />
-          )}
+            {/* Step content */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+              {currentStep === 1 && (
+                <StepUploadFiles
+                  projectId={projectId}
+                  matrixDatasetId={state.matrixDatasetId}
+                  samplesDatasetId={state.samplesDatasetId}
+                  contrastsDatasetId={state.contrastsDatasetId}
+                  onComplete={handleUploadComplete}
+                />
+              )}
 
-          {currentStep === 3 && (
-            <StepAnalysisSettings
-              analysisName={state.analysisName}
-              deseq2Params={state.deseq2Params}
-              clusteringConfig={state.clusteringConfig}
-              enrichmentConfig={state.enrichmentConfig}
-              species={state.species}
-              onChangeName={name => patchState({ analysisName: name })}
-              onChangeDeseq2={params => patchState({ deseq2Params: params })}
-              onChangeClustering={cfg => patchState({ clusteringConfig: cfg })}
-              onChangeEnrichment={cfg => patchState({ enrichmentConfig: cfg })}
-              onChangeSpecies={s => patchState({ species: s })}
-              onContinue={() => goTo(4)}
-              onBack={() => goTo(2)}
-            />
-          )}
+              {currentStep === 2 && state.matrixDatasetId && state.samplesDatasetId && (
+                <StepDataValidation
+                  projectId={projectId}
+                  matrixDatasetId={state.matrixDatasetId}
+                  samplesDatasetId={state.samplesDatasetId}
+                  onContinue={() => goTo(3)}
+                  onBack={() => goTo(1)}
+                />
+              )}
 
-          {currentStep === 4 &&
-            state.matrixDatasetId &&
-            state.samplesDatasetId &&
-            state.contrastsDatasetId && (
-              <StepLaunch
-                projectId={projectId}
-                analysisName={state.analysisName}
-                matrixDatasetId={state.matrixDatasetId}
-                samplesDatasetId={state.samplesDatasetId}
-                contrastsDatasetId={state.contrastsDatasetId}
-                deseq2Params={{ ...state.deseq2Params, enrichment_databases: state.enrichmentConfig.databases, species: state.species }}
-                analysisId={state.launchedAnalysisId}
-                onLaunched={id => patchState({ launchedAnalysisId: id })}
-                onComplete={id => { patchState({ launchedAnalysisId: id }); goTo(5); }}
-                onBack={() => goTo(3)}
-              />
-            )}
+              {currentStep === 3 && (
+                <StepAnalysisSettings
+                  analysisName={state.analysisName}
+                  deseq2Params={state.deseq2Params}
+                  clusteringConfig={state.clusteringConfig}
+                  enrichmentConfig={state.enrichmentConfig}
+                  species={state.species}
+                  onChangeName={name => patchState({ analysisName: name })}
+                  onChangeDeseq2={params => patchState({ deseq2Params: params })}
+                  onChangeClustering={cfg => patchState({ clusteringConfig: cfg })}
+                  onChangeEnrichment={cfg => patchState({ enrichmentConfig: cfg })}
+                  onChangeSpecies={s => patchState({ species: s })}
+                  onContinue={() => goTo(4)}
+                  onBack={() => goTo(2)}
+                />
+              )}
 
-          {currentStep === 5 &&
-            state.launchedAnalysisId &&
-            state.matrixDatasetId && (
-              <StepResults
-                projectId={projectId}
-                analysisId={state.launchedAnalysisId}
-                matrixDatasetId={state.matrixDatasetId}
-                clusteringConfig={state.clusteringConfig}
-                enrichmentConfig={state.enrichmentConfig}
-                onRunNew={handleRunNew}
-              />
-            )}
-        </div>
+              {currentStep === 4 &&
+                state.matrixDatasetId &&
+                state.samplesDatasetId &&
+                state.contrastsDatasetId && (
+                  <StepLaunch
+                    projectId={projectId}
+                    analysisName={state.analysisName}
+                    dataType={selectedDataType!}
+                    matrixDatasetId={state.matrixDatasetId}
+                    samplesDatasetId={state.samplesDatasetId}
+                    contrastsDatasetId={state.contrastsDatasetId}
+                    deseq2Params={{ ...state.deseq2Params, enrichment_databases: state.enrichmentConfig.databases, species: state.species }}
+                    analysisId={state.launchedAnalysisId}
+                    onLaunched={id => patchState({ launchedAnalysisId: id })}
+                    onComplete={id => { patchState({ launchedAnalysisId: id }); goTo(5); }}
+                    onBack={() => goTo(3)}
+                  />
+                )}
+
+              {currentStep === 5 &&
+                state.launchedAnalysisId &&
+                state.matrixDatasetId && (
+                  <StepResults
+                    projectId={projectId}
+                    analysisId={state.launchedAnalysisId}
+                    matrixDatasetId={state.matrixDatasetId}
+                    clusteringConfig={state.clusteringConfig}
+                    enrichmentConfig={state.enrichmentConfig}
+                    onRunNew={handleRunNew}
+                  />
+                )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

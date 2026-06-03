@@ -132,6 +132,8 @@ export enum SelfServiceAnalysisStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export type OmicsDataType = 'transcriptomics' | 'proteomics' | 'lipidomics';
+
 export interface AnalysisParams {
   design: 'auto' | 'condition' | 'batch_condition';
   fdr: number;
@@ -155,6 +157,7 @@ export interface SelfServiceAnalysis {
   id: string;
   project_id: string;
   name: string;
+  data_type: OmicsDataType;
   status: SelfServiceAnalysisStatus;
   matrix_dataset_id: string | null;
   samples_dataset_id: string | null;
@@ -174,6 +177,7 @@ export interface SelfServiceAnalysis {
 export interface SelfServiceAnalysisCreate {
   project_id: string;
   name: string;
+  data_type: OmicsDataType;
   matrix_dataset_id: string;
   samples_dataset_id: string;
   comparisons_dataset_id: string;
