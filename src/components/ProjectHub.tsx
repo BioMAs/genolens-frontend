@@ -33,12 +33,13 @@ import {
   BarChart3,
 } from 'lucide-react';
 import GenerateReportButton from '@/components/GenerateReportButton';
+import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 
 interface ProjectHubProps {
   projectId: string;
 }
 
-type ProjectTab = 'comparisons' | 'datasets' | 'qc' | 'pca' | 'history';
+type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
   const { user: currentUser } = useCurrentUser();
@@ -47,7 +48,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const { data: analysesData } = useAnalyses(projectId);
   const { data: membersData } = useProjectMembers(projectId);
 
-  const [activeTab, setActiveTab] = useState<ProjectTab>('comparisons');
+  const [activeTab, setActiveTab] = useState<ProjectTab>('analyses');
   const [isBookmarkModalOpen, setBookmarkModalOpen] = useState(false);
   const [isGeneListModalOpen, setGeneListModalOpen] = useState(false);
   const [isMembersModalOpen, setMembersModalOpen] = useState(false);
@@ -56,6 +57,17 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const stats = summary?.stats;
   const comparisons = summary?.comparisons ?? [];
   const analyses = analysesData?.items ?? [];
+
+  // Build a map: dataset_id → analysisId, for linking comparisons through their analysis
+  const datasetToAnalysisId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const analysis of analysesData?.items ?? []) {
+      for (const datasetId of analysis.result_dataset_ids ?? []) {
+        map[datasetId] = analysis.id;
+      }
+    }
+    return map;
+  }, [analysesData?.items]);
 
   const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
   const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
@@ -198,10 +210,9 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         className="mt-5 inline-flex flex-wrap rounded-xl p-1"
         style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
       >
+        <ProjectTabButton id="analyses" activeTab={activeTab} onClick={setActiveTab} label="Analyses" />
         <ProjectTabButton id="comparisons" activeTab={activeTab} onClick={setActiveTab} label="Comparisons" />
         <ProjectTabButton id="datasets" activeTab={activeTab} onClick={setActiveTab} label="Datasets" />
-        <ProjectTabButton id="qc" activeTab={activeTab} onClick={setActiveTab} label="QC" />
-        <ProjectTabButton id="pca" activeTab={activeTab} onClick={setActiveTab} label="PCA" />
         <ProjectTabButton id="history" activeTab={activeTab} onClick={setActiveTab} label="History" />
       </div>
 
@@ -227,6 +238,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 <ComparisonCard
                   key={comparison.name}
                   projectId={projectId}
+                  analysisId={datasetToAnalysisId[comparison.dataset_id]}
                   name={comparison.name}
                   up={comparison.deg_up}
                   down={comparison.deg_down}
@@ -324,22 +336,46 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         </div>
       ) : null}
 
-      {activeTab === 'qc' ? (
-        <InfoTabCard
-          title="Quality Control"
-          description="Review preprocessing quality metrics and input data integrity."
-          ctaLabel="Open QC"
-          ctaHref={readyDataset ? `/projects/${projectId}/datasets/${readyDataset.id}` : undefined}
-        />
-      ) : null}
-
-      {activeTab === 'pca' ? (
-        <InfoTabCard
-          title="PCA / Clustering"
-          description="Explore global sample structure and clustering views from normalized matrices."
-          ctaLabel="Open PCA"
-          ctaHref={readyDataset ? `/projects/${projectId}/datasets/${readyDataset.id}/clustering` : undefined}
-        />
+      {activeTab === 'analyses' ? (
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Analyses ({analyses.length})
+            </h2>
+            {canManageData ? (
+              <Link
+                href={`/projects/${projectId}/setup`}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                style={{ background: 'var(--sl-purple)' }}
+              >
+                <Plus className="h-3.5 w-3.5" /> New Analysis
+              </Link>
+            ) : null}
+          </div>
+          {analyses.length === 0 ? (
+            <EmptyStateHelix
+              title="No analyses yet"
+              description="Launch your first self-service analysis to run DESeq2, generate PCA and QC reports."
+              action={
+                canManageData ? (
+                  <Link
+                    href={`/projects/${projectId}/setup`}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
+                    style={{ background: 'var(--sl-purple)' }}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> New Analysis
+                  </Link>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {analyses.map((analysis) => (
+                <AnalysisStatusCard key={analysis.id} analysis={analysis} projectId={projectId} />
+              ))}
+            </div>
+          )}
+        </div>
       ) : null}
 
       {activeTab === 'history' ? (
@@ -435,17 +471,22 @@ function ProjectTabButton({
 
 function ComparisonCard({
   projectId,
+  analysisId,
   name,
   up,
   down,
   hasEnrichment,
 }: {
   projectId: string;
+  analysisId?: string;
   name: string;
   up: number;
   down: number;
   hasEnrichment: boolean;
 }) {
+  const href = analysisId
+    ? `/projects/${projectId}/analyses/${analysisId}/comparisons/${encodeURIComponent(name)}`
+    : `/projects/${projectId}/comparisons/${encodeURIComponent(name)}`;
   return (
     <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
       <div>
@@ -469,7 +510,7 @@ function ComparisonCard({
       </div>
 
       <Link
-        href={`/projects/${projectId}/comparisons/${encodeURIComponent(name)}`}
+        href={href}
         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
         style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
       >

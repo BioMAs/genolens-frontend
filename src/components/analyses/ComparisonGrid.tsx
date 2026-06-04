@@ -12,7 +12,7 @@ interface ComparisonGridProps {
   matrixDatasetId?: string | null;
 }
 
-export default function ComparisonGrid({ projectId, comparisons }: ComparisonGridProps) {
+export default function ComparisonGrid({ projectId, analysisId, comparisons }: ComparisonGridProps) {
   if (comparisons.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
@@ -26,7 +26,11 @@ export default function ComparisonGrid({ projectId, comparisons }: ComparisonGri
       {comparisons.map((comp) => (
         <Link
           key={comp.name}
-          href={`/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`}
+          href={
+            analysisId
+              ? `/projects/${projectId}/analyses/${analysisId}/comparisons/${encodeURIComponent(comp.name)}`
+              : `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`
+          }
           className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors group"
         >
           <div>

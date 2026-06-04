@@ -27,6 +27,7 @@ import { Dot } from '@/components/ui/dot';
 interface ComparisonDetailProps {
   projectId: string;
   comparisonName: string;
+  analysisId?: string;
 }
 
 type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'integrations' | 'custom-viz';
@@ -46,7 +47,7 @@ type EnrichmentRow = {
   regulation?: 'ALL' | 'UP' | 'DOWN' | string;
 };
 
-export default function ComparisonDetail({ projectId, comparisonName }: ComparisonDetailProps) {
+export default function ComparisonDetail({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
 
@@ -582,8 +583,8 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={`/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Project
+          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+            <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
           <div className="bg-yellow-50 p-4 rounded-md mt-4">
             <p className="text-yellow-700">No Differential Expression (DEG) dataset found for this comparison.</p>
@@ -596,11 +597,11 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   return (
     <div className="page-container">
       <Link
-        href={`/projects/${projectId}`}
+        href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
         className="mb-4 inline-flex items-center gap-1.5 text-sm"
         style={{ color: 'var(--text-secondary)' }}
       >
-        <ArrowLeft className="h-4 w-4" /> Back to Project
+        <ArrowLeft className="h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
       </Link>
 
       <div className="gl-card p-5">
