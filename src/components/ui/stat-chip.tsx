@@ -8,7 +8,6 @@ interface StatChipProps {
   label: string;
   tone?: StatChipTone;
   className?: string;
-  style?: React.CSSProperties;
 }
 
 const toneBg: Record<StatChipTone, string> = {
@@ -25,11 +24,11 @@ const toneIcon: Record<StatChipTone, string> = {
   warning: '#f59e0b',
 };
 
-export function StatChip({ icon, value, label, tone = 'neutral', className = '', style }: StatChipProps) {
+export function StatChip({ icon, value, label, tone = 'neutral', className = '' }: StatChipProps) {
   return (
     <div
       className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${className}`}
-      style={{ background: toneBg[tone], ...style }}
+      style={{ background: toneBg[tone] }}
     >
       {icon && (
         <span style={{ color: toneIcon[tone] }}>{icon}</span>

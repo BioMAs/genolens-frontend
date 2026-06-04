@@ -1,6 +1,6 @@
 import React from 'react';
 
-type DotVariant = 'ready' | 'failed' | 'pending' | 'warning' | 'processing' | 'default';
+type DotVariant = 'ready' | 'failed' | 'pending' | 'warning';
 
 interface DotProps {
   variant?: DotVariant;
@@ -9,12 +9,10 @@ interface DotProps {
 }
 
 const variantColors: Record<DotVariant, string> = {
-  ready:      '#14b8a6',
-  failed:     '#a855f7',
-  pending:    '#9ca3af',
-  warning:    '#f59e0b',
-  processing: '#3b82f6',
-  default:    '#9ca3af',
+  ready: '#14b8a6',    // teal — upregulated
+  failed: '#a855f7',   // purple — downregulated
+  pending: '#9ca3af',  // gray — not significant
+  warning: '#f59e0b',
 };
 
 export function Dot({ variant = 'pending', size = 8, className = '' }: DotProps) {
