@@ -211,6 +211,21 @@ body {
 .animate-slide-in   { animation: slideInLeft 0.2s ease-out both; }
 .animate-scale-in   { animation: scaleIn    0.15s ease-out both; }
 
+/* ---- Mockup-aligned primitives ---- */
+@keyframes gl-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--sl-purple) 60%, transparent); }
+  50%      { box-shadow: 0 0 0 5px transparent; }
+}
+.gl-dot-pulse { animation: gl-pulse 1.4s ease-in-out infinite; }
+
+.gl-gene-token {
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s;
+}
+.gl-gene-token:hover {
+  border-bottom-color: color-mix(in oklab, var(--sl-teal) 55%, transparent);
+}
+
 /* ============================================================
    Skeleton / Loading
    ============================================================ */

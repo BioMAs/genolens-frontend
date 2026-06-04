@@ -12,12 +12,24 @@ interface EditDatasetModalProps {
   onSuccess: () => void;
 }
 
+interface UpdateDatasetPayload {
+  name: string;
+  description: string;
+  type: DatasetType;
+  dataset_metadata: Record<string, boolean>;
+}
+
 export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }: EditDatasetModalProps) {
+  const getBool = (value: unknown, defaultValue: boolean): boolean =>
+    typeof value === 'boolean' ? value : defaultValue;
+
   const [name, setName] = useState(dataset.name);
   const [description, setDescription] = useState(dataset.description || '');
   const [type, setType] = useState<DatasetType>(dataset.type);
-  const [isNormalized, setIsNormalized] = useState(dataset.dataset_metadata?.is_normalized || false);
-  const [containsAllGenes, setContainsAllGenes] = useState(dataset.dataset_metadata?.contains_all_genes || true);
+  const [isNormalized, setIsNormalized] = useState<boolean>(getBool(dataset.dataset_metadata?.is_normalized, false));
+  const [containsAllGenes, setContainsAllGenes] = useState<boolean>(
+    getBool(dataset.dataset_metadata?.contains_all_genes, true)
+  );
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -28,8 +40,8 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
       setName(dataset.name);
       setDescription(dataset.description || '');
       setType(dataset.type);
-      setIsNormalized(dataset.dataset_metadata?.is_normalized || false);
-      setContainsAllGenes(dataset.dataset_metadata?.contains_all_genes || true);
+      setIsNormalized(getBool(dataset.dataset_metadata?.is_normalized, false));
+      setContainsAllGenes(getBool(dataset.dataset_metadata?.contains_all_genes, true));
       setShowDeleteConfirm(false);
       setError(null);
     }
@@ -43,7 +55,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
     setError(null);
 
     try {
-      const updateData: any = {
+      const updateData: UpdateDatasetPayload = {
         name,
         description,
         type,

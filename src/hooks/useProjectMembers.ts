@@ -3,13 +3,12 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ProjectMember,
   ProjectMemberCreate,
   ProjectMemberUpdate,
   ProjectMemberListResponse,
 } from "@/types/project-member";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(/\/$/, "");
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v2").replace(/\/$/, "");
 
 /**
  * Fetch all members of a project.

@@ -8,9 +8,9 @@ const getBaseUrl = () => {
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
-  // Safe-guard: if somehow the url ends with double /api/v1, fix it (though unlikely)
+  // Safe-guard: if somehow the url ends with double /api/v2, fix it (though unlikely)
   // But more importantly, ensure we don't end up with empty string
-  return url || 'http://localhost:8000/api/v1';
+  return url || 'http://localhost:8000/api/v2';
 };
 
 const api = axios.create({

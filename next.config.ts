@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // `turbopack` silences the Next.js 16 error that fires when a webpack
   // plugin (injected by withSentryConfig) is present without a matching
   // turbopack config. Production builds are forced to webpack via the
@@ -21,7 +22,6 @@ const nextConfig: NextConfig = {
     // can resolve it without needing a second Plotly install.
     config.resolve.alias = {
       ...config.resolve.alias,
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       "plotly.js/dist/plotly": require.resolve("plotly.js-dist-min"),
     };
     return config;

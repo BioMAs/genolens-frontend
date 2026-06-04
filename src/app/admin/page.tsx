@@ -3,18 +3,25 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
-import { Users, Database, Activity, BarChart3, Shield, AlertCircle, Bot, LogIn } from 'lucide-react';
+import { Users, Database, Activity, BarChart3, Shield, AlertCircle, Bot, LogIn, Key } from 'lucide-react';
 import UserManagement from '@/components/admin/UserManagement';
 import SystemStats from '@/components/admin/SystemStats';
 import ProjectManagement from '@/components/admin/ProjectManagement';
 import AIUsageLogs from '@/components/admin/AIUsageLogs';
 import UserConnections from '@/components/admin/UserConnections';
+import LicenseManagement from '@/components/admin/LicenseManagement';
+
+interface ApiErrorShape {
+  response?: {
+    status?: number;
+  };
+}
 
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'projects' | 'ai' | 'connections'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'projects' | 'ai' | 'connections' | 'licenses'>('stats');
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
@@ -24,10 +31,11 @@ export default function AdminPage() {
         await api.get('/admin/stats');
         setHasAccess(true);
         setLoading(false);
-      } catch (err: any) {
-        if (err.response?.status === 403) {
+      } catch (err: unknown) {
+        const apiError = err as ApiErrorShape;
+        if (apiError.response?.status === 403) {
           setError('Access denied. Admin privileges required.');
-        } else if (err.response?.status === 401) {
+        } else if (apiError.response?.status === 401) {
           router.push('/');
         } else {
           setError('Failed to verify admin access.');
@@ -146,6 +154,17 @@ export default function AdminPage() {
               <LogIn className="h-5 w-5" />
               Connexions
             </button>
+            <button
+              onClick={() => setActiveTab('licenses')}
+              className={`${
+                activeTab === 'licenses'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+            >
+              <Key className="h-5 w-5" />
+              Licences
+            </button>
           </nav>
         </div>
 
@@ -156,6 +175,7 @@ export default function AdminPage() {
           {activeTab === 'projects' && <ProjectManagement />}
           {activeTab === 'ai' && <AIUsageLogs />}
           {activeTab === 'connections' && <UserConnections />}
+          {activeTab === 'licenses' && <LicenseManagement />}
         </div>
       </div>
     </div>

@@ -10,8 +10,6 @@ import {
   useCreateGeneList,
   useUpdateGeneList,
   useDeleteGeneList,
-  useAddGenesToList,
-  useRemoveGenesFromList,
 } from '@/hooks/useBookmarks';
 import { GeneList } from '@/types/bookmark';
 import ExportMenu from '@/components/ExportMenu';

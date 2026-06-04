@@ -105,7 +105,7 @@ export function useChartAI({
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v1').replace(/\/$/, '');
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v2').replace(/\/$/, '');
       const url = `${apiBase}/datasets/${datasetId}/ai/interpret-stream`;
 
       let accumulated = '';
@@ -136,7 +136,7 @@ export function useChartAI({
       const { data: { session } } = await createClient().auth.getSession();
       const token = session?.access_token;
 
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v1').replace(/\/$/, '');
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v2').replace(/\/$/, '');
       const url = `${apiBase}/datasets/${datasetId}/ai/ask-stream`;
 
       let answer = '';

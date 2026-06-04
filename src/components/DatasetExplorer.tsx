@@ -1,15 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
 import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
-import { Dataset } from '@/types';
 import DatasetVisualizer from './DatasetVisualizer';
 
 interface DatasetExplorerProps {
   projectId: string;
   datasetId: string;
+}
+
+interface DatasetQueryFilters {
+  limit: number;
+  offset: number;
+  columns?: string[];
+  gene_ids?: string[];
 }
 
 export default function DatasetExplorer({ projectId, datasetId }: DatasetExplorerProps) {
@@ -29,21 +35,15 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
   const pageSize = 50;
 
   // Colonnes disponibles depuis l'endpoint optimisé
-  const availableColumns = columnsData?.columns || [];
-
-  // Initialise selectedColumns quand les colonnes sont disponibles
-  useEffect(() => {
-    if (availableColumns.length > 0 && selectedColumns.length === 0) {
-      setSelectedColumns(availableColumns);
-    }
-  }, [availableColumns, selectedColumns.length]);
+  const availableColumns = useMemo(() => columnsData?.columns ?? [], [columnsData?.columns]);
+  const effectiveColumns = selectedColumns.length === 0 ? availableColumns : selectedColumns;
 
   // Prépare les filtres pour l'endpoint optimisé
-  const filters = {
+  const filters: DatasetQueryFilters = {
     limit: pageSize,
     offset: (page - 1) * pageSize,
-    columns: selectedColumns.length > 0 && selectedColumns.length < availableColumns.length 
-      ? selectedColumns 
+    columns: effectiveColumns.length > 0 && effectiveColumns.length < availableColumns.length
+      ? effectiveColumns
       : undefined,
   };
 
@@ -52,7 +52,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
     const ids = searchQuery.split(/[\s,]+/).filter(Boolean);
     if (ids.length > 0) {
       // Note: l'API doit supporter un paramètre gene_ids ou équivalent
-      (filters as any).gene_ids = ids;
+      filters.gene_ids = ids;
     }
   }
 

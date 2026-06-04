@@ -6,7 +6,7 @@ import type { Data, Layout } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
-interface UMAPPoint {
+export interface UMAPPoint {
   sample_id: string;
   UMAP1: number;
   UMAP2: number;
@@ -36,7 +36,7 @@ export default function UMAPResults({ umapData }: UMAPResultsProps) {
 
     const traces = Object.entries(groups).map(([groupName, points], i) => ({
       type: 'scatter' as const,
-      mode: 'markers+text' as const,
+      mode: 'text+markers' as const,
       name: groupName,
       x: points.map((p) => p.UMAP1),
       y: points.map((p) => p.UMAP2),
@@ -55,13 +55,13 @@ export default function UMAPResults({ umapData }: UMAPResultsProps) {
       autosize: true,
       height: 520,
       xaxis: {
-        title: 'UMAP1',
+        title: { text: 'UMAP1' },
         zeroline: true,
         zerolinecolor: '#e5e7eb',
         gridcolor: '#f3f4f6',
       },
       yaxis: {
-        title: 'UMAP2',
+        title: { text: 'UMAP2' },
         zeroline: true,
         zerolinecolor: '#e5e7eb',
         gridcolor: '#f3f4f6',

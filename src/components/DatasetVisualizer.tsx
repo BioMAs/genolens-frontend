@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
   ScatterChart,
   Scatter,
-  ZAxis
 } from 'recharts';
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
 
@@ -60,12 +59,18 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
   const volcanoY = numericColumns.find(c => c.toLowerCase().includes('padj') || c.toLowerCase().includes('pvalue') || c.toLowerCase().includes('fdr'));
 
   if (volcanoX && volcanoY) {
-    const volcanoData = chartData.map(d => ({
-      ...d,
-      x: d[volcanoX],
-      y: -Math.log10(Number(d[volcanoY]) || 1e-10), // -log10(pvalue)
-      name: d[categoryColumn] || 'Gene'
-    })).filter(d => !isNaN(d.x) && !isNaN(d.y));
+    const volcanoData = chartData
+      .map(d => {
+        const x = Number(d[volcanoX]);
+        const yRaw = Number(d[volcanoY]) || 1e-10;
+        const name = typeof d[categoryColumn] === 'string' ? d[categoryColumn] : 'Gene';
+        return {
+          x,
+          y: -Math.log10(yRaw), // -log10(pvalue)
+          name,
+        };
+      })
+      .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
 
     return (
       <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">

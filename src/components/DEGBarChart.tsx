@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
+import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -20,6 +21,8 @@ interface DEGGene {
   padj: number;
   direction: 'up' | 'down';
 }
+
+type QueryRow = Record<string, unknown>;
 
 export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProps) {
   const [topN, setTopN] = useState<TopN>(10);
@@ -39,20 +42,24 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
           sort_order: 'asc',
         });
 
-        const data: any[] = response.data.data ?? [];
+        const data = (response.data.data ?? []) as QueryRow[];
         const columns: string[] = response.data.columns ?? [];
 
         // Resolve column names
-        const meta = dataset.dataset_metadata;
+        const meta = dataset.dataset_metadata as Record<string, unknown> | undefined;
         let logFCCol: string | null = null;
         let padjCol: string | null = null;
+        const comparisons =
+          meta?.comparisons && typeof meta.comparisons === 'object' && !Array.isArray(meta.comparisons)
+            ? (meta.comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
 
         // Global multi-comparison dataset
-        if (meta?.comparisons && typeof meta.comparisons === 'object' && !Array.isArray(meta.comparisons)) {
-          const compData = meta.comparisons[comparisonName];
+        if (comparisons) {
+          const compData = comparisons[comparisonName];
           if (compData) {
-            logFCCol = compData.logFC ?? null;
-            padjCol = compData.padj ?? null;
+            logFCCol = typeof compData.logFC === 'string' ? compData.logFC : null;
+            padjCol = typeof compData.padj === 'string' ? compData.padj : null;
           }
         }
 
@@ -95,10 +102,10 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         const upGenes: DEGGene[] = [];
         const downGenes: DEGGene[] = [];
 
-        data.forEach((row: any) => {
-          const name = row[geneCol];
-          const logFC = parseFloat(row[logFCCol!]);
-          const padj = parseFloat(row[padjCol!]);
+        data.forEach((row) => {
+          const name = String(row[geneCol] ?? '');
+          const logFC = Number(row[logFCCol]);
+          const padj = Number(row[padjCol]);
 
           if (!name || isNaN(logFC) || isNaN(padj)) return;
 
@@ -124,7 +131,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         setGenes([...upGenes, ...downGenes]);
       } catch (err) {
         console.error('DEGBarChart fetch error:', err);
-        setError('Impossible de charger les données DEG.');
+        setError('Failed to load DEG data.');
       } finally {
         setLoading(false);
       }
@@ -138,7 +145,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-          Chargement du graphique DEG…
+          Loading DEG chart…
         </div>
       </div>
     );
@@ -158,7 +165,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
   if (upGenes.length === 0 && downGenes.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <p className="text-sm text-gray-500">Aucun gène différentiellement exprimé trouvé.</p>
+        <p className="text-sm text-gray-500">No differentially expressed genes found.</p>
       </div>
     );
   }
@@ -178,7 +185,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Top DEGs régulés</h2>
+        <h2 className="text-xl font-bold text-gray-900">Top Regulated DEGs</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Top</span>
           {([5, 10, 15, 20] as TopN[]).map((n) => (
@@ -200,11 +207,11 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
       <div className="flex gap-4 mb-3 text-xs">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-sm bg-red-500" />
-          Surexprimés ({upGenes.length})
+          Up-regulated ({upGenes.length})
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-sm bg-blue-500" />
-          Sous-exprimés ({downGenes.length})
+          Down-regulated ({downGenes.length})
         </span>
       </div>
 
@@ -218,7 +225,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
             marker: { color: colors },
             hovertemplate: '%{customdata}<extra></extra>',
             customdata: hoverTexts,
-          } as any,
+          } as Partial<PlotData>,
         ]}
         layout={{
           height: chartHeight,
@@ -245,7 +252,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
               line: { color: '#9ca3af', width: 1, dash: 'dot' },
             },
           ],
-        } as any}
+        } as Partial<Layout>}
         config={{
           displayModeBar: true,
           displaylogo: false,

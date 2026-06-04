@@ -5,8 +5,7 @@
 
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageSquare, Reply, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Reply, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
 import CommentEditor from './CommentEditor';
 import {
   useCreateComment,

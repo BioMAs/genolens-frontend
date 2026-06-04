@@ -13,6 +13,18 @@ interface Stats {
   estimated_revenue: number;
 }
 
+interface ApiErrorWithMessage {
+  message?: string;
+}
+
+interface StatCard {
+  name: string;
+  value: number;
+  icon: typeof Users;
+  color: string;
+  isMoney?: boolean;
+}
+
 export default function SystemStats() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,9 +36,10 @@ export default function SystemStats() {
         const response = await api.get('/admin/stats');
         setStats(response.data);
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const apiError = err as ApiErrorWithMessage;
         console.error('Failed to fetch stats:', err);
-        setError('Failed to load statistics.');
+        setError(apiError.message || 'Failed to load statistics.');
       } finally {
         setLoading(false);
       }
@@ -62,7 +75,7 @@ export default function SystemStats() {
     );
   }
 
-  const statCards = [
+  const statCards: StatCard[] = [
     {
       name: 'Total Users',
       value: stats.total_users,
@@ -113,7 +126,6 @@ export default function SystemStats() {
                     <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
                     <dd className="flex items-baseline">
                       <div className="text-2xl font-semibold text-gray-900">
-                        {/* @ts-ignore */}
                         {stat.isMoney ? `$${stat.value.toLocaleString()}` : stat.value.toLocaleString()}
                       </div>
                     </dd>

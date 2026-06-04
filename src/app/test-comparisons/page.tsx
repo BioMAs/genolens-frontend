@@ -3,9 +3,25 @@
 import { useState } from 'react';
 import api from '@/utils/api';
 
+interface ComparisonsResponse {
+  dataset_name: string;
+  dataset_id: string;
+  comparisons: string[];
+}
+
+interface ApiErrorShape {
+  response?: {
+    data?: {
+      detail?: unknown;
+      [key: string]: unknown;
+    };
+    status?: number;
+  };
+}
+
 export default function TestComparisonsPage() {
   const [datasetId, setDatasetId] = useState('64d46ac5-42d2-4d4f-b705-0dd81e95cbc0');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ComparisonsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,11 +33,13 @@ export default function TestComparisonsPage() {
       const response = await api.get(`/datasets/${datasetId}/comparisons`);
       console.log('Response:', response.data);
       setResult(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiErrorShape;
       console.error('Error:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
-      setError(err.response?.data?.detail || JSON.stringify(err.response?.data) || 'Failed to fetch comparisons');
+      console.error('Error response:', apiError.response?.data);
+      console.error('Error status:', apiError.response?.status);
+      const detail = apiError.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : JSON.stringify(apiError.response?.data) || 'Failed to fetch comparisons');
     } finally {
       setLoading(false);
     }

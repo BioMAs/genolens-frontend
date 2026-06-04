@@ -3,6 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { Layout, PlotData } from 'plotly.js';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -16,11 +18,13 @@ interface PCAPoint {
   batch?: string;
 }
 
-interface PCAData {
+export interface PCAData {
   variance_explained: number[];
   pc_labels: string[];
   samples: PCAPoint[];
 }
+
+type PCAAxisKey = 'PC1' | 'PC2' | 'PC3' | 'PC4';
 
 interface PCAResultsProps {
   pcaData: PCAData | null;
@@ -33,11 +37,23 @@ const CONDITION_COLORS = [
 ];
 
 export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
-  const [xAxis, setXAxis] = useState<string>('PC1');
-  const [yAxis, setYAxis] = useState<string>('PC2');
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const [xAxis, setXAxis] = useState<PCAAxisKey>('PC1');
+  const [yAxis, setYAxis] = useState<PCAAxisKey>('PC2');
   const [colorBy, setColorBy] = useState<'condition' | 'batch'>('condition');
 
-  const availablePCs = pcaData?.pc_labels ?? [];
+  const availablePCs = useMemo(() => {
+    const labels = pcaData?.pc_labels ?? [];
+    return labels.filter((pc): pc is PCAAxisKey => ['PC1', 'PC2', 'PC3', 'PC4'].includes(pc));
+  }, [pcaData?.pc_labels]);
+
+  const getPCValue = (point: PCAPoint, axis: PCAAxisKey): number => {
+    if (axis === 'PC1') return point.PC1 ?? 0;
+    if (axis === 'PC2') return point.PC2 ?? 0;
+    if (axis === 'PC3') return point.PC3 ?? 0;
+    return point.PC4 ?? 0;
+  };
 
   const { traces, layout } = useMemo(() => {
     if (!pcaData || pcaData.samples.length === 0) return { traces: [], layout: {} };
@@ -56,47 +72,50 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
     const xVar = pcaData.variance_explained[xIdx] ?? 0;
     const yVar = pcaData.variance_explained[yIdx] ?? 0;
 
-    const traces = Object.entries(groups).map(([groupName, points], i) => ({
+    const traces: Partial<PlotData>[] = Object.entries(groups).map(([groupName, points], i) => ({
       type: 'scatter' as const,
-      mode: 'markers+text' as const,
+      mode: 'text+markers' as const,
       name: groupName,
-      x: points.map((p) => (p as any)[xAxis] ?? 0),
-      y: points.map((p) => (p as any)[yAxis] ?? 0),
+      x: points.map((p) => getPCValue(p, xAxis)),
+      y: points.map((p) => getPCValue(p, yAxis)),
       text: points.map((p) => p.sample_id),
       textposition: 'top center' as const,
-      textfont: { size: 9, color: '#6b7280' },
+      textfont: { size: 9, color: isDark ? '#9ca3af' : '#6b7280' },
       marker: {
         size: 10,
         color: CONDITION_COLORS[i % CONDITION_COLORS.length],
         opacity: 0.85,
-        line: { width: 1, color: '#fff' },
+        line: { width: 1, color: isDark ? '#374151' : '#fff' },
       },
     }));
 
-    const layout = {
+    const layout: Partial<Layout> = {
       autosize: true,
       height: 520,
+      font: { color: isDark ? '#d1d5db' : '#374151' },
       xaxis: {
-        title: `${xAxis} (${(xVar * 100).toFixed(1)}% variance)`,
+        title: { text: `${xAxis} (${(xVar * 100).toFixed(1)}% variance)` },
         zeroline: true,
-        zerolinecolor: '#e5e7eb',
-        gridcolor: '#f3f4f6',
+        zerolinecolor: isDark ? '#374151' : '#e5e7eb',
+        gridcolor: isDark ? '#1f2937' : '#f3f4f6',
+        color: isDark ? '#9ca3af' : '#6b7280',
       },
       yaxis: {
-        title: `${yAxis} (${(yVar * 100).toFixed(1)}% variance)`,
+        title: { text: `${yAxis} (${(yVar * 100).toFixed(1)}% variance)` },
         zeroline: true,
-        zerolinecolor: '#e5e7eb',
-        gridcolor: '#f3f4f6',
+        zerolinecolor: isDark ? '#374151' : '#e5e7eb',
+        gridcolor: isDark ? '#1f2937' : '#f3f4f6',
+        color: isDark ? '#9ca3af' : '#6b7280',
       },
-      legend: { orientation: 'v' as const, x: 1.02, y: 1 },
+      legend: { orientation: 'v' as const, x: 1.02, y: 1, font: { color: isDark ? '#d1d5db' : '#374151' } },
       paper_bgcolor: 'transparent',
-      plot_bgcolor: '#fafafa',
+      plot_bgcolor: isDark ? '#1a1f2e' : '#fafafa',
       margin: { l: 60, r: 140, t: 30, b: 60 },
       hovermode: 'closest' as const,
     };
 
     return { traces, layout };
-  }, [pcaData, xAxis, yAxis, colorBy, availablePCs]);
+  }, [pcaData, xAxis, yAxis, colorBy, availablePCs, isDark]);
 
   if (!pcaData) {
     return (
@@ -119,32 +138,35 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-600">X axis</label>
+          <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>X axis</label>
           <select
             value={xAxis}
-            onChange={(e) => setXAxis(e.target.value)}
-            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+            onChange={(e) => setXAxis(e.target.value as PCAAxisKey)}
+            className="rounded-md px-2 py-1 text-xs"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
           >
             {availablePCs.map((pc) => <option key={pc} value={pc}>{pc}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-600">Y axis</label>
+          <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Y axis</label>
           <select
             value={yAxis}
-            onChange={(e) => setYAxis(e.target.value)}
-            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+            onChange={(e) => setYAxis(e.target.value as PCAAxisKey)}
+            className="rounded-md px-2 py-1 text-xs"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
           >
             {availablePCs.map((pc) => <option key={pc} value={pc}>{pc}</option>)}
           </select>
         </div>
         {hasBatch && (
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-gray-600">Color by</label>
+            <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Color by</label>
             <select
               value={colorBy}
               onChange={(e) => setColorBy(e.target.value as 'condition' | 'batch')}
-              className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+              className="rounded-md px-2 py-1 text-xs"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
             >
               <option value="condition">Condition</option>
               <option value="batch">Batch</option>
@@ -170,8 +192,8 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       </div>
 
       {/* Variance explained bar */}
-      <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
-        <p className="text-xs font-medium text-gray-600 mb-2">Variance explained per component</p>
+      <div className="rounded-lg p-3" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+        <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Variance explained per component</p>
         <div className="flex flex-wrap gap-2">
           {pcaData.pc_labels.map((pc, i) => (
             <div key={pc} className="flex items-center gap-1.5">
@@ -183,7 +205,7 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
                   opacity: 0.7,
                 }}
               />
-              <span className="text-xs text-gray-500">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {pc}: {((pcaData.variance_explained[i] ?? 0) * 100).toFixed(1)}%
               </span>
             </div>
@@ -192,10 +214,10 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       </div>
 
       {/* Scatter plot */}
-      <div className="rounded-xl border border-gray-200 bg-white p-2">
+      <div className="rounded-xl p-2" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
         <Plot
-          data={traces as any}
-          layout={layout as any}
+          data={traces}
+          layout={layout}
           useResizeHandler
           style={{ width: '100%' }}
           config={{ displayModeBar: true, responsive: true }}

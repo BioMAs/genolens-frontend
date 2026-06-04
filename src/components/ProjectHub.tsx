@@ -1,329 +1,434 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
+import { useProjectSummary, useProjectDatasets } from '@/hooks/useProjectData';
 import { useAnalyses } from '@/hooks/useAnalyses';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useProjectMembers } from '@/hooks/useProjectMembers';
-import { DatasetType, DatasetStatus, SelfServiceAnalysisStatus, Dataset } from '@/types';
-import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
+import { DatasetStatus, DatasetType, SelfServiceAnalysisStatus, Dataset } from '@/types';
 import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
+import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
+import { StatChip } from '@/components/ui/stat-chip';
+import { Dot } from '@/components/ui/dot';
+import { Chip } from '@/components/ui/chip';
+import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
 import {
-  ArrowLeft, Plus, Upload, Users, Star, List,
-  FlaskConical, ChevronDown, ChevronUp,
-  GitCompare, Layers, Activity, Database, Eye,
+  ArrowLeft,
+  Plus,
+  Upload,
+  Users,
+  Star,
+  List,
+  GitCompare,
+  Database,
+  FlaskConical,
+  Clock,
+  ArrowRight,
+  Layers,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
-import api from '@/utils/api';
+import GenerateReportButton from '@/components/GenerateReportButton';
+import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 
 interface ProjectHubProps {
   projectId: string;
 }
 
-type ProjectTab = 'overview' | 'data';
+type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
   const { user: currentUser } = useCurrentUser();
   const { data: summary, isLoading } = useProjectSummary(projectId);
-  const { data: datasets = [], refetch: refetchDatasets } = useProjectDatasets(projectId);
+  const { data: datasets = [] } = useProjectDatasets(projectId);
   const { data: analysesData } = useAnalyses(projectId);
   const { data: membersData } = useProjectMembers(projectId);
 
-  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
+  const [activeTab, setActiveTab] = useState<ProjectTab>('analyses');
   const [isBookmarkModalOpen, setBookmarkModalOpen] = useState(false);
   const [isGeneListModalOpen, setGeneListModalOpen] = useState(false);
   const [isMembersModalOpen, setMembersModalOpen] = useState(false);
 
-  const project  = summary?.project;
-  const stats    = summary?.stats;
+  const project = summary?.project;
+  const stats = summary?.stats;
+  const comparisons = summary?.comparisons ?? [];
   const analyses = analysesData?.items ?? [];
 
+  // Build a map: dataset_id → analysisId, for linking comparisons through their analysis
+  const datasetToAnalysisId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const analysis of analysesData?.items ?? []) {
+      for (const datasetId of analysis.result_dataset_ids ?? []) {
+        map[datasetId] = analysis.id;
+      }
+    }
+    return map;
+  }, [analysesData?.items]);
+
   const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
-  const currentMember = membersData?.members?.find(m => m.user_id === currentUser?.id);
+  const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
   const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
 
-  const hasAnalyses = analyses.length > 0;
-  const comparisons = summary?.comparisons ?? [];
+  const runningAnalyses = analyses.filter(
+    (a) =>
+      a.status === SelfServiceAnalysisStatus.PENDING ||
+      a.status === SelfServiceAnalysisStatus.RUNNING,
+  );
+
+  const sourceDatasets = datasets.filter(
+    (d) =>
+      d.type === DatasetType.MATRIX ||
+      d.type === DatasetType.METADATA_SAMPLE ||
+      d.type === DatasetType.METADATA_CONTRAST,
+  );
+
+  const readyDataset = useMemo(
+    () => sourceDatasets.find((d) => d.status === DatasetStatus.READY),
+    [sourceDatasets],
+  );
 
   if (isLoading) return <ProjectDetailSkeleton />;
-  if (!project)  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <p className="text-gray-400">Project not found.</p>
-    </div>
-  );
-
-  // Separate running from completed analyses
-  const runningAnalyses = analyses.filter(
-    a => a.status === SelfServiceAnalysisStatus.PENDING || a.status === SelfServiceAnalysisStatus.RUNNING
-  );
-  const doneAnalyses = analyses.filter(
-    a => a.status === SelfServiceAnalysisStatus.DONE
-  );
-  const failedAnalyses = analyses.filter(
-    a => a.status === SelfServiceAnalysisStatus.FAILED || a.status === SelfServiceAnalysisStatus.CANCELLED
-  );
-
-  const sourceDatasets = datasets.filter(d =>
-    d.type === DatasetType.MATRIX ||
-    d.type === DatasetType.METADATA_SAMPLE ||
-    d.type === DatasetType.METADATA_CONTRAST
-  );
-
-  // Comparisons not linked to any platform analysis (imported externally)
-  const linkedDatasetIds = new Set(doneAnalyses.flatMap(a => a.result_dataset_ids ?? []));
-  const orphanedComparisons = comparisons.filter(c => !linkedDatasetIds.has(c.dataset_id));
-  const hasOrphanedData = orphanedComparisons.length > 0;
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p style={{ color: 'var(--text-muted)' }}>Project not found.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="page-container">
+      <div className="mb-3">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <ArrowLeft className="h-4 w-4" /> Dashboard
+        </Link>
+      </div>
 
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-3">
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Link>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-              {project.description && (
-                <p className="mt-1 text-sm text-gray-500">{project.description}</p>
-              )}
-            </div>
-            {/* Action buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              {comparisons.length >= 2 && (
-                <Link
-                  href={`/projects/${projectId}/multi-comparison`}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                >
-                  <GitCompare className="h-3.5 w-3.5" /> Multi-comparison
-                </Link>
-              )}
-              <button
-                onClick={() => setBookmarkModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-              >
-                <Star className="h-3.5 w-3.5" /> Bookmarks
-              </button>
-              <button
-                onClick={() => setGeneListModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-              >
-                <List className="h-3.5 w-3.5" /> Gene Lists
-              </button>
-              {isOwner && (
-                <button
-                  onClick={() => setMembersModalOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                >
-                  <Users className="h-3.5 w-3.5" /> Members
-                </button>
-              )}
-            </div>
+          <h1 className="page-title">{project.name}</h1>
+          {project.description ? (
+            <p className="mt-1 max-w-3xl text-sm" style={{ color: 'var(--text-secondary)' }}>
+              {project.description}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {comparisons.length >= 2 && (
+            <Link
+              href={`/projects/${projectId}/multi-comparison`}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Layers className="h-3.5 w-3.5" /> Multi-Comparison
+            </Link>
+          )}
+
+          <button
+            onClick={() => setBookmarkModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+            style={{
+              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <Star className="h-3.5 w-3.5" /> Bookmarks
+          </button>
+
+          <button
+            onClick={() => setGeneListModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+            style={{
+              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <List className="h-3.5 w-3.5" /> Gene Lists
+          </button>
+
+          {isOwner ? (
+            <button
+              onClick={() => setMembersModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Users className="h-3.5 w-3.5" /> Members
+            </button>
+          ) : null}
+
+          <GenerateReportButton projectId={projectId} />
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <StatChip
+          icon={<GitCompare className="h-4 w-4" />}
+          value={comparisons.length}
+          label="Comparisons"
+          tone="teal"
+        />
+        <StatChip
+          icon={<Database className="h-4 w-4" />}
+          value={stats?.total_datasets ?? 0}
+          label="Datasets"
+          tone="purple"
+        />
+        <StatChip
+          icon={<FlaskConical className="h-4 w-4" />}
+          value={analyses.length}
+          label="Analyses"
+          tone="neutral"
+        />
+        <StatChip
+          icon={<Upload className="h-4 w-4" />}
+          value={stats?.original_files_count ?? 0}
+          label="Original Files"
+          tone="neutral"
+        />
+      </div>
+
+      <div
+        className="mt-5 inline-flex flex-wrap rounded-xl p-1"
+        style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
+      >
+        <ProjectTabButton id="analyses" activeTab={activeTab} onClick={setActiveTab} label="Analyses" />
+        <ProjectTabButton id="comparisons" activeTab={activeTab} onClick={setActiveTab} label="Comparisons" />
+        <ProjectTabButton id="datasets" activeTab={activeTab} onClick={setActiveTab} label="Datasets" />
+        <ProjectTabButton id="history" activeTab={activeTab} onClick={setActiveTab} label="History" />
+      </div>
+
+      {activeTab === 'comparisons' ? (
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8 space-y-3">
+            {comparisons.length === 0 ? (
+              <EmptyStateHelix
+                title="No comparisons yet"
+                description="Upload data and configure your first differential expression comparison."
+                action={
+                  <Link
+                    href={`/projects/${projectId}/setup`}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
+                    style={{ background: 'var(--sl-purple)' }}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Start Analysis
+                  </Link>
+                }
+              />
+            ) : (
+              comparisons.map((comparison) => (
+                <ComparisonCard
+                  key={comparison.name}
+                  projectId={projectId}
+                  analysisId={datasetToAnalysisId[comparison.dataset_id]}
+                  name={comparison.name}
+                  up={comparison.deg_up}
+                  down={comparison.deg_down}
+                  hasEnrichment={comparison.has_enrichment}
+                />
+              ))
+            )}
+
+            {runningAnalyses.length > 0 ? (
+              <div className="gl-card p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <Clock className="h-4 w-4" /> Processing
+                </div>
+                <div className="space-y-2">
+                  {runningAnalyses.map((analysis) => (
+                    <div key={analysis.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.name}</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <Dot variant="processing" size={7} /> {analysis.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
-          {/* Stats strip */}
-          {stats && (
-            <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-              <StatChip label="Analyses" value={analyses.length} />
-              <StatChip label="Comparisons" value={comparisons.length} />
-              <StatChip label="Datasets" value={stats.total_datasets} />
-              {(stats.processing_count ?? 0) > 0 && (
-                <StatChip label="Processing" value={stats.processing_count} accent />
-              )}
+          <div className="lg:col-span-4 space-y-3">
+            <div className="gl-card p-4">
+              <div className="mb-2 text-xs font-semibold uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                Add Data
+              </div>
+              <Link
+                href={`/projects/${projectId}/setup`}
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+              >
+                <Upload className="h-5 w-5" />
+                <span className="text-sm">Drop CSV / TSV / Excel or open setup wizard</span>
+                <Chip>Counts matrix · DEG · metadata</Chip>
+              </Link>
+            </div>
+
+            <DatasetListCard datasets={sourceDatasets} />
+
+            {canManageData ? (
+              <Link
+                href={`/projects/${projectId}/setup`}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                style={{ background: 'var(--sl-purple)' }}
+              >
+                <Plus className="h-3.5 w-3.5" /> New Analysis
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === 'datasets' ? (
+        <div className="mt-4 gl-card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Source datasets
+            </h2>
+            {canManageData ? (
+              <Link
+                href={`/projects/${projectId}/setup`}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                style={{ background: 'var(--sl-purple)' }}
+              >
+                <Upload className="h-3.5 w-3.5" /> Upload
+              </Link>
+            ) : null}
+          </div>
+
+          {sourceDatasets.length === 0 ? (
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              No source files uploaded yet.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sourceDatasets.map((dataset) => (
+                <div key={dataset.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{dataset.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{dataset.type}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <DatasetStatusDot status={dataset.status} /> {dataset.status}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
+      ) : null}
 
-        {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="flex overflow-x-auto border-b border-gray-100">
-            <TabBtn id="overview" active={activeTab} label="Overview" icon={<FlaskConical className="h-3.5 w-3.5" />} onClick={setActiveTab} />
-            <TabBtn
-              id="data"
-              active={activeTab}
-              label={`Data Files (${sourceDatasets.length})`}
-              icon={<Layers className="h-3.5 w-3.5" />}
-              onClick={setActiveTab}
-            />
+      {activeTab === 'analyses' ? (
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Analyses ({analyses.length})
+            </h2>
+            {canManageData ? (
+              <Link
+                href={`/projects/${projectId}/setup`}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                style={{ background: 'var(--sl-purple)' }}
+              >
+                <Plus className="h-3.5 w-3.5" /> New Analysis
+              </Link>
+            ) : null}
           </div>
-
-          {/* ── Tab content ──────────────────────────────────────────────────── */}
-          <div className="p-5">
-
-            {/* OVERVIEW */}
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* Empty state */}
-                {!hasAnalyses && !hasOrphanedData && (
-                  <div className="rounded-2xl border-2 border-dashed border-indigo-200 p-10 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
-                      <FlaskConical className="h-7 w-7 text-indigo-400" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-900">Ready to analyse?</h2>
-                    <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                      Upload your expression data and run a guided differential expression analysis
-                      with clustering and pathway enrichment.
-                    </p>
-                    <Link
-                      href={`/projects/${projectId}/setup`}
-                      className="mt-5 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700"
-                    >
-                      <Plus className="h-4 w-4" /> Start New Analysis
-                    </Link>
-                  </div>
-                )}
-
-                {/* Imported / external results */}
-                {hasOrphanedData && (
-                  <ImportedResultsSection
-                    projectId={projectId}
-                    comparisons={orphanedComparisons}
-                    datasets={datasets}
-                  />
-                )}
-
-                {/* Running analyses */}
-                {runningAnalyses.length > 0 && (
-                  <Section title="Running" badge={runningAnalyses.length} badgeColor="blue">
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {runningAnalyses.map(a => (
-                        <AnalysisStatusCard key={a.id} analysis={a} projectId={projectId} />
-                      ))}
-                    </div>
-                  </Section>
-                )}
-
-                {/* Completed analyses */}
-                {doneAnalyses.length > 0 && (
-                  <Section
-                    title="Completed Analyses"
-                    badge={doneAnalyses.length}
-                    badgeColor="green"
-                    action={
-                      <Link
-                        href={`/projects/${projectId}/setup`}
-                        className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-                      >
-                        <Plus className="h-3.5 w-3.5" /> New Analysis
-                      </Link>
-                    }
+          {analyses.length === 0 ? (
+            <EmptyStateHelix
+              title="No analyses yet"
+              description="Launch your first self-service analysis to run DESeq2, generate PCA and QC reports."
+              action={
+                canManageData ? (
+                  <Link
+                    href={`/projects/${projectId}/setup`}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
+                    style={{ background: 'var(--sl-purple)' }}
                   >
-                    <div className="space-y-3">
-                      {doneAnalyses.map(a => (
-                        <CompletedAnalysisRow
-                          key={a.id}
-                          analysis={a}
-                          projectId={projectId}
-                          comparisons={comparisons.filter(c =>
-                            a.result_dataset_ids.some(id => c.dataset_id === id)
-                          )}
-                          matrixDatasetId={a.matrix_dataset_id}
-                          firstResultDatasetId={a.result_dataset_ids[0] ?? null}
-                        />
-                      ))}
-                    </div>
-                  </Section>
-                )}
-
-                {/* New Analysis CTA when all are running / failed */}
-                {hasAnalyses && doneAnalyses.length === 0 && runningAnalyses.length === 0 && (
-                  <div className="flex justify-end">
-                    <Link
-                      href={`/projects/${projectId}/setup`}
-                      className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                    >
-                      <Plus className="h-4 w-4" /> New Analysis
-                    </Link>
-                  </div>
-                )}
-
-                {/* Failed analyses */}
-                {failedAnalyses.length > 0 && (
-                  <Section title="Failed / Cancelled" badge={failedAnalyses.length} badgeColor="red" collapsed>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {failedAnalyses.map(a => (
-                        <AnalysisStatusCard key={a.id} analysis={a} projectId={projectId} />
-                      ))}
-                    </div>
-                  </Section>
-                )}
-              </div>
-            )}
-
-            {/* DATA FILES */}
-            {activeTab === 'data' && (
-              <div className="divide-y divide-gray-50">
-                {sourceDatasets.length === 0 && (
-                  <p className="py-4 text-sm text-gray-400">No source files uploaded yet.</p>
-                )}
-                {sourceDatasets.map(d => (
-                  <div key={d.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{d.name}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {d.type} · {d.status}
-                      </p>
-                    </div>
-                    <DatasetStatusDot status={d.status} />
-                  </div>
-                ))}
-                {canManageData && (
-                  <div className="pt-3">
-                    <Link
-                      href={`/projects/${projectId}/setup`}
-                      className="flex items-center gap-1.5 text-xs text-indigo-600 hover:underline"
-                    >
-                      <Upload className="h-3.5 w-3.5" /> Upload via new analysis wizard
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
+                    <Plus className="h-3.5 w-3.5" /> New Analysis
+                  </Link>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {analyses.map((analysis) => (
+                <AnalysisStatusCard key={analysis.id} analysis={analysis} projectId={projectId} />
+              ))}
+            </div>
+          )}
         </div>
+      ) : null}
 
-      </div>
+      {activeTab === 'history' ? (
+        <div className="mt-4">
+          <ProjectHistory projectId={projectId} />
+        </div>
+      ) : null}
 
-      {/* Bookmark Modal */}
-      {isBookmarkModalOpen && (
+      {isBookmarkModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-4xl h-[80vh] rounded-xl bg-white shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900">My Bookmarks</h2>
-              <button onClick={() => setBookmarkModalOpen(false)} className="rounded-full p-1 text-gray-400 hover:bg-gray-100">
+              <button
+                onClick={() => setBookmarkModalOpen(false)}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+              >
                 <span className="sr-only">Close</span>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6"><BookmarkManager projectId={projectId} /></div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <BookmarkManager projectId={projectId} />
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Gene List Modal */}
-      {isGeneListModalOpen && (
+      {isGeneListModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-4xl h-[80vh] rounded-xl bg-white shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900">My Gene Lists</h2>
-              <button onClick={() => setGeneListModalOpen(false)} className="rounded-full p-1 text-gray-400 hover:bg-gray-100">
+              <button
+                onClick={() => setGeneListModalOpen(false)}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+              >
                 <span className="sr-only">Close</span>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6"><GeneListManager projectId={projectId} /></div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <GeneListManager projectId={projectId} />
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Members Modal */}
-      {isMembersModalOpen && project && currentUser && (
+      {isMembersModalOpen && project && currentUser ? (
         <ProjectMembersModal
           projectId={projectId}
           projectOwnerId={project.owner_id}
@@ -331,285 +436,164 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           isOpen={isMembersModalOpen}
           onClose={() => setMembersModalOpen(false)}
         />
+      ) : null}
+    </div>
+  );
+}
+
+function ProjectTabButton({
+  id,
+  activeTab,
+  onClick,
+  label,
+}: {
+  id: ProjectTab;
+  activeTab: ProjectTab;
+  onClick: (id: ProjectTab) => void;
+  label: string;
+}) {
+  const active = id === activeTab;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(id)}
+      className="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+      style={
+        active
+          ? { background: 'var(--sl-teal-light)', color: 'var(--sl-teal-dark)' }
+          : { color: 'var(--text-secondary)' }
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+function ComparisonCard({
+  projectId,
+  analysisId,
+  name,
+  up,
+  down,
+  hasEnrichment,
+}: {
+  projectId: string;
+  analysisId?: string;
+  name: string;
+  up: number;
+  down: number;
+  hasEnrichment: boolean;
+}) {
+  const href = analysisId
+    ? `/projects/${projectId}/analyses/${analysisId}/comparisons/${encodeURIComponent(name)}`
+    : `/projects/${projectId}/comparisons/${encodeURIComponent(name)}`;
+  return (
+    <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
+      <div>
+        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+          <span className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {name}
+          </span>
+          <Chip icon={<Activity className="h-3 w-3" />}>DEG</Chip>
+          {hasEnrichment ? <Chip icon={<BarChart3 className="h-3 w-3" />}>GSEA</Chip> : null}
+        </div>
+
+        <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <span>
+            <span style={{ color: 'var(--sl-teal)', fontWeight: 600 }}>↑ {up.toLocaleString()}</span> up
+          </span>
+          <span>
+            <span style={{ color: 'var(--sl-purple)', fontWeight: 600 }}>↓ {down.toLocaleString()}</span> down
+          </span>
+          <span>{(up + down).toLocaleString()} total DEGs</span>
+        </div>
+      </div>
+
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+        style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+      >
+        Analyze <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+function DatasetListCard({ datasets }: { datasets: Dataset[] }) {
+  return (
+    <div className="gl-card p-4">
+      <div className="mb-2 text-xs font-semibold uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+        Datasets
+      </div>
+
+      {datasets.length === 0 ? (
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          No source datasets yet.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {datasets.slice(0, 6).map((dataset) => (
+            <div key={dataset.id} className="flex items-center justify-between text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="truncate" title={dataset.name}>
+                {dataset.name}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs">
+                <DatasetStatusDot status={dataset.status} /> {dataset.status}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-// ─── Imported / External results section ─────────────────────────────────────
-type ImportedTab = 'comparisons';
-
-function ImportedResultsSection({
-  projectId,
-  comparisons,
-  datasets,
-}: {
-  projectId: string;
-  comparisons: ComparisonSummary[];
-  datasets: Dataset[];
-}) {
-  const [activeTab, setActiveTab] = useState<ImportedTab>('comparisons');
-
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <Database className="h-4 w-4 text-gray-400" />
-          <span className="text-sm font-semibold text-gray-800">Imported Results</span>
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-            {comparisons.length} comparison{comparisons.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <Link
-          href={`/projects/${projectId}/setup`}
-          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> New Analysis
-        </Link>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-100 flex overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab('comparisons')}
-          className={`shrink-0 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            activeTab === 'comparisons'
-              ? 'border-indigo-500 text-indigo-700'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" /> Comparisons
-          </span>
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="p-5">
-        {/* Comparisons */}
-        {activeTab === 'comparisons' && (
-          <div className="space-y-1.5">
-            {comparisons.map(c => (
-              <Link
-                key={c.name}
-                href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm hover:border-indigo-300 hover:bg-indigo-50/40"
-              >
-                <div className="flex items-center gap-3">
-                  <Activity className="h-4 w-4 text-indigo-400 shrink-0" />
-                  <div>
-                    <p className="font-medium text-gray-800">{c.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
-                      {c.has_enrichment && (
-                        <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-green-100 text-green-700 text-xs font-medium">
-                          Enrichment
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-semibold text-red-500 text-xs">↑{c.deg_up}</span>
-                  <span className="font-semibold text-blue-500 text-xs">↓{c.deg_down}</span>
-                  <Eye className="h-4 w-4 text-gray-400" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Section wrapper ──────────────────────────────────────────────────────────
-function Section({
-  title, badge, badgeColor = 'gray', action, collapsed = false, children,
+function InfoTabCard({
+  title,
+  description,
+  ctaLabel,
+  ctaHref,
 }: {
   title: string;
-  badge?: number;
-  badgeColor?: 'gray' | 'green' | 'blue' | 'red';
-  action?: React.ReactNode;
-  collapsed?: boolean;
-  children: React.ReactNode;
+  description: string;
+  ctaLabel: string;
+  ctaHref?: string;
 }) {
-  const [open, setOpen] = useState(!collapsed);
-  const badgeStyles: Record<string, string> = {
-    gray:  'bg-gray-100 text-gray-600',
-    green: 'bg-green-100 text-green-700',
-    blue:  'bg-blue-100 text-blue-700',
-    red:   'bg-red-100 text-red-700',
-  };
-
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button
-          type="button"
-          onClick={() => setOpen(v => !v)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-800"
+    <div className="mt-4 gl-card p-5">
+      <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+        {title}
+      </h2>
+      <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        {description}
+      </p>
+      {ctaHref ? (
+        <Link
+          href={ctaHref}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+          style={{ background: 'var(--sl-purple)' }}
         >
-          {title}
-          {badge !== undefined && (
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeStyles[badgeColor]}`}>
-              {badge}
-            </span>
-          )}
-          {open ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
-        </button>
-        {action}
-      </div>
-      {open && <div className="p-5">{children}</div>}
-    </div>
-  );
-}
-
-// ─── Completed analysis row ───────────────────────────────────────────────────
-function CompletedAnalysisRow({
-  analysis,
-  projectId,
-  comparisons,
-  matrixDatasetId,
-  firstResultDatasetId,
-}: {
-  analysis: { id: string; name: string; created_at: string };
-  projectId: string;
-  comparisons: { name: string; deg_up: number; deg_down: number }[];
-  matrixDatasetId: string | null;
-  firstResultDatasetId: string | null;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-100"
-      >
-        <div>
-          <p className="text-sm font-semibold text-gray-900">{analysis.name}</p>
-          <p className="text-xs text-gray-400">
-            {new Date(analysis.created_at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'short', year: 'numeric',
-            })}
-            {comparisons.length > 0 && ` · ${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Done</span>
-          {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="border-t border-gray-200 px-4 py-3 space-y-3">
-          {/* Quick links */}
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/projects/${projectId}/analyses/${analysis.id}`}
-              className="flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-            >
-              <FlaskConical className="h-3.5 w-3.5" /> Analysis results
-            </Link>
-            {matrixDatasetId && (
-              <Link
-                href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering`}
-                className="flex items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100"
-              >
-                <Layers className="h-3.5 w-3.5" /> Clustering
-              </Link>
-            )}
-            {firstResultDatasetId && (
-              <Link
-                href={`/projects/${projectId}/datasets/${firstResultDatasetId}/enrichment`}
-                className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-700 hover:bg-teal-100"
-              >
-                <FlaskConical className="h-3.5 w-3.5" /> Enrichment
-              </Link>
-            )}
-          </div>
-
-          {/* Comparisons */}
-          {comparisons.length > 0 && (
-            <div className="space-y-1.5">
-              {comparisons.map(c => (
-                <Link
-                  key={c.name}
-                  href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                  className="flex items-center justify-between rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs hover:border-indigo-300 hover:bg-indigo-50/40"
-                >
-                  <span className="font-medium text-gray-800 truncate">{c.name}</span>
-                  <span className="ml-3 shrink-0 font-medium">
-                    <span className="text-red-500">↑{c.deg_up}</span>
-                    {' '}
-                    <span className="text-blue-500">↓{c.deg_down}</span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+          {ctaLabel} <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : (
+        <p className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+          A ready matrix dataset is required first.
+        </p>
       )}
-    </div>
-  );
-}
-
-// ─── Micro-components ─────────────────────────────────────────────────────────
-function StatChip({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
-  return (
-    <div className={`flex items-center gap-1 text-xs ${accent ? 'text-amber-600' : 'text-gray-500'}`}>
-      <span className={`font-semibold ${accent ? 'text-amber-700' : 'text-gray-800'}`}>
-        {value.toLocaleString()}
-      </span>
-      {label}
     </div>
   );
 }
 
 function DatasetStatusDot({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    READY:      'bg-green-400',
-    PROCESSING: 'bg-blue-400 animate-pulse',
-    PENDING:    'bg-yellow-400 animate-pulse',
-    FAILED:     'bg-red-400',
-  };
-  return <div className={`h-2 w-2 rounded-full shrink-0 ${colors[status] ?? 'bg-gray-300'}`} />;
+  if (status === DatasetStatus.READY) {
+    return <Dot variant="ready" size={7} />;
+  }
+  if (status === DatasetStatus.PROCESSING) {
+    return <Dot variant="processing" size={7} />;
+  }
+  if (status === DatasetStatus.FAILED) {
+    return <Dot variant="failed" size={7} />;
+  }
+  return <Dot variant="pending" size={7} />;
 }
-
-// ─── Tab button ───────────────────────────────────────────────────────────────
-function TabBtn({
-  id, active, label, icon, onClick, badge,
-}: {
-  id: ProjectTab;
-  active: ProjectTab;
-  label: string;
-  icon: React.ReactNode;
-  onClick: (id: ProjectTab) => void;
-  badge?: 'ready' | 'na';
-}) {
-  const isActive = active === id;
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(id)}
-      className={`shrink-0 flex items-center gap-1.5 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-        isActive
-          ? 'border-indigo-500 text-indigo-700'
-          : 'border-transparent text-gray-500 hover:text-gray-700'
-      }`}
-    >
-      {icon}
-      {label}
-      {badge === 'ready' && (
-        <span className="h-1.5 w-1.5 rounded-full bg-green-400 ml-0.5" />
-      )}
-      {badge === 'na' && (
-        <span className="text-xs text-gray-400 opacity-60">(N/A)</span>
-      )}
-    </button>
-  );
-}
-

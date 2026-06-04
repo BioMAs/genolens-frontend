@@ -5,16 +5,17 @@ import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import {
   SelfServiceAnalysisStatus,
-  AnalysisParams,
+  OmicsDataType,
 } from '@/types';
 import { AnalysisParams as AP } from '@/types';
 import {
-  Play, X, CheckCircle, AlertCircle, Clock, ChevronRight, Loader,
+  Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
 
 interface StepLaunchProps {
   projectId: string;
   analysisName: string;
+  dataType: OmicsDataType;
   matrixDatasetId: string;
   samplesDatasetId: string;
   contrastsDatasetId: string;
@@ -39,6 +40,7 @@ const STEP_LABELS: Record<string, string> = {
 export default function StepLaunch({
   projectId,
   analysisName,
+  dataType,
   matrixDatasetId,
   samplesDatasetId,
   contrastsDatasetId,
@@ -74,6 +76,7 @@ export default function StepLaunch({
       const result = await createAnalysis.mutateAsync({
         project_id:              projectId,
         name:                    analysisName,
+        data_type:               dataType,
         matrix_dataset_id:       matrixDatasetId,
         samples_dataset_id:      samplesDatasetId,
         comparisons_dataset_id:  contrastsDatasetId,
@@ -93,7 +96,7 @@ export default function StepLaunch({
     if (!analysisId || !confirm('Cancel this analysis?')) return;
     try {
       // The delete endpoint acts as cancel for running jobs
-      await fetch(`/api/v1/analyses/${analysisId}`, { method: 'DELETE' });
+      await fetch(`/api/v2/analyses/${analysisId}`, { method: 'DELETE' });
     } catch {
       // Ignore cancel errors
     }
@@ -133,7 +136,7 @@ export default function StepLaunch({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
-              <SummaryRow label="Min log2FC" value={String(deseq2Params.min_log2fc)} />
+              <SummaryRow label="log2FC" value={String(deseq2Params.min_log2fc)} />
             </div>
           </div>
           <div className="px-4 py-3">

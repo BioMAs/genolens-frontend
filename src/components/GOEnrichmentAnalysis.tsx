@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Dataset } from '@/types';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronUp, CheckCircle, RefreshCw } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
 import GOEnrichmentTable from './GOEnrichmentTable';
 import EnrichmentHistogram from './EnrichmentHistogram';
 import GOTreePanel from './GOTreePanel';
@@ -38,6 +38,7 @@ interface GOTerm {
   go_id: string;
   go_name: string;
   namespace: string;
+  description?: string;
   pvalue: number;
   fdr: number;
   enrichment_ratio: number;
@@ -47,14 +48,14 @@ interface GOTerm {
   level?: number;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+interface DegGeneInfo {
+  regulation: string;
+  log_fc: number;
+  padj: number;
+  gene_name: string;
+}
 
-const NS_FROM_CATEGORY: Record<string, string> = {
-  'GO:BP': 'biological_process',
-  'GO:MF': 'molecular_function',
-  'GO:CC': 'cellular_component',
-  'GO:ALL': 'biological_process',
-};
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function transformCachedRow(row: Record<string, unknown>): GOTerm {
   const geneRatioStr = (row.gene_ratio as string) ?? '0/1';
@@ -64,7 +65,8 @@ function transformCachedRow(row: Record<string, unknown>): GOTerm {
   return {
     go_id: (row.pathway_id as string) ?? '',
     go_name: (row.pathway_name as string) ?? '',
-    namespace: NS_FROM_CATEGORY[(row.category as string) ?? ''] ?? 'biological_process',
+    namespace: (row.category as string) ?? '',
+    description: (row.description as string) ?? undefined,
     pvalue: (row.pvalue as number) ?? 0,
     fdr: (row.padj as number) ?? 0,
     enrichment_ratio: (row.enrichment_ratio as number) ?? 0,
@@ -73,13 +75,6 @@ function transformCachedRow(row: Record<string, unknown>): GOTerm {
     background_count: bgCount ?? 0,
     level: (row.level as number | undefined),
   };
-}
-
-function formatRelativeTime(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-  return `${Math.floor(seconds / 3600)}h ago`;
 }
 
 type TabId = 'dotplot' | 'histogram' | 'radar' | 'table';
@@ -175,17 +170,14 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnrichmentAnalysisProps) {
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [terms, setTerms] = useState<GOTerm[]>([]);
-  const [meta, setMeta] = useState<{ study_size: number; background_size: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('dotplot');
-  const [savedAt, setSavedAt] = useState<Date | null>(null);
-  const [isCached, setIsCached] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [tick, setTick] = useState(0);
-  // True when displayed results come from a previous run (different params may apply)
-  const [isStaleCache, setIsStaleCache] = useState(false);
+  const [degGeneMap, setDegGeneMap] = useState<Record<string, DegGeneInfo>>({});
 
   const [params, setParams] = useState<GOEnrichmentParams>({
     namespace: null,
@@ -198,241 +190,244 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     propagateAnnotations: true,
   });
 
-  // Update relative time badge every 30s
-  useEffect(() => {
-    if (!savedAt) return;
-    const id = setInterval(() => setTick(t => t + 1), 30_000);
-    return () => clearInterval(id);
-  }, [savedAt]);
-  void tick; // consumed via formatRelativeTime(savedAt)
+  const updateParams = (next: GOEnrichmentParams) => setParams(next);
 
-  // On mount: check for cached GO enrichment results, auto-run if none found
+  // On mount: load all cached enrichment results from DB (all databases)
   const loadCached = useCallback(async (): Promise<boolean> => {
     try {
+      setError(null);
       const res = await api.get(
         `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
-        { params: { page_size: 500 } }
+        { params: { page_size: 1000 } }
       );
       const rows: Record<string, unknown>[] = res.data?.pathways ?? res.data?.results ?? res.data ?? [];
-      const goRows = rows.filter((r) => String(r.category ?? '').startsWith('GO:'));
-      if (goRows.length > 0) {
-        setTerms(goRows.map(transformCachedRow));
-        setIsCached(true);
-        setIsStaleCache(true); // mark as potentially stale until a fresh run confirms params
-        setSavedAt(new Date());
+      if (rows.length > 0) {
+        setTerms(rows.map(transformCachedRow));
+        setIsInitialLoad(false);
         return true;
       }
     } catch {
-      // No cached results or endpoint not available — silent fail
+      setError('Failed to load enrichment cache.');
     }
     return false;
   }, [dataset.id, comparisonName]);
 
+  // Fetch DEG gene map for UP/DOWN coloring — paginate through all pages
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const hasCached = await loadCached();
-      if (!hasCached && !cancelled) {
-        runGOEnrichment(false);
-      }
+      try {
+        const PAGE_SIZE = 1000;
+        const map: Record<string, DegGeneInfo> = {};
+
+        // Fetch first page to get total_pages
+        const first = await api.get(
+          `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+          { params: { page_size: PAGE_SIZE, page: 1 } }
+        );
+        if (cancelled) return;
+
+        const addGenes = (genes: Array<{gene_id: string; regulation: string; log_fc: number; padj: number; gene_name: string}>) => {
+          genes.forEach(g => {
+            const info: DegGeneInfo = { regulation: g.regulation, log_fc: g.log_fc, padj: g.padj, gene_name: g.gene_name };
+            // Index by both Ensembl ID and gene symbol for broad matching
+            if (g.gene_id) map[g.gene_id.toUpperCase()] = info;
+            if (g.gene_name) map[g.gene_name.toUpperCase()] = info;
+          });
+        };
+
+        addGenes(first.data?.genes ?? []);
+        const totalPages: number = first.data?.pagination?.total_pages ?? 1;
+
+        // Fetch remaining pages in parallel (max 5 extra = 6000 genes total)
+        const remainingPages = Math.min(totalPages, 6);
+        const requests = [];
+        for (let p = 2; p <= remainingPages; p++) {
+          requests.push(api.get(
+            `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+            { params: { page_size: PAGE_SIZE, page: p } }
+          ));
+        }
+        const results = await Promise.all(requests);
+        if (cancelled) return;
+        results.forEach(r => addGenes(r.data?.genes ?? []));
+
+        setDegGeneMap(map);
+      } catch { /* silent */ }
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataset.id, comparisonName]);
+
+  // Initial load: load from cache only
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await loadCached();
+      if (!cancelled) setIsRunning(false);
+    })();
+    return () => { cancelled = true; };
   }, [loadCached]);
 
-  const runGOEnrichment = async (forceRefresh = false) => {
-    setIsRunning(true);
-    setError(null);
-    if (forceRefresh) setTerms([]);
-
-    try {
-      const response = await api.post(
-        `/datasets/${dataset.id}/comparisons/${encodeURIComponent(comparisonName)}/go-enrichment`,
-        {
-          namespace: params.namespace,
-          regulation: params.regulation,
-          padj_threshold: params.padjThreshold,
-          log_fc_threshold: params.logFcThreshold,
-          min_term_size: params.minTermSize,
-          max_term_size: params.maxTermSize,
-          pvalue_threshold: params.pvalueThreshold,
-          fdr_method: 'fdr_bh',
-          propagate_annotations: params.propagateAnnotations,
-          organism: 'Homo sapiens',
-        }
-      );
-
-      const data = response.data;
-      const enrichedTerms: GOTerm[] = (data.enriched_terms ?? []).map((r: Record<string, unknown>) => ({
-        go_id: (r.go_id as string) ?? '',
-        go_name: (r.go_name as string) ?? '',
-        namespace: (r.namespace as string) ?? '',
-        pvalue: (r.pvalue as number) ?? 0,
-        fdr: (r.fdr as number) ?? 0,
-        enrichment_ratio: (r.enrichment_ratio as number) ?? 0,
-        study_count: (r.study_count as number) ?? 0,
-        study_genes: (r.study_genes as string[]) ?? [],
-        background_count: (r.background_count as number) ?? 0,
-        level: r.level as number | undefined,
-      }));
-
-      setTerms(enrichedTerms);
-      setMeta({ study_size: data.study_size, background_size: data.background_size });
-      setIsCached(data.cached === true);
-      setIsStaleCache(false);
-      setSavedAt(new Date());
-    } catch (err: unknown) {
-      const anyErr = err as { response?: { data?: { detail?: string } }; message?: string };
-      setError(anyErr?.response?.data?.detail ?? anyErr?.message ?? 'Failed to run GO enrichment');
-    } finally {
-      setIsRunning(false);
-    }
-  };
+  const hasResults = terms.length > 0;
 
   return (
     <div className="space-y-4">
-      {/* Parameters Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>GO Enrichment Analysis</CardTitle>
-              <CardDescription>Analyze GO term enrichment for {comparisonName}</CardDescription>
-            </div>
-            {savedAt && (
-              <div className="flex items-center gap-2">
-                <span className={`flex items-center gap-1.5 text-xs rounded-full px-3 py-1 border ${
-                  isStaleCache
-                    ? 'text-amber-700 bg-amber-50 border-amber-200'
-                    : 'text-emerald-600 bg-emerald-50 border-emerald-200'
-                }`}>
-                  <CheckCircle className="w-3 h-3" />
-                  {isStaleCache ? 'Previous run · params may differ' : isCached ? 'Loaded from cache' : 'Results saved'} · {formatRelativeTime(savedAt)}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => runGOEnrichment(true)}
-                  disabled={isRunning}
+
+      {/* ── Header bar ───────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <h3 className="font-semibold text-gray-900">Pathway Enrichment</h3>
+          {isRunning && (
+            <span className="flex items-center gap-1.5 text-xs text-indigo-600">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Loading…
+            </span>
+          )}
+          {!isRunning && hasResults && (
+            <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+              {terms.length} enriched terms
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-7 text-xs gap-1.5 ${showSettings ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500'}`}
+            onClick={() => setShowSettings(s => !s)}
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            Filter
+            {showSettings ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Collapsible Settings ─────────────────────────────────────────── */}
+      {showSettings && (
+        <Card className="border-dashed">
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">GO Namespace</Label>
+                <Select
+                  value={params.namespace || 'all'}
+                  onValueChange={(v) => updateParams({ ...params, namespace: v === 'all' ? null : v })}
                 >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Re-run
-                </Button>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All namespaces" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Namespaces</SelectItem>
+                    <SelectItem value="BP">Biological Process (BP)</SelectItem>
+                    <SelectItem value="MF">Molecular Function (MF)</SelectItem>
+                    <SelectItem value="CC">Cellular Component (CC)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Regulation</Label>
+                <Select
+                  value={params.regulation || 'all'}
+                  onValueChange={(v) => updateParams({ ...params, regulation: v === 'all' ? null : v })}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All genes" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All DEGs</SelectItem>
+                    <SelectItem value="UP">Upregulated Only</SelectItem>
+                    <SelectItem value="DOWN">Downregulated Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Adj. P-value Threshold</Label>
+                <Input
+                  className="h-8 text-xs"
+                  type="number" step="0.01" min="0" max="1"
+                  value={params.padjThreshold}
+                  onChange={(e) => updateParams({ ...params, padjThreshold: parseFloat(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(s => !s)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
+            >
+              {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              Advanced options
+            </button>
+
+            {showAdvanced && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Log FC Threshold</Label>
+                  <Input className="h-8 text-xs" type="number" step="0.1" min="0" value={params.logFcThreshold}
+                    onChange={(e) => updateParams({ ...params, logFcThreshold: parseFloat(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Term Size</Label>
+                  <Input className="h-8 text-xs" type="number" min="1" value={params.minTermSize}
+                    onChange={(e) => updateParams({ ...params, minTermSize: parseInt(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Term Size</Label>
+                  <Input className="h-8 text-xs" type="number" min="1" value={params.maxTermSize}
+                    onChange={(e) => updateParams({ ...params, maxTermSize: parseInt(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Enrichment P-value</Label>
+                  <Input className="h-8 text-xs" type="number" step="0.01" min="0" max="1" value={params.pvalueThreshold}
+                    onChange={(e) => updateParams({ ...params, pvalueThreshold: parseFloat(e.target.value) })} />
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <input type="checkbox" id="propagate" checked={params.propagateAnnotations}
+                    onChange={(e) => updateParams({ ...params, propagateAnnotations: e.target.checked })}
+                    className="rounded" />
+                  <Label htmlFor="propagate" className="cursor-pointer text-xs">Propagate Annotations (True Path Rule)</Label>
+                </div>
               </div>
             )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Basic Parameters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>GO Namespace</Label>
-              <Select
-                value={params.namespace || 'all'}
-                onValueChange={(v) => setParams({ ...params, namespace: v === 'all' ? null : v })}
-              >
-                <SelectTrigger><SelectValue placeholder="All namespaces" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Namespaces</SelectItem>
-                  <SelectItem value="BP">Biological Process (BP)</SelectItem>
-                  <SelectItem value="MF">Molecular Function (MF)</SelectItem>
-                  <SelectItem value="CC">Cellular Component (CC)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          </CardContent>
+        </Card>
+      )}
 
-            <div className="space-y-2">
-              <Label>Regulation</Label>
-              <Select
-                value={params.regulation || 'all'}
-                onValueChange={(v) => setParams({ ...params, regulation: v === 'all' ? null : v })}
-              >
-                <SelectTrigger><SelectValue placeholder="All genes" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All DEGs</SelectItem>
-                  <SelectItem value="UP">Upregulated Only</SelectItem>
-                  <SelectItem value="DOWN">Downregulated Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      {/* ── Error ────────────────────────────────────────────────────────── */}
+      {error && (
+        <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          {error}
+        </div>
+      )}
 
-            <div className="space-y-2">
-              <Label>Adj. P-value Threshold</Label>
-              <Input
-                type="number" step="0.01" min="0" max="1"
-                value={params.padjThreshold}
-                onChange={(e) => setParams({ ...params, padjThreshold: parseFloat(e.target.value) })}
-              />
-            </div>
-          </div>
+      {/* ── Loading skeleton (first load) ────────────────────────────────── */}
+      {isInitialLoad && isRunning && (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-10 bg-gray-100 rounded-lg" />
+          <div className="h-64 bg-gray-50 rounded-xl border border-gray-100" />
+        </div>
+      )}
 
-          <Button variant="ghost" size="sm" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full">
-            {showAdvanced ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}
-            Advanced Parameters
-          </Button>
-
-          {showAdvanced && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="space-y-2">
-                <Label>Log FC Threshold</Label>
-                <Input type="number" step="0.1" min="0" value={params.logFcThreshold}
-                  onChange={(e) => setParams({ ...params, logFcThreshold: parseFloat(e.target.value) })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Min Term Size</Label>
-                <Input type="number" min="1" value={params.minTermSize}
-                  onChange={(e) => setParams({ ...params, minTermSize: parseInt(e.target.value) })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Max Term Size</Label>
-                <Input type="number" min="1" value={params.maxTermSize}
-                  onChange={(e) => setParams({ ...params, maxTermSize: parseInt(e.target.value) })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Enrichment P-value</Label>
-                <Input type="number" step="0.01" min="0" max="1" value={params.pvalueThreshold}
-                  onChange={(e) => setParams({ ...params, pvalueThreshold: parseFloat(e.target.value) })} />
-              </div>
-              <div className="flex items-center gap-2 pt-6">
-                <input type="checkbox" id="propagate" checked={params.propagateAnnotations}
-                  onChange={(e) => setParams({ ...params, propagateAnnotations: e.target.checked })}
-                  className="rounded" />
-                <Label htmlFor="propagate" className="cursor-pointer">Propagate Annotations (True Path Rule)</Label>
-              </div>
-            </div>
-          )}
-
-          <Button
-            onClick={() => runGOEnrichment(false)}
-            disabled={isRunning}
-            className={`w-full ${isStaleCache ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
-          >
-            {isRunning ? 'Running GO Enrichment…' : isStaleCache ? 'Run GO Enrichment Analysis (params may differ from displayed results)' : 'Run GO Enrichment Analysis'}
-          </Button>
-
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
-              {error}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      {terms.length > 0 && (
+      {/* ── Results ──────────────────────────────────────────────────────── */}
+      {hasResults && (
         <>
-          {/* Summary bar */}
-          {meta && (
-            <div className="flex items-center gap-6 px-4 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground flex-wrap">
-              <span><strong className="text-indigo-600 text-sm">{terms.length}</strong> enriched terms</span>
-              <span>{meta.study_size} study genes / {meta.background_size} background</span>
-              <span>{terms.filter(t => t.namespace === 'biological_process').length} BP · {terms.filter(t => t.namespace === 'molecular_function').length} MF · {terms.filter(t => t.namespace === 'cellular_component').length} CC</span>
+          {/* Stats bar */}
+          {terms.length > 0 && (
+            <div className="flex items-center gap-5 px-4 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground flex-wrap">
+              {['GO:BP', 'GO:MF', 'GO:CC', 'KEGG', 'REACTOME', 'HALLMARK'].map(cat => {
+                const count = terms.filter(t => t.namespace === cat).length;
+                return count > 0 ? <span key={cat}>{count} {cat}</span> : null;
+              })}
+              {terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length > 0 && (
+                <span>{terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length} other</span>
+              )}
             </div>
           )}
 
-          {/* 4-Tab visualization panel */}
-          <Card>
+          {/* Visualization tabs */}
+          <Card className={isRunning ? 'opacity-60 pointer-events-none transition-opacity' : 'transition-opacity'}>
             <div className="flex border-b border-gray-100 bg-gray-50 rounded-t-xl overflow-hidden">
               {TABS.map(tab => (
                 <button
@@ -458,18 +453,26 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
                 />
               )}
               {activeTab === 'table' && (
-                <GOEnrichmentTable terms={terms} />
+                <GOEnrichmentTable terms={terms} degGeneMap={degGeneMap} />
               )}
             </CardContent>
           </Card>
 
-          {/* GO Hierarchy Tree — always visible */}
+          {/* GO Hierarchy Tree */}
           <GOTreePanel
             datasetId={dataset.id}
             comparisonName={comparisonName}
             regulation={params.regulation ?? undefined}
           />
         </>
+      )}
+
+      {/* ── Empty state (loaded but no results) ─────────────────────────── */}
+      {!isRunning && !error && !isInitialLoad && !hasResults && (
+        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
+          <p className="text-sm font-medium mb-1">No enriched terms found</p>
+          <p className="text-xs">Enrichment analysis has not been computed yet for this comparison.</p>
+        </div>
       )}
     </div>
   );

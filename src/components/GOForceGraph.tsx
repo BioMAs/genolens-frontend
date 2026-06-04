@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
 
@@ -86,17 +86,20 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [enabledNs, setEnabledNs] = useState<Set<NamespaceKey>>(new Set(ALL_NS));
   const [tooltip, setTooltip] = useState<{ x: number; y: number; node: GraphNode } | null>(null);
-  const [truncatedBanner, setTruncatedBanner] = useState(false);
 
   const toggleNs = (ns: NamespaceKey) => {
     setEnabledNs(prev => {
       const next = new Set(prev);
-      next.has(ns) ? next.delete(ns) : next.add(ns);
+      if (next.has(ns)) {
+        next.delete(ns);
+      } else {
+        next.add(ns);
+      }
       return next;
     });
   };
 
-  const buildGraph = useCallback(() => {
+  const graphData = useMemo(() => {
     const allNodes: GraphNode[] = [];
     const allLinks: GraphLink[] = [];
     const visited = new Set<string>();
@@ -108,17 +111,16 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
     }
 
     let nodes = allNodes;
-    let banner = false;
+    let truncatedBanner = false;
     if (nodes.length > 150) {
       nodes = nodes.filter(n => n.is_enriched);
-      banner = true;
+      truncatedBanner = true;
     }
-    setTruncatedBanner(banner);
 
     const nodeIds = new Set(nodes.map(n => n.go_id));
     const links = allLinks.filter(l => nodeIds.has(l.source as string) && nodeIds.has(l.target as string));
 
-    return { nodes, links };
+    return { nodes, links, truncatedBanner };
   }, [data, enabledNs]);
 
   useEffect(() => {
@@ -131,7 +133,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
 
     d3.select(svg).selectAll('*').remove();
 
-    const { nodes, links } = buildGraph();
+    const { nodes, links } = graphData;
     if (nodes.length === 0) return;
 
     const svgEl = d3.select(svg)
@@ -213,7 +215,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
       });
 
     return () => { sim.stop(); };
-  }, [buildGraph]);
+  }, [graphData, onNodeClick]);
 
   return (
     <div className="flex flex-col h-full">
@@ -234,7 +236,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
         <span className="ml-auto text-gray-400">Scroll to zoom · Drag nodes to reposition</span>
       </div>
 
-      {truncatedBanner && (
+      {graphData.truncatedBanner && (
         <div className="px-3 py-1 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
           More than 150 terms — showing enriched terms only
         </div>

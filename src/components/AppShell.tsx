@@ -6,6 +6,7 @@ interface AppShellProps {
   user: User;
   userRole: string | null;
   children: React.ReactNode;
+  topBarRightSlot?: React.ReactNode;
 }
 
 /**
@@ -22,12 +23,17 @@ interface AppShellProps {
  *   │             │  {children}                        │
  *   └─────────────┴────────────────────────────────────┘
  */
-export default function AppShell({ user, userRole, children }: AppShellProps) {
+export default function AppShell({
+  user,
+  userRole,
+  children,
+  topBarRightSlot,
+}: AppShellProps) {
   return (
     <div className="app-shell">
       <Sidebar user={user} userRole={userRole} />
       <div className="app-main">
-        <TopBar />
+        <TopBar rightSlot={topBarRightSlot} />
         <main className="app-content">
           {children}
         </main>

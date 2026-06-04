@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useProjectDatasets } from '@/hooks/useProjectData';
-import { Dataset, DatasetStatus, DatasetType } from '@/types';
+import { Dataset, DatasetStatus } from '@/types';
 import QCDashboard from '@/components/QCDashboard';
 import { AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
 

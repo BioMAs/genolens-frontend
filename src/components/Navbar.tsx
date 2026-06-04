@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import { Menu, X, User as UserIcon, LogOut, Shield, Moon, Sun } from 'lucide-react'
 import QuotaDisplay from './QuotaDisplay'
@@ -16,7 +16,6 @@ interface NavbarProps {
 
 export default function Navbar({ user, userRole }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const pathname = usePathname()
   const isAdmin = userRole?.toLowerCase() === 'admin'
   const { theme, toggleTheme } = useTheme()
 
@@ -31,7 +30,7 @@ export default function Navbar({ user, userRole }: NavbarProps) {
         <div className="flex justify-between h-16 gap-4">
           <div className="flex items-center gap-4 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="GenoLens Next" className="h-10 w-auto" />
+              <Image src="/logo.png" alt="GenoLens Next" width={160} height={40} className="h-10 w-auto" priority />
             </Link>
           </div>
 

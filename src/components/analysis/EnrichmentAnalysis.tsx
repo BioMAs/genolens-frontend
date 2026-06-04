@@ -1,29 +1,49 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { EnrichmentResult } from '@/types';
 import Link from 'next/link';
-import { Filter, ArrowUpRight, ExternalLink, BarChart2, Table as TableIcon, Activity, Play, RefreshCw } from 'lucide-react';
+import { ExternalLink, TableIcon, Activity, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+interface DegGeneInfo {
+    regulation: string;
+    log_fc: number | null;
+    padj: number | null;
+    gene_name: string | null;
+}
+
 interface EnrichmentAnalysisProps {
     datasetId: string;
+}
+
+interface ApiErrorShape {
+    response?: {
+        data?: {
+            detail?: unknown;
+        };
+    };
 }
 
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
-    
-    // We store ALL results here
+    const [loadingComparisons, setLoadingComparisons] = useState(true);
+
+    // All enrichment results
     const [allResults, setAllResults] = useState<EnrichmentResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // DEG gene lookup map for coloring genes: geneSymbol → regulation info
+    const [degGeneMap, setDegGeneMap] = useState<Record<string, DegGeneInfo>>({});
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
     // Filters
     const [categoryFilter, setCategoryFilter] = useState<string>("");
@@ -31,43 +51,72 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     const [maxPadj, setMaxPadj] = useState<number>(0.05);
     const [viewMode, setViewMode] = useState<'table' | 'radar'>('table');
 
-    // GO Enrichment runner
-    const [degComparisons, setDegComparisons] = useState<string[]>([]);
-    const [selectedDegComparison, setSelectedDegComparison] = useState<string>("");
-    const [isRunning, setIsRunning] = useState(false);
-    const [runError, setRunError] = useState<string | null>(null);
-    const [runSuccess, setRunSuccess] = useState<string | null>(null);
-
-    // Fetch comparisons on mount
+    // Fetch comparisons on mount (no polling — show what's available immediately)
     useEffect(() => {
-        const fetchComparisons = async () => {
-             try {
-                 const res = await api.get(`/enrichment/${datasetId}/comparisons`);
-                 setComparisons(res.data);
-                 if (res.data.length > 0) {
-                     setSelectedComparison(res.data[0]);
-                 }
-             } catch (err: any) {
-                 console.error("Failed to fetch comparisons", err);
-             }
-        };
-        fetchComparisons();
-    }, [datasetId]);
-
-    // Fetch DEG comparisons available for GO enrichment
-    useEffect(() => {
-        const fetchDegComparisons = async () => {
+        let cancelled = false;
+        const init = async () => {
+            setLoadingComparisons(true);
             try {
-                const res = await api.get(`/datasets/${datasetId}/comparisons`);
-                const names: string[] = res.data?.comparisons ?? [];
-                setDegComparisons(names);
-                if (names.length > 0) setSelectedDegComparison(names[0]);
-            } catch (err: any) {
-                console.error("Failed to fetch DEG comparisons", err);
+                const res = await api.get(`/enrichment/${datasetId}/comparisons`);
+                if (cancelled) return;
+                const data = res.data as string[];
+                setComparisons(data);
+                if (data.length > 0) setSelectedComparison(data[0]);
+            } catch {
+                // silent — empty state shown
+            } finally {
+                if (!cancelled) setLoadingComparisons(false);
             }
         };
-        fetchDegComparisons();
+        init();
+        return () => { cancelled = true; };
     }, [datasetId]);
+
+    // Fetch DEG genes for the selected comparison to power gene UP/DOWN coloring
+    useEffect(() => {
+        if (!selectedComparison) return;
+        let cancelled = false;
+        const fetchDegGenes = async () => {
+            try {
+                const PAGE_SIZE = 1000;
+                const map: Record<string, DegGeneInfo> = {};
+
+                const addGenes = (genes: Array<{ gene_id: string; regulation: string; log_fc: number | null; padj: number | null; gene_name: string | null }>) => {
+                    genes.forEach(g => {
+                        const info = { regulation: g.regulation, log_fc: g.log_fc, padj: g.padj, gene_name: g.gene_name };
+                        if (g.gene_id) map[g.gene_id.toUpperCase()] = info;
+                        if (g.gene_name) map[g.gene_name.toUpperCase()] = info;
+                    });
+                };
+
+                const first = await api.get(
+                    `/datasets/${datasetId}/deg-genes/${encodeURIComponent(selectedComparison)}`,
+                    { params: { page_size: PAGE_SIZE, page: 1 } }
+                );
+                if (cancelled) return;
+                addGenes(first.data?.genes ?? []);
+
+                const totalPages: number = first.data?.pagination?.total_pages ?? 1;
+                const remaining = Math.min(totalPages, 6);
+                const reqs = [];
+                for (let p = 2; p <= remaining; p++) {
+                    reqs.push(api.get(
+                        `/datasets/${datasetId}/deg-genes/${encodeURIComponent(selectedComparison)}`,
+                        { params: { page_size: PAGE_SIZE, page: p } }
+                    ));
+                }
+                const results = await Promise.all(reqs);
+                if (cancelled) return;
+                results.forEach(r => addGenes(r.data?.genes ?? []));
+
+                setDegGeneMap(map);
+            } catch {
+                setDegGeneMap({});
+            }
+        };
+        fetchDegGenes();
+        return () => { cancelled = true; };
+    }, [datasetId, selectedComparison]);
 
     // Fetch ALL results when comparison or maxPadj changes
     useEffect(() => {
@@ -79,14 +128,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             try {
                 const params = new URLSearchParams();
                 params.append('max_padj', maxPadj.toString());
-                params.append('limit', '500'); // reasonable limit
-                // Note: We intentionally do NOT send 'regulation' or 'category' here
-                // We fetch everything and filter client-side
+                params.append('limit', '2000'); // fetch all categories
+                // Fetch everything and filter client-side for instant UI responses
 
                 const res = await api.get(`/enrichment/${datasetId}/${selectedComparison}?${params.toString()}`);
                 setAllResults(res.data);
-            } catch (err: any) {
-                setError("Failed to load enrichment results");
+            } catch (err: unknown) {
+                const detail = (err as ApiErrorShape)?.response?.data?.detail;
+                setError(typeof detail === 'string' ? detail : 'Failed to load enrichment results');
                 console.error(err);
             } finally {
                 setLoading(false);
@@ -95,35 +144,6 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
         fetchResults();
     }, [datasetId, selectedComparison, maxPadj]);
-
-    // Run GO enrichment on demand
-    const runGoEnrichment = async () => {
-        if (!selectedDegComparison) return;
-        setIsRunning(true);
-        setRunError(null);
-        setRunSuccess(null);
-        try {
-            const res = await api.post(
-                `/datasets/${datasetId}/comparisons/${encodeURIComponent(selectedDegComparison)}/go-enrichment`,
-                {}
-            );
-            const n = res.data?.enriched_terms?.length ?? 0;
-            setRunSuccess(`GO enrichment completed: ${n} terms found for "${selectedDegComparison}".`);
-            // Re-fetch enrichment comparisons so the new comparison appears in the dropdown
-            const compsRes = await api.get(`/enrichment/${datasetId}/comparisons`);
-            setComparisons(compsRes.data);
-            if (compsRes.data.includes(selectedDegComparison)) {
-                setSelectedComparison(selectedDegComparison);
-            } else if (compsRes.data.length > 0) {
-                setSelectedComparison(compsRes.data[0]);
-            }
-        } catch (err: any) {
-            const detail = err?.response?.data?.detail ?? err?.message ?? "Unknown error";
-            setRunError(`GO enrichment failed: ${detail}`);
-        } finally {
-            setIsRunning(false);
-        }
-    };
 
     // Derived filtered results for TABLE
     const filteredResults = useMemo(() => {
@@ -253,55 +273,68 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
+    // Color-code database badges
+    const getCategoryBadgeColor = (cat: string) => {
+        if (cat.startsWith('GO:BP')) return 'bg-blue-100 text-blue-800';
+        if (cat.startsWith('GO:MF')) return 'bg-green-100 text-green-800';
+        if (cat.startsWith('GO:CC')) return 'bg-purple-100 text-purple-800';
+        if (cat.toUpperCase().includes('KEGG')) return 'bg-orange-100 text-orange-800';
+        if (cat.toUpperCase().includes('REACTOME')) return 'bg-teal-100 text-teal-800';
+        if (cat.toUpperCase().includes('HALLMARK')) return 'bg-yellow-100 text-yellow-800';
+        if (cat.toUpperCase().includes('WIKI')) return 'bg-pink-100 text-pink-800';
+        return 'bg-gray-100 text-gray-800';
+    };
+
+    // Gene chip: UP/DOWN color + hover tooltip
+    const renderGeneChip = (gene: string) => {
+        const info = degGeneMap[gene.toUpperCase()];
+        const reg = info?.regulation;
+        const chipColor = reg === 'UP'
+            ? 'bg-red-100 text-red-800 border border-red-200'
+            : reg === 'DOWN'
+            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200';
+
+        const tooltip = info
+            ? `${info.gene_name ?? gene} · ${reg} · logFC: ${info.log_fc != null ? info.log_fc.toFixed(3) : 'N/A'} · padj: ${info.padj != null ? info.padj.toExponential(2) : 'N/A'}`
+            : gene;
+
+        return (
+            <span
+                key={gene}
+                title={tooltip}
+                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-default ${chipColor}`}
+            >
+                {reg === 'UP' && <span className="mr-0.5 text-red-500">↑</span>}
+                {reg === 'DOWN' && <span className="mr-0.5 text-blue-500">↓</span>}
+                {gene}
+            </span>
+        );
+    };
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
     return (
         <div className="space-y-6">
-            {/* GO Enrichment Runner */}
-            {degComparisons.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <Play className="h-4 w-4 text-indigo-600" />
-                        Run GO Enrichment on DEGs
-                    </h3>
-                    <div className="flex flex-wrap gap-3 items-end">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">DEG Comparison</label>
-                            <select
-                                className="block rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                value={selectedDegComparison}
-                                onChange={(e) => setSelectedDegComparison(e.target.value)}
-                                disabled={isRunning}
-                            >
-                                {degComparisons.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <button
-                            onClick={runGoEnrichment}
-                            disabled={isRunning || !selectedDegComparison}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isRunning
-                                ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Running...</>
-                                : <><Play className="h-4 w-4 mr-2" />Run GO Enrichment</>
-                            }
-                        </button>
-                    </div>
-                    {runError && <p className="mt-2 text-sm text-red-600">{runError}</p>}
-                    {runSuccess && <p className="mt-2 text-sm text-green-600">{runSuccess}</p>}
-                </div>
-            )}
-
             {/* Controls */}
             <div className="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Comparison</label>
-                        <select 
+                        <select
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             value={selectedComparison}
                             onChange={(e) => setSelectedComparison(e.target.value)}
-                            disabled={comparisons.length === 0}
+                            disabled={loadingComparisons || comparisons.length === 0}
                         >
-                            {comparisons.length === 0 && <option>No enrichment data found</option>}
+                            {loadingComparisons && <option>Loading…</option>}
+                            {!loadingComparisons && comparisons.length === 0 && <option>No enrichment data available</option>}
                             {comparisons.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
@@ -373,7 +406,12 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 </div>
             </div>
 
-            {loading && <div className="text-center py-12 text-gray-500">Loading enrichment data...</div>}
+            {loading && (
+                <div className="flex items-center justify-center gap-2 py-12 text-gray-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading enrichment results…</span>
+                </div>
+            )}
             
             {error && <div className="p-4 bg-red-50 text-red-700 rounded-md">{error}</div>}
 
@@ -388,7 +426,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                             category: categoryFilter || 'ALL',
                             comparison_name: selectedComparison || 'all',
                             regulation: regulationFilter,
-                            top_terms: filteredResults.slice(0, 8).map((t: any) => ({
+                            top_terms: filteredResults.slice(0, 8).map((t) => ({
                                 name: t.pathway_name,
                                 pvalue: t.padj,
                                 gene_count: t.gene_count ?? 0,
@@ -399,16 +437,16 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 </div>
             )}
 
-            {/* Category Filter - Always visible as it affects both views logically */}
+            {/* Category Filter */}
             {!loading && !error && allResults.length > 0 && (
-                 <div className="flex gap-2 flex-wrap pb-2">
+                <div className="flex gap-2 flex-wrap pb-2">
                     {categories.map(cat => (
-                        <button 
+                        <button
                             key={cat}
                             onClick={() => setCategoryFilter(categoryFilter === cat ? "" : cat)}
                             className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
-                                categoryFilter === cat 
-                                ? 'bg-indigo-600 border-indigo-600 text-white' 
+                                categoryFilter === cat
+                                ? 'bg-indigo-600 border-indigo-600 text-white'
                                 : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
                             }`}
                         >
@@ -416,11 +454,11 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         </button>
                     ))}
                     {categoryFilter && (
-                         <button 
+                        <button
                             onClick={() => setCategoryFilter("")}
                             className="px-2 py-1 text-xs text-indigo-600 hover:text-indigo-800"
                         >
-                            Clear Filter
+                            Clear filter
                         </button>
                     )}
                 </div>
@@ -449,70 +487,114 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
             {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    No enrichment pathways found for these settings.
+                    {comparisons.length === 0
+                        ? "No enrichment data available for this dataset."
+                        : "No enrichment pathways found for these settings."}
                 </div>
             )}
 
             {!loading && viewMode === 'table' && filteredResults.length > 0 && (
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                     <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <span className="text-sm text-gray-700 font-medium">Found {filteredResults.length} pathways</span>
+                    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <span className="text-sm text-gray-700 font-medium">
+                            {filteredResults.length} pathways found
+                        </span>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-red-100 border border-red-200" /> Upregulated</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-200" /> Downregulated</span>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P-adjust</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8" />
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Term name &amp; description</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Database</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genes</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adj. p-value</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regulation</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Links</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredResults.map((r) => (
-                                    <tr key={r.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
-                                            {r.pathway_id}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                            <div className="font-medium">{r.pathway_name}</div>
-                                            {r.description && <div className="text-xs text-gray-500 truncate max-w-xs">{r.description}</div>}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                                {r.category}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {r.gene_count}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {r.padj.toExponential(2)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                r.regulation === 'UP' ? 'bg-red-100 text-red-800' : 
-                                                r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {r.regulation}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {(r.category.startsWith('GO:') || r.pathway_id.startsWith('GO:')) && (
-                                                <Link 
-                                                    href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
-                                                    target="_blank"
-                                                    className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end"
-                                                >
-                                                    View <ExternalLink className="h-3 w-3 ml-1"/>
-                                                </Link>
+                                {filteredResults.map((r) => {
+                                    const isExpanded = expandedRows.has(r.id);
+                                    return (
+                                        <Fragment key={r.id}>
+                                            <tr key={r.id} className="hover:bg-gray-50">
+                                                <td className="px-2 py-3 text-center">
+                                                    {r.genes && r.genes.length > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleRow(r.id)}
+                                                            className="text-gray-400 hover:text-gray-600 p-1"
+                                                            title={isExpanded ? 'Hide genes' : 'Show genes'}
+                                                        >
+                                                            {isExpanded
+                                                                ? <ChevronUp className="h-4 w-4" />
+                                                                : <ChevronDown className="h-4 w-4" />
+                                                            }
+                                                        </button>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-indigo-600">
+                                                    {r.pathway_id}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                    <div className="font-medium">{r.pathway_name}</div>
+                                                    {r.description && r.description !== r.pathway_name && (
+                                                        <div className="text-xs text-gray-500 mt-0.5 leading-snug">{r.description}</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryBadgeColor(r.category)}`}>
+                                                        {r.category}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                    {r.gene_count}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-700">
+                                                    {r.padj.toExponential(2)}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
+                                                        r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                                    {(r.category.startsWith('GO:') || r.pathway_id.startsWith('GO:')) && (
+                                                        <Link
+                                                            href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
+                                                            target="_blank"
+                                                            className="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1"
+                                                            title="View in GO browser"
+                                                        >
+                                                            GO <ExternalLink className="h-3 w-3" />
+                                                        </Link>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && r.genes && r.genes.length > 0 && (
+                                                <tr key={`${r.id}-genes`} className="bg-gray-50">
+                                                    <td colSpan={8} className="px-6 py-3">
+                                                        <p className="text-xs font-medium text-gray-500 mb-2">
+                                                            Associated genes ({r.genes.length}) — hover for details
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {r.genes.map(gene => renderGeneChip(gene))}
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                        </Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

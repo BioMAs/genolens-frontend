@@ -46,13 +46,35 @@ interface GSEAResponse {
   results: GSEAResult[];
 }
 
+interface EnrichmentPlotData {
+  gene_set_name: string;
+  enrichment_score: number;
+  running_enrichment_scores: number[];
+  gene_positions: number[];
+  ranked_genes: string[];
+  metrics: number[];
+  gene_set_size: number;
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  return (error as ApiError).response?.data?.detail ?? fallback;
+}
+
 export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisProps) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<GSEAResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedGeneSet, setSelectedGeneSet] = useState<string | null>(null);
-  const [enrichmentPlotData, setEnrichmentPlotData] = useState<any | null>(null);
+  const [enrichmentPlotData, setEnrichmentPlotData] = useState<EnrichmentPlotData | null>(null);
   const [loadingPlot, setLoadingPlot] = useState(false);
   const [isCached, setIsCached] = useState(false);
 
@@ -76,7 +98,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       }
     };
     loadCached();
-  }, [dataset.id, comparisonName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dataset.id, comparisonName]);
 
   // GSEA parameters
   const [parameters, setParameters] = useState({
@@ -100,9 +122,9 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       setResults(response.data);
       setIsCached(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('GSEA analysis failed:', err);
-      setError(err.response?.data?.detail || 'Failed to run GSEA analysis');
+      setError(getApiErrorMessage(err, 'Failed to run GSEA analysis'));
     } finally {
       setLoading(false);
     }
@@ -124,7 +146,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       );
 
       setEnrichmentPlotData(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load enrichment plot:', err);
       alert('Failed to load enrichment plot');
     } finally {
@@ -365,7 +387,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
           <Play className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Run GSEA</h3>
           <p className="text-gray-600 mb-4">
-            Click "Run GSEA" to start the analysis. You can adjust settings before running.
+            Click &quot;Run GSEA&quot; to start the analysis. You can adjust settings before running.
           </p>
           <p className="text-sm text-gray-500">
             GSEA will analyze {comparisonName} to identify enriched gene sets.

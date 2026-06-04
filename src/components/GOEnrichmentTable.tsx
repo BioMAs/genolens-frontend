@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
+import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
@@ -12,6 +13,7 @@ interface GOTerm {
   go_id: string;
   go_name: string;
   namespace: string;
+  description?: string;
   pvalue: number;
   fdr: number;
   enrichment_ratio: number;
@@ -21,13 +23,21 @@ interface GOTerm {
   level?: number;
 }
 
+interface DegGeneInfo {
+  regulation: string;
+  log_fc: number;
+  padj: number;
+  gene_name: string;
+}
+
 interface GOEnrichmentTableProps {
   terms: GOTerm[];
   onTermSelect?: (goId: string) => void;
-  projectId?: string; // Optional project ID for bookmarks
+  projectId?: string;
+  degGeneMap?: Record<string, DegGeneInfo>;
 }
 
-export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GOEnrichmentTableProps) {
+export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'fdr' | 'pvalue' | 'ratio'>('fdr');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -106,33 +116,77 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
   };
 
   const getNamespaceBadgeColor = (ns: string) => {
-    switch (ns) {
-      case 'biological_process':
-        return 'bg-blue-500 hover:bg-blue-600';
-      case 'molecular_function':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'cellular_component':
-        return 'bg-purple-500 hover:bg-purple-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
+    if (ns === 'GO:BP' || ns === 'biological_process') return 'bg-blue-500 hover:bg-blue-600';
+    if (ns === 'GO:MF' || ns === 'molecular_function') return 'bg-green-500 hover:bg-green-600';
+    if (ns === 'GO:CC' || ns === 'cellular_component') return 'bg-purple-500 hover:bg-purple-600';
+    if (ns === 'KEGG') return 'bg-orange-500 hover:bg-orange-600';
+    if (ns === 'REACTOME') return 'bg-cyan-600 hover:bg-cyan-700';
+    if (ns === 'HALLMARK') return 'bg-rose-500 hover:bg-rose-600';
+    if (ns === 'TF') return 'bg-yellow-500 hover:bg-yellow-600';
+    return 'bg-gray-500 hover:bg-gray-600';
   };
 
   const getNamespaceLabel = (ns: string) => {
-    switch (ns) {
-      case 'biological_process':
-        return 'BP';
-      case 'molecular_function':
-        return 'MF';
-      case 'cellular_component':
-        return 'CC';
-      default:
-        return ns;
-    }
+    if (ns === 'biological_process') return 'GO:BP';
+    if (ns === 'molecular_function') return 'GO:MF';
+    if (ns === 'cellular_component') return 'GO:CC';
+    return ns || '—';
   };
+
+  const [hoveredGene, setHoveredGene] = useState<{ gene: string; x: number; y: number } | null>(null);
+
+  const renderGeneChip = (gene: string) => {
+    const key = gene.toUpperCase();
+    const info = degGeneMap?.[key];
+    const isUp = info?.regulation === 'UP';
+    const isDown = info?.regulation === 'DOWN';
+    const chipClass = isUp
+      ? 'bg-red-100 text-red-800 border-red-200'
+      : isDown
+        ? 'bg-blue-100 text-blue-800 border-blue-200'
+        : 'bg-gray-100 text-gray-700 border-gray-200';
+    return (
+      <span
+        key={gene}
+        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border cursor-help ${chipClass}`}
+        onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
+        onMouseLeave={() => setHoveredGene(null)}
+      >
+        {isUp ? '↑ ' : isDown ? '↓ ' : ''}{gene}
+      </span>
+    );
+  };
+
+  const canUsePortal = typeof document !== 'undefined';
 
   return (
     <div className="space-y-4">
+      {/* Gene hover tooltip portal */}
+      {canUsePortal && hoveredGene && (() => {
+        const info = degGeneMap?.[hoveredGene.gene.toUpperCase()];
+        if (!info) return null;
+        const isUp = info.regulation === 'UP';
+        const isDown = info.regulation === 'DOWN';
+        return createPortal(
+          <div
+            className="fixed z-[9999] pointer-events-none bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs max-w-xs"
+            style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
+          >
+            <div className="font-semibold text-gray-900">{hoveredGene.gene}</div>
+            {info.gene_name && info.gene_name !== hoveredGene.gene && (
+              <div className="text-gray-500 mb-1">{info.gene_name}</div>
+            )}
+            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-gray-600'}`}>
+              {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-gray-600">
+              <span>logFC</span><span className="font-semibold text-gray-900">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
+              <span>Adj. P-value</span><span className="font-semibold text-gray-900">{info.padj?.toExponential(2) ?? 'N/A'}</span>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
       {/* Search and Export */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -220,12 +274,15 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
               {pagedTerms.map((term) => {
                 const isExpanded = expandedRows.has(term.go_id);
                 return (
-                  <>
+                  <Fragment key={term.go_id}>
                     <tr key={term.go_id} className="border-t hover:bg-muted/50 transition-colors">
                       <td className="p-3">
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
                           <div className="text-sm text-muted-foreground">{term.go_id}</div>
+                          {term.description && (
+                            <div className="text-xs text-gray-500 italic max-w-sm leading-snug">{term.description}</div>
+                          )}
                         </div>
                       </td>
                       <td className="p-3">
@@ -288,9 +345,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
                                       variant="icon"
                                     />
                                   )}
-                                  <Badge variant="secondary">
-                                    {gene}
-                                  </Badge>
+                                  {renderGeneChip(gene)}
                                 </div>
                               ))}
                             </div>
@@ -298,7 +353,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId }: GO
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

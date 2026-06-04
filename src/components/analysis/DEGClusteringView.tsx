@@ -5,8 +5,9 @@ import dynamic from 'next/dynamic';
 import { Dataset } from '@/types';
 import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData } from '@/components/heatmap/useHeatmapData';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -171,14 +172,14 @@ export default function DEGClusteringView({
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-xs text-amber-800">
           <span className="mt-0.5">⚠️</span>
           <span>
-            <strong>Fichier metadata absent</strong> — les échantillons ne sont pas filtrés à cette comparaison.
-            Tous les échantillons de la matrice sont affichés. Uploadez un fichier de métadonnées (sample design) pour restreindre l&apos;affichage aux échantillons de <em>{comparisonName}</em>.
+            <strong>Metadata file missing</strong> — samples are not filtered for this comparison.
+            All matrix samples are displayed. Upload a metadata (sample design) file to restrict the view to the samples of <em>{comparisonName}</em>.
           </span>
         </div>
       )}
       {/* Controls bar */}
       <div className="flex items-center gap-6 flex-wrap bg-white rounded-lg border border-gray-200 px-4 py-2.5">
-        <span className="text-sm font-medium text-gray-700">Valeur affichée :</span>
+        <span className="text-sm font-medium text-gray-700">Displayed value:</span>
         <div className="flex gap-4">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
@@ -189,7 +190,7 @@ export default function DEGClusteringView({
               onChange={() => setDisplayMode('expression')}
               className="text-brand-primary"
             />
-            <span className="text-sm text-gray-700">Expression normalisée (z-score)</span>
+            <span className="text-sm text-gray-700">Normalized expression (z-score)</span>
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
@@ -209,13 +210,13 @@ export default function DEGClusteringView({
         {isPreview && (
           <span className="text-xs text-amber-600 flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
-            Aperçu (chargement données complètes…)
+            Preview (loading full data…)
           </span>
         )}
         {loading && plotData && (
           <span className="text-xs text-purple-600 flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
-            Mise à jour…
+            Updating…
           </span>
         )}
 
@@ -244,7 +245,7 @@ export default function DEGClusteringView({
               customdata: degStatus.map(v => [v === 1 ? 'UP ▲' : 'DOWN ▼']),
               xaxis: 'x2',
               yaxis: 'y',
-            } as any,
+            } as Partial<PlotData>,
 
             // ── Main expression / log2FC heatmap ─────────────────────────
             {
@@ -269,7 +270,7 @@ export default function DEGClusteringView({
               },
               xaxis: 'x',
               yaxis: 'y',
-            } as any,
+            } as unknown as Partial<PlotData>,
           ]}
           layout={{
             autosize: true,
@@ -304,7 +305,7 @@ export default function DEGClusteringView({
             margin: { l: 55, r: 90, b: 120, t: 140 },
             paper_bgcolor: 'white',
             plot_bgcolor: 'white',
-          } as any}
+          } as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}
           config={{
@@ -324,15 +325,15 @@ export default function DEGClusteringView({
       <div className="flex flex-wrap items-center gap-5 text-xs text-gray-600 bg-gray-50 rounded px-4 py-2">
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#7B2D8B' }} />
-          <span>DOWN-régulé</span>
+          <span>DOWN-regulated</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3A7D44' }} />
-          <span>UP-régulé</span>
+          <span>UP-regulated</span>
         </div>
         <span className="text-gray-300">|</span>
         <span className="text-gray-500">
-          Comparaison : <strong className="text-gray-700">{comparisonName}</strong> — {nSamples} échantillons, {nDEGs} DEGs
+          Comparison: <strong className="text-gray-700">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
         </span>
       </div>
     </div>

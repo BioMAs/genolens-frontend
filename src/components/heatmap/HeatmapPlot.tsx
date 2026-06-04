@@ -9,6 +9,20 @@ import HeatmapControls from './HeatmapControls';
 import HeatmapVisualization from './HeatmapVisualization';
 import HeatmapModal from './HeatmapModal';
 
+declare global {
+  interface Window {
+    Plotly?: {
+      downloadImage: (plot: Element, options: {
+        format: ExportFormat;
+        width: number;
+        height: number;
+        scale: number;
+        filename: string;
+      }) => Promise<void> | void;
+    };
+  }
+}
+
 export default function HeatmapPlot({
   degDataset,
   matrixDataset,
@@ -19,8 +33,11 @@ export default function HeatmapPlot({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const plotDivRef = useRef<HTMLDivElement | null>(null);
 
+  const metadataComparisonName = degDataset.dataset_metadata?.comparison_name;
   const comparisonName =
-    propComparisonName || degDataset.dataset_metadata?.comparison_name || degDataset.name;
+    propComparisonName ||
+    (typeof metadataComparisonName === 'string' ? metadataComparisonName : '') ||
+    degDataset.name;
 
   const { loading, error, plotData, geneMetadata, isPreview, refetch } = useHeatmapData({
     degDataset,
@@ -37,11 +54,8 @@ export default function HeatmapPlot({
     if (!plotDivRef.current || !plotData) return;
 
     try {
-      // Dynamic import of Plotly for client-side only
-      const Plotly = (await import('react-plotly.js')).default as any;
-      
       // Get the main plot element
-      const plotElement = plotDivRef.current.querySelector('.js-plotly-plot') as any;
+      const plotElement = plotDivRef.current.querySelector('.js-plotly-plot');
       if (!plotElement) {
         console.error('Plot element not found');
         return;
@@ -49,8 +63,7 @@ export default function HeatmapPlot({
 
       const filename = generateExportFilename(comparisonName, params.top_n_genes, format);
       
-      // Use Plotly.Lib to access the underlying Plotly library
-      const PlotlyLib = (Plotly as any).Plotly || window.Plotly;
+      const PlotlyLib = window.Plotly;
       if (!PlotlyLib || !PlotlyLib.downloadImage) {
         console.error('Plotly library not available');
         return;

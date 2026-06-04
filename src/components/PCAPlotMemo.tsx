@@ -2,12 +2,6 @@
 
 import { memo } from 'react';
 import PCAPlot from './PCAPlot';
-import { Dataset } from '@/types';
-
-interface PCAPlotMemoProps {
-  dataset: Dataset;
-  metadataDataset?: Dataset;
-}
 
 // Memoized version of PCAPlot for performance
 // Only re-renders if dataset IDs change

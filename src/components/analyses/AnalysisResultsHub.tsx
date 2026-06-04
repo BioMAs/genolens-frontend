@@ -2,15 +2,17 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
-import { SelfServiceAnalysisStatus, Dataset, DatasetType, DatasetStatus } from '@/types';
+import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
 import PreprocessingResults from './PreprocessingResults';
+import type { QCReport } from './PreprocessingResults';
 import PCAResults from './PCAResults';
+import type { PCAData } from './PCAResults';
 import UMAPResults from './UMAPResults';
+import type { UMAPPoint } from './UMAPResults';
 import ComparisonGrid from './ComparisonGrid';
 
 type Tab = 'preprocessing' | 'pca' | 'umap' | 'comparisons' | 'params';
@@ -28,8 +30,43 @@ interface Props {
   analysisId: string;
 }
 
+function isQCReport(value: unknown): value is QCReport {
+  if (!value || typeof value !== 'object') return false;
+  const report = value as Partial<QCReport>;
+  return (
+    typeof report.total_input_samples === 'number' &&
+    typeof report.samples_passed === 'number' &&
+    typeof report.samples_removed === 'number' &&
+    typeof report.genes_before_filter === 'number' &&
+    typeof report.genes_after_filter === 'number'
+  );
+}
+
+function isPCAData(value: unknown): value is PCAData {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Partial<PCAData>;
+  return (
+    Array.isArray(data.variance_explained) &&
+    Array.isArray(data.pc_labels) &&
+    Array.isArray(data.samples)
+  );
+}
+
+function isUMAPPoint(value: unknown): value is UMAPPoint {
+  if (!value || typeof value !== 'object') return false;
+  const point = value as Partial<UMAPPoint>;
+  return (
+    typeof point.sample_id === 'string' &&
+    typeof point.UMAP1 === 'number' &&
+    typeof point.UMAP2 === 'number'
+  );
+}
+
+function isUMAPData(value: unknown): value is UMAPPoint[] {
+  return Array.isArray(value) && value.every(isUMAPPoint);
+}
+
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('comparisons');
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
@@ -50,20 +87,21 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     ) {
       queryClient.invalidateQueries({ queryKey: ['datasets', 'project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId, 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId, 'comparisons'] });
     }
-  }, [analysis?.status, projectId, queryClient]);
+  }, [analysis, projectId, queryClient]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
   // Comparisons linked to this analysis (via result_dataset_ids)
-  const allComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
   const analysisComparisons = useMemo(() => {
+    const allComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
     if (!analysis) return allComparisons;
     const resultIds = new Set(analysis.result_dataset_ids ?? []);
     const filtered = allComparisons.filter((c) => resultIds.has(c.dataset_id));
     // If no match via dataset_id, show all (fallback for older analyses)
     return filtered.length > 0 ? filtered : allComparisons;
-  }, [analysis, allComparisons]);
+  }, [analysis, summary?.comparisons]);
 
   // VST dataset (for PCA data embedded in metadata)
   const vstDataset = useMemo<Dataset | undefined>(() => {
@@ -79,7 +117,10 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   }, [datasets, analysis, analysisId]);
 
   // PCA data embedded in the VST dataset metadata
-  const pcaData = vstDataset?.dataset_metadata?.pca_data ?? null;
+  const pcaData = useMemo<PCAData | null>(() => {
+    const rawPcaData = vstDataset?.dataset_metadata?.pca_data;
+    return isPCAData(rawPcaData) ? rawPcaData : null;
+  }, [vstDataset]);
 
   // UMAP dataset
   const umapDataset = useMemo<Dataset | undefined>(() => {
@@ -93,17 +134,22 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }, [datasets, analysis, analysisId]);
 
-  const umapData = umapDataset?.dataset_metadata?.umap_data ?? null;
+  const umapData = useMemo<UMAPPoint[] | null>(() => {
+    const rawUmapData = umapDataset?.dataset_metadata?.umap_data;
+    return isUMAPData(rawUmapData) ? rawUmapData : null;
+  }, [umapDataset]);
 
   // QC report embedded in VST dataset metadata (or normalized dataset)
-  const qcReport = useMemo(() => {
-    if (vstDataset?.dataset_metadata?.qc_report) {
-      return vstDataset.dataset_metadata.qc_report;
+  const qcReport = useMemo<QCReport | null>(() => {
+    const vstQcReport = vstDataset?.dataset_metadata?.qc_report;
+    if (isQCReport(vstQcReport)) {
+      return vstQcReport;
     }
     const normId = analysis?.intermediate_dataset_ids?.normalized;
     if (normId) {
       const normDs = datasets.find((d) => d.id === normId);
-      return normDs?.dataset_metadata?.qc_report ?? null;
+      const normQcReport = normDs?.dataset_metadata?.qc_report;
+      return isQCReport(normQcReport) ? normQcReport : null;
     }
     return null;
   }, [vstDataset, analysis, datasets]);
@@ -119,7 +165,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
   if (analysisLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
       </div>
     );
@@ -127,11 +173,11 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
   if (!analysis) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <div className="text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
-          <p className="text-gray-600">Analysis not found.</p>
-          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-indigo-600 hover:underline">
+          <p style={{ color: 'var(--text-secondary)' }}>Analysis not found.</p>
+          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-indigo-500 hover:underline">
             ← Back to project
           </Link>
         </div>
@@ -139,33 +185,33 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }
 
-  const isDone = analysis.status === SelfServiceAnalysisStatus.DONE;
   const projectName = summary?.project?.name ?? 'Project';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--app-bg)' }}>
       <div className="mx-auto max-w-7xl space-y-6">
 
         {/* Breadcrumb */}
         <div>
           <Link
             href={`/projects/${projectId}`}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+            className="inline-flex items-center gap-1.5 text-sm"
+            style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft className="h-4 w-4" /> {projectName}
           </Link>
         </div>
 
         {/* Header */}
-        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm px-6 py-5">
+        <div className="rounded-2xl shadow-sm px-6 py-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30">
                 <FlaskConical className="h-5 w-5 text-indigo-500" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{analysis.name}</h1>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   {new Date(analysis.created_at).toLocaleString('en-US')}
                   {' · '}
                   {analysisComparisons.length} comparison{analysisComparisons.length !== 1 ? 's' : ''}
@@ -176,7 +222,8 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <StatusBadge status={analysis.status} />
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-secondary)' }}
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Re-run
               </Link>
@@ -185,9 +232,9 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           {/* Tab bar */}
-          <div className="border-b border-gray-200 flex overflow-x-auto">
+          <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
             {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => (
               <button
                 key={tab}
@@ -195,13 +242,13 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                 onClick={() => setActiveTab(tab)}
                 className={`shrink-0 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab
-                    ? 'border-indigo-500 text-indigo-700'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {TAB_LABELS[tab]}
                 {tab === 'comparisons' && analysisComparisons.length > 0 && (
-                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-600">
+                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
                     {analysisComparisons.length}
                   </span>
                 )}
@@ -254,11 +301,11 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
 function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
   const styles: Record<SelfServiceAnalysisStatus, string> = {
-    [SelfServiceAnalysisStatus.PENDING]:   'bg-yellow-100 text-yellow-800',
-    [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800',
-    [SelfServiceAnalysisStatus.DONE]:      'bg-green-100 text-green-800',
-    [SelfServiceAnalysisStatus.FAILED]:    'bg-red-100 text-red-800',
-    [SelfServiceAnalysisStatus.CANCELLED]: 'bg-gray-100 text-gray-600',
+    [SelfServiceAnalysisStatus.PENDING]:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    [SelfServiceAnalysisStatus.DONE]:      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    [SelfServiceAnalysisStatus.FAILED]:    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    [SelfServiceAnalysisStatus.CANCELLED]: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
   };
   const labels: Record<SelfServiceAnalysisStatus, string> = {
     [SelfServiceAnalysisStatus.PENDING]:   'Pending',
@@ -281,7 +328,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
   const rows: { label: string; value: string }[] = [
     { label: 'DESeq2 design',        value: String(params.design ?? 'auto') },
     { label: 'FDR threshold',        value: String(params.fdr ?? 0.05) },
-    { label: 'Min |log2FC|',         value: String(params.min_log2fc ?? 1.0) },
+    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.5) },
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },
@@ -291,21 +338,22 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700">DESeq2 Parameters</h3>
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>DESeq2 Parameters</h3>
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div
             key={label}
-            className={`flex items-center justify-between px-4 py-2.5 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+            className="flex items-center justify-between px-4 py-2.5"
+            style={{ background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-raised)' }}
           >
-            <span className="text-xs text-gray-500">{label}</span>
-            <span className="text-xs font-semibold font-mono text-gray-800">{value}</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
+            <span className="text-xs font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{value}</span>
           </div>
         ))}
       </div>
       <Link
         href={`/projects/${analysis.project_id}/setup?rerun=${analysis.id}`}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
       >
         <RotateCcw className="h-3.5 w-3.5" /> Re-run with new parameters
       </Link>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/utils/api';
-import { Bot, RefreshCw, Search, Filter } from 'lucide-react';
+import { Bot, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface AIUsageLog {
@@ -21,7 +21,6 @@ interface AIUsageLog {
 export default function AIUsageLogs() {
   const [logs, setLogs] = useState<AIUsageLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
 
   const fetchLogs = async () => {
@@ -31,10 +30,8 @@ export default function AIUsageLogs() {
         params: { limit: 100 }
       });
       setLogs(response.data);
-      setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch AI logs:', err);
-      setError('Failed to load usage logs.');
     } finally {
       setLoading(false);
     }

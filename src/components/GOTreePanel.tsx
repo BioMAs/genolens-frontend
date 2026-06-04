@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronRight, ChevronDown, ExternalLink, Network, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -223,9 +223,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
   const [loaded, setLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'graph'>('tree');
 
-  // Lazy-load on first render
   const loadHierarchy = useCallback(async () => {
-    if (loaded) return;
     setLoading(true);
     setError(null);
     try {
@@ -242,12 +240,12 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
     } finally {
       setLoading(false);
     }
-  }, [datasetId, comparisonName, regulation, loaded]);
+  }, [datasetId, comparisonName, regulation]);
 
-  // Trigger load when component mounts
-  if (!loaded && !loading && !error) {
+  // Trigger load on mount (and when key props change)
+  useEffect(() => {
     loadHierarchy();
-  }
+  }, [loadHierarchy]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds(prev => {

@@ -22,6 +22,26 @@ interface UseHeatmapDataReturn {
   refetch: () => void;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+  message?: string;
+}
+
+type LooseRow = Record<string, unknown>;
+
+function toNumber(value: unknown, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function toStringValue(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
 export function useHeatmapData({
   degDataset,
   matrixDataset,
@@ -65,13 +85,13 @@ export function useHeatmapData({
             },
           }
         );
-        const genes: any[] = dbResp.data.genes ?? [];
+        const genes = (dbResp.data.genes ?? []) as LooseRow[];
         if (genes.length > 0) {
-          degRows = genes.map((g: any) => ({
-            gene_id: g.gene_id,
+          degRows = genes.map((g) => ({
+            gene_id: toStringValue(g.gene_id),
             // The DB stores the field as log_fc; normalise to logFC here
-            logFC: parseFloat(g.log_fc ?? g.logFC ?? g.log2FoldChange ?? 0),
-            padj: parseFloat(g.padj ?? 1),
+            logFC: toNumber(g.log_fc ?? g.logFC ?? g.log2FoldChange, 0),
+            padj: toNumber(g.padj, 1),
           }));
         }
       } catch {
@@ -80,20 +100,33 @@ export function useHeatmapData({
 
       // --- Strategy B: Parquet /query fallback ---
       if (degRows.length === 0) {
-        const _comparisons = degDataset.dataset_metadata?.comparisons;
-        const columnsInfo =
-          degDataset.dataset_metadata?.columns_info?.comparisons?.[comparisonName] ||
-          (_comparisons && typeof _comparisons === 'object' && !Array.isArray(_comparisons)
-            ? _comparisons[comparisonName]
-            : undefined);
+        const datasetMetadata = degDataset.dataset_metadata as Record<string, unknown> | undefined;
+        const comparisons =
+          datasetMetadata?.comparisons &&
+          typeof datasetMetadata.comparisons === 'object' &&
+          !Array.isArray(datasetMetadata.comparisons)
+            ? (datasetMetadata.comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
+
+        const columnsInfoComparisons =
+          datasetMetadata?.columns_info &&
+          typeof datasetMetadata.columns_info === 'object' &&
+          !Array.isArray(datasetMetadata.columns_info) &&
+          (datasetMetadata.columns_info as Record<string, unknown>).comparisons &&
+          typeof (datasetMetadata.columns_info as Record<string, unknown>).comparisons === 'object' &&
+          !Array.isArray((datasetMetadata.columns_info as Record<string, unknown>).comparisons)
+            ? ((datasetMetadata.columns_info as Record<string, unknown>).comparisons as Record<string, Record<string, unknown>>)
+            : undefined;
+
+        const columnsInfo = columnsInfoComparisons?.[comparisonName] || comparisons?.[comparisonName];
 
         const logFCCol: string =
-          columnsInfo?.logFC ||
+          (typeof columnsInfo?.logFC === 'string' ? columnsInfo.logFC : undefined) ||
           degDataset.column_mapping?.log_fc ||
           degDataset.column_mapping?.log2FoldChange ||
           'log2FoldChange';
         const pValCol: string =
-          columnsInfo?.padj ||
+          (typeof columnsInfo?.padj === 'string' ? columnsInfo.padj : undefined) ||
           degDataset.column_mapping?.padj ||
           'padj';
 
@@ -105,7 +138,7 @@ export function useHeatmapData({
           ...(safeLogFCCol ? { sort_by: safeLogFCCol, sort_desc: true } : {}),
         });
 
-        const rawRows: any[] = queryResp.data.data ?? [];
+        const rawRows = (queryResp.data.data ?? []) as LooseRow[];
         const returnedColumns: string[] = queryResp.data.columns ?? [];
 
         // Detect prefixed column names (e.g. logFC:comparisonName, padj:comparisonName)
@@ -124,15 +157,15 @@ export function useHeatmapData({
           pValCol;
 
         degRows = rawRows
-          .filter((r: any) => {
-            const lfc = parseFloat(r[detectedLogFCCol]);
-            const p = parseFloat(r[detectedPadjCol]);
+          .filter((r) => {
+            const lfc = toNumber(r[detectedLogFCCol], Number.NaN);
+            const p = toNumber(r[detectedPadjCol], Number.NaN);
             return !isNaN(lfc) && !isNaN(p);
           })
-          .map((r: any) => ({
-            gene_id: r.gene_id,
-            logFC: parseFloat(r[detectedLogFCCol]),
-            padj: parseFloat(r[detectedPadjCol]),
+          .map((r) => ({
+            gene_id: toStringValue(r.gene_id),
+            logFC: toNumber(r[detectedLogFCCol], 0),
+            padj: toNumber(r[detectedPadjCol], 1),
           }));
       }
 
@@ -225,10 +258,11 @@ export function useHeatmapData({
       } else {
         setIsPreview(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Heatmap error:', err);
-      const detail = err?.response?.data?.detail;
-      setError(detail || err.message || 'Failed to load heatmap');
+      const typedErr = err as ApiError;
+      const detail = typedErr.response?.data?.detail;
+      setError(detail || typedErr.message || 'Failed to load heatmap');
       setLoading(false);
     }
   }, [degDataset, matrixDataset, sampleIds, comparisonName, params]);

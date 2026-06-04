@@ -61,7 +61,12 @@ export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="sample" />
             <YAxis tickFormatter={(value) => `${(value / 1e6).toFixed(1)}M`} />
-            <Tooltip formatter={(value: any) => [`${Number(value).toLocaleString()} reads`, 'Library Size']} />
+            <Tooltip
+              formatter={(value: number | string | undefined) => [
+                `${Number(value ?? 0).toLocaleString()} reads`,
+                'Library Size',
+              ]}
+            />
             <Legend />
             <Bar dataKey="reads" fill="#00BFA5" name="Reads" />
           </BarChart>

@@ -24,7 +24,7 @@ export interface DatasetStats {
   deg_total?: number;
   mean_expression?: number;
   median_padj?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
+import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -14,6 +15,33 @@ interface GeneExpressionViewerProps {
   allGenes: string[];
   sampleConditionMap?: Record<string, string>;
   geneNameMap?: Record<string, string>;
+}
+
+interface SampleValue {
+  sample: string;
+  value: number;
+}
+
+interface BoxplotStats {
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+  mean: number;
+  values: number[];
+}
+
+interface ConditionExpression {
+  name: string;
+  samples: SampleValue[];
+  stats: BoxplotStats | null;
+}
+
+interface ExpressionData {
+  gene: string;
+  condition1: ConditionExpression;
+  condition2: ConditionExpression;
 }
 
 export default function GeneExpressionViewer({ 
@@ -27,7 +55,7 @@ export default function GeneExpressionViewer({
   const [selectedGene, setSelectedGene] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [expressionData, setExpressionData] = useState<any>(null);
+  const [expressionData, setExpressionData] = useState<ExpressionData | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Parse comparison name to get conditions
@@ -44,16 +72,6 @@ export default function GeneExpressionViewer({
     return [comparisonName, ''];
   }, [comparisonName]);
 
-  // Load top DEG on mount
-  useEffect(() => {
-    if (allGenes.length > 0 && !selectedGene) {
-      const topGene = allGenes[0];
-      setSelectedGene(topGene);
-      setSearchTerm(geneNameMap?.[topGene] ?? topGene);
-      fetchGeneExpression(topGene);
-    }
-  }, [allGenes, geneNameMap]);
-
   // Filter genes based on search term (matches symbol OR Ensembl ID)
   const filteredGenes = useMemo(() => {
     if (!searchTerm) return [];
@@ -69,7 +87,7 @@ export default function GeneExpressionViewer({
       .slice(0, 50);
   }, [searchTerm, allGenes, geneNameMap]);
 
-  const fetchGeneExpression = async (gene: string) => {
+  const fetchGeneExpression = useCallback(async (gene: string) => {
     if (!gene) return;
     
     setExpressionData(null);
@@ -90,8 +108,8 @@ export default function GeneExpressionViewer({
         );
         
         // Group samples by condition
-        const condition1Samples: { sample: string; value: number }[] = [];
-        const condition2Samples: { sample: string; value: number }[] = [];
+        const condition1Samples: SampleValue[] = [];
+        const condition2Samples: SampleValue[] = [];
 
         if (sampleConditionMap && Object.keys(sampleConditionMap).length > 0) {
           // Preferred: use explicit sample→condition mapping from metadata
@@ -127,7 +145,7 @@ export default function GeneExpressionViewer({
         }
         
         // Calculate statistics for boxplot
-        const calculateBoxplotStats = (values: number[]) => {
+        const calculateBoxplotStats = (values: number[]): BoxplotStats | null => {
           if (values.length === 0) return null;
           
           const sorted = [...values].sort((a, b) => a - b);
@@ -169,7 +187,17 @@ export default function GeneExpressionViewer({
     } finally {
       setLoading(false);
     }
-  };
+  }, [conditions, matrixDataset.id, sampleConditionMap, sampleIds]);
+
+  // Load top DEG on mount
+  useEffect(() => {
+    if (allGenes.length > 0 && !selectedGene) {
+      const topGene = allGenes[0];
+      setSelectedGene(topGene);
+      setSearchTerm(geneNameMap?.[topGene] ?? topGene);
+      fetchGeneExpression(topGene);
+    }
+  }, [allGenes, fetchGeneExpression, geneNameMap, selectedGene]);
 
   const handleGeneSelect = (gene: string) => {
     setSelectedGene(gene);
@@ -264,7 +292,7 @@ export default function GeneExpressionViewer({
                   jitter: 0.3,
                   pointpos: -1.8,
                 }] : []),
-              ] as any[]}
+              ] as Partial<PlotData>[]}
               layout={{
                 title: {
                   text: `Expression of ${geneNameMap?.[expressionData.gene] ?? expressionData.gene}`,
@@ -282,7 +310,7 @@ export default function GeneExpressionViewer({
                 showlegend: false,
                 margin: { l: 60, r: 40, t: 60, b: 60 },
                 height: 400,
-              } as any}
+              } as Partial<Layout>}
               config={{
                 displayModeBar: true,
                 displaylogo: false,

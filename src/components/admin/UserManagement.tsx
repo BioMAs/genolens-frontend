@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import api from '@/utils/api';
 import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, FlaskConical } from 'lucide-react';
 
@@ -20,6 +21,32 @@ interface User {
   updated_at: string;
   last_sign_in_at: string | null;
   confirmed_at: string | null;
+}
+
+interface ValidationDetail {
+  loc?: Array<string | number>;
+  msg?: string;
+}
+
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      detail?: string | ValidationDetail[];
+    };
+  };
+}
+
+function getApiErrorDetail(error: unknown): string | ValidationDetail[] | undefined {
+  return (error as ApiError).response?.data?.detail;
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  const detail = getApiErrorDetail(error);
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  return fallback;
 }
 
 function StatusBadge({ status }: { status?: string }) {
@@ -94,7 +121,7 @@ export default function UserManagement() {
       const response = await api.get('/admin/users');
       setUsers(response.data);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load users.');
     } finally {
@@ -114,9 +141,9 @@ export default function UserManagement() {
       await fetchUsers();
       setShowCreateModal(false);
       setCreateForm({ email: '', password: '', full_name: '', role: 'user' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create user:', err);
-      alert(err.response?.data?.detail || 'Failed to create user.');
+      alert(getApiErrorMessage(err, 'Failed to create user.'));
     } finally {
       setCreating(false);
     }
@@ -140,10 +167,10 @@ export default function UserManagement() {
       await fetchUsers();
       setShowInviteModal(false);
       setInviteForm({ email: '', full_name: '', plan: 'BASIC', subscription_ends_at: '' });
-    } catch (err: any) {
-      const detail = err.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = getApiErrorDetail(err);
       const message = Array.isArray(detail)
-        ? detail.map((e: any) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join('\n')
+        ? detail.map((e) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join('\n')
         : detail ?? 'Failed to send invitation.';
       alert(message);
     } finally {
@@ -192,7 +219,7 @@ export default function UserManagement() {
       await fetchUsers();
       setShowEditModal(false);
       setEditingUser(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update user:', err);
       // alert(err.response?.data?.detail || 'Failed to update user.');
     } finally {
@@ -212,7 +239,7 @@ export default function UserManagement() {
       await fetchUsers();
       setShowTokenModal(false);
       setTokenUser(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to add tokens:', err);
       alert('Failed to add tokens');
     } finally {
@@ -229,11 +256,12 @@ export default function UserManagement() {
       setAssigningDemo(userId);
       const response = await api.post(`/admin/users/${userId}/assign-demo`, {});
       alert(`✓ ${response.data.message}`);
-    } catch (err: any) {
-      if (err.response?.status === 409) {
+    } catch (err: unknown) {
+      const status = (err as ApiError).response?.status;
+      if (status === 409) {
         alert('This user already has a demo project. Delete it first to re-assign.');
       } else {
-        alert(err.response?.data?.detail || 'Failed to assign demo data.');
+        alert(getApiErrorMessage(err, 'Failed to assign demo data.'));
       }
     } finally {
       setAssigningDemo(null);
@@ -249,9 +277,9 @@ export default function UserManagement() {
       setDeleting(userId);
       await api.delete(`/admin/users/${userId}`);
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete user:', err);
-      alert(err.response?.data?.detail || 'Failed to delete user.');
+      alert(getApiErrorMessage(err, 'Failed to delete user.'));
     } finally {
       setDeleting(null);
     }
@@ -353,7 +381,7 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {user.avatar_url ? (
-                        <img className="h-10 w-10 rounded-full" src={user.avatar_url} alt="" />
+                        <Image className="h-10 w-10 rounded-full" src={user.avatar_url} alt="" width={40} height={40} />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-brand-primary flex items-center justify-center">
                           <span className="text-white font-medium text-sm">

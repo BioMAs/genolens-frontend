@@ -18,7 +18,7 @@
  */
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Network,
   Search,
@@ -84,6 +84,14 @@ interface GEODataset {
   geo_link: string;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,6 +146,10 @@ function downloadFile(content: string, filename: string, mimeType: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  return (error as ApiError).response?.data?.detail || fallback;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,11 +242,14 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
 
-  const parseGenes = () =>
-    genesInput
-      .split(/[\n,;\s]+/)
-      .map((g) => g.trim())
-      .filter(Boolean);
+  const parseGenes = useCallback(
+    () =>
+      genesInput
+        .split(/[\n,;\s]+/)
+        .map((g) => g.trim())
+        .filter(Boolean),
+    [genesInput],
+  );
 
   const fetchNetwork = useCallback(async () => {
     const genes = parseGenes();
@@ -249,18 +264,18 @@ function StringNetworkTab({ initialGenes }: { initialGenes: string }) {
         limit,
       });
       setNetwork(data);
-    } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Error fetching from STRING DB');
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'Error fetching from STRING DB'));
     } finally {
       setLoading(false);
     }
-  }, [genesInput, species, score, limit]);
+  }, [limit, parseGenes, score, species]);
 
   const exportFormat = useCallback(async (fmt: 'cx2' | 'graphml' | 'cytoscapejs') => {
     if (!network) return;
     setExporting(fmt);
     try {
-      const { data, headers } = await api.post(
+      const { data } = await api.post(
         `/integrations/cytoscape/${fmt}`,
         { network, network_name: 'GenoLens_PPI_Network' },
         fmt !== 'cytoscapejs' ? { responseType: 'blob' } : {},
@@ -480,8 +495,10 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
   const [filter, setFilter] = useState('');
   const [catFilter, setCatFilter] = useState('');
 
-  const parseGenes = () =>
-    genesInput.split(/[\n,;\s]+/).map((g) => g.trim()).filter(Boolean);
+  const parseGenes = useCallback(
+    () => genesInput.split(/[\n,;\s]+/).map((g) => g.trim()).filter(Boolean),
+    [genesInput],
+  );
 
   const run = useCallback(async () => {
     const genes = parseGenes();
@@ -494,12 +511,12 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
         species,
       });
       setEnrichments(data.enrichments || []);
-    } catch (e: any) {
-      setError(e?.response?.data?.detail || 'STRING enrichment error');
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'STRING enrichment error'));
     } finally {
       setLoading(false);
     }
-  }, [genesInput, species]);
+  }, [parseGenes, species]);
 
   const visible = enrichments.filter((e) => {
     const matchText = !filter || e.description.toLowerCase().includes(filter.toLowerCase()) || e.term.toLowerCase().includes(filter.toLowerCase());
@@ -659,8 +676,8 @@ function GEOSearchTab() {
         params: { q: query, max_results: maxResults, db: 'gds' },
       });
       setResult(data);
-    } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Error searching NCBI GEO');
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'Error searching NCBI GEO'));
     } finally {
       setLoading(false);
     }
