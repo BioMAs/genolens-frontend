@@ -6,36 +6,54 @@ import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
 import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity } from 'lucide-react';
 import DEGBarChart from './DEGBarChart';
+import OverviewTopGenes from './OverviewTopGenes';
+import OverviewEnrichmentTop from './OverviewEnrichmentTop';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
 import EnrichmentRadarPlot from './EnrichmentRadarPlot';
-import GeneExpressionViewer from './GeneExpressionViewer';
 import DEGTable from './DEGTable';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import ExportMenu from './ExportMenu';
-import MultipleTestingPanel from './MultipleTestingPanel';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
-import GSEAAnalysis from './GSEAAnalysis';
 import { formatDate } from '@/utils/formatters';
+import { StatChip } from '@/components/ui/stat-chip';
+import { Chip } from '@/components/ui/chip';
+import { Dot } from '@/components/ui/dot';
 
 interface ComparisonDetailProps {
   projectId: string;
   comparisonName: string;
+  analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'stats' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'integrations' | 'custom-viz';
 
-export default function ComparisonDetail({ projectId, comparisonName }: ComparisonDetailProps) {
+type GenericRow = Record<string, unknown>;
+
+type EnrichmentRow = {
+  pathway_id?: string;
+  term?: string;
+  description?: string;
+  pvalue?: number;
+  padj?: number;
+  geneRatio?: string;
+  count?: number | string;
+  genes?: string[];
+  category?: string;
+  regulation?: 'ALL' | 'UP' | 'DOWN' | string;
+};
+
+export default function ComparisonDetail({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'gsea' | 'legacy'>('go');
+  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'legacy'>('go');
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,9 +103,10 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             setReprocessing(false);
             setError('Heatmap regeneration timed out after 10 minutes');
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Ignore ECONNABORTED errors during polling
-          if (err?.code !== 'ECONNABORTED') {
+          const errorCode = (err as { code?: string } | null)?.code;
+          if (errorCode !== 'ECONNABORTED') {
             console.error('Polling error:', err);
           }
         }
@@ -121,17 +140,21 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
             try {
                 // Reduced from 10,000 to 500 for performance - only need samples for this comparison
                 const metaResp = await api.post(`/datasets/${metadataDataset.id}/query`, { limit: 500 });
-                const metaData = metaResp.data.data;
+                const metaData: GenericRow[] = Array.isArray(metaResp.data.data) ? metaResp.data.data : [];
 
                 // Resolve actual column names from column_mapping (fallback to common alternatives)
                 const cm = metadataDataset.column_mapping ?? {};
                 const sampleCol: string = cm.sample_id || cm.sample || 'sample_id';
                 const conditionCol: string = cm.condition || 'condition';
 
-                const getSample = (row: any): string | undefined =>
-                    row[sampleCol] || row.sample || row['ini.sample.name'] || undefined;
-                const getCondition = (row: any): string | undefined =>
-                    row[conditionCol] || row.condition || undefined;
+                const getSample = (row: GenericRow): string | undefined => {
+                  const value = row[sampleCol] ?? row.sample ?? row['ini.sample.name'];
+                  return value == null ? undefined : String(value);
+                };
+                const getCondition = (row: GenericRow): string | undefined => {
+                  const value = row[conditionCol] ?? row.condition;
+                  return value == null ? undefined : String(value);
+                };
 
                 // Parse comparison name to find relevant samples
                 // Expected format: ConditionA_vs_ConditionB
@@ -140,7 +163,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
                 if (parts.length === 2) {
                     const [cond1, cond2] = parts;
-                    const filteredMeta = metaData.filter((row: any) => {
+                    const filteredMeta = metaData.filter((row: GenericRow) => {
                         const cond = getCondition(row);
                         return cond === cond1 || cond === cond2;
                     });
@@ -149,14 +172,14 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
                     // Build sample→condition map for GeneExpressionViewer
                     const condMap: Record<string, string> = {};
-                    filteredMeta.forEach((row: any) => {
+                    filteredMeta.forEach((row: GenericRow) => {
                         const sampleName = getSample(row);
                         const cond = getCondition(row);
                         if (sampleName && cond) condMap[sampleName] = cond;
                     });
                     setSampleConditionMap(condMap);
                 } else {
-                    const filteredMeta = metaData.filter((row: any) => {
+                    const filteredMeta = metaData.filter((row: GenericRow) => {
                         const cond = getCondition(row);
                         return cond && decodedName.includes(cond);
                     });
@@ -164,7 +187,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                     setRelevantSamples(relevant);
 
                     const condMap: Record<string, string> = {};
-                    filteredMeta.forEach((row: any) => {
+                    filteredMeta.forEach((row: GenericRow) => {
                         const sampleName = getSample(row);
                         const cond = getCondition(row);
                         if (sampleName && cond) condMap[sampleName] = cond;
@@ -231,8 +254,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     if (!enrichment) {
       enrichment = datasets.find(d =>
         d.type === DatasetType.ENRICHMENT &&
-        (d.dataset_metadata?.enrichment_comparisons?.includes(actualComparisonName) ||
-         d.dataset_metadata?.enrichment_comparisons?.includes(decodedName))
+        Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
+        (d.dataset_metadata.enrichment_comparisons.includes(actualComparisonName) ||
+         d.dataset_metadata.enrichment_comparisons.includes(decodedName))
       );
     }
 
@@ -243,24 +267,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     if (!datasets || datasets.length === 0) return undefined;
     return datasets.find(d => d.type === DatasetType.MATRIX && d.status === DatasetStatus.READY);
   }, [datasets]);
-
-  const { logFCColumn, pValColumn } = useMemo(() => {
-    if (!degDataset) return { logFCColumn: undefined, pValColumn: undefined };
-    const comparisons = degDataset.dataset_metadata?.comparisons;
-    // Global multi-comparison dataset: comparisons is a dict with column mappings
-    if (comparisons && typeof comparisons === 'object' && !Array.isArray(comparisons) && comparisons[decodedName]) {
-      return {
-        logFCColumn: comparisons[decodedName].logFC,
-        pValColumn: comparisons[decodedName].padj
-      };
-    }
-    // Single-comparison dataset (demo or standard): fall back to column_mapping
-    const cm = degDataset.column_mapping;
-    return {
-      logFCColumn: cm?.log_fc ?? cm?.log2FoldChange ?? 'log2FoldChange',
-      pValColumn: cm?.padj ?? 'padj'
-    };
-  }, [degDataset, decodedName]);
 
   // Fetch all genes from matrix dataset for gene expression query
   useEffect(() => {
@@ -289,7 +295,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
           limit: 100000,
           columns: ['gene_id', 'gene_name'],
         });
-        const rows: any[] = queryResp.data.data || [];
+          const rows: GenericRow[] = Array.isArray(queryResp.data.data) ? queryResp.data.data : [];
         const availableCols: string[] = queryResp.data.columns || [];
 
         const hasGeneId = availableCols.includes('gene_id');
@@ -298,7 +304,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         if (hasGeneId) {
           const geneIds: string[] = [];
           const map: Record<string, string> = {};
-          rows.forEach((row: any) => {
+            rows.forEach((row: GenericRow) => {
             const id = row['gene_id'];
             if (!id) return;
             geneIds.push(String(id));
@@ -312,7 +318,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
         // No gene_id column — matrix uses gene_name as primary key
         if (hasGeneName) {
-          const geneNames = rows.map((r: any) => r['gene_name']).filter(Boolean).map(String);
+            const geneNames = rows.map((r: GenericRow) => r['gene_name']).filter(Boolean).map(String);
           setAllMatrixGenes(geneNames);
           return;
         }
@@ -338,27 +344,43 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   useEffect(() => {
     if (!degDataset) return;
 
-    const metadata = degDataset.dataset_metadata;
+    const metadata = degDataset.dataset_metadata as Record<string, unknown> | undefined;
+    const toNumber = (value: unknown): number => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    };
+    const comparisons =
+      metadata?.comparisons && typeof metadata.comparisons === 'object' && !Array.isArray(metadata.comparisons)
+        ? (metadata.comparisons as Record<string, Record<string, unknown>>)
+        : undefined;
 
     // Check if stats already exist in metadata
     if (metadata?.deg_up !== undefined && metadata?.deg_down !== undefined) {
+      const degUp = toNumber(metadata.deg_up);
+      const degDown = toNumber(metadata.deg_down);
+      const degTotal = metadata.deg_total !== undefined ? toNumber(metadata.deg_total) : degUp + degDown;
+
       // Stats exist at top level (for individual comparison datasets)
       setStats({
-        degUp: metadata.deg_up,
-        degDown: metadata.deg_down,
-        degTotal: metadata.deg_total || metadata.deg_up + metadata.deg_down
+        degUp,
+        degDown,
+        degTotal,
       });
       return;
     }
 
-    if (globalDatasetId && metadata?.comparisons?.[decodedName]) {
-      const compData = metadata.comparisons[decodedName];
+    if (globalDatasetId && comparisons?.[decodedName]) {
+      const compData = comparisons[decodedName];
       if (compData.deg_up !== undefined && compData.deg_down !== undefined) {
         // Stats exist in comparisons metadata (for global DEG files)
         setStats({
-          degUp: compData.deg_up || 0,
-          degDown: compData.deg_down || 0,
-          degTotal: compData.deg_total || 0
+          degUp: toNumber(compData.deg_up),
+          degDown: toNumber(compData.deg_down),
+          degTotal: toNumber(compData.deg_total)
         });
         return;
       }
@@ -390,9 +412,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         const updatedMetadata = globalDatasetId
           ? {
               comparisons: {
-                ...metadata?.comparisons,
+                ...comparisons,
                 [decodedName]: {
-                  ...metadata?.comparisons?.[decodedName],
+                  ...comparisons?.[decodedName],
                   deg_up: newStats.degUp,
                   deg_down: newStats.degDown,
                   deg_total: newStats.degTotal
@@ -437,9 +459,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
 
         // For global dataset, find columns for this comparison
         if (globalDatasetId) {
-          const compData = metadata?.comparisons?.[decodedName];
-          logFCCol = compData?.logFC || null;
-          padjCol = compData?.padj || null;
+          const compData = comparisons?.[decodedName];
+          logFCCol = typeof compData?.logFC === 'string' ? compData.logFC : null;
+          padjCol = typeof compData?.padj === 'string' ? compData.padj : null;
         } else {
           // For individual comparison dataset, find any logFC/padj columns
           logFCCol = columns.find((c: string) =>
@@ -467,9 +489,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         let degDown = 0;
         let degTotal = 0;
 
-        if (hasContrastCol) {
+          if (hasContrastCol) {
           // Use contrast column to count (matches DEG table logic exactly)
-          data.forEach((row: any) => {
+            (Array.isArray(data) ? data : []).forEach((row: GenericRow) => {
             const contrastValue = row[contrastCol];
 
             // Only count rows with non-empty contrast values
@@ -489,12 +511,20 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
           const logFCThreshold = 0.58;
           const padjThreshold = 0.05;
 
-          data.forEach((row: any) => {
-            const logFC = row[logFCCol!];
-            const padj = row[padjCol!];
+            const logFCCol = columns.find((c: string) => c.includes('log2FoldChange') || c.includes('logFC'));
+            const padjCol = columns.find((c: string) => c.includes('padj') || c.includes('adj.P.Val') || c.includes('FDR'));
+
+            if (!logFCCol || !padjCol) {
+              setStats({ degUp: 0, degDown: 0, degTotal: 0 });
+              return;
+            }
+
+            (Array.isArray(data) ? data : []).forEach((row: GenericRow) => {
+              const logFC = Number(row[logFCCol]);
+              const padj = Number(row[padjCol]);
 
             // Filter: padj < 0.05 AND |logFC| > 0.58
-            if (logFC != null && padj != null && padj < padjThreshold && Math.abs(logFC) > logFCThreshold) {
+              if (Number.isFinite(logFC) && Number.isFinite(padj) && padj < padjThreshold && Math.abs(logFC) > logFCThreshold) {
               degTotal++;
               if (logFC > 0) {
                 degUp++;
@@ -514,9 +544,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
         const updatedMetadata = globalDatasetId
           ? {
               comparisons: {
-                ...metadata?.comparisons,
+                ...comparisons,
                 [decodedName]: {
-                  ...metadata?.comparisons?.[decodedName],
+                  ...comparisons?.[decodedName],
                   deg_up: degUp,
                   deg_down: degDown,
                   deg_total: degTotal
@@ -554,8 +584,8 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={`/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Project
+          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+            <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
           <div className="bg-yellow-50 p-4 rounded-md mt-4">
             <p className="text-yellow-700">No Differential Expression (DEG) dataset found for this comparison.</p>
@@ -566,137 +596,128 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Link href={`/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-6">
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Project
-        </Link>
+    <div className="page-container">
+      <Link
+        href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        <ArrowLeft className="h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
+      </Link>
 
-        {/* Header Section */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{decodedName}</h1>
-              <div className="flex items-center gap-6 text-sm text-gray-500">
-                <div className="flex items-center gap-1.5">
-                  <Database className="h-4 w-4" />
-                  <span>Project: {project.name}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span>Created {formatDate(degDataset.created_at)}</span>
-                </div>
-              </div>
+      <div className="gl-card p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="page-title">{decodedName}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="inline-flex items-center gap-1.5">
+                <Database className="h-4 w-4" /> Project: {project.name}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" /> Created {formatDate(degDataset.created_at)}
+              </span>
             </div>
           </div>
 
-          {/* Statistics Grid */}
-          {statsLoading ? (
-            <div className="mt-6 text-center text-sm text-gray-500">
-              <div className="inline-flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                Calculating DEG statistics...
-              </div>
-            </div>
-          ) : stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              {/* DEG Up */}
-              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="h-5 w-5 text-red-600" />
-                  <span className="text-sm font-medium text-red-900">Upregulated</span>
-                </div>
-                <p className="text-2xl font-bold text-red-600">{stats.degUp.toLocaleString()}</p>
-              </div>
-
-              {/* DEG Down */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingDown className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">Downregulated</span>
-                </div>
-                <p className="text-2xl font-bold text-blue-600">{stats.degDown.toLocaleString()}</p>
-              </div>
-
-              {/* Total DEG */}
-              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Activity className="h-5 w-5 text-indigo-600" />
-                  <span className="text-sm font-medium text-indigo-900">Total DEG</span>
-                </div>
-                <p className="text-2xl font-bold text-indigo-600">{stats.degTotal.toLocaleString()}</p>
-              </div>
-
-              {/* Enrichment */}
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Database className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-900">Enrichment</span>
-                </div>
-                <p className="text-2xl font-bold text-purple-600">
-                  {enrichmentDataset ? 'Available' : 'N/A'}
-                </p>
-              </div>
-            </div>
-          )}
-
+          <button
+            onClick={handleReprocessDEG}
+            disabled={reprocessing}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+            style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
+            {reprocessing ? 'Reprocessing…' : 'Reprocess'}
+          </button>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex">
+        {statsLoading ? (
+          <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+            <RefreshCw className="h-4 w-4 animate-spin" /> Calculating DEG statistics...
+          </div>
+        ) : stats ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <StatChip
+              icon={<TrendingUp className="h-4 w-4" />}
+              value={stats.degUp}
+              label="Upregulated"
+              tone="teal"
+            />
+            <StatChip
+              icon={<TrendingDown className="h-4 w-4" />}
+              value={stats.degDown}
+              label="Downregulated"
+              tone="purple"
+            />
+            <StatChip
+              icon={<Activity className="h-4 w-4" />}
+              value={stats.degTotal}
+              label="Total DEGs"
+              tone="neutral"
+            />
+            <StatChip
+              icon={<Database className="h-4 w-4" />}
+              value={enrichmentDataset ? 1 : 0}
+              label="Enrichment"
+              tone="neutral"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-4 gl-card overflow-hidden">
+        <div className="border-b" style={{ borderColor: 'var(--border)' }}>
+          <nav className="flex overflow-x-auto px-2 py-2">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`${
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
                   activeTab === 'overview'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab('deg')}
-                className={`${
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
                   activeTab === 'deg'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
-                DEG Analysis
-              </button>
-              <button
-                onClick={() => setActiveTab('stats')}
-                className={`${
-                  activeTab === 'stats'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
-              >
-                Statistics
+                DEG Table
               </button>
               <button
                 onClick={() => setActiveTab('enrichment')}
-                className={`${
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
                   activeTab === 'enrichment'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
-                Enrichissement
-                {!enrichmentDataset && (
-                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
-                )}
+                Enrichment
               </button>
+              <span
+                className="whitespace-nowrap py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-300 cursor-not-allowed flex items-center gap-1"
+                title="Coming soon"
+              >
+                Claims
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </span>
               <button
                 onClick={() => setActiveTab('clustering')}
-                className={`${
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
                   activeTab === 'clustering'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
                 Clustering
                 {!matrixDataset && (
@@ -705,13 +726,14 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               </button>
               <button
                 onClick={() => setActiveTab('integrations')}
-                className={`${
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
                   activeTab === 'integrations'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
-                Intégrations
+                Integrations
               </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
@@ -730,53 +752,74 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
           </div>
 
           {/* Tab Content */}
-          <div className="p-6">
+          <div className="p-5">
             {/* Overview Tab */}
             {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* AI Interpretation Panel */}
-                <div>
-                  <AIInterpretationPanel 
-                    datasetId={degDataset.id} 
-                    comparisonName={actualComparisonName} 
-                  />
-                </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+                  <div className="xl:col-span-8 space-y-4">
+                    {/* Volcano Plot */}
+                    <div className="gl-card p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            Volcano Plot
+                          </h2>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            log2FC threshold: 0.58 · padj: 0.05
+                          </p>
+                        </div>
+                        <Link
+                          href={`/projects/${projectId}/datasets/${degDataset.id}`}
+                          className="text-xs font-semibold"
+                          style={{ color: 'var(--sl-teal-dark)' }}
+                        >
+                          View dataset
+                        </Link>
+                      </div>
 
-                {/* Volcano Plot */}
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Volcano Plot</h2>
-                    <Link
-                      href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                      className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
-                    >
-                      View Full Dataset &rarr;
-                    </Link>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <VolcanoPlot
-                      dataset={degDataset}
-                      comparisonName={actualComparisonName}
-                    />
-                  </div>
-                </div>
+                      <VolcanoPlot dataset={degDataset} comparisonName={actualComparisonName} />
 
-                {/* Gene Expression Viewer */}
-                {matrixDataset && (
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Gene Expression Query</h2>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <GeneExpressionViewer
-                        matrixDataset={matrixDataset}
-                        sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                        comparisonName={actualComparisonName}
-                        allGenes={allMatrixGenes}
-                        geneNameMap={Object.keys(geneNameMap).length > 0 ? geneNameMap : undefined}
-                        sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-                      />
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="inline-flex items-center gap-1">
+                          <Dot variant="ready" size={7} /> Upregulated
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Dot variant="failed" size={7} /> Downregulated
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Dot variant="pending" size={7} /> Not significant
+                        </span>
+                        {stats ? <Chip>{stats.degTotal.toLocaleString()} significant genes</Chip> : null}
+                      </div>
                     </div>
+
+                    {/* Top up / down genes — simple list */}
+                    <div className="gl-card p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          Top differentially expressed genes
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('deg')}
+                          className="text-xs font-semibold"
+                          style={{ color: 'var(--sl-teal-dark)' }}
+                        >
+                          Full DEG table →
+                        </button>
+                      </div>
+                      <OverviewTopGenes dataset={degDataset} comparisonName={actualComparisonName} />
+                    </div>
+
+                    {/* Top enrichments — only rendered when pre-computed data exists */}
+                    <OverviewEnrichmentTop dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
-                )}
+
+                  <div className="xl:col-span-4 space-y-4">
+                    <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -813,17 +856,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                           : 'border-transparent text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      GO Enrichment
-                    </button>
-                    <button
-                      onClick={() => setEnrichSubTab('gsea')}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        enrichSubTab === 'gsea'
-                          ? 'border-brand-primary text-brand-primary'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      GSEA
+                      Pathway Enrichment
                     </button>
                     {enrichmentDataset && (
                       <button
@@ -834,7 +867,7 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                       >
-                        Héritage
+                        Inheritance
                       </button>
                     )}
                   </div>
@@ -847,14 +880,6 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
                         comparisonName={actualComparisonName}
                       />
                     </div>
-                  )}
-
-                  {/* GSEA sub-tab */}
-                  {enrichSubTab === 'gsea' && (
-                    <GSEAAnalysis
-                      dataset={degDataset}
-                      comparisonName={actualComparisonName}
-                    />
                   )}
 
                   {/* Legacy sub-tab (Parquet-based enrichment data) */}
@@ -895,9 +920,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune donnée DEG</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG data</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    L&apos;enrichissement nécessite un jeu de données DEG associé à cette comparaison.
+                    Enrichment requires a DEG dataset associated with this comparison.
                   </p>
                 </div>
               )
@@ -908,9 +933,9 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               matrixDataset && degDataset ? (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — Gènes DEG</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — DEG Genes</h2>
                     <p className="text-sm text-gray-600 mb-4">
-                      Visualisation de l&apos;expression des gènes différentiellement exprimés (DEGs) pour les échantillons de cette comparaison uniquement.
+                      Visualization of differentially expressed genes (DEGs) for the samples in this comparison only.
                     </p>
                     <DEGClusteringView
                       degDataset={degDataset}
@@ -930,21 +955,13 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune matrice d&apos;expression</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Le clustering nécessite une matrice d&apos;expression (count matrix).
-                    Uploadez une matrice de type &quot;Expression Matrix&quot; pour activer cette vue.
+                    Clustering requires an expression matrix (count matrix).
+                    Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
                   </p>
                 </div>
               )
-            )}
-
-            {/* Statistics / Multiple Testing Tab */}
-            {activeTab === 'stats' && (
-              <MultipleTestingPanel
-                datasetId={degDataset.id}
-                comparisonName={actualComparisonName}
-              />
             )}
 
             {/* External Integrations Tab */}
@@ -967,13 +984,12 @@ export default function ComparisonDetail({ projectId, comparisonName }: Comparis
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+    }
 
 // Component for enrichment table
 function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, comparisonName: string }) {
-    const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<EnrichmentRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterText, setFilterText] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
@@ -1015,23 +1031,34 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
                 }
 
                 // Extract unique categories
-                const categories = [...new Set(pathways.map((p: any) => p.category).filter(Boolean))];
+                const categories = [...new Set(pathways.map((p: GenericRow) => p.category).filter(Boolean).map(String))];
                 setAvailableCategories(categories as string[]);
 
                 // Transform database format to component format
-                const processedData = pathways.map((pathway: any) => ({
-                    pathway_id: pathway.pathway_id,
-                    term: pathway.pathway_name,
-                    description: pathway.description,
-                    pvalue: pathway.pvalue || pathway.padj,
-                    padj: pathway.padj,
-                    geneRatio: pathway.gene_ratio ? pathway.gene_ratio.toFixed(3) :
-                               (pathway.gene_count && pathway.bg_ratio ? (pathway.gene_count * pathway.bg_ratio).toFixed(3) : 'N/A'),
-                    count: pathway.gene_count || 'N/A',
-                    genes: pathway.genes || [],
-                    category: pathway.category,
-                    regulation: pathway.regulation || 'ALL'
-                }));
+                const processedData: EnrichmentRow[] = pathways.map((pathway: GenericRow) => {
+                  const geneRatioValue = Number(pathway.gene_ratio);
+                  const geneCountValue = Number(pathway.gene_count);
+                  const bgRatioValue = Number(pathway.bg_ratio);
+
+                  const row: EnrichmentRow = {
+                    pathway_id: pathway.pathway_id ? String(pathway.pathway_id) : undefined,
+                    term: pathway.pathway_name ? String(pathway.pathway_name) : undefined,
+                    description: pathway.description ? String(pathway.description) : undefined,
+                    pvalue: Number(pathway.pvalue ?? pathway.padj),
+                    padj: Number(pathway.padj),
+                    geneRatio: Number.isFinite(geneRatioValue)
+                      ? geneRatioValue.toFixed(3)
+                      : (Number.isFinite(geneCountValue) && Number.isFinite(bgRatioValue)
+                        ? (geneCountValue * bgRatioValue).toFixed(3)
+                        : 'N/A'),
+                    count: Number.isFinite(geneCountValue) ? geneCountValue : 'N/A',
+                    genes: Array.isArray(pathway.genes) ? pathway.genes.map(String) : [],
+                    category: pathway.category ? String(pathway.category) : undefined,
+                    regulation: pathway.regulation ? String(pathway.regulation) : 'ALL',
+                  };
+
+                  return row;
+                });
 
                 console.log(`[EnrichmentTable] Processed ${processedData.length} pathways from database`);
                 console.log('[EnrichmentTable] First pathway sample:', processedData[0]);
@@ -1066,7 +1093,7 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
                     );
 
                     if (clusterCol) {
-                        rawData = rawData.filter((row: any) => {
+                        rawData = rawData.filter((row: GenericRow) => {
                             const clusterValue = String(row[clusterCol] || '');
                             const cleanCluster = clusterValue.includes(':') ? clusterValue.split(':').pop() : clusterValue;
                             return cleanCluster?.includes(comparisonName) ||
@@ -1085,16 +1112,19 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
                     console.log('[EnrichmentTable] 🔍 Column mapping:', { termCol, pvalCol, rCol, rExpectedCol, categoryCol, genesCol });
 
                     // Sort by p-value and process all
-                    const processedData = rawData
-                        .filter((row: any) => row[pvalCol] && row[pvalCol] > 0)
-                        .sort((a: any, b: any) => parseFloat(a[pvalCol]) - parseFloat(b[pvalCol]))
-                        .map((row: any) => ({
-                            term: row[termCol],
-                            pvalue: parseFloat(row[pvalCol]),
-                            padj: parseFloat(row[pvalCol]),
-                            geneRatio: rCol && rExpectedCol ? (parseFloat(row[rCol]) / parseFloat(row[rExpectedCol])).toFixed(3) : 'N/A',
-                            count: rCol ? parseFloat(row[rCol]) : 'N/A',
-                            category: categoryCol ? row[categoryCol] : undefined,
+                      const processedData: EnrichmentRow[] = rawData
+                        .filter((row: GenericRow) => pvalCol ? Number(row[pvalCol]) > 0 : false)
+                        .sort((a: GenericRow, b: GenericRow) => {
+                            if (!pvalCol) return 0;
+                            return Number(a[pvalCol]) - Number(b[pvalCol]);
+                        })
+                        .map((row: GenericRow) => ({
+                            term: termCol ? String(row[termCol] ?? '') : undefined,
+                            pvalue: pvalCol ? Number(row[pvalCol]) : undefined,
+                            padj: pvalCol ? Number(row[pvalCol]) : undefined,
+                            geneRatio: rCol && rExpectedCol ? (Number(row[rCol]) / Number(row[rExpectedCol])).toFixed(3) : 'N/A',
+                            count: rCol ? Number(row[rCol]) : 'N/A',
+                            category: categoryCol && row[categoryCol] ? String(row[categoryCol]) : undefined,
                             genes: genesCol ? (row[genesCol] ? String(row[genesCol]).split('|') : []) : []
                         }));
 
@@ -1102,7 +1132,7 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
                     console.log('[EnrichmentTable] 📦 First fallback pathway:', processedData[0]);
 
                     // Extract unique categories for fallback data
-                    const categories = [...new Set(processedData.map((p: any) => p.category).filter(Boolean))];
+                      const categories = [...new Set(processedData.map((p) => p.category).filter(Boolean).map(String))];
                     setAvailableCategories(categories as string[]);
 
                     setData(processedData);
@@ -1139,7 +1169,7 @@ function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, compar
           {/* Filters - Compact Bar */}
           <div className="flex gap-4 items-center flex-wrap bg-gray-50 px-4 py-3 rounded-md border border-gray-200">
             {/* Search Input */}
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1 min-w-50">
               <input
                 type="text"
                 placeholder="Search pathways..."

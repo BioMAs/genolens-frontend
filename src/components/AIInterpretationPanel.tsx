@@ -27,15 +27,37 @@ interface InterpretationData {
     };
 }
 
+interface AIStatus {
+    available: boolean;
+    current_model: string;
+}
+
+interface ConversationItem {
+    question: string;
+    answer: string;
+    created_at: string;
+}
+
+interface ApiError {
+    response?: {
+        status?: number;
+        data?: {
+            detail?: string;
+        };
+    };
+}
+
+function getApiErrorDetail(error: unknown): string | undefined {
+    return (error as ApiError).response?.data?.detail;
+}
+
 export default function AIInterpretationPanel({ datasetId, comparisonName }: AIInterpretationPanelProps) {
     const [data, setData] = useState<InterpretationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
-    const [aiStatus, setAiStatus] = useState<any>(null);
+    const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [expanded, setExpanded] = useState(false);
-    const [autoLoadAttempted, setAutoLoadAttempted] = useState(false);
     
     // Chat Q&A states
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -78,7 +100,8 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 );
                 
                 if (response.data.conversations && response.data.conversations.length > 0) {
-                    const loadedMessages: ChatMessage[] = response.data.conversations.map((conv: any) => [
+                    const conversations = response.data.conversations as ConversationItem[];
+                    const loadedMessages: ChatMessage[] = conversations.map((conv) => [
                         {
                             role: 'user' as const,
                             content: conv.question,
@@ -149,19 +172,19 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             );
 
             setData(response.data);
-            setExpanded(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('AI interpretation error:', err);
+            const status = (err as ApiError).response?.status;
 
-            if (err.response?.status === 403) {
+            if (status === 403) {
                 setError("AI interpretation requires a Pro or Advanced plan.");
                 setErrorType('plan');
-            } else if (err.response?.status === 402) {
+            } else if (status === 402) {
                 setError("You've used all your AI interpretations for this month.");
                 setErrorType('quota');
             } else {
                 setError(
-                    err.response?.data?.detail ||
+                    getApiErrorDetail(err) ||
                     "Error generating interpretation. Please check if Ollama is running."
                 );
                 setErrorType('generic');
@@ -200,17 +223,18 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             };
             
             setChatMessages(prev => [...prev, assistantMessage]);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('AI chat error:', err);
+            const status = (err as ApiError).response?.status;
             
             let errorMsg = "Sorry, I couldn't answer your question. Please check if Ollama is running.";
             
-            if (err.response?.status === 403) {
+            if (status === 403) {
                 errorMsg = "AI interpretation requires a Pro or Advanced plan. Visit /pricing to upgrade.";
-            } else if (err.response?.status === 402) {
+            } else if (status === 402) {
                 errorMsg = "You've used all your AI interpretations for this month. Visit /pricing to upgrade or /profile to buy more tokens.";
-            } else if (err.response?.data?.detail) {
-                errorMsg = err.response.data.detail;
+            } else if (getApiErrorDetail(err)) {
+                errorMsg = getApiErrorDetail(err) as string;
             }
 
             const errorMessage: ChatMessage = {
@@ -351,9 +375,6 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900">AI Biological Interpretation</h3>
-                        <p className="text-sm text-gray-600">
-                            Analysis powered by {aiStatus.current_model} • 100% local and private
-                        </p>
                     </div>
                 </div>
                 
