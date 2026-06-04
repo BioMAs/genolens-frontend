@@ -58,6 +58,17 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const comparisons = summary?.comparisons ?? [];
   const analyses = analysesData?.items ?? [];
 
+  // Build a map: dataset_id → analysisId, for linking comparisons through their analysis
+  const datasetToAnalysisId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const analysis of analysesData?.items ?? []) {
+      for (const datasetId of analysis.result_dataset_ids ?? []) {
+        map[datasetId] = analysis.id;
+      }
+    }
+    return map;
+  }, [analysesData?.items]);
+
   const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
   const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
   const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
@@ -227,6 +238,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 <ComparisonCard
                   key={comparison.name}
                   projectId={projectId}
+                  analysisId={datasetToAnalysisId[comparison.dataset_id]}
                   name={comparison.name}
                   up={comparison.deg_up}
                   down={comparison.deg_down}
@@ -459,17 +471,22 @@ function ProjectTabButton({
 
 function ComparisonCard({
   projectId,
+  analysisId,
   name,
   up,
   down,
   hasEnrichment,
 }: {
   projectId: string;
+  analysisId?: string;
   name: string;
   up: number;
   down: number;
   hasEnrichment: boolean;
 }) {
+  const href = analysisId
+    ? `/projects/${projectId}/analyses/${analysisId}/comparisons/${encodeURIComponent(name)}`
+    : `/projects/${projectId}/comparisons/${encodeURIComponent(name)}`;
   return (
     <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
       <div>
@@ -493,7 +510,7 @@ function ComparisonCard({
       </div>
 
       <Link
-        href={`/projects/${projectId}/comparisons/${encodeURIComponent(name)}`}
+        href={href}
         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
         style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
       >
