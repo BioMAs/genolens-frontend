@@ -155,7 +155,7 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
             <ReferenceLine x={logfcThreshold} stroke="#fbbf24" strokeDasharray="2 2" />
             <ReferenceLine x={-logfcThreshold} stroke="#fbbf24" strokeDasharray="2 2" />
             <ReferenceLine y={-Math.log10(padjThreshold)} stroke="#fbbf24" strokeDasharray="2 2" label={`p=${padjThreshold}`} />
-            <Scatter name="Genes" data={data} fill="#8884d8" shape="circle" r={1.5}>
+            <Scatter name="Genes" data={data} fill="#8884d8" shape="circle" r={1}>
               {data.map((entry, index: number) => (
                 <Cell key={`cell-${index}`} fill={entry.is_significant ? (entry.x > 0 ? palette.up : palette.down) : palette.ns} />
               ))}

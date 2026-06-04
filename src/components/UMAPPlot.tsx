@@ -236,11 +236,12 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
                         key={cat as string} 
                         name={cat as string} 
                   data={plotData.filter((d) => d.category === cat)} 
-                        fill={categoryColorMap[cat as string]} 
+                        fill={categoryColorMap[cat as string]}
+                        r={3}
                     />
                 ))
             ) : (
-              <Scatter name="Samples" data={typedUmapData.data} fill="#2A2E5B" />
+              <Scatter name="Samples" data={typedUmapData.data} fill="#2A2E5B" r={3} />
             )}
           </ScatterChart>
         </ResponsiveContainer>

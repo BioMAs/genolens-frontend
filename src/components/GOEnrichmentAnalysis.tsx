@@ -154,7 +154,7 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
             type="category" dataKey="y" width={210}
             tick={{ fontSize: 10, fill: '#374151' }} tickLine={false} axisLine={false}
           />
-          <ZAxis type="number" dataKey="z" range={[40, 220]} />
+          <ZAxis type="number" dataKey="z" range={[20, 120]} />
           <RechartTooltip content={<DotPlotTooltip />} cursor={{ strokeDasharray: '3 3' }} />
           <Scatter data={data}>
             {data.map((entry, i) => (
