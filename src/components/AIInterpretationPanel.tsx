@@ -375,9 +375,6 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900">AI Biological Interpretation</h3>
-                        <p className="text-sm text-gray-600">
-                            Analysis powered by {aiStatus.current_model} • 100% local and private
-                        </p>
                     </div>
                 </div>
                 

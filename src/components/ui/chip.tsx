@@ -1,40 +1,24 @@
-import * as React from 'react';
+import React from 'react';
 
-export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
-  /** Optional leading icon node */
+interface ChipProps {
+  children?: React.ReactNode;
   icon?: React.ReactNode;
-  /** Optional bold/mono value rendered after the label */
-  value?: React.ReactNode;
+  value?: number | string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-/**
- * Chip — small meta token (raised background, neutral border).
- * Used inside project cards / meta rows: `{value} samples`, `{value} comparisons`.
- */
-function Chip({ icon, value, className = '', children, style, ...props }: ChipProps) {
+export function Chip({ children, icon, value, className = '', style }: ChipProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.75 text-[11px] ${className}`}
-      style={{
-        background: 'var(--surface-raised)',
-        borderColor: 'var(--border)',
-        color: 'var(--text-secondary)',
-        ...style,
-      }}
-      {...props}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 ${className}`}
+      style={style}
     >
-      {icon}
+      {icon && <span className="flex-shrink-0">{icon}</span>}
       {value !== undefined && (
-        <span
-          className="font-mono font-semibold"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {value}
-        </span>
+        <span className="font-semibold">{typeof value === 'number' ? value.toLocaleString() : value}</span>
       )}
       {children}
     </span>
   );
 }
-
-export { Chip };

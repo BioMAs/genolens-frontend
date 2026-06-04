@@ -1,76 +1,43 @@
-import * as React from 'react';
+import React from 'react';
 
-export interface StatChipProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Lucide icon node (size 14 recommended). */
+type StatChipTone = 'teal' | 'purple' | 'neutral' | 'warning';
+
+interface StatChipProps {
   icon?: React.ReactNode;
-  /** Big numeric value (rendered in Syne, weight 700). */
-  value: React.ReactNode;
-  /** Caption shown below the number. */
+  value: number | string;
   label: string;
-  /** Tints icon + number. */
-  tone?: 'teal' | 'purple' | 'neutral';
-  /** Min width — defaults to mockup `92px`. */
-  minWidth?: number;
+  tone?: StatChipTone;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-/**
- * StatChip — small KPI tile used in project headers (StatRow).
- * Mockup: `.stat-chip` with `.sc-top`, `.n`, `.l`.
- */
-function StatChip({
-  icon,
-  value,
-  label,
-  tone = 'neutral',
-  minWidth = 92,
-  className = '',
-  style,
-  ...props
-}: StatChipProps) {
-  const accent: Record<NonNullable<StatChipProps['tone']>, string> = {
-    teal: 'var(--sl-teal)',
-    purple: 'var(--sl-purple)',
-    neutral: 'var(--text-secondary)',
-  };
+const toneBg: Record<StatChipTone, string> = {
+  teal:    'rgba(20,184,166,0.1)',
+  purple:  'rgba(168,85,247,0.1)',
+  neutral: 'var(--surface-2, #f3f4f6)',
+  warning: 'rgba(245,158,11,0.1)',
+};
 
+const toneIcon: Record<StatChipTone, string> = {
+  teal:    '#14b8a6',
+  purple:  '#a855f7',
+  neutral: '#6b7280',
+  warning: '#f59e0b',
+};
+
+export function StatChip({ icon, value, label, tone = 'neutral', className = '', style }: StatChipProps) {
   return (
     <div
-      className={`rounded-[9px] border px-3.5 py-2.75 ${className}`}
-      style={{
-        background: 'var(--surface)',
-        borderColor: 'var(--border)',
-        minWidth,
-        ...style,
-      }}
-      {...props}
+      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${className}`}
+      style={{ background: toneBg[tone], ...style }}
     >
-      <div className="flex items-center gap-1.75" style={{ color: accent[tone] }}>
-        {icon}
-      </div>
-      <div
-        className="font-display font-bold leading-none"
-        style={{
-          fontSize: 21,
-          color: tone === 'neutral' ? 'var(--text-primary)' : accent[tone],
-          marginTop: 6,
-          letterSpacing: '-0.02em',
-        }}
-      >
-        {value}
-      </div>
-      <div
-        className="uppercase"
-        style={{
-          fontSize: 10.5,
-          color: 'var(--text-muted)',
-          letterSpacing: '0.07em',
-          marginTop: 5,
-        }}
-      >
-        {label}
-      </div>
+      {icon && (
+        <span style={{ color: toneIcon[tone] }}>{icon}</span>
+      )}
+      <span className="font-semibold" style={{ color: 'var(--text-primary, #111827)' }}>
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </span>
+      <span style={{ color: 'var(--text-muted, #6b7280)' }}>{label}</span>
     </div>
   );
 }
-
-export { StatChip };

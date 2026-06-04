@@ -6,11 +6,12 @@ import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
 import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity } from 'lucide-react';
 import DEGBarChart from './DEGBarChart';
+import OverviewTopGenes from './OverviewTopGenes';
+import OverviewEnrichmentTop from './OverviewEnrichmentTop';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
 import EnrichmentRadarPlot from './EnrichmentRadarPlot';
-import GeneExpressionViewer from './GeneExpressionViewer';
 import DEGTable from './DEGTable';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
@@ -757,6 +758,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
                   <div className="xl:col-span-8 space-y-4">
+                    {/* Volcano Plot */}
                     <div className="gl-card p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <div>
@@ -792,10 +794,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       </div>
                     </div>
 
+                    {/* Top up / down genes — simple list */}
                     <div className="gl-card p-4">
-                      <div className="mb-2 flex items-center justify-between">
-                        <h3 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          Differential expression — top genes
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          Top differentially expressed genes
                         </h3>
                         <button
                           type="button"
@@ -803,41 +806,18 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                           className="text-xs font-semibold"
                           style={{ color: 'var(--sl-teal-dark)' }}
                         >
-                          Open full DEG table
+                          Full DEG table →
                         </button>
                       </div>
-                      <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
+                      <OverviewTopGenes dataset={degDataset} comparisonName={actualComparisonName} />
                     </div>
 
-                    {matrixDataset ? (
-                      <div className="gl-card p-4">
-                        <h3 className="mb-2 font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          Gene Expression Query
-                        </h3>
-                        <GeneExpressionViewer
-                          matrixDataset={matrixDataset}
-                          sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                          comparisonName={actualComparisonName}
-                          allGenes={allMatrixGenes}
-                          geneNameMap={Object.keys(geneNameMap).length > 0 ? geneNameMap : undefined}
-                          sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-                        />
-                      </div>
-                    ) : null}
+                    {/* Top enrichments — only rendered when pre-computed data exists */}
+                    <OverviewEnrichmentTop dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
 
                   <div className="xl:col-span-4 space-y-4">
                     <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-
-                    <div className="gl-card p-4">
-                      <div className="mb-2 flex items-center justify-between">
-                        <h3 className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          Top DEGs by log2FC
-                        </h3>
-                        <Chip>by |log2FC|</Chip>
-                      </div>
-                      <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
-                    </div>
                   </div>
                 </div>
               </div>
