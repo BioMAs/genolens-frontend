@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import {
@@ -66,25 +67,19 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
   return (
     <aside className="app-sidebar">
       <div
-        className="flex h-[var(--topbar-height)] items-center gap-2.5 border-b px-4"
+        className="flex h-[var(--topbar-height)] items-center border-b px-4"
         style={{ borderColor: 'var(--sidebar-border)' }}
       >
-        <div
-          className="relative h-6 w-6 rounded-[7px]"
-          style={{
-            background:
-              'conic-gradient(from 220deg, var(--sl-purple), var(--sl-teal), var(--sl-purple))',
-            boxShadow: 'inset 0 0 0 1px color-mix(in oklab, white 8%, transparent)',
-          }}
-        >
-          <div
-            className="absolute inset-[6px] rounded-full"
-            style={{ background: 'var(--sidebar-bg)' }}
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="GenoLens"
+            width={120}
+            height={38}
+            className="h-8 w-auto"
+            priority
           />
-        </div>
-        <p className="font-display text-[15px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">
-          GenoLens
-        </p>
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2.5 py-3.5">
