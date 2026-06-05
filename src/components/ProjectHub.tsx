@@ -32,7 +32,6 @@ import {
   Activity,
   BarChart3,
 } from 'lucide-react';
-import GenerateReportButton from '@/components/GenerateReportButton';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 
 interface ProjectHubProps {
@@ -174,8 +173,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
               <Users className="h-3.5 w-3.5" /> Members
             </button>
           ) : null}
-
-          <GenerateReportButton projectId={projectId} />
         </div>
       </div>
 

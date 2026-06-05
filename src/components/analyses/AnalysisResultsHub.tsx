@@ -14,6 +14,7 @@ import type { PCAData } from './PCAResults';
 import UMAPResults from './UMAPResults';
 import type { UMAPPoint } from './UMAPResults';
 import ComparisonGrid from './ComparisonGrid';
+import GenerateReportButton from '@/components/GenerateReportButton';
 
 type Tab = 'preprocessing' | 'pca' | 'umap' | 'comparisons' | 'params';
 
@@ -220,6 +221,9 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={analysis.status} />
+              {analysis.status === SelfServiceAnalysisStatus.DONE && (
+                <GenerateReportButton projectId={projectId} />
+              )}
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}
                 className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
