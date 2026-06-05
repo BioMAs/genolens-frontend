@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, Loader2, Download, AlertCircle, RefreshCw } from "lucide-react";
 import { useReportStatus, useTriggerReport } from "@/hooks/useReportGeneration";
+import api from "@/utils/api";
 
 interface Props {
   projectId: string;
@@ -10,37 +11,54 @@ interface Props {
 
 export default function GenerateReportButton({ projectId }: Props) {
   const [hasTriggered, setHasTriggered] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const trigger = useTriggerReport(projectId);
-  const { data: job } = useReportStatus(projectId, hasTriggered);
+  // Always enabled so we show DONE/RUNNING state even after page reload
+  const { data: job } = useReportStatus(projectId, true);
 
   const isDone = job?.status === "DONE";
   const isFailed = job?.status === "FAILED";
   const isRunning = job?.status === "PENDING" || job?.status === "RUNNING";
-
-  const apiBase =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v2";
-  const downloadUrl = isDone
-    ? `${apiBase}/projects/${projectId}/report/download`
-    : null;
 
   const handleGenerate = () => {
     setHasTriggered(true);
     trigger.mutate();
   };
 
-  if (isDone && downloadUrl) {
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await api.get(`/projects/${projectId}/report/download`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `report_${projectId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Download failed. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  if (isDone) {
     return (
-      <a
-        href={downloadUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        onClick={handleDownload}
+        disabled={isDownloading}
         className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2
-                   text-sm font-medium text-white transition-colors hover:bg-green-700"
+                   text-sm font-medium text-white transition-colors hover:bg-green-700
+                   disabled:opacity-50"
       >
-        <Download className="h-4 w-4" />
-        Download Report
-      </a>
+        {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        {isDownloading ? "Downloading…" : "Download Report"}
+      </button>
     );
   }
 
