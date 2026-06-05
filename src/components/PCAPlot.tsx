@@ -232,11 +232,11 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
                         name={cat as string} 
                         data={(plotData as PCADataPoint[]).filter((d) => d.category === cat)} 
                         fill={categoryColorMap[cat as string]}
-                        r={3}
+                        shape={(props: any) => <circle cx={props.cx} cy={props.cy} r={3} fill={props.fill} fillOpacity={0.85} />}
                     />
                 ))
             ) : (
-                <Scatter name="Samples" data={pcaData.data} fill="#2A2E5B" r={3} />
+                <Scatter name="Samples" data={pcaData.data} fill="#2A2E5B" shape={(props: any) => <circle cx={props.cx} cy={props.cy} r={3} fill={props.fill} fillOpacity={0.85} />} />
             )}
           </ScatterChart>
         </ResponsiveContainer>
