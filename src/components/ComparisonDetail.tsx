@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download } from 'lucide-react';
 import DEGBarChart from './DEGBarChart';
 import OverviewTopGenes from './OverviewTopGenes';
 import OverviewEnrichmentTop from './OverviewEnrichmentTop';
@@ -833,7 +833,34 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
 
                 {/* DEG Table */}
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Differentially Expressed Genes</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Differentially Expressed Genes</h2>
+                    <button
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700"
+                      onClick={async () => {
+                        try {
+                          const response = await api.get(
+                            `/datasets/${degDataset.id}/deg-stats/export`,
+                            {
+                              params: { comparison: actualComparisonName },
+                              responseType: 'blob',
+                            }
+                          );
+                          const url = URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `deg_stats_${actualComparisonName}.csv`;
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        } catch (e) {
+                          console.error('DEG stats download failed', e);
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Stats par méthode (.csv)
+                    </button>
+                  </div>
                   <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
