@@ -10,12 +10,13 @@ const MODE_KEY = 'genolens:analysis-mode';
 export const DEFAULT_DESEQ2_PARAMS: AnalysisParams = {
   design:     'auto',
   fdr:        0.05,
-  min_log2fc: 1.5,
+  min_log2fc: 1.0,
   min_reads:  100_000,
   min_genes:  500,
   min_count:  10,
   min_reps:   2,
   threads:    1,
+  de_method:  'all',
 };
 
 export interface ClusteringConfig {
@@ -244,7 +245,7 @@ export default function StepAnalysisSettings({
                 value={deseq2Params.min_log2fc}
                 min={0} max={5} step={0.1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_log2fc: v })}
-                hint="1.5 = ~2.8× fold change minimum."
+                hint="1.0 = 2× fold change minimum (identique pipe_scilicium)."
               />
               <NumberField
                 label="Min reads / sample"
@@ -265,6 +266,18 @@ export default function StepAnalysisSettings({
                 min={0} max={100} step={1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_count: v })}
                 hint="Genes with lower mean count are filtered."
+              />
+              <SelectField
+                label="Méthode DEA"
+                value={deseq2Params.de_method ?? 'all'}
+                options={[
+                  { value: 'all',    label: 'Toutes + Stouffer (recommandé)' },
+                  { value: 'deseq2', label: 'DESeq2 uniquement' },
+                  { value: 'limma',  label: 'limma-voom uniquement' },
+                  { value: 'edger',  label: 'edgeR uniquement' },
+                ]}
+                onChange={v => onChangeDeseq2({ ...deseq2Params, de_method: v as AnalysisParams['de_method'] })}
+                hint='"Toutes" combine DESeq2 + edgeR + limma via Stouffer pour plus de robustesse.'
               />
             </div>
           </details>

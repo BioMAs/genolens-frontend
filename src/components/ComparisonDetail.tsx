@@ -858,7 +858,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       }}
                     >
                       <Download className="w-4 h-4" />
-                      Stats par méthode (.csv)
+                      Télécharger DEG — p-valeurs par méthode (.csv)
                     </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>

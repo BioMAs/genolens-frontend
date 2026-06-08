@@ -145,6 +145,7 @@ export interface AnalysisParams {
   threads: number;
   enrichment_databases?: string[] | null;
   species?: string;
+  de_method?: 'deseq2' | 'limma' | 'edger' | 'all';
 }
 
 export interface ProgressLogEntry {

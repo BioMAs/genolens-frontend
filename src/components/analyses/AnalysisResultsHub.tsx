@@ -330,9 +330,10 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
   const params = analysis.params ?? {};
 
   const rows: { label: string; value: string }[] = [
-    { label: 'DESeq2 design',        value: String(params.design ?? 'auto') },
+    { label: 'Méthode DEA',          value: String(params.de_method ?? 'all') },
+    { label: 'Design formula',       value: String(params.design ?? 'auto') },
     { label: 'FDR threshold',        value: String(params.fdr ?? 0.05) },
-    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.5) },
+    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.0) },
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },
@@ -342,7 +343,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>DESeq2 Parameters</h3>
+      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Paramètres d&apos;analyse</h3>
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div
