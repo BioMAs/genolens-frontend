@@ -13,6 +13,7 @@ import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
 import EnrichmentRadarPlot from './EnrichmentRadarPlot';
 import DEGTable from './DEGTable';
+import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import ExportMenu from './ExportMenu';
@@ -31,7 +32,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'clustering' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'clustering' | 'integrations' | 'custom-viz';
 
 type GenericRow = Record<string, unknown>;
 
@@ -691,6 +692,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 DEG Table
               </button>
               <button
+                onClick={() => setActiveTab('metrics')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'metrics'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Method statistics
+              </button>
+              <button
                 onClick={() => setActiveTab('enrichment')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
@@ -858,7 +870,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       }}
                     >
                       <Download className="w-4 h-4" />
-                      Télécharger DEG — p-valeurs par méthode (.csv)
+                      Download DEG — per-method p-values (.csv)
                     </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
@@ -867,6 +879,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Method statistics Tab (per-method p-values + Stouffer) */}
+            {activeTab === 'metrics' && (
+              <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
             )}
 
             {/* Enrichment Tab */}

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import api from '@/utils/api';
-import { Project, Dataset } from '@/types';
+import { Project, Dataset, DatasetType } from '@/types';
 import MultiComparisonVenn from '@/components/MultiComparisonVenn';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,12 +26,12 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         setProject(projectResponse.data);
 
         // Fetch datasets to find global DEG dataset
-        const datasetsResponse = await api.get(`/projects/${projectId}/datasets`);
+        const datasetsResponse = await api.get(`/datasets/project/${projectId}`);
         const datasets = datasetsResponse.data;
 
         // Find global DEG dataset (has multiple comparisons)
         const globalDeg = datasets.find((d: Dataset) =>
-          d.type === 'DEG' &&
+          d.type === DatasetType.DEG &&
           d.dataset_metadata?.comparisons &&
           Object.keys(d.dataset_metadata.comparisons).length > 1
         );

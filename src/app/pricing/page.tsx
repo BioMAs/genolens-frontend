@@ -44,25 +44,25 @@ const PLANS: PlanConfig[] = [
     displayName: 'Starter',
     monthlyPrice: '€80',
     annualPrice: '€800',
-    annualMonthlyEquiv: '≈ €67 / mois',
-    priceNote: '/ mois',
-    engagement: 'Engagement 3 mois minimum',
-    description: 'Pour les petits labos et les biotechs en démarrage.',
+    annualMonthlyEquiv: '≈ €67 / month',
+    priceNote: '/ month',
+    engagement: '3-month minimum commitment',
+    description: 'For small labs and early-stage biotechs.',
     highlight: false,
-    ctaLabel: 'Démarrer avec Starter',
+    ctaLabel: 'Get started with Starter',
     features: [
-      { label: '3 utilisateurs', included: true },
-      { label: '15 projets', included: true },
-      { label: '5 datasets / projet', included: true },
-      { label: '30 comparaisons / mois', included: true },
-      { label: 'Analyse différentielle', included: true },
-      { label: 'Analyse fonctionnelle (incluse)', included: true },
+      { label: '3 users', included: true },
+      { label: '15 projects', included: true },
+      { label: '5 datasets / project', included: true },
+      { label: '30 comparisons / month', included: true },
+      { label: 'Differential analysis', included: true },
+      { label: 'Functional analysis (included)', included: true },
       { label: 'Clustering', included: true },
-      { label: 'Export CSV', included: true },
-      { label: 'Multi-comparaison', included: false },
-      { label: 'Interprétation IA (BioMistral)', included: false },
-      { label: 'Export PDF / Excel', included: false },
-      { label: 'Accès API REST', included: false },
+      { label: 'CSV export', included: true },
+      { label: 'Multi-comparison', included: false },
+      { label: 'AI interpretation (BioMistral)', included: false },
+      { label: 'PDF / Excel export', included: false },
+      { label: 'REST API access', included: false },
     ],
   },
   {
@@ -70,25 +70,25 @@ const PLANS: PlanConfig[] = [
     displayName: 'Team',
     monthlyPrice: '€149',
     annualPrice: '€1 490',
-    annualMonthlyEquiv: '≈ €124 / mois',
-    priceNote: '/ mois',
-    engagement: 'Engagement 3 mois minimum',
-    description: 'Pour les équipes multi-projets avec analyses avancées.',
+    annualMonthlyEquiv: '≈ €124 / month',
+    priceNote: '/ month',
+    engagement: '3-month minimum commitment',
+    description: 'For multi-project teams running advanced analyses.',
     highlight: true,
-    ctaLabel: 'Passer à Team',
+    ctaLabel: 'Upgrade to Team',
     features: [
-      { label: '10 utilisateurs', included: true },
-      { label: 'Projets illimités', included: true },
-      { label: 'Datasets illimités', included: true },
-      { label: '150 comparaisons / mois', included: true },
-      { label: 'Analyse différentielle', included: true },
-      { label: 'Analyse fonctionnelle (incluse)', included: true },
+      { label: '10 users', included: true },
+      { label: 'Unlimited projects', included: true },
+      { label: 'Unlimited datasets', included: true },
+      { label: '150 comparisons / month', included: true },
+      { label: 'Differential analysis', included: true },
+      { label: 'Functional analysis (included)', included: true },
       { label: 'Clustering', included: true },
-      { label: 'Export CSV + PDF + Excel', included: true },
-      { label: 'Multi-comparaison', included: true },
-      { label: 'Interprétation IA (BioMistral)', included: true },
-      { label: 'Accès API REST', included: true },
-      { label: 'Partage de projet', included: true },
+      { label: 'CSV + PDF + Excel export', included: true },
+      { label: 'Multi-comparison', included: true },
+      { label: 'AI interpretation (BioMistral)', included: true },
+      { label: 'REST API access', included: true },
+      { label: 'Project sharing', included: true },
     ],
   },
   {
@@ -97,23 +97,23 @@ const PLANS: PlanConfig[] = [
     monthlyPrice: '€15 000',
     annualPrice: '€15 000',
     annualMonthlyEquiv: '',
-    priceNote: '/ an',
-    engagement: 'Licence annuelle',
-    description: "Installation sur vos serveurs. Données qui ne quittent jamais votre infrastructure.",
+    priceNote: '/ year',
+    engagement: 'Annual license',
+    description: "Installed on your own servers. Data never leaves your infrastructure.",
     highlight: false,
-    ctaLabel: "Contacter l'équipe",
+    ctaLabel: "Contact the team",
     isOnPremise: true,
     features: [
-      { label: 'Utilisateurs illimités', included: true },
-      { label: 'Projets illimités', included: true },
-      { label: 'Comparaisons illimitées', included: true },
-      { label: 'Toutes les fonctionnalités Team', included: true },
+      { label: 'Unlimited users', included: true },
+      { label: 'Unlimited projects', included: true },
+      { label: 'Unlimited comparisons', included: true },
+      { label: 'All Team features', included: true },
       { label: 'SSO / LDAP', included: true },
-      { label: 'Modèles IA custom (Ollama)', included: true },
-      { label: 'Déploiement Docker self-hosted', included: true },
-      { label: 'SLA 99.5% garanti', included: true },
-      { label: 'Support dédié 24h + onboarding', included: true },
-      { label: 'Mises à jour livrées et accompagnées', included: true },
+      { label: 'Custom AI models (Ollama)', included: true },
+      { label: 'Self-hosted Docker deployment', included: true },
+      { label: 'Guaranteed 99.5% SLA', included: true },
+      { label: 'Dedicated 24h support + onboarding', included: true },
+      { label: 'Managed updates and rollout', included: true },
     ],
   },
 ];
@@ -192,17 +192,17 @@ export default function PricingPage() {
       {/* Header */}
       <div className="mx-auto max-w-3xl text-center mb-10">
         <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
-          Tarifs simples et transparents
+          Simple, transparent pricing
         </h1>
         <p style={{ color: 'var(--text-secondary)' }} className="text-lg">
-          Sans plan gratuit — l&apos;acquisition se fait par notre expertise domaine.
+          No free plan — we earn your trust through our domain expertise.
         </p>
       </div>
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-4 mb-10">
         <span className={billing === 'monthly' ? 'font-semibold' : ''} style={{ color: billing === 'monthly' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-          Mensuel
+          Monthly
         </span>
         <button
           onClick={() => setBilling(b => b === 'monthly' ? 'annual' : 'monthly')}
@@ -218,7 +218,7 @@ export default function PricingPage() {
           />
         </button>
         <span className={billing === 'annual' ? 'font-semibold' : ''} style={{ color: billing === 'annual' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-          Annuel{' '}
+          Annual{' '}
           <Badge variant="secondary" className="ml-1 text-xs">
             −17%
           </Badge>
@@ -261,7 +261,7 @@ export default function PricingPage() {
           const displayPriceNote = plan.isOnPremise
             ? plan.priceNote
             : billing === 'annual'
-              ? `/ an`
+              ? `/ year`
               : plan.priceNote;
 
           const displayEquiv = !plan.isOnPremise && billing === 'annual'
@@ -273,7 +273,7 @@ export default function PricingPage() {
               {plan.highlight && (
                 <div className="flex justify-center mb-2">
                   <Badge variant="teal" className="text-xs font-semibold px-3 py-0.5">
-                    Le plus populaire
+                    Most popular
                   </Badge>
                 </div>
               )}
@@ -288,7 +288,7 @@ export default function PricingPage() {
                     <CardTitle className="text-xl">{plan.displayName}</CardTitle>
                     {isCurrent && (
                       <Badge variant="success" className="text-xs">
-                        Plan actuel
+                        Current plan
                       </Badge>
                     )}
                   </div>
@@ -355,7 +355,7 @@ export default function PricingPage() {
                       className="inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2"
                       style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                     >
-                      Contacter l&apos;équipe
+                      Contact the team
                     </a>
                   ) : (
                     <Button
@@ -368,10 +368,10 @@ export default function PricingPage() {
                       {isButtonLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Redirection…</span>
+                          <span>Redirecting…</span>
                         </>
                       ) : isCurrent ? (
-                        'Plan actuel'
+                        'Current plan'
                       ) : (
                         plan.ctaLabel
                       )}
@@ -386,7 +386,7 @@ export default function PricingPage() {
 
       {/* Footer note */}
       <p className="mt-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        Engagement minimum 3 mois pour les plans SaaS. Paiement annuel : remise de 17% (2 mois offerts). Prix HT.
+        3-month minimum commitment for SaaS plans. Annual billing: 17% off (2 months free). Prices exclude VAT.
       </p>
     </div>
   );

@@ -283,6 +283,8 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
         if (cat.toUpperCase().includes('HALLMARK')) return 'bg-yellow-100 text-yellow-800';
         if (cat.toUpperCase().includes('C5_ONTOLOGY')) return 'bg-teal-100 text-teal-800';
         if (cat.toUpperCase().includes('C7_IMMUNOLOGIC')) return 'bg-indigo-100 text-indigo-800';
+        if (cat.toUpperCase().includes('C2_CURATED')) return 'bg-rose-100 text-rose-800';
+        if (cat.toUpperCase().includes('C6_ONCOGENIC')) return 'bg-amber-100 text-amber-800';
         if (cat.toUpperCase().includes('WIKI')) return 'bg-pink-100 text-pink-800';
         return 'bg-gray-100 text-gray-800';
     };

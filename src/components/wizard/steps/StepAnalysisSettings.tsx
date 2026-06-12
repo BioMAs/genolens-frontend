@@ -268,16 +268,16 @@ export default function StepAnalysisSettings({
                 hint="Genes with lower mean count are filtered."
               />
               <SelectField
-                label="Méthode DEA"
+                label="DEA method"
                 value={deseq2Params.de_method ?? 'all'}
                 options={[
-                  { value: 'all',    label: 'Toutes + Stouffer (recommandé)' },
-                  { value: 'deseq2', label: 'DESeq2 uniquement' },
-                  { value: 'limma',  label: 'limma-voom uniquement' },
-                  { value: 'edger',  label: 'edgeR uniquement' },
+                  { value: 'all',    label: 'All + Stouffer (recommended)' },
+                  { value: 'deseq2', label: 'DESeq2 only' },
+                  { value: 'limma',  label: 'limma-voom only' },
+                  { value: 'edger',  label: 'edgeR only' },
                 ]}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, de_method: v as AnalysisParams['de_method'] })}
-                hint='"Toutes" combine DESeq2 + edgeR + limma via Stouffer pour plus de robustesse.'
+                hint='"All" combines DESeq2 + edgeR + limma via Stouffer for added robustness.'
               />
             </div>
           </details>

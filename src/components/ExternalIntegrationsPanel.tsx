@@ -22,7 +22,6 @@ import { useState, useCallback } from 'react';
 import {
   Network,
   Search,
-  Database,
   Download,
   RefreshCw,
   ExternalLink,
@@ -658,8 +657,11 @@ function StringEnrichTab({ initialGenes }: { initialGenes: string }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab 3 – GEO Datasets search
+// Kept for future re-activation: GEO has moved to the Tools page ("Available soon").
+// Not currently rendered in the comparison Integrations tab.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function GEOSearchTab() {
   const [query, setQuery] = useState('');
   const [maxResults, setMaxResults] = useState(10);
@@ -832,7 +834,7 @@ function Stat({ label, value, color }: { label: string; value: number | string; 
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SubTab = 'ppi' | 'enrich' | 'geo';
+type SubTab = 'ppi' | 'enrich';
 
 interface ExternalIntegrationsPanelProps {
   /** Optional genes to pre-populate STRING inputs (e.g. top DEGs from the comparison) */
@@ -848,7 +850,6 @@ export default function ExternalIntegrationsPanel({
   const tabs: { id: SubTab; label: string; icon: React.ReactNode }[] = [
     { id: 'ppi', label: 'PPI Network (STRING)', icon: <Share2 className="w-4 h-4" /> },
     { id: 'enrich', label: 'STRING Enrichment', icon: <FlaskConical className="w-4 h-4" /> },
-    { id: 'geo', label: 'Public GEO Datasets', icon: <Database className="w-4 h-4" /> },
   ];
 
   return (
@@ -860,7 +861,7 @@ export default function ExternalIntegrationsPanel({
           External Integrations
         </h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Query public databases (STRING&nbsp;DB, NCBI&nbsp;GEO) and export your networks to Cytoscape.
+          Query public databases (STRING&nbsp;DB) and export your networks to Cytoscape.
         </p>
       </div>
 
@@ -888,7 +889,6 @@ export default function ExternalIntegrationsPanel({
       <div>
         {activeTab === 'ppi' && <StringNetworkTab initialGenes={initialGenes} />}
         {activeTab === 'enrich' && <StringEnrichTab initialGenes={initialGenes} />}
-        {activeTab === 'geo' && <GEOSearchTab />}
       </div>
     </div>
   );
