@@ -7,7 +7,6 @@ import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
 import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download } from 'lucide-react';
 import DEGBarChart from './DEGBarChart';
 import OverviewTopGenes from './OverviewTopGenes';
-import OverviewEnrichmentTop from './OverviewEnrichmentTop';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import EnrichmentPlot from './EnrichmentPlot';
@@ -823,9 +822,6 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       </div>
                       <OverviewTopGenes dataset={degDataset} comparisonName={actualComparisonName} />
                     </div>
-
-                    {/* Top enrichments — only rendered when pre-computed data exists */}
-                    <OverviewEnrichmentTop dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
 
                   <div className="xl:col-span-4 space-y-4">
