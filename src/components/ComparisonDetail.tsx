@@ -212,22 +212,34 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   // Compute derived values using useMemo to ensure they're available before early returns
   const decodedName = useMemo(() => decodeURIComponent(comparisonName), [comparisonName]);
 
-  const degDataset = useMemo(() => {
-    if (!datasets || datasets.length === 0) return undefined;
+  // Scope candidate datasets to the current analysis (when known) so comparisons
+  // from OTHER analyses sharing the same name don't bleed in ("mélange entre
+  // analyses"). Falls back to the full project list if the analysis has none.
+  const scopedDatasets = useMemo(() => {
+    if (!datasets || datasets.length === 0) return [];
+    if (analysisId) {
+      const inAnalysis = datasets.filter(d => d.dataset_metadata?.analysis_id === analysisId);
+      if (inAnalysis.length > 0) return inAnalysis;
+    }
+    return datasets;
+  }, [datasets, analysisId]);
 
+  const degDataset = useMemo(() => {
     if (globalDatasetId) {
       return datasets.find(d => d.id === globalDatasetId);
-    } else {
-      return datasets.find(d =>
-        d.type === DatasetType.DEG && (
-          d.dataset_metadata?.comparison_name === decodedName ||
-          d.name === decodedName ||
-          (Array.isArray(d.dataset_metadata?.comparisons) && d.dataset_metadata.comparisons.includes(decodedName)) ||
-          (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in d.dataset_metadata.comparisons)
-        )
-      );
     }
-  }, [datasets, globalDatasetId, decodedName]);
+    if (scopedDatasets.length === 0) return undefined;
+    const matches = scopedDatasets.filter(d =>
+      d.type === DatasetType.DEG && (
+        d.dataset_metadata?.comparison_name === decodedName ||
+        d.name === decodedName ||
+        (Array.isArray(d.dataset_metadata?.comparisons) && (d.dataset_metadata.comparisons as unknown[]).includes(decodedName)) ||
+        (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in (d.dataset_metadata.comparisons as object))
+      )
+    );
+    // Prefer a READY dataset so failed/old duplicates are never picked.
+    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
+  }, [scopedDatasets, datasets, globalDatasetId, decodedName]);
 
   // Derive the actual comparison name from dataset metadata.
   // When the URL contains the dataset display name (e.g. "DEG Analysis — KO vs WT")
@@ -241,27 +253,26 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   }, [degDataset, decodedName]);
 
   const enrichmentDataset = useMemo(() => {
-    if (!datasets || datasets.length === 0) return undefined;
+    if (scopedDatasets.length === 0) return undefined;
 
-    // First try to find by comparison_name or name (check both decoded and actual)
-    let enrichment = datasets.find(d => d.type === DatasetType.ENRICHMENT && (
+    const byName = scopedDatasets.filter(d => d.type === DatasetType.ENRICHMENT && (
       d.dataset_metadata?.comparison_name === actualComparisonName ||
       d.dataset_metadata?.comparison_name === decodedName ||
       d.name === decodedName
     ));
 
-    // Also check for enrichment files with enrichment_comparisons metadata
-    if (!enrichment) {
-      enrichment = datasets.find(d =>
-        d.type === DatasetType.ENRICHMENT &&
-        Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
-        (d.dataset_metadata.enrichment_comparisons.includes(actualComparisonName) ||
-         d.dataset_metadata.enrichment_comparisons.includes(decodedName))
-      );
-    }
+    // Also match enrichment files via enrichment_comparisons metadata
+    const byComparisons = scopedDatasets.filter(d =>
+      d.type === DatasetType.ENRICHMENT &&
+      Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
+      ((d.dataset_metadata.enrichment_comparisons as unknown[]).includes(actualComparisonName) ||
+       (d.dataset_metadata.enrichment_comparisons as unknown[]).includes(decodedName))
+    );
 
-    return enrichment;
-  }, [datasets, decodedName, actualComparisonName]);
+    const matches = byName.length > 0 ? byName : byComparisons;
+    // Prefer a READY dataset so failed/old duplicates are never picked.
+    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
+  }, [scopedDatasets, decodedName, actualComparisonName]);
 
   const matrixDataset = useMemo(() => {
     if (!datasets || datasets.length === 0) return undefined;
