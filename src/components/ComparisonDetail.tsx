@@ -9,8 +9,6 @@ import DEGBarChart from './DEGBarChart';
 import OverviewTopGenes from './OverviewTopGenes';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
-import EnrichmentPlot from './EnrichmentPlot';
-import EnrichmentRadarPlot from './EnrichmentRadarPlot';
 import DEGTable from './DEGTable';
 import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
@@ -53,7 +51,6 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const globalDatasetId = searchParams.get('datasetId');
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'legacy'>('go');
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -896,78 +893,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             {/* Enrichment Tab */}
             {activeTab === 'enrichment' && (
               degDataset ? (
-                <div className="space-y-4">
-                  {/* Sub-tab navigation */}
-                  <div className="flex border-b border-gray-200">
-                    <button
-                      onClick={() => setEnrichSubTab('go')}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        enrichSubTab === 'go'
-                          ? 'border-brand-primary text-brand-primary'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      Pathway Enrichment
-                    </button>
-                    {enrichmentDataset && (
-                      <button
-                        onClick={() => setEnrichSubTab('legacy')}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                          enrichSubTab === 'legacy'
-                            ? 'border-brand-primary text-brand-primary'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        Inheritance
-                      </button>
-                    )}
-                  </div>
-
-                  {/* GO Enrichment sub-tab */}
-                  {enrichSubTab === 'go' && (
-                    <div className="space-y-6">
-                      <GOEnrichmentAnalysis
-                        dataset={degDataset}
-                        comparisonName={actualComparisonName}
-                      />
-                    </div>
-                  )}
-
-                  {/* Legacy sub-tab (Parquet-based enrichment data) */}
-                  {enrichSubTab === 'legacy' && enrichmentDataset && (
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex justify-between items-center mb-4">
-                          <h2 className="text-xl font-bold text-gray-900">Pathway Enrichment Plot</h2>
-                          <Link
-                            href={`/projects/${projectId}/datasets/${enrichmentDataset.id}`}
-                            className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
-                          >
-                            View Full Dataset &rarr;
-                          </Link>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <EnrichmentPlot dataset={enrichmentDataset} comparisonName={actualComparisonName} />
-                        </div>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                          <Activity className="w-5 h-5 text-purple-600" />
-                          Enrichment Radar Plot
-                        </h2>
-                        <EnrichmentRadarPlot
-                          datasetId={enrichmentDataset.id}
-                          comparisonName={actualComparisonName}
-                          maxTerms={10}
-                        />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Enriched Pathways</h2>
-                        <EnrichmentTable dataset={enrichmentDataset} comparisonName={actualComparisonName} />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <GOEnrichmentAnalysis
+                  dataset={degDataset}
+                  enrichmentDataset={enrichmentDataset}
+                  comparisonName={actualComparisonName}
+                />
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />

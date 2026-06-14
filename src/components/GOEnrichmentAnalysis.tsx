@@ -21,6 +21,9 @@ const EnrichmentRadarPlot = dynamic(() => import('./EnrichmentRadarPlot'), { ssr
 interface GOEnrichmentAnalysisProps {
   dataset: Dataset;
   comparisonName: string;
+  // Dataset holding the enrichment pathways (annoDB ENRICHMENT dataset). When set,
+  // pathways are read from it; DEG gene info still comes from `dataset` (the DEG dataset).
+  enrichmentDataset?: Dataset;
 }
 
 interface GOEnrichmentParams {
@@ -181,7 +184,9 @@ const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
   { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic', color: 'text-indigo-600' },
 ];
 
-export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnrichmentAnalysisProps) {
+export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichmentDataset }: GOEnrichmentAnalysisProps) {
+  // Pathways live on the ENRICHMENT dataset (annoDB); DEG genes on the DEG dataset.
+  const enrichmentDatasetId = enrichmentDataset?.id ?? dataset.id;
   const [isRunning, setIsRunning] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [terms, setTerms] = useState<GOTerm[]>([]);
@@ -209,7 +214,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     try {
       setError(null);
       const res = await api.get(
-        `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
+        `/datasets/${enrichmentDatasetId}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
         { params: { page_size: 1000 } }
       );
       const rows: Record<string, unknown>[] = res.data?.pathways ?? res.data?.results ?? res.data ?? [];
@@ -222,7 +227,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       setError('Failed to load enrichment cache.');
     }
     return false;
-  }, [dataset.id, comparisonName]);
+  }, [enrichmentDatasetId, comparisonName]);
 
   // Fetch DEG gene map for UP/DOWN coloring — paginate through all pages
   useEffect(() => {
@@ -488,7 +493,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
               {activeTab === 'histogram' && <EnrichmentHistogram terms={displayTerms} />}
               {activeTab === 'radar' && (
                 <EnrichmentRadarPlot
-                  datasetId={dataset.id}
+                  datasetId={enrichmentDatasetId}
                   comparisonName={comparisonName}
                 />
               )}
@@ -500,7 +505,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
 
           {/* GO Hierarchy Tree */}
           <GOTreePanel
-            datasetId={dataset.id}
+            datasetId={enrichmentDatasetId}
             comparisonName={comparisonName}
             regulation={params.regulation ?? undefined}
           />
