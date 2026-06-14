@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, ShieldCheck } from 'lucide-react';
 import { useCosmeticsInterpretation } from '@/hooks/useCosmetics';
+import PanelInfo from './PanelInfo';
 
 /** Minimal markdown renderer: ## headings, **bold**, paragraphs. */
 function Markdown({ text }: { text: string }) {
@@ -51,9 +52,28 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
   return (
     <div className="gl-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           <Sparkles className="h-4 w-4" style={{ color: '#db2777' }} />
           AI cosmetic interpretation
+          <PanelInfo title="AI cosmetic interpretation — what it does">
+            <p>
+              A private AI model turns the computed claim scores into a readable,
+              marketing-oriented narrative. It receives <b>only the scored claims,
+              skin-zone activity and caveats</b> — not your raw data.
+            </p>
+            <p><b>What it generates</b></p>
+            <ul>
+              <li><b>Claim-by-claim narrative</b>: the biological mechanism behind each well-supported claim, in skin-care language.</li>
+              <li><b>Executive summary</b>: a short pitch describing the overall effect on the skin.</li>
+              <li><b>Regulatory note</b>: cautious wording, flagging caveats.</li>
+            </ul>
+            <p><b>How to read it</b></p>
+            <ul>
+              <li>It is a <b>drafting aid</b> grounded in the scores above — always review before any external use.</li>
+              <li>These are <b>cosmetic</b> statements, not medical or therapeutic claims.</li>
+              <li>Regenerate any time; results are cached per comparison.</li>
+            </ul>
+          </PanelInfo>
         </h3>
         {!demoText && (
           <button

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
+import PanelInfo from './PanelInfo';
 
 const CONFIDENCE_STYLES: Record<string, { bg: string; fg: string }> = {
   HIGH: { bg: '#dcfce7', fg: '#166534' },
@@ -117,10 +118,34 @@ export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] })
   const supported = claims.filter((c) => c.n_supporting > 0 || c.score > 0);
   const list = supported.length > 0 ? supported : claims;
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {list.map((c) => (
-        <ClaimCard key={c.slug} claim={c} />
-      ))}
+    <div className="space-y-3">
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Claim details
+        </h3>
+        <PanelInfo title="Claim details — how to read each card">
+          <p>One card per claim, detailing the evidence behind its score.</p>
+          <p><b>What each element means</b></p>
+          <ul>
+            <li><b>Score (0–100)</b> + bar: the claim activation score (consistency × strength of the supporting evidence).</li>
+            <li><b>Favorable / Unfavorable</b>: whether the net of supporting vs contradicting pathways points in the claim&apos;s direction.</li>
+            <li><b>Confidence badge</b> (HIGH/MODERATE/LOW): based on the literature evidence level of the matched pathways and how many support the claim.</li>
+            <li><b>Supporting vs contradicting pathways</b>: how many enriched pathways agree vs disagree with the claim&apos;s expected direction.</li>
+            <li><b>Gene chips</b>: representative genes driving the matched pathways.</li>
+            <li><b>Evidence pathways</b> (expandable): the actual pathways behind the score, with their observed direction and evidence level.</li>
+          </ul>
+          <p><b>How to read it</b></p>
+          <ul>
+            <li>Prioritize claims with a <b>high score AND HIGH/MODERATE confidence</b> for communication.</li>
+            <li>A high score with LOW confidence or few supporting pathways is <b>exploratory</b> — treat with caution.</li>
+          </ul>
+        </PanelInfo>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {list.map((c) => (
+          <ClaimCard key={c.slug} claim={c} />
+        ))}
+      </div>
     </div>
   );
 }

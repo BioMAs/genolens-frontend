@@ -1,6 +1,7 @@
 'use client';
 
 import { CosmeticSkinZone } from '@/hooks/useCosmetics';
+import PanelInfo from './PanelInfo';
 
 const ZONE_COLORS: Record<string, string> = {
   stratum_corneum: '#0ea5e9',
@@ -38,9 +39,30 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
 
   return (
     <div className="gl-card p-4">
-      <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-        Effect on skin
-      </h3>
+      <div className="mb-1 flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Effect on skin
+        </h3>
+        <PanelInfo title="Effect on skin — how it is computed">
+          <p>
+            This map shows how strongly each <b>skin compartment</b> is engaged at
+            the transcriptional level in this comparison — regardless of whether
+            the effect is beneficial.
+          </p>
+          <p><b>How the activity score is built</b></p>
+          <ul>
+            <li>Each significantly enriched pathway is mapped to a skin compartment via its functional category (e.g. ECM/cytoskeleton → dermis, barrier lipids → stratum corneum, redox → antioxidant defense).</li>
+            <li>Every pathway contributes a weight = <b>evidence strength</b> (HIGH/MODERATE/LOW from the curated referential) × <b>statistical significance</b> (−log₁₀ of the adjusted p-value).</li>
+            <li>The weights are summed per compartment, then rescaled <b>0–100 relative to the most engaged compartment</b>.</li>
+          </ul>
+          <p><b>How to read it</b></p>
+          <ul>
+            <li><b>Brighter / higher number</b> = more transcriptional activity in that area.</li>
+            <li>The <b>arrow</b> shows the dominant direction of regulation (▲ up, ▼ down, ■ mixed).</li>
+            <li>This is an <b>engagement</b> view, not a benefit score — see the radar and claim cards for the favorable/unfavorable interpretation.</li>
+          </ul>
+        </PanelInfo>
+      </div>
       <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
         Transcriptional engagement per skin compartment. Brighter = more active.
       </p>
