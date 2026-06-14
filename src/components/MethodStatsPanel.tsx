@@ -90,7 +90,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
     const keys = Object.keys(rows[0]);
     const geneIdKey = keys.includes('gene_id') ? 'gene_id' : undefined;
     const geneNameKey = keys.includes('gene_name') ? 'gene_name' : undefined;
-    const logfcKey = findColumn(keys, 'log2FoldChange');
+    const logfcKey = findColumn(keys, 'log2FoldChange') ?? findColumn(keys, 'logFC');
     const perMethod = methods.map((m) => ({
       method: m,
       pvalueKey: findMethodColumn(keys, 'pvalue', m),
