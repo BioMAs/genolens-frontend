@@ -63,6 +63,8 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
+  /** Cosmetics add-on module, unlocked per-user by an admin (from /users/me). */
+  has_cosmetics_module?: boolean;
 }
 
 export interface EnrichmentResult {
