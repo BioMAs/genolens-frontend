@@ -3,6 +3,7 @@ export type ReportJobStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
 export interface ReportJob {
   id: string;
   project_id: string;
+  analysis_id: string | null;
   celery_task_id: string | null;
   status: ReportJobStatus;
   pdf_path: string | null;

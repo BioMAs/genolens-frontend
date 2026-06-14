@@ -5,14 +5,14 @@ import type { ReportJob, ReportTriggerResponse } from "@/types/report";
 
 const POLL_MS = 3000;
 
-export function useReportStatus(projectId: string, enabled: boolean) {
+export function useReportStatus(analysisId: string, enabled: boolean) {
   return useQuery<ReportJob>({
-    queryKey: ["report", projectId, "status"],
+    queryKey: ["report", analysisId, "status"],
     queryFn: async () => {
-      const res = await api.get<ReportJob>(`/projects/${projectId}/report/status`);
+      const res = await api.get<ReportJob>(`/analyses/${analysisId}/report/status`);
       return res.data;
     },
-    enabled: enabled && !!projectId,
+    enabled: enabled && !!analysisId,
     refetchInterval: (query) => {
       const s = query.state.data?.status;
       return s === "PENDING" || s === "RUNNING" ? POLL_MS : false;
@@ -26,15 +26,15 @@ export function useReportStatus(projectId: string, enabled: boolean) {
   });
 }
 
-export function useTriggerReport(projectId: string) {
+export function useTriggerReport(analysisId: string) {
   const queryClient = useQueryClient();
   return useMutation<ReportTriggerResponse, Error>({
     mutationFn: async () => {
-      const res = await api.post<ReportTriggerResponse>(`/projects/${projectId}/report`);
+      const res = await api.post<ReportTriggerResponse>(`/analyses/${analysisId}/report`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["report", projectId, "status"] });
+      queryClient.invalidateQueries({ queryKey: ["report", analysisId, "status"] });
     },
   });
 }

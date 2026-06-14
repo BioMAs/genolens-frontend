@@ -222,7 +222,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
             <div className="flex items-center gap-2">
               <StatusBadge status={analysis.status} />
               {analysis.status === SelfServiceAnalysisStatus.DONE && (
-                <GenerateReportButton projectId={projectId} />
+                <GenerateReportButton analysisId={analysisId} />
               )}
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}

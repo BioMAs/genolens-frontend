@@ -6,16 +6,16 @@ import { useReportStatus, useTriggerReport } from "@/hooks/useReportGeneration";
 import api from "@/utils/api";
 
 interface Props {
-  projectId: string;
+  analysisId: string;
 }
 
-export default function GenerateReportButton({ projectId }: Props) {
+export default function GenerateReportButton({ analysisId }: Props) {
   const [hasTriggered, setHasTriggered] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const trigger = useTriggerReport(projectId);
+  const trigger = useTriggerReport(analysisId);
   // Always enabled so we show DONE/RUNNING state even after page reload
-  const { data: job } = useReportStatus(projectId, true);
+  const { data: job } = useReportStatus(analysisId, true);
 
   const isDone = job?.status === "DONE";
   const isFailed = job?.status === "FAILED";
@@ -29,13 +29,13 @@ export default function GenerateReportButton({ projectId }: Props) {
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const res = await api.get(`/projects/${projectId}/report/download`, {
+      const res = await api.get(`/analyses/${analysisId}/report/download`, {
         responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `report_${projectId}.pdf`;
+      a.download = `report_${analysisId}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
