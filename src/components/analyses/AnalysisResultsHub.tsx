@@ -9,10 +9,8 @@ import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hook
 import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
 import PreprocessingResults from './PreprocessingResults';
 import type { QCReport } from './PreprocessingResults';
-import PCAResults from './PCAResults';
-import type { PCAData } from './PCAResults';
-import UMAPResults from './UMAPResults';
-import type { UMAPPoint } from './UMAPResults';
+import PCAPlot from '@/components/PCAPlot';
+import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
 import GenerateReportButton from '@/components/GenerateReportButton';
 
@@ -43,29 +41,6 @@ function isQCReport(value: unknown): value is QCReport {
   );
 }
 
-function isPCAData(value: unknown): value is PCAData {
-  if (!value || typeof value !== 'object') return false;
-  const data = value as Partial<PCAData>;
-  return (
-    Array.isArray(data.variance_explained) &&
-    Array.isArray(data.pc_labels) &&
-    Array.isArray(data.samples)
-  );
-}
-
-function isUMAPPoint(value: unknown): value is UMAPPoint {
-  if (!value || typeof value !== 'object') return false;
-  const point = value as Partial<UMAPPoint>;
-  return (
-    typeof point.sample_id === 'string' &&
-    typeof point.UMAP1 === 'number' &&
-    typeof point.UMAP2 === 'number'
-  );
-}
-
-function isUMAPData(value: unknown): value is UMAPPoint[] {
-  return Array.isArray(value) && value.every(isUMAPPoint);
-}
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('comparisons');
@@ -117,28 +92,12 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }, [datasets, analysis, analysisId]);
 
-  // PCA data embedded in the VST dataset metadata
-  const pcaData = useMemo<PCAData | null>(() => {
-    const rawPcaData = vstDataset?.dataset_metadata?.pca_data;
-    return isPCAData(rawPcaData) ? rawPcaData : null;
-  }, [vstDataset]);
-
-  // UMAP dataset
-  const umapDataset = useMemo<Dataset | undefined>(() => {
-    const umapId = analysis?.intermediate_dataset_ids?.umap;
-    if (umapId) return datasets.find((d) => d.id === umapId);
-    return datasets.find(
-      (d) =>
-        d.type === DatasetType.METADATA &&
-        d.dataset_metadata?.source === 'umap' &&
-        d.dataset_metadata?.analysis_id === analysisId
-    );
-  }, [datasets, analysis, analysisId]);
-
-  const umapData = useMemo<UMAPPoint[] | null>(() => {
-    const rawUmapData = umapDataset?.dataset_metadata?.umap_data;
-    return isUMAPData(rawUmapData) ? rawUmapData : null;
-  }, [umapDataset]);
+  // Samples dataset — drives condition colouring of PCA/UMAP (and is the
+  // metadata source for the on-demand PCA/UMAP plots computed from the VST).
+  const samplesDataset = useMemo<Dataset | undefined>(() => {
+    const sid = analysis?.samples_dataset_id;
+    return sid ? datasets.find((d) => d.id === sid) : undefined;
+  }, [datasets, analysis]);
 
   // QC report embedded in VST dataset metadata (or normalized dataset)
   const qcReport = useMemo<QCReport | null>(() => {
@@ -267,14 +226,26 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <PreprocessingResults qcReport={qcReport} />
             )}
 
-            {/* ── PCA ── */}
+            {/* ── PCA (computed on demand from the VST matrix) ── */}
             {activeTab === 'pca' && (
-              <PCAResults pcaData={pcaData} datasetId={vstDataset?.id} />
+              vstDataset ? (
+                <PCAPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+              ) : (
+                <div className="text-center py-16 text-sm text-gray-500">
+                  No normalized matrix available for PCA.
+                </div>
+              )
             )}
 
-            {/* ── UMAP ── */}
+            {/* ── UMAP (computed on demand from the VST matrix) ── */}
             {activeTab === 'umap' && (
-              <UMAPResults umapData={umapData} />
+              vstDataset ? (
+                <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+              ) : (
+                <div className="text-center py-16 text-sm text-gray-500">
+                  No normalized matrix available for UMAP.
+                </div>
+              )
             )}
 
             {/* ── Comparisons ── */}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
+import { useProject } from '@/hooks/useProjects';
 import {
   LayoutDashboard,
   Wrench,
@@ -50,7 +51,10 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch?.[1] ?? null;
   const hasProjectContext = Boolean(projectId);
-  const projectLabel = projectId ? decodeURIComponent(projectId).replace(/[-_]/g, ' ') : '';
+  // Resolve the human project name; fall back to the id while it loads.
+  const { data: currentProject } = useProject(projectId ?? '', hasProjectContext);
+  const projectLabel =
+    currentProject?.name ?? (projectId ? decodeURIComponent(projectId) : '');
   const userName = user.email?.split('@')[0] || 'User';
   const initials = userName
     .replace(/[^a-zA-Z0-9]/g, '')
