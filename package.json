@@ -21,6 +21,7 @@
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/d3": "^7.4.3",
+    "@upsetjs/react": "^1.11.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
