@@ -1,24 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Dataset } from '@/types';
+import { useState } from 'react';
 import api from '@/utils/api';
 import VennDiagram from './VennDiagram';
 import UpSetPlot from './UpSetPlot';
 
-interface MultiComparisonVennProps {
-  projectId: string;
-  degDataset: Dataset; // Global DEG dataset with multiple comparisons
-}
-
-interface ComparisonOption {
-  name: string;
+// One comparison, tagged with the DEG dataset that holds it. `label` is the
+// unique display key used across selection state and the Venn response.
+export interface ComparisonRef {
+  datasetId: string;
+  comparisonName: string;
   label: string;
   degCount: number;
 }
 
-interface ComparisonMeta {
-  deg_total?: number;
+interface MultiComparisonVennProps {
+  projectId: string;
+  pathDatasetId: string; // Any dataset id in the project; used for the endpoint URL + access check
+  comparisons: ComparisonRef[]; // Comparisons aggregated from all DEG datasets
 }
 
 interface ApiErrorShape {
@@ -38,40 +37,23 @@ interface VennData {
   }[];
 }
 
-export default function MultiComparisonVenn({ degDataset }: MultiComparisonVennProps) {
-  const [availableComparisons, setAvailableComparisons] = useState<ComparisonOption[]>([]);
+export default function MultiComparisonVenn({ pathDatasetId, comparisons: availableComparisons }: MultiComparisonVennProps) {
   const [selectedComparisons, setSelectedComparisons] = useState<string[]>([]);
   const [vennData, setVennData] = useState<VennData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Extract available comparisons from metadata
-  useEffect(() => {
-    const metadata = degDataset.dataset_metadata;
-    const comparisonsMap = metadata?.comparisons as Record<string, ComparisonMeta> | undefined;
-    if (comparisonsMap) {
-      const comparisons: ComparisonOption[] = Object.entries(comparisonsMap).map(
-        ([name, data]) => ({
-          name,
-          label: name,
-          degCount: (data.deg_total || 0)
-        })
-      );
-      setAvailableComparisons(comparisons);
-    }
-  }, [degDataset]);
-
-  const handleComparisonToggle = (compName: string) => {
+  const handleComparisonToggle = (compLabel: string) => {
     setSelectedComparisons(prev => {
-      if (prev.includes(compName)) {
-        return prev.filter(c => c !== compName);
+      if (prev.includes(compLabel)) {
+        return prev.filter(c => c !== compLabel);
       } else {
         // Limit to 5 comparisons
         if (prev.length >= 5) {
           setError('Maximum 5 comparisons allowed');
           return prev;
         }
-        return [...prev, compName];
+        return [...prev, compLabel];
       }
     });
     setError(null);
@@ -87,8 +69,16 @@ export default function MultiComparisonVenn({ degDataset }: MultiComparisonVennP
     setError(null);
 
     try {
-      const response = await api.post(`/datasets/${degDataset.id}/venn-analysis`, {
-        comparisons: selectedComparisons,
+      const selectedRefs = availableComparisons
+        .filter((c) => selectedComparisons.includes(c.label))
+        .map((c) => ({
+          dataset_id: c.datasetId,
+          comparison_name: c.comparisonName,
+          label: c.label,
+        }));
+
+      const response = await api.post(`/datasets/${pathDatasetId}/venn-analysis`, {
+        comparison_refs: selectedRefs,
         padj_threshold: 0.05,
         logfc_threshold: 0.58
       });
@@ -132,10 +122,10 @@ export default function MultiComparisonVenn({ degDataset }: MultiComparisonVennP
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {availableComparisons.map((comp) => (
             <label
-              key={comp.name}
+              key={comp.label}
               className={`
                 relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all
-                ${selectedComparisons.includes(comp.name)
+                ${selectedComparisons.includes(comp.label)
                   ? 'border-brand-primary bg-brand-primary/5'
                   : 'border-gray-200 hover:border-gray-300'
                 }
@@ -143,8 +133,8 @@ export default function MultiComparisonVenn({ degDataset }: MultiComparisonVennP
             >
               <input
                 type="checkbox"
-                checked={selectedComparisons.includes(comp.name)}
-                onChange={() => handleComparisonToggle(comp.name)}
+                checked={selectedComparisons.includes(comp.label)}
+                onChange={() => handleComparisonToggle(comp.label)}
                 className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
               />
               <div className="ml-3 flex-1">

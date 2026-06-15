@@ -6,7 +6,86 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType } from '@/types';
-import MultiComparisonVenn from '@/components/MultiComparisonVenn';
+import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
+
+interface ComparisonMetaShape {
+  deg_total?: number;
+  deg_up?: number;
+  deg_down?: number;
+}
+
+/**
+ * Flatten every comparison across all DEG datasets in the project into a single
+ * list of refs (one entry per comparison, tagged with its owning dataset). This
+ * supports both a single "global" multi-comparison dataset and several
+ * single-comparison datasets.
+ */
+function buildComparisonRefs(datasets: Dataset[]): ComparisonRef[] {
+  const degDatasets = datasets.filter((d) => d.type === DatasetType.DEG);
+  const refs: ComparisonRef[] = [];
+
+  const degCountOf = (meta: ComparisonMetaShape | undefined): number => {
+    if (!meta) return 0;
+    if (typeof meta.deg_total === 'number') return meta.deg_total;
+    return (meta.deg_up || 0) + (meta.deg_down || 0);
+  };
+
+  for (const d of degDatasets) {
+    const metadata = (d.dataset_metadata || {}) as Record<string, unknown>;
+    const columnsInfo = metadata.columns_info as Record<string, unknown> | undefined;
+    const rawComparisons = metadata.comparisons ?? columnsInfo?.comparisons;
+
+    if (Array.isArray(rawComparisons) && rawComparisons.length > 0) {
+      // Legacy single-comparison datasets store comparisons as a list of names
+      for (const entry of rawComparisons) {
+        const comparisonName =
+          typeof entry === 'string' ? entry : ((entry as { name?: string })?.name ?? d.name);
+        refs.push({
+          datasetId: d.id,
+          comparisonName,
+          label: comparisonName,
+          degCount: degCountOf(metadata as ComparisonMetaShape),
+        });
+      }
+    } else if (
+      rawComparisons &&
+      typeof rawComparisons === 'object' &&
+      Object.keys(rawComparisons).length > 0
+    ) {
+      // "Global" dataset: comparisons is a dict keyed by comparison name
+      const comparisonsMap = rawComparisons as Record<string, ComparisonMetaShape>;
+      for (const [name, meta] of Object.entries(comparisonsMap)) {
+        refs.push({
+          datasetId: d.id,
+          comparisonName: name,
+          label: name,
+          degCount: degCountOf(meta),
+        });
+      }
+    } else {
+      // Fallback: explicit comparison_name, else dataset name
+      const comparisonName = (metadata.comparison_name as string) || d.name;
+      refs.push({
+        datasetId: d.id,
+        comparisonName,
+        label: comparisonName,
+        degCount: degCountOf(metadata as ComparisonMetaShape),
+      });
+    }
+  }
+
+  // Disambiguate labels that collide across datasets
+  const labelCounts = new Map<string, number>();
+  for (const r of refs) labelCounts.set(r.label, (labelCounts.get(r.label) || 0) + 1);
+  const datasetName = new Map(degDatasets.map((d) => [d.id, d.name]));
+  for (const r of refs) {
+    if ((labelCounts.get(r.label) || 0) > 1) {
+      r.label = `${datasetName.get(r.datasetId) ?? r.datasetId}: ${r.comparisonName}`;
+    }
+  }
+
+  return refs;
+}
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -14,7 +93,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   const router = useRouter();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [degDataset, setDegDataset] = useState<Dataset | null>(null);
+  const [comparisons, setComparisons] = useState<ComparisonRef[]>([]);
+  const [pathDatasetId, setPathDatasetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,21 +105,17 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         const projectResponse = await api.get(`/projects/${projectId}`);
         setProject(projectResponse.data);
 
-        // Fetch datasets to find global DEG dataset
+        // Fetch datasets and flatten comparisons across all DEG datasets
         const datasetsResponse = await api.get(`/datasets/project/${projectId}`);
-        const datasets = datasetsResponse.data;
+        const datasets: Dataset[] = datasetsResponse.data;
 
-        // Find global DEG dataset (has multiple comparisons)
-        const globalDeg = datasets.find((d: Dataset) =>
-          d.type === DatasetType.DEG &&
-          d.dataset_metadata?.comparisons &&
-          Object.keys(d.dataset_metadata.comparisons).length > 1
-        );
+        const refs = buildComparisonRefs(datasets);
 
-        if (!globalDeg) {
+        if (refs.length < 2) {
           setError('No multi-comparison DEG dataset found in this project');
         } else {
-          setDegDataset(globalDeg);
+          setComparisons(refs);
+          setPathDatasetId(refs[0].datasetId);
         }
       } catch (err) {
         console.error('Failed to fetch project data:', err);
@@ -64,7 +140,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  if (error || !degDataset) {
+  if (error || !pathDatasetId || comparisons.length < 2) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
@@ -119,7 +195,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MultiComparisonVenn
           projectId={projectId}
-          degDataset={degDataset}
+          pathDatasetId={pathDatasetId}
+          comparisons={comparisons}
         />
       </div>
     </div>
