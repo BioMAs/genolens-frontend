@@ -30,6 +30,18 @@ function buildComparisonRefs(datasets: Dataset[]): ComparisonRef[] {
     return (meta.deg_up || 0) + (meta.deg_down || 0);
   };
 
+  const add = (datasetId: string, comparisonName: string, degCount: number) => {
+    refs.push({
+      // datasetId::comparisonName is unique: a dataset can't hold two
+      // comparisons with the same name. Used as the selection id.
+      key: `${datasetId}::${comparisonName}`,
+      datasetId,
+      comparisonName,
+      label: comparisonName,
+      degCount,
+    });
+  };
+
   for (const d of degDatasets) {
     const metadata = (d.dataset_metadata || {}) as Record<string, unknown>;
     const columnsInfo = metadata.columns_info as Record<string, unknown> | undefined;
@@ -40,12 +52,7 @@ function buildComparisonRefs(datasets: Dataset[]): ComparisonRef[] {
       for (const entry of rawComparisons) {
         const comparisonName =
           typeof entry === 'string' ? entry : ((entry as { name?: string })?.name ?? d.name);
-        refs.push({
-          datasetId: d.id,
-          comparisonName,
-          label: comparisonName,
-          degCount: degCountOf(metadata as ComparisonMetaShape),
-        });
+        add(d.id, comparisonName, degCountOf(metadata as ComparisonMetaShape));
       }
     } else if (
       rawComparisons &&
@@ -55,33 +62,31 @@ function buildComparisonRefs(datasets: Dataset[]): ComparisonRef[] {
       // "Global" dataset: comparisons is a dict keyed by comparison name
       const comparisonsMap = rawComparisons as Record<string, ComparisonMetaShape>;
       for (const [name, meta] of Object.entries(comparisonsMap)) {
-        refs.push({
-          datasetId: d.id,
-          comparisonName: name,
-          label: name,
-          degCount: degCountOf(meta),
-        });
+        add(d.id, name, degCountOf(meta));
       }
     } else {
       // Fallback: explicit comparison_name, else dataset name
-      const comparisonName = (metadata.comparison_name as string) || d.name;
-      refs.push({
-        datasetId: d.id,
-        comparisonName,
-        label: comparisonName,
-        degCount: degCountOf(metadata as ComparisonMetaShape),
-      });
+      add(d.id, (metadata.comparison_name as string) || d.name, degCountOf(metadata as ComparisonMetaShape));
     }
   }
 
-  // Disambiguate labels that collide across datasets
-  const labelCounts = new Map<string, number>();
-  for (const r of refs) labelCounts.set(r.label, (labelCounts.get(r.label) || 0) + 1);
+  // Make `label` unique (the backend keys Venn sets by label). When a comparison
+  // name is shared, prefix with the dataset name; if that still collides
+  // (homonymous datasets from different analyses), append a numeric suffix.
   const datasetName = new Map(degDatasets.map((d) => [d.id, d.name]));
+  const nameCounts = new Map<string, number>();
+  for (const r of refs) nameCounts.set(r.comparisonName, (nameCounts.get(r.comparisonName) || 0) + 1);
   for (const r of refs) {
-    if ((labelCounts.get(r.label) || 0) > 1) {
-      r.label = `${datasetName.get(r.datasetId) ?? r.datasetId}: ${r.comparisonName}`;
+    if ((nameCounts.get(r.comparisonName) || 0) > 1) {
+      const dn = datasetName.get(r.datasetId) ?? r.datasetId;
+      if (dn && dn !== r.comparisonName) r.label = `${dn}: ${r.comparisonName}`;
     }
+  }
+  const seen = new Map<string, number>();
+  for (const r of refs) {
+    const n = (seen.get(r.label) || 0) + 1;
+    seen.set(r.label, n);
+    if (n > 1) r.label = `${r.label} (${n})`;
   }
 
   return refs;

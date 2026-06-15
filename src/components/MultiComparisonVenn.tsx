@@ -5,9 +5,13 @@ import api from '@/utils/api';
 import VennDiagram from './VennDiagram';
 import UpSetPlot from './UpSetPlot';
 
-// One comparison, tagged with the DEG dataset that holds it. `label` is the
-// unique display key used across selection state and the Venn response.
+// One comparison, tagged with the DEG dataset that holds it.
+// `key` is a guaranteed-unique selection id (`datasetId::comparisonName`) — two
+// distinct datasets may share a comparison name, so selection must key on this,
+// not on `label`. `label` is the (also unique) human-readable name shown in the
+// UI and used as the Venn set name by the backend.
 export interface ComparisonRef {
+  key: string;
   datasetId: string;
   comparisonName: string;
   label: string;
@@ -43,17 +47,17 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleComparisonToggle = (compLabel: string) => {
+  const handleComparisonToggle = (compKey: string) => {
     setSelectedComparisons(prev => {
-      if (prev.includes(compLabel)) {
-        return prev.filter(c => c !== compLabel);
+      if (prev.includes(compKey)) {
+        return prev.filter(c => c !== compKey);
       } else {
         // Limit to 5 comparisons
         if (prev.length >= 5) {
           setError('Maximum 5 comparisons allowed');
           return prev;
         }
-        return [...prev, compLabel];
+        return [...prev, compKey];
       }
     });
     setError(null);
@@ -70,7 +74,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
     try {
       const selectedRefs = availableComparisons
-        .filter((c) => selectedComparisons.includes(c.label))
+        .filter((c) => selectedComparisons.includes(c.key))
         .map((c) => ({
           dataset_id: c.datasetId,
           comparison_name: c.comparisonName,
@@ -122,10 +126,10 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {availableComparisons.map((comp) => (
             <label
-              key={comp.label}
+              key={comp.key}
               className={`
                 relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all
-                ${selectedComparisons.includes(comp.label)
+                ${selectedComparisons.includes(comp.key)
                   ? 'border-brand-primary bg-brand-primary/5'
                   : 'border-gray-200 hover:border-gray-300'
                 }
@@ -133,12 +137,12 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
             >
               <input
                 type="checkbox"
-                checked={selectedComparisons.includes(comp.label)}
-                onChange={() => handleComparisonToggle(comp.label)}
-                className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                checked={selectedComparisons.includes(comp.key)}
+                onChange={() => handleComparisonToggle(comp.key)}
+                className="h-4 w-4 shrink-0 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
               />
-              <div className="ml-3 flex-1">
-                <div className="text-sm font-medium text-gray-900">{comp.label}</div>
+              <div className="ml-3 flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 break-words" title={comp.label}>{comp.label}</div>
                 <div className="text-xs text-gray-500">{comp.degCount} DEGs</div>
               </div>
             </label>
