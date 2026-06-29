@@ -14,6 +14,7 @@ import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import ExportMenu from './ExportMenu';
+import ComparisonReportButton from './ComparisonReportButton';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
@@ -628,15 +629,18 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             </div>
           </div>
 
-          <button
-            onClick={handleReprocessDEG}
-            disabled={reprocessing}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-            style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
-            {reprocessing ? 'Reprocessing…' : 'Reprocess'}
-          </button>
+          <div className="flex items-center gap-2">
+            <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            <button
+              onClick={handleReprocessDEG}
+              disabled={reprocessing}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
+              {reprocessing ? 'Reprocessing…' : 'Reprocess'}
+            </button>
+          </div>
         </div>
 
         {statsLoading ? (

@@ -65,6 +65,8 @@ export interface UserProfile {
   full_name?: string;
   /** Cosmetics add-on module, unlocked per-user by an admin (from /users/me). */
   has_cosmetics_module?: boolean;
+  /** Report customization add-on module, unlocked per-user by an admin (from /users/me). */
+  has_report_customization?: boolean;
 }
 
 export interface EnrichmentResult {
