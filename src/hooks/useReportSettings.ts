@@ -4,6 +4,16 @@ import api from "@/utils/api";
 import type { ReportSettings } from "@/types/report";
 
 const KEY = ["report-settings", "me"];
+const LOGO_KEY = ["report-settings", "logo"];
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 /**
  * Persistent per-user report branding settings. Gated behind the report
@@ -53,6 +63,25 @@ export function useUploadReportLogo() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(KEY, data);
+      queryClient.invalidateQueries({ queryKey: LOGO_KEY });
     },
+  });
+}
+
+/**
+ * The stored logo as a data URL (for preview). Returns null when no logo /
+ * the logo is a PDF (not previewable as an <img>). Gated like the settings.
+ */
+export function useReportLogo(enabled: boolean, logoPath: string | null | undefined) {
+  const isImage = !!logoPath && !logoPath.toLowerCase().endsWith(".pdf");
+  return useQuery<string | null>({
+    queryKey: LOGO_KEY,
+    queryFn: async () => {
+      const res = await api.get("/users/me/report-settings/logo", { responseType: "blob" });
+      return blobToDataUrl(res.data as Blob);
+    },
+    enabled: enabled && isImage,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 }

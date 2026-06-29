@@ -15,6 +15,7 @@ import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import ExportMenu from './ExportMenu';
 import ComparisonReportButton from './ComparisonReportButton';
+import ReportCustomizationPanel from './report/ReportCustomizationPanel';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
@@ -31,7 +32,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'clustering' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz';
 
 type GenericRow = Record<string, unknown>;
 
@@ -737,6 +738,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 Claims
               </button>
               <button
+                onClick={() => setActiveTab('report')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'report'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Customization
+              </button>
+              <button
                 onClick={() => setActiveTab('clustering')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
@@ -922,6 +934,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 datasetId={degDataset?.id}
                 comparisonName={actualComparisonName}
               />
+            )}
+
+            {/* Report customization Tab — always visible; locked overlay when not unlocked */}
+            {activeTab === 'report' && (
+              <ReportCustomizationPanel />
             )}
 
             {/* Clustering Tab */}
