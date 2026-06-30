@@ -1,16 +1,42 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
 import ClaimPathwayMap from './ClaimPathwayMap';
 
-const CONFIDENCE_STYLES: Record<string, { bg: string; fg: string }> = {
-  HIGH: { bg: '#dcfce7', fg: '#166534' },
-  MODERATE: { bg: '#fef9c3', fg: '#854d0e' },
-  LOW: { bg: '#f3f4f6', fg: '#6b7280' },
-};
+// ── Verdict system ─────────────────────────────────────────────────────────────
+// Merges direction + score + confidence into a single readable signal.
+// confidence reflects assessment *reliability*, direction reflects *biology*.
+
+interface Verdict {
+  label: string;
+  icon: string;
+  color: string;       // text + border
+  bg: string;          // badge background
+}
+
+function getVerdict(claim: CosmeticClaimScore): Verdict {
+  const { direction, score, confidence, n_contradicting } = claim;
+
+  if (direction === 'favorable') {
+    if (score >= 60)
+      return { label: 'Supported', icon: '✓', color: '#16a34a', bg: '#dcfce7' };
+    if (score >= 30)
+      return { label: 'Partial support', icon: '~', color: '#0f766e', bg: '#ccfbf1' };
+    return { label: 'Weak signal', icon: '∿', color: '#6b7280', bg: '#f3f4f6' };
+  }
+
+  // unfavorable
+  if (score >= 50 && confidence === 'HIGH')
+    return { label: 'Counteracted', icon: '✗', color: '#dc2626', bg: '#fee2e2' };
+  if (n_contradicting > 0)
+    return { label: 'Not supported', icon: '✗', color: '#ea580c', bg: '#ffedd5' };
+  return { label: 'No signal', icon: '∿', color: '#6b7280', bg: '#f3f4f6' };
+}
+
+// ── ClaimCard ──────────────────────────────────────────────────────────────────
 
 interface ClaimCardProps {
   claim: CosmeticClaimScore;
@@ -19,50 +45,52 @@ interface ClaimCardProps {
 }
 
 function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
-  const conf = CONFIDENCE_STYLES[claim.confidence] ?? CONFIDENCE_STYLES.LOW;
-  const favorable = claim.direction === 'favorable';
+  const verdict = getVerdict(claim);
 
   return (
-    <div className="gl-card p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+    <div
+      className="gl-card flex flex-col gap-3 overflow-hidden"
+      style={{ borderLeft: `4px solid ${verdict.color}` }}
+    >
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between gap-2 px-4 pt-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-full" style={{ background: claim.color }} />
-            <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <span className="inline-block h-3 w-3 shrink-0 rounded-full" style={{ background: claim.color }} />
+            <h4 className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {claim.label}
             </h4>
           </div>
-          <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
             {claim.description}
           </p>
         </div>
+
+        {/* Verdict badge */}
         <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-          style={{ background: conf.bg, color: conf.fg }}
+          className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          style={{ background: verdict.bg, color: verdict.color }}
         >
-          {claim.confidence}
+          {verdict.icon} {verdict.label}
         </span>
       </div>
 
-      {/* Score gauge */}
-      <div>
+      {/* ── Score bar ── */}
+      <div className="px-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold" style={{ color: claim.color }}>
+          <span className="text-2xl font-bold" style={{ color: verdict.color }}>
             {claim.score}
-            <span className="text-sm font-normal text-gray-400">/100</span>
+            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
           </span>
-          <span
-            className="flex items-center gap-1 text-xs font-medium"
-            style={{ color: favorable ? '#16a34a' : '#dc2626' }}
-          >
-            {favorable ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-            {favorable ? 'Favorable' : 'Unfavorable'}
+          {/* Reliability sub-info — small and unobtrusive */}
+          <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+            {claim.confidence} reliability
           </span>
         </div>
-        <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100">
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${claim.score}%`, background: claim.color }}
+            style={{ width: `${claim.score}%`, background: verdict.color }}
           />
         </div>
         <div className="mt-1.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
@@ -70,13 +98,13 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
         </div>
       </div>
 
-      {/* Top genes */}
+      {/* ── Top genes ── */}
       {claim.top_genes.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 px-4">
           {claim.top_genes.slice(0, 6).map((g) => (
             <span
               key={g}
-              className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono text-gray-600 border border-gray-100"
+              className="rounded border border-gray-100 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-600"
             >
               {g}
             </span>
@@ -84,9 +112,9 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
         </div>
       )}
 
-      {/* Expand pathway network */}
+      {/* ── Expand pathway network ── */}
       {claim.evidence_pathways.length > 0 && (
-        <div>
+        <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: 'var(--border-default)' }}>
           <button
             onClick={onToggle}
             className="flex items-center gap-1 text-xs font-medium"
@@ -102,6 +130,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
               claimLabel={claim.label}
               claimColor={claim.color}
               claimScore={claim.score}
+              verdictColor={verdict.color}
             />
           )}
         </div>
@@ -110,16 +139,14 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
   );
 }
 
+// ── ClaimCards (grid) ──────────────────────────────────────────────────────────
+
 export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] }) {
   const supported = claims.filter((c) => c.n_supporting > 0 || c.score > 0);
   const list = supported.length > 0 ? supported : claims;
 
-  // Track which claim is expanded — only one at a time, expands to full row width
   const [openSlug, setOpenSlug] = useState<string | null>(null);
-
-  function toggle(slug: string) {
-    setOpenSlug((prev) => (prev === slug ? null : slug));
-  }
+  const toggle = (slug: string) => setOpenSlug((p) => (p === slug ? null : slug));
 
   return (
     <div className="space-y-3">
@@ -128,21 +155,17 @@ export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] })
           Claim details
         </h3>
         <PanelInfo title="Claim details — how to read each card">
-          <p>One card per claim, detailing the evidence behind its score.</p>
-          <p><b>What each element means</b></p>
+          <p>One card per claim, detailing the molecular evidence behind its score.</p>
+          <p><b>Verdict badges</b></p>
           <ul>
-            <li><b>Score (0–100)</b> + bar: the claim activation score (consistency × strength of the supporting evidence).</li>
-            <li><b>Favorable / Unfavorable</b>: whether the net of supporting vs contradicting pathways points in the claim&apos;s direction.</li>
-            <li><b>Confidence badge</b> (HIGH/MODERATE/LOW): based on the literature evidence level of the matched pathways and how many support the claim.</li>
-            <li><b>Supporting vs contradicting pathways</b>: how many enriched pathways agree vs disagree with the claim&apos;s expected direction.</li>
-            <li><b>Gene chips</b>: representative genes driving the matched pathways.</li>
-            <li><b>Pathway network</b> (expandable): the biological processes behind the score as an interactive network — click &quot;Show pathway network&quot; on any card.</li>
+            <li><b>✓ Supported</b> — the biology clearly moves in the expected direction (score ≥ 60, favorable).</li>
+            <li><b>~ Partial support</b> — some evidence in the right direction but signal is moderate.</li>
+            <li><b>✗ Counteracted</b> — HIGH-confidence evidence shows the biology moves AGAINST this claim.</li>
+            <li><b>✗ Not supported</b> — more contradicting pathways than supporting ones.</li>
+            <li><b>∿ No signal / Weak signal</b> — insufficient or very weak evidence.</li>
           </ul>
-          <p><b>How to read it</b></p>
-          <ul>
-            <li>Prioritize claims with a <b>high score AND HIGH/MODERATE confidence</b> for communication.</li>
-            <li>A high score with LOW confidence or few supporting pathways is <b>exploratory</b> — treat with caution.</li>
-          </ul>
+          <p><b>Reliability</b> (HIGH / MODERATE / LOW) indicates how well the matched pathways are backed by literature — it is independent of whether the claim is supported or not.</p>
+          <p><b>Score (0–100)</b> reflects the strength of the evidence signal. A high score with an unfavorable direction means the ingredient strongly and reliably does <em>not</em> support that claim.</p>
         </PanelInfo>
       </div>
 
@@ -150,13 +173,8 @@ export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] })
         {list.map((c) => {
           const isOpen = openSlug === c.slug;
           return (
-            // When open, span all 3 columns so the horizontal network has room
             <div key={c.slug} className={isOpen ? 'col-span-full' : ''}>
-              <ClaimCard
-                claim={c}
-                open={isOpen}
-                onToggle={() => toggle(c.slug)}
-              />
+              <ClaimCard claim={c} open={isOpen} onToggle={() => toggle(c.slug)} />
             </div>
           );
         })}

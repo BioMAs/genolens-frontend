@@ -8,6 +8,7 @@ interface Props {
   claimLabel: string;
   claimColor: string;
   claimScore: number;
+  verdictColor?: string;
 }
 
 const UP_COLOR = '#ef4444';
@@ -17,77 +18,91 @@ function dirColor(dir: string) {
   return dir === 'UP' ? UP_COLOR : DOWN_COLOR;
 }
 
-// Layout constants — wide landscape SVG
+// Layout — wide landscape
 const VW = 1000;
-const VH = 340;
+const VH = 400;           // taller to avoid clipping
+const PADDING_TOP = 48;   // minimum Y for first node
+const PADDING_BOT = 48;   // minimum margin from bottom
 const HUB_X = 130;
 const HUB_Y = VH / 2;
 const HUB_R = 54;
 const PATHWAY_START_X = 300;
-const COL_W = 320;        // width of each pathway column
-const ROW_H = 68;         // vertical spacing between pathway rows
+const COL_W = 330;
+const ROW_H = 72;
 const NODE_R = 14;
-const LABEL_OFFSET = 22;  // gap between node edge and label text
+const LABEL_OFFSET = 24;
 
 interface TooltipState { x: number; y: number; lines: string[] }
 
-export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, claimScore }: Props) {
+export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, claimScore, verdictColor }: Props) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   if (pathways.length === 0) return null;
 
+  // ── Deduplication by pathway_name (keep highest-weight entry) ──────────────
+  const nameMap = new Map<string, CosmeticEvidencePathway>();
+  for (const pw of pathways) {
+    const key = pw.pathway_name.toLowerCase().trim();
+    const existing = nameMap.get(key);
+    if (!existing || pw.weight > existing.weight) nameMap.set(key, pw);
+  }
+  const deduped = Array.from(nameMap.values());
+
   // Sort: UP first, then DOWN; within each group by weight desc
-  const sorted = [...pathways].sort((a, b) => {
+  const sorted = [...deduped].sort((a, b) => {
     if (a.direction !== b.direction) return a.direction === 'UP' ? -1 : 1;
     return b.weight - a.weight;
   });
 
-  // Lay pathways in 2 columns: left column = UP, right column = DOWN
   const upPathways = sorted.filter((p) => p.direction === 'UP');
   const downPathways = sorted.filter((p) => p.direction === 'DOWN');
+  const hasBoth = upPathways.length > 0 && downPathways.length > 0;
 
-  // Each column is a vertical list, centered in VH
+  // Position nodes in a vertical column, clamped to avoid clipping
   function colNodes(pws: CosmeticEvidencePathway[], colX: number) {
+    if (pws.length === 0) return [];
     const totalH = (pws.length - 1) * ROW_H;
-    const startY = VH / 2 - totalH / 2;
+    const availH = VH - PADDING_TOP - PADDING_BOT;
+    // If too many nodes, compress ROW_H
+    const effectiveRowH = totalH > availH ? availH / (pws.length - 1) : ROW_H;
+    const effectiveTotalH = (pws.length - 1) * effectiveRowH;
+    const startY = Math.max(PADDING_TOP, VH / 2 - effectiveTotalH / 2);
     return pws.map((pw, i) => ({
       pw,
       x: colX,
-      y: startY + i * ROW_H,
+      y: startY + i * effectiveRowH,
     }));
   }
 
-  // If only one direction present, use a single centred column; otherwise two columns
-  const hasBoth = upPathways.length > 0 && downPathways.length > 0;
   const upNodes = colNodes(upPathways, hasBoth ? PATHWAY_START_X : PATHWAY_START_X + COL_W / 2);
   const downNodes = colNodes(downPathways, hasBoth ? PATHWAY_START_X + COL_W : PATHWAY_START_X + COL_W / 2);
   const allNodes = [...upNodes, ...downNodes];
 
-  // Same-category connections (thin dashed line between nodes of same category)
-  const catGroups = new Map<string, typeof allNodes>();
-  for (const node of allNodes) {
-    const cat = node.pw.category ?? '';
-    if (!cat) continue;
-    if (!catGroups.has(cat)) catGroups.set(cat, []);
-    catGroups.get(cat)!.push(node);
-  }
-  const catEdges: { x1: number; y1: number; x2: number; y2: number }[] = [];
-  for (const members of catGroups.values()) {
-    for (let i = 0; i < members.length - 1; i++) {
-      catEdges.push({ x1: members[i].x, y1: members[i].y, x2: members[i + 1].x, y2: members[i + 1].y });
-    }
-  }
-
-  // Evidence level → node opacity
   const evidenceOpacity: Record<string, number> = { HIGH: 1, MODERATE: 0.72, LOW: 0.45 };
+
+  const hubColor = verdictColor ?? claimColor;
 
   return (
     <div className="relative mt-3" onMouseLeave={() => setTooltip(null)}>
-      {/* Direction column headers */}
+
+      {/* Column headers */}
       {hasBoth && (
-        <div className="mb-1 flex text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%` }}>
+        <div
+          className="mb-1 flex text-xs font-semibold"
+          style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%` }}
+        >
           <span style={{ width: `${(COL_W / VW) * 100}%`, color: UP_COLOR }}>↑ UP-regulated</span>
           <span style={{ color: DOWN_COLOR }}>↓ DOWN-regulated</span>
+        </div>
+      )}
+      {!hasBoth && upPathways.length > 0 && (
+        <div className="mb-1 text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: UP_COLOR }}>
+          ↑ UP-regulated
+        </div>
+      )}
+      {!hasBoth && downPathways.length > 0 && (
+        <div className="mb-1 text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: DOWN_COLOR }}>
+          ↓ DOWN-regulated
         </div>
       )}
 
@@ -96,19 +111,9 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
         style={{ display: 'block', width: '100%', height: 'auto' }}
         aria-label={`Pathway network for ${claimLabel}`}
       >
-        {/* Same-category dashed connectors */}
-        {catEdges.map((e, i) => (
-          <line
-            key={i}
-            x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-            stroke="#cbd5e1" strokeWidth={1.8} strokeDasharray="4 3" opacity={0.75}
-          />
-        ))}
-
-        {/* Hub → pathway spokes */}
+        {/* Hub → pathway Bézier spokes */}
         {allNodes.map(({ pw, x, y }, i) => {
           const col = dirColor(pw.direction);
-          // Bezier: exit hub on the right, arrive at node on the left
           const cx1 = HUB_X + HUB_R + 60;
           const cx2 = x - NODE_R - 50;
           return (
@@ -118,50 +123,46 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
               fill="none"
               stroke={col}
               strokeWidth={Math.max(1, pw.weight * 2)}
-              strokeOpacity={0.25}
+              strokeOpacity={0.22}
             />
           );
         })}
 
         {/* Central claim hub */}
-        <circle cx={HUB_X} cy={HUB_Y} r={HUB_R} fill={claimColor} fillOpacity={0.13} stroke={claimColor} strokeWidth={2.5} />
-        {/* Claim label — split into two lines if long */}
-        {claimLabel.length <= 12 ? (
-          <>
-            <text x={HUB_X} y={HUB_Y - 8} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight="700" fill={claimColor}>
-              {claimLabel}
-            </text>
-            <text x={HUB_X} y={HUB_Y + 12} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill={claimColor} opacity={0.75}>
-              {claimScore}/100
-            </text>
-          </>
-        ) : (
-          <>
-            <text x={HUB_X} y={HUB_Y - 14} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={claimColor}>
-              {claimLabel.split(' ').slice(0, Math.ceil(claimLabel.split(' ').length / 2)).join(' ')}
-            </text>
-            <text x={HUB_X} y={HUB_Y + 2} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={claimColor}>
-              {claimLabel.split(' ').slice(Math.ceil(claimLabel.split(' ').length / 2)).join(' ')}
-            </text>
-            <text x={HUB_X} y={HUB_Y + 18} textAnchor="middle" dominantBaseline="middle" fontSize={10} fill={claimColor} opacity={0.75}>
-              {claimScore}/100
-            </text>
-          </>
-        )}
+        <circle cx={HUB_X} cy={HUB_Y} r={HUB_R} fill={hubColor} fillOpacity={0.12} stroke={hubColor} strokeWidth={2.5} />
+        {(() => {
+          const words = claimLabel.split(' ');
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(' ');
+          const line2 = words.slice(mid).join(' ');
+          const hasTwo = line2.length > 0;
+          return hasTwo ? (
+            <>
+              <text x={HUB_X} y={HUB_Y - 14} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={hubColor}>{line1}</text>
+              <text x={HUB_X} y={HUB_Y + 2} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={hubColor}>{line2}</text>
+              <text x={HUB_X} y={HUB_Y + 18} textAnchor="middle" dominantBaseline="middle" fontSize={10} fill={hubColor} opacity={0.7}>{claimScore}/100</text>
+            </>
+          ) : (
+            <>
+              <text x={HUB_X} y={HUB_Y - 7} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight="700" fill={hubColor}>{line1}</text>
+              <text x={HUB_X} y={HUB_Y + 10} textAnchor="middle" dominantBaseline="middle" fontSize={10} fill={hubColor} opacity={0.7}>{claimScore}/100</text>
+            </>
+          );
+        })()}
 
         {/* Pathway nodes + labels */}
         {allNodes.map(({ pw, x, y }, i) => {
           const col = dirColor(pw.direction);
           const opacity = evidenceOpacity[pw.evidence_level] ?? 0.5;
-          // Label to the right of the node
           const labelX = x + NODE_R + LABEL_OFFSET;
-          const maxChars = 42;
+          const maxChars = 40;
           const label = pw.pathway_name.length > maxChars
             ? pw.pathway_name.slice(0, maxChars - 1) + '…'
             : pw.pathway_name;
+
           return (
             <g
-              key={pw.term_id}
+              key={`${pw.term_id}-${i}`}
               style={{ cursor: 'pointer' }}
               onMouseEnter={(e) => {
                 const svgEl = e.currentTarget.closest('svg') as SVGSVGElement;
@@ -183,48 +184,32 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
               }}
               onMouseLeave={() => setTooltip(null)}
             >
-              {/* Evidence level ring */}
+              {/* Outer glow ring */}
               <circle cx={x} cy={y} r={NODE_R + 4} fill={col} fillOpacity={0.1} />
-              <circle
-                cx={x} cy={y} r={NODE_R}
-                fill={col} fillOpacity={opacity}
-                stroke="#fff" strokeWidth={2}
-              />
-              {/* Direction arrow inside node */}
+              {/* Main node */}
+              <circle cx={x} cy={y} r={NODE_R} fill={col} fillOpacity={opacity} stroke="#fff" strokeWidth={2} />
+              {/* Arrow inside */}
               <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize={13} fill="#fff" fontWeight="700" style={{ pointerEvents: 'none' }}>
                 {pw.direction === 'UP' ? '↑' : '↓'}
               </text>
-              {/* Pathway label */}
-              <text
-                x={labelX} y={y - 5}
-                textAnchor="start" dominantBaseline="middle"
-                fontSize={12} fontWeight="500"
-                fill="var(--text-primary)"
-                style={{ pointerEvents: 'none' }}
-              >
+              {/* Pathway name */}
+              <text x={labelX} y={y - 6} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="500" fill="var(--text-primary)" style={{ pointerEvents: 'none' }}>
                 {label}
               </text>
-              {/* Sub-label: evidence + FDR */}
-              <text
-                x={labelX} y={y + 11}
-                textAnchor="start" dominantBaseline="middle"
-                fontSize={10}
-                fill="var(--text-secondary)"
-                style={{ pointerEvents: 'none' }}
-              >
-                {pw.evidence_level} · FDR {pw.padj.toExponential(1)}
-                {pw.category ? ` · ${pw.category}` : ''}
+              {/* Sub-label */}
+              <text x={labelX} y={y + 10} textAnchor="start" dominantBaseline="middle" fontSize={10} fill="var(--text-secondary)" style={{ pointerEvents: 'none' }}>
+                {pw.evidence_level} · FDR {pw.padj.toExponential(1)}{pw.category ? ` · ${pw.category}` : ''}
               </text>
             </g>
           );
         })}
 
-        {/* Legend bottom-right */}
-        <g transform={`translate(${VW - 10}, ${VH - 10})`}>
-          <circle cx={-160} cy={-10} r={6} fill={UP_COLOR} />
-          <text x={-150} y={-6} fontSize={10} fill="#6b7280">UP-regulated</text>
-          <circle cx={-60} cy={-10} r={6} fill={DOWN_COLOR} />
-          <text x={-50} y={-6} fontSize={10} fill="#6b7280">DOWN-regulated</text>
+        {/* Legend */}
+        <g>
+          <circle cx={VW - 170} cy={VH - 14} r={5} fill={UP_COLOR} />
+          <text x={VW - 161} y={VH - 10} fontSize={10} fill="#6b7280">UP-regulated</text>
+          <circle cx={VW - 80} cy={VH - 14} r={5} fill={DOWN_COLOR} />
+          <text x={VW - 71} y={VH - 10} fontSize={10} fill="#6b7280">DOWN-regulated</text>
         </g>
       </svg>
 
