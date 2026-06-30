@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen } from 'lucide-react';
+import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen, GitCompare, Check, Lock, FlaskConical, FileText } from 'lucide-react';
 import type { SubscriptionInfo } from '@/hooks/useBilling';
 import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
@@ -138,6 +138,109 @@ function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionIn
   );
 }
 
+function ComparisonsBar({ profile }: { profile?: UserProfile | null }) {
+  const used = profile?.comparisons_used_this_month ?? 0;
+  const quota = profile?.comparisons_quota ?? null;
+
+  if (quota === null || quota === undefined) {
+    return (
+      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <GitCompare className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--sl-teal)' }} />
+        <span>Unlimited analyses</span>
+      </div>
+    );
+  }
+
+  const pct = Math.min(100, (used / quota) * 100);
+  const isNearLimit = pct >= 80;
+  const isAtLimit = used >= quota;
+
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
+        <span className="flex items-center gap-1">
+          <GitCompare className="w-3 h-3" />
+          Analyses this month
+        </span>
+        <span style={{ color: isAtLimit ? 'var(--sl-red)' : isNearLimit ? 'var(--sl-orange, #f97316)' : 'var(--text-secondary)' }}>
+          {used} / {quota}
+        </span>
+      </div>
+      <Meter value={pct / 100} tone={isAtLimit ? 'red' : isNearLimit ? 'purple' : 'teal'} />
+      {isAtLimit && (
+        <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>
+          Limit reached — upgrade to run more analyses.
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface ModuleItem {
+  label: string;
+  unlocked: boolean;
+  icon: React.ReactNode;
+}
+
+function UnlockedModules({ profile }: { profile?: UserProfile | null }) {
+  const role = profile?.role;
+  const isAdmin = role === 'ADMIN' || role === 'SCILICIUM_ADMIN';
+
+  const modules: ModuleItem[] = [
+    {
+      label: 'AI interpretations',
+      unlocked: isAdmin || (profile?.can_use_ai ?? false),
+      icon: <Sparkles className="w-3 h-3" />,
+    },
+    {
+      label: 'Multi-comparison',
+      unlocked: isAdmin || (profile?.can_use_multi_comparison ?? false),
+      icon: <GitCompare className="w-3 h-3" />,
+    },
+    {
+      label: 'Advanced export',
+      unlocked: isAdmin || (profile?.can_export_advanced ?? false),
+      icon: <FileText className="w-3 h-3" />,
+    },
+    {
+      label: 'Cosmetics module',
+      unlocked: isAdmin || (profile?.has_cosmetics_module ?? false),
+      icon: <FlaskConical className="w-3 h-3" />,
+    },
+    {
+      label: 'Report customization',
+      unlocked: isAdmin || (profile?.has_report_customization ?? false),
+      icon: <FileText className="w-3 h-3" />,
+    },
+  ];
+
+  return (
+    <div>
+      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+        Features
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {modules.map((mod) => (
+          <div key={mod.label} className="flex items-center gap-2 text-xs">
+            {mod.unlocked ? (
+              <Check className="w-3 h-3 shrink-0" style={{ color: 'var(--sl-teal)' }} />
+            ) : (
+              <Lock className="w-3 h-3 shrink-0" style={{ color: 'var(--text-muted)' }} />
+            )}
+            <span
+              className={mod.unlocked ? 'flex items-center gap-1' : 'flex items-center gap-1 line-through'}
+              style={{ color: mod.unlocked ? 'var(--text-secondary)' : 'var(--text-muted)' }}
+            >
+              {mod.icon}
+              {mod.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardSubscriptionCard({
   subscription,
   userProfile,
@@ -205,6 +308,12 @@ export default function DashboardSubscriptionCard({
 
       {/* Projects quota */}
       <ProjectsBar subscription={subscription} profile={userProfile} />
+
+      {/* Analyses quota */}
+      <ComparisonsBar profile={userProfile} />
+
+      {/* Unlocked features */}
+      <UnlockedModules profile={userProfile} />
 
       {/* Dates */}
       {(subsStart || subsEnd) && (

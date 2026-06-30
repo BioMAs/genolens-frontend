@@ -63,6 +63,15 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
+  // Quota fields from /users/me (UserSelf)
+  comparisons_used_this_month?: number;
+  comparisons_quota?: number | null;
+  comparisons_remaining?: number | null;
+  max_projects?: number | null;
+  max_datasets_per_project?: number | null;
+  can_use_ai?: boolean;
+  can_use_multi_comparison?: boolean;
+  can_export_advanced?: boolean;
   /** Cosmetics add-on module, unlocked per-user by an admin (from /users/me). */
   has_cosmetics_module?: boolean;
   /** Report customization add-on module, unlocked per-user by an admin (from /users/me). */
