@@ -12,30 +12,22 @@ interface Props {
 
 const UP_COLOR = '#ef4444';
 const DOWN_COLOR = '#3b82f6';
-const EVIDENCE_R: Record<string, number> = { HIGH: 13, MODERATE: 10, LOW: 8 };
-const EVIDENCE_OPACITY: Record<string, number> = { HIGH: 1, MODERATE: 0.75, LOW: 0.5 };
-
-const CX = 190;
-const CY = 145;
-const ORBIT_R = 105;
-const VW = 420;
-const VH = 300;
 
 function dirColor(dir: string) {
   return dir === 'UP' ? UP_COLOR : DOWN_COLOR;
 }
 
-function labelAnchor(x: number): 'start' | 'middle' | 'end' {
-  if (x < CX - 20) return 'end';
-  if (x > CX + 20) return 'start';
-  return 'middle';
-}
-
-function labelDy(y: number): string {
-  if (y < CY - 20) return '-0.5em';
-  if (y > CY + 20) return '1.1em';
-  return '0.35em';
-}
+// Layout constants — wide landscape SVG
+const VW = 1000;
+const VH = 340;
+const HUB_X = 130;
+const HUB_Y = VH / 2;
+const HUB_R = 54;
+const PATHWAY_START_X = 300;
+const COL_W = 320;        // width of each pathway column
+const ROW_H = 68;         // vertical spacing between pathway rows
+const NODE_R = 14;
+const LABEL_OFFSET = 22;  // gap between node edge and label text
 
 interface TooltipState { x: number; y: number; lines: string[] }
 
@@ -44,108 +36,142 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
 
   if (pathways.length === 0) return null;
 
-  // Sort by category so same-category pathways are adjacent in the circle
-  const sorted = [...pathways].sort((a, b) =>
-    (a.category ?? '').localeCompare(b.category ?? '') || b.weight - a.weight
-  );
-
-  const n = sorted.length;
-
-  // Compute node positions (evenly spaced on the orbit circle)
-  const nodes = sorted.map((p, i) => {
-    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-    return {
-      pw: p,
-      x: CX + ORBIT_R * Math.cos(angle),
-      y: CY + ORBIT_R * Math.sin(angle),
-      r: EVIDENCE_R[p.evidence_level] ?? 9,
-    };
+  // Sort: UP first, then DOWN; within each group by weight desc
+  const sorted = [...pathways].sort((a, b) => {
+    if (a.direction !== b.direction) return a.direction === 'UP' ? -1 : 1;
+    return b.weight - a.weight;
   });
 
-  // Same-category edges (connect adjacent pairs in the sorted order)
-  const edges: { i: number; j: number }[] = [];
-  for (let i = 0; i < n - 1; i++) {
-    if (sorted[i].category && sorted[i].category === sorted[i + 1].category) {
-      edges.push({ i, j: i + 1 });
+  // Lay pathways in 2 columns: left column = UP, right column = DOWN
+  const upPathways = sorted.filter((p) => p.direction === 'UP');
+  const downPathways = sorted.filter((p) => p.direction === 'DOWN');
+
+  // Each column is a vertical list, centered in VH
+  function colNodes(pws: CosmeticEvidencePathway[], colX: number) {
+    const totalH = (pws.length - 1) * ROW_H;
+    const startY = VH / 2 - totalH / 2;
+    return pws.map((pw, i) => ({
+      pw,
+      x: colX,
+      y: startY + i * ROW_H,
+    }));
+  }
+
+  // If only one direction present, use a single centred column; otherwise two columns
+  const hasBoth = upPathways.length > 0 && downPathways.length > 0;
+  const upNodes = colNodes(upPathways, hasBoth ? PATHWAY_START_X : PATHWAY_START_X + COL_W / 2);
+  const downNodes = colNodes(downPathways, hasBoth ? PATHWAY_START_X + COL_W : PATHWAY_START_X + COL_W / 2);
+  const allNodes = [...upNodes, ...downNodes];
+
+  // Same-category connections (thin dashed line between nodes of same category)
+  const catGroups = new Map<string, typeof allNodes>();
+  for (const node of allNodes) {
+    const cat = node.pw.category ?? '';
+    if (!cat) continue;
+    if (!catGroups.has(cat)) catGroups.set(cat, []);
+    catGroups.get(cat)!.push(node);
+  }
+  const catEdges: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (const members of catGroups.values()) {
+    for (let i = 0; i < members.length - 1; i++) {
+      catEdges.push({ x1: members[i].x, y1: members[i].y, x2: members[i + 1].x, y2: members[i + 1].y });
     }
   }
 
-  // Label position: pushed further out from the circle center
-  const LABEL_R = ORBIT_R + 22;
-  const labels = sorted.map((p, i) => {
-    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-    return {
-      x: CX + LABEL_R * Math.cos(angle),
-      y: CY + LABEL_R * Math.sin(angle),
-      text: p.pathway_name.length > 28 ? p.pathway_name.slice(0, 27) + '…' : p.pathway_name,
-    };
-  });
+  // Evidence level → node opacity
+  const evidenceOpacity: Record<string, number> = { HIGH: 1, MODERATE: 0.72, LOW: 0.45 };
 
   return (
-    <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
+    <div className="relative mt-3" onMouseLeave={() => setTooltip(null)}>
+      {/* Direction column headers */}
+      {hasBoth && (
+        <div className="mb-1 flex text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%` }}>
+          <span style={{ width: `${(COL_W / VW) * 100}%`, color: UP_COLOR }}>↑ UP-regulated</span>
+          <span style={{ color: DOWN_COLOR }}>↓ DOWN-regulated</span>
+        </div>
+      )}
+
       <svg
         viewBox={`0 0 ${VW} ${VH}`}
         style={{ display: 'block', width: '100%', height: 'auto' }}
         aria-label={`Pathway network for ${claimLabel}`}
       >
-        {/* Same-category connection arcs */}
-        {edges.map(({ i, j }) => (
+        {/* Same-category dashed connectors */}
+        {catEdges.map((e, i) => (
           <line
-            key={`${i}-${j}`}
-            x1={nodes[i].x}
-            y1={nodes[i].y}
-            x2={nodes[j].x}
-            y2={nodes[j].y}
-            stroke="#cbd5e1"
-            strokeWidth={1.5}
-            strokeDasharray="3 2"
-            opacity={0.7}
+            key={i}
+            x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
+            stroke="#cbd5e1" strokeWidth={1.8} strokeDasharray="4 3" opacity={0.75}
           />
         ))}
 
-        {/* Spokes from center to each node */}
-        {nodes.map(({ pw, x, y }, i) => (
-          <line
-            key={`spoke-${i}`}
-            x1={CX}
-            y1={CY}
-            x2={x}
-            y2={y}
-            stroke={dirColor(pw.direction)}
-            strokeWidth={Math.max(0.6, pw.weight * 1.6)}
-            strokeOpacity={0.22}
-          />
-        ))}
+        {/* Hub → pathway spokes */}
+        {allNodes.map(({ pw, x, y }, i) => {
+          const col = dirColor(pw.direction);
+          // Bezier: exit hub on the right, arrive at node on the left
+          const cx1 = HUB_X + HUB_R + 60;
+          const cx2 = x - NODE_R - 50;
+          return (
+            <path
+              key={`spoke-${i}`}
+              d={`M${HUB_X + HUB_R},${HUB_Y} C${cx1},${HUB_Y} ${cx2},${y} ${x - NODE_R},${y}`}
+              fill="none"
+              stroke={col}
+              strokeWidth={Math.max(1, pw.weight * 2)}
+              strokeOpacity={0.25}
+            />
+          );
+        })}
 
         {/* Central claim hub */}
-        <circle cx={CX} cy={CY} r={36} fill={claimColor} fillOpacity={0.12} stroke={claimColor} strokeWidth={2} />
-        <text x={CX} y={CY - 5} textAnchor="middle" dominantBaseline="middle" fontSize={10} fontWeight="700" fill={claimColor}>
-          {claimLabel.length > 16 ? claimLabel.slice(0, 15) + '…' : claimLabel}
-        </text>
-        <text x={CX} y={CY + 10} textAnchor="middle" dominantBaseline="middle" fontSize={9} fill={claimColor} opacity={0.75}>
-          {claimScore}/100
-        </text>
+        <circle cx={HUB_X} cy={HUB_Y} r={HUB_R} fill={claimColor} fillOpacity={0.13} stroke={claimColor} strokeWidth={2.5} />
+        {/* Claim label — split into two lines if long */}
+        {claimLabel.length <= 12 ? (
+          <>
+            <text x={HUB_X} y={HUB_Y - 8} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight="700" fill={claimColor}>
+              {claimLabel}
+            </text>
+            <text x={HUB_X} y={HUB_Y + 12} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill={claimColor} opacity={0.75}>
+              {claimScore}/100
+            </text>
+          </>
+        ) : (
+          <>
+            <text x={HUB_X} y={HUB_Y - 14} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={claimColor}>
+              {claimLabel.split(' ').slice(0, Math.ceil(claimLabel.split(' ').length / 2)).join(' ')}
+            </text>
+            <text x={HUB_X} y={HUB_Y + 2} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight="700" fill={claimColor}>
+              {claimLabel.split(' ').slice(Math.ceil(claimLabel.split(' ').length / 2)).join(' ')}
+            </text>
+            <text x={HUB_X} y={HUB_Y + 18} textAnchor="middle" dominantBaseline="middle" fontSize={10} fill={claimColor} opacity={0.75}>
+              {claimScore}/100
+            </text>
+          </>
+        )}
 
         {/* Pathway nodes + labels */}
-        {nodes.map(({ pw, x, y, r }, i) => {
-          const lab = labels[i];
-          const anchor = labelAnchor(lab.x);
-          const dy = labelDy(lab.y);
+        {allNodes.map(({ pw, x, y }, i) => {
+          const col = dirColor(pw.direction);
+          const opacity = evidenceOpacity[pw.evidence_level] ?? 0.5;
+          // Label to the right of the node
+          const labelX = x + NODE_R + LABEL_OFFSET;
+          const maxChars = 42;
+          const label = pw.pathway_name.length > maxChars
+            ? pw.pathway_name.slice(0, maxChars - 1) + '…'
+            : pw.pathway_name;
           return (
             <g
               key={pw.term_id}
               style={{ cursor: 'pointer' }}
               onMouseEnter={(e) => {
-                const rect = (e.currentTarget as SVGGElement).getBoundingClientRect();
                 const svgEl = e.currentTarget.closest('svg') as SVGSVGElement;
                 const svgRect = svgEl?.getBoundingClientRect();
                 if (!svgRect) return;
-                // Scale tooltip coords from SVG viewBox to rendered px
                 const scaleX = svgRect.width / VW;
                 const scaleY = svgRect.height / VH;
                 setTooltip({
                   x: x * scaleX,
-                  y: (y - r - 4) * scaleY,
+                  y: (y - NODE_R - 6) * scaleY,
                   lines: [
                     pw.pathway_name,
                     `Direction: ${pw.direction === 'UP' ? '↑ UP-regulated' : '↓ DOWN-regulated'}`,
@@ -157,45 +183,55 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
               }}
               onMouseLeave={() => setTooltip(null)}
             >
+              {/* Evidence level ring */}
+              <circle cx={x} cy={y} r={NODE_R + 4} fill={col} fillOpacity={0.1} />
               <circle
-                cx={x}
-                cy={y}
-                r={r}
-                fill={dirColor(pw.direction)}
-                fillOpacity={EVIDENCE_OPACITY[pw.evidence_level] ?? 0.5}
-                stroke="#fff"
-                strokeWidth={1.5}
+                cx={x} cy={y} r={NODE_R}
+                fill={col} fillOpacity={opacity}
+                stroke="#fff" strokeWidth={2}
               />
+              {/* Direction arrow inside node */}
+              <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize={13} fill="#fff" fontWeight="700" style={{ pointerEvents: 'none' }}>
+                {pw.direction === 'UP' ? '↑' : '↓'}
+              </text>
+              {/* Pathway label */}
               <text
-                x={lab.x}
-                y={lab.y}
-                textAnchor={anchor}
-                dy={dy}
-                fontSize={8}
+                x={labelX} y={y - 5}
+                textAnchor="start" dominantBaseline="middle"
+                fontSize={12} fontWeight="500"
+                fill="var(--text-primary)"
+                style={{ pointerEvents: 'none' }}
+              >
+                {label}
+              </text>
+              {/* Sub-label: evidence + FDR */}
+              <text
+                x={labelX} y={y + 11}
+                textAnchor="start" dominantBaseline="middle"
+                fontSize={10}
                 fill="var(--text-secondary)"
                 style={{ pointerEvents: 'none' }}
               >
-                {lab.text}
+                {pw.evidence_level} · FDR {pw.padj.toExponential(1)}
+                {pw.category ? ` · ${pw.category}` : ''}
               </text>
             </g>
           );
         })}
 
-        {/* Direction mini-legend */}
-        <g transform={`translate(${VW - 8}, ${VH - 8})`}>
-          <circle cx={-70} cy={-8} r={4} fill={UP_COLOR} />
-          <text x={-63} y={-5} fontSize={7} fill="#6b7280">UP</text>
-          <circle cx={-40} cy={-8} r={4} fill={DOWN_COLOR} />
-          <text x={-33} y={-5} fontSize={7} fill="#6b7280">DOWN</text>
-          <line x1={-85} y1={-4} x2={-80} y2={-4} stroke="#cbd5e1" strokeWidth={1.5} strokeDasharray="2 1" />
-          <text x={-77} y={-1} fontSize={6.5} fill="#9ca3af">same category</text>
+        {/* Legend bottom-right */}
+        <g transform={`translate(${VW - 10}, ${VH - 10})`}>
+          <circle cx={-160} cy={-10} r={6} fill={UP_COLOR} />
+          <text x={-150} y={-6} fontSize={10} fill="#6b7280">UP-regulated</text>
+          <circle cx={-60} cy={-10} r={6} fill={DOWN_COLOR} />
+          <text x={-50} y={-6} fontSize={10} fill="#6b7280">DOWN-regulated</text>
         </g>
       </svg>
 
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-30 rounded-lg px-3 py-2 text-xs shadow-xl"
+          className="pointer-events-none absolute z-30 rounded-lg px-3 py-2.5 text-xs shadow-xl"
           style={{
             left: tooltip.x,
             top: tooltip.y,
@@ -203,9 +239,8 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
             background: 'var(--surface-default)',
             border: '1px solid var(--border-default)',
             color: 'var(--text-primary)',
-            maxWidth: 240,
-            lineHeight: 1.6,
-            whiteSpace: 'normal',
+            maxWidth: 280,
+            lineHeight: 1.7,
           }}
         >
           {tooltip.lines.map((line, i) => (
