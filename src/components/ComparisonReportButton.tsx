@@ -60,7 +60,8 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
     setIsDownloading(true);
     try {
       const res = await api.get(`/datasets/${datasetId}/report/download`, {
-        params: { comparison_name: comparisonName },
+        // _ts busts any HTTP cache so a freshly regenerated PDF is always fetched.
+        params: { comparison_name: comparisonName, _ts: Date.now() },
         responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
