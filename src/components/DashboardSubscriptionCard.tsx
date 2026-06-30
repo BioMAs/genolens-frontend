@@ -45,47 +45,28 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
   );
 }
 
-function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
-  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'FREE';
-  const role = profile?.role;
-  const count = subscription?.project_count ?? 0;
-  const max = subscription?.max_projects ?? null;
-
-  // Unlimited for ADVANCED or ADMIN
-  if (plan === 'ADVANCED' || role === 'ADMIN' || max === null) {
-    return (
-      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-        <FolderOpen className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-        <span>Unlimited projects</span>
-      </div>
-    );
-  }
-
-  const pct = Math.min(100, (count / max) * 100);
-  const isNearLimit = pct >= 80;
-  const isAtLimit = count >= max;
-
+/** Circular SVG arc gauge. radius=28 → circumference≈175.9 */
+function ArcGauge({ pct, tone }: { pct: number; tone: 'teal' | 'purple' | 'red' }) {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.max(0, Math.min(1, pct / 100)));
+  const color: Record<string, string> = {
+    teal: 'var(--sl-teal)',
+    purple: 'var(--sl-purple)',
+    red: 'var(--sl-red)',
+  };
   return (
-    <div>
-      <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1">
-          <FolderOpen className="w-3 h-3" />
-          Projects
-        </span>
-        <span style={{ color: isAtLimit ? 'var(--sl-red)' : isNearLimit ? 'var(--sl-orange, #f97316)' : 'var(--text-secondary)' }}>
-          {count} / {max} used
-        </span>
-      </div>
-      <Meter
-        value={pct / 100}
-        tone={isAtLimit ? 'red' : isNearLimit ? 'purple' : 'teal'}
+    <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx="36" cy="36" r={r} fill="none" stroke="var(--surface-raised)" strokeWidth="7" />
+      <circle
+        cx="36" cy="36" r={r} fill="none"
+        stroke={color[tone]} strokeWidth="7"
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset .4s ease' }}
       />
-      {isAtLimit && (
-        <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>
-          Limit reached — upgrade to create more projects.
-        </p>
-      )}
-    </div>
+    </svg>
   );
 }
 
@@ -94,47 +75,123 @@ function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionIn
 
   if (plan === 'ADVANCED') {
     return (
-      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-        <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-        <span>Unlimited AI interpretations</span>
+      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
+        <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
+        <div>
+          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited</p>
+        </div>
       </div>
     );
   }
 
-  // Free plan: base quota
   const freeUsed = subscription?.ai_interpretations_used ?? profile?.ai_interpretations_used ?? 0;
   const freeRemaining = Math.max(0, FREE_QUOTA - freeUsed);
   const freePct = Math.min(100, (freeUsed / FREE_QUOTA) * 100);
+  const tone = freePct >= 90 ? 'red' : 'teal';
 
-  // Purchased tokens
   const tokensPurchased = subscription?.ai_tokens_purchased ?? profile?.ai_tokens_purchased ?? 0;
   const tokensUsed = subscription?.ai_tokens_used ?? profile?.ai_tokens_used ?? 0;
   const tokensRemaining = Math.max(0, tokensPurchased - tokensUsed);
 
   return (
     <div className="space-y-2.5">
-      {/* Free quota */}
-      <div>
-        <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-          <span>Free interpretations</span>
-          <span style={{ color: freeRemaining <= 3 ? 'var(--sl-red)' : 'var(--text-secondary)' }}>
-            {freeRemaining} / {FREE_QUOTA} remaining
-          </span>
+      {/* Arc gauge + stat */}
+      <div className="flex items-center gap-4">
+        <div className="relative shrink-0">
+          <ArcGauge pct={freePct} tone={tone} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: '1px' }}>
+            <span className="text-base font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{freeRemaining}</span>
+            <span className="text-[9px] leading-none" style={{ color: 'var(--text-muted)' }}>left</span>
+          </div>
         </div>
-        <Meter value={freePct / 100} tone={freePct >= 90 ? 'red' : 'teal'} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {freeUsed} used · {freeRemaining} / {FREE_QUOTA} remaining
+          </p>
+          {freeRemaining <= 3 && (
+            <p className="text-xs mt-1" style={{ color: 'var(--sl-red)' }}>Almost out — upgrade for more.</p>
+          )}
+        </div>
       </div>
 
-      {/* Purchased tokens (only show if any purchased) */}
+      {/* Purchased tokens */}
       {tokensPurchased > 0 && (
         <div>
-          <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-            <span>Purchased tokens</span>
-            <span>{tokensRemaining} / {tokensPurchased} remaining</span>
+          <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />Purchased tokens</span>
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{tokensRemaining} / {tokensPurchased}</span>
           </div>
-          <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" />
+          <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" height={8} />
         </div>
       )}
     </div>
+  );
+}
+
+function StatBar({
+  icon,
+  label,
+  used,
+  max,
+  unlimited,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  used: number;
+  max?: number | null;
+  unlimited?: boolean;
+}) {
+  if (unlimited || max === null || max === undefined) {
+    return (
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {icon}{label}
+        </span>
+        <span className="text-xs font-semibold" style={{ color: 'var(--sl-teal)' }}>∞</span>
+      </div>
+    );
+  }
+  const pct = Math.min(100, (used / max) * 100);
+  const isNear = pct >= 80;
+  const isAt = used >= max;
+  const tone = isAt ? 'red' : isNear ? 'purple' : 'teal';
+  const valueColor = isAt ? 'var(--sl-red)' : isNear ? 'var(--sl-orange, #f97316)' : 'var(--text-primary)';
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {icon}{label}
+        </span>
+        <span className="text-xs font-semibold tabular-nums" style={{ color: valueColor }}>
+          {used} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>/ {max}</span>
+        </span>
+      </div>
+      <Meter value={pct / 100} tone={tone} height={8} />
+      {isAt && (
+        <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>Limit reached — upgrade to continue.</p>
+      )}
+    </div>
+  );
+}
+
+function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
+  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'FREE';
+  const role = profile?.role;
+  const count = subscription?.project_count ?? 0;
+  const max = subscription?.max_projects ?? null;
+  const unlimited = plan === 'ADVANCED' || role === 'ADMIN' || max === null;
+
+  return (
+    <StatBar
+      icon={<FolderOpen className="w-3.5 h-3.5" />}
+      label="Projects"
+      used={count}
+      max={max}
+      unlimited={unlimited}
+    />
   );
 }
 
@@ -142,99 +199,45 @@ function ComparisonsBar({ profile }: { profile?: UserProfile | null }) {
   const used = profile?.comparisons_used_this_month ?? 0;
   const quota = profile?.comparisons_quota ?? null;
 
-  if (quota === null || quota === undefined) {
-    return (
-      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-        <GitCompare className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-        <span>Unlimited analyses</span>
-      </div>
-    );
-  }
-
-  const pct = Math.min(100, (used / quota) * 100);
-  const isNearLimit = pct >= 80;
-  const isAtLimit = used >= quota;
-
   return (
-    <div>
-      <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1">
-          <GitCompare className="w-3 h-3" />
-          Analyses this month
-        </span>
-        <span style={{ color: isAtLimit ? 'var(--sl-red)' : isNearLimit ? 'var(--sl-orange, #f97316)' : 'var(--text-secondary)' }}>
-          {used} / {quota}
-        </span>
-      </div>
-      <Meter value={pct / 100} tone={isAtLimit ? 'red' : isNearLimit ? 'purple' : 'teal'} />
-      {isAtLimit && (
-        <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>
-          Limit reached — upgrade to run more analyses.
-        </p>
-      )}
-    </div>
+    <StatBar
+      icon={<GitCompare className="w-3.5 h-3.5" />}
+      label="Analyses / month"
+      used={used}
+      max={quota}
+      unlimited={quota === null || quota === undefined}
+    />
   );
-}
-
-interface ModuleItem {
-  label: string;
-  unlocked: boolean;
-  icon: React.ReactNode;
 }
 
 function UnlockedModules({ profile }: { profile?: UserProfile | null }) {
   const role = profile?.role;
   const isAdmin = role === 'ADMIN' || role === 'SCILICIUM_ADMIN';
 
-  const modules: ModuleItem[] = [
-    {
-      label: 'AI interpretations',
-      unlocked: isAdmin || (profile?.can_use_ai ?? false),
-      icon: <Sparkles className="w-3 h-3" />,
-    },
-    {
-      label: 'Multi-comparison',
-      unlocked: isAdmin || (profile?.can_use_multi_comparison ?? false),
-      icon: <GitCompare className="w-3 h-3" />,
-    },
-    {
-      label: 'Advanced export',
-      unlocked: isAdmin || (profile?.can_export_advanced ?? false),
-      icon: <FileText className="w-3 h-3" />,
-    },
-    {
-      label: 'Cosmetics module',
-      unlocked: isAdmin || (profile?.has_cosmetics_module ?? false),
-      icon: <FlaskConical className="w-3 h-3" />,
-    },
-    {
-      label: 'Report customization',
-      unlocked: isAdmin || (profile?.has_report_customization ?? false),
-      icon: <FileText className="w-3 h-3" />,
-    },
+  const modules = [
+    { label: 'AI', icon: <Sparkles className="w-3 h-3" />, unlocked: isAdmin || (profile?.can_use_ai ?? false) },
+    { label: 'Multi-compare', icon: <GitCompare className="w-3 h-3" />, unlocked: isAdmin || (profile?.can_use_multi_comparison ?? false) },
+    { label: 'Export', icon: <FileText className="w-3 h-3" />, unlocked: isAdmin || (profile?.can_export_advanced ?? false) },
+    { label: 'Cosmetics', icon: <FlaskConical className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_cosmetics_module ?? false) },
+    { label: 'Reports', icon: <FileText className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_report_customization ?? false) },
   ];
 
   return (
     <div>
-      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-        Features
-      </p>
-      <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Features</p>
+      <div className="flex flex-wrap gap-1.5">
         {modules.map((mod) => (
-          <div key={mod.label} className="flex items-center gap-2 text-xs">
-            {mod.unlocked ? (
-              <Check className="w-3 h-3 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-            ) : (
-              <Lock className="w-3 h-3 shrink-0" style={{ color: 'var(--text-muted)' }} />
-            )}
-            <span
-              className={mod.unlocked ? 'flex items-center gap-1' : 'flex items-center gap-1 line-through'}
-              style={{ color: mod.unlocked ? 'var(--text-secondary)' : 'var(--text-muted)' }}
-            >
-              {mod.icon}
-              {mod.label}
-            </span>
-          </div>
+          <span
+            key={mod.label}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+            style={mod.unlocked
+              ? { background: 'var(--sl-teal-light)', color: 'var(--sl-teal-dark)' }
+              : { background: 'var(--surface-raised)', color: 'var(--text-muted)' }
+            }
+          >
+            {mod.unlocked ? <Check className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+            {mod.label}
+          </span>
         ))}
       </div>
     </div>
