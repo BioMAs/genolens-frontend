@@ -123,6 +123,8 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
                   if (patch.first_page_type) setFirstPageType(patch.first_page_type);
                   if (patch.last_page_type) setLastPageType(patch.last_page_type);
                 }}
+                primaryColor={settings?.primary_color}
+                secondaryColor={settings?.secondary_color}
               />
             </div>
 

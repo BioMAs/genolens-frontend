@@ -244,6 +244,8 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           lastPageType={pages.last_page_type}
           onChange={(patch) => setPages((p) => ({ ...p, ...patch }))}
           disabled={demo}
+          primaryColor={form.primary_color}
+          secondaryColor={form.secondary_color}
         />
       </div>
 
