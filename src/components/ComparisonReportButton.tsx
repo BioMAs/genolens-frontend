@@ -8,6 +8,9 @@ import {
 } from "@/hooks/useReportGeneration";
 import { useReportSettings } from "@/hooks/useReportSettings";
 import { useUserProfile } from "@/hooks/useCosmetics";
+import type { CoverInfo, FirstPageType, LastPageType } from "@/types/report";
+import PageModelSelector from "./report/PageModelSelector";
+import CoverInfoFields from "./report/CoverInfoFields";
 import api from "@/utils/api";
 
 interface Props {
@@ -20,6 +23,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
   const [showModal, setShowModal] = useState(false);
   const [conclusion, setConclusion] = useState("");
   const [materialsMethods, setMaterialsMethods] = useState("");
+  const [firstPageType, setFirstPageType] = useState<FirstPageType>("detailed");
+  const [lastPageType, setLastPageType] = useState<LastPageType>("color");
+  const [cover, setCover] = useState<CoverInfo>({});
 
   const { data: profile } = useUserProfile();
   const hasModule = profile?.has_report_customization === true;
@@ -37,6 +43,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
   const openCustomizeModal = () => {
     setConclusion(settings?.default_conclusion ?? "");
     setMaterialsMethods(settings?.default_materials_methods ?? "");
+    setFirstPageType(settings?.first_page_type ?? "detailed");
+    setLastPageType(settings?.last_page_type ?? "color");
+    setCover(settings?.cover_info ?? {});
     setShowModal(true);
   };
 
@@ -52,6 +61,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
     trigger.mutate({
       conclusion: conclusion || undefined,
       materials_methods: materialsMethods || undefined,
+      first_page_type: firstPageType,
+      last_page_type: lastPageType,
+      cover_info: cover,
     });
     setShowModal(false);
   };
@@ -85,7 +97,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div
-            className="w-full max-w-2xl rounded-2xl p-6 shadow-xl"
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-6 shadow-xl"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -97,9 +109,27 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               </button>
             </div>
             <p className="mb-4 text-xs" style={{ color: "var(--text-muted)" }}>
-              Your saved logo, colours and institute are applied automatically. Edit the
-              conclusion and Material &amp; Methods for this report below.
+              Your saved logo and colours are applied automatically. Page models, project
+              information, Material &amp; Methods and conclusion are pre-filled from your
+              defaults and can be overridden for this report.
             </p>
+
+            <h3 className="mb-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Page layout</h3>
+            <div className="mb-5">
+              <PageModelSelector
+                firstPageType={firstPageType}
+                lastPageType={lastPageType}
+                onChange={(patch) => {
+                  if (patch.first_page_type) setFirstPageType(patch.first_page_type);
+                  if (patch.last_page_type) setLastPageType(patch.last_page_type);
+                }}
+              />
+            </div>
+
+            <h3 className="mb-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Project information</h3>
+            <div className="mb-5">
+              <CoverInfoFields value={cover} onChange={setCover} />
+            </div>
 
             <label className="mb-1 block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               Material &amp; Methods

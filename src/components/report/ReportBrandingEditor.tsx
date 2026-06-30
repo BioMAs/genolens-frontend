@@ -8,7 +8,9 @@ import {
   useUpdateReportSettings,
   useUploadReportLogo,
 } from "@/hooks/useReportSettings";
-import type { ReportSettings } from "@/types/report";
+import type { CoverInfo, FirstPageType, LastPageType, ReportSettings } from "@/types/report";
+import PageModelSelector from "./PageModelSelector";
+import CoverInfoFields from "./CoverInfoFields";
 
 const DEFAULT_PRIMARY = "#003C65";
 const DEFAULT_SECONDARY = "#42E2BA";
@@ -22,6 +24,9 @@ const DEMO_SETTINGS: ReportSettings = {
   default_materials_methods:
     "Samples were sequenced and analysed following standard transcriptomics protocols…",
   default_conclusion: "These results highlight the key biological signals of the comparison…",
+  first_page_type: "detailed",
+  last_page_type: "color",
+  cover_info: { project_name: "My project", client_ref: "ACME-001", test_facility_name: "Your Lab" },
 };
 
 interface Props {
@@ -61,6 +66,11 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
     default_materials_methods: settings?.default_materials_methods ?? "",
     default_conclusion: settings?.default_conclusion ?? "",
   });
+  const [pages, setPages] = useState<{ first_page_type: FirstPageType; last_page_type: LastPageType }>({
+    first_page_type: settings?.first_page_type ?? "detailed",
+    last_page_type: settings?.last_page_type ?? "color",
+  });
+  const [cover, setCover] = useState<CoverInfo>(settings?.cover_info ?? {});
   const [saved, setSaved] = useState(false);
   const [selectedLogoUrl, setSelectedLogoUrl] = useState<string | null>(null);
 
@@ -71,7 +81,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
   const handleSave = async () => {
     if (demo) return;
     setSaved(false);
-    await update.mutateAsync(form);
+    await update.mutateAsync({ ...form, ...pages, cover_info: cover });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -224,6 +234,23 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           rows={3}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
         />
+      </div>
+
+      {/* Page models */}
+      <div className="border-t border-gray-100 pt-5">
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Page layout</h3>
+        <PageModelSelector
+          firstPageType={pages.first_page_type}
+          lastPageType={pages.last_page_type}
+          onChange={(patch) => setPages((p) => ({ ...p, ...patch }))}
+          disabled={demo}
+        />
+      </div>
+
+      {/* Project information */}
+      <div className="border-t border-gray-100 pt-5">
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Project information</h3>
+        <CoverInfoFields value={cover} onChange={setCover} disabled={demo} />
       </div>
 
       <div className="flex items-center gap-3">
