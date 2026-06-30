@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Database, Info } from 'lucide-react';
+import { Loader2, Database, Info } from 'lucide-react'; // Info kept for hasSignal block below
 import { useCosmeticsData, useUserProfile, CosmeticsResult } from '@/hooks/useCosmetics';
 import ClaimsRadar from './ClaimsRadar';
 import ClaimCards from './ClaimCards';
@@ -42,24 +42,7 @@ function CosmeticsContent({
       </div>
       <ClaimCards claims={data.claims} />
 
-      {data.caveats.length > 0 && (
-        <div className="gl-card p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            <Info className="h-4 w-4" /> Caveats
-          </h3>
-          <ul className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {data.caveats.map((c, i) => (
-              <li key={`${c.term_id}-${i}`}>
-                <span className="font-medium">{c.pathway_name}</span>{' '}
-                <span className="rounded bg-amber-50 px-1 text-amber-700">[{c.flag}]</span>
-                {c.note ? ` — ${c.note}` : ''}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+<p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
         {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways
         matched the claim referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
       </p>
