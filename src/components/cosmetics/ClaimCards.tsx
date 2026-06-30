@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
+import ClaimPathwayMap from './ClaimPathwayMap';
 
 const CONFIDENCE_STYLES: Record<string, { bg: string; fg: string }> = {
   HIGH: { bg: '#dcfce7', fg: '#166534' },
@@ -90,23 +91,15 @@ function ClaimCard({ claim }: { claim: CosmeticClaimScore }) {
             <ChevronDown
               className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
             />
-            {open ? 'Hide' : 'Show'} evidence pathways
+            {open ? 'Hide' : 'Show'} pathway network
           </button>
           {open && (
-            <ul className="mt-2 space-y-1">
-              {claim.evidence_pathways.map((p) => (
-                <li
-                  key={p.term_id}
-                  className="flex items-center justify-between gap-2 text-[11px]"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  <span className="truncate">{p.pathway_name}</span>
-                  <span className="shrink-0 font-mono">
-                    {p.direction} · {p.evidence_level}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ClaimPathwayMap
+              pathways={claim.evidence_pathways}
+              claimLabel={claim.label}
+              claimColor={claim.color}
+              claimScore={claim.score}
+            />
           )}
         </div>
       )}

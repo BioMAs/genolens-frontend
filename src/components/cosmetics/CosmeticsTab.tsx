@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Loader2, Database, Info } from 'lucide-react';
 import { useCosmeticsData, useUserProfile, CosmeticsResult } from '@/hooks/useCosmetics';
 import ClaimsRadar from './ClaimsRadar';
@@ -8,20 +7,12 @@ import ClaimCards from './ClaimCards';
 import SkinSchematic from './SkinSchematic';
 import CosmeticsAIPanel from './CosmeticsAIPanel';
 import CosmeticsLockedOverlay from './CosmeticsLockedOverlay';
-import ClaimPathwayNetwork from './ClaimPathwayNetwork';
 import { DEMO_COSMETICS, DEMO_INTERPRETATION } from './demoData';
 
 interface Props {
   datasetId?: string;
   comparisonName: string;
 }
-
-const SUBTABS = [
-  { id: 'overview', label: 'Vue d\'ensemble' },
-  { id: 'network', label: 'Réseau AOP' },
-] as const;
-
-type SubTab = (typeof SUBTABS)[number]['id'];
 
 function CosmeticsContent({
   data,
@@ -34,72 +25,44 @@ function CosmeticsContent({
   comparisonName?: string;
   demo?: boolean;
 }) {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('overview');
-
   return (
     <div className="space-y-4">
-      {/* Sub-tab switcher */}
-      <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--surface-elevated)', width: 'fit-content' }}>
-        {SUBTABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className="rounded-md px-4 py-1.5 text-xs font-medium transition-colors"
-            style={
-              activeSubTab === tab.id
-                ? { background: 'var(--surface-default)', color: 'var(--text-primary)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
-                : { color: 'var(--text-secondary)' }
-            }
-          >
-            {tab.label}
-          </button>
-        ))}
+      <SkinSchematic zones={data.skin_zones} />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-5">
+          <ClaimsRadar claims={data.claims} />
+        </div>
+        <div className="xl:col-span-7">
+          <CosmeticsAIPanel
+            datasetId={datasetId}
+            comparisonName={comparisonName}
+            demoText={demo ? DEMO_INTERPRETATION : undefined}
+          />
+        </div>
       </div>
+      <ClaimCards claims={data.claims} />
 
-      {activeSubTab === 'overview' && (
-        <>
-          <SkinSchematic zones={data.skin_zones} />
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-            <div className="xl:col-span-5">
-              <ClaimsRadar claims={data.claims} />
-            </div>
-            <div className="xl:col-span-7">
-              <CosmeticsAIPanel
-                datasetId={datasetId}
-                comparisonName={comparisonName}
-                demoText={demo ? DEMO_INTERPRETATION : undefined}
-              />
-            </div>
-          </div>
-          <ClaimCards claims={data.claims} />
-
-          {data.caveats.length > 0 && (
-            <div className="gl-card p-4">
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                <Info className="h-4 w-4" /> Caveats
-              </h3>
-              <ul className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                {data.caveats.map((c, i) => (
-                  <li key={`${c.term_id}-${i}`}>
-                    <span className="font-medium">{c.pathway_name}</span>{' '}
-                    <span className="rounded bg-amber-50 px-1 text-amber-700">[{c.flag}]</span>
-                    {c.note ? ` — ${c.note}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-            {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways
-            matched the claim referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
-          </p>
-        </>
+      {data.caveats.length > 0 && (
+        <div className="gl-card p-4">
+          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <Info className="h-4 w-4" /> Caveats
+          </h3>
+          <ul className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {data.caveats.map((c, i) => (
+              <li key={`${c.term_id}-${i}`}>
+                <span className="font-medium">{c.pathway_name}</span>{' '}
+                <span className="rounded bg-amber-50 px-1 text-amber-700">[{c.flag}]</span>
+                {c.note ? ` — ${c.note}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
-      {activeSubTab === 'network' && (
-        <ClaimPathwayNetwork claims={data.claims} />
-      )}
+      <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+        {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways
+        matched the claim referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
+      </p>
     </div>
   );
 }
