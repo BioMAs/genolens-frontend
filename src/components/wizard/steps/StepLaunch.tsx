@@ -136,7 +136,7 @@ export default function StepLaunch({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
-              <SummaryRow label="log2FC" value={String(deseq2Params.min_log2fc)} />
+              <SummaryRow label="Fold-change" value={`${(2 ** deseq2Params.min_log2fc).toFixed(2)}×`} />
             </div>
           </div>
           <div className="px-4 py-3">

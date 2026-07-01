@@ -300,7 +300,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
     { label: 'DEA method',           value: String(params.de_method ?? 'all') },
     { label: 'Design formula',       value: String(params.design ?? 'auto') },
     { label: 'FDR threshold',        value: String(params.fdr ?? 0.05) },
-    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.0) },
+    { label: 'Fold-change',          value: `${(2 ** Number(params.min_log2fc ?? Math.log2(1.5))).toFixed(2)}×` },
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },
