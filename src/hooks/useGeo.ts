@@ -20,7 +20,8 @@ export function useGeoSearch() {
         params: {
           q: query,
           max_results: maxResults,
-          db: 'geo',
+          // NCBI's GEO E-utilities database is 'gds' (there is no 'geo' db).
+          db: 'gds',
           counts_only: countsOnly,
         },
       });
