@@ -54,6 +54,34 @@ export interface DatasetQueryResponse {
   returned_rows: number;
 }
 
+export interface GEODataset {
+  uid: string;
+  accession: string;
+  title: string;
+  summary: string;
+  organism: string;
+  samples_n: number;
+  platform: string;
+  type: string;
+  pub_date: string;
+  geo_link: string;
+}
+
+export interface GeoSearchResponse {
+  total: number;
+  ids: string[];
+  datasets: GEODataset[];
+  query: string;
+  db: string;
+}
+
+export interface GeoImportResponse {
+  matrix_dataset_id: string;
+  samples_dataset_id: string;
+  status: DatasetStatus;
+  message: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
