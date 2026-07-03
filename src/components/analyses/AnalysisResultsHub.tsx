@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database } from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
 import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
@@ -178,6 +178,24 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {(() => {
+                const meta = matrixDataset?.dataset_metadata as
+                  | { source?: string; geo_accession?: string }
+                  | undefined;
+                if (meta?.source !== 'GEO' || !meta.geo_accession) return null;
+                return (
+                  <a
+                    href={`https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${meta.geo_accession}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
+                    className="flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                  >
+                    <Database className="h-3.5 w-3.5" />
+                    GEO · {meta.geo_accession}
+                  </a>
+                );
+              })()}
               <StatusBadge status={analysis.status} />
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}

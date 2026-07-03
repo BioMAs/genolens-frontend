@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useAnalyses } from '@/hooks/useAnalyses';
+import { useProjectDatasets } from '@/hooks/useProjectData';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 
 interface Props {
@@ -11,6 +12,19 @@ interface Props {
 
 export default function AnalysesListView({ projectId }: Props) {
   const { data, isLoading, isError } = useAnalyses(projectId);
+  const { data: datasets } = useProjectDatasets(projectId);
+
+  // Map matrix_dataset_id → GEO accession for datasets imported from NCBI GEO.
+  const geoByDatasetId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of datasets ?? []) {
+      const meta = d.dataset_metadata as { source?: string; geo_accession?: string } | undefined;
+      if (meta?.source === 'GEO' && meta.geo_accession) {
+        map.set(d.id, meta.geo_accession);
+      }
+    }
+    return map;
+  }, [datasets]);
 
   if (isLoading) {
     return (
@@ -56,7 +70,12 @@ export default function AnalysesListView({ projectId }: Props) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {analyses.map((a) => (
-            <AnalysisStatusCard key={a.id} analysis={a} projectId={projectId} />
+            <AnalysisStatusCard
+              key={a.id}
+              analysis={a}
+              projectId={projectId}
+              geoAccession={a.matrix_dataset_id ? geoByDatasetId.get(a.matrix_dataset_id) : null}
+            />
           ))}
         </div>
       )}
