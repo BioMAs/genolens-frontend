@@ -38,12 +38,9 @@ interface ContrastBuilderProps {
 let _rowSeq = 0;
 const nextRowId = () => `cmp-${Date.now()}-${_rowSeq++}`;
 
-/** Wrap a CSV field in quotes when it contains a comma, quote or newline. */
-function csvEscape(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
+/** Sanitise a TSV field: strip tabs/newlines that would break column parsing. */
+function tsvField(value: string): string {
+  return value.replace(/[\t\r\n]+/g, ' ').trim();
 }
 
 export default function ContrastBuilder({
@@ -138,12 +135,14 @@ export default function ContrastBuilder({
     setUploadError(null);
     setUploading(true);
     try {
-      const header = 'comparison,condition1,condition2';
+      // TSV — the R DEA pipeline reads inputs with read_tsv; commas commonly
+      // appear inside GEO condition values (e.g. "SARS-CoV-2, MOI = 1.0").
+      const header = 'comparison\tcondition1\tcondition2';
       const lines = comparisons.map(
-        (r) => `${csvEscape(r.name.trim())},${csvEscape(r.condition1)},${csvEscape(r.condition2)}`
+        (r) => `${tsvField(r.name.trim())}\t${tsvField(r.condition1)}\t${tsvField(r.condition2)}`
       );
-      const csv = [header, ...lines].join('\n') + '\n';
-      const file = new File([csv], 'contrasts.csv', { type: 'text/csv' });
+      const tsv = [header, ...lines].join('\n') + '\n';
+      const file = new File([tsv], 'contrasts.tsv', { type: 'text/tab-separated-values' });
 
       const form = new FormData();
       form.append('file', file);
