@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles } from 'lucide-react';
+import { useChatMode } from '@/contexts/ChatModeContext';
 import DEGBarChart from './DEGBarChart';
 import OverviewTopGenes from './OverviewTopGenes';
 import Link from 'next/link';
@@ -52,6 +53,7 @@ type EnrichmentRow = {
 export default function ComparisonDetail({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
+  const { openChatWith } = useChatMode();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [project, setProject] = useState<Project | null>(null);
@@ -631,6 +633,21 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                openChatWith({
+                  projectId,
+                  datasetId: degDataset.id,
+                  comparisonName: actualComparisonName,
+                })
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+              style={{ background: 'var(--sl-purple)' }}
+              title="Open the AI chat assistant for this comparison"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Ask AI
+            </button>
             <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
             <button
               onClick={handleReprocessDEG}

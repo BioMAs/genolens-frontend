@@ -17,16 +17,23 @@ import ChatFigure from '@/components/chat/ChatFigure';
  * agent can answer questions and generate figures inline.
  */
 export default function ChatModeShell() {
-  const { setChatMode } = useChatMode();
-  const [projectId, setProjectId] = useState('');
-  const [datasetId, setDatasetId] = useState('');
-  const [comparisonName, setComparisonName] = useState('');
+  const { setChatMode, initialContext } = useChatMode();
+  const [projectId, setProjectId] = useState(initialContext?.projectId ?? '');
+  const [datasetId, setDatasetId] = useState(initialContext?.datasetId ?? '');
+  const [comparisonName, setComparisonName] = useState(initialContext?.comparisonName ?? '');
 
   const { data: projectsResp } = useProjects({ page_size: 100 });
   const projects = projectsResp?.items ?? [];
   const { data: datasets } = useProjectDatasets(projectId);
   const degDatasets = (datasets ?? []).filter((d) => d.type === DatasetType.DEG);
-  const { data: comparisons } = useDatasetComparisons(datasetId, !!datasetId);
+  // The /datasets/{id}/comparisons endpoint returns { comparisons: string[] },
+  // not an array — normalise to a list of comparison names.
+  const { data: comparisonsResp } = useDatasetComparisons(datasetId, !!datasetId);
+  const comparisonNames: string[] = Array.isArray(comparisonsResp)
+    ? (comparisonsResp as Array<{ name?: string } | string>)
+        .map((c) => (typeof c === 'string' ? c : c?.name))
+        .filter((n): n is string => !!n)
+    : ((comparisonsResp as unknown as { comparisons?: string[] })?.comparisons ?? []);
 
   const contextReady = !!projectId && !!datasetId && !!comparisonName;
 
@@ -75,7 +82,7 @@ export default function ChatModeShell() {
           value={comparisonName}
           disabled={!datasetId}
           onChange={setComparisonName}
-          options={(comparisons ?? []).map((c) => ({ value: c.name, label: c.name }))}
+          options={comparisonNames.map((name) => ({ value: name, label: name }))}
         />
       </div>
 
