@@ -126,29 +126,25 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
         }
     }, [datasetId, comparisonName]);
 
-    // Load existing interpretation on mount
+    // Load existing interpretation on mount — READ-ONLY (never triggers generation).
+    // Generation happens only when the user clicks "Generate" (see generateInterpretation).
     useEffect(() => {
         const loadInterpretation = async () => {
             try {
-                const response = await api.post(
-                    `/datasets/${datasetId}/comparisons/${encodeURIComponent(comparisonName)}/interpret`,
-                    null,
-                    {
-                        params: {
-                            force_regenerate: false,
-                            language: 'en'
-                        }
-                    }
+                const response = await api.get(
+                    `/datasets/${datasetId}/comparisons/${encodeURIComponent(comparisonName)}/interpretation`
                 );
-                
+
                 if (response.data && response.data.interpretation) {
                     setData(response.data);
+                } else {
+                    setData(null);
                 }
             } catch (err) {
                 console.error('Failed to load interpretation:', err);
             }
         };
-        
+
         if (datasetId && comparisonName) {
             loadInterpretation();
         }
@@ -185,7 +181,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             } else {
                 setError(
                     getApiErrorDetail(err) ||
-                    "Error generating interpretation. Please check if Ollama is running."
+                    "Error generating interpretation. The AI service may be starting up — please try again."
                 );
                 setErrorType('generic');
             }
@@ -227,7 +223,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             console.error('AI chat error:', err);
             const status = (err as ApiError).response?.status;
             
-            let errorMsg = "Sorry, I couldn't answer your question. Please check if Ollama is running.";
+            let errorMsg = "Sorry, I couldn't answer your question. The AI service may be starting up — please try again.";
             
             if (status === 403) {
                 errorMsg = "AI interpretation requires a Pro or Advanced plan. Visit /pricing to upgrade.";
@@ -301,7 +297,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                     <svg className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                     </svg>
-                                    <span>100% local processing - your data stays private</span>
+                                    <span>Powered by Gemma 4, a state-of-the-art open model</span>
                                 </li>
                             </ul>
                         </div>
@@ -335,28 +331,12 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     </svg>
                     <div className="flex-1">
                         <h3 className="text-sm font-semibold text-yellow-800 mb-2">
-                            AI interpretation not available
+                            AI interpretation temporarily unavailable
                         </h3>
-                        <p className="text-sm text-yellow-700 mb-3">
-                            Ollama is not detected. To enable local AI interpretation, install Ollama:
+                        <p className="text-sm text-yellow-700">
+                            The AI service is currently unreachable. This is usually transient —
+                            please try again in a moment. If it persists, contact support.
                         </p>
-                        <div className="bg-yellow-100 rounded px-3 py-2 font-mono text-xs text-yellow-900 mb-2">
-                            brew install ollama && ollama serve
-                        </div>
-                        <div className="bg-yellow-100 rounded px-3 py-2 font-mono text-xs text-yellow-900">
-                            ollama pull biomistral
-                        </div>
-                        <a 
-                            href="https://ollama.ai" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-yellow-700 hover:text-yellow-800 mt-3"
-                        >
-                            Complete documentation
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -414,7 +394,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         </svg>
                         <span className="text-sm font-medium">Analysis in progress by {aiStatus.current_model}...</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">This may take 15-60 seconds</p>
+                    <p className="text-xs text-gray-500 mt-2">This can take up to a few minutes on the first run</p>
                 </div>
             )}
 
@@ -593,11 +573,11 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             <span>Generated: {new Date(data.generated_at).toLocaleString('en-US')}</span>
                         </div>
                         
-                        <div className="flex items-center gap-1 text-xs text-green-600">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <div className="flex items-center gap-1 text-xs text-purple-600">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
-                            100% local • No data exported
+                            Powered by Gemma 4
                         </div>
                     </div>
                 </div>

@@ -109,7 +109,7 @@ const PLANS: PlanConfig[] = [
       { label: 'Unlimited comparisons', included: true },
       { label: 'All Team features', included: true },
       { label: 'SSO / LDAP', included: true },
-      { label: 'Custom AI models (Ollama)', included: true },
+      { label: 'Custom AI models (Gemma 4)', included: true },
       { label: 'Self-hosted Docker deployment', included: true },
       { label: 'Guaranteed 99.5% SLA', included: true },
       { label: 'Dedicated 24h support + onboarding', included: true },
