@@ -2,137 +2,70 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Send, Sparkles, Wrench } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Send, Sparkles, Wrench } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
-import { useProjects } from '@/hooks/useProjects';
-import { useProjectDatasets } from '@/hooks/useProjectData';
-import { useDatasetComparisons } from '@/hooks/useComparisons';
 import { useChatAgent } from '@/hooks/useChatAgent';
-import { DatasetType } from '@/types';
-import ChatFigure from '@/components/chat/ChatFigure';
+import PlotlyFigure from '@/components/chat/PlotlyFigure';
+import HelpPanel from '@/components/chat/HelpPanel';
 
 /**
- * Full-screen ChatGPT-style assistant. Rendered by AppFrame when chat mode is on.
- * The user first selects a project → DEG dataset → comparison, then converses; the
- * agent can answer questions and generate figures inline.
+ * Full-screen assistant. Rendered by AppFrame when chat mode is on. Entry is always
+ * scoped to a single comparison, passed via `initialContext` from the comparison-page
+ * "AI Assistant" button — there is no in-chat project/dataset/comparison selector.
  */
 export default function ChatModeShell() {
   const { setChatMode, initialContext } = useChatMode();
-  const [projectId, setProjectId] = useState(initialContext?.projectId ?? '');
-  const [datasetId, setDatasetId] = useState(initialContext?.datasetId ?? '');
-  const [comparisonName, setComparisonName] = useState(initialContext?.comparisonName ?? '');
+  const [helpOpen, setHelpOpen] = useState(false);
 
-  const { data: projectsResp } = useProjects({ page_size: 100 });
-  const projects = projectsResp?.items ?? [];
-  const { data: datasets } = useProjectDatasets(projectId);
-  const degDatasets = (datasets ?? []).filter((d) => d.type === DatasetType.DEG);
-  // The /datasets/{id}/comparisons endpoint returns { comparisons: string[] },
-  // not an array — normalise to a list of comparison names.
-  const { data: comparisonsResp } = useDatasetComparisons(datasetId, !!datasetId);
-  const comparisonNames: string[] = Array.isArray(comparisonsResp)
-    ? (comparisonsResp as Array<{ name?: string } | string>)
-        .map((c) => (typeof c === 'string' ? c : c?.name))
-        .filter((n): n is string => !!n)
-    : ((comparisonsResp as unknown as { comparisons?: string[] })?.comparisons ?? []);
-
-  const contextReady = !!projectId && !!datasetId && !!comparisonName;
+  const contextReady =
+    !!initialContext?.projectId && !!initialContext?.datasetId && !!initialContext?.comparisonName;
 
   return (
     <div className="flex h-screen flex-col bg-[var(--surface-base,var(--surface))]">
-      {/* Header */}
+      {/* Minimal top bar */}
       <header className="flex h-[var(--topbar-height,52px)] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="GenoLens" width={110} height={34} className="h-7 w-auto" />
           <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">
-            <Sparkles className="h-4 w-4 text-[var(--sl-purple)]" /> Assistant
+            <Sparkles className="h-4 w-4 text-[var(--sl-purple)]" /> AI Assistant
           </span>
         </div>
-        <button
-          onClick={() => setChatMode(false)}
-          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--hover-overlay)]"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Full interface
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHelpOpen((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--hover-overlay)] ${
+              helpOpen ? 'text-[var(--sl-purple)]' : 'text-[var(--text-primary)]'
+            }`}
+          >
+            <HelpCircle className="h-3.5 w-3.5" /> Help
+          </button>
+          <button
+            onClick={() => setChatMode(false)}
+            className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--hover-overlay)]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Full interface
+          </button>
+        </div>
       </header>
 
-      {/* Context selector */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border)] px-4 py-2.5">
-        <Selector
-          label="Project"
-          value={projectId}
-          onChange={(v) => {
-            setProjectId(v);
-            setDatasetId('');
-            setComparisonName('');
-          }}
-          options={projects.map((p) => ({ value: p.id, label: p.name }))}
-        />
-        <Selector
-          label="Dataset"
-          value={datasetId}
-          disabled={!projectId}
-          onChange={(v) => {
-            setDatasetId(v);
-            setComparisonName('');
-          }}
-          options={degDatasets.map((d) => ({ value: d.id, label: d.name }))}
-        />
-        <Selector
-          label="Comparison"
-          value={comparisonName}
-          disabled={!datasetId}
-          onChange={setComparisonName}
-          options={comparisonNames.map((name) => ({ value: name, label: name }))}
-        />
-      </div>
-
-      {/* Conversation (remounts on context change to start a fresh session) */}
-      {contextReady ? (
-        <ChatConversation
-          key={`${datasetId}::${comparisonName}`}
-          projectId={projectId}
-          datasetId={datasetId}
-          comparisonName={comparisonName}
-        />
-      ) : (
-        <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[var(--text-muted)]">
-          Select a project, a DEG dataset and a comparison to start chatting.
+      <div className="flex min-h-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
+          {contextReady ? (
+            <ChatConversation
+              key={`${initialContext!.datasetId}::${initialContext!.comparisonName}`}
+              projectId={initialContext!.projectId}
+              datasetId={initialContext!.datasetId}
+              comparisonName={initialContext!.comparisonName as string}
+            />
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[var(--text-muted)]">
+              Open the AI Assistant from a comparison to start chatting.
+            </div>
+          )}
         </div>
-      )}
+        {helpOpen && <HelpPanel onClose={() => setHelpOpen(false)} />}
+      </div>
     </div>
-  );
-}
-
-function Selector({
-  label,
-  value,
-  onChange,
-  options,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  disabled?: boolean;
-}) {
-  return (
-    <label className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
-      <span>{label}</span>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
-      >
-        <option value="">—</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -181,7 +114,7 @@ function ChatConversation({
                 </div>
               ))}
               {(m.figures ?? []).map((fig) => (
-                <ChatFigure key={fig.call_id} figure={fig} />
+                <PlotlyFigure key={fig.call_id} figure={fig} comparisonName={comparisonName} />
               ))}
               {m.content && (
                 <div className="whitespace-pre-wrap rounded-2xl bg-[var(--surface-raised)] px-4 py-2 text-sm text-[var(--text-primary)]">

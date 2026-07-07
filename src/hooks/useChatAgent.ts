@@ -6,11 +6,18 @@ import { createClient } from '@/utils/supabase/client';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+/** A Plotly figure spec built server-side from the constrained chart request. */
+export interface PlotlySpec {
+  data: Record<string, unknown>[];
+  layout: Record<string, unknown>;
+}
+
 export interface ChatFigureData {
   call_id: string;
   figure_type: string;
   params: Record<string, unknown>;
-  payload: Record<string, unknown>;
+  /** Plotly {data, layout} — merged with real data server-side. */
+  spec: PlotlySpec;
 }
 
 export interface ChatToolCall {

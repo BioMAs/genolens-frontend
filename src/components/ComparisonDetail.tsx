@@ -643,10 +643,10 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               }
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
               style={{ background: 'var(--sl-purple)' }}
-              title="Open the AI chat assistant for this comparison"
+              title="Open the AI Assistant for this comparison"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Ask AI
+              AI Assistant
             </button>
             <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
             <button
