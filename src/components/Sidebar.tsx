@@ -17,8 +17,10 @@ import {
   LogOut,
   Moon,
   Sun,
+  Sparkles,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useChatMode } from '@/contexts/ChatModeContext';
 import QuotaDisplay from './QuotaDisplay';
 import { Dot } from '@/components/ui/dot';
 
@@ -47,6 +49,7 @@ const projectNav = [
 export default function Sidebar({ user, userRole }: SidebarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { toggleChatMode } = useChatMode();
   const isAdmin = userRole?.toLowerCase() === 'admin';
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch?.[1] ?? null;
@@ -188,6 +191,18 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
           </div>
           <UserIcon className="h-3.5 w-3.5 text-[var(--text-muted)]" />
         </Link>
+
+        <div className="px-2.5">
+          <button
+            onClick={toggleChatMode}
+            title="Switch to the AI chat assistant"
+            className="nav-item w-full justify-center gap-1.5 !m-0"
+            style={{ color: 'var(--sl-purple)' }}
+          >
+            <Sparkles className="nav-icon" />
+            <span className="text-[11px]">Chat mode</span>
+          </button>
+        </div>
 
         <div className="mt-0.5 flex gap-1 px-2.5">
           <button

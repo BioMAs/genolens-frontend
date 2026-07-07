@@ -4,8 +4,8 @@ import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import AppShell from "@/components/AppShell";
-import LicenseExpiredBanner from "@/components/LicenseExpiredBanner";
+import { ChatModeProvider } from "@/contexts/ChatModeContext";
+import AppFrame from "@/components/AppFrame";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 
@@ -57,14 +57,15 @@ export default async function RootLayout({
         <ErrorBoundary>
           <QueryProvider>
             <ThemeProvider>
-              {user ? (
-                <AppShell user={user} userRole={userRole}>
-                  <LicenseExpiredBanner />
-                  {children}
-                </AppShell>
-              ) : (
-                <main>{children}</main>
-              )}
+              <ChatModeProvider>
+                {user ? (
+                  <AppFrame user={user} userRole={userRole}>
+                    {children}
+                  </AppFrame>
+                ) : (
+                  <main>{children}</main>
+                )}
+              </ChatModeProvider>
             </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
