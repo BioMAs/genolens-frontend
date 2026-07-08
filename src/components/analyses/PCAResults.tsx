@@ -72,6 +72,38 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
     const xVar = pcaData.variance_explained[xIdx] ?? 0;
     const yVar = pcaData.variance_explained[yIdx] ?? 0;
 
+    // Soft group halos: an ellipse (±1.8σ) behind each group's points.
+    const mean = (a: number[]) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0);
+    const std = (a: number[], m: number) =>
+      a.length > 1 ? Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1)) : 0;
+    const allX = pcaData.samples.map((p) => getPCValue(p, xAxis));
+    const allY = pcaData.samples.map((p) => getPCValue(p, yAxis));
+    const fallbackX = (Math.max(...allX) - Math.min(...allX)) * 0.06 || 1;
+    const fallbackY = (Math.max(...allY) - Math.min(...allY)) * 0.06 || 1;
+
+    const shapes = Object.entries(groups).map(([, points], i) => {
+      const xs = points.map((p) => getPCValue(p, xAxis));
+      const ys = points.map((p) => getPCValue(p, yAxis));
+      const mx = mean(xs);
+      const my = mean(ys);
+      const sx = (std(xs, mx) || fallbackX) * 1.8;
+      const sy = (std(ys, my) || fallbackY) * 1.8;
+      const color = CONDITION_COLORS[i % CONDITION_COLORS.length];
+      return {
+        type: 'circle' as const,
+        xref: 'x' as const,
+        yref: 'y' as const,
+        x0: mx - sx,
+        x1: mx + sx,
+        y0: my - sy,
+        y1: my + sy,
+        fillcolor: color,
+        opacity: 0.08,
+        line: { color, width: 1, dash: 'dot' as const },
+        layer: 'below' as const,
+      };
+    });
+
     const traces: Partial<PlotData>[] = Object.entries(groups).map(([groupName, points], i) => ({
       type: 'scatter' as const,
       mode: 'text+markers' as const,
@@ -112,10 +144,22 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
       plot_bgcolor: isDark ? '#1a1f2e' : '#fafafa',
       margin: { l: 60, r: 140, t: 30, b: 60 },
       hovermode: 'closest' as const,
+      shapes,
     };
 
     return { traces, layout };
   }, [pcaData, xAxis, yAxis, colorBy, availablePCs, isDark]);
+
+  // Plain-language read of the plot.
+  const read = useMemo(() => {
+    if (!pcaData) return null;
+    const xIdx = availablePCs.indexOf(xAxis);
+    const pcVar = (pcaData.variance_explained[xIdx] ?? 0) * 100;
+    const nGroups = new Set(
+      pcaData.samples.map((s) => (colorBy === 'batch' ? s.batch : s.condition) ?? 'Unknown'),
+    ).size;
+    return `${xAxis} captures ${pcVar.toFixed(1)}% of the variance. Points are coloured across ${nGroups} ${colorBy} group${nGroups === 1 ? '' : 's'}; tighter halos mean a more coherent group.`;
+  }, [pcaData, xAxis, colorBy, availablePCs]);
 
   if (!pcaData) {
     return (
@@ -191,8 +235,21 @@ export default function PCAResults({ pcaData, datasetId }: PCAResultsProps) {
         )}
       </div>
 
+      {/* Plain-language read */}
+      {read && (
+        <div
+          className="flex items-start gap-2.5 rounded-xl border p-3.5"
+          style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}
+        >
+          <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+          <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+            {read}
+          </p>
+        </div>
+      )}
+
       {/* Variance explained bar */}
-      <div className="rounded-lg p-3" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+      <div className="rounded-xl p-3.5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Variance explained per component</p>
         <div className="flex flex-wrap gap-2">
           {pcaData.pc_labels.map((pc, i) => (

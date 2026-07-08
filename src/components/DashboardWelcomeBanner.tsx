@@ -60,7 +60,7 @@ export default function DashboardWelcomeBanner({
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl px-6 py-5 mb-6 animate-fade-up"
+      className="relative overflow-hidden rounded-[18px] px-6 py-5 mb-6 animate-fade-up"
       style={{
         background:
           'linear-gradient(135deg, var(--sl-teal-light) 0%, color-mix(in srgb, var(--sl-purple) 8%, var(--surface)) 100%)',
