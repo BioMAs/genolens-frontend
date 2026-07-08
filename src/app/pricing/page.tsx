@@ -120,6 +120,8 @@ export default function PricingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [billing, setBilling] = useState<BillingCycle>('monthly');
+  const [submitting, setSubmitting] = useState<PlanKey | null>(null);
+  const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   // Fetch authenticated user profile (for the current-plan badge + email)
   useEffect(() => {
@@ -145,27 +147,28 @@ export default function PricingPage() {
   const isLoggedIn = !!profile;
   const currentPlan = (profile?.subscription_plan as string | undefined)?.toUpperCase() as PlanKey | undefined;
 
-  // Plan changes are handled as a request (prefilled email), like module access.
+  // Plan changes are handled as a request: notify the team by email, then confirm.
+  const submitRequest = async (plan: PlanConfig, details: string) => {
+    setNotice(null);
+    setSubmitting(plan.key);
+    try {
+      await api.post('/users/requests', { type: 'plan', item: plan.displayName, details });
+      setNotice({ kind: 'success', text: "Request sent — we'll get back to you soon." });
+    } catch {
+      setNotice({ kind: 'error', text: `Couldn't send your request. Please email ${SALES_EMAIL}.` });
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
   const requestPlan = (plan: PlanConfig) => {
     const cycle = billing === 'annual' ? 'annual' : 'monthly';
     const price = billing === 'annual' ? plan.annualPrice : plan.monthlyPrice;
     const period = billing === 'annual' ? '/ year' : plan.priceNote;
-    const who = profile?.email ? ` (${profile.email})` : '';
-    const subject = encodeURIComponent(`Plan request — ${plan.displayName}`);
-    const body = encodeURIComponent(
-      `Hello,\n\nI would like to move to the ${plan.displayName} plan (${price} ${period}, ${cycle} billing) for my GenoLens account${who}.\n\nThank you.`,
-    );
-    window.location.href = `mailto:${SALES_EMAIL}?subject=${subject}&body=${body}`;
+    submitRequest(plan, `${price} ${period}, ${cycle} billing`);
   };
 
-  const contactSales = (plan: PlanConfig) => {
-    const who = profile?.email ? ` (${profile.email})` : '';
-    const subject = encodeURIComponent(`GenoLens ${plan.displayName} enquiry`);
-    const body = encodeURIComponent(
-      `Hello,\n\nI would like to discuss the ${plan.displayName} plan for my organisation${who}.\n\nThank you.`,
-    );
-    window.location.href = `mailto:${SALES_EMAIL}?subject=${subject}&body=${body}`;
-  };
+  const contactSales = (plan: PlanConfig) => submitRequest(plan, 'Enterprise enquiry — custom terms');
 
   return (
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
@@ -200,10 +203,31 @@ export default function PricingPage() {
         </span>
       </div>
 
+      {/* Notice banner */}
+      {notice && (
+        <div className="mx-auto max-w-3xl mb-8">
+          <div
+            className="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+            style={
+              notice.kind === 'success'
+                ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)', color: 'var(--sl-teal)' }
+                : { background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }
+            }
+          >
+            {notice.kind === 'success' ? <Check className="mt-0.5 h-4 w-4 shrink-0" /> : <X className="mt-0.5 h-4 w-4 shrink-0" />}
+            <span className="flex-1" style={{ color: 'var(--text-primary)' }}>{notice.text}</span>
+            <button onClick={() => setNotice(null)} className="shrink-0 opacity-70 hover:opacity-100" aria-label="Dismiss">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Plan cards */}
       <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {PLANS.map((plan) => {
           const isCurrent = isLoggedIn && currentPlan === plan.key;
+          const isSubmitting = submitting === plan.key;
 
           const displayPrice = plan.isEnterprise ? plan.monthlyPrice : billing === 'annual' ? plan.annualPrice : plan.monthlyPrice;
           const displayPriceNote = plan.isEnterprise ? plan.priceNote : billing === 'annual' ? '/ year' : plan.priceNote;
@@ -263,18 +287,18 @@ export default function PricingPage() {
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </Button>
                   ) : plan.isEnterprise ? (
-                    <Button variant="outline" size="lg" className="w-full" onClick={() => contactSales(plan)}>
-                      {plan.ctaLabel}
+                    <Button variant="outline" size="lg" className="w-full" disabled={isSubmitting} onClick={() => contactSales(plan)}>
+                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : plan.ctaLabel}
                     </Button>
                   ) : (
                     <Button
                       variant={plan.highlight ? 'teal' : isCurrent ? 'secondary' : 'outline'}
                       size="lg"
                       className="w-full"
-                      disabled={isCurrent}
+                      disabled={isCurrent || isSubmitting}
                       onClick={() => requestPlan(plan)}
                     >
-                      {isCurrent ? 'Current plan' : plan.ctaLabel}
+                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : isCurrent ? 'Current plan' : plan.ctaLabel}
                     </Button>
                   )}
                 </CardFooter>

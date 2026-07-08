@@ -117,11 +117,13 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
           ) : onRequestAccess ? (
             <button
               type="button"
+              disabled={busy}
               onClick={() => onRequestAccess(id)}
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors"
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-60"
               style={{ borderColor: `color-mix(in oklab, ${color} 35%, var(--surface))`, color }}
             >
-              <Lock className="h-3 w-3" /> Request access
+              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
+              {busy ? 'Sending…' : 'Request access'}
             </button>
           ) : (
             <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
