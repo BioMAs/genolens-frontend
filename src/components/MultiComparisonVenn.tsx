@@ -2,7 +2,6 @@
 
 import { FC, useMemo, useState } from 'react';
 import {
-  VennDiagram as VennDiagramImpl,
   UpSetJS as UpSetJSImpl,
   extractCombinations,
   ISetLike,
@@ -12,9 +11,12 @@ import {
 import api from '@/utils/api';
 import { exportToCSV, exportToJSON } from '@/lib/exportUtils';
 import { useIntersectionEnrichment, EnrichmentRow } from '@/hooks/useIntersectionEnrichment';
+import { Button } from '@/components/ui/button';
+import { ConditionPill } from '@/components/ui/condition-pill';
+import ProportionalVenn, { VennRegion } from '@/components/viz/ProportionalVenn';
 
 // @upsetjs ships generic component signatures that current @types/react flags as
-// invalid JSX elements (a type-only mismatch). Cast to plain FCs with the props
+// invalid JSX elements (a type-only mismatch). Cast to a plain FC with the props
 // we use; runtime behaviour is unaffected.
 interface DiagramProps {
   sets: ISets<GeneElem>;
@@ -25,14 +27,11 @@ interface DiagramProps {
   onClick: (s: ISetLike<GeneElem> | null) => void;
   theme?: 'light' | 'dark' | 'vega';
 }
-const VennDiagram = VennDiagramImpl as unknown as FC<DiagramProps>;
 const UpSetJS = UpSetJSImpl as unknown as FC<DiagramProps>;
 
+const CONDITION_PALETTE = ['var(--dc-indigo)', 'var(--dc-pink)', 'var(--dc-green)', 'var(--dc-amber)', 'var(--sl-violet)'];
+
 // One comparison, tagged with the DEG dataset that holds it.
-// `key` is a guaranteed-unique selection id (`datasetId::comparisonName`) — two
-// distinct datasets may share a comparison name, so selection must key on this,
-// not on `label`. `label` is the (also unique) human-readable name shown in the
-// UI and used as the Venn set name by the backend.
 export interface ComparisonRef {
   key: string;
   datasetId: string;
@@ -43,8 +42,8 @@ export interface ComparisonRef {
 
 interface MultiComparisonVennProps {
   projectId: string;
-  pathDatasetId: string; // Any dataset id in the project; used for the endpoint URL + access check
-  comparisons: ComparisonRef[]; // Comparisons aggregated from all DEG datasets
+  pathDatasetId: string;
+  comparisons: ComparisonRef[];
 }
 
 interface ApiErrorShape {
@@ -56,10 +55,15 @@ interface VennResponse {
   set_genes: Record<string, string[]>;
 }
 
-// One element per gene, tagged with the comparison labels it belongs to.
 interface GeneElem {
   name: string;
   sets: string[];
+}
+
+/** Unified selection shape, driven by both the proportional Venn and UpSet. */
+interface Selection {
+  name: string;
+  genes: string[];
 }
 
 export default function MultiComparisonVenn({ pathDatasetId, comparisons: availableComparisons }: MultiComparisonVennProps) {
@@ -67,14 +71,14 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
   const [vennData, setVennData] = useState<VennResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selection, setSelection] = useState<ISetLike<GeneElem> | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
   const [category, setCategory] = useState<string>('ALL');
 
   const enrichment = useIntersectionEnrichment(pathDatasetId);
 
   const handleComparisonToggle = (compKey: string) => {
-    setSelectedComparisons(prev => {
-      if (prev.includes(compKey)) return prev.filter(c => c !== compKey);
+    setSelectedComparisons((prev) => {
+      if (prev.includes(compKey)) return prev.filter((c) => c !== compKey);
       if (prev.length >= 5) {
         setError('Maximum 5 comparisons allowed');
         return prev;
@@ -114,9 +118,11 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
     }
   };
 
-  // Build @upsetjs sets/combinations from the per-set gene lists.
-  const { sets, combinations, setCount } = useMemo(() => {
-    if (!vennData?.set_genes) return { sets: [], combinations: [], setCount: 0 };
+  const setCount = vennData ? Object.keys(vennData.set_genes).length : 0;
+
+  // @upsetjs sets/combinations — only needed for the 4–5 set UpSet fallback.
+  const { sets, combinations } = useMemo(() => {
+    if (!vennData?.set_genes) return { sets: [], combinations: [] };
     const membership = new Map<string, string[]>();
     for (const [label, genes] of Object.entries(vennData.set_genes)) {
       for (const g of genes) {
@@ -126,20 +132,21 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
       }
     }
     const elements: GeneElem[] = Array.from(membership.entries()).map(([name, s]) => ({ name, sets: s }));
-    const extracted = extractCombinations<GeneElem>(elements, (e) => e.sets, {
-      type: 'distinctIntersection',
-    });
-    return {
-      sets: extracted.sets,
-      combinations: extracted.combinations,
-      setCount: Object.keys(vennData.set_genes).length,
-    };
+    const extracted = extractCombinations<GeneElem>(elements, (e) => e.sets, { type: 'distinctIntersection' });
+    return { sets: extracted.sets, combinations: extracted.combinations };
   }, [vennData]);
 
-  const selectedGenes: string[] = useMemo(
-    () => (selection ? Array.from(selection.elems).map((e) => e.name).sort() : []),
-    [selection]
-  );
+  // Genes shared by ALL selected comparisons — the "core".
+  const sharedByAll = useMemo(() => {
+    if (!vennData?.set_genes) return [] as string[];
+    const lists = Object.values(vennData.set_genes);
+    if (!lists.length) return [];
+    const [first, ...rest] = lists;
+    const others = rest.map((l) => new Set(l));
+    return first.filter((g) => others.every((s) => s.has(g)));
+  }, [vennData]);
+
+  const selectedGenes = selection?.genes ?? [];
 
   const categories = useMemo(() => {
     const rows = enrichment.result || [];
@@ -153,7 +160,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
   const maxNegLog = useMemo(
     () => Math.max(1, ...filteredEnrichment.slice(0, 15).map((r) => (r.padj ? -Math.log10(r.padj) : 0))),
-    [filteredEnrichment]
+    [filteredEnrichment],
   );
 
   const exportGenes = (fmt: 'csv' | 'json') => {
@@ -191,212 +198,280 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
     ]);
   };
 
-  const isIntersection = !!selection && selection.type !== 'set';
   const enrichRunning = enrichment.status === 'PENDING' || enrichment.status === 'RUNNING';
+  const selectFromUpset = (s: ISetLike<GeneElem> | null) =>
+    setSelection(s ? { name: s.name, genes: Array.from(s.elems).map((e) => e.name) } : null);
+  const selectFromVenn = (r: VennRegion) => setSelection(r);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Multi-Comparison Analysis</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Compare 2–5 comparisons, click an intersection to inspect its genes and run functional enrichment
+        <h2 className="page-title">Multi-comparison</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Compare 2–5 comparisons — click a region to inspect its genes and run functional enrichment.
         </p>
       </div>
 
-      {/* Comparison Selection */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Select Comparisons ({selectedComparisons.length}/5)
+      {/* Comparison selection */}
+      <div className="gl-card p-6">
+        <h3 className="mb-4 font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Select comparisons ({selectedComparisons.length}/5)
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {availableComparisons.map((comp) => (
-            <label
-              key={comp.key}
-              className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                selectedComparisons.includes(comp.key)
-                  ? 'border-brand-primary bg-brand-primary/5'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedComparisons.includes(comp.key)}
-                onChange={() => handleComparisonToggle(comp.key)}
-                className="h-4 w-4 shrink-0 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
-              />
-              <div className="ml-3 flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 break-words" title={comp.label}>{comp.label}</div>
-                <div className="text-xs text-gray-500">{comp.degCount} DEGs</div>
-              </div>
-            </label>
-          ))}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {availableComparisons.map((comp) => {
+            const active = selectedComparisons.includes(comp.key);
+            return (
+              <label
+                key={comp.key}
+                className="flex cursor-pointer items-center rounded-xl border p-3.5 transition-all"
+                style={{
+                  borderColor: active ? 'var(--sl-teal-muted)' : 'var(--border)',
+                  background: active ? 'var(--sl-teal-light)' : 'var(--surface)',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => handleComparisonToggle(comp.key)}
+                  className="h-4 w-4 shrink-0 accent-[var(--sl-teal)]"
+                />
+                <div className="ml-3 min-w-0 flex-1">
+                  <div className="break-words text-sm font-medium" style={{ color: 'var(--text-primary)' }} title={comp.label}>
+                    {comp.label}
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {comp.degCount} DEGs
+                  </div>
+                </div>
+              </label>
+            );
+          })}
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-800">{error}</p>
+          <div
+            className="mt-4 rounded-lg border p-3 text-sm"
+            style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
+          >
+            {error}
           </div>
         )}
 
         <div className="mt-4 flex gap-3">
-          <button
-            onClick={fetchVennData}
-            disabled={selectedComparisons.length < 2 || loading}
-            className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {loading ? 'Analyzing…' : 'Generate Analysis'}
-          </button>
+          <Button onClick={fetchVennData} disabled={selectedComparisons.length < 2 || loading}>
+            {loading ? 'Analyzing…' : 'Generate analysis'}
+          </Button>
           {selectedComparisons.length > 0 && (
-            <button
-              onClick={() => { setSelectedComparisons([]); setVennData(null); setSelection(null); enrichment.reset(); }}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedComparisons([]);
+                setVennData(null);
+                setSelection(null);
+                enrichment.reset();
+              }}
             >
-              Clear Selection
-            </button>
+              Clear selection
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Diagram */}
-      {vennData && sets.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            {setCount <= 3 ? 'Venn Diagram' : 'UpSet Plot'}
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">Click a region to select that intersection.</p>
-          <div className="flex justify-center overflow-x-auto">
-            {setCount <= 3 ? (
-              <VennDiagram
-                sets={sets}
-                combinations={combinations}
-                width={620}
-                height={420}
-                selection={selection}
-                onClick={(s) => setSelection(s as ISetLike<GeneElem>)}
-                theme="light"
-              />
-            ) : (
-              <UpSetJS
-                sets={sets}
-                combinations={combinations}
-                width={760}
-                height={460}
-                selection={selection}
-                onClick={(s) => setSelection(s as ISetLike<GeneElem>)}
-                theme="light"
-              />
-            )}
+      {/* Diagram + verdict */}
+      {vennData && (setCount <= 3 ? Object.keys(vennData.set_genes).length > 0 : sets.length > 0) && (
+        <div className="gl-card p-7">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.35fr_1fr]">
+            <div className="flex justify-center overflow-x-auto">
+              {setCount <= 3 ? (
+                <ProportionalVenn
+                  setGenes={vennData.set_genes}
+                  selectedName={selection?.name}
+                  onSelect={selectFromVenn}
+                />
+              ) : (
+                <UpSetJS
+                  sets={sets}
+                  combinations={combinations}
+                  width={760}
+                  height={460}
+                  selection={null}
+                  onClick={selectFromUpset}
+                  theme="light"
+                />
+              )}
+            </div>
+
+            {/* Verdict / shared core */}
+            <div>
+              <div className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.6px]" style={{ color: 'var(--sl-teal)' }}>
+                The verdict
+              </div>
+              <h3
+                className="font-display text-[22px] font-semibold leading-[1.3] tracking-[-0.4px]"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                A shared {sharedByAll.length}-gene core runs through all {setCount} comparisons
+              </h3>
+              <p className="mt-2.5 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
+                Click any region of the diagram to inspect its genes and run functional enrichment on that exact
+                intersection.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.keys(vennData.set_genes).map((label, i) => (
+                  <ConditionPill key={label} label={label} color={CONDITION_PALETTE[i % CONDITION_PALETTE.length]} size="sm" />
+                ))}
+              </div>
+              {sharedByAll.length > 0 && (
+                <button
+                  className="mt-4 text-[13px] font-semibold"
+                  style={{ color: 'var(--sl-purple)' }}
+                  onClick={() => selectFromVenn({ name: `Shared by all ${setCount}`, genes: sharedByAll })}
+                >
+                  Inspect the {sharedByAll.length}-gene core →
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* Selected intersection: genes + enrichment */}
       {selection && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <div className="gl-card space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{selection.name}</h3>
-              <p className="text-sm text-gray-500">{selectedGenes.length} genes in this selection</p>
+              <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {selection.name}
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {selectedGenes.length} genes in this selection
+              </p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => exportGenes('csv')} className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Export genes (CSV)</button>
-              <button onClick={() => exportGenes('json')} className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">JSON</button>
-              <button
-                onClick={() => enrichment.run(selectedGenes, selection.name)}
-                disabled={selectedGenes.length < 1 || enrichRunning}
-                className="px-3 py-1.5 text-sm bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
-              >
+              <Button variant="outline" size="sm" onClick={() => exportGenes('csv')}>
+                Export genes (CSV)
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportGenes('json')}>
+                JSON
+              </Button>
+              <Button size="sm" onClick={() => enrichment.run(selectedGenes, selection.name)} disabled={selectedGenes.length < 1 || enrichRunning}>
                 {enrichRunning ? 'Running enrichment…' : 'Run functional enrichment'}
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Gene chips */}
-          <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+          <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
             {selectedGenes.map((g) => (
-              <span key={g} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded">{g}</span>
+              <span
+                key={g}
+                className="rounded px-2 py-0.5 font-mono text-xs"
+                style={{ background: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}
+              >
+                {g}
+              </span>
             ))}
           </div>
 
-          {/* Enrichment results */}
           {enrichment.status === 'FAILED' && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+            <div
+              className="rounded-lg border p-3 text-sm"
+              style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
+            >
               {enrichment.error || 'Enrichment failed'}
             </div>
           )}
 
           {enrichment.status === 'DONE' && (
-            <div className="border-t border-gray-100 pt-5">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <h4 className="text-md font-semibold text-gray-900">
-                  Functional enrichment {isIntersection ? '' : ''}({(enrichment.result || []).length} terms)
+            <div className="border-t pt-5" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h4 className="font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Functional enrichment ({(enrichment.result || []).length} terms)
                 </h4>
                 <div className="flex gap-2">
-                  <button onClick={() => exportEnrichment('csv')} className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Export (CSV)</button>
-                  <button onClick={() => exportEnrichment('json')} className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">JSON</button>
+                  <Button variant="outline" size="sm" onClick={() => exportEnrichment('csv')}>
+                    Export (CSV)
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportEnrichment('json')}>
+                    JSON
+                  </Button>
                 </div>
               </div>
 
               {(enrichment.result || []).length === 0 ? (
-                <p className="text-sm text-gray-500">No enriched terms for this gene set.</p>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  No enriched terms for this gene set.
+                </p>
               ) : (
                 <>
-                  {/* Category filter */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {['ALL', ...categories].map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setCategory(c)}
-                        className={`px-2.5 py-1 text-xs rounded-full border ${
-                          category === c
-                            ? 'bg-brand-primary text-white border-brand-primary'
-                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {['ALL', ...categories].map((c) => {
+                      const activeCat = category === c;
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => setCategory(c)}
+                          className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                          style={
+                            activeCat
+                              ? { background: 'var(--sl-purple)', color: '#fff', borderColor: 'var(--sl-purple)' }
+                              : { background: 'var(--surface)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }
+                          }
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Top terms bar (−log10 FDR) */}
-                  <div className="space-y-1 mb-5">
+                  <div className="mb-5 space-y-1">
                     {filteredEnrichment.slice(0, 15).map((r) => {
                       const v = r.padj ? -Math.log10(r.padj) : 0;
                       return (
                         <div key={`${r.category}-${r.pathway_id}`} className="flex items-center gap-2">
-                          <div className="w-64 truncate text-xs text-gray-700" title={r.pathway_name}>{r.pathway_name}</div>
-                          <div className="flex-1 bg-gray-100 rounded h-3">
-                            <div className="bg-indigo-500 h-3 rounded" style={{ width: `${(v / maxNegLog) * 100}%` }} />
+                          <div className="w-64 truncate text-xs" style={{ color: 'var(--text-secondary)' }} title={r.pathway_name}>
+                            {r.pathway_name}
                           </div>
-                          <div className="w-16 text-right text-xs text-gray-500">{v.toFixed(2)}</div>
+                          <div className="h-3 flex-1 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
+                            <div className="h-3 rounded" style={{ width: `${(v / maxNegLog) * 100}%`, background: 'var(--sl-purple)' }} />
+                          </div>
+                          <div className="w-16 text-right text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {v.toFixed(2)}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Terms table */}
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                      <thead className="bg-gray-50">
+                    <table className="data-table min-w-full">
+                      <thead>
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Term</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">FDR</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Genes</th>
+                          <th>Category</th>
+                          <th>Term</th>
+                          <th>FDR</th>
+                          <th>Genes</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-100">
+                      <tbody>
                         {filteredEnrichment.slice(0, 200).map((r) => (
-                          <tr key={`${r.category}-${r.pathway_id}`} className="hover:bg-gray-50 align-top">
-                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{r.category}</td>
-                            <td className="px-3 py-2 text-gray-900">
-                              <div className="font-medium">{r.pathway_name}</div>
-                              <div className="text-xs text-gray-400">{r.pathway_id}</div>
+                          <tr key={`${r.category}-${r.pathway_id}`}>
+                            <td className="whitespace-nowrap text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {r.category}
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-gray-600">{r.padj != null ? r.padj.toExponential(2) : '—'}</td>
-                            <td className="px-3 py-2 text-gray-600">
-                              {r.gene_count} <span className="text-xs text-gray-400">({r.gene_ratio})</span>
+                            <td>
+                              <div className="font-medium">{r.pathway_name}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {r.pathway_id}
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                              {r.padj != null ? r.padj.toExponential(2) : '—'}
+                            </td>
+                            <td style={{ color: 'var(--text-secondary)' }}>
+                              {r.gene_count} <span className="text-xs" style={{ color: 'var(--text-muted)' }}>({r.gene_ratio})</span>
                             </td>
                           </tr>
                         ))}
