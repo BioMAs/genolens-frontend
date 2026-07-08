@@ -52,12 +52,8 @@ export default function AIChartAssistant({
     fetchProfile();
   }, []);
 
-  // Auto-interpret on first open
-  useEffect(() => {
-    if (open && !interpretation && !isInterpreting) {
-      interpret();
-    }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  // No auto-interpretation: generation must be triggered explicitly by the user
+  // (button below) so opening the panel never launches an AI call on its own.
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -155,6 +151,20 @@ export default function AIChartAssistant({
 
           {/* Messages */}
           <div className={`${panelClassName ?? 'max-h-72'} overflow-y-auto p-4 flex flex-col gap-3`}>
+            {!interpretation && !isInterpreting && (
+              <div className="flex flex-col items-center gap-2 py-4 text-center">
+                <p className="text-xs text-gray-500">Get an AI reading of this chart.</p>
+                <button
+                  onClick={() => interpret()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-md hover:from-purple-600 hover:to-blue-600 shadow-sm transition-all"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Interpret this chart
+                </button>
+              </div>
+            )}
             {isInterpreting && !interpretation && (
               <div className="flex gap-2">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px]">
