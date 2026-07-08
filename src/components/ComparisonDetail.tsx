@@ -660,7 +660,9 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               <Sparkles className="h-3.5 w-3.5" />
               AI Assistant
             </button>
-            <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            {reportCustomizationUnlocked && (
+              <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            )}
             <button
               onClick={handleReprocessDEG}
               disabled={reprocessing}
@@ -778,7 +780,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       : { color: 'var(--text-secondary)' }
                   }
                 >
-                  Customization
+                  Report
                 </button>
               )}
               <button
