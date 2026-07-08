@@ -7,6 +7,7 @@ import DashboardWelcomeBanner from './DashboardWelcomeBanner';
 import DashboardKpiBar from './DashboardKpiBar';
 import DashboardSubscriptionCard from './DashboardSubscriptionCard';
 import RecentProjectsSection from './RecentProjectsSection';
+import JumpBackInCard from './dashboard/JumpBackInCard';
 import { Plus } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useProjects } from '@/hooks/useProjects';
@@ -57,6 +58,13 @@ export default function Dashboard() {
         aiInterpretationsUsed={aiInterpretationsUsed}
         resumeHref={recentProject ? `/projects/${recentProject.id}` : undefined}
       />
+
+      {/* Jump back in — last result with its skin verdict (redesign 2a) */}
+      {recentProject && (
+        <div className="mb-6">
+          <JumpBackInCard projectId={recentProject.id} />
+        </div>
+      )}
 
       {/* Global KPI bar */}
       <DashboardKpiBar stats={aggregated} isLoading={statsLoading && projects.length === 0} />
