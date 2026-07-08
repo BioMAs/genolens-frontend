@@ -91,7 +91,7 @@ function TabsTrigger({ value, children, className = '', disabled = false }: Tabs
         className,
       ].join(' ')}
       style={{
-        color: isActive ? 'var(--sl-teal-dark)' : 'var(--text-secondary)',
+        color: isActive ? 'var(--sl-teal)' : 'var(--text-secondary)',
       }}
     >
       {children}
@@ -100,7 +100,7 @@ function TabsTrigger({ value, children, className = '', disabled = false }: Tabs
       <span
         className="absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-200"
         style={{
-          height: '2px',
+          height: '2.5px',
           background: isActive ? 'var(--sl-teal)' : 'transparent',
         }}
       />

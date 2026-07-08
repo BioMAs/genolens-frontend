@@ -127,7 +127,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
       <div
         className={
           isTopBar
-            ? "flex items-center gap-2 rounded-[8px] border px-2.5 py-1.5"
+            ? "flex w-full items-center gap-2 rounded-[11px] border px-3.5 py-2"
             : "relative"
         }
         style={

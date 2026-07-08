@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans, Geist_Mono } from "next/font/google";
+import { Poppins, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -9,17 +9,20 @@ import AppFrame from "@/components/AppFrame";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 
-const syne = Syne({
+// "Skin Stack" redesign: Poppins is the display/heading font, Geist the body font.
+// The CSS variable slots keep their historical names (--font-syne = display,
+// --font-dm-sans = body) so the many existing var(--font-*) references keep working.
+const displayFont = Poppins({
   variable: "--font-syne",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const bodyFont = Geist({
   variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -52,7 +55,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${syne.variable} ${dmSans.variable} ${geistMono.variable} antialiased`}
+        className={`${displayFont.variable} ${bodyFont.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
           <QueryProvider>

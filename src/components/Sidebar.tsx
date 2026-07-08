@@ -167,7 +167,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
 
         <Link
           href="/profile"
-          className={`mx-2.5 mb-1.5 flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 transition-colors ${
+          className={`mx-2.5 mb-1.5 flex items-center gap-2.5 rounded-[11px] px-2.5 py-2 transition-colors ${
             isActive('/profile') ? 'bg-[var(--surface-raised)]' : 'hover:bg-[var(--hover-overlay)]'
           }`}
         >

@@ -8,7 +8,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className = '', style, ...props }, ref) => (
     <div
       ref={ref}
-      className={`rounded-xl border shadow-sm transition-colors ${className}`}
+      className={`rounded-[18px] border shadow-sm transition-colors ${className}`}
       style={{
         background: 'var(--surface)',
         borderColor: 'var(--border)',
