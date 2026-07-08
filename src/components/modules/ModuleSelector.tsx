@@ -26,6 +26,11 @@ interface ModuleMeta {
   capabilities: string[];
 }
 
+export const MODULE_LABELS: Record<ModuleId, string> = {
+  claim: 'Skin claims',
+  reporting: 'Reporting',
+};
+
 const MODULES: ModuleMeta[] = [
   {
     id: 'claim',
@@ -60,14 +65,17 @@ interface Props {
   onToggle?: (id: ModuleId, enabled: boolean) => void;
   readOnly?: boolean;
   busy?: ModuleId | null;
+  /** Read-only mode: called when the user asks for access to a locked module. */
+  onRequestAccess?: (id: ModuleId) => void;
 }
 
-function ModuleCard({ meta, active, readOnly, busy, onToggle }: {
+function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }: {
   meta: ModuleMeta;
   active: boolean;
   readOnly: boolean;
   busy: boolean;
   onToggle?: (id: ModuleId, enabled: boolean) => void;
+  onRequestAccess?: (id: ModuleId) => void;
 }) {
   const { id, name, tagline, icon: Icon, color, capabilities } = meta;
   return (
@@ -99,17 +107,27 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle }: {
 
         {/* Toggle / status */}
         {readOnly ? (
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
-            style={
-              active
-                ? { background: `color-mix(in oklab, ${color} 14%, var(--surface))`, color }
-                : { background: 'var(--surface-secondary)', color: 'var(--text-muted)' }
-            }
-          >
-            {active ? <Check className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-            {active ? 'Active' : 'Locked'}
-          </span>
+          active ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              style={{ background: `color-mix(in oklab, ${color} 14%, var(--surface))`, color }}
+            >
+              <Check className="h-3 w-3" /> Active
+            </span>
+          ) : onRequestAccess ? (
+            <button
+              type="button"
+              onClick={() => onRequestAccess(id)}
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors"
+              style={{ borderColor: `color-mix(in oklab, ${color} 35%, var(--surface))`, color }}
+            >
+              <Lock className="h-3 w-3" /> Request access
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
+              <Lock className="h-3 w-3" /> Locked
+            </span>
+          )
         ) : (
           <button
             type="button"
@@ -152,7 +170,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle }: {
   );
 }
 
-export default function ModuleSelector({ value, onToggle, readOnly = false, busy = null }: Props) {
+export default function ModuleSelector({ value, onToggle, readOnly = false, busy = null, onRequestAccess }: Props) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {MODULES.map((m) => (
@@ -163,6 +181,7 @@ export default function ModuleSelector({ value, onToggle, readOnly = false, busy
           readOnly={readOnly}
           busy={busy === m.id}
           onToggle={onToggle}
+          onRequestAccess={onRequestAccess}
         />
       ))}
     </div>
