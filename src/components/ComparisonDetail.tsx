@@ -22,6 +22,7 @@ import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
+import { useUserProfile } from '@/hooks/useCosmetics';
 import { formatDate } from '@/utils/formatters';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Chip } from '@/components/ui/chip';
@@ -56,6 +57,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const { openChatWith } = useChatMode();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+  // Add-on module gating: show the Skin-effect / Customization tabs only when the
+  // module is unlocked (admins keep full access by role; otherwise the explicit
+  // per-user flag). Disabled module → tab hidden entirely (no teaser).
+  const { data: moduleProfile } = useUserProfile();
+  const isModuleAdmin =
+    moduleProfile?.role === 'ADMIN' || moduleProfile?.role === 'SCILICIUM_ADMIN';
+  const cosmeticsUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_cosmetics_module === true);
+  const reportCustomizationUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_report_customization === true);
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -743,28 +755,32 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               >
                 Enrichment
               </button>
-              <button
-                onClick={() => setActiveTab('cosmetics')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'cosmetics'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Skin effect
-              </button>
-              <button
-                onClick={() => setActiveTab('report')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'report'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Customization
-              </button>
+              {cosmeticsUnlocked && (
+                <button
+                  onClick={() => setActiveTab('cosmetics')}
+                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                  style={
+                    activeTab === 'cosmetics'
+                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                      : { color: 'var(--text-secondary)' }
+                  }
+                >
+                  Skin effect
+                </button>
+              )}
+              {reportCustomizationUnlocked && (
+                <button
+                  onClick={() => setActiveTab('report')}
+                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                  style={
+                    activeTab === 'report'
+                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                      : { color: 'var(--text-secondary)' }
+                  }
+                >
+                  Customization
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('clustering')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
@@ -945,16 +961,16 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* Cosmetics (Claims) Tab — always visible; locked teaser when not unlocked */}
-            {activeTab === 'cosmetics' && (
+            {/* Skin effect (Cosmetics) Tab — only when the module is unlocked */}
+            {activeTab === 'cosmetics' && cosmeticsUnlocked && (
               <CosmeticsTab
                 datasetId={degDataset?.id}
                 comparisonName={actualComparisonName}
               />
             )}
 
-            {/* Report customization Tab — always visible; locked overlay when not unlocked */}
-            {activeTab === 'report' && (
+            {/* Report customization Tab — only when the module is unlocked */}
+            {activeTab === 'report' && reportCustomizationUnlocked && (
               <ReportCustomizationPanel />
             )}
 
