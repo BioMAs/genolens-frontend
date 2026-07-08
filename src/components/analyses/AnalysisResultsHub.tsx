@@ -217,15 +217,19 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`shrink-0 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className="shrink-0 whitespace-nowrap border-b-[2.5px] px-5 py-3.5 text-sm font-medium transition-colors"
+                style={
                   activeTab === tab
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
+                    ? { borderColor: 'var(--sl-teal)', color: 'var(--sl-teal)' }
+                    : { borderColor: 'transparent', color: 'var(--text-secondary)' }
+                }
               >
                 {TAB_LABELS[tab]}
                 {tab === 'comparisons' && analysisComparisons.length > 0 && (
-                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
+                  <span
+                    className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs"
+                    style={{ background: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}
+                  >
                     {analysisComparisons.length}
                   </span>
                 )}

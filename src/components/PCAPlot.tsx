@@ -140,28 +140,33 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       return map;
   }, [uniqueCategories, palette]);
 
-  if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating PCA...</div>;
-  if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
+  if (isLoading) return <div className="flex h-64 items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>Calculating PCA…</div>;
+  if (error) return <div className="flex h-64 items-center justify-center p-4 text-center text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</div>;
   if (!pcaData) return null;
 
-  const xLabel = `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)`;
-  const yLabel = `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)`;
+  const pc1 = (pcaData.explained_variance[0] * 100).toFixed(1);
+  const pc2 = (pcaData.explained_variance[1] * 100).toFixed(1);
+  const xLabel = `PC1 (${pc1}%)`;
+  const yLabel = `PC2 (${pc2}%)`;
+  const nSamples = pcaData.data?.length ?? 0;
+  const read = `PC1 captures ${pc1}% and PC2 ${pc2}% of the variance across ${nSamples} samples${selectedColorColumn ? `, coloured by ${selectedColorColumn}` : ''}.`;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Sample PCA</h3>
-        <div className="flex items-center gap-2">
+    <div className="gl-card p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Sample PCA</h3>
+        <div className="flex flex-wrap items-center gap-2">
           {metadataColumns.length > 0 && (
-              <select
-                  value={selectedColorColumn}
-                  onChange={(e) => setSelectedColorColumn(e.target.value)}
-                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
-              >
-                  {metadataColumns.map(col => (
-                      <option key={col} value={col}>Color by: {col}</option>
-                  ))}
-              </select>
+            <select
+              value={selectedColorColumn}
+              onChange={(e) => setSelectedColorColumn(e.target.value)}
+              className="rounded-lg border p-1.5 text-sm"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+            >
+              {metadataColumns.map((col) => (
+                <option key={col} value={col}>Color by: {col}</option>
+              ))}
+            </select>
           )}
           <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
           <AIChartAssistant
@@ -171,7 +176,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
             context={{
               variance_pc1: pcaData ? +(pcaData.explained_variance[0] * 100).toFixed(1) : 0,
               variance_pc2: pcaData ? +(pcaData.explained_variance[1] * 100).toFixed(1) : 0,
-              n_samples: pcaData?.data?.length ?? 0,
+              n_samples: nSamples,
               n_genes: 0,
               sample_groups: Array.from(new Set((plotData as PCADataPoint[]).map((d) => String(d.category ?? 'Unknown')))),
               group_separation: true,
@@ -181,66 +186,92 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         </div>
       </div>
 
-      <div>
-        <ResponsiveContainer width="100%" height={420}>
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-                type="number" 
-                dataKey="x" 
-                name="PC1" 
-                label={{ value: xLabel, position: 'bottom', offset: 0, fill: '#374151' }} 
-                tick={{ fill: '#374151' }}
-                stroke="#9ca3af"
-            />
-            <YAxis 
-                type="number" 
-                dataKey="y" 
-                name="PC2" 
-                label={{ value: yLabel, angle: -90, position: 'left', fill: '#374151' }} 
-                tick={{ fill: '#374151' }}
-                stroke="#9ca3af"
-            />
-            <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }} 
+      {/* Plain-language read */}
+      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+        <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_220px]">
+        {/* Scatter */}
+        <div className="min-w-0">
+          <ResponsiveContainer width="100%" height={440}>
+            <ScatterChart margin={{ top: 16, right: 16, bottom: 56, left: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis
+                type="number"
+                dataKey="x"
+                name="PC1"
+                label={{ value: xLabel, position: 'bottom', offset: 0, fill: 'var(--text-secondary)' }}
+                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                stroke="var(--border-strong)"
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                name="PC2"
+                label={{ value: yLabel, angle: -90, position: 'left', fill: 'var(--text-secondary)' }}
+                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                stroke="var(--border-strong)"
+              />
+              <Tooltip
+                cursor={{ strokeDasharray: '3 3' }}
                 content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const data = payload[0].payload;
-                return (
-                  <div className="bg-white p-2 border border-gray-200 shadow-sm rounded">
-                    <p className="font-medium text-gray-900">{data.sample}</p>
-                    {data.category && <p className="text-xs text-gray-500">{selectedColorColumn}: {data.category}</p>}
-                    <p className="text-sm text-gray-500">PC1: {data.x.toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">PC2: {data.y.toFixed(2)}</p>
-                  </div>
-                );
-              }
-              return null;
-            }} />
-            <Legend 
-              verticalAlign="bottom" 
-              align="center"
-              wrapperStyle={{ 
-                paddingTop: '20px',
-                color: '#374151'
-              }} 
-            />
-            {uniqueCategories.length > 0 ? (
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
+                        {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>PC1: {data.x.toFixed(2)}</p>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>PC2: {data.y.toFixed(2)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px', color: 'var(--text-secondary)' }} />
+              {uniqueCategories.length > 0 ? (
                 uniqueCategories.map((cat) => (
-                    <Scatter 
-                        key={cat as string} 
-                        name={cat as string} 
-                        data={(plotData as PCADataPoint[]).filter((d) => d.category === cat)} 
-                        fill={categoryColorMap[cat as string]}
-                        shape={(props: any) => <circle cx={props.cx} cy={props.cy} r={3} fill={props.fill} fillOpacity={0.85} />}
-                    />
+                  <Scatter
+                    key={cat as string}
+                    name={cat as string}
+                    data={(plotData as PCADataPoint[]).filter((d) => d.category === cat)}
+                    fill={categoryColorMap[cat as string]}
+                    shape={PcaDot}
+                  />
                 ))
-            ) : (
-                <Scatter name="Samples" data={pcaData.data} fill="#2A2E5B" shape={(props: any) => <circle cx={props.cx} cy={props.cy} r={3} fill={props.fill} fillOpacity={0.85} />} />
-            )}
-          </ScatterChart>
-        </ResponsiveContainer>
+              ) : (
+                <Scatter name="Samples" data={pcaData.data} fill="var(--dc-indigo)" shape={PcaDot} />
+              )}
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Variance rail */}
+        <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-muted)' }}>Variance explained</div>
+          <div className="flex flex-col gap-2.5">
+            {pcaData.explained_variance.slice(0, 6).map((v: number, i: number) => (
+              <div key={i}>
+                <div className="mb-1 flex justify-between text-[11.5px]">
+                  <span style={{ color: 'var(--text-secondary)' }}>PC{i + 1}</span>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{(v * 100).toFixed(1)}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
+                  <div className="h-full rounded" style={{ width: `${Math.min(100, v * 100 * 3)}%`, background: i < 2 ? 'var(--sl-teal)' : 'var(--sl-purple)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+/** Point renderer for the PCA scatter (typed to avoid `any`). */
+function PcaDot(props: { cx?: number; cy?: number; fill?: string }) {
+  return <circle cx={props.cx} cy={props.cy} r={5.5} fill={props.fill} fillOpacity={0.85} stroke="var(--surface)" strokeWidth={1} />;
 }
