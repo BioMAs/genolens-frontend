@@ -32,20 +32,19 @@ function pickComparison(comps: ComparisonSummary[]): ComparisonSummary | undefin
 
 export default function JumpBackInCard({ projectId }: { projectId: string }) {
   const { data: profile } = useUserProfile();
-  const unlocked =
-    !!profile &&
-    (profile.role === 'ADMIN' || profile.role === 'SCILICIUM_ADMIN' || profile.has_cosmetics_module === true);
+  // Skin read is shown ONLY when the skin/cosmetics module is active for the user.
+  const skinActive = profile?.has_cosmetics_module === true;
 
   const { data: summary } = useProjectSummary(projectId);
   const comp = pickComparison(summary?.comparisons ?? []);
 
-  const { data: cos } = useCosmeticsData(comp?.dataset_id, comp?.name, unlocked && !!comp);
+  const { data: cos } = useCosmeticsData(comp?.dataset_id, comp?.name, skinActive && !!comp);
 
   if (!comp) return null;
 
   const href = `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`;
   const zonesById = Object.fromEntries((cos?.skin_zones ?? []).map((z) => [z.slug, z]));
-  const hasSkin = unlocked && !!cos && cos.skin_zones.length > 0;
+  const hasSkin = skinActive && !!cos && cos.skin_zones.length > 0;
   const topClaims = [...(cos?.claims ?? [])].filter((c) => c.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
   const title = comp.name.replace(/_?vs_?/i, ' vs ');
 
@@ -92,10 +91,15 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 );
               })
             ) : (
-              <div className="flex items-center gap-4 text-xs font-medium">
-                <span style={{ color: 'var(--dc-up-dark)' }}>▲ {comp.deg_up} up</span>
-                <span style={{ color: 'var(--dc-down-dark)' }}>▼ {comp.deg_down} down</span>
-                <span style={{ color: 'var(--text-muted)' }}>{comp.deg_total} total DEGs</span>
+              <div>
+                <div className="mb-1.5 flex justify-between text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  <span>{comp.deg_total.toLocaleString()} DEGs</span>
+                  <span>{comp.deg_up} up · {comp.deg_down} down</span>
+                </div>
+                <div className="flex h-2 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
+                  <div style={{ width: `${comp.deg_total ? (comp.deg_up / comp.deg_total) * 100 : 50}%`, background: 'var(--dc-up)' }} />
+                  <div style={{ width: `${comp.deg_total ? (comp.deg_down / comp.deg_total) * 100 : 50}%`, background: 'var(--dc-down)' }} />
+                </div>
               </div>
             )}
           </div>
@@ -107,7 +111,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         {/* Middle — verdict + claim pills */}
         <div>
           <div className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
-            Verdict
+            {hasSkin ? 'Verdict' : 'Results'}
           </div>
           {hasSkin ? (
             <>
@@ -132,9 +136,25 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
               </div>
             </>
           ) : (
-            <div className="font-display text-[14.5px] font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
-              {comp.deg_total} differentially expressed genes
-            </div>
+            <>
+              <div className="font-display text-[14.5px] font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+                {comp.deg_total.toLocaleString()} differentially expressed genes
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
+                  {comp.deg_up} up
+                </span>
+                <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
+                  {comp.deg_down} down
+                </span>
+                <span
+                  className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+                  style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
+                >
+                  {comp.has_enrichment ? 'Pathway enrichment ready' : 'Enrichment not run'}
+                </span>
+              </div>
+            </>
           )}
         </div>
 

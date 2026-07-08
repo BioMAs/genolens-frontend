@@ -13,15 +13,17 @@ import PCAPlot from '@/components/PCAPlot';
 import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
 
-type Tab = 'preprocessing' | 'pca' | 'umap' | 'comparisons' | 'params';
-
-const TAB_LABELS: Record<Tab, string> = {
-  preprocessing: 'Preprocessing',
-  pca:           'PCA',
-  umap:          'UMAP',
-  comparisons:   'Comparisons',
-  params:        'Parameters',
-};
+function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 className="font-display text-[17px] font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+        {subtitle && <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
 
 interface Props {
   projectId: string;
@@ -42,7 +44,7 @@ function isQCReport(value: unknown): value is QCReport {
 
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('comparisons');
+  const [structureView, setStructureView] = useState<'pca' | 'umap'>('pca');
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
 
@@ -208,80 +210,73 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          {/* Tab bar */}
-          <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
-            {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className="shrink-0 whitespace-nowrap border-b-[2.5px] px-5 py-3.5 text-sm font-medium transition-colors"
-                style={
-                  activeTab === tab
-                    ? { borderColor: 'var(--sl-teal)', color: 'var(--sl-teal)' }
-                    : { borderColor: 'transparent', color: 'var(--text-secondary)' }
-                }
-              >
-                {TAB_LABELS[tab]}
-                {tab === 'comparisons' && analysisComparisons.length > 0 && (
-                  <span
-                    className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs"
-                    style={{ background: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}
+        {/* ── Comparisons (primary results) ── */}
+        <section>
+          <SectionHeader
+            title="Comparisons"
+            subtitle={`${analysisComparisons.length} differential-expression comparison${analysisComparisons.length !== 1 ? 's' : ''} in this analysis`}
+          />
+          <ComparisonGrid
+            projectId={projectId}
+            analysisId={analysisId}
+            comparisons={analysisComparisons}
+            matrixDatasetId={matrixDataset?.id ?? null}
+          />
+        </section>
+
+        {/* ── Sample structure (PCA / UMAP) ── */}
+        <section>
+          <SectionHeader
+            title="Sample structure"
+            subtitle="How samples relate to each other, computed from the normalized matrix"
+            right={
+              <div className="inline-flex rounded-lg border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+                {(['pca', 'umap'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setStructureView(v)}
+                    className="rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors"
+                    style={
+                      structureView === v
+                        ? { background: 'var(--sl-teal)', color: '#fff' }
+                        : { background: 'transparent', color: 'var(--text-secondary)' }
+                    }
                   >
-                    {analysisComparisons.length}
-                  </span>
-                )}
-              </button>
-            ))}
+                    {v}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          {vstDataset ? (
+            structureView === 'pca' ? (
+              <PCAPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+            ) : (
+              <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+            )
+          ) : (
+            <div className="gl-card p-16 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+              No normalized matrix available for {structureView.toUpperCase()}.
+            </div>
+          )}
+        </section>
+
+        {/* ── Quality control ── */}
+        <section>
+          <SectionHeader title="Quality control" subtitle="Preprocessing & filtering applied before analysis" />
+          <PreprocessingResults qcReport={qcReport} params={analysis.params} />
+        </section>
+
+        {/* ── Parameters (collapsible) ── */}
+        <details className="gl-card p-5">
+          <summary className="cursor-pointer font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Analysis parameters
+          </summary>
+          <div className="mt-4">
+            <AnalysisParams analysis={analysis} />
           </div>
-
-          {/* Tab content */}
-          <div className="p-6">
-            {/* ── Preprocessing ── */}
-            {activeTab === 'preprocessing' && (
-              <PreprocessingResults qcReport={qcReport} />
-            )}
-
-            {/* ── PCA (computed on demand from the VST matrix) ── */}
-            {activeTab === 'pca' && (
-              vstDataset ? (
-                <PCAPlot dataset={vstDataset} metadataDataset={samplesDataset} />
-              ) : (
-                <div className="text-center py-16 text-sm text-gray-500">
-                  No normalized matrix available for PCA.
-                </div>
-              )
-            )}
-
-            {/* ── UMAP (computed on demand from the VST matrix) ── */}
-            {activeTab === 'umap' && (
-              vstDataset ? (
-                <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
-              ) : (
-                <div className="text-center py-16 text-sm text-gray-500">
-                  No normalized matrix available for UMAP.
-                </div>
-              )
-            )}
-
-            {/* ── Comparisons ── */}
-            {activeTab === 'comparisons' && (
-              <ComparisonGrid
-                projectId={projectId}
-                analysisId={analysisId}
-                comparisons={analysisComparisons}
-                matrixDatasetId={matrixDataset?.id ?? null}
-              />
-            )}
-
-            {/* ── Parameters ── */}
-            {activeTab === 'params' && (
-              <AnalysisParams analysis={analysis} />
-            )}
-          </div>
-        </div>
+        </details>
 
       </div>
     </div>
@@ -332,7 +327,6 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Analysis parameters</h3>
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div
