@@ -752,7 +752,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                     : { color: 'var(--text-secondary)' }
                 }
               >
-                Claims
+                Skin effect
               </button>
               <button
                 onClick={() => setActiveTab('report')}
