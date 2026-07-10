@@ -2,6 +2,7 @@
 
 import { User } from '@supabase/supabase-js';
 import { useChatMode } from '@/contexts/ChatModeContext';
+import { TourProvider } from '@/contexts/TourContext';
 import AppShell from '@/components/AppShell';
 import ChatModeShell from '@/components/chat/ChatModeShell';
 import LicenseExpiredBanner from '@/components/LicenseExpiredBanner';
@@ -21,14 +22,16 @@ export default function AppFrame({
 }) {
   const { chatMode } = useChatMode();
 
-  if (chatMode) {
-    return <ChatModeShell />;
-  }
-
   return (
-    <AppShell user={user} userRole={userRole}>
-      <LicenseExpiredBanner />
-      {children}
-    </AppShell>
+    <TourProvider>
+      {chatMode ? (
+        <ChatModeShell />
+      ) : (
+        <AppShell user={user} userRole={userRole}>
+          <LicenseExpiredBanner />
+          {children}
+        </AppShell>
+      )}
+    </TourProvider>
   );
 }
