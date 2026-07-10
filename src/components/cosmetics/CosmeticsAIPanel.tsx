@@ -3,27 +3,8 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, ShieldCheck } from 'lucide-react';
 import { useCosmeticsInterpretation } from '@/hooks/useCosmetics';
+import AIMarkdown from '@/components/ui/AIMarkdown';
 import PanelInfo from './PanelInfo';
-
-/** Minimal markdown renderer: ## headings, **bold**, paragraphs. */
-function Markdown({ text }: { text: string }) {
-  const blocks = text.split(/\n{2,}/);
-  return (
-    <div className="space-y-3 text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-      {blocks.map((block, i) => {
-        if (block.startsWith('## ')) {
-          return (
-            <h4 key={i} className="text-sm font-bold mt-2" style={{ color: 'var(--sl-teal-dark, #0f766e)' }}>
-              {block.replace(/^##\s+/, '')}
-            </h4>
-          );
-        }
-        const html = block.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        return <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-      })}
-    </div>
-  );
-}
 
 interface Props {
   datasetId?: string;
@@ -104,7 +85,7 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
       )}
 
       {text ? (
-        <Markdown text={text} />
+        <AIMarkdown text={text} />
       ) : (
         !mutation.isPending && (
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>

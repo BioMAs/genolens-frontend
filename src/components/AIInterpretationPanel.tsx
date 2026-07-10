@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+    Sparkles,
+    MessageCircle,
+    Zap,
+    Send,
+    Loader2,
+    AlertTriangle,
+    Database,
+    CheckCircle2,
+    Check,
+} from 'lucide-react';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
+import AIMarkdown from '@/components/ui/AIMarkdown';
 
 interface AIInterpretationPanelProps {
     datasetId: string;
@@ -58,7 +70,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
     const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    
+
     // Chat Q&A states
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [userQuestion, setUserQuestion] = useState('');
@@ -98,7 +110,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 const response = await api.get(
                     `/datasets/${datasetId}/comparisons/${encodeURIComponent(comparisonName)}/conversations`
                 );
-                
+
                 if (response.data.conversations && response.data.conversations.length > 0) {
                     const conversations = response.data.conversations as ConversationItem[];
                     const loadedMessages: ChatMessage[] = conversations.map((conv) => [
@@ -113,14 +125,14 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             timestamp: new Date(conv.created_at)
                         }
                     ]).flat();
-                    
+
                     setChatMessages(loadedMessages);
                 }
             } catch (err) {
                 console.error('Failed to load conversation history:', err);
             }
         };
-        
+
         if (datasetId && comparisonName) {
             loadHistory();
         }
@@ -192,17 +204,17 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
 
     const askQuestion = async () => {
         if (!userQuestion.trim()) return;
-        
+
         const newUserMessage: ChatMessage = {
             role: 'user',
             content: userQuestion,
             timestamp: new Date()
         };
-        
+
         setChatMessages(prev => [...prev, newUserMessage]);
         setUserQuestion('');
         setChatLoading(true);
-        
+
         try {
             const response = await api.post(
                 `/datasets/${datasetId}/comparisons/${encodeURIComponent(comparisonName)}/ask`,
@@ -211,20 +223,20 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     context: data?.interpretation || ''
                 }
             );
-            
+
             const assistantMessage: ChatMessage = {
                 role: 'assistant',
                 content: response.data.answer,
                 timestamp: new Date()
             };
-            
+
             setChatMessages(prev => [...prev, assistantMessage]);
         } catch (err: unknown) {
             console.error('AI chat error:', err);
             const status = (err as ApiError).response?.status;
-            
+
             let errorMsg = "Sorry, I couldn't answer your question. The AI service may be starting up — please try again.";
-            
+
             if (status === 403) {
                 errorMsg = "AI interpretation requires a Pro or Advanced plan. Visit /pricing to upgrade.";
             } else if (status === 402) {
@@ -250,69 +262,64 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
 
     // Show upgrade notice for BASIC users
     if (userProfile.subscription_plan === 'BASIC' && userProfile.role !== 'ADMIN') {
+        const perks = [
+            'Automated biological interpretation of DEG results',
+            'Interactive Q&A about your analysis results',
+            'Pathway enrichment insights and gene function summaries',
+            'Powered by Gemma 4, a state-of-the-art open model',
+        ];
         return (
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+            <div className="gl-card">
                 <div className="flex items-start gap-4 p-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
+                    <div
+                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
+                        style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
+                    >
+                        <Sparkles className="h-6 w-6" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="mb-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                             AI Biological Interpretation
                         </h3>
-                        <p className="text-sm text-gray-700 mb-4">
-                            Get instant AI-powered insights and biological interpretation of your differential expression results. 
+                        <p className="mb-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Get instant AI-powered insights and biological interpretation of your differential expression results.
                             This feature uses advanced language models to analyze your data and provide meaningful scientific explanations.
                         </p>
-                        
-                        <div className="bg-white border border-purple-200 rounded-lg p-4 mb-4">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+
+                        <div
+                            className="mb-4 rounded-xl border p-4"
+                            style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
+                        >
+                            <h4
+                                className="mb-2 flex items-center gap-2 text-sm font-semibold"
+                                style={{ color: 'var(--text-primary)' }}
+                            >
+                                <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--sl-purple)' }} />
                                 Available with PREMIUM or ADVANCED plans:
                             </h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li className="flex items-start gap-2">
-                                    <svg className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Automated biological interpretation of DEG results</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <svg className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Interactive Q&A about your analysis results</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <svg className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Pathway enrichment insights and gene function summaries</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <svg className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Powered by Gemma 4, a state-of-the-art open model</span>
-                                </li>
+                            <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                {perks.map((perk) => (
+                                    <li key={perk} className="flex items-start gap-2">
+                                        <Check
+                                            className="mt-0.5 h-4 w-4 flex-shrink-0"
+                                            style={{ color: 'var(--sl-teal)' }}
+                                        />
+                                        <span>{perk}</span>
+                                    </li>
+                                ))}
                             </ul>
                         </div>
 
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/pricing"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg hover:from-purple-600 hover:to-blue-600 shadow-sm transition-all"
+                                className="inline-flex items-center gap-2 rounded-[11px] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+                                style={{ background: 'var(--sl-purple)' }}
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
+                                <Zap className="h-4 w-4" />
                                 View Plans →
                             </Link>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                                 Starting at $29/month
                             </span>
                         </div>
@@ -324,16 +331,17 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
 
     if (!aiStatus.available) {
         return (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div
+                className="rounded-[14px] border p-4"
+                style={{ background: 'var(--sl-amber-light, rgba(245,158,11,0.10))', borderColor: 'rgba(245,158,11,0.35)' }}
+            >
                 <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
                     <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-yellow-800 mb-2">
+                        <h3 className="mb-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                             AI interpretation temporarily unavailable
                         </h3>
-                        <p className="text-sm text-yellow-700">
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                             The AI service is currently unreachable. This is usually transient —
                             please try again in a moment. If it persists, contact support.
                         </p>
@@ -344,40 +352,39 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     }
 
     return (
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+        <div className="gl-card overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-purple-200">
+            <div className="flex items-center justify-between border-b p-4" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
+                    <div
+                        className="flex h-10 w-10 items-center justify-center rounded-xl"
+                        style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
+                    >
+                        <Sparkles className="h-5 w-5" />
                     </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-900">AI Biological Interpretation</h3>
-                    </div>
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        AI Biological Interpretation
+                    </h3>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     {data && (
                         <button
                             onClick={() => setShowChat(!showChat)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-purple-300 rounded-md bg-white hover:bg-purple-50"
+                            className="inline-flex items-center gap-2 rounded-[11px] border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--hover-overlay)]"
+                            style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
+                            <MessageCircle className="h-4 w-4" />
                             {showChat ? 'Hide Q&A' : 'Ask a Question'}
                         </button>
                     )}
                     {!data && !loading && (
                         <button
                             onClick={() => generateInterpretation(false)}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-md hover:from-purple-600 hover:to-blue-600"
+                            className="inline-flex items-center gap-2 rounded-[11px] px-4 py-2 text-sm font-medium text-white transition-colors"
+                            style={{ background: 'var(--sl-purple)' }}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                            <Sparkles className="h-4 w-4" />
                             Generate Interpretation
                         </button>
                     )}
@@ -387,31 +394,29 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             {/* Loading State */}
             {loading && (
                 <div className="p-8 text-center">
-                    <div className="inline-flex items-center gap-3 text-purple-600">
-                        <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                    <div className="inline-flex items-center gap-3" style={{ color: 'var(--sl-purple)' }}>
+                        <Loader2 className="h-6 w-6 animate-spin" />
                         <span className="text-sm font-medium">Analysis in progress by {aiStatus.current_model}...</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">This can take up to a few minutes on the first run</p>
+                    <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        This can take up to a few minutes on the first run
+                    </p>
                 </div>
             )}
 
             {/* Error State */}
             {error && errorType === 'plan' && (
-                <div className="p-4 bg-purple-50 border-t border-purple-200">
+                <div className="border-t p-4" style={{ background: 'var(--sl-purple-light)', borderColor: 'var(--border)' }}>
                     <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-purple)' }} />
                         <div className="flex-1">
-                            <p className="text-sm font-medium text-purple-900">Plan Required</p>
-                            <p className="text-sm text-purple-800 mt-1">{error}</p>
+                            <p className="text-sm font-semibold" style={{ color: 'var(--sl-purple-dark)' }}>Plan Required</p>
+                            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                             <div className="mt-3">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-white transition-colors"
+                                    style={{ background: 'var(--sl-purple)' }}
                                 >
                                     View Plans →
                                 </Link>
@@ -421,25 +426,25 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 </div>
             )}
             {error && errorType === 'quota' && (
-                <div className="p-4 bg-amber-50 border-t border-amber-200">
+                <div className="border-t p-4" style={{ background: 'rgba(245,158,11,0.10)', borderColor: 'rgba(245,158,11,0.35)' }}>
                     <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <Zap className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
                         <div className="flex-1">
-                            <p className="text-sm font-medium text-amber-900">Monthly Quota Reached</p>
-                            <p className="text-sm text-amber-800 mt-1">{error}</p>
-                            <p className="text-sm text-amber-700 mt-0.5">Purchase more tokens or upgrade your plan.</p>
+                            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Monthly Quota Reached</p>
+                            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+                            <p className="mt-0.5 text-sm" style={{ color: 'var(--text-muted)' }}>Purchase more tokens or upgrade your plan.</p>
                             <div className="mt-3 flex items-center gap-2">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-white transition-colors"
+                                    style={{ background: 'var(--sl-purple)' }}
                                 >
                                     Upgrade Plan
                                 </Link>
                                 <Link
                                     href="/profile#billing"
-                                    className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-[11px] border px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--hover-overlay)]"
+                                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                                 >
                                     Buy More Tokens
                                 </Link>
@@ -449,16 +454,17 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 </div>
             )}
             {error && errorType === 'generic' && (
-                <div className="p-4 bg-red-50 border-t border-red-200">
+                <div className="border-t p-4" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
                     <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-red)' }} />
                         <div className="flex-1">
-                            <p className="text-sm font-medium text-red-800">Error</p>
-                            <p className="text-sm text-red-700 mt-1">{error}</p>
+                            <p className="text-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>Error</p>
+                            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                             {error.includes('memory') && (
-                                <div className="mt-2 text-xs text-red-600 bg-red-100 rounded p-2">
+                                <div
+                                    className="mt-2 rounded-lg p-2 text-xs"
+                                    style={{ background: 'var(--sl-red-light)', color: 'var(--sl-red-dark)' }}
+                                >
                                     <strong>Solution:</strong> Increase Docker RAM to 8+ GB in Docker Desktop → Settings → Resources → Memory
                                 </div>
                             )}
@@ -471,68 +477,74 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             {data && !loading && (
                 <div className="p-4">
                     {/* Interpretation Text */}
-                    <div className="bg-white rounded-lg p-6 border border-purple-100 prose prose-sm max-w-none">
-                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-                            {data.interpretation}
-                        </div>
+                    <div
+                        className="rounded-xl border p-6"
+                        style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
+                    >
+                        <AIMarkdown text={data.interpretation} />
                     </div>
 
                     {/* Chat Q&A Section */}
                     {showChat && (
-                        <div className="mt-4 bg-white rounded-lg border border-purple-100">
-                            <div className="border-b border-purple-100 p-3 bg-gradient-to-r from-purple-50 to-blue-50">
-                                <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
+                        <div
+                            className="mt-4 rounded-xl border"
+                            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+                        >
+                            <div
+                                className="border-b p-3"
+                                style={{ background: 'var(--sl-purple-light)', borderColor: 'var(--border)' }}
+                            >
+                                <h4 className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                    <MessageCircle className="h-4 w-4" style={{ color: 'var(--sl-purple)' }} />
                                     Questions & Answers
                                 </h4>
-                                <p className="text-xs text-gray-600 mt-1">Ask your questions about this analysis</p>
+                                <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Ask your questions about this analysis</p>
                             </div>
-                            
+
                             {/* Chat Messages */}
-                            <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                            <div className="max-h-96 space-y-3 overflow-y-auto p-4">
                                 {chatMessages.length === 0 && (
-                                    <div className="text-center text-sm text-gray-500 py-8">
-                                        <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                        </svg>
+                                    <div className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                                        <MessageCircle className="mx-auto mb-2 h-12 w-12" style={{ color: 'var(--border-strong)' }} />
                                         Ask your first question below
                                     </div>
                                 )}
                                 {chatMessages.map((msg, idx) => (
                                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[80%] rounded-lg p-3 ${
-                                            msg.role === 'user' 
-                                                ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white' 
-                                                : 'bg-gray-100 text-gray-900'
-                                        }`}>
-                                            <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
-                                            <div className={`text-xs mt-1 ${
-                                                msg.role === 'user' ? 'text-purple-100' : 'text-gray-500'
-                                            }`}>
-                                                {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                        {msg.role === 'user' ? (
+                                            <div className="max-w-[80%] rounded-2xl px-4 py-2 text-white" style={{ background: 'var(--sl-purple)' }}>
+                                                <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
+                                                <div className="mt-1 text-xs text-white/70">
+                                                    {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div
+                                                className="max-w-[80%] rounded-2xl px-4 py-2"
+                                                style={{ background: 'var(--surface-raised)' }}
+                                            >
+                                                <AIMarkdown text={msg.content} />
+                                                <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                                    {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                                 {chatLoading && (
                                     <div className="flex justify-start">
-                                        <div className="bg-gray-100 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                AI is thinking...
+                                        <div className="rounded-2xl px-4 py-2" style={{ background: 'var(--surface-raised)' }}>
+                                            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <span className="animate-pulse">AI is thinking…</span>
                                             </div>
                                         </div>
                                     </div>
                                 )}
                             </div>
-                            
+
                             {/* Input */}
-                            <div className="border-t border-purple-100 p-3">
+                            <div className="border-t p-3" style={{ borderColor: 'var(--border)' }}>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
@@ -541,16 +553,16 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                         onKeyPress={(e) => e.key === 'Enter' && !chatLoading && askQuestion()}
                                         placeholder="Ask your question (e.g., What are the most important genes?)"
                                         disabled={chatLoading}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm disabled:bg-gray-50"
+                                        className="flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
+                                        style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                                     />
                                     <button
                                         onClick={askQuestion}
                                         disabled={!userQuestion.trim() || chatLoading}
-                                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-md hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                        style={{ background: 'var(--sl-purple)' }}
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                        </svg>
+                                        <Send className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -558,13 +570,14 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-purple-200">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                             {data.cached && (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                    </svg>
+                                <span
+                                    className="inline-flex items-center gap-1 rounded px-2 py-1"
+                                    style={{ background: 'var(--surface-raised)', color: 'var(--text-secondary)' }}
+                                >
+                                    <Database className="h-3 w-3" />
                                     From cache
                                 </span>
                             )}
@@ -572,11 +585,9 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             <span>•</span>
                             <span>Generated: {new Date(data.generated_at).toLocaleString('en-US')}</span>
                         </div>
-                        
-                        <div className="flex items-center gap-1 text-xs text-purple-600">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
+
+                        <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--sl-purple)' }}>
+                            <Sparkles className="h-3 w-3" />
                             Powered by Gemma 4
                         </div>
                     </div>
