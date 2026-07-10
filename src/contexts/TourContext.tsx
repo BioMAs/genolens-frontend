@@ -24,29 +24,33 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const startTour = useCallback(
     async (id: TourId) => {
       const tour = getTour(id);
-      if (!tour) return;
-      const { driver } = await import('driver.js');
-      const popoverClass =
-        theme === 'dark' ? 'genolens-tour genolens-tour-dark' : 'genolens-tour';
-      const driverObj = driver({
-        showProgress: true,
-        allowClose: true,
-        nextBtnText: 'Suivant',
-        prevBtnText: 'Précédent',
-        doneBtnText: 'Terminer',
-        progressText: '{{current}} / {{total}}',
-        popoverClass,
-        steps: tour.steps,
-      });
-      driverObj.drive();
+      try {
+        const { driver } = await import('driver.js');
+        const popoverClass =
+          theme === 'dark' ? 'genolens-tour genolens-tour-dark' : 'genolens-tour';
+        const driverObj = driver({
+          showProgress: true,
+          allowClose: true,
+          nextBtnText: 'Suivant',
+          prevBtnText: 'Précédent',
+          doneBtnText: 'Terminer',
+          progressText: '{{current}} / {{total}}',
+          popoverClass,
+          steps: tour.steps,
+        });
+        driverObj.drive();
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[tour] failed to start', err);
+        }
+      }
     },
     [theme],
   );
 
   const restartCurrentTour = useCallback(() => {
-    const id = tourIdForPathname(pathname ?? '');
-    if (id) startTour(id);
-  }, [pathname, startTour]);
+    if (currentTourId) startTour(currentTourId);
+  }, [currentTourId, startTour]);
 
   return (
     <TourContext.Provider value={{ startTour, restartCurrentTour, currentTourId }}>
