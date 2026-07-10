@@ -116,7 +116,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
                 </span>
               </span>
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" data-tour="sidebar-project">
               {projectNav.map(({ key, suffix, label, icon: Icon }) => {
                 const href = `/projects/${projectId}${suffix}`;
                 return (

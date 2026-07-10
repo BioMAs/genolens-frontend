@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useAnalyses } from '@/hooks/useAnalyses';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
+import { useAutoTour } from '@/hooks/useAutoTour';
 
 interface Props {
   projectId: string;
 }
 
 export default function AnalysesListView({ projectId }: Props) {
+  useAutoTour('analyses');
   const { data, isLoading, isError } = useAnalyses(projectId);
   const { data: datasets } = useProjectDatasets(projectId);
 
@@ -44,12 +46,13 @@ export default function AnalysesListView({ projectId }: Props) {
   const analyses = data?.items ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="analyses-list">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
           Self-service analyses ({analyses.length})
         </h2>
         <Link
+          data-tour="analyses-new"
           href={`/projects/${projectId}/analyses/new`}
           className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700"
         >

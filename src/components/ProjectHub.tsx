@@ -12,6 +12,7 @@ import GeneListManager from '@/components/GeneListManager';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
 import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
+import { useAutoTour } from '@/hooks/useAutoTour';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Dot } from '@/components/ui/dot';
 import { Chip } from '@/components/ui/chip';
@@ -41,6 +42,7 @@ interface ProjectHubProps {
 type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
+  useAutoTour('project-overview');
   const { user: currentUser } = useCurrentUser();
   const { data: summary, isLoading } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
@@ -100,7 +102,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container" data-tour="project-overview">
       <div className="mb-3">
         <Link
           href="/dashboard"
