@@ -46,7 +46,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         element: anchor('dashboard-kpis'),
         popover: {
           title: 'Indicateurs clés',
-          description: 'Vos comparaisons, analyses et usages en un coup d\'œil.',
+          description: "Vos comparaisons, analyses et usages en un coup d'œil.",
           side: 'bottom',
           align: 'start',
         },
@@ -91,7 +91,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         popover: {
           title: 'Sections du projet',
           description:
-            'Naviguez entre l\'aperçu, la configuration, les analyses et la multi-comparaison.',
+            "Naviguez entre l'aperçu, la configuration, les analyses et la multi-comparaison.",
           side: 'right',
           align: 'start',
         },
@@ -101,7 +101,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         popover: {
           title: 'Aperçu du projet',
           description:
-            'Retrouvez ici vos jeux de données, analyses et l\'activité du projet.',
+            "Retrouvez ici vos jeux de données, analyses et l'activité du projet.",
           side: 'top',
           align: 'start',
         },
@@ -117,7 +117,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         popover: {
           title: 'Vos analyses',
           description:
-            'La liste de vos analyses en libre-service, avec leur statut, s\'affiche ici.',
+            "La liste de vos analyses en libre-service, avec leur statut, s'affiche ici.",
           side: 'top',
           align: 'start',
         },
