@@ -89,7 +89,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-2.5 py-3.5">
         <div className="mb-4">
           <span className="nav-section-label">Workspace</span>
-          <div className="mt-1.5 space-y-0.5">
+          <div className="mt-1.5 space-y-0.5" data-tour="sidebar-workspace">
             {primaryNav.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}

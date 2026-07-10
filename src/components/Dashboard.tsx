@@ -16,9 +16,11 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
+import { useAutoTour } from '@/hooks/useAutoTour';
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  useAutoTour('dashboard');
 
   const { user } = useCurrentUser();
   const { data: projectsData } = useProjects({ page_size: 100, sort_by: 'updated_at', sort_order: 'desc' });
@@ -50,14 +52,16 @@ export default function Dashboard() {
 
   return (
     <>
-      <DashboardWelcomeBanner
-        userName={user?.name ?? user?.email}
-        recentProjectName={recentProject?.name}
-        totalComparisons={aggregated.total_comparisons}
-        activityLast7Days={aggregated.activity_last_7_days}
-        aiInterpretationsUsed={aiInterpretationsUsed}
-        resumeHref={recentProject ? `/projects/${recentProject.id}` : undefined}
-      />
+      <div data-tour="dashboard-welcome">
+        <DashboardWelcomeBanner
+          userName={user?.name ?? user?.email}
+          recentProjectName={recentProject?.name}
+          totalComparisons={aggregated.total_comparisons}
+          activityLast7Days={aggregated.activity_last_7_days}
+          aiInterpretationsUsed={aiInterpretationsUsed}
+          resumeHref={recentProject ? `/projects/${recentProject.id}` : undefined}
+        />
+      </div>
 
       {/* Jump back in — last result with its skin verdict (redesign 2a) */}
       {recentProject && (
@@ -67,7 +71,9 @@ export default function Dashboard() {
       )}
 
       {/* Global KPI bar */}
-      <DashboardKpiBar stats={aggregated} isLoading={statsLoading && projects.length === 0} />
+      <div data-tour="dashboard-kpis">
+        <DashboardKpiBar stats={aggregated} isLoading={statsLoading && projects.length === 0} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
         <div className="lg:col-span-8">
@@ -85,7 +91,7 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4" data-tour="dashboard-plan">
           <h3
             className="font-display text-sm font-semibold mb-3"
             style={{ color: 'var(--text-primary)' }}
@@ -115,6 +121,7 @@ export default function Dashboard() {
           All Projects
         </h2>
         <button
+          data-tour="dashboard-new-project"
           onClick={() => !isAtProjectLimit && setIsModalOpen(true)}
           disabled={isAtProjectLimit}
           title={isAtProjectLimit ? `Project limit reached (${subscription?.project_count}/${subscription?.max_projects}). Upgrade your plan.` : undefined}
