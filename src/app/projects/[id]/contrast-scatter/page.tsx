@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
-import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
+import type { ComparisonRef } from '@/components/MultiComparisonVenn';
+import ContrastScatter from '@/components/ContrastScatter';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
 
-export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ContrastScatterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
   const router = useRouter();
@@ -23,18 +24,15 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch project
         const projectResponse = await api.get(`/projects/${projectId}`);
         setProject(projectResponse.data);
 
-        // Fetch datasets and flatten comparisons across all DEG datasets
         const datasetsResponse = await api.get(`/datasets/project/${projectId}`);
         const datasets: Dataset[] = datasetsResponse.data;
-
         const refs = buildComparisonRefs(datasets);
 
         if (refs.length < 2) {
-          setError('No multi-comparison DEG dataset found in this project');
+          setError('This feature requires at least two DEG comparisons in the project.');
         } else {
           setComparisons(refs);
           setPathDatasetId(refs[0].datasetId);
@@ -46,18 +44,13 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         setLoading(false);
       }
     };
-
     fetchData();
   }, [projectId]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="text-gray-600">Loading...</div>
-          </div>
-        </div>
+        <div className="max-w-7xl mx-auto text-center py-12 text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -73,13 +66,10 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-red-600 mb-4">
-              {error || 'No multi-comparison DEG dataset found'}
-            </div>
+            <div className="text-red-600 mb-4">{error || 'Not enough comparisons'}</div>
             <p className="text-sm text-gray-600">
-              This feature requires a DEG dataset with multiple comparisons.
+              This feature compares two DEG contrasts, so the project needs at least two.
             </p>
           </div>
         </div>
@@ -89,7 +79,6 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
@@ -99,27 +88,13 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Multi-Comparison Analysis
-            </h1>
-            {project && (
-              <p className="mt-2 text-sm text-gray-600">
-                Project: {project.name}
-              </p>
-            )}
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Contrast comparison</h1>
+          {project && <p className="mt-2 text-sm text-gray-600">Project: {project.name}</p>}
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MultiComparisonVenn
-          projectId={projectId}
-          pathDatasetId={pathDatasetId}
-          comparisons={comparisons}
-        />
+        <ContrastScatter pathDatasetId={pathDatasetId} comparisons={comparisons} />
       </div>
     </div>
   );

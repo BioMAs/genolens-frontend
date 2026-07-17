@@ -14,6 +14,7 @@ import DEGTable from './DEGTable';
 import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
+import SignatureScorePanel from './SignatureScorePanel';
 import ExportMenu from './ExportMenu';
 import ComparisonReportButton from './ComparisonReportButton';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
@@ -21,6 +22,7 @@ import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
+import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
 import { useUserProfile } from '@/hooks/useCosmetics';
 import { formatDate } from '@/utils/formatters';
@@ -34,7 +36,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature';
 
 type GenericRow = Record<string, unknown>;
 
@@ -57,6 +59,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const { openChatWith } = useChatMode();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
+  const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
 
   // Add-on module gating: show the Skin-effect / Customization tabs only when the
   // module is unlocked (admins keep full access by role; otherwise the explicit
@@ -808,6 +812,20 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               >
                 Integrations
               </button>
+              <button
+                onClick={() => setActiveTab('signature')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'signature'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Signature score
+                {!matrixDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
+              </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
                 <button
@@ -947,11 +965,44 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             {/* Enrichment Tab */}
             {activeTab === 'enrichment' && (
               degDataset ? (
-                <GOEnrichmentAnalysis
-                  dataset={degDataset}
-                  enrichmentDataset={enrichmentDataset}
-                  comparisonName={actualComparisonName}
-                />
+                <div className="space-y-4">
+                  {/* Sub-mode toggle: over-representation vs ranked GSEA */}
+                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                    <button
+                      onClick={() => setEnrichmentMode('ora')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        enrichmentMode === 'ora'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Over-representation (ORA)
+                    </button>
+                    <button
+                      onClick={() => setEnrichmentMode('gsea')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        enrichmentMode === 'gsea'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      GSEA (ranked)
+                    </button>
+                  </div>
+
+                  {enrichmentMode === 'ora' ? (
+                    <GOEnrichmentAnalysis
+                      dataset={degDataset}
+                      enrichmentDataset={enrichmentDataset}
+                      comparisonName={actualComparisonName}
+                    />
+                  ) : (
+                    <GSEAAnalysis
+                      dataset={degDataset}
+                      comparisonName={actualComparisonName}
+                    />
+                  )}
+                </div>
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
@@ -1019,11 +1070,31 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               />
             )}
 
+            {/* Signature scoring Tab */}
+            {activeTab === 'signature' && (
+              matrixDataset ? (
+                <SignatureScorePanel
+                  projectId={projectId}
+                  matrixDatasetId={matrixDataset.id}
+                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Signature scoring requires an expression matrix (count matrix) for this project.
+                  </p>
+                </div>
+              )
+            )}
+
             {/* Custom Visualizations Tab */}
             {activeTab === 'custom-viz' && (
               <div>
-                <CustomVisualizationPanel 
-                  datasetId={degDataset.id} 
+                <CustomVisualizationPanel
+                  datasetId={degDataset.id}
                   comparisonName={actualComparisonName}
                   allGenes={allMatrixGenes}
                 />

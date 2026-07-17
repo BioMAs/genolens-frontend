@@ -42,6 +42,12 @@ const projectNav = [
     label: 'Multi-comparison',
     icon: GitCompareArrows,
   },
+  {
+    key: 'contrast-scatter',
+    suffix: '/contrast-scatter',
+    label: 'Contrast scatter',
+    icon: GitCompareArrows,
+  },
 ];
 
 export default function Sidebar({ user, userRole }: SidebarProps) {
