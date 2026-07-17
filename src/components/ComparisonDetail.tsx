@@ -15,6 +15,7 @@ import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import SignatureScorePanel from './SignatureScorePanel';
+import DEGPatternsView from './DEGPatternsView';
 import ExportMenu from './ExportMenu';
 import ComparisonReportButton from './ComparisonReportButton';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
@@ -36,7 +37,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature' | 'deg-patterns';
 
 type GenericRow = Record<string, unknown>;
 
@@ -826,6 +827,20 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   <span className="ml-1 text-xs opacity-50">(N/A)</span>
                 )}
               </button>
+              <button
+                onClick={() => setActiveTab('deg-patterns')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'deg-patterns'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                DEG patterns
+                {!matrixDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
+              </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
                 <button
@@ -1085,6 +1100,26 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
                     Signature scoring requires an expression matrix (count matrix) for this project.
+                  </p>
+                </div>
+              )
+            )}
+
+            {/* DEG patterns Tab */}
+            {activeTab === 'deg-patterns' && (
+              matrixDataset && degDataset ? (
+                <DEGPatternsView
+                  degDatasetId={degDataset.id}
+                  matrixDatasetId={matrixDataset.id}
+                  comparisonName={actualComparisonName}
+                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    DEG patterns require both a DEG dataset and an expression matrix.
                   </p>
                 </div>
               )
