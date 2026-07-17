@@ -17,9 +17,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
     steps: [
       {
         popover: {
-          title: 'Bienvenue sur GenoLens 👋',
+          title: 'Welcome to GenoLens 👋',
           description:
-            "Ce guide rapide vous montre l'essentiel. Vous pourrez le relancer à tout moment.",
+            'This quick guide walks you through the essentials. You can replay it anytime.',
         },
       },
       {
@@ -27,7 +27,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         popover: {
           title: 'Navigation',
           description:
-            'Accédez au tableau de bord et aux outils depuis ce menu latéral.',
+            'Reach your dashboard and tools from this side menu.',
           side: 'right',
           align: 'start',
         },
@@ -35,9 +35,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('dashboard-welcome'),
         popover: {
-          title: 'Votre activité',
+          title: 'Your activity',
           description:
-            'Un résumé de vos projets récents et de votre activité apparaît ici.',
+            'A summary of your recent projects and activity appears here.',
           side: 'bottom',
           align: 'start',
         },
@@ -45,8 +45,8 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('dashboard-kpis'),
         popover: {
-          title: 'Indicateurs clés',
-          description: "Vos comparaisons, analyses et usages en un coup d'œil.",
+          title: 'Key metrics',
+          description: 'Your comparisons, analyses and usage at a glance.',
           side: 'bottom',
           align: 'start',
         },
@@ -54,8 +54,8 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('dashboard-plan'),
         popover: {
-          title: 'Votre abonnement',
-          description: 'Suivez vos quotas et votre offre depuis cette carte.',
+          title: 'Your plan',
+          description: 'Track your quotas and subscription from this card.',
           side: 'left',
           align: 'start',
         },
@@ -63,9 +63,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('dashboard-new-project'),
         popover: {
-          title: 'Créer un projet',
+          title: 'Create a project',
           description:
-            'Lancez-vous : créez un projet pour importer vos données et démarrer une analyse.',
+            'Get started: create a project to import your data and run an analysis.',
           side: 'left',
           align: 'end',
         },
@@ -73,9 +73,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('help-button'),
         popover: {
-          title: 'Rejouer le guide',
+          title: 'Replay the guide',
           description:
-            'Ce bouton relance le guide de la page où vous vous trouvez.',
+            'This button restarts the guide for the page you are on.',
           side: 'bottom',
           align: 'end',
         },
@@ -89,9 +89,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('sidebar-project'),
         popover: {
-          title: 'Sections du projet',
+          title: 'Project sections',
           description:
-            "Naviguez entre l'aperçu, la configuration, les analyses et la multi-comparaison.",
+            'Move between the overview, setup, analyses and multi-comparison.',
           side: 'right',
           align: 'start',
         },
@@ -99,9 +99,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('project-overview'),
         popover: {
-          title: 'Aperçu du projet',
+          title: 'Project overview',
           description:
-            "Retrouvez ici vos jeux de données, analyses et l'activité du projet.",
+            'Find your datasets, analyses and project activity here.',
           side: 'top',
           align: 'start',
         },
@@ -115,9 +115,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('analyses-list'),
         popover: {
-          title: 'Vos analyses',
+          title: 'Your analyses',
           description:
-            "La liste de vos analyses en libre-service, avec leur statut, s'affiche ici.",
+            'Your self-service analyses and their status are listed here.',
           side: 'top',
           align: 'start',
         },
@@ -125,8 +125,8 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('analyses-new'),
         popover: {
-          title: 'Nouvelle analyse',
-          description: 'Lancez une nouvelle analyse depuis ce bouton.',
+          title: 'New analysis',
+          description: 'Launch a new analysis from this button.',
           side: 'left',
           align: 'start',
         },

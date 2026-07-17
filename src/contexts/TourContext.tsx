@@ -31,9 +31,9 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         const driverObj = driver({
           showProgress: true,
           allowClose: true,
-          nextBtnText: 'Suivant',
-          prevBtnText: 'Précédent',
-          doneBtnText: 'Terminer',
+          nextBtnText: 'Next',
+          prevBtnText: 'Previous',
+          doneBtnText: 'Done',
           progressText: '{{current}} / {{total}}',
           popoverClass,
           steps: tour.steps,
