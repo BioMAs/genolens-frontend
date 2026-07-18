@@ -13,14 +13,14 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Download, ArrowLeft, ArrowRight, GitBranch } from 'lucide-react';
-import { useDegPatterns, type PatternCluster } from '@/hooks/useDegPatterns';
+import { useDegPatterns, type PatternCluster, type DegSource } from '@/hooks/useDegPatterns';
 import { getPalette } from '@/utils/chartPalettes';
 
 interface DEGPatternsViewProps {
-  degDatasetId: string;
   matrixDatasetId: string;
-  comparisonName: string;
+  degSources: DegSource[];
   sampleConditionMap?: Record<string, string>;
+  label?: string;
 }
 
 function quantile(sorted: number[], q: number): number {
@@ -47,10 +47,10 @@ function facetData(cluster: PatternCluster, groups: string[]) {
 }
 
 export default function DEGPatternsView({
-  degDatasetId,
   matrixDatasetId,
-  comparisonName,
+  degSources,
   sampleConditionMap,
+  label = 'this analysis',
 }: DEGPatternsViewProps) {
   const { loading, result, error, run } = useDegPatterns(matrixDatasetId);
 
@@ -60,8 +60,7 @@ export default function DEGPatternsView({
 
   const doRun = (order?: string[]) =>
     run({
-      degDatasetId,
-      comparisonName,
+      degSources,
       sampleConditionMap,
       groupOrder: order,
       nClusters,
@@ -102,7 +101,7 @@ export default function DEGPatternsView({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `deg_patterns_${comparisonName}.csv`.replace(/[^a-zA-Z0-9._-]/g, '_');
+    a.download = `deg_patterns_${label}.csv`.replace(/[^a-zA-Z0-9._-]/g, '_');
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -116,9 +115,9 @@ export default function DEGPatternsView({
           <h2 className="text-xl font-bold text-gray-900">DEG patterns</h2>
         </div>
         <p className="text-sm text-gray-600 mb-4">
-          Group the significant DEGs of <strong>{comparisonName}</strong> into clusters that share an
-          expression trajectory across conditions (z-scored). Each panel shows a cluster&apos;s median
-          trajectory and its interquartile band.
+          Group the significant DEGs of <strong>{label}</strong> (union across all comparisons) into
+          clusters that share an expression trajectory across the analysis&apos; conditions (z-scored).
+          Each panel shows a cluster&apos;s median trajectory and its interquartile band.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">

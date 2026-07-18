@@ -28,9 +28,13 @@ export interface DegPatternsResult {
   clusters: PatternCluster[];
 }
 
+export interface DegSource {
+  dataset_id: string;
+  comparison_name: string;
+}
+
 interface RunArgs {
-  degDatasetId: string;
-  comparisonName: string;
+  degSources: DegSource[];
   sampleConditionMap?: Record<string, string>;
   groupOrder?: string[];
   nClusters: number;
@@ -53,8 +57,7 @@ export function useDegPatterns(matrixDatasetId: string) {
       setError(null);
       try {
         const resp = await api.post(`/datasets/${matrixDatasetId}/deg-patterns`, {
-          deg_dataset_id: args.degDatasetId,
-          comparison_name: args.comparisonName,
+          deg_sources: args.degSources,
           sample_condition_map: args.sampleConditionMap ?? null,
           group_order: args.groupOrder ?? null,
           n_clusters: args.nClusters,

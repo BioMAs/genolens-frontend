@@ -12,6 +12,8 @@ import type { QCReport } from './PreprocessingResults';
 import PCAPlot from '@/components/PCAPlot';
 import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
+import DEGPatternsView from '@/components/DEGPatternsView';
+import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -122,6 +124,15 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     return undefined;
   }, [datasets, analysis]);
 
+  // Full {sample -> condition} map (all analysis conditions) for DEG patterns
+  const { data: sampleConditionMap } = useSampleConditionMap(samplesDataset);
+
+  // DEG sources for analysis-level pattern clustering: union across all comparisons
+  const degSources = useMemo(
+    () => analysisComparisons.map((c) => ({ dataset_id: c.dataset_id, comparison_name: c.name })),
+    [analysisComparisons]
+  );
+
   // ── Loading / error states ────────────────────────────────────────────────
 
   if (analysisLoading) {
@@ -223,6 +234,22 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
             matrixDatasetId={matrixDataset?.id ?? null}
           />
         </section>
+
+        {/* ── DEG patterns (expression trajectories across all conditions) ── */}
+        {matrixDataset && degSources.length > 0 && (
+          <section>
+            <SectionHeader
+              title="DEG patterns"
+              subtitle="Significant DEGs (union across comparisons) clustered by expression trajectory across the analysis' conditions"
+            />
+            <DEGPatternsView
+              matrixDatasetId={matrixDataset.id}
+              degSources={degSources}
+              sampleConditionMap={sampleConditionMap}
+              label={analysis.name}
+            />
+          </section>
+        )}
 
         {/* ── Sample structure (PCA / UMAP) ── */}
         <section>
