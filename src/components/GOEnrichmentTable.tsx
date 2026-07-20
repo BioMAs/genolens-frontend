@@ -122,6 +122,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     if (ns === 'KEGG') return 'bg-orange-500 hover:bg-orange-600';
     if (ns === 'REACTOME') return 'bg-cyan-600 hover:bg-cyan-700';
     if (ns === 'HALLMARK') return 'bg-rose-500 hover:bg-rose-600';
+    if (ns === 'C5_ONTOLOGY') return 'bg-teal-500 hover:bg-teal-600';
+    if (ns === 'C7_IMMUNOLOGIC') return 'bg-indigo-500 hover:bg-indigo-600';
     if (ns === 'TF') return 'bg-yellow-500 hover:bg-yellow-600';
     return 'bg-gray-500 hover:bg-gray-600';
   };

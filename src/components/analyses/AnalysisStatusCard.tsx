@@ -2,12 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Database } from 'lucide-react';
 import { SelfServiceAnalysis, SelfServiceAnalysisStatus } from '@/types';
 import { useDeleteAnalysis } from '@/hooks/useAnalyses';
 
 interface Props {
   analysis: SelfServiceAnalysis;
   projectId: string;
+  /** GEO accession when the analysis data was imported from NCBI GEO. */
+  geoAccession?: string | null;
 }
 
 const STATUS_STYLES: Record<SelfServiceAnalysisStatus, string> = {
@@ -26,7 +29,7 @@ const STATUS_LABELS: Record<SelfServiceAnalysisStatus, string> = {
   [SelfServiceAnalysisStatus.CANCELLED]: 'Cancelled',
 };
 
-export default function AnalysisStatusCard({ analysis, projectId }: Props) {
+export default function AnalysisStatusCard({ analysis, projectId, geoAccession }: Props) {
   const deleteAnalysis = useDeleteAnalysis(projectId);
   const isActive =
     analysis.status === SelfServiceAnalysisStatus.PENDING ||
@@ -47,6 +50,18 @@ export default function AnalysisStatusCard({ analysis, projectId }: Props) {
           <p className="text-xs text-gray-400 mt-0.5">
             {new Date(analysis.created_at).toLocaleString('en-US')}
           </p>
+          {geoAccession && (
+            <a
+              href={`https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${geoAccession}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Data imported from NCBI GEO — ${geoAccession}`}
+              className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100"
+            >
+              <Database className="h-3 w-3" />
+              GEO · {geoAccession}
+            </a>
+          )}
         </div>
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[analysis.status]}`}

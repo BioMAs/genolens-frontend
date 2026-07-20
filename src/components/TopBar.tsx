@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import GlobalGeneSearch from './GlobalGeneSearch';
+import HelpTourButton from './onboarding/HelpTourButton';
 
 /** Map route segments to human-readable page titles. */
 function resolvePageTitle(pathname: string): string {
@@ -32,17 +33,20 @@ export default function TopBar({ rightSlot }: TopBarProps) {
 
   return (
     <header className="app-topbar">
-      <h1 className="page-title !text-[1rem] !font-semibold !tracking-[-0.01em] !leading-none">
-        {pageTitle}
-      </h1>
+      <div className="flex min-w-0 flex-1 items-center">
+        <h1 className="page-title truncate !text-[1rem] !font-semibold !tracking-[-0.01em] !leading-none">
+          {pageTitle}
+        </h1>
+      </div>
 
-      <div className="flex-1" />
-
-      <div className="w-[248px] shrink-0">
+      <div className="hidden w-[400px] shrink-0 justify-center md:flex">
         <GlobalGeneSearch variant="topbar" />
       </div>
 
-      <div className="flex flex-1 justify-end">{rightSlot}</div>
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        <HelpTourButton />
+        {rightSlot}
+      </div>
     </header>
   );
 }

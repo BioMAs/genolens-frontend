@@ -1,70 +1,15 @@
 'use client';
 
-import { Loader2, Database, Info } from 'lucide-react';
-import { useCosmeticsData, useUserProfile, CosmeticsResult } from '@/hooks/useCosmetics';
-import ClaimsRadar from './ClaimsRadar';
-import ClaimCards from './ClaimCards';
+import { Loader2, Database, Info } from 'lucide-react'; // Info kept for hasSignal block below
+import { useCosmeticsData, useUserProfile } from '@/hooks/useCosmetics';
 import SkinSchematic from './SkinSchematic';
-import CosmeticsAIPanel from './CosmeticsAIPanel';
 import CosmeticsLockedOverlay from './CosmeticsLockedOverlay';
-import { DEMO_COSMETICS, DEMO_INTERPRETATION } from './demoData';
+import { DEMO_COSMETICS } from './demoData';
+import SkinEffectView from '../skin/SkinEffectView';
 
 interface Props {
   datasetId?: string;
   comparisonName: string;
-}
-
-function CosmeticsContent({
-  data,
-  datasetId,
-  comparisonName,
-  demo,
-}: {
-  data: CosmeticsResult;
-  datasetId?: string;
-  comparisonName?: string;
-  demo?: boolean;
-}) {
-  return (
-    <div className="space-y-4">
-      <SkinSchematic zones={data.skin_zones} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-5">
-          <ClaimsRadar claims={data.claims} />
-        </div>
-        <div className="xl:col-span-7">
-          <CosmeticsAIPanel
-            datasetId={datasetId}
-            comparisonName={comparisonName}
-            demoText={demo ? DEMO_INTERPRETATION : undefined}
-          />
-        </div>
-      </div>
-      <ClaimCards claims={data.claims} />
-
-      {data.caveats.length > 0 && (
-        <div className="gl-card p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            <Info className="h-4 w-4" /> Caveats
-          </h3>
-          <ul className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {data.caveats.map((c, i) => (
-              <li key={`${c.term_id}-${i}`}>
-                <span className="font-medium">{c.pathway_name}</span>{' '}
-                <span className="rounded bg-amber-50 px-1 text-amber-700">[{c.flag}]</span>
-                {c.note ? ` — ${c.note}` : ''}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-        {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways
-        matched the claim referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
-      </p>
-    </div>
-  );
 }
 
 export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
@@ -93,7 +38,7 @@ export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
   if (!unlocked) {
     return (
       <CosmeticsLockedOverlay>
-        <CosmeticsContent data={DEMO_COSMETICS} demo />
+        <SkinEffectView data={DEMO_COSMETICS} demo />
       </CosmeticsLockedOverlay>
     );
   }
@@ -148,6 +93,6 @@ export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
   }
 
   return (
-    <CosmeticsContent data={data} datasetId={datasetId} comparisonName={comparisonName} />
+    <SkinEffectView data={data} datasetId={datasetId} comparisonName={comparisonName} />
   );
 }

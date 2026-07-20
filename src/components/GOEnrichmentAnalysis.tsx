@@ -21,6 +21,9 @@ const EnrichmentRadarPlot = dynamic(() => import('./EnrichmentRadarPlot'), { ssr
 interface GOEnrichmentAnalysisProps {
   dataset: Dataset;
   comparisonName: string;
+  // Dataset holding the enrichment pathways (annoDB ENRICHMENT dataset). When set,
+  // pathways are read from it; DEG gene info still comes from `dataset` (the DEG dataset).
+  enrichmentDataset?: Dataset;
 }
 
 interface GOEnrichmentParams {
@@ -154,7 +157,7 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
             type="category" dataKey="y" width={210}
             tick={{ fontSize: 10, fill: '#374151' }} tickLine={false} axisLine={false}
           />
-          <ZAxis type="number" dataKey="z" range={[40, 220]} />
+          <ZAxis type="number" dataKey="z" range={[20, 120]} />
           <RechartTooltip content={<DotPlotTooltip />} cursor={{ strokeDasharray: '3 3' }} />
           <Scatter data={data}>
             {data.map((entry, i) => (
@@ -169,7 +172,21 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnrichmentAnalysisProps) {
+// Known database categories with labels and colors for the selector
+const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
+  { value: 'GO:BP', label: 'GO: Biological Process', color: 'text-blue-600' },
+  { value: 'GO:MF', label: 'GO: Molecular Function', color: 'text-green-600' },
+  { value: 'GO:CC', label: 'GO: Cellular Component', color: 'text-purple-600' },
+  { value: 'KEGG', label: 'KEGG Pathways', color: 'text-orange-600' },
+  { value: 'REACTOME', label: 'Reactome Pathways', color: 'text-cyan-700' },
+  { value: 'HALLMARK', label: 'MSigDB Hallmark', color: 'text-rose-600' },
+  { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology', color: 'text-teal-600' },
+  { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic', color: 'text-indigo-600' },
+];
+
+export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichmentDataset }: GOEnrichmentAnalysisProps) {
+  // Pathways live on the ENRICHMENT dataset (annoDB); DEG genes on the DEG dataset.
+  const enrichmentDatasetId = enrichmentDataset?.id ?? dataset.id;
   const [isRunning, setIsRunning] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [terms, setTerms] = useState<GOTerm[]>([]);
@@ -197,7 +214,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
     try {
       setError(null);
       const res = await api.get(
-        `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
+        `/datasets/${enrichmentDatasetId}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
         { params: { page_size: 1000 } }
       );
       const rows: Record<string, unknown>[] = res.data?.pathways ?? res.data?.results ?? res.data ?? [];
@@ -210,7 +227,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       setError('Failed to load enrichment cache.');
     }
     return false;
-  }, [dataset.id, comparisonName]);
+  }, [enrichmentDatasetId, comparisonName]);
 
   // Fetch DEG gene map for UP/DOWN coloring — paginate through all pages
   useEffect(() => {
@@ -270,6 +287,16 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
 
   const hasResults = terms.length > 0;
 
+  // Apply category + regulation filters for display
+  const displayTerms = terms.filter(t => {
+    if (params.namespace && t.namespace !== params.namespace) return false;
+    if (params.regulation && params.regulation !== 'all') {
+      const reg = (t as GOTerm & { regulation?: string }).regulation;
+      if (reg && reg !== params.regulation) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-4">
 
@@ -310,17 +337,29 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
           <CardContent className="pt-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs">GO Namespace</Label>
+                <Label className="text-xs">Database / Category</Label>
                 <Select
                   value={params.namespace || 'all'}
                   onValueChange={(v) => updateParams({ ...params, namespace: v === 'all' ? null : v })}
                 >
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All namespaces" /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All databases" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Namespaces</SelectItem>
-                    <SelectItem value="BP">Biological Process (BP)</SelectItem>
-                    <SelectItem value="MF">Molecular Function (MF)</SelectItem>
-                    <SelectItem value="CC">Cellular Component (CC)</SelectItem>
+                    <SelectItem value="all">All Databases</SelectItem>
+                    {DB_CATEGORIES
+                      .filter(db => terms.some(t => t.namespace === db.value))
+                      .map(db => (
+                        <SelectItem key={db.value} value={db.value}>
+                          <span className={db.color}>{db.label}</span>
+                        </SelectItem>
+                      ))
+                    }
+                    {/* Show unknown categories present in results */}
+                    {[...new Set(terms.map(t => t.namespace).filter(Boolean))]
+                      .filter(ns => !DB_CATEGORIES.some(db => db.value === ns))
+                      .map(ns => (
+                        <SelectItem key={ns} value={ns}>{ns}</SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </div>
@@ -413,16 +452,22 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
       {/* ── Results ──────────────────────────────────────────────────────── */}
       {hasResults && (
         <>
-          {/* Stats bar */}
+          {/* Stats bar — dynamic: shows all categories present in results */}
           {terms.length > 0 && (
             <div className="flex items-center gap-5 px-4 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground flex-wrap">
-              {['GO:BP', 'GO:MF', 'GO:CC', 'KEGG', 'REACTOME', 'HALLMARK'].map(cat => {
+              {[...new Set(terms.map(t => t.namespace).filter(Boolean))].map(cat => {
                 const count = terms.filter(t => t.namespace === cat).length;
-                return count > 0 ? <span key={cat}>{count} {cat}</span> : null;
+                const dbDef = DB_CATEGORIES.find(db => db.value === cat);
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => updateParams({ ...params, namespace: params.namespace === cat ? null : cat })}
+                    className={`transition-colors ${params.namespace === cat ? 'font-semibold text-foreground' : 'hover:text-foreground'}`}
+                  >
+                    {count} {dbDef ? dbDef.label.replace(/^(GO: |MSigDB )/, '') : cat}
+                  </button>
+                );
               })}
-              {terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length > 0 && (
-                <span>{terms.filter(t => !['GO:BP','GO:MF','GO:CC','KEGG','REACTOME','HALLMARK'].includes(t.namespace)).length} other</span>
-              )}
             </div>
           )}
 
@@ -444,23 +489,23 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName }: GOEnri
               ))}
             </div>
             <CardContent className="pt-5">
-              {activeTab === 'dotplot' && <GODotPlot terms={terms} />}
-              {activeTab === 'histogram' && <EnrichmentHistogram terms={terms} />}
+              {activeTab === 'dotplot' && <GODotPlot terms={displayTerms} />}
+              {activeTab === 'histogram' && <EnrichmentHistogram terms={displayTerms} />}
               {activeTab === 'radar' && (
                 <EnrichmentRadarPlot
-                  datasetId={dataset.id}
+                  datasetId={enrichmentDatasetId}
                   comparisonName={comparisonName}
                 />
               )}
               {activeTab === 'table' && (
-                <GOEnrichmentTable terms={terms} degGeneMap={degGeneMap} />
+                <GOEnrichmentTable terms={displayTerms} degGeneMap={degGeneMap} />
               )}
             </CardContent>
           </Card>
 
           {/* GO Hierarchy Tree */}
           <GOTreePanel
-            datasetId={dataset.id}
+            datasetId={enrichmentDatasetId}
             comparisonName={comparisonName}
             regulation={params.regulation ?? undefined}
           />

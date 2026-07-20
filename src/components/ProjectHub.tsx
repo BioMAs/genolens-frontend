@@ -9,9 +9,11 @@ import { useProjectMembers } from '@/hooks/useProjectMembers';
 import { DatasetStatus, DatasetType, SelfServiceAnalysisStatus, Dataset } from '@/types';
 import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
+import CustomGeneSetManager from '@/components/CustomGeneSetManager';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
 import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
+import { useAutoTour } from '@/hooks/useAutoTour';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Dot } from '@/components/ui/dot';
 import { Chip } from '@/components/ui/chip';
@@ -24,6 +26,7 @@ import {
   Star,
   List,
   GitCompare,
+  GitCompareArrows,
   Database,
   FlaskConical,
   Clock,
@@ -32,7 +35,6 @@ import {
   Activity,
   BarChart3,
 } from 'lucide-react';
-import GenerateReportButton from '@/components/GenerateReportButton';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 
 interface ProjectHubProps {
@@ -42,6 +44,7 @@ interface ProjectHubProps {
 type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
+  useAutoTour('project-overview');
   const { user: currentUser } = useCurrentUser();
   const { data: summary, isLoading } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
@@ -51,6 +54,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const [activeTab, setActiveTab] = useState<ProjectTab>('analyses');
   const [isBookmarkModalOpen, setBookmarkModalOpen] = useState(false);
   const [isGeneListModalOpen, setGeneListModalOpen] = useState(false);
+  const [isGeneSetModalOpen, setGeneSetModalOpen] = useState(false);
   const [isMembersModalOpen, setMembersModalOpen] = useState(false);
 
   const project = summary?.project;
@@ -101,7 +105,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container" data-tour="project-overview">
       <div className="mb-3">
         <Link
           href="/dashboard"
@@ -137,6 +141,20 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             </Link>
           )}
 
+          {comparisons.length >= 2 && (
+            <Link
+              href={`/projects/${projectId}/contrast-scatter`}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <GitCompareArrows className="h-3.5 w-3.5" /> Contrast scatter
+            </Link>
+          )}
+
           <button
             onClick={() => setBookmarkModalOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
@@ -161,6 +179,18 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             <List className="h-3.5 w-3.5" /> Gene Lists
           </button>
 
+          <button
+            onClick={() => setGeneSetModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+            style={{
+              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <List className="h-3.5 w-3.5" /> Custom gene sets
+          </button>
+
           {isOwner ? (
             <button
               onClick={() => setMembersModalOpen(true)}
@@ -174,8 +204,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
               <Users className="h-3.5 w-3.5" /> Members
             </button>
           ) : null}
-
-          <GenerateReportButton projectId={projectId} />
         </div>
       </div>
 
@@ -423,6 +451,28 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <GeneListManager projectId={projectId} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isGeneSetModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900">Custom gene sets</h2>
+              <button
+                onClick={() => setGeneSetModalOpen(false)}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <CustomGeneSetManager projectId={projectId} />
             </div>
           </div>
         </div>

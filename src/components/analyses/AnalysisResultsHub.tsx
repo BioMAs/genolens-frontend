@@ -3,27 +3,32 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import {
+  ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database,
+  GitCompare, GitBranch, Network, Activity, Settings2, ChevronRight, ArrowUpRight,
+} from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
 import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
 import PreprocessingResults from './PreprocessingResults';
 import type { QCReport } from './PreprocessingResults';
-import PCAResults from './PCAResults';
-import type { PCAData } from './PCAResults';
-import UMAPResults from './UMAPResults';
-import type { UMAPPoint } from './UMAPResults';
+import PCAPlot from '@/components/PCAPlot';
+import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
+import DEGPatternsView from '@/components/DEGPatternsView';
+import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 
-type Tab = 'preprocessing' | 'pca' | 'umap' | 'comparisons' | 'params';
-
-const TAB_LABELS: Record<Tab, string> = {
-  preprocessing: 'Preprocessing',
-  pca:           'PCA',
-  umap:          'UMAP',
-  comparisons:   'Comparisons',
-  params:        'Parameters',
-};
+function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 className="font-display text-[17px] font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+        {subtitle && <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
 
 interface Props {
   projectId: string;
@@ -42,32 +47,10 @@ function isQCReport(value: unknown): value is QCReport {
   );
 }
 
-function isPCAData(value: unknown): value is PCAData {
-  if (!value || typeof value !== 'object') return false;
-  const data = value as Partial<PCAData>;
-  return (
-    Array.isArray(data.variance_explained) &&
-    Array.isArray(data.pc_labels) &&
-    Array.isArray(data.samples)
-  );
-}
-
-function isUMAPPoint(value: unknown): value is UMAPPoint {
-  if (!value || typeof value !== 'object') return false;
-  const point = value as Partial<UMAPPoint>;
-  return (
-    typeof point.sample_id === 'string' &&
-    typeof point.UMAP1 === 'number' &&
-    typeof point.UMAP2 === 'number'
-  );
-}
-
-function isUMAPData(value: unknown): value is UMAPPoint[] {
-  return Array.isArray(value) && value.every(isUMAPPoint);
-}
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('comparisons');
+  const [structureView, setStructureView] = useState<'pca' | 'umap'>('pca');
+  const [paramsOpen, setParamsOpen] = useState(false);
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
 
@@ -116,28 +99,12 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     );
   }, [datasets, analysis, analysisId]);
 
-  // PCA data embedded in the VST dataset metadata
-  const pcaData = useMemo<PCAData | null>(() => {
-    const rawPcaData = vstDataset?.dataset_metadata?.pca_data;
-    return isPCAData(rawPcaData) ? rawPcaData : null;
-  }, [vstDataset]);
-
-  // UMAP dataset
-  const umapDataset = useMemo<Dataset | undefined>(() => {
-    const umapId = analysis?.intermediate_dataset_ids?.umap;
-    if (umapId) return datasets.find((d) => d.id === umapId);
-    return datasets.find(
-      (d) =>
-        d.type === DatasetType.METADATA &&
-        d.dataset_metadata?.source === 'umap' &&
-        d.dataset_metadata?.analysis_id === analysisId
-    );
-  }, [datasets, analysis, analysisId]);
-
-  const umapData = useMemo<UMAPPoint[] | null>(() => {
-    const rawUmapData = umapDataset?.dataset_metadata?.umap_data;
-    return isUMAPData(rawUmapData) ? rawUmapData : null;
-  }, [umapDataset]);
+  // Samples dataset — drives condition colouring of PCA/UMAP (and is the
+  // metadata source for the on-demand PCA/UMAP plots computed from the VST).
+  const samplesDataset = useMemo<Dataset | undefined>(() => {
+    const sid = analysis?.samples_dataset_id;
+    return sid ? datasets.find((d) => d.id === sid) : undefined;
+  }, [datasets, analysis]);
 
   // QC report embedded in VST dataset metadata (or normalized dataset)
   const qcReport = useMemo<QCReport | null>(() => {
@@ -160,6 +127,23 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     if (matId) return datasets.find((d) => d.id === matId);
     return undefined;
   }, [datasets, analysis]);
+
+  // Full {sample -> condition} map (all analysis conditions) for DEG patterns
+  const { data: sampleConditionMap } = useSampleConditionMap(samplesDataset);
+
+  // DEG sources for analysis-level pattern clustering: union across all comparisons
+  const degSources = useMemo(
+    () => analysisComparisons.map((c) => ({ dataset_id: c.dataset_id, comparison_name: c.name })),
+    [analysisComparisons]
+  );
+
+  // Number of distinct conditions (x-axis of the DEG-patterns module)
+  const conditionCount = useMemo(
+    () => new Set(Object.values(sampleConditionMap ?? {})).size,
+    [sampleConditionMap]
+  );
+
+  const hasPatterns = Boolean(matrixDataset) && degSources.length > 0;
 
   // ── Loading / error states ────────────────────────────────────────────────
 
@@ -202,23 +186,39 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           </Link>
         </div>
 
-        {/* Header */}
-        <div className="rounded-2xl shadow-sm px-6 py-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        {/* ── Analysis information card ── */}
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30">
-                <FlaskConical className="h-5 w-5 text-indigo-500" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'var(--sl-teal-light)' }}>
+                <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <div>
                 <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {new Date(analysis.created_at).toLocaleString('en-US')}
-                  {' · '}
-                  {analysisComparisons.length} comparison{analysisComparisons.length !== 1 ? 's' : ''}
+                  Created {new Date(analysis.created_at).toLocaleString('en-US')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {(() => {
+                const meta = matrixDataset?.dataset_metadata as
+                  | { source?: string; geo_accession?: string }
+                  | undefined;
+                if (meta?.source !== 'GEO' || !meta.geo_accession) return null;
+                return (
+                  <a
+                    href={`https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${meta.geo_accession}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
+                    className="flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                  >
+                    <Database className="h-3.5 w-3.5" />
+                    GEO · {meta.geo_accession}
+                  </a>
+                );
+              })()}
               <StatusBadge status={analysis.status} />
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}
@@ -229,66 +229,167 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          {/* Tab bar */}
-          <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
-            {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`shrink-0 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
-              >
-                {TAB_LABELS[tab]}
-                {tab === 'comparisons' && analysisComparisons.length > 0 && (
-                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
-                    {analysisComparisons.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content */}
-          <div className="p-6">
-            {/* ── Preprocessing ── */}
-            {activeTab === 'preprocessing' && (
-              <PreprocessingResults qcReport={qcReport} />
-            )}
-
-            {/* ── PCA ── */}
-            {activeTab === 'pca' && (
-              <PCAResults pcaData={pcaData} datasetId={vstDataset?.id} />
-            )}
-
-            {/* ── UMAP ── */}
-            {activeTab === 'umap' && (
-              <UMAPResults umapData={umapData} />
-            )}
-
-            {/* ── Comparisons ── */}
-            {activeTab === 'comparisons' && (
-              <ComparisonGrid
-                projectId={projectId}
-                analysisId={analysisId}
-                comparisons={analysisComparisons}
-                matrixDatasetId={matrixDataset?.id ?? null}
-              />
-            )}
-
-            {/* ── Parameters ── */}
-            {activeTab === 'params' && (
-              <AnalysisParams analysis={analysis} />
-            )}
+          {/* Stat tiles — 1px dividers via gap-px over a border-coloured background */}
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px border-t"
+            style={{ borderColor: 'var(--border)', background: 'var(--border)' }}
+          >
+            <StatTile label="Comparisons" value={String(analysisComparisons.length)} />
+            <StatTile label="Conditions" value={conditionCount > 0 ? String(conditionCount) : '—'} />
+            <StatTile
+              label="Samples kept"
+              value={qcReport ? `${qcReport.samples_passed}/${qcReport.total_input_samples}` : '—'}
+            />
+            <StatTile
+              label="Genes retained"
+              value={qcReport ? qcReport.genes_after_filter.toLocaleString() : '—'}
+            />
+            <StatTile label="DEA method" value={String(analysis.params?.de_method ?? 'all')} mono />
+            <StatTile label="FDR" value={String(analysis.params?.fdr ?? 0.05)} mono />
           </div>
         </div>
+
+        {/* ── Analysis modules (card launcher) ── */}
+        <section>
+          <SectionHeader title="Analysis modules" subtitle="Jump to a result view" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ModuleCard
+              icon={GitCompare}
+              title="Comparisons"
+              description="Differential-expression results per contrast"
+              metric={`${analysisComparisons.length} comparison${analysisComparisons.length !== 1 ? 's' : ''}`}
+              targetId="module-comparisons"
+            />
+            <ModuleCard
+              icon={GitBranch}
+              title="DEG patterns"
+              description="DEGs clustered by trajectory across conditions"
+              metric={hasPatterns ? `${degSources.length} × ${conditionCount || '—'} conditions` : undefined}
+              targetId="module-patterns"
+              disabled={!hasPatterns}
+              disabledHint="Needs an expression matrix"
+            />
+            <ModuleCard
+              icon={Network}
+              title="Sample structure"
+              description="PCA & UMAP of the normalized matrix"
+              metric={vstDataset ? 'PCA · UMAP' : undefined}
+              targetId="module-structure"
+              disabled={!vstDataset}
+              disabledHint="No normalized matrix"
+            />
+            <ModuleCard
+              icon={Activity}
+              title="Quality control"
+              description="Preprocessing & filtering summary"
+              metric={
+                qcReport
+                  ? `${Math.round((qcReport.samples_passed / Math.max(qcReport.total_input_samples, 1)) * 100)}% samples kept`
+                  : undefined
+              }
+              targetId="module-qc"
+              disabled={!qcReport}
+              disabledHint="No QC report"
+            />
+            <ModuleCard
+              icon={Settings2}
+              title="Parameters"
+              description="DEA method, thresholds & design"
+              metric="View settings"
+              targetId="module-params"
+              onActivate={() => setParamsOpen(true)}
+            />
+          </div>
+        </section>
+
+        {/* ── Comparisons (primary results) ── */}
+        <section id="module-comparisons" className="scroll-mt-6">
+          <SectionHeader
+            title="Comparisons"
+            subtitle={`${analysisComparisons.length} differential-expression comparison${analysisComparisons.length !== 1 ? 's' : ''} in this analysis`}
+          />
+          <ComparisonGrid
+            projectId={projectId}
+            analysisId={analysisId}
+            comparisons={analysisComparisons}
+            matrixDatasetId={matrixDataset?.id ?? null}
+          />
+        </section>
+
+        {/* ── DEG patterns (expression trajectories across all conditions) ── */}
+        {matrixDataset && degSources.length > 0 && (
+          <section id="module-patterns" className="scroll-mt-6">
+            <SectionHeader
+              title="DEG patterns"
+              subtitle="Significant DEGs (union across comparisons) clustered by expression trajectory across the analysis' conditions"
+            />
+            <DEGPatternsView
+              matrixDatasetId={matrixDataset.id}
+              degSources={degSources}
+              sampleConditionMap={sampleConditionMap}
+              label={analysis.name}
+            />
+          </section>
+        )}
+
+        {/* ── Sample structure (PCA / UMAP) ── */}
+        <section id="module-structure" className="scroll-mt-6">
+          <SectionHeader
+            title="Sample structure"
+            subtitle="How samples relate to each other, computed from the normalized matrix"
+            right={
+              <div className="inline-flex rounded-lg border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+                {(['pca', 'umap'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setStructureView(v)}
+                    className="rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors"
+                    style={
+                      structureView === v
+                        ? { background: 'var(--sl-teal)', color: '#fff' }
+                        : { background: 'transparent', color: 'var(--text-secondary)' }
+                    }
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          {vstDataset ? (
+            structureView === 'pca' ? (
+              <PCAPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+            ) : (
+              <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
+            )
+          ) : (
+            <div className="gl-card p-16 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+              No normalized matrix available for {structureView.toUpperCase()}.
+            </div>
+          )}
+        </section>
+
+        {/* ── Quality control ── */}
+        <section id="module-qc" className="scroll-mt-6">
+          <SectionHeader title="Quality control" subtitle="Preprocessing & filtering applied before analysis" />
+          <PreprocessingResults qcReport={qcReport} params={analysis.params} />
+        </section>
+
+        {/* ── Parameters (collapsible) ── */}
+        <details
+          id="module-params"
+          className="gl-card p-5 scroll-mt-6"
+          open={paramsOpen}
+          onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
+        >
+          <summary className="cursor-pointer font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Analysis parameters
+          </summary>
+          <div className="mt-4">
+            <AnalysisParams analysis={analysis} />
+          </div>
+        </details>
 
       </div>
     </div>
@@ -298,6 +399,80 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
+
+type IconType = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+
+function scrollToId(id: string) {
+  if (typeof window === 'undefined') return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
+function StatTile({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="px-4 py-3" style={{ background: 'var(--surface)' }}>
+      <div className="text-[10.5px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className={`mt-1 text-[15px] font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
+    </div>
+  );
+}
+
+function ModuleCard({
+  icon: Icon, title, description, metric, targetId, disabled, disabledHint, onActivate,
+}: {
+  icon: IconType;
+  title: string;
+  description: string;
+  metric?: string;
+  targetId: string;
+  disabled?: boolean;
+  disabledHint?: string;
+  onActivate?: () => void;
+}) {
+  const activate = () => {
+    if (disabled) return;
+    onActivate?.();
+    scrollToId(targetId);
+  };
+  return (
+    <button
+      type="button"
+      onClick={activate}
+      disabled={disabled}
+      aria-label={`Go to ${title}`}
+      className="group text-left rounded-2xl p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        opacity: disabled ? 0.55 : 1,
+        // @ts-expect-error CSS custom prop for focus ring colour
+        '--tw-ring-color': 'var(--sl-teal)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'var(--sl-teal-light)' }}>
+          <Icon className="h-4 w-4" style={{ color: 'var(--sl-teal-dark)' }} />
+        </div>
+        {!disabled && (
+          <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
+        )}
+      </div>
+      <h3 className="mt-3 font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <p className="mt-0.5 text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      {(disabled ? disabledHint : metric) && (
+        <div
+          className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium"
+          style={{ color: disabled ? 'var(--text-muted)' : 'var(--sl-teal-dark)' }}
+        >
+          {!disabled && <ChevronRight className="h-3 w-3" />}
+          {disabled ? disabledHint : metric}
+        </div>
+      )}
+    </button>
+  );
+}
 
 function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
   const styles: Record<SelfServiceAnalysisStatus, string> = {
@@ -326,9 +501,10 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
   const params = analysis.params ?? {};
 
   const rows: { label: string; value: string }[] = [
-    { label: 'DESeq2 design',        value: String(params.design ?? 'auto') },
+    { label: 'DEA method',           value: String(params.de_method ?? 'all') },
+    { label: 'Design formula',       value: String(params.design ?? 'auto') },
     { label: 'FDR threshold',        value: String(params.fdr ?? 0.05) },
-    { label: 'log2FC',               value: String(params.min_log2fc ?? 1.5) },
+    { label: 'Fold-change',          value: `${(2 ** Number(params.min_log2fc ?? Math.log2(1.5))).toFixed(2)}×` },
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },
@@ -338,7 +514,6 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>DESeq2 Parameters</h3>
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div

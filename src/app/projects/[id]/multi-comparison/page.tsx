@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
-import MultiComparisonVenn from '@/components/MultiComparisonVenn';
+import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
+import { buildComparisonRefs } from '@/lib/comparisonRefs';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -14,7 +15,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   const router = useRouter();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [degDataset, setDegDataset] = useState<Dataset | null>(null);
+  const [comparisons, setComparisons] = useState<ComparisonRef[]>([]);
+  const [pathDatasetId, setPathDatasetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,21 +27,17 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         const projectResponse = await api.get(`/projects/${projectId}`);
         setProject(projectResponse.data);
 
-        // Fetch datasets to find global DEG dataset
-        const datasetsResponse = await api.get(`/projects/${projectId}/datasets`);
-        const datasets = datasetsResponse.data;
+        // Fetch datasets and flatten comparisons across all DEG datasets
+        const datasetsResponse = await api.get(`/datasets/project/${projectId}`);
+        const datasets: Dataset[] = datasetsResponse.data;
 
-        // Find global DEG dataset (has multiple comparisons)
-        const globalDeg = datasets.find((d: Dataset) =>
-          d.type === 'DEG' &&
-          d.dataset_metadata?.comparisons &&
-          Object.keys(d.dataset_metadata.comparisons).length > 1
-        );
+        const refs = buildComparisonRefs(datasets);
 
-        if (!globalDeg) {
+        if (refs.length < 2) {
           setError('No multi-comparison DEG dataset found in this project');
         } else {
-          setDegDataset(globalDeg);
+          setComparisons(refs);
+          setPathDatasetId(refs[0].datasetId);
         }
       } catch (err) {
         console.error('Failed to fetch project data:', err);
@@ -64,7 +62,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  if (error || !degDataset) {
+  if (error || !pathDatasetId || comparisons.length < 2) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
@@ -119,7 +117,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MultiComparisonVenn
           projectId={projectId}
-          degDataset={degDataset}
+          pathDatasetId={pathDatasetId}
+          comparisons={comparisons}
         />
       </div>
     </div>

@@ -22,7 +22,7 @@ interface ApiErrorShape {
 const DEFAULT_PARAMS: AnalysisParams = {
   design: 'auto',
   fdr: 0.05,
-  min_log2fc: 1.5,
+  min_log2fc: Math.log2(1.5),
   min_reads: 100_000,
   min_genes: 500,
   min_count: 10,
@@ -156,12 +156,12 @@ export default function AnalysisLauncher({ projectId }: Props) {
             onChange={(v) => setParams((p) => ({ ...p, fdr: v }))}
           />
           <NumberParam
-            label="log2FC"
-            value={params.min_log2fc}
+            label="Fold-change"
+            value={Math.round(2 ** params.min_log2fc * 100) / 100}
             step={0.1}
-            min={0}
-            max={5}
-            onChange={(v) => setParams((p) => ({ ...p, min_log2fc: v }))}
+            min={1}
+            max={10}
+            onChange={(v) => setParams((p) => ({ ...p, min_log2fc: Math.log2(v) }))}
           />
           <NumberParam
             label="Min reads / sample"

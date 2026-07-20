@@ -150,25 +150,29 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       return map;
   }, [uniqueCategories, palette]);
 
-  if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating UMAP...</div>;
-  if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
+  if (isLoading) return <div className="flex h-64 items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>Calculating UMAP…</div>;
+  if (error) return <div className="flex h-64 items-center justify-center p-4 text-center text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</div>;
   if (!typedUmapData) return null;
 
+  const nSamples = typedUmapData.data.length;
+  const read = `A non-linear projection of ${nSamples} samples${selectedColorColumn ? `, coloured by ${selectedColorColumn}` : ''}. Points that sit close together have similar overall expression.`;
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Sample UMAP</h3>
-        <div className="flex items-center gap-2">
+    <div className="gl-card p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Sample UMAP</h3>
+        <div className="flex flex-wrap items-center gap-2">
           {metadataColumns.length > 0 && (
-              <select
-                  value={selectedColorColumn}
-                  onChange={(e) => setSelectedColorColumn(e.target.value)}
-                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-primary focus:ring-brand-primary border p-1 text-gray-900"
-              >
-                  {metadataColumns.map(col => (
-                      <option key={col} value={col}>Color by: {col}</option>
-                  ))}
-              </select>
+            <select
+              value={selectedColorColumn}
+              onChange={(e) => setSelectedColorColumn(e.target.value)}
+              className="rounded-lg border p-1.5 text-sm"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+            >
+              {metadataColumns.map((col) => (
+                <option key={col} value={col}>Color by: {col}</option>
+              ))}
+            </select>
           )}
           <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
           <AIChartAssistant
@@ -176,7 +180,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             chartType="umap"
             contextKey="umap-default"
             context={{
-              n_samples: typedUmapData.data.length,
+              n_samples: nSamples,
               n_clusters: Array.from(new Set(plotData.map((d) => d.cluster ?? 0))).length,
               cluster_sizes: [],
               sample_groups: Array.from(new Set(plotData.map((d) => d.category ?? 'Unknown'))),
@@ -186,65 +190,63 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
         </div>
       </div>
 
-      <div>
-        <ResponsiveContainer width="100%" height={420}>
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-                type="number" 
-                dataKey="x" 
-                name="UMAP1" 
-                label={{ value: 'UMAP 1', position: 'bottom', offset: 0, fill: '#374151' }} 
-                tick={{ fill: '#374151' }}
-                stroke="#9ca3af"
-            />
-            <YAxis 
-                type="number" 
-                dataKey="y" 
-                name="UMAP2" 
-                label={{ value: 'UMAP 2', angle: -90, position: 'left', fill: '#374151' }} 
-                tick={{ fill: '#374151' }}
-                stroke="#9ca3af"
-            />
-            <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }} 
-                content={({ active, payload }) => {
+      {/* Plain-language read */}
+      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+        <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
+      </div>
+
+      <ResponsiveContainer width="100%" height={440}>
+        <ScatterChart margin={{ top: 16, right: 16, bottom: 56, left: 16 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="UMAP1"
+            label={{ value: 'UMAP 1', position: 'bottom', offset: 0, fill: 'var(--text-secondary)' }}
+            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            stroke="var(--border-strong)"
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            name="UMAP2"
+            label={{ value: 'UMAP 2', angle: -90, position: 'left', fill: 'var(--text-secondary)' }}
+            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            stroke="var(--border-strong)"
+          />
+          <Tooltip
+            cursor={{ strokeDasharray: '3 3' }}
+            content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as UmapDataPoint;
                 return (
-                  <div className="bg-white p-2 border border-gray-200 shadow-sm rounded">
-                    <p className="font-medium text-gray-900">{data.sample}</p>
-                    {data.category && <p className="text-xs text-gray-500">{selectedColorColumn}: {data.category}</p>}
-                    <p className="text-sm text-gray-500">UMAP1: {data.x.toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">UMAP2: {data.y.toFixed(2)}</p>
+                  <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
+                    {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>UMAP1: {data.x.toFixed(2)}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>UMAP2: {data.y.toFixed(2)}</p>
                   </div>
                 );
               }
               return null;
-            }} />
-            <Legend 
-              verticalAlign="bottom" 
-              align="center"
-              wrapperStyle={{ 
-                paddingTop: '20px',
-                color: '#374151'
-              }} 
-            />
-            {uniqueCategories.length > 0 ? (
-                uniqueCategories.map((cat) => (
-                    <Scatter 
-                        key={cat as string} 
-                        name={cat as string} 
-                  data={plotData.filter((d) => d.category === cat)} 
-                        fill={categoryColorMap[cat as string]} 
-                    />
-                ))
-            ) : (
-              <Scatter name="Samples" data={typedUmapData.data} fill="#2A2E5B" />
-            )}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
+            }}
+          />
+          <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px', color: 'var(--text-secondary)' }} />
+          {uniqueCategories.length > 0 ? (
+            uniqueCategories.map((cat) => (
+              <Scatter key={cat as string} name={cat as string} data={plotData.filter((d) => d.category === cat)} fill={categoryColorMap[cat as string]} shape={UmapDot} />
+            ))
+          ) : (
+            <Scatter name="Samples" data={typedUmapData.data} fill="var(--dc-indigo)" shape={UmapDot} />
+          )}
+        </ScatterChart>
+      </ResponsiveContainer>
     </div>
   );
+}
+
+/** Point renderer for the UMAP scatter (typed to avoid `any`). */
+function UmapDot(props: { cx?: number; cy?: number; fill?: string }) {
+  return <circle cx={props.cx} cy={props.cy} r={5.5} fill={props.fill} fillOpacity={0.85} stroke="var(--surface)" strokeWidth={1} />;
 }

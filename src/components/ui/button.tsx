@@ -8,21 +8,21 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'default', size = 'default', ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-semibold ' +
+      'inline-flex items-center justify-center gap-1.5 rounded-[11px] text-sm font-semibold ' +
       'transition-all duration-150 select-none ' +
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 ' +
       'disabled:pointer-events-none disabled:opacity-50';
 
     const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
-      // Primary: SciLicium purple — authoritative, structural
+      // Primary: indigo — the redesign's primary CTA, with a soft indigo glow
       default:
-        'bg-brand-purple text-white shadow-sm ' +
+        'bg-brand-purple text-white shadow-[0_6px_16px_-6px_rgba(79,70,229,0.5)] ' +
         'hover:bg-brand-purple-dark',
 
-      // Accent: SciLicium teal — interactive, key highlights
+      // Accent: emerald — brand / key highlights
       teal:
-        'bg-brand-teal text-gray-900 shadow-sm ' +
-        'hover:bg-brand-teal-dark hover:text-white',
+        'bg-brand-teal text-white shadow-[0_6px_16px_-6px_rgba(15,157,107,0.45)] ' +
+        'hover:bg-brand-teal-dark',
 
       // Destructive: SciLicium red
       destructive:

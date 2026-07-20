@@ -19,91 +19,112 @@ export interface QCReport {
   has_batch_correction: boolean;
 }
 
-interface PreprocessingResultsProps {
-  qcReport: QCReport | null;
+/** Loose shape of analysis.params — used to show thresholds when no QC report exists. */
+export interface AnalysisParamsLike {
+  min_reads?: unknown;
+  min_genes?: unknown;
+  min_count?: unknown;
+  min_reps?: unknown;
+  design?: unknown;
 }
 
-export default function PreprocessingResults({ qcReport }: PreprocessingResultsProps) {
-  if (!qcReport) {
+interface PreprocessingResultsProps {
+  qcReport: QCReport | null;
+  params?: AnalysisParamsLike | null;
+}
+
+export default function PreprocessingResults({ qcReport, params }: PreprocessingResultsProps) {
+  // Thresholds come from the QC report when present, otherwise from the analysis
+  // params. (The aggregate per-sample QC counts are not persisted by the pipeline,
+  // so the sample/gene stat cards only render when a real qc_report exists.)
+  const thresholds = qcReport
+    ? {
+        minReads: qcReport.min_reads_threshold.toLocaleString(),
+        minGenes: qcReport.min_genes_threshold.toLocaleString(),
+        minCount: qcReport.min_count_threshold.toString(),
+        minReps: qcReport.min_reps_threshold.toString(),
+        design: qcReport.design_formula,
+        batch: qcReport.has_batch_correction as boolean | undefined,
+      }
+    : params
+      ? {
+          minReads: Number(params.min_reads ?? 10).toLocaleString(),
+          minGenes: Number(params.min_genes ?? 200).toLocaleString(),
+          minCount: String(params.min_count ?? 5),
+          minReps: String(params.min_reps ?? 2),
+          design: String(params.design ?? 'auto'),
+          batch: undefined as boolean | undefined,
+        }
+      : null;
+
+  if (!qcReport && !thresholds) {
     return (
-      <div className="rounded-lg border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 p-6 text-center">
-        <AlertCircle className="mx-auto h-8 w-8 text-yellow-400 mb-2" />
-        <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">
-          QC report not available for this analysis.
-        </p>
-        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-          Re-run the analysis to generate preprocessing metrics.
-        </p>
+      <div className="rounded-2xl border p-6 text-center" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
+        <AlertCircle className="mx-auto mb-2 h-8 w-8" style={{ color: 'var(--sl-red)' }} />
+        <p className="text-sm font-medium" style={{ color: 'var(--sl-red-dark)' }}>QC report not available for this analysis.</p>
       </div>
     );
   }
 
-  const filterPct = qcReport.genes_before_filter > 0
-    ? ((qcReport.genes_removed / qcReport.genes_before_filter) * 100).toFixed(1)
-    : '0';
+  const filterPct =
+    qcReport && qcReport.genes_before_filter > 0
+      ? ((qcReport.genes_removed / qcReport.genes_before_filter) * 100).toFixed(1)
+      : '0';
+  const read = qcReport
+    ? `${qcReport.samples_passed} of ${qcReport.total_input_samples} samples passed QC · ${qcReport.genes_after_filter.toLocaleString()} of ${qcReport.genes_before_filter.toLocaleString()} genes retained (${filterPct}% filtered out).`
+    : 'Filtering thresholds applied to this run. Detailed per-sample QC counts were not recorded for this analysis.';
 
   return (
-    <div className="space-y-6">
-      {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={<Users className="h-5 w-5 text-indigo-500" />}
-          label="Samples Input"
-          value={qcReport.total_input_samples}
-          bg="bg-indigo-50 dark:bg-indigo-900/20"
-        />
-        <StatCard
-          icon={<CheckCircle className="h-5 w-5 text-green-500" />}
-          label="Samples Passed"
-          value={qcReport.samples_passed}
-          bg="bg-green-50 dark:bg-green-900/20"
-        />
-        <StatCard
-          icon={<XCircle className="h-5 w-5 text-red-500" />}
-          label="Samples Removed"
-          value={qcReport.samples_removed}
-          bg="bg-red-50 dark:bg-red-900/20"
-        />
-        <StatCard
-          icon={<Dna className="h-5 w-5 text-purple-500" />}
-          label="Genes Kept"
-          value={`${qcReport.genes_after_filter.toLocaleString()} / ${qcReport.genes_before_filter.toLocaleString()}`}
-          sub={`${filterPct}% removed`}
-          bg="bg-purple-50 dark:bg-purple-900/20"
-        />
+    <div className="space-y-5">
+      {/* Plain-language read */}
+      <div className="flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+        <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
-      {/* Filtering thresholds */}
-      <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Filtering Thresholds Applied</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ThresholdRow label="Min reads / sample" value={qcReport.min_reads_threshold.toLocaleString()} />
-          <ThresholdRow label="Min genes detected / sample" value={qcReport.min_genes_threshold.toLocaleString()} />
-          <ThresholdRow label="Min count / gene" value={qcReport.min_count_threshold.toString()} />
-          <ThresholdRow label="Min replicates with min count" value={qcReport.min_reps_threshold.toString()} />
-          <ThresholdRow
-            label="DESeq2 design formula"
-            value={qcReport.design_formula}
-            mono
-          />
-          <ThresholdRow
-            label="Batch correction"
-            value={qcReport.has_batch_correction ? 'Enabled' : 'Disabled'}
-            highlight={qcReport.has_batch_correction ? 'green' : 'gray'}
+      {/* Summary cards — only when the aggregate QC counts exist */}
+      {qcReport && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard icon={<Users className="h-5 w-5" />} tone="var(--dc-indigo)" label="Samples input" value={qcReport.total_input_samples} />
+          <StatCard icon={<CheckCircle className="h-5 w-5" />} tone="var(--dc-up-dark)" label="Samples passed" value={qcReport.samples_passed} />
+          <StatCard icon={<XCircle className="h-5 w-5" />} tone="var(--dc-down-dark)" label="Samples removed" value={qcReport.samples_removed} />
+          <StatCard
+            icon={<Dna className="h-5 w-5" />}
+            tone="var(--sl-violet)"
+            label="Genes kept"
+            value={`${qcReport.genes_after_filter.toLocaleString()} / ${qcReport.genes_before_filter.toLocaleString()}`}
+            sub={`${filterPct}% removed`}
           />
         </div>
-      </div>
+      )}
+
+      {/* Filtering thresholds */}
+      {thresholds && (
+        <div className="gl-card p-5">
+          <h3 className="mb-3 font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>Filtering thresholds applied</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ThresholdRow label="Min reads / sample" value={thresholds.minReads} />
+            <ThresholdRow label="Min genes detected / sample" value={thresholds.minGenes} />
+            <ThresholdRow label="Min count / gene" value={thresholds.minCount} />
+            <ThresholdRow label="Min replicates with min count" value={thresholds.minReps} />
+            <ThresholdRow label="DESeq2 design formula" value={thresholds.design} mono />
+            {thresholds.batch !== undefined && (
+              <ThresholdRow label="Batch correction" value={thresholds.batch ? 'Enabled' : 'Disabled'} highlight={thresholds.batch ? 'green' : 'gray'} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Removed samples */}
-      {qcReport.removed_sample_ids && qcReport.removed_sample_ids.length > 0 && (
-        <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-5">
-          <h3 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2 flex items-center gap-2">
+      {qcReport && qcReport.removed_sample_ids && qcReport.removed_sample_ids.length > 0 && (
+        <div className="rounded-2xl border p-5" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>
             <XCircle className="h-4 w-4" />
-            Removed Samples ({qcReport.removed_sample_ids.length})
+            Removed samples ({qcReport.removed_sample_ids.length})
           </h3>
           <div className="flex flex-wrap gap-2">
             {qcReport.removed_sample_ids.map((s) => (
-              <span key={s} className="rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
+              <span key={s} className="rounded-full px-2.5 py-0.5 font-mono text-xs font-medium" style={{ background: 'color-mix(in oklab, var(--sl-red) 14%, var(--surface))', color: 'var(--sl-red-dark)' }}>
                 {s}
               </span>
             ))}
@@ -119,22 +140,27 @@ function StatCard({
   label,
   value,
   sub,
-  bg,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
   sub?: string;
-  bg: string;
+  tone: string;
 }) {
   return (
-    <div className={`rounded-xl border border-gray-100 dark:border-gray-700 ${bg} p-4`}>
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+    <div className="gl-card p-4">
+      <div className="mb-2 flex items-center gap-2.5">
+        <span
+          className="grid h-9 w-9 place-items-center rounded-[10px]"
+          style={{ background: `color-mix(in oklab, ${tone} 12%, var(--surface))`, color: tone }}
+        >
+          {icon}
+        </span>
+        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       </div>
-      <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
-      {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{sub}</p>}
+      <p className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      {sub && <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
     </div>
   );
 }
@@ -151,16 +177,18 @@ function ThresholdRow({
   highlight?: 'green' | 'gray';
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 px-3 py-2">
-      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+    <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: 'var(--surface-secondary)' }}>
+      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       <span
-        className={`text-xs font-semibold ${mono ? 'font-mono' : ''} ${
-          highlight === 'green'
-            ? 'text-green-700 dark:text-green-400'
-            : highlight === 'gray'
-            ? 'text-gray-400 dark:text-gray-500'
-            : 'text-gray-800 dark:text-gray-100'
-        }`}
+        className={`text-xs font-semibold ${mono ? 'font-mono' : ''}`}
+        style={{
+          color:
+            highlight === 'green'
+              ? 'var(--dc-up-dark)'
+              : highlight === 'gray'
+                ? 'var(--text-muted)'
+                : 'var(--text-primary)',
+        }}
       >
         {value}
       </span>

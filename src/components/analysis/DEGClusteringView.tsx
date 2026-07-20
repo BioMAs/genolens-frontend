@@ -5,9 +5,22 @@ import dynamic from 'next/dynamic';
 import { Dataset } from '@/types';
 import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData } from '@/components/heatmap/useHeatmapData';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import { getPalette } from '@/utils/chartPalettes';
 import { Layout, PlotData } from 'plotly.js';
+
+// Build a Plotly discrete (stepped) colorscale so each category maps to a flat color.
+// Category i is encoded as z = (i + 0.5) / n, which lands in the middle of its band.
+function discreteColorscale(colors: string[]): [number, string][] {
+  const n = colors.length;
+  const scale: [number, string][] = [];
+  for (let i = 0; i < n; i++) {
+    scale.push([i / n, colors[i]]);
+    scale.push([(i + 1) / n, colors[i]]);
+  }
+  return scale;
+}
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -62,6 +75,7 @@ export default function DEGClusteringView({
   matrixDataset,
   sampleIds,
   comparisonName,
+  sampleConditionMap,
 }: DEGClusteringViewProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
   const [colorblindMode, setColorblindMode] = useState(false);
@@ -153,6 +167,45 @@ export default function DEGClusteringView({
     })
   );
 
+  // ---- Condition annotation track (above the heatmap columns) ----
+  // Uses the sample→condition map already resolved by ComparisonDetail.
+  const condPalette = getPalette(colorblindMode ? 'colorblind' : 'standard').categorical;
+  const sampleConditions = plotData.x.map((s) => sampleConditionMap?.[s]);
+  const hasConditions = sampleConditions.some((c) => c != null);
+  const uniqueConds = Array.from(new Set(sampleConditions.filter((c): c is string => c != null)));
+  const condColors = uniqueConds.map((_, i) => condPalette[i % condPalette.length]);
+  const condIndex = new Map(uniqueConds.map((c, i) => [c, i]));
+  // z encoded to the middle of each discrete band; NaN for samples without a condition
+  const condTrackZ = [
+    sampleConditions.map((c) =>
+      c != null && condIndex.has(c) ? (condIndex.get(c)! + 0.5) / Math.max(uniqueConds.length, 1) : NaN
+    ),
+  ];
+
+  // ---- CSV export of the (clustered) matrix in display order ----
+  const exportMatrixCSV = () => {
+    const header = ['gene', 'logFC', 'padj', ...plotData.x];
+    const lines = [header.join(',')];
+    mainZ.forEach((row, i) => {
+      const geneId = plotData.y[i];
+      const meta = geneMetadata.get(geneId);
+      const cells = [
+        geneId,
+        meta ? meta.logFC : plotData.logFCs[i],
+        meta ? meta.padj : '',
+        ...row.map((v) => (Number.isFinite(v) ? v : '')),
+      ];
+      lines.push(cells.join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `deg_heatmap_${comparisonName}_${displayMode}.csv`.replace(/[^a-zA-Z0-9._-]/g, '_');
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Multi-line title matching the reference figure style
   const dataLabel =
     displayMode === 'expression'
@@ -220,6 +273,14 @@ export default function DEGClusteringView({
           </span>
         )}
 
+        <button
+          onClick={exportMatrixCSV}
+          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+          title="Export the clustered matrix (genes × samples, in display order) as CSV"
+        >
+          <Download className="w-3.5 h-3.5" /> Export matrix (.csv)
+        </button>
+
         <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
       </div>
 
@@ -230,6 +291,24 @@ export default function DEGClusteringView({
       >
         <Plot
           data={[
+            // ── Top track: sample condition annotation ────────────────────
+            ...(hasConditions
+              ? [{
+                  type: 'heatmap',
+                  z: condTrackZ,
+                  x: plotData.x,
+                  y: ['Condition'],
+                  colorscale: discreteColorscale(condColors),
+                  zmin: 0,
+                  zmax: 1,
+                  showscale: false,
+                  hovertext: [plotData.x.map((s) => `${s}<br>Condition: ${sampleConditionMap?.[s] ?? '—'}`)],
+                  hoverinfo: 'text',
+                  xaxis: 'x',
+                  yaxis: 'y2',
+                } as unknown as Partial<PlotData>]
+              : []),
+
             // ── Left sidebar: UP/DOWN status ──────────────────────────────
             {
               type: 'heatmap',
@@ -295,6 +374,15 @@ export default function DEGClusteringView({
               showticklabels: false,
               ticks: '',
               showgrid: false,
+              domain: hasConditions ? [0.0, 0.93] : [0.0, 1.0],
+            },
+            // Condition annotation track (thin row at the top, aligned to columns)
+            yaxis2: {
+              domain: [0.95, 1.0],
+              showticklabels: false,
+              ticks: '',
+              showgrid: false,
+              fixedrange: true,
             },
             title: {
               text: titleText,
@@ -331,6 +419,18 @@ export default function DEGClusteringView({
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3A7D44' }} />
           <span>UP-regulated</span>
         </div>
+        {hasConditions && (
+          <>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-500">Condition:</span>
+            {uniqueConds.map((c, i) => (
+              <div key={c} className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: condColors[i] }} />
+                <span>{c}</span>
+              </div>
+            ))}
+          </>
+        )}
         <span className="text-gray-300">|</span>
         <span className="text-gray-500">
           Comparison: <strong className="text-gray-700">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs

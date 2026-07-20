@@ -54,6 +54,34 @@ export interface DatasetQueryResponse {
   returned_rows: number;
 }
 
+export interface GEODataset {
+  uid: string;
+  accession: string;
+  title: string;
+  summary: string;
+  organism: string;
+  samples_n: number;
+  platform: string;
+  type: string;
+  pub_date: string;
+  geo_link: string;
+}
+
+export interface GeoSearchResponse {
+  total: number;
+  ids: string[];
+  datasets: GEODataset[];
+  query: string;
+  db: string;
+}
+
+export interface GeoImportResponse {
+  matrix_dataset_id: string;
+  samples_dataset_id: string;
+  status: DatasetStatus;
+  message: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -63,8 +91,19 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
+  // Quota fields from /users/me (UserSelf)
+  comparisons_used_this_month?: number;
+  comparisons_quota?: number | null;
+  comparisons_remaining?: number | null;
+  max_projects?: number | null;
+  max_datasets_per_project?: number | null;
+  can_use_ai?: boolean;
+  can_use_multi_comparison?: boolean;
+  can_export_advanced?: boolean;
   /** Cosmetics add-on module, unlocked per-user by an admin (from /users/me). */
   has_cosmetics_module?: boolean;
+  /** Report customization add-on module, unlocked per-user by an admin (from /users/me). */
+  has_report_customization?: boolean;
 }
 
 export interface EnrichmentResult {
@@ -147,6 +186,7 @@ export interface AnalysisParams {
   threads: number;
   enrichment_databases?: string[] | null;
   species?: string;
+  de_method?: 'deseq2' | 'limma' | 'edger' | 'all';
 }
 
 export interface ProgressLogEntry {

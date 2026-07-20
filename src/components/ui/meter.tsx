@@ -35,7 +35,7 @@ function Meter({
       className={`overflow-hidden rounded ${className}`}
       style={{
         height,
-        background: 'var(--surface-raised)',
+        background: 'var(--n-100)',
         ...style,
       }}
       {...props}

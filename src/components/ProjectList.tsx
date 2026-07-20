@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useProjects, usePrefetchProject } from '@/hooks/useProjects';
 import { useProjectDashboardStats } from '@/hooks/useProjectDashboardStats';
-import { Folder, Plus, Calendar, ChevronRight, AlertCircle, Database, GitCompare } from 'lucide-react';
+import { Folder, Plus, Calendar, ChevronRight, AlertCircle, Database, GitCompare, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Project } from '@/types';
+import DeleteProjectModal from './DeleteProjectModal';
 
 function ProjectCardStats({ project }: { project: Project }) {
   const { data: stats } = useProjectDashboardStats(project.id);
@@ -36,6 +38,7 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
   const { data, isLoading, error } = useProjects();
   const { prefetchProject } = usePrefetchProject();
   const projects = data?.items || [];
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   /* ── Loading ──────────────────────────────────────────────── */
   if (isLoading) {
@@ -136,10 +139,23 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
                 {project.name}
               </h3>
             </div>
-            <ChevronRight
-              className="h-4 w-4 flex-shrink-0 mt-0.5 transition-transform duration-150 group-hover:translate-x-0.5"
-              style={{ color: 'var(--text-muted)' }}
-            />
+            <div className="flex items-center flex-shrink-0 mt-0.5">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setProjectToDelete(project);
+                }}
+                className="opacity-0 group-hover:opacity-100 rounded-md p-1 transition-opacity duration-150 hover:bg-red-50"
+                title="Supprimer le projet"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+              </button>
+              <ChevronRight
+                className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
+                style={{ color: 'var(--text-muted)' }}
+              />
+            </div>
           </div>
 
           {/* Description */}
@@ -169,6 +185,10 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
           </div>
         </Link>
       ))}
+      <DeleteProjectModal
+        project={projectToDelete}
+        onClose={() => setProjectToDelete(null)}
+      />
     </div>
   );
 }

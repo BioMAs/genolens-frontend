@@ -1,41 +1,74 @@
 @import "tailwindcss";
 
 /* ============================================================
-   GenoLens V2 — SciLicium Design System
+   GenoLens V2 — "Skin Stack" Design System (SciLicium)
+   ------------------------------------------------------------
+   The --sl-teal* / --sl-purple* token names are kept for
+   backwards-compat, but remapped to the redesign palette:
+     --sl-teal*   → emerald  #0f9d6b  (brand · active nav · success)
+     --sl-purple* → indigo   #4f46e5  (primary CTA · links)
+     --sl-violet* → violet   #8b5cf6  (AI / accent)
    ============================================================ */
 
-/* ---- SciLicium Brand Tokens ---- */
+/* ---- Brand Tokens ---- */
 :root {
-  /* Primary palette */
-  --sl-teal:          #42e2ba;
-  --sl-teal-dark:     #34b596;
-  --sl-teal-light:    #edfaf6;
-  --sl-teal-muted:    #c8f0e5;
-  --sl-purple:        #5d5892;
-  --sl-purple-dark:   #4a4576;
-  --sl-purple-light:  #f0eff8;
-  --sl-purple-muted:  #dddcf2;
-  --sl-red:           #ff5f5f;
-  --sl-red-light:     #fff2f2;
-  --sl-red-muted:     #ffd6d6;
+  /* Brand green (emerald) — brand, active nav, success, verdicts */
+  --sl-teal:          #0f9d6b;
+  --sl-teal-dark:     #0f766e;
+  --sl-teal-light:    #e7f7ef;
+  --sl-teal-muted:    #c7f0dc;
+  /* Primary CTA (indigo) */
+  --sl-purple:        #4f46e5;
+  --sl-purple-dark:   #4338ca;
+  --sl-purple-light:  #eef0ff;
+  --sl-purple-muted:  #dce0fb;
+  /* AI / accent (violet) */
+  --sl-violet:        #8b5cf6;
+  --sl-violet-dark:   #7c3aed;
+  --sl-violet-light:  #faf7ff;
+  --sl-violet-muted:  #ece9fb;
+  /* Danger / down-regulated (red) */
+  --sl-red:           #ef4444;
+  --sl-red-dark:      #dc2626;
+  --sl-red-light:     #fdeaea;
+  --sl-red-muted:     #fca5a5;
 
-  /* Neutral scale — light mode */
+  /* Data / condition & direction palette (used by charts + novel viz) */
+  --dc-indigo:  #6366f1;
+  --dc-pink:    #ec4899;
+  --dc-green:   #10b981;
+  --dc-amber:   #f59e0b;
+  --dc-up:      #22c55e;
+  --dc-up-dark: #16a34a;
+  --dc-down:    #ef4444;
+  --dc-down-dark: #dc2626;
+  --dc-skin-barrier: #0284c7;
+  --dc-skin-barrier-fill: #38bdf8;
+  --dc-skin-epidermis: #0f9d6b;
+  --dc-skin-dermis: #db2777;
+
+  /* Neutral scale — light mode (mockup grays) */
   --n-0:   #ffffff;
-  --n-25:  #fafafa;
-  --n-50:  #f6f7f8;
-  --n-100: #edf0f3;
-  --n-200: #dde2e8;
-  --n-300: #c5cdd8;
-  --n-400: #9baab8;
-  --n-500: #6b7a8d;
+  --n-25:  #fbfcfe;
+  --n-50:  #f4f5f8;
+  --n-100: #edeff2;
+  --n-200: #e2e5ea;
+  --n-300: #c7ccd4;
+  --n-400: #8b93a0;
+  --n-500: #5b6472;
   --n-600: #4a5568;
   --n-700: #2d3748;
-  --n-800: #1a202c;
-  --n-900: #0f1117;
+  --n-800: #131629;
+  --n-900: #0b0e1c;
 
   /* App shell dimensions */
-  --sidebar-width:   220px;
-  --topbar-height:   52px;
+  --sidebar-width:   236px;
+  --topbar-height:   64px;
+
+  /* Radii */
+  --radius-card:     18px;
+  --radius-panel:    14px;
+  --radius-control:  11px;
 
   /* Semantic — light mode */
   --background:          var(--n-0);
@@ -43,17 +76,18 @@
   --text-primary:        var(--n-800);
   --text-secondary:      var(--n-500);
   --text-muted:          var(--n-400);
-  --border:              var(--n-200);
+  --border:              var(--n-100);
   --border-subtle:       var(--n-100);
+  --border-strong:       var(--n-200);
   --surface:             var(--n-0);
   --surface-secondary:   var(--n-50);
   --surface-raised:      var(--n-0);
   --hover-overlay:       var(--n-50);
   --app-bg:              var(--n-50);
   --sidebar-bg:          var(--n-0);
-  --sidebar-border:      var(--n-200);
+  --sidebar-border:      var(--n-100);
   --topbar-bg:           var(--n-0);
-  --topbar-border:       var(--n-200);
+  --topbar-border:       var(--n-100);
 }
 
 /* ---- Dark mode overrides ---- */
@@ -64,12 +98,14 @@
   --n-100: #222838;
   --n-200: #2d3550;
 
-  --sl-teal-light:   rgba(66, 226, 186, 0.09);
-  --sl-teal-muted:   rgba(66, 226, 186, 0.14);
-  --sl-purple-light: rgba(93, 88, 146, 0.12);
-  --sl-purple-muted: rgba(93, 88, 146, 0.18);
-  --sl-red-light:    rgba(255, 95, 95, 0.09);
-  --sl-red-muted:    rgba(255, 95, 95, 0.14);
+  --sl-teal-light:   rgba(15, 157, 107, 0.14);
+  --sl-teal-muted:   rgba(15, 157, 107, 0.22);
+  --sl-purple-light: rgba(79, 70, 229, 0.16);
+  --sl-purple-muted: rgba(79, 70, 229, 0.24);
+  --sl-violet-light: rgba(139, 92, 246, 0.14);
+  --sl-violet-muted: rgba(139, 92, 246, 0.22);
+  --sl-red-light:    rgba(239, 68, 68, 0.12);
+  --sl-red-muted:    rgba(239, 68, 68, 0.18);
 
   --background:          #0c1018;
   --foreground:          #dde4ee;
@@ -78,6 +114,7 @@
   --text-muted:          #5a6a82;
   --border:              #1f2840;
   --border-subtle:       #171e30;
+  --border-strong:       #2d3550;
   --surface:             #131720;
   --surface-secondary:   #171e2c;
   --surface-raised:      #1c2438;
@@ -93,12 +130,13 @@
    Tailwind v4 Theme Registration
    ============================================================ */
 @theme inline {
-  /* Fonts */
+  /* Fonts — slots keep historical names (see layout.tsx):
+     --font-sans = Geist (body), --font-display = Poppins (headings) */
   --font-sans:    var(--font-dm-sans);
   --font-display: var(--font-syne);
   --font-mono:    var(--font-geist-mono);
 
-  /* SciLicium brand colors — static (same light/dark) */
+  /* Brand colors — static (same light/dark) */
   --color-brand-teal:         var(--sl-teal);
   --color-brand-teal-dark:    var(--sl-teal-dark);
   --color-brand-teal-light:   var(--sl-teal-light);
@@ -106,13 +144,23 @@
   --color-brand-purple:       var(--sl-purple);
   --color-brand-purple-dark:  var(--sl-purple-dark);
   --color-brand-purple-light: var(--sl-purple-light);
+  --color-brand-violet:       var(--sl-violet);
+  --color-brand-violet-dark:  var(--sl-violet-dark);
   --color-brand-red:          var(--sl-red);
+  --color-brand-red-dark:     var(--sl-red-dark);
   --color-brand-red-light:    var(--sl-red-light);
 
-  /* Backwards-compat aliases used by older components */
+  /* Backwards-compat aliases used by older components.
+     primary = indigo CTA, secondary/accent = emerald brand. */
   --color-brand-primary:      var(--sl-purple);
   --color-brand-secondary:    var(--sl-teal);
   --color-brand-accent:       var(--sl-teal-dark);
+
+  /* Data / direction palette */
+  --color-dc-up:              var(--dc-up);
+  --color-dc-up-dark:         var(--dc-up-dark);
+  --color-dc-down:            var(--dc-down);
+  --color-dc-down-dark:       var(--dc-down-dark);
 
   /* Semantic aliases as Tailwind tokens */
   --color-surface:            var(--surface);
@@ -137,7 +185,7 @@ body {
   height: 100%;
   background: var(--background);
   color: var(--text-primary);
-  font-family: var(--font-dm-sans, 'DM Sans', system-ui, sans-serif);
+  font-family: var(--font-dm-sans, 'Geist', system-ui, sans-serif);
   font-size: 0.9375rem;
   line-height: 1.6;
   transition: background-color 0.2s ease, color 0.15s ease;
@@ -145,14 +193,14 @@ body {
 
 /* Display font utility (Tailwind also registers font-display via @theme) */
 .font-display {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
 }
 
 /* ============================================================
    Selection & Focus
    ============================================================ */
 ::selection {
-  background: rgba(66, 226, 186, 0.22);
+  background: rgba(15, 157, 107, 0.20);
   color: var(--text-primary);
 }
 
@@ -290,7 +338,7 @@ body {
   border-bottom: 1px solid var(--topbar-border);
   display: flex;
   align-items: center;
-  padding: 0 1.25rem;
+  padding: 0 1.75rem;
   gap: 1rem;
 }
 
@@ -311,16 +359,16 @@ body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.5625rem;
-  padding: 0.4375rem 0.75rem;
+  gap: 0.6875rem;
+  padding: 0.5625rem 0.75rem;
   margin: 0 0.375rem;
-  border-radius: 7px;
+  border-radius: 11px;
   font-size: 0.84375rem;
   font-weight: 500;
   color: var(--text-secondary);
@@ -345,14 +393,14 @@ body {
 }
 
 .dark .nav-item.active {
-  background: rgba(66, 226, 186, 0.09);
-  color: var(--sl-teal);
-  border-color: rgba(66, 226, 186, 0.18);
+  background: rgba(15, 157, 107, 0.14);
+  color: #34d39e;
+  border-color: rgba(15, 157, 107, 0.22);
 }
 
 .nav-icon {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
@@ -370,7 +418,7 @@ body {
 .gl-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 16px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -380,23 +428,23 @@ body {
 
 .gl-card-interactive:hover {
   border-color: var(--sl-teal);
-  box-shadow: 0 0 0 1px var(--sl-teal-muted), 0 4px 16px rgba(66,226,186,0.07);
+  box-shadow: 0 0 0 1px var(--sl-teal-muted), 0 4px 16px rgba(15,157,107,0.08);
 }
 
 /* ============================================================
    Typography Utilities
    ============================================================ */
 .page-title {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.02em;
   color: var(--text-primary);
 }
 
 .section-title {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -405,7 +453,7 @@ body {
 }
 
 .stat-value {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 1;
@@ -428,12 +476,12 @@ body {
 .plot-container {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 16px;
   padding: 1.25rem;
 }
 
 .plot-title {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -449,7 +497,7 @@ body {
 /* Data tables */
 .data-table            { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
 .data-table th {
-  font-family: var(--font-syne, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-syne, 'Poppins', system-ui, sans-serif);
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.07em;

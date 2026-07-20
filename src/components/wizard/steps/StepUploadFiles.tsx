@@ -5,8 +5,10 @@ import { useProjectDatasets } from '@/hooks/useProjectData';
 import { Dataset, DatasetType, DatasetStatus } from '@/types';
 import api from '@/utils/api';
 import {
-  Upload, CheckCircle, Clock, AlertCircle, FileText, ChevronRight,
+  Upload, CheckCircle, Clock, AlertCircle, FileText, ChevronRight, UploadCloud, Database,
 } from 'lucide-react';
+import ContrastBuilder from '../ContrastBuilder';
+import GeoImportPanel from '../GeoImportPanel';
 
 // ─── Sub-step config ────────────────────────────────────────────────────────
 interface SubStepConfig {
@@ -72,6 +74,19 @@ export default function StepUploadFiles({
   const [localSamples,   setLocalSamples]   = useState<string | null>(samplesDatasetId);
   const [localContrasts, setLocalContrasts] = useState<string | null>(contrastsDatasetId);
 
+  // Comparisons can be built from the sample sheet conditions (default) or uploaded as a file.
+  const [contrastMode, setContrastMode] = useState<'builder' | 'upload'>('builder');
+
+  // Matrix + sample sheet can be uploaded manually or imported from a public GEO series.
+  const [sourceMode, setSourceMode] = useState<'upload' | 'geo'>('upload');
+
+  const handleGeoImported = (ids: { matrixDatasetId: string; samplesDatasetId: string }) => {
+    setLocalMatrix(ids.matrixDatasetId);
+    setLocalSamples(ids.samplesDatasetId);
+    setSourceMode('upload');
+    refetch();
+  };
+
   const getDataset = (id: string | null) =>
     id ? datasets.find(d => d.id === id) : undefined;
 
@@ -99,14 +114,43 @@ export default function StepUploadFiles({
       <div>
         <h2 className="text-xl font-bold text-gray-900">Upload your data files</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Upload all three required files. Each file is validated automatically before you proceed.
+          Upload your count matrix and sample sheet, then build the comparisons from the sample
+          conditions (or upload a contrast file). Each file is validated automatically.
         </p>
       </div>
 
-      {/* Upload cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        {SUB_STEPS.map((config, idx) => {
-          const datasetId = idx === 0 ? localMatrix : idx === 1 ? localSamples : localContrasts;
+      {/* Data source toggle: manual upload vs GEO import */}
+      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+        <button
+          type="button"
+          onClick={() => setSourceMode('upload')}
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            sourceMode === 'upload' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <UploadCloud className="h-4 w-4" />
+          Upload files
+        </button>
+        <button
+          type="button"
+          onClick={() => setSourceMode('geo')}
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            sourceMode === 'geo' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Database className="h-4 w-4" />
+          Import from GEO
+        </button>
+      </div>
+
+      {sourceMode === 'geo' ? (
+        <GeoImportPanel projectId={projectId} onImported={handleGeoImported} />
+      ) : (
+      <>
+      {/* Matrix + sample sheet upload cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {SUB_STEPS.slice(0, 2).map((config, idx) => {
+          const datasetId = idx === 0 ? localMatrix : localSamples;
           const dataset   = getDataset(datasetId);
           return (
             <UploadCardWithProjectId
@@ -119,6 +163,41 @@ export default function StepUploadFiles({
             />
           );
         })}
+      </div>
+
+      {/* Comparisons: build from sample sheet conditions (default) or upload a contrast file */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-800">Comparisons</h3>
+          {!localContrasts && (
+            <button
+              type="button"
+              onClick={() => setContrastMode(contrastMode === 'builder' ? 'upload' : 'builder')}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
+            >
+              {contrastMode === 'builder'
+                ? 'Upload a contrast file instead'
+                : 'Build comparisons from conditions instead'}
+            </button>
+          )}
+        </div>
+
+        {(localContrasts || contrastMode === 'upload') ? (
+          <UploadCardWithProjectId
+            config={SUB_STEPS[2]}
+            projectId={projectId}
+            dataset={contrastsDs}
+            isActive
+            onUploaded={handleUploaded('contrasts')}
+          />
+        ) : (
+          <ContrastBuilder
+            projectId={projectId}
+            samplesDatasetId={localSamples}
+            samplesReady={samplesDs?.status === DatasetStatus.READY}
+            onBuilt={handleUploaded('contrasts')}
+          />
+        )}
       </div>
 
       {/* File format reference */}
@@ -147,7 +226,8 @@ Sample_B2,Treatment,2`}
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-gray-700">Contrast File (CSV/TSV)</p>
+            <p className="font-semibold text-gray-700">Contrast File (CSV/TSV) — optional</p>
+            <p className="mt-0.5">Only needed if you upload comparisons instead of building them from the sample sheet conditions.</p>
             <pre className="mt-1 rounded bg-white border border-gray-200 p-2 overflow-x-auto">
 {`group1,group2
 Treatment,Control`}
@@ -176,6 +256,8 @@ Treatment,Control`}
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
+      </>
+      )}
     </div>
   );
 }

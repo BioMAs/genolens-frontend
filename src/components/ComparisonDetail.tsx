@@ -4,23 +4,27 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles } from 'lucide-react';
+import { useChatMode } from '@/contexts/ChatModeContext';
 import DEGBarChart from './DEGBarChart';
 import OverviewTopGenes from './OverviewTopGenes';
-import OverviewEnrichmentTop from './OverviewEnrichmentTop';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
-import EnrichmentPlot from './EnrichmentPlot';
-import EnrichmentRadarPlot from './EnrichmentRadarPlot';
 import DEGTable from './DEGTable';
+import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
+import SignatureScorePanel from './SignatureScorePanel';
 import ExportMenu from './ExportMenu';
+import ComparisonReportButton from './ComparisonReportButton';
+import ReportCustomizationPanel from './report/ReportCustomizationPanel';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
+import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
+import { useUserProfile } from '@/hooks/useCosmetics';
 import { formatDate } from '@/utils/formatters';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Chip } from '@/components/ui/chip';
@@ -32,7 +36,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'enrichment' | 'cosmetics' | 'clustering' | 'integrations' | 'custom-viz';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature';
 
 type GenericRow = Record<string, unknown>;
 
@@ -52,9 +56,22 @@ type EnrichmentRow = {
 export default function ComparisonDetail({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
+  const { openChatWith } = useChatMode();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [enrichSubTab, setEnrichSubTab] = useState<'go' | 'legacy'>('go');
+  // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
+  const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
+
+  // Add-on module gating: show the Skin-effect / Customization tabs only when the
+  // module is unlocked (admins keep full access by role; otherwise the explicit
+  // per-user flag). Disabled module → tab hidden entirely (no teaser).
+  const { data: moduleProfile } = useUserProfile();
+  const isModuleAdmin =
+    moduleProfile?.role === 'ADMIN' || moduleProfile?.role === 'SCILICIUM_ADMIN';
+  const cosmeticsUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_cosmetics_module === true);
+  const reportCustomizationUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_report_customization === true);
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -213,22 +230,34 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   // Compute derived values using useMemo to ensure they're available before early returns
   const decodedName = useMemo(() => decodeURIComponent(comparisonName), [comparisonName]);
 
-  const degDataset = useMemo(() => {
-    if (!datasets || datasets.length === 0) return undefined;
+  // Scope candidate datasets to the current analysis (when known) so comparisons
+  // from OTHER analyses sharing the same name don't bleed in ("mélange entre
+  // analyses"). Falls back to the full project list if the analysis has none.
+  const scopedDatasets = useMemo(() => {
+    if (!datasets || datasets.length === 0) return [];
+    if (analysisId) {
+      const inAnalysis = datasets.filter(d => d.dataset_metadata?.analysis_id === analysisId);
+      if (inAnalysis.length > 0) return inAnalysis;
+    }
+    return datasets;
+  }, [datasets, analysisId]);
 
+  const degDataset = useMemo(() => {
     if (globalDatasetId) {
       return datasets.find(d => d.id === globalDatasetId);
-    } else {
-      return datasets.find(d =>
-        d.type === DatasetType.DEG && (
-          d.dataset_metadata?.comparison_name === decodedName ||
-          d.name === decodedName ||
-          (Array.isArray(d.dataset_metadata?.comparisons) && d.dataset_metadata.comparisons.includes(decodedName)) ||
-          (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in d.dataset_metadata.comparisons)
-        )
-      );
     }
-  }, [datasets, globalDatasetId, decodedName]);
+    if (scopedDatasets.length === 0) return undefined;
+    const matches = scopedDatasets.filter(d =>
+      d.type === DatasetType.DEG && (
+        d.dataset_metadata?.comparison_name === decodedName ||
+        d.name === decodedName ||
+        (Array.isArray(d.dataset_metadata?.comparisons) && (d.dataset_metadata.comparisons as unknown[]).includes(decodedName)) ||
+        (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in (d.dataset_metadata.comparisons as object))
+      )
+    );
+    // Prefer a READY dataset so failed/old duplicates are never picked.
+    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
+  }, [scopedDatasets, datasets, globalDatasetId, decodedName]);
 
   // Derive the actual comparison name from dataset metadata.
   // When the URL contains the dataset display name (e.g. "DEG Analysis — KO vs WT")
@@ -242,27 +271,26 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   }, [degDataset, decodedName]);
 
   const enrichmentDataset = useMemo(() => {
-    if (!datasets || datasets.length === 0) return undefined;
+    if (scopedDatasets.length === 0) return undefined;
 
-    // First try to find by comparison_name or name (check both decoded and actual)
-    let enrichment = datasets.find(d => d.type === DatasetType.ENRICHMENT && (
+    const byName = scopedDatasets.filter(d => d.type === DatasetType.ENRICHMENT && (
       d.dataset_metadata?.comparison_name === actualComparisonName ||
       d.dataset_metadata?.comparison_name === decodedName ||
       d.name === decodedName
     ));
 
-    // Also check for enrichment files with enrichment_comparisons metadata
-    if (!enrichment) {
-      enrichment = datasets.find(d =>
-        d.type === DatasetType.ENRICHMENT &&
-        Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
-        (d.dataset_metadata.enrichment_comparisons.includes(actualComparisonName) ||
-         d.dataset_metadata.enrichment_comparisons.includes(decodedName))
-      );
-    }
+    // Also match enrichment files via enrichment_comparisons metadata
+    const byComparisons = scopedDatasets.filter(d =>
+      d.type === DatasetType.ENRICHMENT &&
+      Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
+      ((d.dataset_metadata.enrichment_comparisons as unknown[]).includes(actualComparisonName) ||
+       (d.dataset_metadata.enrichment_comparisons as unknown[]).includes(decodedName))
+    );
 
-    return enrichment;
-  }, [datasets, decodedName, actualComparisonName]);
+    const matches = byName.length > 0 ? byName : byComparisons;
+    // Prefer a READY dataset so failed/old duplicates are never picked.
+    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
+  }, [scopedDatasets, decodedName, actualComparisonName]);
 
   const matrixDataset = useMemo(() => {
     if (!datasets || datasets.length === 0) return undefined;
@@ -620,15 +648,35 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             </div>
           </div>
 
-          <button
-            onClick={handleReprocessDEG}
-            disabled={reprocessing}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-            style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
-            {reprocessing ? 'Reprocessing…' : 'Reprocess'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                openChatWith({
+                  projectId,
+                  datasetId: degDataset.id,
+                  comparisonName: actualComparisonName,
+                })
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+              style={{ background: 'var(--sl-purple)' }}
+              title="Open the AI Assistant for this comparison"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              AI Assistant
+            </button>
+            {reportCustomizationUnlocked && (
+              <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            )}
+            <button
+              onClick={handleReprocessDEG}
+              disabled={reprocessing}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
+              {reprocessing ? 'Reprocessing…' : 'Reprocess'}
+            </button>
+          </div>
         </div>
 
         {statsLoading ? (
@@ -692,6 +740,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 DEG Table
               </button>
               <button
+                onClick={() => setActiveTab('metrics')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'metrics'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Method statistics
+              </button>
+              <button
                 onClick={() => setActiveTab('enrichment')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
@@ -702,17 +761,32 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               >
                 Enrichment
               </button>
-              <button
-                onClick={() => setActiveTab('cosmetics')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'cosmetics'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Claims
-              </button>
+              {cosmeticsUnlocked && (
+                <button
+                  onClick={() => setActiveTab('cosmetics')}
+                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                  style={
+                    activeTab === 'cosmetics'
+                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                      : { color: 'var(--text-secondary)' }
+                  }
+                >
+                  Skin effect
+                </button>
+              )}
+              {reportCustomizationUnlocked && (
+                <button
+                  onClick={() => setActiveTab('report')}
+                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                  style={
+                    activeTab === 'report'
+                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                      : { color: 'var(--text-secondary)' }
+                  }
+                >
+                  Report
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('clustering')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
@@ -737,6 +811,20 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 }
               >
                 Integrations
+              </button>
+              <button
+                onClick={() => setActiveTab('signature')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'signature'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Signature score
+                {!matrixDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
               </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
@@ -814,9 +902,6 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       </div>
                       <OverviewTopGenes dataset={degDataset} comparisonName={actualComparisonName} />
                     </div>
-
-                    {/* Top enrichments — only rendered when pre-computed data exists */}
-                    <OverviewEnrichmentTop dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
 
                   <div className="xl:col-span-4 space-y-4">
@@ -836,7 +921,34 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
 
                 {/* DEG Table */}
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Differentially Expressed Genes</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Differentially Expressed Genes</h2>
+                    <button
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700"
+                      onClick={async () => {
+                        try {
+                          const response = await api.get(
+                            `/datasets/${degDataset.id}/deg-stats/export`,
+                            {
+                              params: { comparison: actualComparisonName },
+                              responseType: 'blob',
+                            }
+                          );
+                          const url = URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `deg_stats_${actualComparisonName}.csv`;
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        } catch (e) {
+                          console.error('DEG stats download failed', e);
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Download DEG — per-method p-values (.csv)
+                    </button>
+                  </div>
                   <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
@@ -845,79 +957,50 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               </div>
             )}
 
+            {/* Method statistics Tab (per-method p-values + Stouffer) */}
+            {activeTab === 'metrics' && (
+              <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            )}
+
             {/* Enrichment Tab */}
             {activeTab === 'enrichment' && (
               degDataset ? (
                 <div className="space-y-4">
-                  {/* Sub-tab navigation */}
-                  <div className="flex border-b border-gray-200">
+                  {/* Sub-mode toggle: over-representation vs ranked GSEA */}
+                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <button
-                      onClick={() => setEnrichSubTab('go')}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        enrichSubTab === 'go'
-                          ? 'border-brand-primary text-brand-primary'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      onClick={() => setEnrichmentMode('ora')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        enrichmentMode === 'ora'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      Pathway Enrichment
+                      Over-representation (ORA)
                     </button>
-                    {enrichmentDataset && (
-                      <button
-                        onClick={() => setEnrichSubTab('legacy')}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                          enrichSubTab === 'legacy'
-                            ? 'border-brand-primary text-brand-primary'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        Inheritance
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setEnrichmentMode('gsea')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        enrichmentMode === 'gsea'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      GSEA (ranked)
+                    </button>
                   </div>
 
-                  {/* GO Enrichment sub-tab */}
-                  {enrichSubTab === 'go' && (
-                    <div className="space-y-6">
-                      <GOEnrichmentAnalysis
-                        dataset={degDataset}
-                        comparisonName={actualComparisonName}
-                      />
-                    </div>
-                  )}
-
-                  {/* Legacy sub-tab (Parquet-based enrichment data) */}
-                  {enrichSubTab === 'legacy' && enrichmentDataset && (
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex justify-between items-center mb-4">
-                          <h2 className="text-xl font-bold text-gray-900">Pathway Enrichment Plot</h2>
-                          <Link
-                            href={`/projects/${projectId}/datasets/${enrichmentDataset.id}`}
-                            className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium"
-                          >
-                            View Full Dataset &rarr;
-                          </Link>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <EnrichmentPlot dataset={enrichmentDataset} comparisonName={actualComparisonName} />
-                        </div>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                          <Activity className="w-5 h-5 text-purple-600" />
-                          Enrichment Radar Plot
-                        </h2>
-                        <EnrichmentRadarPlot
-                          datasetId={enrichmentDataset.id}
-                          comparisonName={actualComparisonName}
-                          maxTerms={10}
-                        />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Enriched Pathways</h2>
-                        <EnrichmentTable dataset={enrichmentDataset} comparisonName={actualComparisonName} />
-                      </div>
-                    </div>
+                  {enrichmentMode === 'ora' ? (
+                    <GOEnrichmentAnalysis
+                      dataset={degDataset}
+                      enrichmentDataset={enrichmentDataset}
+                      comparisonName={actualComparisonName}
+                    />
+                  ) : (
+                    <GSEAAnalysis
+                      dataset={degDataset}
+                      comparisonName={actualComparisonName}
+                    />
                   )}
                 </div>
               ) : (
@@ -931,12 +1014,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* Cosmetics (Claims) Tab — always visible; locked teaser when not unlocked */}
-            {activeTab === 'cosmetics' && (
+            {/* Skin effect (Cosmetics) Tab — only when the module is unlocked */}
+            {activeTab === 'cosmetics' && cosmeticsUnlocked && (
               <CosmeticsTab
                 datasetId={degDataset?.id}
                 comparisonName={actualComparisonName}
               />
+            )}
+
+            {/* Report customization Tab — only when the module is unlocked */}
+            {activeTab === 'report' && reportCustomizationUnlocked && (
+              <ReportCustomizationPanel />
             )}
 
             {/* Clustering Tab */}
@@ -982,11 +1070,31 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               />
             )}
 
+            {/* Signature scoring Tab */}
+            {activeTab === 'signature' && (
+              matrixDataset ? (
+                <SignatureScorePanel
+                  projectId={projectId}
+                  matrixDatasetId={matrixDataset.id}
+                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Signature scoring requires an expression matrix (count matrix) for this project.
+                  </p>
+                </div>
+              )
+            )}
+
             {/* Custom Visualizations Tab */}
             {activeTab === 'custom-viz' && (
               <div>
-                <CustomVisualizationPanel 
-                  datasetId={degDataset.id} 
+                <CustomVisualizationPanel
+                  datasetId={degDataset.id}
                   comparisonName={actualComparisonName}
                   allGenes={allMatrixGenes}
                 />

@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
+import { useProject } from '@/hooks/useProjects';
 import {
   LayoutDashboard,
   Wrench,
@@ -40,6 +42,12 @@ const projectNav = [
     label: 'Multi-comparison',
     icon: GitCompareArrows,
   },
+  {
+    key: 'contrast-scatter',
+    suffix: '/contrast-scatter',
+    label: 'Contrast scatter',
+    icon: GitCompareArrows,
+  },
 ];
 
 export default function Sidebar({ user, userRole }: SidebarProps) {
@@ -49,7 +57,10 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch?.[1] ?? null;
   const hasProjectContext = Boolean(projectId);
-  const projectLabel = projectId ? decodeURIComponent(projectId).replace(/[-_]/g, ' ') : '';
+  // Resolve the human project name; fall back to the id while it loads.
+  const { data: currentProject } = useProject(projectId ?? '', hasProjectContext);
+  const projectLabel =
+    currentProject?.name ?? (projectId ? decodeURIComponent(projectId) : '');
   const userName = user.email?.split('@')[0] || 'User';
   const initials = userName
     .replace(/[^a-zA-Z0-9]/g, '')
@@ -66,31 +77,25 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
   return (
     <aside className="app-sidebar">
       <div
-        className="flex h-[var(--topbar-height)] items-center gap-2.5 border-b px-4"
+        className="flex h-[var(--topbar-height)] items-center border-b px-4"
         style={{ borderColor: 'var(--sidebar-border)' }}
       >
-        <div
-          className="relative h-6 w-6 rounded-[7px]"
-          style={{
-            background:
-              'conic-gradient(from 220deg, var(--sl-purple), var(--sl-teal), var(--sl-purple))',
-            boxShadow: 'inset 0 0 0 1px color-mix(in oklab, white 8%, transparent)',
-          }}
-        >
-          <div
-            className="absolute inset-[6px] rounded-full"
-            style={{ background: 'var(--sidebar-bg)' }}
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="GenoLens"
+            width={120}
+            height={38}
+            className="h-8 w-auto"
+            priority
           />
-        </div>
-        <p className="font-display text-[15px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">
-          GenoLens
-        </p>
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2.5 py-3.5">
         <div className="mb-4">
           <span className="nav-section-label">Workspace</span>
-          <div className="mt-1.5 space-y-0.5">
+          <div className="mt-1.5 space-y-0.5" data-tour="sidebar-workspace">
             {primaryNav.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -117,7 +122,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
                 </span>
               </span>
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" data-tour="sidebar-project">
               {projectNav.map(({ key, suffix, label, icon: Icon }) => {
                 const href = `/projects/${projectId}${suffix}`;
                 return (
@@ -168,7 +173,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
 
         <Link
           href="/profile"
-          className={`mx-2.5 mb-1.5 flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 transition-colors ${
+          className={`mx-2.5 mb-1.5 flex items-center gap-2.5 rounded-[11px] px-2.5 py-2 transition-colors ${
             isActive('/profile') ? 'bg-[var(--surface-raised)]' : 'hover:bg-[var(--hover-overlay)]'
           }`}
         >
@@ -190,7 +195,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
           <UserIcon className="h-3.5 w-3.5 text-[var(--text-muted)]" />
         </Link>
 
-        <div className="mt-0.5 flex gap-1 px-2.5">
+        <div className="flex gap-1 px-2.5">
           <button
             onClick={toggleTheme}
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}

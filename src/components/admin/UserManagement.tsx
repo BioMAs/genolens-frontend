@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import api from '@/utils/api';
 import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, FlaskConical } from 'lucide-react';
+import ModuleSelector, { ModuleId } from '@/components/modules/ModuleSelector';
 
 interface User {
   id: string;
@@ -21,6 +22,8 @@ interface User {
   updated_at: string;
   last_sign_in_at: string | null;
   confirmed_at: string | null;
+  has_cosmetics_module?: boolean;
+  has_report_customization?: boolean;
 }
 
 interface ValidationDetail {
@@ -83,6 +86,7 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [moduleBusy, setModuleBusy] = useState<ModuleId | null>(null);
   const [editForm, setEditForm] = useState({
     full_name: '',
     role: '',
@@ -224,6 +228,25 @@ export default function UserManagement() {
       // alert(err.response?.data?.detail || 'Failed to update user.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleToggleModule = async (userId: string, id: ModuleId, enabled: boolean) => {
+    const endpoint = id === 'claim' ? 'cosmetics-module' : 'report-customization-module';
+    try {
+      setModuleBusy(id);
+      const res = await api.patch(`/admin/users/${userId}/${endpoint}`, { enabled });
+      const updated = {
+        has_cosmetics_module: res.data?.has_cosmetics_module,
+        has_report_customization: res.data?.has_report_customization,
+      };
+      setEditingUser((prev) => (prev && prev.id === userId ? { ...prev, ...updated } : prev));
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...updated } : u)));
+    } catch (err: unknown) {
+      console.error('Failed to update module:', err);
+      alert(getApiErrorMessage(err, 'Failed to update module. The user must exist in the local database (update subscription first).'));
+    } finally {
+      setModuleBusy(null);
     }
   };
 
@@ -682,7 +705,7 @@ export default function UserManagement() {
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
               <button
@@ -731,6 +754,21 @@ export default function UserManagement() {
                   ))}
                 </select>
               </div>
+
+              {/* Add-on modules */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Add-on modules</label>
+                <p className="mb-3 text-xs text-gray-500">Toggle to enable instantly — no need to save.</p>
+                <ModuleSelector
+                  value={{
+                    claim: !!editingUser.has_cosmetics_module,
+                    reporting: !!editingUser.has_report_customization,
+                  }}
+                  busy={moduleBusy}
+                  onToggle={(id, enabled) => handleToggleModule(editingUser.id, id, enabled)}
+                />
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dataset } from '@/types';
 import api from '@/utils/api';
 import { Play, Settings, X } from 'lucide-react';
@@ -78,6 +78,15 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
   const [loadingPlot, setLoadingPlot] = useState(false);
   const [isCached, setIsCached] = useState(false);
 
+  // Guard against setting state after unmount while a long GSEA poll is in flight
+  const cancelledRef = useRef(false);
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
+
   // Auto-load persisted GSEA results on mount
   useEffect(() => {
     const loadCached = async () => {
@@ -114,19 +123,45 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
     try {
       setLoading(true);
       setError(null);
+      setIsCached(false);
 
-      const response = await api.post(`/datasets/${dataset.id}/gsea`, {
+      // GSEA over a full gene-set database with permutations takes minutes, so
+      // it runs as a background job: trigger, then poll until DONE/FAILED.
+      const trigger = await api.post(`/datasets/${dataset.id}/gsea-async`, {
         comparison_name: comparisonName,
         ...parameters
       });
+      const jobId = trigger.data.job_id;
 
-      setResults(response.data);
-      setIsCached(false);
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLLS = 400; // ~20 min safety cap
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        if (cancelledRef.current) return;
+
+        const poll = await api.get(`/gsea-jobs/${jobId}`);
+        const status = poll.data.status;
+        if (status === 'DONE') {
+          if (!cancelledRef.current) setResults(poll.data.result);
+          return;
+        }
+        if (status === 'FAILED') {
+          if (!cancelledRef.current) {
+            setError(poll.data.error_message || 'GSEA analysis failed');
+          }
+          return;
+        }
+      }
+      if (!cancelledRef.current) {
+        setError('GSEA is taking longer than expected. Please try again later.');
+      }
     } catch (err: unknown) {
       console.error('GSEA analysis failed:', err);
-      setError(getApiErrorMessage(err, 'Failed to run GSEA analysis'));
+      if (!cancelledRef.current) {
+        setError(getApiErrorMessage(err, 'Failed to run GSEA analysis'));
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   };
 
@@ -210,6 +245,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                   <option value="KEGG">KEGG Pathways</option>
                   <option value="REACTOME">Reactome Pathways</option>
                   <option value="HALLMARK">MSigDB Hallmark</option>
+                  <option value="CUSTOM">Custom (this project)</option>
                 </select>
               </div>
 
@@ -301,6 +337,14 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {/* Running indicator (GSEA runs as a background job, can take minutes) */}
+        {loading && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm flex items-center gap-3">
+            <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            Running GSEA over the full gene-set database — this runs in the background and can take a few minutes. You can keep this tab open.
           </div>
         )}
       </div>

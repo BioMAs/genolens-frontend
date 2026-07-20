@@ -188,7 +188,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
               tick={{fontSize: 11}} 
               interval={0}
             />
-            <ZAxis type="number" dataKey="z" range={[50, 400]} name="Count" />
+            <ZAxis type="number" dataKey="z" range={[20, 200]} name="Count" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                 const d = payload[0].payload as EnrichmentPoint;

@@ -1,11 +1,18 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { User, Mail, Calendar, Shield } from 'lucide-react'
+import { Mail, Calendar, Shield, Clock, Blocks } from 'lucide-react'
 import BillingSection from './BillingSection'
+import MyModules from './MyModules'
+
+function fmt(date?: string | null) {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
 
 export default async function ProfilePage() {
   const supabase = await createClient()
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -14,82 +21,70 @@ export default async function ProfilePage() {
     redirect('/')
   }
 
+  const name = (user.user_metadata?.full_name as string) || user.email?.split('@')[0] || 'User'
+  const initials = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'U'
+
+  const details = [
+    { icon: Mail, label: 'Email address', value: user.email ?? '—' },
+    { icon: Shield, label: 'User ID', value: user.id, mono: true },
+    { icon: Calendar, label: 'Account created', value: fmt(user.created_at) },
+    { icon: Clock, label: 'Last sign in', value: fmt(user.last_sign_in_at) },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="bg-brand-primary px-4 py-5 sm:px-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg leading-6 font-medium text-white">User Profile</h3>
-              <p className="mt-1 max-w-2xl text-sm text-brand-secondary/80">
-                Personal details and account information.
-              </p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-white">
-              <User className="h-6 w-6" />
-            </div>
+    <div className="page-container space-y-6">
+      {/* Account hero */}
+      <div className="gl-card flex flex-wrap items-center justify-between gap-5 p-6">
+        <div className="flex items-center gap-4">
+          <div
+            className="grid h-16 w-16 place-items-center rounded-full font-display text-xl font-bold text-white"
+            style={{ background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))' }}
+          >
+            {initials}
           </div>
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-            <dl className="sm:divide-y sm:divide-gray-200">
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Mail className="h-4 w-4" /> Email address
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {user.email}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Shield className="h-4 w-4" /> User ID
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 font-mono text-xs">
-                  {user.id}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Account Created
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {new Date(user.created_at).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Last Sign In</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString(undefined, {
-                     year: 'numeric',
-                     month: 'long',
-                     day: 'numeric',
-                     hour: '2-digit',
-                     minute: '2-digit'
-                  }) : 'N/A'}
-                </dd>
-              </div>
-            </dl>
+          <div>
+            <h1 className="page-title">{name}</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{user.email}</p>
           </div>
         </div>
-
-        <BillingSection />
-
-        <div className="mt-8 flex justify-center">
-           <form action="/auth/signout" method="post">
-              <button
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                type="submit"
-              >
-                Sign Out
-              </button>
-            </form>
-        </div>
+        <form action="/auth/signout" method="post">
+          <button
+            type="submit"
+            className="rounded-xl border px-4 py-2 text-sm font-semibold transition-colors"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--sl-red-dark)', background: 'var(--surface)' }}
+          >
+            Sign out
+          </button>
+        </form>
       </div>
+
+      {/* Account details */}
+      <section>
+        <h2 className="mb-3 font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Account details</h2>
+        <div className="gl-card divide-y" style={{ borderColor: 'var(--border)' }}>
+          {details.map(({ icon: Icon, label, value, mono }) => (
+            <div key={label} className="flex items-center justify-between gap-4 px-5 py-3.5" style={{ borderColor: 'var(--border-subtle)' }}>
+              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <Icon className="h-4 w-4" /> {label}
+              </span>
+              <span className={`text-sm ${mono ? 'font-mono text-xs' : 'font-medium'}`} style={{ color: 'var(--text-primary)' }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Add-on modules */}
+      <section>
+        <h2 className="mb-1 flex items-center gap-2 font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <Blocks className="h-4 w-4" style={{ color: 'var(--sl-teal)' }} /> Add-on modules
+        </h2>
+        <p className="mb-3 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+          Extra capabilities unlocked on your account. Contact your administrator to enable a locked module.
+        </p>
+        <MyModules />
+      </section>
+
+      <BillingSection />
     </div>
   )
 }
