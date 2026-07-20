@@ -3,7 +3,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database } from 'lucide-react';
+import {
+  ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database,
+  GitCompare, GitBranch, Network, Activity, Settings2, ChevronRight, ArrowUpRight,
+} from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectSummary, useProjectDatasets, ComparisonSummary } from '@/hooks/useProjectData';
 import { SelfServiceAnalysisStatus, Dataset, DatasetType } from '@/types';
@@ -47,6 +50,7 @@ function isQCReport(value: unknown): value is QCReport {
 
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   const [structureView, setStructureView] = useState<'pca' | 'umap'>('pca');
+  const [paramsOpen, setParamsOpen] = useState(false);
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
 
@@ -133,6 +137,14 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     [analysisComparisons]
   );
 
+  // Number of distinct conditions (x-axis of the DEG-patterns module)
+  const conditionCount = useMemo(
+    () => new Set(Object.values(sampleConditionMap ?? {})).size,
+    [sampleConditionMap]
+  );
+
+  const hasPatterns = Boolean(matrixDataset) && degSources.length > 0;
+
   // ── Loading / error states ────────────────────────────────────────────────
 
   if (analysisLoading) {
@@ -174,19 +186,17 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           </Link>
         </div>
 
-        {/* Header */}
-        <div className="rounded-2xl shadow-sm px-6 py-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        {/* ── Analysis information card ── */}
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30">
-                <FlaskConical className="h-5 w-5 text-indigo-500" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'var(--sl-teal-light)' }}>
+                <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <div>
                 <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {new Date(analysis.created_at).toLocaleString('en-US')}
-                  {' · '}
-                  {analysisComparisons.length} comparison{analysisComparisons.length !== 1 ? 's' : ''}
+                  Created {new Date(analysis.created_at).toLocaleString('en-US')}
                 </p>
               </div>
             </div>
@@ -219,10 +229,81 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               </Link>
             </div>
           </div>
+          {/* Stat tiles — 1px dividers via gap-px over a border-coloured background */}
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px border-t"
+            style={{ borderColor: 'var(--border)', background: 'var(--border)' }}
+          >
+            <StatTile label="Comparisons" value={String(analysisComparisons.length)} />
+            <StatTile label="Conditions" value={conditionCount > 0 ? String(conditionCount) : '—'} />
+            <StatTile
+              label="Samples kept"
+              value={qcReport ? `${qcReport.samples_passed}/${qcReport.total_input_samples}` : '—'}
+            />
+            <StatTile
+              label="Genes retained"
+              value={qcReport ? qcReport.genes_after_filter.toLocaleString() : '—'}
+            />
+            <StatTile label="DEA method" value={String(analysis.params?.de_method ?? 'all')} mono />
+            <StatTile label="FDR" value={String(analysis.params?.fdr ?? 0.05)} mono />
+          </div>
         </div>
 
-        {/* ── Comparisons (primary results) ── */}
+        {/* ── Analysis modules (card launcher) ── */}
         <section>
+          <SectionHeader title="Analysis modules" subtitle="Jump to a result view" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ModuleCard
+              icon={GitCompare}
+              title="Comparisons"
+              description="Differential-expression results per contrast"
+              metric={`${analysisComparisons.length} comparison${analysisComparisons.length !== 1 ? 's' : ''}`}
+              targetId="module-comparisons"
+            />
+            <ModuleCard
+              icon={GitBranch}
+              title="DEG patterns"
+              description="DEGs clustered by trajectory across conditions"
+              metric={hasPatterns ? `${degSources.length} × ${conditionCount || '—'} conditions` : undefined}
+              targetId="module-patterns"
+              disabled={!hasPatterns}
+              disabledHint="Needs an expression matrix"
+            />
+            <ModuleCard
+              icon={Network}
+              title="Sample structure"
+              description="PCA & UMAP of the normalized matrix"
+              metric={vstDataset ? 'PCA · UMAP' : undefined}
+              targetId="module-structure"
+              disabled={!vstDataset}
+              disabledHint="No normalized matrix"
+            />
+            <ModuleCard
+              icon={Activity}
+              title="Quality control"
+              description="Preprocessing & filtering summary"
+              metric={
+                qcReport
+                  ? `${Math.round((qcReport.samples_passed / Math.max(qcReport.total_input_samples, 1)) * 100)}% samples kept`
+                  : undefined
+              }
+              targetId="module-qc"
+              disabled={!qcReport}
+              disabledHint="No QC report"
+            />
+            <ModuleCard
+              icon={Settings2}
+              title="Parameters"
+              description="DEA method, thresholds & design"
+              metric="View settings"
+              targetId="module-params"
+              onActivate={() => setParamsOpen(true)}
+            />
+          </div>
+        </section>
+
+        {/* ── Comparisons (primary results) ── */}
+        <section id="module-comparisons" className="scroll-mt-6">
           <SectionHeader
             title="Comparisons"
             subtitle={`${analysisComparisons.length} differential-expression comparison${analysisComparisons.length !== 1 ? 's' : ''} in this analysis`}
@@ -237,7 +318,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
         {/* ── DEG patterns (expression trajectories across all conditions) ── */}
         {matrixDataset && degSources.length > 0 && (
-          <section>
+          <section id="module-patterns" className="scroll-mt-6">
             <SectionHeader
               title="DEG patterns"
               subtitle="Significant DEGs (union across comparisons) clustered by expression trajectory across the analysis' conditions"
@@ -252,7 +333,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         )}
 
         {/* ── Sample structure (PCA / UMAP) ── */}
-        <section>
+        <section id="module-structure" className="scroll-mt-6">
           <SectionHeader
             title="Sample structure"
             subtitle="How samples relate to each other, computed from the normalized matrix"
@@ -290,13 +371,18 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </section>
 
         {/* ── Quality control ── */}
-        <section>
+        <section id="module-qc" className="scroll-mt-6">
           <SectionHeader title="Quality control" subtitle="Preprocessing & filtering applied before analysis" />
           <PreprocessingResults qcReport={qcReport} params={analysis.params} />
         </section>
 
         {/* ── Parameters (collapsible) ── */}
-        <details className="gl-card p-5">
+        <details
+          id="module-params"
+          className="gl-card p-5 scroll-mt-6"
+          open={paramsOpen}
+          onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
+        >
           <summary className="cursor-pointer font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
             Analysis parameters
           </summary>
@@ -313,6 +399,80 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
+
+type IconType = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+
+function scrollToId(id: string) {
+  if (typeof window === 'undefined') return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
+function StatTile({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="px-4 py-3" style={{ background: 'var(--surface)' }}>
+      <div className="text-[10.5px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className={`mt-1 text-[15px] font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
+    </div>
+  );
+}
+
+function ModuleCard({
+  icon: Icon, title, description, metric, targetId, disabled, disabledHint, onActivate,
+}: {
+  icon: IconType;
+  title: string;
+  description: string;
+  metric?: string;
+  targetId: string;
+  disabled?: boolean;
+  disabledHint?: string;
+  onActivate?: () => void;
+}) {
+  const activate = () => {
+    if (disabled) return;
+    onActivate?.();
+    scrollToId(targetId);
+  };
+  return (
+    <button
+      type="button"
+      onClick={activate}
+      disabled={disabled}
+      aria-label={`Go to ${title}`}
+      className="group text-left rounded-2xl p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        opacity: disabled ? 0.55 : 1,
+        // @ts-expect-error CSS custom prop for focus ring colour
+        '--tw-ring-color': 'var(--sl-teal)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'var(--sl-teal-light)' }}>
+          <Icon className="h-4 w-4" style={{ color: 'var(--sl-teal-dark)' }} />
+        </div>
+        {!disabled && (
+          <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
+        )}
+      </div>
+      <h3 className="mt-3 font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <p className="mt-0.5 text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      {(disabled ? disabledHint : metric) && (
+        <div
+          className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium"
+          style={{ color: disabled ? 'var(--text-muted)' : 'var(--sl-teal-dark)' }}
+        >
+          {!disabled && <ChevronRight className="h-3 w-3" />}
+          {disabled ? disabledHint : metric}
+        </div>
+      )}
+    </button>
+  );
+}
 
 function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
   const styles: Record<SelfServiceAnalysisStatus, string> = {
