@@ -76,15 +76,21 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
-  // Comparisons linked to this analysis (via result_dataset_ids)
+  // Comparisons that belong to THIS analysis. The project summary aggregates
+  // comparisons across every analysis, so we must scope them to this analysis'
+  // own datasets: the recorded result_dataset_ids, plus any dataset tagged with
+  // this analysis_id in its metadata (covers analyses whose result_dataset_ids
+  // was never populated). Previously an empty result_dataset_ids fell back to
+  // showing ALL project comparisons — which leaked other analyses' comparisons.
   const analysisComparisons = useMemo(() => {
     const allComparisons: ComparisonSummary[] = summary?.comparisons ?? [];
     if (!analysis) return allComparisons;
-    const resultIds = new Set(analysis.result_dataset_ids ?? []);
-    const filtered = allComparisons.filter((c) => resultIds.has(c.dataset_id));
-    // If no match via dataset_id, show all (fallback for older analyses)
-    return filtered.length > 0 ? filtered : allComparisons;
-  }, [analysis, summary?.comparisons]);
+    const analysisDatasetIds = new Set<string>(analysis.result_dataset_ids ?? []);
+    for (const d of datasets) {
+      if (d.dataset_metadata?.analysis_id === analysisId) analysisDatasetIds.add(d.id);
+    }
+    return allComparisons.filter((c) => analysisDatasetIds.has(c.dataset_id));
+  }, [analysis, summary?.comparisons, datasets, analysisId]);
 
   // VST dataset (for PCA data embedded in metadata)
   const vstDataset = useMemo<Dataset | undefined>(() => {
