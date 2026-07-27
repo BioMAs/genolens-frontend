@@ -14,6 +14,7 @@ import {
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
+import { canUseAI } from '@/utils/plan';
 
 interface AIInterpretationPanelProps {
     datasetId: string;
@@ -260,8 +261,8 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
         return null;
     }
 
-    // Show upgrade notice for BASIC users
-    if (userProfile.subscription_plan === 'BASIC' && userProfile.role !== 'ADMIN') {
+    // Show upgrade notice for users whose plan has no AI access (see utils/plan.ts)
+    if (!canUseAI(userProfile)) {
         const perks = [
             'Automated biological interpretation of DEG results',
             'Interactive Q&A about your analysis results',

@@ -99,7 +99,7 @@ export default function UserManagement() {
   const [inviteForm, setInviteForm] = useState({
     email: '',
     full_name: '',
-    plan: 'BASIC',
+    plan: 'STARTER',
     subscription_ends_at: '',
   });
 
@@ -116,7 +116,7 @@ export default function UserManagement() {
   const [assigningDemo, setAssigningDemo] = useState<string | null>(null);
 
   const roles = ['admin', 'user', 'analyst', 'viewer'];
-  const plans = ['BASIC', 'PREMIUM', 'ADVANCED'];
+  const plans = ['STARTER', 'TEAM', 'ON_PREMISE'];
 
 
   const fetchUsers = async () => {
@@ -170,7 +170,7 @@ export default function UserManagement() {
       });
       await fetchUsers();
       setShowInviteModal(false);
-      setInviteForm({ email: '', full_name: '', plan: 'BASIC', subscription_ends_at: '' });
+      setInviteForm({ email: '', full_name: '', plan: 'STARTER', subscription_ends_at: '' });
     } catch (err: unknown) {
       const detail = getApiErrorDetail(err);
       const message = Array.isArray(detail)
@@ -187,7 +187,7 @@ export default function UserManagement() {
     setEditForm({
       full_name: user.full_name || '',
       role: user.role,
-      subscription_plan: user.subscription_plan || 'BASIC'
+      subscription_plan: user.subscription_plan || 'STARTER'
     });
     setShowEditModal(true);
   };
@@ -425,13 +425,13 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.subscription_plan === 'ADVANCED' ? 'bg-purple-100 text-purple-800' :
-                      user.subscription_plan === 'PREMIUM' ? 'bg-blue-100 text-blue-800' :
+                      user.subscription_plan === 'ON_PREMISE' ? 'bg-purple-100 text-purple-800' :
+                      user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {user.subscription_plan === 'ADVANCED' && <Crown className="h-3 w-3 mr-1" />}
-                      {user.subscription_plan === 'PREMIUM' && <Zap className="h-3 w-3 mr-1" />}
-                      {user.subscription_plan || 'BASIC'}
+                      {user.subscription_plan === 'ON_PREMISE' && <Crown className="h-3 w-3 mr-1" />}
+                      {user.subscription_plan === 'TEAM' && <Zap className="h-3 w-3 mr-1" />}
+                      {user.subscription_plan || 'STARTER'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

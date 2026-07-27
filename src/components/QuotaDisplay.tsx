@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { Sparkles, AlertCircle } from 'lucide-react'
 import { UserProfile } from '@/types'
 import api from '@/utils/api'
+import { hasUnlimitedAI } from '@/utils/plan';
 
 export default function QuotaDisplay() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -48,8 +49,8 @@ export default function QuotaDisplay() {
     )
   }
 
-  // Advanced Plan
-  if (profile.subscription_plan === 'ADVANCED') {
+  // TEAM / ON_PREMISE: no AI interpretation cap (see utils/plan.ts)
+  if (hasUnlimitedAI(profile)) {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-full text-xs font-semibold shadow-sm">
         <Sparkles className="w-3.5 h-3.5" />
