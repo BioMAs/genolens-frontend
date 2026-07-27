@@ -6,6 +6,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip,
 import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
+import { canUseAI } from '@/utils/plan';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
@@ -234,8 +235,8 @@ export default function EnrichmentRadarPlot({
     }
 
     // Check subscription
-    if (!userProfile || (userProfile.subscription_plan === 'BASIC' && userProfile.role !== 'ADMIN')) {
-      setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
+    if (!canUseAI(userProfile)) {
+      setError('AI term selection requires a TEAM or ON_PREMISE subscription.');
       return;
     }
 
@@ -334,7 +335,7 @@ export default function EnrichmentRadarPlot({
     }
   };
 
-  const canUseAI = userProfile && (userProfile.role === 'ADMIN' || ['PREMIUM', 'ADVANCED'].includes(userProfile.subscription_plan));
+  const userCanUseAI = canUseAI(userProfile);
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: RadarDataPoint }> }) => {
     if (active && payload && payload.length) {
@@ -385,7 +386,7 @@ export default function EnrichmentRadarPlot({
   }
 
   if (error) {
-    const isPlanError = error.includes('PREMIUM') || error.includes('ADVANCED') || error.includes('subscription');
+    const isPlanError = error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription');
     return (
       <div className={`border rounded-lg p-4 ${isPlanError ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200'}`}>
         <p className={`text-sm ${isPlanError ? 'text-purple-800' : 'text-red-700'}`}>{error}</p>
@@ -428,7 +429,7 @@ export default function EnrichmentRadarPlot({
             </button>
             <button
               onClick={() => {
-                if (canUseAI) {
+                if (userCanUseAI) {
                   setSelectionMode('ai');
                   setShowAiPrompt(true);
                   setShowTermSelector(false);
@@ -439,13 +440,13 @@ export default function EnrichmentRadarPlot({
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
                 selectionMode === 'ai'
                   ? 'bg-purple-600 text-white'
-                  : canUseAI
+                  : userCanUseAI
                   ? 'bg-white text-gray-700 hover:bg-purple-100'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
-              disabled={!canUseAI}
+              disabled={!userCanUseAI}
             >
-              {!canUseAI && <Lock className="w-3 h-3" />}
+              {!userCanUseAI && <Lock className="w-3 h-3" />}
               <Sparkles className="w-3 h-3" />
               AI Select
             </button>

@@ -6,6 +6,7 @@ import type { SubscriptionInfo } from '@/hooks/useBilling';
 import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
 import { Meter } from '@/components/ui/meter';
+import { normalizePlan, isPrivilegedRole } from '@/utils/plan';
 
 const FREE_QUOTA = 15;
 
@@ -27,7 +28,7 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
       </span>
     );
   }
-  if (plan === 'ADVANCED') {
+  if (normalizePlan(plan) === 'ON_PREMISE' || normalizePlan(plan) === 'TEAM') {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-linear-to-r from-purple-500 to-indigo-500 text-white">
         <Sparkles className="w-3 h-3" />
@@ -71,9 +72,9 @@ function ArcGauge({ pct, tone }: { pct: number; tone: 'teal' | 'purple' | 'red' 
 }
 
 function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
-  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'FREE';
+  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
 
-  if (plan === 'ADVANCED') {
+  if (normalizePlan(plan) === 'ON_PREMISE' || normalizePlan(plan) === 'TEAM') {
     return (
       <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
         <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
@@ -178,11 +179,11 @@ function StatBar({
 }
 
 function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
-  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'FREE';
+  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
   const role = profile?.role;
   const count = subscription?.project_count ?? 0;
   const max = subscription?.max_projects ?? null;
-  const unlimited = plan === 'ADVANCED' || role === 'ADMIN' || max === null;
+  const unlimited = normalizePlan(plan) !== 'STARTER' || isPrivilegedRole(role) || max === null;
 
   return (
     <StatBar
@@ -252,7 +253,7 @@ export default function DashboardSubscriptionCard({
   const { initiateCheckout, getBillingPortal, loading: billingLoading } = useBilling();
   const [redirecting, setRedirecting] = useState(false);
 
-  const plan = subscription?.plan ?? userProfile?.subscription_plan ?? 'FREE';
+  const plan = subscription?.plan ?? userProfile?.subscription_plan ?? 'STARTER';
   const role = userProfile?.role;
 
   const handleUpgrade = async () => {
@@ -329,7 +330,7 @@ export default function DashboardSubscriptionCard({
       {/* CTA — hidden for admin */}
       {role !== 'ADMIN' && (
         <div className="mt-auto">
-          {plan === 'ADVANCED' ? (
+          {normalizePlan(plan) !== 'STARTER' ? (
             <button
               onClick={handleManageBilling}
               disabled={billingLoading || redirecting}

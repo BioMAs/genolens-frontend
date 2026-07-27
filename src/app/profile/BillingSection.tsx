@@ -4,32 +4,26 @@ import { useEffect, useState } from 'react';
 import { CreditCard, Zap, FolderOpen, HardDrive, ExternalLink, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useBilling, SubscriptionInfo } from '@/hooks/useBilling';
+import { normalizePlan, type PlanKey } from '@/utils/plan';
 
+// Quotas mirror the authoritative properties on the backend User model
+// (backend/app/models/models.py: max_projects, comparisons_quota,
+// ai_interpretations_remaining). Infinity = unlimited (the API sends null).
 const PLAN_LIMITS = {
-  BASIC: { projects: 3, storage: '500 MB', aiInterpretations: 0 },
-  PREMIUM: { projects: 20, storage: '10 GB', aiInterpretations: 50 },
-  ADVANCED: { projects: Infinity, storage: '50 GB', aiInterpretations: 200 },
+  STARTER: { projects: 15, comparisons: 30, aiInterpretations: 0 },
+  TEAM: { projects: Infinity, comparisons: 150, aiInterpretations: Infinity },
+  ON_PREMISE: { projects: Infinity, comparisons: Infinity, aiInterpretations: Infinity },
 } as const;
 
-type PlanKey = keyof typeof PLAN_LIMITS;
-
-function normalizePlan(plan: string): PlanKey {
-  const upper = plan.toUpperCase();
-  if (upper === 'BASIC' || upper === 'PREMIUM' || upper === 'ADVANCED') {
-    return upper as PlanKey;
-  }
-  return 'BASIC';
-}
-
 function PlanBadge({ plan }: { plan: PlanKey }) {
-  if (plan === 'ADVANCED') {
+  if (plan === 'ON_PREMISE') {
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-        Advanced
+        Enterprise
       </span>
     );
   }
-  if (plan === 'PREMIUM') {
+  if (plan === 'TEAM') {
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
         Pro
@@ -38,7 +32,7 @@ function PlanBadge({ plan }: { plan: PlanKey }) {
   }
   return (
     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-      Starter (Free)
+      Starter
     </span>
   );
 }
@@ -82,12 +76,12 @@ export default function BillingSection() {
     }
   };
 
-  const planKey = subscription ? normalizePlan(subscription.plan) : 'BASIC';
+  const planKey = subscription ? normalizePlan(subscription.plan) : 'STARTER';
   const limits = PLAN_LIMITS[planKey];
   const aiUsed = subscription?.ai_interpretations_used ?? 0;
   const aiLimit = limits.aiInterpretations;
   const hasStripeCustomer = Boolean(subscription?.stripe_customer_id);
-  const isPaidPlan = planKey === 'PREMIUM' || planKey === 'ADVANCED';
+  const isPaidPlan = planKey === 'TEAM' || planKey === 'ON_PREMISE';
 
   return (
     <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
@@ -158,13 +152,13 @@ export default function BillingSection() {
               </dd>
             </div>
 
-            {/* Storage */}
+            {/* Monthly comparisons */}
             <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <HardDrive className="h-4 w-4" /> Storage
+                <HardDrive className="h-4 w-4" /> Comparisons / month
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {limits.storage}
+                {limits.comparisons === Infinity ? 'Unlimited' : limits.comparisons}
               </dd>
             </div>
 
@@ -176,6 +170,8 @@ export default function BillingSection() {
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {aiLimit === 0 ? (
                   <span className="text-gray-400">Not included in this plan</span>
+                ) : aiLimit === Infinity ? (
+                  <>Unlimited — {aiUsed} used this month</>
                 ) : (
                   <>
                     {aiUsed} / {aiLimit} used this month

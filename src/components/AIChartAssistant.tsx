@@ -7,6 +7,7 @@ import api from '@/utils/api';
 import { useChartAI, ChartType } from '@/hooks/useChartAI';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
+import { canUseAI } from '@/utils/plan';
 
 interface AIChartAssistantProps {
   datasetId: string;
@@ -93,8 +94,8 @@ export default function AIChartAssistant({
     return null;
   }
 
-  // Show upgrade notice for BASIC users (same gating as AIInterpretationPanel)
-  if (userProfile?.subscription_plan === 'BASIC' && userProfile?.role !== 'ADMIN') {
+  // Show upgrade notice when the plan has no AI access (same gating as AIInterpretationPanel)
+  if (!canUseAI(userProfile)) {
     return (
       <div className="w-full">
         <div className="gl-card">
