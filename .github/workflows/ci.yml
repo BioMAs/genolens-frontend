@@ -27,6 +27,20 @@ jobs:
         run: npm run lint -- --max-warnings=0 || true
 
       - name: Run tests
-        run: npm test -- --passWithNoTests --forceExit --ci
+        # e2e-capture/ holds Playwright specs, which Jest must not try to load.
+        # jest.config.ts already ignores them but is gitignored, so it is absent
+        # here and Jest falls back to its defaults — no TypeScript transform, and
+        # a testMatch that picks up **/*.spec.ts. Passing the flag REPLACES the
+        # default ignore list, hence /node_modules/ is repeated explicitly.
+        #
+        # NOTE: because jest.config.ts, jest.setup.tsx and /src/__tests__ are all
+        # gitignored, this step currently runs ZERO unit tests — it passes on
+        # --passWithNoTests. Un-ignoring that infrastructure is what would make
+        # this step meaningful.
+        run: >-
+          npm test --
+          --passWithNoTests --forceExit --ci
+          --testPathIgnorePatterns=/node_modules/
+          --testPathIgnorePatterns=/e2e-capture/
         env:
           CI: true
