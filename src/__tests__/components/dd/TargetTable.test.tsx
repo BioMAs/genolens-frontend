@@ -43,15 +43,55 @@ describe('TargetTable', () => {
     );
     // « écarté faute de preuve » et « disqualifié essentiel commun » ne se défendent pas
     // pareil devant un client : dd les compte séparément, l'UI ne doit pas les additionner.
-    expect(screen.getByText(/120/)).toBeInTheDocument();
-    expect(screen.getByText(/\b8\b/)).toBeInTheDocument();
-    expect(screen.getByText(/45/)).toBeInTheDocument();
+    // Chaque assertion lie la valeur à SON libellé (pas juste « ce nombre existe quelque
+    // part ») : les quatre valeurs de la fixture sont distinctes (120, 8, 3, 45), donc un
+    // échange de libellés entre deux compteurs ferait échouer le test correspondant.
+    expect(
+      screen.getByText(/120\s*écartées faute de preuve suffisante/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/8\s*disqualifiées \(essentiel commun\)/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/3\s*sous le plancher de sécurité/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/45\s*sans axe obligatoire/),
+    ).toBeInTheDocument();
   });
 
-  it('marque un sous-score non mesuré autrement qu\'un zéro', () => {
+  it('marque un sous-score non mesuré autrement qu\'un zéro mesuré', () => {
+    // La fixture porte ici, sur la même cible, un axe non mesuré (dependency: null) ET un
+    // axe mesuré à zéro (tractability: 0). Un test qui ne contiendrait aucun vrai zéro ne
+    // pourrait pas distinguer `value === null` d'un test de falsy (`!value`) : les deux
+    // afficheraient « non mesuré » pour du `null`. Seule la présence d'un zéro mesuré, rendu
+    // comme valeur numérique et jamais comme « non mesuré », prouve la distinction.
+    const dataWithMeasuredZero = {
+      ...DATA,
+      targets: [
+        {
+          ...DATA.targets[0],
+          subscores: { disease: 0.9, dependency: null, safety: 0.11, tractability: 0 },
+        },
+      ],
+    };
     render(
-      <TargetTable data={DATA} weights={{ dependency: 0.2 }} limit={50} onLimitChange={jest.fn()} />,
+      <TargetTable
+        data={dataWithMeasuredZero}
+        weights={{ dependency: 0.2 }}
+        limit={50}
+        onLimitChange={jest.fn()}
+      />,
     );
-    expect(screen.getByTitle(/non mesuré/i)).toBeInTheDocument();
+
+    // Le zéro mesuré s'affiche comme une valeur numérique, sans marqueur "non mesuré".
+    const measuredZero = screen.getByText('0.00');
+    expect(measuredZero).toBeInTheDocument();
+    expect(measuredZero).not.toHaveAttribute('title');
+
+    // L'axe non mesuré (null), lui, porte le marqueur — et ce n'est pas le même nœud.
+    const unmeasured = screen.getByTitle(/non mesuré/i);
+    expect(unmeasured).toBeInTheDocument();
+    expect(unmeasured).not.toHaveTextContent('0.00');
   });
 });
