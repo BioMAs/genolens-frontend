@@ -47,6 +47,16 @@ describe('IndicationPicker', () => {
     await userEvent.click(excluded);
     expect(onSelect).not.toHaveBeenCalled();
     expect(onForce).not.toHaveBeenCalled();
+
+    // Contournement clavier : focus (même impossible sur un bouton disabled) puis Entrée.
+    excluded.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSelect).not.toHaveBeenCalled();
+
+    // Contournement par clic direct sur un enfant du bouton (le libellé de la maladie).
+    await userEvent.click(screen.getByText('pheochromocytoma'));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onForce).not.toHaveBeenCalled();
   });
 
   it('force un run exclu seulement après confirmation', async () => {
@@ -67,5 +77,26 @@ describe('IndicationPicker', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent(/identifiant de maladie est ambigu/i);
     await userEvent.click(screen.getByRole('button', { name: /je comprends/i }));
     expect(onForce).toHaveBeenCalledWith('TCGA-PCPG');
+  });
+
+  it('Échap ferme la confirmation sans forcer le run', async () => {
+    const onForce = jest.fn();
+    render(
+      <IndicationPicker
+        indications={INDICATIONS}
+        value={null}
+        onSelect={jest.fn()}
+        onForceExcluded={onForce}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /lancer sans axe maladie.*TCGA-PCPG/i }),
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onForce).not.toHaveBeenCalled();
   });
 });
