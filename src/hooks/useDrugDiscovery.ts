@@ -13,7 +13,7 @@
  *    identifiant perdu, sinon un dd durablement cassé produirait une boucle de POST.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import api from '@/utils/api';
 import {
@@ -114,8 +114,19 @@ export function useReport(runId: string | undefined) {
 /**
  * Le classement, avec récupération après expiration du run.
  *
- * Le `Set` des identifiants déjà réessayés vit dans une ref : il survit aux rendus et ne
- * déclenche pas de re-render. C'est lui qui borne la récupération à un essai par `run_id`.
+ * Le `Set` des tentatives déjà faites vit dans une ref : il survit aux rendus et ne déclenche
+ * pas de re-render. Il est indexé par **jeu de paramètres** (`indication|profile|allowExcluded`,
+ * la même clé que `runKey`), PAS par `run_id` : côté genolens-dd, `POST /runs` fait
+ * `run_id = str(uuid.uuid4())`, donc chaque appel — même à paramètres identiques — mint un
+ * identifiant frais. Borner sur `run_id` ne bornerait jamais rien : la garde ne se
+ * déclencherait jamais et un dd durablement cassé produirait une boucle de POST sans fin.
+ * Le jeu de paramètres, lui, identifie la demande de l'utilisateur et reste stable d'une
+ * tentative à l'autre — c'est la seule borne qui protège réellement.
+ *
+ * Le déclenchement vit dans un `useEffect` (pas dans le corps du rendu) : `recover()` mute le
+ * cache React Query et émet un vrai POST réseau, un effet de bord qui doit attendre le commit.
+ * Appelé pendant le rendu, un rendu concurrent abandonné avant commit émettrait quand même le
+ * POST.
  */
 export function useDdTargetsWithRecovery(params: DdRunParams | null, limit: number) {
   const qc = useQueryClient();
@@ -124,16 +135,22 @@ export function useDdTargetsWithRecovery(params: DdRunParams | null, limit: numb
   const targets = useTargets(run.data, limit);
 
   const recover = useCallback(() => {
-    const lost = run.data;
-    if (!lost || !params || retried.current.has(lost)) return;
-    retried.current.add(lost);
-    qc.removeQueries({ queryKey: runKey(params) });
-    void qc.refetchQueries({ queryKey: runKey(params) });
-  }, [params, qc, run.data]);
+    if (!params) return;
+    const key = runKey(params).join('|');
+    if (retried.current.has(key)) return;
+    retried.current.add(key);
+    // `invalidateQueries` (et non `removeQueries`) : le run est un observer ACTIF (monté par
+    // `useDdRun` juste au-dessus), donc invalider force son refetch immédiat. `removeQueries`
+    // vide le cache mais ne garantit pas qu'un nouvel appel parte aussitôt — la recréation de
+    // la query par l'observer et un `refetchQueries` séparé peuvent se rater dans le temps.
+    void qc.invalidateQueries({ queryKey: runKey(params) });
+  }, [params, qc]);
 
-  if (targets.isError && statusOf(targets.error) === 404) {
-    recover();
-  }
+  useEffect(() => {
+    if (targets.isError && statusOf(targets.error) === 404) {
+      recover();
+    }
+  }, [targets.isError, targets.error, run.data, recover]);
 
   return targets;
 }
