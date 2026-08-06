@@ -12,6 +12,7 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith('/tools/ontology') && pathname.length > '/tools/ontology'.length) return 'GO Term';
   if (pathname.startsWith('/tools/ontology')) return 'Gene Ontology Browser';
   if (pathname.startsWith('/tools/power-analysis')) return 'Power Analysis';
+  if (pathname.startsWith('/tools/drug-discovery')) return 'Drug Discovery';
   if (pathname === '/profile') return 'Profile';
   if (pathname === '/admin') return 'Administration';
   if (pathname.includes('/multi-comparison')) return 'Multi-Comparison';
