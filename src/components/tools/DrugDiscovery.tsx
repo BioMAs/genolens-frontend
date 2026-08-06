@@ -112,6 +112,38 @@ export default function DrugDiscovery() {
   }
 
   /**
+   * `GET /status` et `GET /indications` sont les deux PREMIERS appels de chaque chargement de
+   * page — leur mode de défaillance le plus probable (502/503/504, timeout réseau) n'a pas de
+   * `data`, donc le garde-fou ci-dessus ne se déclenche jamais : sans ce bloc, la section
+   * catalogue s'afficherait vide, sans message ni indicateur.
+   */
+  if (status.error || catalogue.error) {
+    const bootstrapFailure = (status.error ?? catalogue.error) as
+      | { response?: { status?: number } }
+      | undefined;
+    const notConfigured = bootstrapFailure?.response?.status === 503;
+    return (
+      <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
+        <p>
+          {notConfigured
+            ? "Drug Discovery n'est pas configuré sur ce serveur. Contactez un administrateur."
+            : 'Drug Discovery est momentanément indisponible. Réessayez dans un instant.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            if (status.error) void status.refetch();
+            if (catalogue.error) void catalogue.refetch();
+          }}
+          className="mt-2 underline"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  /**
    * Un 422 porte la rationale curée et s'affiche VERBATIM : c'est la seule partie actionnable
    * de la réponse. Les autres échecs n'ont rien d'actionnable côté utilisateur, mais les taire
    * laisserait la page bloquée sur « Calcul en cours… » sans jamais rien rendre.
@@ -165,6 +197,7 @@ export default function DrugDiscovery() {
             onClick={() => {
               void run.refetch();
               void targets.refetch();
+              void report.refetch();
             }}
             className="mt-2 underline"
           >
