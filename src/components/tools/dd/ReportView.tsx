@@ -49,8 +49,8 @@ export default function ReportView({ report }: ReportViewProps) {
     <article className="space-y-8">
       {report.n_targets_without_evidence > 0 && (
         <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-          {report.n_targets_without_evidence} cibles du haut de classement ont été écartées de ce
-          rapport faute de preuve citable. Ce n'est donc pas le top du classement.
+          {report.n_targets_without_evidence} top-ranked targets were excluded from this report
+          for lack of citable evidence. This is therefore not the actual top of the ranking.
         </p>
       )}
 
@@ -77,7 +77,7 @@ export default function ReportView({ report }: ReportViewProps) {
       ))}
 
       <section>
-        <h3 className="mb-2 text-lg font-medium text-gray-900">Preuves</h3>
+        <h3 className="mb-2 text-lg font-medium text-gray-900">Evidence</h3>
         <ol className="space-y-1 text-sm text-gray-700">
           {report.appendix.map((entry) => {
             const evidenceId = appendixEvidenceId(entry);

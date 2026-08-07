@@ -13,16 +13,16 @@ interface ProfileSelectorProps {
 }
 
 const LABELS: Record<string, string> = {
-  default_oncology: 'Oncologie (défaut)',
+  default_oncology: 'Oncology (default)',
   first_in_class: 'First-in-class',
   fast_follower: 'Fast-follower',
-  safety_first: 'Sécurité d\'abord',
+  safety_first: 'Safety first',
 };
 
 export default function ProfileSelector({ profiles, value, onChange }: ProfileSelectorProps) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-gray-700">Profil de pondération</span>
+      <span className="mb-1 block font-medium text-gray-700">Weighting profile</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}

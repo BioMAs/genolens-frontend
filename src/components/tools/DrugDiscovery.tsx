@@ -91,24 +91,24 @@ export default function DrugDiscovery() {
   const report = useReport(tab === 'report' ? run.data : undefined);
 
   if (profile.isLoading) {
-    return <p className="text-sm text-gray-500">Chargement…</p>;
+    return <p className="text-sm text-gray-500">Loading…</p>;
   }
 
   if (!allowed) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
         <h2 className="text-xl font-medium text-gray-900">
-          Drug Discovery nécessite un plan TEAM ou ON_PREMISE
+          Drug Discovery requires a TEAM or ON_PREMISE plan
         </h2>
         <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600">
-          Le module classe des cibles thérapeutiques sur 33 indications TCGA à partir de sources
-          publiques curées, et produit un rapport cité pour les meilleures.
+          The module ranks therapeutic targets across 33 TCGA indications from curated public
+          sources, and produces a cited report for the top candidates.
         </p>
         <a
           href="/pricing"
           className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white"
         >
-          Voir les plans
+          View plans
         </a>
       </div>
     );
@@ -117,7 +117,7 @@ export default function DrugDiscovery() {
   if (status.data && !status.data.configured) {
     return (
       <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
-        Drug Discovery n&apos;est pas configuré sur ce serveur. Contactez un administrateur.
+        Drug Discovery is not configured on this server. Contact an administrator.
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function DrugDiscovery() {
   if (status.data && status.data.reachable === false) {
     return (
       <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
-        Le service Drug Discovery est momentanément injoignable. Réessayez dans un instant.
+        Drug Discovery is temporarily unreachable. Try again in a moment.
       </div>
     );
   }
@@ -142,11 +142,11 @@ export default function DrugDiscovery() {
     return (
       <div className="rounded-md bg-amber-50 p-4 text-sm text-amber-900">
         <p className="font-medium">
-          Drug Discovery est joignable, mais son socle de référence est incomplet.
+          Drug Discovery is reachable, but its reference dataset is incomplete.
         </p>
         {Object.keys(tables).length > 0 && (
           <>
-            <p className="mt-1">Tables à reconstruire :</p>
+            <p className="mt-1">Tables to rebuild:</p>
             <ul className="mt-1 list-disc pl-5">
               {Object.entries(tables).map(([table, state]) => (
                 <li key={table}>
@@ -175,8 +175,8 @@ export default function DrugDiscovery() {
       <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
         <p>
           {notConfigured
-            ? "Drug Discovery n'est pas configuré sur ce serveur. Contactez un administrateur."
-            : 'Drug Discovery est momentanément indisponible. Réessayez dans un instant.'}
+            ? 'Drug Discovery is not configured on this server. Contact an administrator.'
+            : 'Drug Discovery is temporarily unavailable. Try again in a moment.'}
         </p>
         <button
           type="button"
@@ -186,7 +186,7 @@ export default function DrugDiscovery() {
           }}
           className="mt-2 underline"
         >
-          Réessayer
+          Retry
         </button>
       </div>
     );
@@ -211,12 +211,12 @@ export default function DrugDiscovery() {
     failureStatus === undefined || failureStatus === 422 || failureStatus === 404
       ? null
       : failureStatus === 503
-        ? "Drug Discovery n'est pas configuré sur ce serveur. Contactez un administrateur."
+        ? 'Drug Discovery is not configured on this server. Contact an administrator.'
         : failureStatus === 504
-          ? 'Le calcul a dépassé le délai autorisé. Réessayez.'
+          ? 'The calculation exceeded the allowed time. Try again.'
           : failureStatus === 403
-            ? 'Votre plan ne donne pas accès à Drug Discovery.'
-            : 'Drug Discovery est momentanément indisponible. Réessayez dans un instant.';
+            ? 'Your plan does not include access to Drug Discovery.'
+            : 'Drug Discovery is temporarily unavailable. Try again in a moment.';
 
   const reportFailure = report.error as
     | { response?: { status?: number; data?: { detail?: string } } }
@@ -227,17 +227,17 @@ export default function DrugDiscovery() {
     reportFailureStatus === undefined || reportFailureStatus === 422 || reportFailureStatus === 404
       ? null
       : reportFailureStatus === 503
-        ? "Drug Discovery n'est pas configuré sur ce serveur. Contactez un administrateur."
+        ? 'Drug Discovery is not configured on this server. Contact an administrator.'
         : reportFailureStatus === 504
-          ? 'Le calcul du rapport a dépassé le délai autorisé. Réessayez.'
+          ? 'The report calculation exceeded the allowed time. Try again.'
           : reportFailureStatus === 403
-            ? 'Votre plan ne donne pas accès à Drug Discovery.'
-            : 'Le rapport est momentanément indisponible. Réessayez dans un instant.';
+            ? 'Your plan does not include access to Drug Discovery.'
+            : 'The report is temporarily unavailable. Try again in a moment.';
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        {catalogue.isLoading && <p className="text-sm text-gray-500">Chargement du catalogue…</p>}
+        {catalogue.isLoading && <p className="text-sm text-gray-500">Loading catalog…</p>}
         {catalogue.data && (
           <div className="space-y-4">
             <ProfileSelector
@@ -270,7 +270,7 @@ export default function DrugDiscovery() {
             }}
             className="mt-2 underline"
           >
-            Réessayer
+            Retry
           </button>
         </div>
       )}
@@ -289,14 +289,14 @@ export default function DrugDiscovery() {
               onClick={() => setTab('targets')}
               className={`px-4 py-2 text-sm ${tab === 'targets' ? 'border-b-2 border-brand-primary font-medium' : 'text-gray-500'}`}
             >
-              Cibles
+              Targets
             </button>
             <button
               type="button"
               onClick={() => setTab('report')}
               className={`px-4 py-2 text-sm ${tab === 'report' ? 'border-b-2 border-brand-primary font-medium' : 'text-gray-500'}`}
             >
-              Rapport
+              Report
             </button>
           </div>
 
@@ -310,10 +310,11 @@ export default function DrugDiscovery() {
              */
             <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
               <p>
-                Le calcul a expiré : le service a oublié ce run avant que la page ait pu le lire.
+                The calculation expired: the service forgot this run before the page could read
+                it.
               </p>
               <button type="button" onClick={targets.reset} className="mt-2 underline">
-                Relancer le calcul
+                Restart the calculation
               </button>
             </div>
           ) : (
@@ -342,7 +343,7 @@ export default function DrugDiscovery() {
                         onClick={() => void report.refetch()}
                         className="mt-2 underline"
                       >
-                        Réessayer
+                        Retry
                       </button>
                     </div>
                   )}
@@ -352,7 +353,7 @@ export default function DrugDiscovery() {
 
               {((tab === 'targets' && targets.isLoading) ||
                 (tab === 'report' && report.isLoading)) && (
-                <p className="text-sm text-gray-500">Calcul en cours…</p>
+                <p className="text-sm text-gray-500">Calculating…</p>
               )}
             </>
           )}

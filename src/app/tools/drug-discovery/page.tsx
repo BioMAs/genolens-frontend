@@ -25,16 +25,16 @@ export default function DrugDiscoveryPage() {
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">Drug Discovery</h1>
                             <p className="mt-1 text-gray-600">
-                                Classement de cibles thérapeutiques sur 33 indications TCGA, à
-                                partir de sources publiques curées. Le module ne lit aucune de vos
-                                données.
+                                Ranking of therapeutic targets across 33 TCGA indications, from
+                                curated public sources. The module does not read any of your
+                                data.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* useSearchParams impose une frontière Suspense en App Router. */}
-                <Suspense fallback={<p className="text-sm text-gray-500">Chargement…</p>}>
+                <Suspense fallback={<p className="text-sm text-gray-500">Loading…</p>}>
                     <DrugDiscovery />
                 </Suspense>
             </div>

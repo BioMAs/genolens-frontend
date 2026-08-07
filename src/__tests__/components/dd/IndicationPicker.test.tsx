@@ -70,12 +70,12 @@ describe('IndicationPicker', () => {
       />,
     );
     await userEvent.click(
-      screen.getByRole('button', { name: /lancer sans axe maladie.*TCGA-PCPG/i }),
+      screen.getByRole('button', { name: /run without disease axis.*TCGA-PCPG/i }),
     );
     expect(onForce).not.toHaveBeenCalled();
     // La confirmation répète le motif : c'est ce qu'on demande d'assumer.
     expect(screen.getByRole('dialog')).toHaveTextContent(/identifiant de maladie est ambigu/i);
-    await userEvent.click(screen.getByRole('button', { name: /je comprends/i }));
+    await userEvent.click(screen.getByRole('button', { name: /i understand/i }));
     expect(onForce).toHaveBeenCalledWith('TCGA-PCPG');
   });
 
@@ -90,7 +90,7 @@ describe('IndicationPicker', () => {
       />,
     );
     await userEvent.click(
-      screen.getByRole('button', { name: /lancer sans axe maladie.*TCGA-PCPG/i }),
+      screen.getByRole('button', { name: /run without disease axis.*TCGA-PCPG/i }),
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 

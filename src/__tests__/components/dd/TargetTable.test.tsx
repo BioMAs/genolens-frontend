@@ -47,16 +47,16 @@ describe('TargetTable', () => {
     // part ») : les quatre valeurs de la fixture sont distinctes (120, 8, 3, 45), donc un
     // échange de libellés entre deux compteurs ferait échouer le test correspondant.
     expect(
-      screen.getByText(/120\s*écartées faute de preuve suffisante/),
+      screen.getByText(/120\s*excluded for insufficient evidence/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/8\s*disqualifiées \(essentiel commun\)/),
+      screen.getByText(/8\s*disqualified \(common essential\)/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/3\s*sous le plancher de sécurité/),
+      screen.getByText(/3\s*below the safety floor/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/45\s*sans axe obligatoire/),
+      screen.getByText(/45\s*missing required axis/),
     ).toBeInTheDocument();
   });
 
@@ -90,7 +90,7 @@ describe('TargetTable', () => {
     expect(measuredZero).not.toHaveAttribute('title');
 
     // L'axe non mesuré (null), lui, porte le marqueur — et ce n'est pas le même nœud.
-    const unmeasured = screen.getByTitle(/non mesuré/i);
+    const unmeasured = screen.getByTitle(/not measured/i);
     expect(unmeasured).toBeInTheDocument();
     expect(unmeasured).not.toHaveTextContent('0.00');
   });

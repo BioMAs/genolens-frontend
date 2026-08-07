@@ -89,7 +89,7 @@ export default function IndicationPicker({
                   onClick={(event) => openDialog(indication, event.currentTarget)}
                   className="mt-1 underline"
                 >
-                  Lancer sans axe maladie ({indication.tcga_project})
+                  Run without disease axis ({indication.tcga_project})
                 </button>
               </div>
             )}
@@ -109,13 +109,12 @@ export default function IndicationPicker({
               <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />
               <div>
                 <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-lg font-medium text-gray-900">
-                  {pendingForce.tcga_project} — classement sans axe maladie
+                  {pendingForce.tcga_project} — ranking without disease axis
                 </h2>
                 <p className="mt-2 text-sm text-gray-700">{pendingForce.rationale}</p>
                 <p className="mt-2 text-sm text-gray-700">
-                  Le classement ne portera que sécurité, dépendance, tractabilité et nouveauté.
-                  Il sera indication-agnostique et ne doit pas être lu comme spécifique à cette
-                  maladie.
+                  The ranking will only cover safety, dependency, tractability, and novelty. It
+                  will be indication-agnostic and should not be read as specific to this disease.
                 </p>
               </div>
             </div>
@@ -126,7 +125,7 @@ export default function IndicationPicker({
                 onClick={closeDialog}
                 className="rounded-md border border-gray-300 px-4 py-2 text-sm"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 type="button"
@@ -136,7 +135,7 @@ export default function IndicationPicker({
                 }}
                 className="rounded-md bg-amber-600 px-4 py-2 text-sm text-white"
               >
-                Je comprends, lancer quand même
+                I understand, run anyway
               </button>
             </div>
           </div>

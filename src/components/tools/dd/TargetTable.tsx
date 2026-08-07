@@ -47,13 +47,13 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
-        <span className="font-medium text-gray-900">{data.n_ranked} cibles classées</span>
-        <span>{data.n_excluded_insufficient_evidence} écartées faute de preuve suffisante</span>
-        <span>{data.n_disqualified_common_essential} disqualifiées (essentiel commun)</span>
-        <span>{data.n_disqualified_safety_floor} sous le plancher de sécurité</span>
-        <span>{data.n_excluded_missing_required_axis} sans axe obligatoire</span>
+        <span className="font-medium text-gray-900">{data.n_ranked} targets ranked</span>
+        <span>{data.n_excluded_insufficient_evidence} excluded for insufficient evidence</span>
+        <span>{data.n_disqualified_common_essential} disqualified (common essential)</span>
+        <span>{data.n_disqualified_safety_floor} below the safety floor</span>
+        <span>{data.n_excluded_missing_required_axis} missing required axis</span>
         <label className="ml-auto">
-          Afficher{' '}
+          Show{' '}
           <select
             value={limit}
             onChange={(event) => onLimitChange(Number(event.target.value))}
@@ -71,13 +71,13 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
               <th className="p-2">
-                <button type="button" onClick={() => setSortBy('rank')}>Rang</button>
+                <button type="button" onClick={() => setSortBy('rank')}>Rank</button>
               </th>
-              <th className="p-2">Gène</th>
+              <th className="p-2">Gene</th>
               <th className="p-2">Composite</th>
               <th className="p-2">Percentile</th>
               <th className="p-2">
-                <button type="button" onClick={() => setSortBy('coverage')}>Couverture</button>
+                <button type="button" onClick={() => setSortBy('coverage')}>Coverage</button>
               </th>
               <th className="p-2">Axes</th>
               {axes.map((axis) => (
@@ -109,7 +109,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
                   return (
                     <td key={axis} className="p-2">
                       {value === null || value === undefined ? (
-                        <span className="text-gray-300" title="Axe non mesuré pour ce gène">
+                        <span className="text-gray-300" title="Axis not measured for this gene">
                           —
                         </span>
                       ) : (

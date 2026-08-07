@@ -64,12 +64,12 @@ describe('ReportView', () => {
   it('signale les cibles écartées faute de preuve', () => {
     render(<ReportView report={REPORT} />);
     // Sans ça, l'utilisateur croit lire le top 10 du classement.
-    expect(screen.getByText(/2 cibles/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 top-ranked targets/i)).toBeInTheDocument();
   });
 
   it("affiche l'annexe des preuves en permanence, sans repli derrière un bouton", () => {
     render(<ReportView report={REPORT} />);
-    expect(screen.getByText('Preuves')).toBeInTheDocument();
+    expect(screen.getByText('Evidence')).toBeInTheDocument();
     expect(screen.getByText(/\[ev-1\] disease_observation/)).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
   });

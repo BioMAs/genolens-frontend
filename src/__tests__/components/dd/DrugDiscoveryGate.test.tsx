@@ -160,7 +160,7 @@ describe('DrugDiscovery — garde de plan', () => {
 
     render(<DrugDiscovery />, { wrapper });
 
-    await waitFor(() => expect(screen.getByText(/plan TEAM/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/TEAM or ON_PREMISE plan/i)).toBeInTheDocument());
     // La garde évite tout aller-retour au module pour un compte non autorisé ; le backend reste
     // l'autorité. Vérifier l'absence de TOUT appel au préfixe `/drug-discovery` — pas seulement
     // `/indications` — pour qu'une régression retirant le flag `enabled` de `useDdStatus` fasse
@@ -285,12 +285,12 @@ describe('DrugDiscovery — socle de référence incomplet', () => {
     render(<DrugDiscovery />, { wrapper });
 
     await waitFor(() =>
-      expect(screen.getByText(/socle de référence est incomplet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/reference dataset is incomplete/i)).toBeInTheDocument(),
     );
     expect(screen.getByText(/contrast_disease_normal/)).toBeInTheDocument();
 
-    expect(screen.queryByText(/momentanément injoignable/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/n'est pas configuré/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/temporarily unreachable/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/not configured/i)).not.toBeInTheDocument();
   });
 });
 
@@ -322,11 +322,11 @@ describe('DrugDiscovery — borne de récupération épuisée', () => {
 
     render(<DrugDiscovery />, { wrapper });
 
-    await waitFor(() => expect(screen.getByText(/calcul a expiré/i)).toBeInTheDocument());
-    expect(screen.queryByText(/Calcul en cours/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/calculation expired/i)).toBeInTheDocument());
+    expect(screen.queryByText(/Calculating/)).not.toBeInTheDocument();
     expect(postCount).toBe(2);
 
-    fireEvent.click(screen.getByRole('button', { name: /relancer le calcul/i }));
+    fireEvent.click(screen.getByRole('button', { name: /restart the calculation/i }));
 
     await waitFor(() => expect(postCount).toBe(3));
   });
@@ -368,18 +368,18 @@ describe('DrugDiscovery — panne isolée du rapport', () => {
       expect.anything(),
     ));
     expect(mockedApi.get.mock.calls.some(([url]) => /\/report$/.test(url as string))).toBe(false);
-    expect(screen.queryByText(/dépassé le délai/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/exceeded the allowed time/i)).not.toBeInTheDocument();
 
     // Bascule sur Rapport : la requête part maintenant, échoue, et son message reste local à
     // l'onglet — il ne doit pas remplacer la table de cibles ni le bandeau générique du haut.
-    fireEvent.click(screen.getByText('Rapport'));
+    fireEvent.click(screen.getByText('Report'));
 
     await waitFor(() =>
-      expect(screen.getByText(/calcul du rapport a dépassé le délai autorisé/i)).toBeInTheDocument(),
+      expect(screen.getByText(/report calculation exceeded the allowed time/i)).toBeInTheDocument(),
     );
 
     // Retour sur Cibles : la table est toujours là, intacte, sans trace de la panne du rapport.
-    fireEvent.click(screen.getByText('Cibles'));
-    expect(screen.queryByText(/calcul du rapport a dépassé le délai autorisé/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Targets'));
+    expect(screen.queryByText(/report calculation exceeded the allowed time/i)).not.toBeInTheDocument();
   });
 });
