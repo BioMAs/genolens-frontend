@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -27,16 +27,15 @@ jobs:
         run: npm run lint -- --max-warnings=0 || true
 
       - name: Run tests
-        # e2e-capture/ holds Playwright specs, which Jest must not try to load.
-        # jest.config.ts already ignores them but is gitignored, so it is absent
-        # here and Jest falls back to its defaults — no TypeScript transform, and
-        # a testMatch that picks up **/*.spec.ts. Passing the flag REPLACES the
-        # default ignore list, hence /node_modules/ is repeated explicitly.
+        # jest.config.ts, jest.setup.tsx and src/__tests__ are tracked in git and
+        # run for real here. jest-config v30 only loads a TypeScript config
+        # natively on Node >= 22.6 (process.features.typescript); below that it
+        # falls back to ts-node, which is not a dependency, so the config would
+        # fail to load before a single test runs. Node 22 above covers this.
         #
-        # NOTE: because jest.config.ts, jest.setup.tsx and /src/__tests__ are all
-        # gitignored, this step currently runs ZERO unit tests — it passes on
-        # --passWithNoTests. Un-ignoring that infrastructure is what would make
-        # this step meaningful.
+        # e2e-capture/ holds Playwright specs, which Jest must not try to load.
+        # jest.config.ts already ignores them, but the explicit flag here
+        # REPLACES the default ignore list, hence /node_modules/ is repeated.
         run: >-
           npm test --
           --passWithNoTests --forceExit --ci

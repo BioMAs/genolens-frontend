@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Network, FlaskConical, Database } from 'lucide-react';
+import { Network, FlaskConical, Database, Target } from 'lucide-react';
 
 type Tool = {
     name: string;
@@ -29,6 +29,14 @@ const tools: Tool[] = [
         href: "/tools/power-analysis",
         color: "text-purple-600",
         bgColor: "bg-purple-50"
+    },
+    {
+        name: "Drug Discovery",
+        description: "Rank therapeutic targets across 33 TCGA indications from curated public sources, with a cited report for the top hits. Requires a TEAM or ON_PREMISE plan.",
+        icon: Target,
+        href: "/tools/drug-discovery",
+        color: "text-rose-600",
+        bgColor: "bg-rose-50"
     },
     {
         name: "Public GEO Datasets",
