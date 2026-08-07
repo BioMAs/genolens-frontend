@@ -13,7 +13,7 @@
  *    identifiant perdu, sinon un dd durablement cassé produirait une boucle de POST.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import api from '@/utils/api';
 import {
@@ -131,26 +131,60 @@ export function useReport(runId: string | undefined) {
 export function useDdTargetsWithRecovery(params: DdRunParams | null, limit: number) {
   const qc = useQueryClient();
   const retried = useRef<Set<string>>(new Set());
+  // Épuisé : exposé comme état, pas dérivé de `retried.current` pendant le rendu — lire un ref
+  // hors effet/callback est interdit par les règles des Hooks (`react-hooks/refs`) et, plus
+  // concrètement, ne déclencherait aucun nouveau rendu quand la valeur change puisqu'un ref ne
+  // notifie jamais React. `recover` est le seul endroit qui l'écrit, et il ne tourne que dans un
+  // effet ou dans `reset` (un gestionnaire d'événement) — jamais pendant le rendu.
+  const [exhaustedKey, setExhaustedKey] = useState<string | null>(null);
   const run = useDdRun(params);
   const targets = useTargets(run.data, limit);
+  const key = params ? runKey(params).join('|') : null;
 
-  const recover = useCallback(() => {
-    if (!params) return;
-    const key = runKey(params).join('|');
-    if (retried.current.has(key)) return;
-    retried.current.add(key);
-    // `invalidateQueries` (et non `removeQueries`) : le run est un observer ACTIF (monté par
-    // `useDdRun` juste au-dessus), donc invalider force son refetch immédiat. `removeQueries`
-    // vide le cache mais ne garantit pas qu'un nouvel appel parte aussitôt — la recréation de
-    // la query par l'observer et un `refetchQueries` séparé peuvent se rater dans le temps.
-    void qc.invalidateQueries({ queryKey: runKey(params) });
-  }, [params, qc]);
+  const recover = useCallback(
+    (forKey: string) => {
+      if (!params) return;
+      if (retried.current.has(forKey)) {
+        // La borne a déjà servi pour ce jeu de paramètres — dd a reçu un run_id frais et
+        // /targets rend 404 quand même. Avant ce champ, ce cas retombait dans le silence : le
+        // 404 est exclu du bloc `outage` de la page (il déclenche la récupération, il ne doit
+        // pas s'afficher comme une panne), donc rien ne se rendait — une impasse permanente,
+        // puisque la ref survit au re-rendu et qu'un rechargement de la page ne change pas le
+        // jeu de paramètres dans l'URL.
+        setExhaustedKey(forKey);
+        return;
+      }
+      retried.current.add(forKey);
+      // `invalidateQueries` (et non `removeQueries`) : le run est un observer ACTIF (monté par
+      // `useDdRun` juste au-dessus), donc invalider force son refetch immédiat. `removeQueries`
+      // vide le cache mais ne garantit pas qu'un nouvel appel parte aussitôt — la recréation de
+      // la query par l'observer et un `refetchQueries` séparé peuvent se rater dans le temps.
+      void qc.invalidateQueries({ queryKey: runKey(params) });
+    },
+    [params, qc],
+  );
 
   useEffect(() => {
-    if (targets.isError && statusOf(targets.error) === 404) {
-      recover();
-    }
-  }, [targets.isError, targets.error, run.data, recover]);
+    if (!(key && targets.isError && statusOf(targets.error) === 404)) return;
+    // `recover` peut appeler `setExhaustedKey` : le mettre dans un callback planifié (et non
+    // l'appeler en direct dans le corps de l'effet) évite la cascade de rendu synchrone que
+    // `react-hooks/set-state-in-effect` signale — l'effet réagit ici à un système externe (la
+    // requête réseau qui vient d'échouer), pas à une valeur dérivable pendant le rendu.
+    const timeoutId = setTimeout(() => recover(key), 0);
+    return () => clearTimeout(timeoutId);
+  }, [key, targets.isError, targets.error, run.data, recover]);
 
-  return targets;
+  const exhausted = exhaustedKey !== null && exhaustedKey === key;
+
+  // Réarme la borne pour ce jeu de paramètres puis relance immédiatement — le seul moyen de
+  // sortir de l'impasse ci-dessus sans changer de paramètres. Sans le retrait explicite de la
+  // clé, `recover` refuserait la nouvelle tentative : elle croirait la borne déjà consommée.
+  const reset = useCallback(() => {
+    if (!key) return;
+    retried.current.delete(key);
+    setExhaustedKey((current) => (current === key ? null : current));
+    recover(key);
+  }, [key, recover]);
+
+  return { ...targets, exhausted, reset };
 }

@@ -231,3 +231,155 @@ describe('DrugDiscovery — bandeau de run forcé', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('DrugDiscovery — profil absent du catalogue dans l\'URL', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // `benchmark` : le nom que genolens-dd retire de `/indications` (T1) et refuse désormais
+    // même posté directement (constat 2, côté dd). Une URL peut malgré tout le porter — lien
+    // partagé, tapé à la main. Le catalogue mocké ici ne le liste pas, exactement comme le
+    // vrai service.
+    mockSearchParams = new URLSearchParams('indication=TCGA-BRCA&profile=benchmark');
+    mockAllowedAccount();
+  });
+
+  it('ne poste pas le profil inconnu de l\'URL, retombe sur le profil par défaut', async () => {
+    render(<DrugDiscovery />, { wrapper });
+
+    // Le `<select>` réel n'a pas d'option pour un profil hors catalogue (ProfileSelector.tsx) ;
+    // le stub ici montre la valeur EFFECTIVE que le composant racine lui a calculée.
+    await waitFor(() =>
+      expect(screen.getByText(/profil actuel : default_oncology/)).toBeInTheDocument(),
+    );
+
+    await waitFor(() => expect(mockedApi.post).toHaveBeenCalled());
+    const [, body] = mockedApi.post.mock.calls[0] as [string, { profile: string }];
+    expect(body.profile).toBe('default_oncology');
+    expect(body.profile).not.toBe('benchmark');
+  });
+});
+
+describe('DrugDiscovery — socle de référence incomplet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/drug-discovery/status') {
+        // Joignable (le service répond), mais son `/readyz` amont dit `ready: false` — le cas
+        // que le constat 3 distingue désormais de « injoignable » côté backend.
+        return Promise.resolve({
+          data: {
+            configured: true,
+            reachable: true,
+            ready: false,
+            tables: { contrast_disease_normal: 'missing' },
+          },
+        });
+      }
+      throw new Error(`appel inattendu : ${url}`);
+    });
+  });
+
+  it('affiche un état distinct « socle incomplet », ni injoignable ni non configuré', async () => {
+    render(<DrugDiscovery />, { wrapper });
+
+    await waitFor(() =>
+      expect(screen.getByText(/socle de référence est incomplet/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/contrast_disease_normal/)).toBeInTheDocument();
+
+    expect(screen.queryByText(/momentanément injoignable/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/n'est pas configuré/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('DrugDiscovery — borne de récupération épuisée', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSearchParams = new URLSearchParams('indication=TCGA-BRCA&profile=default_oncology');
+  });
+
+  it('affiche un message et un bouton de relance quand la seconde tentative échoue aussi', async () => {
+    let postCount = 0;
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/drug-discovery/status') {
+        return Promise.resolve({ data: { configured: true, reachable: true, ready: true } });
+      }
+      if (url === '/drug-discovery/indications') return Promise.resolve(CATALOGUE);
+      // Chaque run — même frais — rend 404 : dd est durablement cassé pour ces paramètres, ou
+      // tourne avec plusieurs réplicas et le POST/GET n'atteignent jamais la même instance.
+      if (/\/targets$/.test(url)) {
+        return Promise.reject(Object.assign(new Error('not found'), { response: { status: 404 } }));
+      }
+      throw new Error(`appel inattendu : ${url}`);
+    });
+    mockedApi.post.mockImplementation((url: string) => {
+      if (url === '/drug-discovery/runs') return Promise.resolve({ data: { run_id: `run-${++postCount}` } });
+      throw new Error(`appel inattendu : ${url}`);
+    });
+
+    render(<DrugDiscovery />, { wrapper });
+
+    await waitFor(() => expect(screen.getByText(/calcul a expiré/i)).toBeInTheDocument());
+    expect(screen.queryByText(/Calcul en cours/)).not.toBeInTheDocument();
+    expect(postCount).toBe(2);
+
+    fireEvent.click(screen.getByRole('button', { name: /relancer le calcul/i }));
+
+    await waitFor(() => expect(postCount).toBe(3));
+  });
+});
+
+describe('DrugDiscovery — panne isolée du rapport', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSearchParams = new URLSearchParams('indication=TCGA-BRCA&profile=default_oncology');
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/drug-discovery/status') {
+        return Promise.resolve({ data: { configured: true, reachable: true, ready: true } });
+      }
+      if (url === '/drug-discovery/indications') return Promise.resolve(CATALOGUE);
+      if (/^\/drug-discovery\/runs\/[^/]+$/.test(url)) return Promise.resolve(RUN_DETAIL_WITH_WARNING);
+      if (/\/targets$/.test(url)) return Promise.resolve(EMPTY_TARGETS);
+      // Le rapport est l'appel le plus cher en amont ; c'est lui qui expire ici, pas les cibles.
+      if (/\/report$/.test(url)) {
+        return Promise.reject(Object.assign(new Error('gateway timeout'), { response: { status: 504 } }));
+      }
+      throw new Error(`appel inattendu : ${url}`);
+    });
+    mockedApi.post.mockImplementation((url: string) => {
+      if (url === '/drug-discovery/runs') return Promise.resolve({ data: { run_id: 'r1' } });
+      throw new Error(`appel inattendu : ${url}`);
+    });
+  });
+
+  it('ne déclenche /report que sur l\'onglet Rapport, et son échec ne masque pas les cibles', async () => {
+    render(<DrugDiscovery />, { wrapper });
+
+    await waitFor(() => expect(screen.getByText(/indication actuelle : TCGA-BRCA/)).toBeInTheDocument());
+
+    // Onglet Cibles actif par défaut : la table doit se rendre SANS bandeau de panne, alors que
+    // `/report` n'a même pas encore été appelé.
+    await waitFor(() => expect(mockedApi.get).toHaveBeenCalledWith(
+      expect.stringMatching(/\/targets$/),
+      expect.anything(),
+    ));
+    expect(mockedApi.get.mock.calls.some(([url]) => /\/report$/.test(url as string))).toBe(false);
+    expect(screen.queryByText(/dépassé le délai/i)).not.toBeInTheDocument();
+
+    // Bascule sur Rapport : la requête part maintenant, échoue, et son message reste local à
+    // l'onglet — il ne doit pas remplacer la table de cibles ni le bandeau générique du haut.
+    fireEvent.click(screen.getByText('Rapport'));
+
+    await waitFor(() =>
+      expect(screen.getByText(/calcul du rapport a dépassé le délai autorisé/i)).toBeInTheDocument(),
+    );
+
+    // Retour sur Cibles : la table est toujours là, intacte, sans trace de la panne du rapport.
+    fireEvent.click(screen.getByText('Cibles'));
+    expect(screen.queryByText(/calcul du rapport a dépassé le délai autorisé/i)).not.toBeInTheDocument();
+  });
+});

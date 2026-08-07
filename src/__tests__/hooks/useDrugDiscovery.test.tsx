@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { useDdTargetsWithRecovery } from '@/hooks/useDrugDiscovery';
@@ -64,5 +64,47 @@ describe('useDdTargetsWithRecovery', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(mockedApi.post).toHaveBeenCalledTimes(2);
+  });
+
+  it('expose `exhausted` quand la borne a servi et que dd oublie encore le run frais', async () => {
+    // Avant l'ajout de ce champ, ce cas — la seconde tentative échouant aussi — ne se
+    // distinguait en rien du premier 404 (silencieux, en cours de récupération) : rien dans le
+    // hook ne permettait à la page de savoir que la borne était consommée pour de bon.
+    let postCount = 0;
+    mockedApi.post.mockImplementation(async () => ({
+      data: { run_id: `run-${++postCount}` },
+    }));
+    mockedApi.get.mockRejectedValue(notFound());
+
+    const { result } = renderHook(() => useDdTargetsWithRecovery(PARAMS, 50), { wrapper });
+
+    await waitFor(() => expect(result.current.exhausted).toBe(true));
+    expect(mockedApi.post).toHaveBeenCalledTimes(2);
+  });
+
+  it("`reset` réarme la borne et relance, permettant une nouvelle tentative", async () => {
+    let postCount = 0;
+    mockedApi.post.mockImplementation(async () => ({
+      data: { run_id: `run-${++postCount}` },
+    }));
+    // Les deux premiers appels échouent (tentative initiale + récupération auto), le troisième
+    // — déclenché par `reset()` — réussit : dd est redevenu disponible entre-temps.
+    let getCount = 0;
+    mockedApi.get.mockImplementation(async () => {
+      getCount += 1;
+      if (getCount <= 2) throw notFound();
+      return { data: { run_id: `run-${postCount}`, targets: [], n_ranked: 0 } };
+    });
+
+    const { result } = renderHook(() => useDdTargetsWithRecovery(PARAMS, 50), { wrapper });
+
+    await waitFor(() => expect(result.current.exhausted).toBe(true));
+    expect(mockedApi.post).toHaveBeenCalledTimes(2);
+
+    act(() => result.current.reset());
+
+    await waitFor(() => expect(result.current.data?.run_id).toBe('run-3'));
+    expect(mockedApi.post).toHaveBeenCalledTimes(3);
+    expect(result.current.exhausted).toBe(false);
   });
 });
