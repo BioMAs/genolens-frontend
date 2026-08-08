@@ -18,6 +18,13 @@ interface IndicationPickerProps {
   value: string | null;
   onSelect: (tcgaProject: string) => void;
   onForceExcluded: (tcgaProject: string) => void;
+  /**
+   * `'grid'` (défaut) est la page outil : le choix de l'indication EST la page.
+   * `'compact'` est l'onglet d'une comparaison, où une grille de 33 cellules volerait la
+   * vedette au reste. La boîte de confirmation d'une indication exclue est identique dans les
+   * deux : c'est la partie critique, et une variante l'aurait fait diverger.
+   */
+  layout?: 'grid' | 'compact';
 }
 
 const CONFIRM_DIALOG_TITLE_ID = 'dd-indication-force-dialog-title';
@@ -27,6 +34,7 @@ export default function IndicationPicker({
   value,
   onSelect,
   onForceExcluded,
+  layout = 'grid',
 }: IndicationPickerProps) {
   const [pendingForce, setPendingForce] = useState<DdIndication | null>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,8 +70,67 @@ export default function IndicationPicker({
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [pendingForce]);
 
+  const selected = indications.find((i) => i.tcga_project === value) ?? null;
+
   return (
     <div>
+      {layout === 'compact' ? (
+        <div className="text-sm">
+          <select
+            value={value ?? ''}
+            onChange={(event) => onSelect(event.target.value)}
+            className="w-full rounded border border-gray-300 p-2"
+          >
+            <option value="">Choose an indication…</option>
+            {indications.map((indication) => (
+              <option
+                key={indication.tcga_project}
+                value={indication.tcga_project}
+                disabled={indication.excluded}
+              >
+                {indication.disease_name} ({indication.tcga_project})
+                {indication.excluded ? ' — excluded' : ''}
+              </option>
+            ))}
+          </select>
+
+          {/* Une option désactivée ne peut pas expliquer pourquoi. L'échappatoire reste
+              atteignable, mais elle passe par la même confirmation que sur la page outil. */}
+          {indications.some((i) => i.excluded) && (
+            <details className="mt-2 text-xs text-gray-600">
+              <summary className="cursor-pointer">
+                Why are some indications unavailable?
+              </summary>
+              <ul className="mt-2 space-y-2">
+                {indications
+                  .filter((indication) => indication.excluded)
+                  .map((indication) => (
+                    <li
+                      key={indication.tcga_project}
+                      className="rounded-md bg-amber-50 p-2 text-amber-900"
+                    >
+                      <span className="font-medium">{indication.tcga_project}</span> —{' '}
+                      {indication.rationale}
+                      <button
+                        type="button"
+                        onClick={(event) => openDialog(indication, event.currentTarget)}
+                        className="ml-1 underline"
+                      >
+                        Run without disease axis
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          )}
+
+          {selected?.excluded && (
+            <p className="mt-2 rounded-md bg-amber-50 p-2 text-xs text-amber-900">
+              {selected.rationale}
+            </p>
+          )}
+        </div>
+      ) : (
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {indications.map((indication) => (
           <li key={indication.tcga_project}>
@@ -96,6 +163,7 @@ export default function IndicationPicker({
           </li>
         ))}
       </ul>
+      )}
 
       {pendingForce && (
         <div

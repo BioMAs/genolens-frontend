@@ -100,9 +100,15 @@ export default function DrugDiscovery() {
         <h2 className="text-xl font-medium text-gray-900">
           Drug Discovery requires a TEAM or ON_PREMISE plan
         </h2>
+        {/* L'argumentaire doit décrire le produit vendu, mode B compris : sans la seconde
+            phrase, la carte d'upgrade sous-vend la capacité qui intéresse le plus un
+            utilisateur qui a déjà ses propres comparaisons. */}
         <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600">
           The module ranks therapeutic targets across 33 TCGA indications from curated public
-          sources, and produces a cited report for the top candidates.
+          sources, and produces a cited report for the top candidates. It also confronts your own
+          differential-expression comparisons with those rankings, telling you which of your
+          differentially expressed genes are well-ranked targets and whether that is more than
+          chance.
         </p>
         <a
           href="/pricing"

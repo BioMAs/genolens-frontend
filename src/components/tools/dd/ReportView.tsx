@@ -17,6 +17,13 @@
  *
  * `n_targets_without_evidence` est affiché dès qu'il dépasse 0 : sinon l'utilisateur croit lire
  * le top 10 du classement alors que des cibles en ont été écartées.
+ *
+ * `disclosures` est rendu EN TÊTE et sans repli. En mode B, `validate_report` (genolens-dd,
+ * report/validate.py) refuse en amont un rapport dérivé de données clientes dont l'état de
+ * divulgation n'est pas déclaré — non-résolus, corrections de corruption tableur, troncature,
+ * gènes hors univers, méthode biologiquement non validée. Amont a donc garanti qu'elles
+ * existent ; les replier ou les reléguer en pied de page serait l'endroit exact où cette
+ * discipline cesse de servir, puisqu'elle n'existe que pour être lue.
  */
 import { DdReport } from '@/types/drugDiscovery';
 
@@ -47,11 +54,24 @@ export default function ReportView({ report }: ReportViewProps) {
 
   return (
     <article className="space-y-8">
-      {report.n_targets_without_evidence > 0 && (
+      {(report.n_targets_without_evidence ?? 0) > 0 && (
         <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
           {report.n_targets_without_evidence} top-ranked targets were excluded from this report
           for lack of citable evidence. This is therefore not the actual top of the ranking.
         </p>
+      )}
+
+      {report.disclosures && report.disclosures.length > 0 && (
+        <section className="rounded-md border border-amber-200 bg-amber-50 p-4">
+          <h3 className="mb-2 text-sm font-semibold text-amber-900">
+            What you must know about this report
+          </h3>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-amber-900">
+            {report.disclosures.map((disclosure) => (
+              <li key={disclosure}>{disclosure}</li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {report.sections.map((section) => (
