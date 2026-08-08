@@ -15,6 +15,7 @@ import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
 import CustomVisualizationPanel from './CustomVisualizationPanel';
 import SignatureScorePanel from './SignatureScorePanel';
+import DrugDiscoveryComparisonPanel from './tools/dd/DrugDiscoveryComparisonPanel';
 import ExportMenu from './ExportMenu';
 import ComparisonReportButton from './ComparisonReportButton';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
@@ -36,7 +37,7 @@ interface ComparisonDetailProps {
   analysisId?: string;
 }
 
-type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature';
+type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature' | 'drug-discovery';
 
 type GenericRow = Record<string, unknown>;
 
@@ -826,6 +827,22 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   <span className="ml-1 text-xs opacity-50">(N/A)</span>
                 )}
               </button>
+              <button
+                onClick={() => setActiveTab('drug-discovery')}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
+                style={
+                  activeTab === 'drug-discovery'
+                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
+                    : { color: 'var(--text-secondary)' }
+                }
+              >
+                Drug targets
+                {/* Dépend du dataset DEG et non de la matrice, contrairement à Clustering et
+                    Signature score : la signature est construite depuis les gènes différentiels. */}
+                {!degDataset && (
+                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
+                )}
+              </button>
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
                 <button
@@ -1085,6 +1102,27 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">
                     Signature scoring requires an expression matrix (count matrix) for this project.
+                  </p>
+                </div>
+              )
+            )}
+
+            {/* Drug targets Tab — la comparaison face au classement de cibles (mode B) */}
+            {activeTab === 'drug-discovery' && (
+              degDataset ? (
+                /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
+                   que porte `deg_genes.comparison_name` côté base. */
+                <DrugDiscoveryComparisonPanel
+                  datasetId={degDataset.id}
+                  comparisonName={actualComparisonName}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG results</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Drug target scoring is built from the differentially expressed genes of this
+                    comparison, so it needs the DEG results to be available.
                   </p>
                 </div>
               )

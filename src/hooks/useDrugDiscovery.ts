@@ -21,6 +21,9 @@ import {
   DdReport,
   DdRunDetail,
   DdRunParams,
+  DdSignaturePreview,
+  DdSignatureRunParams,
+  DdSignatureRunResponse,
   DdStatus,
   DdTargetsResponse,
 } from '@/types/drugDiscovery';
@@ -187,4 +190,177 @@ export function useDdTargetsWithRecovery(params: DdRunParams | null, limit: numb
   }, [key, recover]);
 
   return { ...targets, exhausted, reset };
+}
+
+/* ------------------------------------------------------------------ */
+/* Mode B — la comparaison de l'utilisateur face au classement          */
+/* ------------------------------------------------------------------ */
+
+export interface DdSignaturePreviewParams {
+  datasetId: string;
+  comparisonName: string;
+  padjMax: number;
+  logfcMin: number;
+  directions: string;
+  maxGenesPerCondition: number;
+}
+
+/**
+ * Ce qui SERAIT envoyé, avant que quoi que ce soit ne parte.
+ *
+ * N'appelle pas genolens-dd : la route est purement locale. C'est ce qui permet de montrer les
+ * comptes de gènes, les noms de conditions résolus et les effectifs de réplicats **avant** que
+ * la liste de gènes ne quitte le backend — un run mal réglé coûte alors un coup d'œil et non
+ * une transmission.
+ */
+export function useSignaturePreview(params: DdSignaturePreviewParams | null) {
+  return useQuery({
+    queryKey: [
+      'dd', 'signaturePreview', params?.datasetId, params?.comparisonName,
+      params?.padjMax, params?.logfcMin, params?.directions, params?.maxGenesPerCondition,
+    ],
+    queryFn: async () =>
+      (await api.get<DdSignaturePreview>(`${BASE}/signature-preview`, {
+        params: {
+          dataset_id: params!.datasetId,
+          comparison_name: params!.comparisonName,
+          padj_max: params!.padjMax,
+          logfc_min: params!.logfcMin,
+          directions: params!.directions,
+          max_genes_per_condition: params!.maxGenesPerCondition,
+        },
+      })).data,
+    enabled: params !== null,
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function signatureRunKey(params: DdSignatureRunParams) {
+  return [
+    'dd', 'signatureRun', params.datasetId, params.comparisonName, params.indication,
+    params.profile, params.allowExcluded, params.padjMax, params.logfcMin,
+    params.directions, params.maxGenesPerCondition, params.seed,
+    params.allowUnderpowered, JSON.stringify(params.replicates),
+  ] as const;
+}
+
+/**
+ * `useQuery` qui émet un POST, pour la même raison que `useDdRun` : avec une graine explicite,
+ * un run de signature est une fonction pure de ses paramètres, donc le cacher par paramètres est
+ * correct.
+ *
+ * En revanche — et contrairement au mode A — **rien ne doit partir sans geste de l'utilisateur**.
+ * Un run de signature écrit sa liste de gènes dans un autre service ; l'appelant passe `null`
+ * tant que le bouton n'a pas été pressé, et c'est `enabled` qui porte cette garantie.
+ */
+export function useSignatureRun(params: DdSignatureRunParams | null) {
+  return useQuery({
+    queryKey: params ? signatureRunKey(params) : ['dd', 'signatureRun', 'idle'],
+    queryFn: async () => {
+      const body = {
+        dataset_id: params!.datasetId,
+        comparison_name: params!.comparisonName,
+        indication: params!.indication,
+        profile: params!.profile,
+        allow_excluded: params!.allowExcluded,
+        padj_max: params!.padjMax,
+        logfc_min: params!.logfcMin,
+        directions: params!.directions,
+        max_genes_per_condition: params!.maxGenesPerCondition,
+        replicates: params!.replicates,
+        allow_underpowered: params!.allowUnderpowered,
+        seed: params!.seed,
+      };
+      return (await api.post<DdSignatureRunResponse>(`${BASE}/signature-runs`, body)).data;
+    },
+    enabled: params !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+export function useSignatureReport(
+  runId: string | undefined,
+  signatureId: string | undefined,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['dd', 'signatureReport', runId, signatureId],
+    queryFn: async () =>
+      (await api.get<DdReport>(
+        `${BASE}/runs/${runId}/signature/${signatureId}/report`,
+      )).data,
+    enabled: enabled && Boolean(runId) && Boolean(signatureId),
+    retry: false,
+  });
+}
+
+/**
+ * Le run de signature, avec récupération après expiration du run amont.
+ *
+ * Reprend la machinerie bornée de `useDdTargetsWithRecovery`, y compris ses deux subtilités :
+ * la borne est indexée par **jeu de paramètres** et non par `run_id` (amont mint un UUID frais à
+ * chaque POST, donc une borne sur `run_id` ne bornerait jamais rien), et le déclenchement vit
+ * dans un `useEffect` parce que `recover()` émet un vrai POST.
+ *
+ * Une différence de fond avec le mode A : ici, réessayer **retransmet la liste de gènes**. La
+ * borne à une tentative n'est donc plus seulement une protection contre la boucle de POST, c'est
+ * une limite au nombre de fois où les données de l'utilisateur repartent sans qu'il le demande.
+ */
+export function useSignatureRunWithRecovery(params: DdSignatureRunParams | null) {
+  const qc = useQueryClient();
+  const attempts = useRef<Map<string, number>>(new Map());
+  const [exhaustedKey, setExhaustedKey] = useState<string | null>(null);
+  // Compteur en ÉTAT et non seulement en ref : c'est lui qui fait re-tourner l'effet après une
+  // tentative de récupération. Le ref reste la source de vérité (il survit à un démontage), mais
+  // un ref seul ne notifie jamais React.
+  const [attempt, setAttempt] = useState(0);
+  const run = useSignatureRun(params);
+  const key = params ? signatureRunKey(params).join('|') : null;
+
+  useEffect(() => {
+    // Réarme le compteur quand l'utilisateur change de demande : la borne est par jeu de
+    // paramètres, pas par session.
+    setAttempt(key ? (attempts.current.get(key) ?? 0) : 0);
+  }, [key]);
+
+  /**
+   * Le déclencheur exige `!isFetching`, et c'est là que tient la correction.
+   *
+   * Une première version dépendait de l'identité de `run.error` pour re-tourner après la seconde
+   * tentative. Ça marche pour le mode A — dont l'effet dépend aussi de `run.data`, qui change à
+   * chaque run_id frais — mais pas ici : l'erreur d'un 404 répété peut être le MÊME objet, donc
+   * aucune dépendance ne changeait, l'effet ne re-tournait pas, et `exhausted` restait faux pour
+   * toujours. L'utilisateur se retrouvait devant une erreur sans bouton de relance.
+   *
+   * `isFetching` change forcément (true pendant la reprise, false quand elle a échoué), donc le
+   * déclencheur ne dépend plus de l'identité de l'erreur. Et l'attendre à `false` évite le
+   * symétrique : marquer « épuisé » pendant que la reprise est encore en vol.
+   */
+  useEffect(() => {
+    if (!key || !params) return;
+    if (!run.isError || run.isFetching) return;
+    if (statusOf(run.error) !== 404) return;
+
+    if (attempt === 0) {
+      attempts.current.set(key, 1);
+      setAttempt(1);
+      void qc.invalidateQueries({ queryKey: signatureRunKey(params) });
+      return;
+    }
+    setExhaustedKey(key);
+  }, [key, params, qc, attempt, run.isError, run.isFetching, run.error]);
+
+  const exhausted = exhaustedKey !== null && exhaustedKey === key;
+
+  const reset = useCallback(() => {
+    if (!key || !params) return;
+    attempts.current.delete(key);
+    setAttempt(0);
+    setExhaustedKey((current) => (current === key ? null : current));
+    void qc.invalidateQueries({ queryKey: signatureRunKey(params) });
+  }, [key, params, qc]);
+
+  return { ...run, exhausted, reset };
 }

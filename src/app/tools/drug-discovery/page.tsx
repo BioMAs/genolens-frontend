@@ -24,10 +24,17 @@ export default function DrugDiscoveryPage() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">Drug Discovery</h1>
+                            {/* La phrase précédente disait « The module does not read any of your
+                                data ». Elle est devenue fausse le jour où le mode B a été câblé :
+                                l'onglet « Drug targets » d'une comparaison envoie les symboles des
+                                gènes différentiels au service. Une mention de confidentialité
+                                périmée coûte plus que l'absence de mention. */}
                             <p className="mt-1 text-gray-600">
                                 Ranking of therapeutic targets across 33 TCGA indications, from
-                                curated public sources. The module does not read any of your
-                                data.
+                                curated public sources. This page ranks public data only — to
+                                confront your own differential-expression comparison with a
+                                ranking, open the <strong>Drug targets</strong> tab on that
+                                comparison.
                             </p>
                         </div>
                     </div>
