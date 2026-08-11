@@ -4,13 +4,19 @@
  * Figures en données du rapport Drug Discovery, dessinées côté interface.
  *
  * Le service (`genolens-dd`) verse les figures sous une union discriminée sur `kind` — il peut
- * en livrer une nature nouvelle avant que cette interface sache la dessiner. On distingue donc
- * trois cas, jamais un blanc silencieux :
- *   1. `kind` connu et au moins une barre  → le graphique.
+ * en livrer une nature nouvelle avant que cette interface sache la dessiner. `DdFigure` (voir
+ * `types/drugDiscovery.ts`) est donc la forme du **fil** : `kind: string`, pas le littéral
+ * d'une figure connue. `DdKnownFigure` est l'union fermée que cette version sait dessiner ;
+ * `toKnownFigure` est l'unique frontière entre les deux, et le seul endroit du module qui fait
+ * confiance à ce que le service a versé sous un `kind`. On distingue trois cas, jamais un blanc
+ * silencieux :
+ *   1. `kind` connu, majeure supportée, et au moins une barre → le graphique.
  *   2. `kind` connu mais aucune barre      → rien du tout : un histogramme vide affirmerait
  *      « aucune cible » alors qu'il ne signifie que « rien à dessiner ».
- *   3. `kind` inconnu de cette version     → la légende de la figure, plus un avis explicite.
- *      Un client qui ne voit pas une figure doit savoir qu'il en manque une.
+ *   3. `kind` inconnu, ou majeure non supportée → la légende de la figure, plus un avis
+ *      explicite. Un `top_targets` v2 remis à un renderer v1 serait rendu faux plutôt que
+ *      absent ; c'est pourquoi la majeure est gatée exactement comme le `kind`, par le même
+ *      chemin. Un client qui ne voit pas une figure doit savoir qu'il en manque une.
  *
  * Règles de marque (skill dataviz, validées par le script des six contrôles — non redérivées
  * ici) : série unique donc aucune légende ; une seule couleur par thème, choisie par étape (le
@@ -46,7 +52,12 @@ import {
 } from 'recharts';
 import type { TooltipContentProps } from 'recharts';
 
-import type { DdFigure, DdTopTargetsBar, DdTopTargetsFigure } from '@/types/drugDiscovery';
+import type {
+  DdFigure,
+  DdKnownFigure,
+  DdTopTargetsBar,
+  DdTopTargetsFigure,
+} from '@/types/drugDiscovery';
 
 /** Épaisseur de marque, jamais dépassée : l'air restant fait partie du dessin. */
 const BAR_THICKNESS = 24;
@@ -80,15 +91,73 @@ export function ReportFigures({ figures }: ReportFiguresProps) {
   return <div className="space-y-8">{rendered}</div>;
 }
 
-function renderFigure(figure: DdFigure, index: number) {
-  if (figure.kind === 'top_targets') {
-    // Une figure sans barre ne rend rien : cf. le commentaire d'en-tête.
-    return figure.bars.length > 0 ? <TopTargetsFigure key={index} figure={figure} /> : null;
-  }
+/**
+ * Majeure supportée par cette version de l'interface, par `kind` connu. Un service qui
+ * bumperait la majeure d'une figure sans coordination doit tomber sur l'avis explicite,
+ * jamais sur un renderer qui dessinerait une forme qu'il ne connaît pas vraiment.
+ */
+const SUPPORTED_MAJOR_VERSION: Record<DdKnownFigure['kind'], number> = {
+  top_targets: 1,
+};
 
-  // `kind` inconnu de cette version de l'interface (le service en versionne chaque nature ;
-  // une figure future arrivera sous un `kind` que ce composant ne reconnaît pas encore).
-  return <UnknownFigureNotice key={index} caption={figure.caption} />;
+function majorVersion(version: string): number {
+  return Number(version.split('.')[0]);
+}
+
+/**
+ * Frontière entre la forme du fil et l'union connue. Le seul cast du module : au-delà de ce
+ * point, `renderKnownFigure` est exhaustif et vérifié par `tsc` (voir son docstring) ; en
+ * amont, on ne peut que faire confiance à ce que le service a versé sous ce `kind`.
+ *
+ * Rend `null` aussi bien pour un `kind` inconnu que pour une majeure non supportée d'un
+ * `kind` connu — un `top_targets` v2 doit tomber sur le même avis qu'une figure future,
+ * jamais être remis tel quel à un renderer v1 qui le dessinerait faux plutôt qu'absent.
+ */
+function toKnownFigure(figure: DdFigure): DdKnownFigure | null {
+  if (
+    figure.kind === 'top_targets' &&
+    majorVersion(figure.version) === SUPPORTED_MAJOR_VERSION.top_targets
+  ) {
+    return figure as unknown as DdTopTargetsFigure;
+  }
+  return null;
+}
+
+function renderFigure(figure: DdFigure, index: number) {
+  const known = toKnownFigure(figure);
+  if (known === null) {
+    // `kind` inconnu de cette version de l'interface, ou majeure non supportée d'un `kind`
+    // connu (le service en versionne chaque nature ; une figure future ou une majeure
+    // future peut arriver avant que ce composant sache la dessiner).
+    return <UnknownFigureNotice key={index} caption={figure.caption} />;
+  }
+  return renderKnownFigure(known, index);
+}
+
+/**
+ * Rendu d'une nature de figure connue, indexé par `kind`. Exhaustif **par le type du
+ * `Record`**, pas par un contrôle de flux : TypeScript ne réduit pas une variable à
+ * `never` après un test d'égalité sur la propriété d'un type qui n'a qu'un seul membre
+ * (essayé — `if (figure.kind === 'top_targets') {…} else return assertNever(figure)` ne
+ * compile pas tant que `DdKnownFigure` n'a qu'une seule nature), contrairement à mypy sur
+ * un `isinstance` unique côté service (`report/latex.py`). Le `Record` mappé sur
+ * `DdKnownFigure['kind']` n'a pas ce trou : il exige une entrée par nature dès aujourd'hui,
+ * à un membre comme à dix, et son absence fait échouer `tsc` immédiatement — c'est
+ * l'équivalent fonctionnel d'`assertNever`, robuste au cas à un seul membre que ce lot vit.
+ */
+type KnownFigureRenderer<K extends DdKnownFigure['kind']> = (
+  figure: Extract<DdKnownFigure, { kind: K }>,
+  index: number
+) => ReactElement | null;
+
+const RENDER_KNOWN_FIGURE: { [K in DdKnownFigure['kind']]: KnownFigureRenderer<K> } = {
+  top_targets: (figure, index) =>
+    // Une figure sans barre ne rend rien : cf. le commentaire d'en-tête.
+    figure.bars.length > 0 ? <TopTargetsFigure key={index} figure={figure} /> : null,
+};
+
+function renderKnownFigure(figure: DdKnownFigure, index: number) {
+  return RENDER_KNOWN_FIGURE[figure.kind](figure, index);
 }
 
 function UnknownFigureNotice({ caption }: { caption: string }) {
@@ -215,7 +284,7 @@ function GeneLabelTick({ x, y, payload }: GeneLabelTickProps) {
   );
 }
 
-function BarTooltip({ active, payload }: Partial<TooltipContentProps<number, string>>) {
+export function BarTooltip({ active, payload }: Partial<TooltipContentProps<number, string>>) {
   if (!active || !payload?.length) {
     return null;
   }
