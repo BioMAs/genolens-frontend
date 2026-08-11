@@ -23,6 +23,15 @@
  * La couleur de série (`--dd-bar-color`) est portée par CSS (voir globals.css, même mécanisme
  * que `--surface` / `--text-primary`) plutôt que par un hook de thème React : ce composant doit
  * pouvoir se rendre seul, sans `ThemeProvider` ambiant, notamment en test.
+ *
+ * La largeur seule est fluide (`ResponsiveContainer width="100%"`), la hauteur reste dérivée du
+ * nombre de barres (`ROW_HEIGHT * n`). Ne PAS revenir à une largeur *et* hauteur fixes mises à
+ * l'échelle par CSS (`width:100%; height:auto` sur le `<svg>`) : le `viewBox` grandirait/
+ * rétrécirait alors uniformément, texte compris — sur un conteneur mobile (~360-414 px) les
+ * libellés de gènes tomberaient à ~6-7px effectifs. `ResponsiveContainer` fait mesurer la vraie
+ * largeur du conteneur par recharts et recalcule la mise en page (remise en page), alors que les
+ * `fontSize` restent des px SVG réels puisque le `viewBox` correspond toujours à la taille
+ * mesurée — le texte ne rétrécit jamais, la figure se réorganise.
  */
 import type { ReactElement } from 'react';
 import {
@@ -30,6 +39,7 @@ import {
   BarChart,
   CartesianGrid,
   LabelList,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -42,7 +52,16 @@ import type { DdFigure, DdTopTargetsBar, DdTopTargetsFigure } from '@/types/drug
 const BAR_THICKNESS = 24;
 /** Bande par barre = épaisseur + écart de 2 px (1 px de chaque côté une fois les barres centrées). */
 const ROW_HEIGHT = 26;
-const CHART_MARGIN = { top: 8, right: 46, bottom: 24, left: 4 };
+const CHART_MARGIN = { top: 6, right: 46, bottom: 4, left: 4 };
+/**
+ * Hauteur explicitement réservée à l'axe X (ticks + libellés), passée telle quelle à `<XAxis
+ * height=…>`. Sans elle, recharts ajoute son propre défaut interne (~30 px) EN PLUS de
+ * `CHART_MARGIN.bottom`, et la zone de tracé réelle devient plus petite que `rows.length *
+ * ROW_HEIGHT` — les barres se retrouvent alors plus fines que `BAR_THICKNESS` avec un écart
+ * différent de 2 px. En la fixant ici et en l'incluant dans `chartHeight`, la zone de tracé
+ * vaut exactement `rows.length * ROW_HEIGHT`, quelle que soit la largeur mesurée.
+ */
+const X_AXIS_HEIGHT = 20;
 const LABEL_COLUMN_WIDTH = 130;
 
 interface ReportFiguresProps {
@@ -103,7 +122,8 @@ function TopTargetsFigure({ figure }: { figure: DdTopTargetsFigure }) {
   const maxComposite = Math.max(0, ...rows.map((row) => row.composite));
   // Marge de tête pour que la valeur au bout de la barre la plus longue reste lisible.
   const domainMax = maxComposite > 0 ? maxComposite * 1.15 : 1;
-  const chartHeight = rows.length * ROW_HEIGHT + CHART_MARGIN.top + CHART_MARGIN.bottom;
+  const chartHeight =
+    rows.length * ROW_HEIGHT + CHART_MARGIN.top + CHART_MARGIN.bottom + X_AXIS_HEIGHT;
 
   return (
     <figure>
@@ -111,62 +131,59 @@ function TopTargetsFigure({ figure }: { figure: DdTopTargetsFigure }) {
         {figure.caption}
       </figcaption>
       <div style={{ width: '100%', maxWidth: 640 }}>
-        <BarChart
-          width={640}
-          height={chartHeight}
-          data={rows}
-          layout="vertical"
-          margin={CHART_MARGIN}
-          barCategoryGap={0}
-          className="dd-figure-chart"
-        >
-          {/* Grille discrète : jamais au premier plan. */}
-          <CartesianGrid
-            horizontal={false}
-            stroke="var(--border-subtle)"
-            strokeDasharray="3 3"
-          />
-          <XAxis
-            type="number"
-            domain={[0, domainMax]}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
-            tickFormatter={(value: number) => value.toFixed(2)}
-          />
-          <YAxis
-            type="category"
-            dataKey="symbol"
-            width={LABEL_COLUMN_WIDTH}
-            tickLine={false}
-            axisLine={false}
-            tick={<GeneLabelTick />}
-          />
-          {/* Une seule couleur de série, pas de légende : le titre nomme la mesure. */}
-          <Bar
-            dataKey="composite"
-            fill="var(--dd-bar-color)"
-            barSize={BAR_THICKNESS}
-            // Arrondi côté donnée (droite ici), carré à la ligne de base.
-            radius={[0, 4, 4, 0]}
-            isAnimationActive={false}
-          >
-            {/* Valeur au bout de la barre — toujours en encre de texte, jamais dans la
-                couleur de donnée (règle 4). Placée hors barre pour ne jamais dépendre d'une
-                mesure de largeur de texte face à des barres parfois très courtes. */}
-            <LabelList
-              dataKey="composite"
-              position="right"
-              formatter={(value) => (typeof value === 'number' ? value.toFixed(2) : String(value ?? ''))}
-              style={{ fill: 'var(--text-primary)', fontSize: 11 }}
+        {/* Largeur fluide, hauteur figée par le nombre de barres : cf. le commentaire d'en-tête
+            sur pourquoi ce doit être `ResponsiveContainer`, pas une mise à l'échelle CSS. */}
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart data={rows} layout="vertical" margin={CHART_MARGIN} barCategoryGap={0}>
+            {/* Grille discrète : jamais au premier plan. */}
+            <CartesianGrid
+              horizontal={false}
+              stroke="var(--border-subtle)"
+              strokeDasharray="3 3"
             />
-          </Bar>
-          <Tooltip
-            content={<BarTooltip />}
-            cursor={{ fill: 'var(--hover-overlay)' }}
-            isAnimationActive={false}
-          />
-        </BarChart>
+            <XAxis
+              type="number"
+              height={X_AXIS_HEIGHT}
+              domain={[0, domainMax]}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+              tickFormatter={(value: number) => value.toFixed(2)}
+            />
+            <YAxis
+              type="category"
+              dataKey="symbol"
+              width={LABEL_COLUMN_WIDTH}
+              tickLine={false}
+              axisLine={false}
+              tick={<GeneLabelTick />}
+            />
+            {/* Une seule couleur de série, pas de légende : le titre nomme la mesure. */}
+            <Bar
+              dataKey="composite"
+              fill="var(--dd-bar-color)"
+              barSize={BAR_THICKNESS}
+              // Arrondi côté donnée (droite ici), carré à la ligne de base.
+              radius={[0, 4, 4, 0]}
+              isAnimationActive={false}
+            >
+              {/* Valeur au bout de la barre — toujours en encre de texte, jamais dans la
+                  couleur de donnée (règle 4). Placée hors barre pour ne jamais dépendre d'une
+                  mesure de largeur de texte face à des barres parfois très courtes. */}
+              <LabelList
+                dataKey="composite"
+                position="right"
+                formatter={(value) => (typeof value === 'number' ? value.toFixed(2) : String(value ?? ''))}
+                style={{ fill: 'var(--text-primary)', fontSize: 11 }}
+              />
+            </Bar>
+            <Tooltip
+              content={<BarTooltip />}
+              cursor={{ fill: 'var(--hover-overlay)' }}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </figure>
   );

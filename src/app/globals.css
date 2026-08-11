@@ -545,17 +545,8 @@ body {
 .sig-positive { color: var(--sl-teal-dark); font-weight: 600; }
 .sig-negative { color: var(--sl-red);       font-weight: 600; }
 
-/* Drug Discovery — figures de rapport (ReportFigures.tsx). Recharts a besoin d'une largeur/
-   hauteur fixes en pixels pour se rendre sans ResizeObserver (absent de jsdom, indisponible en
-   test) ; ces deux règles font ensuite flotter ce SVG dimensionné dans son conteneur — le
-   viewBox (même largeur/hauteur que les attributs figés) conserve les proportions du dessin
-   sur mobile comme en desktop. */
-.dd-figure-chart {
-  width: 100% !important;
-  height: auto !important;
-}
-.dd-figure-chart svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
+/* Note : ReportFigures.tsx utilise `<ResponsiveContainer width="100%" height={n * ROW_HEIGHT}>`
+   (recharts) pour dessiner ses barres — largeur mesurée réellement, hauteur figée par le nombre
+   de barres. Pas de règle CSS de mise à l'échelle ici : un `<svg>` mis à l'échelle par CSS
+   (`width:100%; height:auto`) réduirait le texte proportionnellement sur mobile, puisque son
+   `viewBox` figé grandirait/rétrécirait uniformément, libellés compris. */
