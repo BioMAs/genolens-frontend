@@ -85,6 +85,27 @@ export interface DdClaim {
   evidence_ids: string[];
 }
 
+export interface DdTopTargetsBar {
+  gene_id: string;
+  symbol: string;
+  composite: number;
+  evidence_ids: string[];
+}
+
+/**
+ * Union discriminée sur `kind`. Le service versionne chaque nature de figure ; l'interface
+ * doit donc savoir dire « je ne connais pas cette figure » plutôt que de l'ignorer.
+ */
+export interface DdTopTargetsFigure {
+  kind: 'top_targets';
+  version: string;
+  caption: string;
+  evidence_ids: string[];
+  bars: DdTopTargetsBar[];
+}
+
+export type DdFigure = DdTopTargetsFigure;
+
 export interface DdReport {
   run_id: string;
   indication: string;
@@ -107,6 +128,8 @@ export interface DdReport {
   disclosures?: string[] | null;
   n_hits_total?: number;
   n_hits_reported?: number;
+  /** Figures en données, rendues par l'interface. Absentes des rapports antérieurs au lot B. */
+  figures?: DdFigure[];
 }
 
 export interface DdRunParams {

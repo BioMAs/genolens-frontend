@@ -47,6 +47,11 @@
   --dc-skin-epidermis: #0f9d6b;
   --dc-skin-dermis: #db2777;
 
+  /* Drug Discovery — figures de rapport (série unique, pas de légende à colorer).
+     Couleur validée par le script des six contrôles de la skill dataviz (bande de luminosité,
+     plancher de chroma, contraste >= 3:1 sur la surface). Ne pas en dériver d'autres teintes. */
+  --dd-bar-color: #2a78d6;
+
   /* Neutral scale — light mode (mockup grays) */
   --n-0:   #ffffff;
   --n-25:  #fbfcfe;
@@ -106,6 +111,9 @@
   --sl-violet-muted: rgba(139, 92, 246, 0.22);
   --sl-red-light:    rgba(239, 68, 68, 0.12);
   --sl-red-muted:    rgba(239, 68, 68, 0.18);
+
+  /* Le sombre est un jeu de pas choisi, pas une inversion automatique du clair. */
+  --dd-bar-color: #3987e5;
 
   --background:          #0c1018;
   --foreground:          #dde4ee;
@@ -536,3 +544,18 @@ body {
 /* Significance badges (pval, log2fc) */
 .sig-positive { color: var(--sl-teal-dark); font-weight: 600; }
 .sig-negative { color: var(--sl-red);       font-weight: 600; }
+
+/* Drug Discovery — figures de rapport (ReportFigures.tsx). Recharts a besoin d'une largeur/
+   hauteur fixes en pixels pour se rendre sans ResizeObserver (absent de jsdom, indisponible en
+   test) ; ces deux règles font ensuite flotter ce SVG dimensionné dans son conteneur — le
+   viewBox (même largeur/hauteur que les attributs figés) conserve les proportions du dessin
+   sur mobile comme en desktop. */
+.dd-figure-chart {
+  width: 100% !important;
+  height: auto !important;
+}
+.dd-figure-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}

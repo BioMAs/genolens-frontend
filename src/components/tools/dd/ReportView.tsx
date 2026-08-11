@@ -25,6 +25,7 @@
  * existent ; les replier ou les reléguer en pied de page serait l'endroit exact où cette
  * discipline cesse de servir, puisqu'elle n'existe que pour être lue.
  */
+import { ReportFigures } from '@/components/tools/dd/ReportFigures';
 import { DdReport } from '@/types/drugDiscovery';
 
 interface ReportViewProps {
@@ -95,6 +96,8 @@ export default function ReportView({ report }: ReportViewProps) {
           </ul>
         </section>
       ))}
+
+      <ReportFigures figures={report.figures ?? []} />
 
       <section>
         <h3 className="mb-2 text-lg font-medium text-gray-900">Evidence</h3>
