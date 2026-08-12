@@ -85,6 +85,48 @@ export interface DdClaim {
   evidence_ids: string[];
 }
 
+export interface DdTopTargetsBar {
+  gene_id: string;
+  symbol: string;
+  composite: number;
+  evidence_ids: string[];
+}
+
+/**
+ * Union discriminée sur `kind`. Le service versionne chaque nature de figure ; l'interface
+ * doit donc savoir dire « je ne connais pas cette figure » plutôt que de l'ignorer.
+ */
+export interface DdTopTargetsFigure {
+  kind: 'top_targets';
+  version: string;
+  caption: string;
+  evidence_ids: string[];
+  bars: DdTopTargetsBar[];
+}
+
+/**
+ * Union fermée des figures que **cette version** de l'interface sait dessiner. S'élargit à
+ * chaque nouvelle nature de figure (lot A, lot C) ; c'est sur cette union — jamais sur
+ * `DdFigure` — que `ReportFigures.tsx` indexe son dispatch (`RENDER_KNOWN_FIGURE`, un
+ * `Record` mappé sur `DdKnownFigure['kind']`), pour que l'oubli d'une entrée fasse échouer
+ * `tsc` plutôt que de rendre un blanc silencieux.
+ */
+export type DdKnownFigure = DdTopTargetsFigure;
+
+/**
+ * Forme du fil : ce qu'une figure porte forcément, connue ou pas encore. Le service peut
+ * verser une nature nouvelle avant que cette interface sache la dessiner — `kind` reste
+ * donc `string` et non le littéral d'une figure connue. Un alias à `DdKnownFigure` rendrait
+ * une figure future irreprésentable autrement que par un cast forcé, ce qui est exactement
+ * ce que le test du `kind` inconnu doit pouvoir éviter.
+ */
+export interface DdFigure {
+  kind: string;
+  version: string;
+  caption: string;
+  evidence_ids: string[];
+}
+
 export interface DdReport {
   run_id: string;
   indication: string;
@@ -107,6 +149,8 @@ export interface DdReport {
   disclosures?: string[] | null;
   n_hits_total?: number;
   n_hits_reported?: number;
+  /** Figures en données, rendues par l'interface. Absentes des rapports antérieurs au lot B. */
+  figures?: DdFigure[];
 }
 
 export interface DdRunParams {
