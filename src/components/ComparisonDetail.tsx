@@ -785,154 +785,10 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         ) : null}
       </div>
 
-      {/* Tabs */}
+      {/* Module panel — navigation lives in the sidebar, under Analyses. */}
       <div className="mt-4 gl-card overflow-hidden">
-        <div className="border-b" style={{ borderColor: 'var(--border)' }}>
-          <nav className="flex overflow-x-auto px-2 py-2">
-              <button
-                onClick={() => selectTab('overview')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'overview'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => selectTab('deg')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'deg'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                DEG Table
-              </button>
-              <button
-                onClick={() => selectTab('metrics')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'metrics'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Method statistics
-              </button>
-              <button
-                onClick={() => selectTab('enrichment')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'enrichment'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Enrichment
-              </button>
-              {cosmeticsUnlocked && (
-                <button
-                  onClick={() => selectTab('cosmetics')}
-                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                  style={
-                    activeTab === 'cosmetics'
-                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                      : { color: 'var(--text-secondary)' }
-                  }
-                >
-                  Skin effect
-                </button>
-              )}
-              {reportCustomizationUnlocked && (
-                <button
-                  onClick={() => selectTab('report')}
-                  className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                  style={
-                    activeTab === 'report'
-                      ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                      : { color: 'var(--text-secondary)' }
-                  }
-                >
-                  Report
-                </button>
-              )}
-              <button
-                onClick={() => selectTab('clustering')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'clustering'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Clustering
-                {!matrixDataset && (
-                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
-                )}
-              </button>
-              <button
-                onClick={() => selectTab('integrations')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'integrations'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Integrations
-              </button>
-              <button
-                onClick={() => selectTab('signature')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'signature'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Signature score
-                {!matrixDataset && (
-                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
-                )}
-              </button>
-              <button
-                onClick={() => selectTab('drug-discovery')}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
-                style={
-                  activeTab === 'drug-discovery'
-                    ? { color: 'var(--sl-teal-dark)', background: 'var(--sl-teal-light)' }
-                    : { color: 'var(--text-secondary)' }
-                }
-              >
-                Drug targets
-                {/* Dépend du dataset DEG et non de la matrice, contrairement à Clustering et
-                    Signature score : la signature est construite depuis les gènes différentiels. */}
-                {!degDataset && (
-                  <span className="ml-1 text-xs opacity-50">(N/A)</span>
-                )}
-              </button>
-              {/* Custom Visualizations tab - hidden for now */}
-              {false && (
-                <button
-                  onClick={() => selectTab('custom-viz')}
-                  className={`${
-                    activeTab === 'custom-viz'
-                      ? 'border-brand-primary text-brand-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
-                >
-                  Custom Visualizations
-                </button>
-              )}
-            </nav>
-          </div>
-
-          {/* Tab Content */}
           <div className="p-5">
-            {/* Overview Tab */}
+            {/* Overview */}
             {activeTab === 'overview' && (
               <div className="space-y-4">
                 <ComparisonSynthesis
@@ -942,8 +798,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   loading={statsLoading}
                 />
 
-                {/* Top DEGs and top pathways side by side: the two answers a
-                    reader wants first — which genes moved, and what they do. */}
+                {/* The AI reading opens the page: the numbers above give the
+                    verdict, this says what it means. */}
+                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+
+                {/* Then the evidence behind it: which genes moved, and what they do. */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
                   <OverviewTopPathways
@@ -953,8 +812,6 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   />
                 </div>
 
-                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-
                 <ComparisonModuleGrid
                   modules={comparisonModules}
                   onOpen={(tab: ComparisonModuleTab) => selectTab(tab)}
@@ -962,7 +819,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               </div>
             )}
 
-            {/* DEG Tab */}
+            {/* DEG */}
             {activeTab === 'deg' && (
               <div className="space-y-6">
                 {/* Volcano plot — the whole comparison at a glance, next to the
@@ -1040,12 +897,12 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               </div>
             )}
 
-            {/* Method statistics Tab (per-method p-values + Stouffer) */}
+            {/* Method statistics (per-method p-values + Stouffer) */}
             {activeTab === 'metrics' && (
               <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
             )}
 
-            {/* Enrichment Tab */}
+            {/* Enrichment */}
             {activeTab === 'enrichment' && (
               degDataset ? (
                 <div className="space-y-4">
@@ -1097,7 +954,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* Skin effect (Cosmetics) Tab — only when the module is unlocked */}
+            {/* Skin effect (Cosmetics) — only when the module is unlocked */}
             {activeTab === 'cosmetics' && cosmeticsUnlocked && (
               <CosmeticsTab
                 datasetId={degDataset?.id}
@@ -1105,12 +962,12 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               />
             )}
 
-            {/* Report customization Tab — only when the module is unlocked */}
+            {/* Report customization — only when the module is unlocked */}
             {activeTab === 'report' && reportCustomizationUnlocked && (
               <ReportCustomizationPanel />
             )}
 
-            {/* Clustering Tab */}
+            {/* Clustering */}
             {activeTab === 'clustering' && (
               matrixDataset && degDataset ? (
                 <div className="space-y-6">
@@ -1146,14 +1003,14 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* External Integrations Tab */}
+            {/* External Integrations */}
             {activeTab === 'integrations' && (
               <ExternalIntegrationsPanel
                 genesToPreload={allMatrixGenes.slice(0, 50)}
               />
             )}
 
-            {/* Signature scoring Tab */}
+            {/* Signature scoring */}
             {activeTab === 'signature' && (
               matrixDataset ? (
                 <SignatureScorePanel
@@ -1173,7 +1030,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* Drug targets Tab — la comparaison face au classement de cibles (mode B) */}
+            {/* Drug targets — la comparaison face au classement de cibles (mode B) */}
             {activeTab === 'drug-discovery' && (
               degDataset ? (
                 /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
@@ -1194,7 +1051,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )
             )}
 
-            {/* Custom Visualizations Tab */}
+            {/* Custom Visualizations */}
             {activeTab === 'custom-viz' && (
               <div>
                 <CustomVisualizationPanel
