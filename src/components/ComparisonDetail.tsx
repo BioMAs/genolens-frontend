@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
@@ -30,6 +30,9 @@ import { formatDate } from '@/utils/formatters';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Chip } from '@/components/ui/chip';
 import { Dot } from '@/components/ui/dot';
+import ComparisonSynthesis from './comparison/ComparisonSynthesis';
+import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
+import { buildComparisonModules, type ComparisonModuleTab } from './comparison/comparisonModules';
 
 interface ComparisonDetailProps {
   projectId: string;
@@ -38,6 +41,16 @@ interface ComparisonDetailProps {
 }
 
 type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature' | 'drug-discovery';
+
+const TAB_VALUES: readonly TabType[] = [
+  'overview', 'deg', 'metrics', 'enrichment', 'cosmetics', 'report',
+  'clustering', 'integrations', 'custom-viz', 'signature', 'drug-discovery',
+];
+
+/** Guards the `?tab=` parameter so a hand-edited URL can't select a dead pane. */
+function isTabType(value: string | null): value is TabType {
+  return !!value && (TAB_VALUES as readonly string[]).includes(value);
+}
 
 type GenericRow = Record<string, unknown>;
 
@@ -59,13 +72,28 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const globalDatasetId = searchParams.get('datasetId');
   const { openChatWith } = useChatMode();
 
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  // The open tab lives in the URL: a refresh stays where the user was, and a
+  // link to a specific view is shareable.
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<TabType>(isTabType(tabParam) ? tabParam : 'overview');
+
+  /** Switches tab and reflects it in the URL without a re-render. */
+  const selectTab = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (tab === 'overview') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', tab);
+    window.history.replaceState(window.history.state, '', url.toString());
+  }, []);
   // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
   const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
 
   // Add-on module gating: show the Skin-effect / Customization tabs only when the
   // module is unlocked (admins keep full access by role; otherwise the explicit
-  // per-user flag). Disabled module → tab hidden entirely (no teaser).
+  // per-user flag). A locked module keeps no tab — it would open an empty pane;
+  // it appears instead as a locked card in the overview's module grid, where
+  // access can be requested.
   const { data: moduleProfile } = useUserProfile();
   const isModuleAdmin =
     moduleProfile?.role === 'ADMIN' || moduleProfile?.role === 'SCILICIUM_ADMIN';
@@ -73,6 +101,18 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_cosmetics_module === true);
   const reportCustomizationUnlocked =
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_report_customization === true);
+  // A `?tab=` pointing at an add-on the user has no access to would render an
+  // empty pane, so fall back to the overview once the profile is known.
+  useEffect(() => {
+    if (!moduleProfile) return;
+    if (
+      (activeTab === 'cosmetics' && !cosmeticsUnlocked) ||
+      (activeTab === 'report' && !reportCustomizationUnlocked)
+    ) {
+      selectTab('overview');
+    }
+  }, [moduleProfile, activeTab, cosmeticsUnlocked, reportCustomizationUnlocked, selectTab]);
+
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +123,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const [reprocessing, setReprocessing] = useState(false);
 
   // State for statistics - must be declared before any conditional returns
-  const [stats, setStats] = useState<{degUp: number, degDown: number, degTotal: number} | null>(null);
+  const [stats, setStats] = useState<{degUp: number, degDown: number, degTotal: number, genesTested?: number} | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   
   // State for all genes from matrix dataset (for gene expression query)
@@ -399,6 +439,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         degUp,
         degDown,
         degTotal,
+        genesTested: metadata.deg_tested !== undefined ? toNumber(metadata.deg_tested) : undefined,
       });
       return;
     }
@@ -410,7 +451,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         setStats({
           degUp: toNumber(compData.deg_up),
           degDown: toNumber(compData.deg_down),
-          degTotal: toNumber(compData.deg_total)
+          degTotal: toNumber(compData.deg_total),
+          genesTested: compData.deg_tested !== undefined ? toNumber(compData.deg_tested) : undefined,
         });
         return;
       }
@@ -433,7 +475,9 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         const newStats = {
           degUp: up_genes || 0,
           degDown: down_genes || 0,
-          degTotal: significant_genes || total_genes || 0
+          degTotal: significant_genes || total_genes || 0,
+          // Denominator of the response — shown as "of N genes tested".
+          genesTested: typeof total_genes === 'number' ? total_genes : undefined,
         };
         
         setStats(newStats);
@@ -447,7 +491,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   ...comparisons?.[decodedName],
                   deg_up: newStats.degUp,
                   deg_down: newStats.degDown,
-                  deg_total: newStats.degTotal
+                  deg_total: newStats.degTotal,
+                  deg_tested: newStats.genesTested
                 }
               }
             }
@@ -455,7 +500,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               ...metadata,
               deg_up: newStats.degUp,
               deg_down: newStats.degDown,
-              deg_total: newStats.degTotal
+              deg_total: newStats.degTotal,
+              deg_tested: newStats.genesTested
             };
 
         await api.patch(`/datasets/${degDataset.id}`, {
@@ -567,7 +613,12 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
 
         console.log('[ComparisonDetail] Calculated stats:', { degUp, degDown, degTotal });
 
-        const newStats = { degUp, degDown, degTotal };
+        const newStats = {
+          degUp,
+          degDown,
+          degTotal,
+          genesTested: Array.isArray(data) ? data.length : undefined,
+        };
         setStats(newStats);
 
         // Save statistics back to database
@@ -579,7 +630,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   ...comparisons?.[decodedName],
                   deg_up: degUp,
                   deg_down: degDown,
-                  deg_total: degTotal
+                  deg_total: degTotal,
+                  deg_tested: newStats.genesTested
                 }
               }
             }
@@ -587,7 +639,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               ...metadata,
               deg_up: degUp,
               deg_down: degDown,
-              deg_total: degTotal
+              deg_total: degTotal,
+              deg_tested: newStats.genesTested
             };
 
         await api.patch(`/datasets/${degDataset.id}`, {
@@ -605,6 +658,19 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
 
     fetchStatsFromAPI();
   }, [degDataset, decodedName, globalDatasetId]);
+
+  // What this comparison offers, and why a module is out of reach.
+  const comparisonModules = useMemo(
+    () =>
+      buildComparisonModules({
+        hasMatrix: !!matrixDataset,
+        hasEnrichmentFile: !!enrichmentDataset,
+        cosmeticsUnlocked,
+        reportUnlocked: reportCustomizationUnlocked,
+        stats,
+      }),
+    [matrixDataset, enrichmentDataset, cosmeticsUnlocked, reportCustomizationUnlocked, stats]
+  );
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -704,12 +770,14 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               label="Total DEGs"
               tone="neutral"
             />
-            <StatChip
-              icon={<Database className="h-4 w-4" />}
-              value={enrichmentDataset ? 1 : 0}
-              label="Enrichment"
-              tone="neutral"
-            />
+            {stats.genesTested ? (
+              <StatChip
+                icon={<Database className="h-4 w-4" />}
+                value={stats.genesTested}
+                label="Genes tested"
+                tone="neutral"
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -719,7 +787,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         <div className="border-b" style={{ borderColor: 'var(--border)' }}>
           <nav className="flex overflow-x-auto px-2 py-2">
               <button
-                onClick={() => setActiveTab('overview')}
+                onClick={() => selectTab('overview')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'overview'
@@ -730,7 +798,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 Overview
               </button>
               <button
-                onClick={() => setActiveTab('deg')}
+                onClick={() => selectTab('deg')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'deg'
@@ -741,7 +809,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 DEG Table
               </button>
               <button
-                onClick={() => setActiveTab('metrics')}
+                onClick={() => selectTab('metrics')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'metrics'
@@ -752,7 +820,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 Method statistics
               </button>
               <button
-                onClick={() => setActiveTab('enrichment')}
+                onClick={() => selectTab('enrichment')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'enrichment'
@@ -764,7 +832,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               </button>
               {cosmeticsUnlocked && (
                 <button
-                  onClick={() => setActiveTab('cosmetics')}
+                  onClick={() => selectTab('cosmetics')}
                   className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                   style={
                     activeTab === 'cosmetics'
@@ -777,7 +845,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               )}
               {reportCustomizationUnlocked && (
                 <button
-                  onClick={() => setActiveTab('report')}
+                  onClick={() => selectTab('report')}
                   className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                   style={
                     activeTab === 'report'
@@ -789,7 +857,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 </button>
               )}
               <button
-                onClick={() => setActiveTab('clustering')}
+                onClick={() => selectTab('clustering')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'clustering'
@@ -803,7 +871,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('integrations')}
+                onClick={() => selectTab('integrations')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'integrations'
@@ -814,7 +882,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 Integrations
               </button>
               <button
-                onClick={() => setActiveTab('signature')}
+                onClick={() => selectTab('signature')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'signature'
@@ -828,7 +896,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('drug-discovery')}
+                onClick={() => selectTab('drug-discovery')}
                 className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-sm transition-colors"
                 style={
                   activeTab === 'drug-discovery'
@@ -846,7 +914,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
               {/* Custom Visualizations tab - hidden for now */}
               {false && (
                 <button
-                  onClick={() => setActiveTab('custom-viz')}
+                  onClick={() => selectTab('custom-viz')}
                   className={`${
                     activeTab === 'custom-viz'
                       ? 'border-brand-primary text-brand-primary'
@@ -864,6 +932,13 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-4">
+                <ComparisonSynthesis
+                  comparisonName={decodedName}
+                  stats={stats}
+                  sampleConditionMap={sampleConditionMap}
+                  loading={statsLoading}
+                />
+
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
                   <div className="xl:col-span-8 space-y-4">
                     {/* Volcano Plot */}
@@ -910,7 +985,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                         </h3>
                         <button
                           type="button"
-                          onClick={() => setActiveTab('deg')}
+                          onClick={() => selectTab('deg')}
                           className="text-xs font-semibold"
                           style={{ color: 'var(--sl-teal-dark)' }}
                         >
@@ -925,6 +1000,11 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                     <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
                   </div>
                 </div>
+
+                <ComparisonModuleGrid
+                  modules={comparisonModules}
+                  onOpen={(tab: ComparisonModuleTab) => selectTab(tab)}
+                />
               </div>
             )}
 

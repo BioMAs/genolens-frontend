@@ -274,6 +274,15 @@ body {
 }
 .gl-dot-pulse { animation: gl-pulse 1.4s ease-in-out infinite; }
 
+/* Up/down balance bar (comparison synthesis): the filled side grows in on load
+   so the asymmetry of the response registers. `from { width: 0 }` alone keeps
+   the element's own width as the end value, so the class carries no geometry. */
+@keyframes gl-bar-grow { from { width: 0; } }
+.gl-bar-grow { animation: gl-bar-grow .7s cubic-bezier(.22,.61,.36,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .gl-bar-grow { animation: none; }
+}
+
 .gl-gene-token {
   border-bottom: 1px solid transparent;
   transition: border-color .15s;
