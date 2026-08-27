@@ -68,6 +68,8 @@ export interface ComparisonModulesInput {
   reportUnlocked: boolean;
   /** Scientific tools add-on (GSEA, signature scoring, …) unlocked for this user. */
   scienceUnlocked: boolean;
+  /** Drug Discovery add-on unlocked for this user. */
+  drugDiscoveryUnlocked: boolean;
   stats: { degUp: number; degDown: number; degTotal: number } | null;
 }
 
@@ -90,6 +92,7 @@ export function buildComparisonModules({
   cosmeticsUnlocked,
   reportUnlocked,
   scienceUnlocked,
+  drugDiscoveryUnlocked,
   stats,
 }: ComparisonModulesInput): ComparisonModule[] {
   const modules: ComparisonModule[] = [
@@ -130,12 +133,15 @@ export function buildComparisonModules({
     },
     {
       id: 'drug-discovery',
-      tab: 'drug-discovery',
+      tab: drugDiscoveryUnlocked ? 'drug-discovery' : null,
       title: 'Drug targets',
       description: 'Druggable targets ranked from these DEGs',
       icon: Pill,
-      state: 'ready',
-      metric: 'Ranked from this comparison',
+      state: drugDiscoveryUnlocked ? 'ready' : 'locked',
+      addOnId: 'drugdiscovery',
+      ...(drugDiscoveryUnlocked
+        ? { metric: 'Ranked from this comparison' }
+        : { hint: ADD_ON }),
     },
     {
       id: 'integrations',

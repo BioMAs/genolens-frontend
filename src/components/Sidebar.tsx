@@ -22,7 +22,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import QuotaDisplay from './QuotaDisplay';
 import ComparisonSidebarNav from './comparison/ComparisonSidebarNav';
-import { useScientificModule } from '@/hooks/useScientificModule';
+import { useScientificModule } from '@/hooks/useAddOnModules';
 import { Dot } from '@/components/ui/dot';
 
 interface SidebarProps {

@@ -106,6 +106,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_report_customization === true);
   const scientificUnlocked =
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_scientific_module === true);
+  const drugDiscoveryUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_drug_discovery_module === true);
   // A `?tab=` pointing at an add-on the user has no access to would render an
   // empty pane, so fall back to the overview once the profile is known.
   useEffect(() => {
@@ -113,7 +115,8 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
     if (
       (activeTab === 'cosmetics' && !cosmeticsUnlocked) ||
       (activeTab === 'report' && !reportCustomizationUnlocked) ||
-      (activeTab === 'signature' && !scientificUnlocked)
+      (activeTab === 'signature' && !scientificUnlocked) ||
+      (activeTab === 'drug-discovery' && !drugDiscoveryUnlocked)
     ) {
       selectTab('overview');
     }
@@ -123,6 +126,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
     cosmeticsUnlocked,
     reportCustomizationUnlocked,
     scientificUnlocked,
+    drugDiscoveryUnlocked,
     selectTab,
   ]);
 
@@ -689,6 +693,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         cosmeticsUnlocked,
         reportUnlocked: reportCustomizationUnlocked,
         scienceUnlocked: scientificUnlocked,
+        drugDiscoveryUnlocked,
         stats,
       }),
     [
@@ -697,6 +702,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
       cosmeticsUnlocked,
       reportCustomizationUnlocked,
       scientificUnlocked,
+      drugDiscoveryUnlocked,
       stats,
     ]
   );
@@ -1067,7 +1073,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             )}
 
             {/* Drug targets — la comparaison face au classement de cibles (mode B) */}
-            {activeTab === 'drug-discovery' && (
+            {activeTab === 'drug-discovery' && drugDiscoveryUnlocked && (
               degDataset ? (
                 /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
                    que porte `deg_genes.comparison_name` côté base. */

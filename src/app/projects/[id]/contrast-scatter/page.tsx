@@ -9,7 +9,7 @@ import { Project, Dataset } from '@/types';
 import type { ComparisonRef } from '@/components/MultiComparisonVenn';
 import ContrastScatter from '@/components/ContrastScatter';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
-import { useScientificModule } from '@/hooks/useScientificModule';
+import { useScientificModule } from '@/hooks/useAddOnModules';
 
 export default function ContrastScatterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);

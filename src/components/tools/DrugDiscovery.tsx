@@ -24,7 +24,8 @@ import {
 } from '@/hooks/useDrugDiscovery';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { DdRunParams } from '@/types/drugDiscovery';
-import { canUseAI } from '@/utils/plan';
+import { isPrivilegedRole } from '@/utils/plan';
+import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
 
 const DEFAULT_PROFILE = 'default_oncology';
 
@@ -35,7 +36,16 @@ export default function DrugDiscovery() {
   const [tab, setTab] = useState<'targets' | 'report'>('targets');
   const [limit, setLimit] = useState(50);
 
-  const allowed = canUseAI(profile.data);
+  // Drug Discovery is a per-user add-on, independent of the subscription plan:
+  // admins have it by role, everyone else needs the flag an admin unlocks.
+  const allowed =
+    isPrivilegedRole(profile.data?.role) || profile.data?.has_drug_discovery_module === true;
+  const {
+    request: requestAccess,
+    pending: accessPending,
+    notice: accessNotice,
+    requested: accessRequested,
+  } = useModuleAccessRequest();
 
   // Les trois scalaires sont lus SÉPARÉMENT de `params`. Les dériver de `params` rendrait le
   // profil inaccessible tant qu'aucune indication n'est choisie, et un profil sélectionné en
@@ -98,11 +108,11 @@ export default function DrugDiscovery() {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
         <h2 className="text-xl font-medium text-gray-900">
-          Drug Discovery requires a TEAM or ON_PREMISE plan
+          Drug Discovery is an add-on module
         </h2>
         {/* L'argumentaire doit décrire le produit vendu, mode B compris : sans la seconde
-            phrase, la carte d'upgrade sous-vend la capacité qui intéresse le plus un
-            utilisateur qui a déjà ses propres comparaisons. */}
+            phrase, la carte sous-vend la capacité qui intéresse le plus un utilisateur qui a
+            déjà ses propres comparaisons. */}
         <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600">
           The module ranks therapeutic targets across 33 TCGA indications from curated public
           sources, and produces a cited report for the top candidates. It also confronts your own
@@ -110,12 +120,25 @@ export default function DrugDiscovery() {
           differentially expressed genes are well-ranked targets and whether that is more than
           chance.
         </p>
-        <a
-          href="/pricing"
-          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white"
+        <button
+          type="button"
+          onClick={() => requestAccess('drugdiscovery')}
+          disabled={accessPending === 'drugdiscovery' || accessRequested.includes('drugdiscovery')}
+          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white disabled:opacity-60"
         >
-          View plans
-        </a>
+          {accessRequested.includes('drugdiscovery')
+            ? 'Request sent'
+            : accessPending === 'drugdiscovery'
+              ? 'Sending…'
+              : 'Request access'}
+        </button>
+        {accessNotice && (
+          <p
+            className={`mt-2 text-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
+          >
+            {accessNotice.text}
+          </p>
+        )}
       </div>
     );
   }
@@ -221,7 +244,7 @@ export default function DrugDiscovery() {
         : failureStatus === 504
           ? 'The calculation exceeded the allowed time. Try again.'
           : failureStatus === 403
-            ? 'Your plan does not include access to Drug Discovery.'
+            ? 'Drug Discovery is not enabled for your account.'
             : 'Drug Discovery is temporarily unavailable. Try again in a moment.';
 
   const reportFailure = report.error as
@@ -237,7 +260,7 @@ export default function DrugDiscovery() {
         : reportFailureStatus === 504
           ? 'The report calculation exceeded the allowed time. Try again.'
           : reportFailureStatus === 403
-            ? 'Your plan does not include access to Drug Discovery.'
+            ? 'Drug Discovery is not enabled for your account.'
             : 'The report is temporarily unavailable. Try again in a moment.';
 
   return (

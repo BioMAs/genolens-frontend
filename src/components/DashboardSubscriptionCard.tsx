@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen, GitCompare, Check, Lock, FlaskConical, FileText } from 'lucide-react';
+import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen, GitCompare, Check, Lock, FlaskConical, FileText, Pill } from 'lucide-react';
 import type { SubscriptionInfo } from '@/hooks/useBilling';
 import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
@@ -222,6 +222,7 @@ function UnlockedModules({ profile }: { profile?: UserProfile | null }) {
     { label: 'Cosmetics', icon: <FlaskConical className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_cosmetics_module ?? false) },
     { label: 'Reports', icon: <FileText className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_report_customization ?? false) },
     { label: 'Science', icon: <FlaskConical className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_scientific_module ?? false) },
+    { label: 'Drug discovery', icon: <Pill className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_drug_discovery_module ?? false) },
   ];
 
   return (

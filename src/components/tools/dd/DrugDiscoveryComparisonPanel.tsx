@@ -46,7 +46,8 @@ import {
   DdSignatureFilters,
   DdSignatureRunParams,
 } from '@/types/drugDiscovery';
-import { canUseAI } from '@/utils/plan';
+import { isPrivilegedRole } from '@/utils/plan';
+import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
 
 const DEFAULT_PROFILE = 'default_oncology';
 
@@ -68,7 +69,15 @@ export default function DrugDiscoveryComparisonPanel({
   comparisonName,
 }: DrugDiscoveryComparisonPanelProps) {
   const profile = useUserProfile();
-  const allowed = canUseAI(profile.data);
+  // Per-user add-on, independent of the plan (see require_drug_discovery_access).
+  const allowed =
+    isPrivilegedRole(profile.data?.role) || profile.data?.has_drug_discovery_module === true;
+  const {
+    request: requestAccess,
+    pending: accessPending,
+    notice: accessNotice,
+    requested: accessRequested,
+  } = useModuleAccessRequest();
 
   const [filters, setFilters] = useState<DdSignatureFilters>(DEFAULT_FILTERS);
   const [indication, setIndication] = useState<string | null>(null);
@@ -174,18 +183,31 @@ export default function DrugDiscoveryComparisonPanel({
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
         <h3 className="text-lg font-medium text-gray-900">
-          Drug targets requires a TEAM or ON_PREMISE plan
+          Drug targets is an add-on module
         </h3>
         <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600">
           Confront this comparison&apos;s differentially expressed genes with a ranking of
           therapeutic targets across 33 TCGA indications, and get a cited report on the hits.
         </p>
-        <a
-          href="/pricing"
-          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white"
+        <button
+          type="button"
+          onClick={() => requestAccess('drugdiscovery')}
+          disabled={accessPending === 'drugdiscovery' || accessRequested.includes('drugdiscovery')}
+          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white disabled:opacity-60"
         >
-          View plans
-        </a>
+          {accessRequested.includes('drugdiscovery')
+            ? 'Request sent'
+            : accessPending === 'drugdiscovery'
+              ? 'Sending…'
+              : 'Request access'}
+        </button>
+        {accessNotice && (
+          <p
+            className={`mt-2 text-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
+          >
+            {accessNotice.text}
+          </p>
+        )}
       </div>
     );
   }

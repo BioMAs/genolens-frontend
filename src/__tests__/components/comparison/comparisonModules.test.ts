@@ -11,6 +11,7 @@ const FULL_ACCESS: ComparisonModulesInput = {
   cosmeticsUnlocked: true,
   reportUnlocked: true,
   scienceUnlocked: true,
+  drugDiscoveryUnlocked: true,
   stats: { degUp: 1860, degDown: 1150, degTotal: 3010 },
 };
 
@@ -90,6 +91,19 @@ describe('buildComparisonModules', () => {
     expect(enrichment.metric).not.toContain('GSEA');
   });
 
+  it('locks drug targets when the Drug Discovery add-on is off', () => {
+    const modules = buildComparisonModules({ ...FULL_ACCESS, drugDiscoveryUnlocked: false });
+
+    expect(byId(modules, 'drug-discovery')).toMatchObject({
+      state: 'locked',
+      tab: null,
+      addOnId: 'drugdiscovery',
+      hint: 'Add-on module',
+    });
+    // It is an add-on, not a plan feature: nothing about the data can unlock it.
+    expect(byId(modules, 'drug-discovery').metric).toBeUndefined();
+  });
+
   it('orders modules ready → needs-data → locked', () => {
     const modules = buildComparisonModules({
       ...FULL_ACCESS,
@@ -129,5 +143,18 @@ describe('countModuleStates', () => {
     });
 
     expect(countModuleStates(modules)).toEqual({ ready: 5, 'needs-data': 2, locked: 2 });
+  });
+
+  it('counts every add-on as locked when none is unlocked', () => {
+    const modules = buildComparisonModules({
+      ...FULL_ACCESS,
+      cosmeticsUnlocked: false,
+      reportUnlocked: false,
+      scienceUnlocked: false,
+      drugDiscoveryUnlocked: false,
+    });
+
+    // claim, reporting, signature, drug-discovery
+    expect(countModuleStates(modules).locked).toBe(4);
   });
 });

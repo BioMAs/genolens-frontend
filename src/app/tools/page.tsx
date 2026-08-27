@@ -32,7 +32,7 @@ const tools: Tool[] = [
     },
     {
         name: "Drug Discovery",
-        description: "Rank therapeutic targets across 33 TCGA indications from curated public sources, with a cited report for the top hits. Requires a TEAM or ON_PREMISE plan.",
+        description: "Rank therapeutic targets across 33 TCGA indications from curated public sources, with a cited report for the top hits. Add-on module — ask an admin to enable it.",
         icon: Target,
         href: "/tools/drug-discovery",
         color: "text-rose-600",

@@ -21,8 +21,15 @@ function wrapper({ children }: { children: React.ReactNode }) {
 const STARTER_PROFILE = {
   data: { id: 'u1', email: 'a@b.c', role: 'USER', subscription_plan: 'STARTER' },
 };
-const TEAM_PROFILE = {
-  data: { id: 'u1', email: 'a@b.c', role: 'USER', subscription_plan: 'TEAM' },
+// Drug Discovery is a per-user add-on now: the plan grants nothing, only the flag does.
+const ALLOWED_PROFILE = {
+  data: {
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'TEAM',
+    has_drug_discovery_module: true,
+  },
 };
 
 const CATALOGUE = {
@@ -58,7 +65,7 @@ const PREVIEW = {
 };
 
 function route(url: string) {
-  if (url.includes('/users/me') || url.includes('/user')) return Promise.resolve(TEAM_PROFILE);
+  if (url.includes('/users/me') || url.includes('/user')) return Promise.resolve(ALLOWED_PROFILE);
   if (url.includes('/drug-discovery/status')) return Promise.resolve(STATUS);
   if (url.includes('/drug-discovery/indications')) return Promise.resolve(CATALOGUE);
   if (url.includes('/drug-discovery/signature-preview')) return Promise.resolve(PREVIEW);
@@ -69,8 +76,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('DrugDiscoveryComparisonPanel — garde de plan', () => {
-  it("montre la carte d'upgrade à un STARTER et n'émet AUCUNE requête Drug Discovery", async () => {
+describe('DrugDiscoveryComparisonPanel — garde de module', () => {
+  it("montre la carte verrouillée sans le module et n'émet AUCUNE requête Drug Discovery", async () => {
     // Les requêtes DD partiraient au montage, donc avant que la garde n'ait pu rendre son
     // écran : sur un compte STARTER elles produiraient des 403 inutiles à chaque visite, et
     // l'écran d'upgrade s'afficherait par-dessus des erreurs réseau.
@@ -87,7 +94,7 @@ describe('DrugDiscoveryComparisonPanel — garde de plan', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/requires a TEAM or ON_PREMISE plan/),
+        screen.getByText(/add-on module/i),
       ).toBeInTheDocument(),
     );
     expect(

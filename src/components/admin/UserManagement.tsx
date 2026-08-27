@@ -26,6 +26,7 @@ interface User {
   cosmetics_module_enabled?: boolean;
   report_customization_module_enabled?: boolean;
   scientific_module_enabled?: boolean;
+  drug_discovery_module_enabled?: boolean;
 }
 
 interface ValidationDetail {
@@ -239,7 +240,9 @@ export default function UserManagement() {
         ? 'cosmetics-module'
         : id === 'reporting'
           ? 'report-customization-module'
-          : 'scientific-module';
+          : id === 'science'
+            ? 'scientific-module'
+            : 'drug-discovery-module';
     try {
       setModuleBusy(id);
       const res = await api.patch(`/admin/users/${userId}/${endpoint}`, { enabled });
@@ -247,6 +250,7 @@ export default function UserManagement() {
         cosmetics_module_enabled: res.data?.cosmetics_module_enabled,
         report_customization_module_enabled: res.data?.report_customization_module_enabled,
         scientific_module_enabled: res.data?.scientific_module_enabled,
+        drug_discovery_module_enabled: res.data?.drug_discovery_module_enabled,
       };
       setEditingUser((prev) => (prev && prev.id === userId ? { ...prev, ...updated } : prev));
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...updated } : u)));
@@ -772,6 +776,7 @@ export default function UserManagement() {
                     claim: !!editingUser.cosmetics_module_enabled,
                     reporting: !!editingUser.report_customization_module_enabled,
                     science: !!editingUser.scientific_module_enabled,
+                    drugdiscovery: !!editingUser.drug_discovery_module_enabled,
                   }}
                   busy={moduleBusy}
                   onToggle={(id, enabled) => handleToggleModule(editingUser.id, id, enabled)}

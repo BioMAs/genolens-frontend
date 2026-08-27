@@ -106,6 +106,8 @@ export interface UserProfile {
   has_report_customization?: boolean;
   /** Scientific tools add-on module, unlocked per-user by an admin (from /users/me). */
   has_scientific_module?: boolean;
+  /** Drug Discovery add-on module, unlocked per-user by an admin (from /users/me). */
+  has_drug_discovery_module?: boolean;
 }
 
 export interface EnrichmentResult {

@@ -43,6 +43,7 @@ export default function MyModules() {
           claim: !!data?.has_cosmetics_module,
           reporting: !!data?.has_report_customization,
           science: !!data?.has_scientific_module,
+          drugdiscovery: !!data?.has_drug_discovery_module,
         }}
       />
     </div>

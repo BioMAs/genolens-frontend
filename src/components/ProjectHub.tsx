@@ -37,7 +37,7 @@ import {
   Lock,
 } from 'lucide-react';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
-import { useScientificModule } from '@/hooks/useScientificModule';
+import { useScientificModule } from '@/hooks/useAddOnModules';
 
 const SCIENCE_LOCKED_HINT = 'Scientific tools add-on — ask an admin to enable it';
 

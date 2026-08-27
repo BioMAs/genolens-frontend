@@ -43,6 +43,8 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
       cosmeticsUnlocked: !!profile && (isAdmin || profile.has_cosmetics_module === true),
       reportUnlocked: !!profile && (isAdmin || profile.has_report_customization === true),
       scienceUnlocked: !!profile && (isAdmin || profile.has_scientific_module === true),
+      drugDiscoveryUnlocked:
+        !!profile && (isAdmin || profile.has_drug_discovery_module === true),
       stats: null,
     });
   }, [datasets, profile, isAdmin]);

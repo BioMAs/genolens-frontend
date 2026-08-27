@@ -17,7 +17,7 @@ import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
 import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
-import { useScientificModule } from '@/hooks/useScientificModule';
+import { useScientificModule } from '@/hooks/useAddOnModules';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (

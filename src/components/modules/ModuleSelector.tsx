@@ -1,22 +1,24 @@
 'use client';
 
-import { Sparkles, FileText, FlaskConical, Check, Lock, Loader2 } from 'lucide-react';
+import { Sparkles, FileText, FlaskConical, Pill, Check, Lock, Loader2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 /**
  * ModuleSelector — animated add-on module picker (redesign).
- * Three modules: "Claim" (cosmetics / skin-claim scoring), "Reporting"
- * (report customization) and "Science" (advanced scientific tools).
+ * Four modules: "Claim" (cosmetics / skin-claim scoring), "Reporting"
+ * (report customization), "Science" (advanced scientific tools) and
+ * "Drug discovery" (target ranking).
  * Used interactively by admins (toggles call the API) and read-only on a
  * user's own profile.
  */
 
-export type ModuleId = 'claim' | 'reporting' | 'science';
+export type ModuleId = 'claim' | 'reporting' | 'science' | 'drugdiscovery';
 
 export interface ModuleState {
   claim: boolean;
   reporting: boolean;
   science: boolean;
+  drugdiscovery: boolean;
 }
 
 interface ModuleMeta {
@@ -32,6 +34,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   claim: 'Skin claims',
   reporting: 'Reporting',
   science: 'Scientific tools',
+  drugdiscovery: 'Drug discovery',
 };
 
 const MODULES: ModuleMeta[] = [
@@ -73,6 +76,19 @@ const MODULES: ModuleMeta[] = [
       'Per-sample signature scoring',
       'Custom gene sets (paste or GMT upload)',
       'DEG patterns across all conditions',
+    ],
+  },
+  {
+    id: 'drugdiscovery',
+    name: 'Drug discovery',
+    tagline: 'Rank therapeutic targets and confront them with your DEGs',
+    icon: Pill,
+    color: 'var(--sl-blue)',
+    capabilities: [
+      'Target ranking across 33 TCGA indications',
+      'Cited report for the top candidates',
+      'Your comparisons confronted with the rankings',
+      'Enrichment of well-ranked targets among your DEGs',
     ],
   },
 ];

@@ -63,8 +63,15 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
-const TEAM_PROFILE = {
-  data: { id: 'u1', email: 'a@b.c', role: 'USER', subscription_plan: 'TEAM' },
+// Drug Discovery is a per-user add-on now: the plan grants nothing, only the flag does.
+const ALLOWED_PROFILE = {
+  data: {
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'TEAM',
+    has_drug_discovery_module: true,
+  },
 };
 
 const CATALOGUE = {
@@ -126,7 +133,7 @@ const EMPTY_REPORT = {
 /** Sert `/users/me`, le statut et le catalogue ; une indication choisie sert aussi le run. */
 function mockAllowedAccount() {
   mockedApi.get.mockImplementation((url: string) => {
-    if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+    if (url === '/users/me') return Promise.resolve(ALLOWED_PROFILE);
     if (url === '/drug-discovery/status') {
       return Promise.resolve({ data: { configured: true, reachable: true, ready: true } });
     }
@@ -142,17 +149,25 @@ function mockAllowedAccount() {
   });
 }
 
-describe('DrugDiscovery — garde de plan', () => {
+describe('DrugDiscovery — garde de module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchParams = new URLSearchParams();
   });
 
-  it('montre l\'écran d\'upgrade à un STARTER et n\'appelle pas le module', async () => {
+  it('montre l\'écran verrouillé sans le module et n\'appelle pas le module', async () => {
+    // Un TEAM sans le flag : depuis que Drug Discovery est un add-on par utilisateur, le plan
+    // n'accorde plus rien — c'est le cas de régression qui compte.
     mockedApi.get.mockImplementation((url: string) => {
       if (url === '/users/me') {
         return Promise.resolve({
-          data: { id: 'u1', email: 'a@b.c', role: 'USER', subscription_plan: 'STARTER' },
+          data: {
+            id: 'u1',
+            email: 'a@b.c',
+            role: 'USER',
+            subscription_plan: 'TEAM',
+            has_drug_discovery_module: false,
+          },
         });
       }
       throw new Error(`appel inattendu : ${url}`);
@@ -160,7 +175,7 @@ describe('DrugDiscovery — garde de plan', () => {
 
     render(<DrugDiscovery />, { wrapper });
 
-    await waitFor(() => expect(screen.getByText(/TEAM or ON_PREMISE plan/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/add-on module/i)).toBeInTheDocument());
     // La garde évite tout aller-retour au module pour un compte non autorisé ; le backend reste
     // l'autorité. Vérifier l'absence de TOUT appel au préfixe `/drug-discovery` — pas seulement
     // `/indications` — pour qu'une régression retirant le flag `enabled` de `useDdStatus` fasse
@@ -264,7 +279,7 @@ describe('DrugDiscovery — socle de référence incomplet', () => {
     jest.clearAllMocks();
     mockSearchParams = new URLSearchParams();
     mockedApi.get.mockImplementation((url: string) => {
-      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/users/me') return Promise.resolve(ALLOWED_PROFILE);
       if (url === '/drug-discovery/status') {
         // Joignable (le service répond), mais son `/readyz` amont dit `ready: false` — le cas
         // que le constat 3 distingue désormais de « injoignable » côté backend.
@@ -303,7 +318,7 @@ describe('DrugDiscovery — borne de récupération épuisée', () => {
   it('affiche un message et un bouton de relance quand la seconde tentative échoue aussi', async () => {
     let postCount = 0;
     mockedApi.get.mockImplementation((url: string) => {
-      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/users/me') return Promise.resolve(ALLOWED_PROFILE);
       if (url === '/drug-discovery/status') {
         return Promise.resolve({ data: { configured: true, reachable: true, ready: true } });
       }
@@ -337,7 +352,7 @@ describe('DrugDiscovery — panne isolée du rapport', () => {
     jest.clearAllMocks();
     mockSearchParams = new URLSearchParams('indication=TCGA-BRCA&profile=default_oncology');
     mockedApi.get.mockImplementation((url: string) => {
-      if (url === '/users/me') return Promise.resolve(TEAM_PROFILE);
+      if (url === '/users/me') return Promise.resolve(ALLOWED_PROFILE);
       if (url === '/drug-discovery/status') {
         return Promise.resolve({ data: { configured: true, reachable: true, ready: true } });
       }
