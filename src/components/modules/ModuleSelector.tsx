@@ -1,20 +1,22 @@
 'use client';
 
-import { Sparkles, FileText, Check, Lock, Loader2 } from 'lucide-react';
+import { Sparkles, FileText, FlaskConical, Check, Lock, Loader2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 /**
  * ModuleSelector — animated add-on module picker (redesign).
- * Two modules for now: "Claim" (cosmetics / skin-claim scoring) and "Reporting"
- * (report customization). Used interactively by admins (toggles call the API)
- * and read-only on a user's own profile.
+ * Three modules: "Claim" (cosmetics / skin-claim scoring), "Reporting"
+ * (report customization) and "Science" (advanced scientific tools).
+ * Used interactively by admins (toggles call the API) and read-only on a
+ * user's own profile.
  */
 
-export type ModuleId = 'claim' | 'reporting';
+export type ModuleId = 'claim' | 'reporting' | 'science';
 
 export interface ModuleState {
   claim: boolean;
   reporting: boolean;
+  science: boolean;
 }
 
 interface ModuleMeta {
@@ -29,6 +31,7 @@ interface ModuleMeta {
 export const MODULE_LABELS: Record<ModuleId, string> = {
   claim: 'Skin claims',
   reporting: 'Reporting',
+  science: 'Scientific tools',
 };
 
 const MODULES: ModuleMeta[] = [
@@ -56,6 +59,20 @@ const MODULES: ModuleMeta[] = [
       'Editable conclusion & Materials / Methods',
       'Cover page & page-model selection',
       'Export-ready PDF reports',
+    ],
+  },
+  {
+    id: 'science',
+    name: 'Scientific tools',
+    tagline: 'Advanced comparison, enrichment & signature analysis',
+    icon: FlaskConical,
+    color: 'var(--sl-teal)',
+    capabilities: [
+      'Ranked GSEA with enrichment plots',
+      'Two-contrast log2FC scatter & quadrants',
+      'Per-sample signature scoring',
+      'Custom gene sets (paste or GMT upload)',
+      'DEG patterns across all conditions',
     ],
   },
 ];

@@ -10,6 +10,7 @@ const FULL_ACCESS: ComparisonModulesInput = {
   hasEnrichmentFile: true,
   cosmeticsUnlocked: true,
   reportUnlocked: true,
+  scienceUnlocked: true,
   stats: { degUp: 1860, degDown: 1150, degTotal: 3010 },
 };
 
@@ -58,6 +59,35 @@ describe('buildComparisonModules', () => {
       tab: null,
       addOnId: 'reporting',
     });
+  });
+
+  it('locks the signature module when the scientific add-on is off', () => {
+    const modules = buildComparisonModules({ ...FULL_ACCESS, scienceUnlocked: false });
+
+    expect(byId(modules, 'signature')).toMatchObject({
+      state: 'locked',
+      tab: null,
+      addOnId: 'science',
+      hint: 'Add-on module',
+    });
+    // Locked wins over needs-data: no module, no point mentioning the matrix.
+    const noMatrix = buildComparisonModules({
+      ...FULL_ACCESS,
+      scienceUnlocked: false,
+      hasMatrix: false,
+    });
+    expect(byId(noMatrix, 'signature').state).toBe('locked');
+  });
+
+  it('drops GSEA from the enrichment metric without the scientific add-on', () => {
+    expect(byId(buildComparisonModules(FULL_ACCESS), 'enrichment').metric).toContain('GSEA');
+
+    const locked = buildComparisonModules({ ...FULL_ACCESS, scienceUnlocked: false });
+    const enrichment = byId(locked, 'enrichment');
+    // ORA stays open to everyone — the module itself is not an add-on.
+    expect(enrichment.state).toBe('ready');
+    expect(enrichment.tab).toBe('enrichment');
+    expect(enrichment.metric).not.toContain('GSEA');
   });
 
   it('orders modules ready → needs-data → locked', () => {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles, Lock } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import DEGBarChart from './DEGBarChart';
 import Link from 'next/link';
@@ -104,17 +104,35 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_cosmetics_module === true);
   const reportCustomizationUnlocked =
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_report_customization === true);
+  const scientificUnlocked =
+    !!moduleProfile && (isModuleAdmin || moduleProfile.has_scientific_module === true);
   // A `?tab=` pointing at an add-on the user has no access to would render an
   // empty pane, so fall back to the overview once the profile is known.
   useEffect(() => {
     if (!moduleProfile) return;
     if (
       (activeTab === 'cosmetics' && !cosmeticsUnlocked) ||
-      (activeTab === 'report' && !reportCustomizationUnlocked)
+      (activeTab === 'report' && !reportCustomizationUnlocked) ||
+      (activeTab === 'signature' && !scientificUnlocked)
     ) {
       selectTab('overview');
     }
-  }, [moduleProfile, activeTab, cosmeticsUnlocked, reportCustomizationUnlocked, selectTab]);
+  }, [
+    moduleProfile,
+    activeTab,
+    cosmeticsUnlocked,
+    reportCustomizationUnlocked,
+    scientificUnlocked,
+    selectTab,
+  ]);
+
+  // GSEA is part of the scientific add-on — never leave the enrichment tab on it
+  // for a user without the module.
+  useEffect(() => {
+    if (moduleProfile && !scientificUnlocked && enrichmentMode === 'gsea') {
+      setEnrichmentMode('ora');
+    }
+  }, [moduleProfile, scientificUnlocked, enrichmentMode]);
 
   const [project, setProject] = useState<Project | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -670,9 +688,17 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
         hasEnrichmentFile: !!enrichmentDataset,
         cosmeticsUnlocked,
         reportUnlocked: reportCustomizationUnlocked,
+        scienceUnlocked: scientificUnlocked,
         stats,
       }),
-    [matrixDataset, enrichmentDataset, cosmeticsUnlocked, reportCustomizationUnlocked, stats]
+    [
+      matrixDataset,
+      enrichmentDataset,
+      cosmeticsUnlocked,
+      reportCustomizationUnlocked,
+      scientificUnlocked,
+      stats,
+    ]
   );
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
@@ -918,16 +944,26 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                     >
                       Over-representation (ORA)
                     </button>
-                    <button
-                      onClick={() => setEnrichmentMode('gsea')}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                        enrichmentMode === 'gsea'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      GSEA (ranked)
-                    </button>
+                    {scientificUnlocked ? (
+                      <button
+                        onClick={() => setEnrichmentMode('gsea')}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                          enrichmentMode === 'gsea'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        GSEA (ranked)
+                      </button>
+                    ) : (
+                      <span
+                        title="GSEA is part of the Scientific tools add-on — request access from the comparison overview"
+                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-gray-400"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                        GSEA (ranked)
+                      </span>
+                    )}
                   </div>
 
                   {enrichmentMode === 'ora' ? (
@@ -936,12 +972,12 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                       enrichmentDataset={enrichmentDataset}
                       comparisonName={actualComparisonName}
                     />
-                  ) : (
+                  ) : scientificUnlocked ? (
                     <GSEAAnalysis
                       dataset={degDataset}
                       comparisonName={actualComparisonName}
                     />
-                  )}
+                  ) : null}
                 </div>
               ) : (
                 <div className="text-center py-16">
@@ -1011,7 +1047,7 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             )}
 
             {/* Signature scoring */}
-            {activeTab === 'signature' && (
+            {activeTab === 'signature' && scientificUnlocked && (
               matrixDataset ? (
                 <SignatureScorePanel
                   projectId={projectId}

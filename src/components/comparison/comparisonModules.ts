@@ -66,6 +66,8 @@ export interface ComparisonModulesInput {
   hasEnrichmentFile: boolean;
   cosmeticsUnlocked: boolean;
   reportUnlocked: boolean;
+  /** Scientific tools add-on (GSEA, signature scoring, …) unlocked for this user. */
+  scienceUnlocked: boolean;
   stats: { degUp: number; degDown: number; degTotal: number } | null;
 }
 
@@ -87,6 +89,7 @@ export function buildComparisonModules({
   hasEnrichmentFile,
   cosmeticsUnlocked,
   reportUnlocked,
+  scienceUnlocked,
   stats,
 }: ComparisonModulesInput): ComparisonModule[] {
   const modules: ComparisonModule[] = [
@@ -117,7 +120,13 @@ export function buildComparisonModules({
       description: 'Pathways behind the differential expression',
       icon: Network,
       state: 'ready',
-      metric: hasEnrichmentFile ? 'ORA · GSEA · pathways ready' : 'ORA · GSEA',
+      metric: scienceUnlocked
+        ? hasEnrichmentFile
+          ? 'ORA · GSEA · pathways ready'
+          : 'ORA · GSEA'
+        : hasEnrichmentFile
+          ? 'ORA · pathways ready'
+          : 'Over-representation (ORA)',
     },
     {
       id: 'drug-discovery',
@@ -148,12 +157,17 @@ export function buildComparisonModules({
     },
     {
       id: 'signature',
-      tab: 'signature',
+      tab: scienceUnlocked ? 'signature' : null,
       title: 'Signature score',
       description: 'Score a gene signature sample by sample',
       icon: FlaskConical,
-      state: hasMatrix ? 'ready' : 'needs-data',
-      ...(hasMatrix ? { metric: 'Per-sample scoring' } : { hint: NEEDS_MATRIX }),
+      state: !scienceUnlocked ? 'locked' : hasMatrix ? 'ready' : 'needs-data',
+      addOnId: 'science',
+      ...(!scienceUnlocked
+        ? { hint: ADD_ON }
+        : hasMatrix
+          ? { metric: 'Per-sample scoring' }
+          : { hint: NEEDS_MATRIX }),
     },
     {
       id: 'claim',

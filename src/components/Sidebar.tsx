@@ -17,10 +17,12 @@ import {
   LogOut,
   Moon,
   Sun,
+  Lock,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import QuotaDisplay from './QuotaDisplay';
 import ComparisonSidebarNav from './comparison/ComparisonSidebarNav';
+import { useScientificModule } from '@/hooks/useScientificModule';
 import { Dot } from '@/components/ui/dot';
 
 interface SidebarProps {
@@ -48,11 +50,14 @@ const projectNav = [
     suffix: '/contrast-scatter',
     label: 'Contrast scatter',
     icon: GitCompareArrows,
+    /** Part of the Scientific tools add-on — locked without it. */
+    requiresScience: true,
   },
 ];
 
 export default function Sidebar({ user, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const { unlocked: scienceUnlocked } = useScientificModule();
   const { theme, toggleTheme } = useTheme();
   const isAdmin = userRole?.toLowerCase() === 'admin';
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
@@ -129,17 +134,29 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
               </span>
             </div>
             <div className="space-y-0.5" data-tour="sidebar-project">
-              {projectNav.map(({ key, suffix, label, icon: Icon }) => {
+              {projectNav.map(({ key, suffix, label, icon: Icon, requiresScience }) => {
                 const href = `/projects/${projectId}${suffix}`;
+                const locked = requiresScience === true && !scienceUnlocked;
                 return (
                   <div key={key}>
-                    <Link
-                      href={href}
-                      className={`nav-item${isProjectActive(href) ? ' active' : ''}`}
-                    >
-                      <Icon className="nav-icon" />
-                      {label}
-                    </Link>
+                    {locked ? (
+                      <span
+                        className="nav-item cursor-not-allowed opacity-50"
+                        title="Scientific tools add-on — ask an admin to enable it"
+                      >
+                        <Icon className="nav-icon" />
+                        {label}
+                        <Lock className="ml-auto h-3 w-3" />
+                      </span>
+                    ) : (
+                      <Link
+                        href={href}
+                        className={`nav-item${isProjectActive(href) ? ' active' : ''}`}
+                      >
+                        <Icon className="nav-icon" />
+                        {label}
+                      </Link>
+                    )}
                     {key === 'analyses' && comparisonBasePath && (
                       <ComparisonSidebarNav basePath={comparisonBasePath} projectId={projectId} />
                     )}

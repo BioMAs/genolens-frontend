@@ -34,8 +34,12 @@ import {
   Layers,
   Activity,
   BarChart3,
+  Lock,
 } from 'lucide-react';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
+import { useScientificModule } from '@/hooks/useScientificModule';
+
+const SCIENCE_LOCKED_HINT = 'Scientific tools add-on — ask an admin to enable it';
 
 interface ProjectHubProps {
   projectId: string;
@@ -45,6 +49,7 @@ type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
   useAutoTour('project-overview');
+  const { unlocked: scienceUnlocked } = useScientificModule();
   const { user: currentUser } = useCurrentUser();
   const { data: summary, isLoading } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
@@ -142,17 +147,32 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           )}
 
           {comparisons.length >= 2 && (
-            <Link
-              href={`/projects/${projectId}/contrast-scatter`}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+            scienceUnlocked ? (
+              <Link
+                href={`/projects/${projectId}/contrast-scatter`}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <GitCompareArrows className="h-3.5 w-3.5" /> Contrast scatter
+              </Link>
+            ) : (
+              <span
+                title={SCIENCE_LOCKED_HINT}
+                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
               style={{
                 border: '1px solid var(--border)',
                 background: 'var(--surface)',
-                color: 'var(--text-secondary)',
+                color: 'var(--text-muted)',
+                opacity: 0.55,
               }}
-            >
-              <GitCompareArrows className="h-3.5 w-3.5" /> Contrast scatter
-            </Link>
+              >
+                <Lock className="h-3.5 w-3.5" /> Contrast scatter
+              </span>
+            )
           )}
 
           <button
@@ -179,17 +199,32 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             <List className="h-3.5 w-3.5" /> Gene Lists
           </button>
 
-          <button
-            onClick={() => setGeneSetModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-            style={{
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <List className="h-3.5 w-3.5" /> Custom gene sets
-          </button>
+          {scienceUnlocked ? (
+            <button
+              onClick={() => setGeneSetModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <List className="h-3.5 w-3.5" /> Custom gene sets
+            </button>
+          ) : (
+            <span
+              title={SCIENCE_LOCKED_HINT}
+              className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+              style={{
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-muted)',
+                opacity: 0.55,
+              }}
+            >
+              <Lock className="h-3.5 w-3.5" /> Custom gene sets
+            </span>
+          )}
 
           {isOwner ? (
             <button
@@ -456,7 +491,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         </div>
       ) : null}
 
-      {isGeneSetModalOpen ? (
+      {isGeneSetModalOpen && scienceUnlocked ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">

@@ -17,6 +17,7 @@ import UMAPPlot from '@/components/UMAPPlot';
 import ComparisonGrid from './ComparisonGrid';
 import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
+import { useScientificModule } from '@/hooks/useScientificModule';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -51,6 +52,7 @@ function isQCReport(value: unknown): value is QCReport {
 export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   const [structureView, setStructureView] = useState<'pca' | 'umap'>('pca');
   const [paramsOpen, setParamsOpen] = useState(false);
+  const { unlocked: scienceUnlocked } = useScientificModule();
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
 
@@ -149,7 +151,8 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     [sampleConditionMap]
   );
 
-  const hasPatterns = Boolean(matrixDataset) && degSources.length > 0;
+  const patternsDataReady = Boolean(matrixDataset) && degSources.length > 0;
+  const hasPatterns = patternsDataReady && scienceUnlocked;
 
   // ── Loading / error states ────────────────────────────────────────────────
 
@@ -273,7 +276,9 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               metric={hasPatterns ? `${degSources.length} × ${conditionCount || '—'} conditions` : undefined}
               targetId="module-patterns"
               disabled={!hasPatterns}
-              disabledHint="Needs an expression matrix"
+              disabledHint={
+                !scienceUnlocked ? 'Scientific tools add-on' : 'Needs an expression matrix'
+              }
             />
             <ModuleCard
               icon={Network}
@@ -323,7 +328,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </section>
 
         {/* ── DEG patterns (expression trajectories across all conditions) ── */}
-        {matrixDataset && degSources.length > 0 && (
+        {matrixDataset && degSources.length > 0 && scienceUnlocked && (
           <section id="module-patterns" className="scroll-mt-6">
             <SectionHeader
               title="DEG patterns"

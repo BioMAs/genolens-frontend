@@ -221,6 +221,7 @@ function UnlockedModules({ profile }: { profile?: UserProfile | null }) {
     { label: 'Export', icon: <FileText className="w-3 h-3" />, unlocked: isAdmin || (profile?.can_export_advanced ?? false) },
     { label: 'Cosmetics', icon: <FlaskConical className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_cosmetics_module ?? false) },
     { label: 'Reports', icon: <FileText className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_report_customization ?? false) },
+    { label: 'Science', icon: <FlaskConical className="w-3 h-3" />, unlocked: isAdmin || (profile?.has_scientific_module ?? false) },
   ];
 
   return (

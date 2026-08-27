@@ -3,17 +3,19 @@
 import { use } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
 import type { ComparisonRef } from '@/components/MultiComparisonVenn';
 import ContrastScatter from '@/components/ContrastScatter';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
+import { useScientificModule } from '@/hooks/useScientificModule';
 
 export default function ContrastScatterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
   const router = useRouter();
+  const { unlocked: scienceUnlocked, loaded: moduleLoaded } = useScientificModule();
 
   const [project, setProject] = useState<Project | null>(null);
   const [comparisons, setComparisons] = useState<ComparisonRef[]>([]);
@@ -46,6 +48,32 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
     };
     fetchData();
   }, [projectId]);
+
+  // Add-on gate: the route can be typed straight into the address bar, so the
+  // page states its own requirement instead of relying on the hidden nav entry.
+  if (moduleLoaded && !scienceUnlocked) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <button
+            onClick={() => router.push(`/projects/${projectId}`)}
+            className="mb-6 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Project
+          </button>
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <Lock className="mx-auto mb-4 h-8 w-8 text-gray-400" />
+            <h1 className="mb-2 text-lg font-semibold text-gray-900">Scientific tools add-on</h1>
+            <p className="mx-auto max-w-md text-sm text-gray-600">
+              Contrast scatter is part of the Scientific tools module. Ask an admin to enable
+              it for your account, or request access from your profile.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -104,6 +104,8 @@ export interface UserProfile {
   has_cosmetics_module?: boolean;
   /** Report customization add-on module, unlocked per-user by an admin (from /users/me). */
   has_report_customization?: boolean;
+  /** Scientific tools add-on module, unlocked per-user by an admin (from /users/me). */
+  has_scientific_module?: boolean;
 }
 
 export interface EnrichmentResult {

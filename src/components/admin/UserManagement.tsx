@@ -22,8 +22,10 @@ interface User {
   updated_at: string;
   last_sign_in_at: string | null;
   confirmed_at: string | null;
-  has_cosmetics_module?: boolean;
-  has_report_customization?: boolean;
+  // Raw per-user module flags as returned by /admin/users (NOT the role-inflated has_*).
+  cosmetics_module_enabled?: boolean;
+  report_customization_module_enabled?: boolean;
+  scientific_module_enabled?: boolean;
 }
 
 interface ValidationDetail {
@@ -232,13 +234,19 @@ export default function UserManagement() {
   };
 
   const handleToggleModule = async (userId: string, id: ModuleId, enabled: boolean) => {
-    const endpoint = id === 'claim' ? 'cosmetics-module' : 'report-customization-module';
+    const endpoint =
+      id === 'claim'
+        ? 'cosmetics-module'
+        : id === 'reporting'
+          ? 'report-customization-module'
+          : 'scientific-module';
     try {
       setModuleBusy(id);
       const res = await api.patch(`/admin/users/${userId}/${endpoint}`, { enabled });
       const updated = {
-        has_cosmetics_module: res.data?.has_cosmetics_module,
-        has_report_customization: res.data?.has_report_customization,
+        cosmetics_module_enabled: res.data?.cosmetics_module_enabled,
+        report_customization_module_enabled: res.data?.report_customization_module_enabled,
+        scientific_module_enabled: res.data?.scientific_module_enabled,
       };
       setEditingUser((prev) => (prev && prev.id === userId ? { ...prev, ...updated } : prev));
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...updated } : u)));
@@ -761,8 +769,9 @@ export default function UserManagement() {
                 <p className="mb-3 text-xs text-gray-500">Toggle to enable instantly — no need to save.</p>
                 <ModuleSelector
                   value={{
-                    claim: !!editingUser.has_cosmetics_module,
-                    reporting: !!editingUser.has_report_customization,
+                    claim: !!editingUser.cosmetics_module_enabled,
+                    reporting: !!editingUser.report_customization_module_enabled,
+                    science: !!editingUser.scientific_module_enabled,
                   }}
                   busy={moduleBusy}
                   onToggle={(id, enabled) => handleToggleModule(editingUser.id, id, enabled)}

@@ -42,6 +42,7 @@ export default function MyModules() {
         value={{
           claim: !!data?.has_cosmetics_module,
           reporting: !!data?.has_report_customization,
+          science: !!data?.has_scientific_module,
         }}
       />
     </div>
