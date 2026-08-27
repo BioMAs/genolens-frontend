@@ -56,7 +56,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   const queryClient = useQueryClient();
   const prevStatusRef = useRef<SelfServiceAnalysisStatus | null>(null);
 
-  const { data: analysis, isLoading: analysisLoading } = useAnalysis(analysisId);
+  const { data: analysis, isLoading: analysisLoading, error: analysisError } = useAnalysis(analysisId);
   const { data: summary } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
 
@@ -165,11 +165,20 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   }
 
   if (!analysis) {
+    // Distinguish a genuinely missing analysis from an access / network failure —
+    // labelling every error "not found" hides permission problems.
+    const status = (analysisError as { response?: { status?: number } } | null)?.response?.status;
+    const message =
+      status === 403
+        ? "You don't have access to this analysis."
+        : status === 404 || !analysisError
+          ? 'Analysis not found.'
+          : 'Could not load this analysis. Please try again.';
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <div className="text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
-          <p style={{ color: 'var(--text-secondary)' }}>Analysis not found.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{message}</p>
           <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-indigo-500 hover:underline">
             ← Back to project
           </Link>
