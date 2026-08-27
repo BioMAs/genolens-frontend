@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import QuotaDisplay from './QuotaDisplay';
+import ComparisonSidebarNav from './comparison/ComparisonSidebarNav';
 import { Dot } from '@/components/ui/dot';
 
 interface SidebarProps {
@@ -56,6 +57,11 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
   const isAdmin = userRole?.toLowerCase() === 'admin';
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch?.[1] ?? null;
+  // On a comparison page, its modules are listed under Analyses.
+  const comparisonMatch = pathname.match(
+    /^(\/projects\/[^/]+(?:\/analyses\/[^/]+)?\/comparisons\/[^/]+)/
+  );
+  const comparisonBasePath = comparisonMatch?.[1] ?? null;
   const hasProjectContext = Boolean(projectId);
   // Resolve the human project name; fall back to the id while it loads.
   const { data: currentProject } = useProject(projectId ?? '', hasProjectContext);
@@ -126,14 +132,18 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
               {projectNav.map(({ key, suffix, label, icon: Icon }) => {
                 const href = `/projects/${projectId}${suffix}`;
                 return (
-                  <Link
-                    key={key}
-                    href={href}
-                    className={`nav-item${isProjectActive(href) ? ' active' : ''}`}
-                  >
-                    <Icon className="nav-icon" />
-                    {label}
-                  </Link>
+                  <div key={key}>
+                    <Link
+                      href={href}
+                      className={`nav-item${isProjectActive(href) ? ' active' : ''}`}
+                    >
+                      <Icon className="nav-icon" />
+                      {label}
+                    </Link>
+                    {key === 'analyses' && comparisonBasePath && (
+                      <ComparisonSidebarNav basePath={comparisonBasePath} projectId={projectId} />
+                    )}
+                  </div>
                 );
               })}
             </div>

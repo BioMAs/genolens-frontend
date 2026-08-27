@@ -7,7 +7,6 @@ import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
 import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import DEGBarChart from './DEGBarChart';
-import OverviewTopGenes from './OverviewTopGenes';
 import Link from 'next/link';
 import VolcanoPlot from './VolcanoPlot';
 import DEGTable from './DEGTable';
@@ -32,6 +31,7 @@ import { Chip } from '@/components/ui/chip';
 import { Dot } from '@/components/ui/dot';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
+import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules, type ComparisonModuleTab } from './comparison/comparisonModules';
 
 interface ComparisonDetailProps {
@@ -72,19 +72,22 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
   const globalDatasetId = searchParams.get('datasetId');
   const { openChatWith } = useChatMode();
 
-  // The open tab lives in the URL: a refresh stays where the user was, and a
-  // link to a specific view is shareable.
+  // The open tab IS the `?tab=` parameter — no local copy to keep in sync. A
+  // refresh stays where the user was, the view is linkable, and the sidebar can
+  // point straight at a module.
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<TabType>(isTabType(tabParam) ? tabParam : 'overview');
+  const activeTab: TabType = isTabType(tabParam) ? tabParam : 'overview';
 
-  /** Switches tab and reflects it in the URL without a re-render. */
+  /** Switches tab through the URL, without a server round-trip. */
   const selectTab = useCallback((tab: TabType) => {
-    setActiveTab(tab);
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     if (tab === 'overview') url.searchParams.delete('tab');
     else url.searchParams.set('tab', tab);
-    window.history.replaceState(window.history.state, '', url.toString());
+    // Native history update: useSearchParams reflects it (Next.js ≥ 14.1), so
+    // this re-renders the page without refetching it. replaceState, not push:
+    // switching tabs shouldn't pile up history entries.
+    window.history.replaceState(null, '', url.toString());
   }, []);
   // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
   const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
@@ -939,67 +942,18 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
                   loading={statsLoading}
                 />
 
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-                  <div className="xl:col-span-8 space-y-4">
-                    {/* Volcano Plot */}
-                    <div className="gl-card p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div>
-                          <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            Volcano Plot
-                          </h2>
-                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            log2FC threshold: 0.58 · padj: 0.05
-                          </p>
-                        </div>
-                        <Link
-                          href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                          className="text-xs font-semibold"
-                          style={{ color: 'var(--sl-teal-dark)' }}
-                        >
-                          View dataset
-                        </Link>
-                      </div>
-
-                      <VolcanoPlot dataset={degDataset} comparisonName={actualComparisonName} />
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="inline-flex items-center gap-1">
-                          <Dot variant="ready" size={7} /> Upregulated
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Dot variant="failed" size={7} /> Downregulated
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Dot variant="pending" size={7} /> Not significant
-                        </span>
-                        {stats ? <Chip>{stats.degTotal.toLocaleString()} significant genes</Chip> : null}
-                      </div>
-                    </div>
-
-                    {/* Top up / down genes — simple list */}
-                    <div className="gl-card p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          Top differentially expressed genes
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => selectTab('deg')}
-                          className="text-xs font-semibold"
-                          style={{ color: 'var(--sl-teal-dark)' }}
-                        >
-                          Full DEG table →
-                        </button>
-                      </div>
-                      <OverviewTopGenes dataset={degDataset} comparisonName={actualComparisonName} />
-                    </div>
-                  </div>
-
-                  <div className="xl:col-span-4 space-y-4">
-                    <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-                  </div>
+                {/* Top DEGs and top pathways side by side: the two answers a
+                    reader wants first — which genes moved, and what they do. */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
+                  <OverviewTopPathways
+                    enrichmentDataset={enrichmentDataset}
+                    comparisonName={actualComparisonName}
+                    onOpenEnrichment={() => selectTab('enrichment')}
+                  />
                 </div>
+
+                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
 
                 <ComparisonModuleGrid
                   modules={comparisonModules}
@@ -1011,9 +965,41 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             {/* DEG Tab */}
             {activeTab === 'deg' && (
               <div className="space-y-6">
-                {/* Top DEG Bar Chart */}
-                <div>
-                  <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
+                {/* Volcano plot — the whole comparison at a glance, next to the
+                    table it filters down to. */}
+                <div className="gl-card p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        Volcano plot
+                      </h2>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        log2FC threshold: 0.58 · padj: 0.05
+                      </p>
+                    </div>
+                    <Link
+                      href={`/projects/${projectId}/datasets/${degDataset.id}`}
+                      className="text-xs font-semibold"
+                      style={{ color: 'var(--sl-teal-dark)' }}
+                    >
+                      View dataset
+                    </Link>
+                  </div>
+
+                  <VolcanoPlot dataset={degDataset} comparisonName={actualComparisonName} />
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="inline-flex items-center gap-1">
+                      <Dot variant="ready" size={7} /> Upregulated
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Dot variant="failed" size={7} /> Downregulated
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Dot variant="pending" size={7} /> Not significant
+                    </span>
+                    {stats ? <Chip>{stats.degTotal.toLocaleString('en-US')} significant genes</Chip> : null}
+                  </div>
                 </div>
 
                 {/* DEG Table */}
