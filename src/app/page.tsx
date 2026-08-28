@@ -1,19 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { AlertTriangle, ArrowRight, Check, Loader2, Lock } from 'lucide-react';
+import AuthShell from '@/components/auth/AuthShell';
+import AuthCard from '@/components/auth/AuthCard';
+import AuthField from '@/components/auth/AuthField';
 
 type AuthMode = 'signin' | 'signup';
-
-const FEATURES = [
-  'Differential expression analysis',
-  'Pathway enrichment — GO & GSEA',
-  'PCA, UMAP & clustering',
-  'AI biological interpretation',
-];
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -25,7 +21,10 @@ export default function Home() {
   const router = useRouter();
   const supabase = createClient();
 
-  const reset = () => { setError(null); setSuccess(null); };
+  const reset = () => {
+    setError(null);
+    setSuccess(null);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +49,11 @@ export default function Home() {
         if (error) {
           setError(error.message);
         } else {
-          setSuccess('Check your email for the confirmation link.');
+          setSuccess('Check your inbox — we sent a link to confirm your account.');
         }
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError('Something went wrong. Try again.');
     } finally {
       setLoading(false);
     }
@@ -65,251 +64,120 @@ export default function Home() {
     reset();
   };
 
+  const isSignin = mode === 'signin';
+
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
+    <AuthShell>
+      <div className="auth-tabs" role="tablist" aria-label="Sign in or sign up">
+        <button
+          type="button"
+          role="tab"
+          className="auth-tab"
+          aria-selected={isSignin}
+          onClick={() => switchMode('signin')}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className="auth-tab"
+          aria-selected={!isSignin}
+          onClick={() => switchMode('signup')}
+        >
+          Sign up
+        </button>
+      </div>
 
-      {/* ── Left brand panel (lg+) ──────────────────────────── */}
-      <aside
-        className="hidden lg:flex flex-col justify-between w-[400px] flex-shrink-0 p-10 relative overflow-hidden"
-        style={{ background: 'var(--sl-purple)' }}
-      >
-        {/* Dot-grid texture */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
-        {/* Ambient glow blobs */}
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full"
-          style={{ background: 'var(--sl-teal)', opacity: 0.12, filter: 'blur(60px)' }}
-        />
-        <div
-          className="pointer-events-none absolute top-24 -right-12 w-48 h-48 rounded-full"
-          style={{ background: 'var(--sl-teal)', opacity: 0.08, filter: 'blur(40px)' }}
-        />
-
-        {/* Logo */}
-        <div className="relative z-10">
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              padding: '4px 10px',
-              display: 'inline-block',
-              lineHeight: 0,
-            }}
+      <AuthCard className="mt-4">
+        <div className="mb-6">
+          <h1
+            className="font-display text-[22px] font-bold"
+            style={{ color: 'var(--auth-text)', letterSpacing: '-0.02em' }}
           >
-            <Image
-              src="/logo.png"
-              alt="GenoLens"
-              height={32}
-              width={150}
-              priority
-              className="object-contain block"
-            />
-          </div>
+            {isSignin ? 'Welcome back' : 'Create your account'}
+          </h1>
+          <p className="mt-1 text-[13px]" style={{ color: 'var(--auth-text-2)' }}>
+            {isSignin
+              ? 'Sign in to your transcriptomics workspace'
+              : 'Start analyzing your RNA-seq data'}
+          </p>
         </div>
 
-        {/* Hero copy */}
-        <div className="relative z-10">
-          <p
-            className="text-xs font-semibold tracking-widest uppercase mb-4"
-            style={{ color: 'var(--sl-teal)' }}
-          >
-            SciLicium Platform
-          </p>
-          <h2
-            className="font-display text-[1.875rem] font-bold text-white leading-[1.2] mb-5"
-          >
-            Transcriptomics<br />made intelligible.
-          </h2>
-          <p className="text-sm leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            Explore RNA-seq datasets, identify differential expression, and gain
-            AI-powered biological insight — all in one workspace.
-          </p>
+        <form className="space-y-4" onSubmit={handleAuth} data-testid="auth-form">
+          <AuthField
+            id="email"
+            name="email"
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@institution.edu"
+            data-testid="auth-email"
+          />
 
-          <ul className="space-y-2.5">
-            {FEATURES.map((feat) => (
-              <li key={feat} className="flex items-center gap-2.5">
-                <span
-                  className="flex-shrink-0 w-1.5 h-1.5 rounded-full"
-                  style={{ background: 'var(--sl-teal)' }}
-                />
-                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.72)' }}>
-                  {feat}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <AuthField
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            autoComplete={isSignin ? 'current-password' : 'new-password'}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            data-testid="auth-password"
+            hint={
+              isSignin ? (
+                <div className="mt-2 text-right">
+                  <Link
+                    href="/auth/forgot"
+                    className="text-[12px]"
+                    style={{ color: 'var(--auth-muted)' }}
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              ) : undefined
+            }
+          />
 
-        <p className="relative z-10 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          © {new Date().getFullYear()} SciLicium. All rights reserved.
-        </p>
-      </aside>
-
-      {/* ── Right form panel ───────────────────────────────── */}
-      <div className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[360px]">
-
-          {/* Mobile-only logo */}
-          <div className="lg:hidden mb-8" style={{ lineHeight: 0 }}>
-            <div style={{ background: 'white', borderRadius: '6px', padding: '3px 8px', display: 'inline-block' }}>
-              <Image
-                src="/logo.png"
-                alt="GenoLens"
-                height={22}
-                width={110}
-                priority
-                className="object-contain block"
-              />
-            </div>
-          </div>
-
-          {/* Heading */}
-          <div className="mb-7">
-            <h1
-              className="font-display text-2xl font-bold mb-1.5"
-              style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
-            >
-              {mode === 'signin' ? 'Welcome back' : 'Create account'}
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {mode === 'signin'
-                ? 'Sign in to your transcriptomics workspace'
-                : 'Start analyzing your RNA-seq data today'}
-            </p>
-          </div>
-
-          {/* Success message */}
-          {success && (
-            <div
-              className="mb-5 p-3.5 rounded-lg text-sm animate-fade-up"
-              style={{
-                background: 'var(--sl-teal-light)',
-                color: 'var(--sl-teal-dark)',
-                border: '1px solid var(--sl-teal-muted)',
-              }}
-            >
-              {success}
+          {error && (
+            <div className="auth-alert auth-alert-error animate-fade-up" role="alert" data-testid="auth-error">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
-          <form className="space-y-4" onSubmit={handleAuth}>
-            <div>
-              <label
-                htmlFor="email"
-                className="section-title block mb-1.5"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@institution.edu"
-                className="w-full px-3.5 py-2.5 rounded-lg text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-brand-teal"
-                style={{
-                  background: 'var(--surface)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              />
+          {success && (
+            <div className="auth-alert auth-alert-ok animate-fade-up" role="status">
+              <Check size={16} aria-hidden="true" />
+              <span>{success}</span>
             </div>
+          )}
 
-            <div>
-              <label
-                htmlFor="password"
-                className="section-title block mb-1.5"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 rounded-lg text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-brand-teal"
-                style={{
-                  background: 'var(--surface)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              />
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div
-                className="p-3 rounded-lg text-sm animate-fade-up"
-                style={{
-                  background: 'var(--sl-red-light)',
-                  color: 'var(--sl-red)',
-                  border: '1px solid var(--sl-red-muted)',
-                }}
-              >
-                {error}
-              </div>
+          <button type="submit" className="auth-btn !mt-5" disabled={loading} data-testid="auth-submit">
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <>
+                {isSignin ? 'Sign in' : 'Create account'}
+                <ArrowRight className="auth-btn-arrow h-4 w-4" aria-hidden="true" />
+              </>
             )}
+          </button>
+        </form>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 mt-1"
-              style={{ background: 'var(--sl-purple)' }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')
-              }
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  {mode === 'signin' ? 'Sign in' : 'Create account'}
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Mode switcher */}
-          <p className="mt-5 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-            <button
-              type="button"
-              onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
-              className="font-semibold transition-colors"
-              style={{ color: 'var(--sl-teal-dark)' }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.color = 'var(--sl-teal)')
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.color = 'var(--sl-teal-dark)')
-              }
-            >
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
-            </button>
-          </p>
-
-        </div>
-      </div>
-    </div>
+        <p
+          className="mt-3 flex items-center justify-center gap-1.5 text-[11px]"
+          style={{ color: 'var(--auth-muted)' }}
+        >
+          <Lock size={12} aria-hidden="true" />
+          Your data is encrypted and never shared
+        </p>
+      </AuthCard>
+    </AuthShell>
   );
 }

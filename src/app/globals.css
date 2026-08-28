@@ -559,3 +559,211 @@ body {
    de barres. Pas de règle CSS de mise à l'échelle ici : un `<svg>` mis à l'échelle par CSS
    (`width:100%; height:auto`) réduirait le texte proportionnellement sur mobile, puisque son
    `viewBox` figé grandirait/rétrécirait uniformément, libellés compris. */
+
+/* ============================================================
+   AUTH SCOPE — logged-out screens only
+   ------------------------------------------------------------
+   The app interior runs on the emerald/indigo --sl-* tokens. The
+   GenoLens mark itself is teal→slate-purple, and a saturated indigo
+   ground fights it, so the auth surfaces realign to the logo's own
+   palette. Scoped to .auth-scope on purpose: nothing behind the
+   login wall inherits these.
+   ============================================================ */
+.auth-scope {
+  --auth-brand:        #5d5892;   /* slate-purple — brand panel, primary CTA */
+  --auth-brand-hover:  #4a4576;
+  --auth-accent:       #0f9b80;   /* teal, light-ground variant */
+  --auth-accent-soft:  rgba(15, 155, 128, 0.10);
+  --auth-ink:          #0c1018;
+
+  --auth-bg:           var(--background);
+  --auth-card:         #ffffff;
+  --auth-card-border:  #e3e7f0;
+  --auth-card-shadow:  0 1px 2px rgba(16, 20, 32, 0.04),
+                       0 12px 32px -12px rgba(16, 20, 32, 0.12);
+
+  --auth-text:         #161c2a;
+  --auth-text-2:       #5a6a82;
+  --auth-muted:        #92a0b4;
+
+  --auth-danger:       #e23b3b;
+  --auth-danger-bg:    rgba(226, 59, 59, 0.07);
+  --auth-danger-br:    rgba(226, 59, 59, 0.22);
+  --auth-ok:           #0c8770;
+  --auth-ok-bg:        rgba(15, 155, 128, 0.08);
+  --auth-ok-br:        rgba(15, 155, 128, 0.22);
+
+  /* on the brand panel (always dark ground, both themes) */
+  --auth-on-brand:     #ffffff;
+  --auth-on-brand-2:   rgba(255, 255, 255, 0.62);
+  --auth-on-brand-3:   rgba(255, 255, 255, 0.28);
+  --auth-panel-accent: #42e2ba;   /* teal reads brighter on the purple ground */
+}
+
+.dark .auth-scope {
+  --auth-accent:       #42e2ba;
+  --auth-accent-soft:  rgba(66, 226, 186, 0.10);
+
+  --auth-card:         rgba(19, 23, 32, 0.82);
+  --auth-card-border:  #1f2840;
+  --auth-card-shadow:  0 0 0 1px rgba(66, 226, 186, 0.04),
+                       0 24px 48px rgba(0, 0, 0, 0.40);
+
+  --auth-text:         #dde4ee;
+  --auth-text-2:       #8898ae;
+  --auth-muted:        #5a6a82;
+
+  --auth-danger:       #ff5f5f;
+  --auth-danger-bg:    rgba(255, 95, 95, 0.08);
+  --auth-danger-br:    rgba(255, 95, 95, 0.20);
+  --auth-ok:           #42e2ba;
+  --auth-ok-bg:        rgba(66, 226, 186, 0.08);
+  --auth-ok-br:        rgba(66, 226, 186, 0.20);
+}
+
+/* Ghost volcano reveal — one orchestrated moment on the auth panel, then still. */
+@keyframes glVolcanoIn { from { opacity: 0; transform: translateY(4px); } to { opacity: var(--o, 1); transform: none; } }
+
+.gl-volcano-points circle {
+  opacity: 0;
+  animation: glVolcanoIn 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-volcano-points circle { animation: none; opacity: var(--o, 1); }
+}
+
+/* ---------- Auth controls ----------
+   Buttons and tabs live as classes rather than inline styles: the auth palette
+   is not the app palette, so `bg-brand-purple` is the wrong colour here, and an
+   inline background would beat every `hover:` utility — which is exactly why the
+   old login page reached for JS onMouseEnter handlers. Classes keep hover,
+   focus and active states declarative. */
+.auth-scope .auth-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--auth-brand);
+  color: #fff;
+  font-family: var(--font-dm-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.1s ease;
+}
+.auth-scope .auth-btn:hover:not(:disabled) { background: var(--auth-brand-hover); }
+.auth-scope .auth-btn:active:not(:disabled) { transform: scale(0.99); }
+.auth-scope .auth-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.auth-scope .auth-btn svg { transition: transform 0.15s ease; }
+.auth-scope .auth-btn:hover:not(:disabled) svg.auth-btn-arrow { transform: translateX(3px); }
+
+.auth-scope .auth-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--auth-card-border);
+  color: var(--auth-text-2);
+}
+.auth-scope .auth-btn-ghost:hover:not(:disabled) {
+  background: var(--auth-accent-soft);
+  border-color: var(--auth-accent);
+  color: var(--auth-text);
+}
+
+/* Segmented sign-in / sign-up control */
+.auth-scope .auth-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--auth-card-border);
+  border-radius: var(--radius-control);
+  background: var(--auth-bg);
+}
+.auth-scope .auth-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--auth-muted);
+  font-family: var(--font-dm-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.auth-scope .auth-tab:hover { color: var(--auth-text); }
+.auth-scope .auth-tab[aria-selected='true'] {
+  background: var(--auth-card);
+  color: var(--auth-text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(16, 20, 32, 0.06);
+}
+
+/* Inline text link (forgot password, mode switch, sign out) */
+.auth-scope .auth-link {
+  color: var(--auth-accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.auth-scope .auth-link:hover { opacity: 0.75; text-decoration: underline; }
+
+/* Field label */
+.auth-scope .auth-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-syne);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+}
+
+/* Alerts */
+.auth-scope .auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.auth-scope .auth-alert svg { flex: none; margin-top: 1px; }
+.auth-scope .auth-alert-error {
+  background: var(--auth-danger-bg);
+  border: 1px solid var(--auth-danger-br);
+  color: var(--auth-danger);
+}
+.auth-scope .auth-alert-ok {
+  background: var(--auth-ok-bg);
+  border: 1px solid var(--auth-ok-br);
+  color: var(--auth-ok);
+}
+
+/* Focus rings on the auth screens.
+   The global :focus-visible ring is the app emerald (--sl-teal), which is too
+   dark against the ink ground in dark mode, so it is retargeted to the auth
+   accent here. The input needs its own rule: components/ui/input.tsx carries
+   `focus-visible:ring-2 ring-brand-teal`, whose specificity (0,2,0) ties with a
+   plain `.auth-scope :focus-visible`, so the input selector adds an element
+   (0,2,1) to win outright rather than depend on source order.
+   Note the border colour is NOT set on focus: AuthField pins borderColor inline
+   to keep the auth palette off the app tokens, and no stylesheet rule can beat
+   an inline declaration. The ring alone carries the focus affordance. */
+.auth-scope :focus-visible {
+  box-shadow: 0 0 0 2px var(--auth-bg), 0 0 0 4px var(--auth-accent);
+}
+
+.auth-scope input.auth-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--auth-bg), 0 0 0 4px var(--auth-accent);
+  outline: none;
+}

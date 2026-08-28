@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Ban, Clock, ShieldOff, ArrowRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import AuthShell from "@/components/auth/AuthShell";
+import AuthCard from "@/components/auth/AuthCard";
 
 type AccountStatus = "suspended" | "cancelled" | "pending" | null;
 
@@ -12,55 +15,109 @@ function getCookieValue(name: string): string | null {
   return match ? match[2] : null;
 }
 
-const CONTENT: Record<NonNullable<AccountStatus>, { title: string; description: string; cta: { label: string; href: string } }> = {
+type Entry = {
+  badge: string;
+  title: string;
+  description: string;
+  cta: { label: string; href: string };
+  icon: typeof Ban;
+  tone: "danger" | "brand";
+};
+
+const CONTENT: Record<NonNullable<AccountStatus>, Entry> = {
   cancelled: {
-    title: "Your subscription has expired",
-    description: "Your GenoLens subscription has ended. Renew to regain full access to your projects.",
+    badge: "Subscription expired",
+    title: "Your subscription has ended",
+    description:
+      "Renew your GenoLens plan to regain access to your projects, analyses and data.",
     cta: { label: "Renew subscription", href: "/pricing" },
+    icon: ShieldOff,
+    tone: "danger",
   },
   suspended: {
+    badge: "Account suspended",
     title: "Your account has been suspended",
-    description: "Your account has been temporarily suspended. Please contact support for assistance.",
+    description: "Contact our support team and we'll get this sorted out.",
     cta: { label: "Contact support", href: "mailto:support@genolens.com" },
+    icon: Ban,
+    tone: "danger",
   },
   pending: {
-    title: "Account pending activation",
-    description: "Your account is waiting for activation. Please check your email for an invitation link.",
-    cta: { label: "Back to login", href: "/login" },
+    badge: "Activation pending",
+    title: "Your account is awaiting activation",
+    description:
+      "Check your email for the invitation link, or contact support if it hasn't arrived.",
+    // Points at "/" rather than "/login": that route only redirects here anyway.
+    cta: { label: "Back to sign in", href: "/" },
+    icon: Clock,
+    tone: "brand",
   },
 };
 
 export default function SuspendedPage() {
-  const [status] = useState<AccountStatus>(() => getCookieValue("account_status") as AccountStatus);
+  const [status] = useState<AccountStatus>(
+    () => getCookieValue("account_status") as AccountStatus
+  );
 
   const current = status ? CONTENT[status] ?? CONTENT.cancelled : CONTENT.cancelled;
+  const Icon = current.icon;
+
+  const tone =
+    current.tone === "danger"
+      ? { bg: "var(--auth-danger-bg)", fg: "var(--auth-danger)" }
+      : { bg: "var(--auth-accent-soft)", fg: "var(--auth-accent)" };
+
+  const signOut = async () => {
+    document.cookie = "account_status=; path=/; max-age=0";
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-        <div className="text-5xl mb-4">🔒</div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-3">{current.title}</h1>
-        <p className="text-gray-500 mb-6 leading-relaxed">{current.description}</p>
-        <Link
-          href={current.cta.href}
-          className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+    <AuthShell>
+      <AuthCard className="text-center">
+        <div
+          className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-[14px]"
+          style={{ background: tone.bg, color: tone.fg }}
         >
-          {current.cta.label}
-        </Link>
-        <div className="mt-5 flex flex-col gap-2 items-center">
-          <button
-            onClick={async () => {
-              document.cookie = "account_status=; path=/; max-age=0";
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = "/login";
-            }}
-            className="text-sm text-gray-400 hover:text-gray-600 hover:underline"
-          >
-            Sign out
-          </button>
+          <Icon size={26} aria-hidden="true" />
         </div>
-      </div>
-    </div>
+
+        <span
+          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[9px] font-bold uppercase"
+          style={{ background: tone.bg, color: tone.fg, letterSpacing: "0.12em" }}
+        >
+          {current.badge}
+        </span>
+
+        <h1
+          className="font-display text-[22px] font-bold"
+          style={{ color: "var(--auth-text)", letterSpacing: "-0.02em" }}
+        >
+          {current.title}
+        </h1>
+        <p
+          className="mx-auto mt-2.5 max-w-[320px] text-[14px] leading-relaxed"
+          style={{ color: "var(--auth-text-2)" }}
+        >
+          {current.description}
+        </p>
+
+        <Link href={current.cta.href} className="auth-btn mt-6">
+          {current.cta.label}
+          <ArrowRight className="auth-btn-arrow h-4 w-4" aria-hidden="true" />
+        </Link>
+
+        <button
+          type="button"
+          onClick={signOut}
+          className="auth-link mt-4 text-[13px]"
+          style={{ color: "var(--auth-muted)" }}
+        >
+          Sign out
+        </button>
+      </AuthCard>
+    </AuthShell>
   );
 }
