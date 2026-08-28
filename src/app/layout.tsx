@@ -35,6 +35,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GenoLens — Transcriptomics Platform",
   description: "Advanced transcriptomics data visualization and analysis powered by AI",
+  // Icons come from the App Router file convention (favicon.ico / icon.png /
+  // apple-icon.png / opengraph-image.png in this directory). Declaring them in
+  // `icons` as well emits a second, duplicate <link> for favicon.ico, which Next
+  // always injects from the convention regardless.
 };
 
 export default async function RootLayout({
