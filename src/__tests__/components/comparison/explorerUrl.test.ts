@@ -1,5 +1,7 @@
 import {
   PARAM_GENE,
+  PARAM_GENE_LIST,
+  readGeneListId,
   PARAM_LOGFC,
   PARAM_PADJ,
   readFocusedGene,
@@ -197,5 +199,61 @@ describe('urlMatchesState', () => {
     expect(urlMatchesState(params(''), DEFAULT_THRESHOLDS, 'TP53')).toBe(false);
     expect(urlMatchesState(params('gene=TP53'), DEFAULT_THRESHOLDS, 'SOX9')).toBe(false);
     expect(urlMatchesState(params('gene=TP53'), { padj: 0.01, logfc: 0.58 }, 'TP53')).toBe(false);
+  });
+});
+
+describe('readGeneListId', () => {
+  it('reads a saved gene list id', () => {
+    expect(readGeneListId(params('geneList=3a39cc1a-1111-2222-3333-444455556666'))).toBe(
+      '3a39cc1a-1111-2222-3333-444455556666'
+    );
+  });
+
+  it('returns null when none is named', () => {
+    expect(readGeneListId(params(''))).toBeNull();
+    expect(readGeneListId(params('geneList='))).toBeNull();
+    expect(readGeneListId(null)).toBeNull();
+  });
+
+  // The id becomes a path segment on the API, so a mangled link is refused rather than sent.
+  it('refuses anything that is not an id', () => {
+    expect(readGeneListId(params('geneList=' + encodeURIComponent('../../admin')))).toBeNull();
+    expect(readGeneListId(params('geneList=short'))).toBeNull();
+    expect(readGeneListId(params('geneList=' + 'a'.repeat(65)))).toBeNull();
+  });
+});
+
+describe('the gene list in the URL', () => {
+  const LIST = '3a39cc1a-1111-2222-3333-444455556666';
+
+  // A set of genes is only shareable once saved: the id travels, the three hundred symbols
+  // never do.
+  it('writes the list id', () => {
+    const written = writeExplorerState(params(''), DEFAULT_THRESHOLDS, null, LIST);
+    expect(written.get(PARAM_GENE_LIST)).toBe(LIST);
+    expect(written.has(PARAM_GENE)).toBe(false);
+  });
+
+  it('drops the list id when the selection is no longer a saved list', () => {
+    expect(
+      writeExplorerState(params(`geneList=${LIST}`), DEFAULT_THRESHOLDS, null, null).toString()
+    ).toBe('');
+  });
+
+  it('carries a focused gene and a list together', () => {
+    const written = writeExplorerState(params(''), DEFAULT_THRESHOLDS, 'TP53', LIST);
+    expect(written.get(PARAM_GENE)).toBe('TP53');
+    expect(written.get(PARAM_GENE_LIST)).toBe(LIST);
+  });
+
+  it('round-trips through readGeneListId', () => {
+    expect(readGeneListId(writeExplorerState(params(''), DEFAULT_THRESHOLDS, null, LIST))).toBe(
+      LIST
+    );
+  });
+
+  it('is seen by urlMatchesState', () => {
+    expect(urlMatchesState(params(`geneList=${LIST}`), DEFAULT_THRESHOLDS, null, LIST)).toBe(true);
+    expect(urlMatchesState(params(''), DEFAULT_THRESHOLDS, null, LIST)).toBe(false);
   });
 });

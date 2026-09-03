@@ -222,7 +222,7 @@ describe('selectGenes', () => {
     expect(result.current.selection).toMatchObject({ genes: [], focusedGene: null });
   });
 
-  it('replaces the selection and focuses the first gene', () => {
+  it('focuses a lone gene, because it is its own subject', () => {
     const { result } = renderHook(useSel, { wrapper });
 
     act(() => result.current.actions.selectGenes(['TP53'], 'volcano'));
@@ -231,11 +231,18 @@ describe('selectGenes', () => {
       focusedGene: 'TP53',
       source: 'volcano',
     });
+  });
+
+  // A lasso of three hundred genes must not arbitrarily promote whichever point came first:
+  // the set is the subject until the user picks one out of it.
+  it('focuses nothing when a set is selected', () => {
+    const { result } = renderHook(useSel, { wrapper });
 
     act(() => result.current.actions.selectGenes(['SOX9', 'MUC16'], 'pathway', 'Wnt signaling'));
+
     expect(result.current.selection).toMatchObject({
       genes: ['SOX9', 'MUC16'],
-      focusedGene: 'SOX9',
+      focusedGene: null,
       label: 'Wnt signaling',
     });
   });
@@ -305,6 +312,7 @@ describe('toggleGene', () => {
     const { result } = renderHook(useSel, { wrapper });
 
     act(() => result.current.actions.selectGenes(['TP53', 'SOX9'], 'volcano'));
+    act(() => result.current.actions.setFocusedGene('TP53'));
     act(() => result.current.actions.toggleGene('SOX9'));
 
     expect(result.current.selection.focusedGene).toBe('TP53');
@@ -369,16 +377,27 @@ describe('the focused gene in the URL', () => {
     expect(new URLSearchParams(window.location.search).get('gene')).toBe('TP53');
   });
 
-  // A lasso is not a stable artifact worth a permalink; its shareable form is a gene list.
-  it('writes only the focused gene of a multi-gene selection', () => {
+  // A lasso is not a stable artifact worth a permalink; its shareable form is a saved gene
+  // list. With nothing focused there is nothing to write, and the URL stays clean.
+  it('writes nothing for a set with no focused gene', () => {
     const { result } = renderHook(useSel, { wrapper });
 
     act(() => result.current.actions.selectGenes(['TP53', 'SOX9', 'MUC16'], 'volcano'));
     act(() => jest.advanceTimersByTime(300));
 
+    expect(window.location.search).toBe('');
+  });
+
+  it('writes the gene the user picked out of a set', () => {
+    const { result } = renderHook(useSel, { wrapper });
+
+    act(() => result.current.actions.selectGenes(['TP53', 'SOX9', 'MUC16'], 'volcano'));
+    act(() => result.current.actions.setFocusedGene('SOX9'));
+    act(() => jest.advanceTimersByTime(300));
+
     const params = new URLSearchParams(window.location.search);
-    expect(params.get('gene')).toBe('TP53');
-    expect(params.toString()).not.toContain('SOX9');
+    expect(params.get('gene')).toBe('SOX9');
+    expect(params.toString()).not.toContain('TP53');
   });
 
   it('drops the parameter when the selection is cleared', () => {
@@ -404,5 +423,57 @@ describe('the focused gene in the URL', () => {
     const params = new URLSearchParams(window.location.search);
     expect(params.get('gene')).toBe('TP53');
     expect(params.get('padj')).toBe('0.001');
+  });
+});
+
+describe('selectGeneList', () => {
+  const LIST = '3a39cc1a-1111-2222-3333-444455556666';
+
+  it('records the list it came from, and focuses nothing', () => {
+    const { result } = renderHook(useSel, { wrapper });
+
+    act(() => result.current.actions.selectGeneList(LIST, 'Wnt hits', ['TP53', 'SOX9']));
+
+    expect(result.current.selection).toMatchObject({
+      genes: ['TP53', 'SOX9'],
+      focusedGene: null,
+      source: 'geneList',
+      label: 'Wnt hits',
+      listId: LIST,
+    });
+  });
+
+  it('puts the list id in the URL, which is what makes a set shareable at all', () => {
+    const { result } = renderHook(useSel, { wrapper });
+
+    act(() => result.current.actions.selectGeneList(LIST, 'Wnt hits', ['TP53', 'SOX9']));
+    act(() => jest.advanceTimersByTime(300));
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('geneList')).toBe(LIST);
+    expect(params.toString()).not.toContain('TP53');
+  });
+
+  it('drops the list id once the selection stops being that list', () => {
+    const { result } = renderHook(useSel, { wrapper });
+
+    act(() => result.current.actions.selectGeneList(LIST, 'Wnt hits', ['TP53', 'SOX9']));
+    act(() => jest.advanceTimersByTime(300));
+    act(() => result.current.actions.selectGenes(['BRCA1'], 'volcano'));
+    act(() => jest.advanceTimersByTime(300));
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.has('geneList')).toBe(false);
+    expect(params.get('gene')).toBe('BRCA1');
+  });
+
+  it('preserves identity when the same list is applied again', () => {
+    const { result } = renderHook(useSel, { wrapper });
+
+    act(() => result.current.actions.selectGeneList(LIST, 'Wnt hits', ['TP53', 'SOX9']));
+    const before = result.current.selection;
+
+    act(() => result.current.actions.selectGeneList(LIST, 'Wnt hits', ['TP53', 'SOX9']));
+    expect(result.current.selection).toBe(before);
   });
 });

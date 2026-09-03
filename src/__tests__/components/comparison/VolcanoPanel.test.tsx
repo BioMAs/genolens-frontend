@@ -24,14 +24,21 @@ interface StubTrace {
   type?: string;
 }
 
+interface PointRef {
+  curveNumber: number;
+  pointNumber: number;
+}
+
 interface StubProps {
   data: StubTrace[];
   layout: { paper_bgcolor?: string; plot_bgcolor?: string; shapes?: unknown[] };
   config: { modeBarButtonsToRemove?: string[] };
   onClick?: (event: {
-    points: Array<{ curveNumber: number; pointNumber: number }>;
+    points: PointRef[];
     event: { shiftKey: boolean; metaKey: boolean };
   }) => void;
+  onSelected?: (event?: { points?: PointRef[] }) => void;
+  onDeselect?: () => void;
 }
 
 /**
@@ -71,6 +78,27 @@ jest.mock('next/dynamic', () => ({
               </button>
             ))
           )}
+          <button
+            type="button"
+            onClick={() =>
+              props.onSelected?.({
+                points: props.data.flatMap((trace, curveNumber) =>
+                  (trace.x ?? []).map((_, pointNumber) => ({ curveNumber, pointNumber }))
+                ),
+              })
+            }
+          >
+            lasso-all
+          </button>
+          <button type="button" onClick={() => props.onSelected?.({ points: [] })}>
+            lasso-empty
+          </button>
+          <button type="button" onClick={() => props.onSelected?.(undefined)}>
+            lasso-undefined
+          </button>
+          <button type="button" onClick={() => props.onDeselect?.()}>
+            deselect
+          </button>
         </div>
       );
     };
@@ -289,15 +317,14 @@ describe('theme and controls', () => {
     expect(lastProps().layout.plot_bgcolor).toBe('rgba(0,0,0,0)');
   });
 
-  // A lasso that selected nothing would read as a broken control; it arrives with the
-  // multi-selection card.
-  it('offers no lasso until there is something to do with one', async () => {
+  // Every other Plotly component in the app strips these; here they are the feature.
+  it('keeps the lasso and box-select buttons', async () => {
     renderPanel();
     await screen.findByTestId('plot-stub');
 
     const removed = lastProps().config.modeBarButtonsToRemove ?? [];
-    expect(removed).toContain('lasso2d');
-    expect(removed).toContain('select2d');
+    expect(removed).not.toContain('lasso2d');
+    expect(removed).not.toContain('select2d');
   });
 
   it('tells the user how to select before anything is selected', async () => {
@@ -305,5 +332,71 @@ describe('theme and controls', () => {
     await screen.findByTestId('plot-stub');
 
     expect(screen.getByText(/Click a point to inspect a gene/i)).toBeInTheDocument();
+  });
+});
+
+describe('lasso selection', () => {
+  it('takes the whole set, and lets the set describe itself rather than picking a gene', async () => {
+    renderPanel(<SelectionCard dataset={DATASET} comparisonName={COMPARISON} />);
+    await screen.findByTestId('plot-stub');
+
+    await userEvent.click(screen.getByText('lasso-all'));
+
+    // four real genes out of five points: the Unknown sentinel is dropped
+    const card = await screen.findByTestId('multi-selection-card');
+    expect(card).toHaveTextContent('4 genes selected');
+    expect(card).toHaveTextContent(/Lasso · 4 genes/);
+  });
+
+  it('reports the up and down split of the set', async () => {
+    renderPanel(<SelectionCard dataset={DATASET} comparisonName={COMPARISON} />);
+    await screen.findByTestId('plot-stub');
+
+    await userEvent.click(screen.getByText('lasso-all'));
+    const card = await screen.findByTestId('multi-selection-card');
+
+    // UP_GENE and Sox9 are up, DOWN_GENE is down, NS_GENE has no verdict at these thresholds
+    expect(card).toHaveTextContent('2 up');
+    expect(card).toHaveTextContent('1 down');
+    expect(card).toHaveTextContent(/1 without a verdict here/);
+  });
+
+  // Plotly fires plotly_selected while the lasso is still being drawn, and again with an empty
+  // payload when a selection is dismissed. Neither is an instruction to clear.
+  it('ignores an empty or absent payload instead of wiping the selection', async () => {
+    renderPanel(<SelectionCard dataset={DATASET} comparisonName={COMPARISON} />);
+    await screen.findByTestId('plot-stub');
+
+    await clickPoint(2, 1);
+    expect(await screen.findByTitle('UP_GENE')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('lasso-empty'));
+    await userEvent.click(screen.getByText('lasso-undefined'));
+
+    expect(screen.getByTitle('UP_GENE')).toBeInTheDocument();
+  });
+
+  it('clears on deselect, which is the gesture that actually means it', async () => {
+    renderPanel(<SelectionCard dataset={DATASET} comparisonName={COMPARISON} />);
+    await screen.findByTestId('plot-stub');
+
+    await userEvent.click(screen.getByText('lasso-all'));
+    await screen.findByTestId('multi-selection-card');
+
+    await userEvent.click(screen.getByText('deselect'));
+
+    expect(await screen.findByText('No gene selected')).toBeInTheDocument();
+  });
+
+  it('writes every lassoed gene back into the plot', async () => {
+    renderPanel();
+    await screen.findByTestId('plot-stub');
+
+    await userEvent.click(screen.getByText('lasso-all'));
+
+    await waitFor(() => {
+      const total = lastProps().data.reduce((n, t) => n + (t.selectedpoints?.length ?? 0), 0);
+      expect(total).toBe(4);
+    });
   });
 });

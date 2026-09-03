@@ -10,6 +10,7 @@ import DEGBarChart from './DEGBarChart';
 import Link from 'next/link';
 import VolcanoPanel from './comparison/explorer/VolcanoPanel';
 import SelectionCard from './comparison/explorer/SelectionCard';
+import GeneListDeepLink from './comparison/explorer/GeneListDeepLink';
 import DEGTable from './DEGTable';
 import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
@@ -888,6 +889,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                   {/* The plot takes the room; the card stays beside it and fills from
                       whatever is selected. The legend lives in the panel itself now, so the
                       dot row that used to duplicate it is gone. */}
+                  {/* Resolves a ?geneList= link into the shared selection. Renders nothing. */}
+                  <GeneListDeepLink projectId={projectId} />
+
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                     <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
                     <SelectionCard dataset={degDataset} comparisonName={actualComparisonName} />

@@ -10,8 +10,9 @@
  * deep link and render the same screen as a warm one.
  *
  * A lasso of three hundred genes does **not** go in the URL. Length aside, it is not a stable
- * artifact worth a permalink; its shareable form is a saved gene list, which is durable and
- * permissioned. A multi-gene selection therefore contributes only its focused gene.
+ * artifact worth a permalink; its shareable form is a **saved gene list**, which is durable and
+ * permissioned — so a set that has been saved travels as `?geneList=<id>`, and an unsaved one
+ * contributes only whichever gene the user picked out of it, if any.
  *
  * Defaults are omitted on write, mirroring how `selectTab` already deletes `tab` for the default
  * view: a URL only ever names what departs from the default.
@@ -27,6 +28,7 @@ import {
 export const PARAM_PADJ = 'padj';
 export const PARAM_LOGFC = 'lfc';
 export const PARAM_GENE = 'gene';
+export const PARAM_GENE_LIST = 'geneList';
 
 /**
  * Longest gene key accepted from a URL.
@@ -142,7 +144,8 @@ export function readFocusedGene(params: URLSearchParams | null | undefined): str
 export function writeExplorerState(
   params: URLSearchParams | null | undefined,
   thresholds: VolcanoThresholds,
-  focusedGene: string | null | undefined
+  focusedGene: string | null | undefined,
+  geneListId?: string | null
 ): URLSearchParams {
   const next = writeThresholds(params, thresholds);
 
@@ -153,6 +156,13 @@ export function writeExplorerState(
     next.delete(PARAM_GENE);
   }
 
+  const listId = geneListId?.trim();
+  if (listId) {
+    next.set(PARAM_GENE_LIST, listId);
+  } else {
+    next.delete(PARAM_GENE_LIST);
+  }
+
   return next;
 }
 
@@ -160,8 +170,24 @@ export function writeExplorerState(
 export function urlMatchesState(
   params: URLSearchParams | null | undefined,
   thresholds: VolcanoThresholds,
-  focusedGene: string | null | undefined
+  focusedGene: string | null | undefined,
+  geneListId?: string | null
 ): boolean {
   const current = new URLSearchParams(params ?? undefined);
-  return writeExplorerState(current, thresholds, focusedGene).toString() === current.toString();
+  return (
+    writeExplorerState(current, thresholds, focusedGene, geneListId).toString() ===
+    current.toString()
+  );
+}
+
+/**
+ * Read the saved gene list a URL points at, or null.
+ *
+ * Ids are UUIDs; anything else is a mangled link and is refused rather than sent to the API as
+ * a path segment.
+ */
+export function readGeneListId(params: URLSearchParams | null | undefined): string | null {
+  const raw = params?.get(PARAM_GENE_LIST)?.trim();
+  if (!raw) return null;
+  return /^[0-9a-fA-F-]{8,64}$/.test(raw) ? raw : null;
 }
