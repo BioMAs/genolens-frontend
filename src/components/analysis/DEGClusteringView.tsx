@@ -4,7 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Dataset } from '@/types';
 import { ClusteringParams } from '@/components/heatmap/types';
-import { useHeatmapData } from '@/components/heatmap/useHeatmapData';
+import { useHeatmapData, type HeatmapGeneRow } from '@/components/heatmap/useHeatmapData';
 import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import { getPalette } from '@/utils/chartPalettes';
@@ -30,6 +30,8 @@ interface DEGClusteringViewProps {
   sampleIds?: string[];
   comparisonName: string;
   sampleConditionMap?: Record<string, string>;
+  /** Plot these genes instead of the top DEGs — the current selection, say. */
+  genesOverride?: HeatmapGeneRow[];
 }
 
 type DisplayMode = 'expression' | 'log2fc';
@@ -76,6 +78,7 @@ export default function DEGClusteringView({
   sampleIds,
   comparisonName,
   sampleConditionMap,
+  genesOverride,
 }: DEGClusteringViewProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
   const [colorblindMode, setColorblindMode] = useState(false);
@@ -90,6 +93,7 @@ export default function DEGClusteringView({
     sampleIds,
     comparisonName,
     params: DEG_CLUSTERING_PARAMS,
+    genesOverride,
   });
 
   // ---- Loading / Error states ----
