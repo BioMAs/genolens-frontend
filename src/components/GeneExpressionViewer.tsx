@@ -1,14 +1,23 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import api from '@/utils/api';
+/**
+ * Pick a gene, see its expression across the conditions of a comparison.
+ *
+ * Now a shell: the fetching moved to `useGeneExpressionByCondition` and the drawing to
+ * `GeneExpressionBoxplot`, both of which the gene detail card uses directly. What is left here
+ * is the part the card does not want — an autocomplete over the matrix's genes, for browsing
+ * rather than following a selection.
+ *
+ * It went from 355 lines to this. It is still mounted nowhere, but it is no longer a *divergent
+ * copy* of the fetch and the plot, which was the actual risk of leaving it around.
+ */
+
+import { useMemo, useState } from 'react';
 import { Dataset } from '@/types';
-import { Layout, PlotData } from 'plotly.js';
+import { useGeneExpressionByCondition } from '@/hooks/useGeneExpressionByCondition';
+import GeneExpressionBoxplot from './GeneExpressionBoxplot';
 
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
-
-interface GeneExpressionViewerProps {
+interface Props {
   matrixDataset: Dataset;
   sampleIds?: string[];
   comparisonName: string;
@@ -17,339 +26,97 @@ interface GeneExpressionViewerProps {
   geneNameMap?: Record<string, string>;
 }
 
-interface SampleValue {
-  sample: string;
-  value: number;
-}
+/** How many suggestions to offer; the matrix can hold a hundred thousand genes. */
+const MAX_SUGGESTIONS = 50;
 
-interface BoxplotStats {
-  min: number;
-  q1: number;
-  median: number;
-  q3: number;
-  max: number;
-  mean: number;
-  values: number[];
-}
-
-interface ConditionExpression {
-  name: string;
-  samples: SampleValue[];
-  stats: BoxplotStats | null;
-}
-
-interface ExpressionData {
-  gene: string;
-  condition1: ConditionExpression;
-  condition2: ConditionExpression;
-}
-
-export default function GeneExpressionViewer({ 
-  matrixDataset, 
-  sampleIds, 
+export default function GeneExpressionViewer({
+  matrixDataset,
+  sampleIds,
   comparisonName,
   allGenes,
   sampleConditionMap,
   geneNameMap,
-}: GeneExpressionViewerProps) {
-  const [selectedGene, setSelectedGene] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [expressionData, setExpressionData] = useState<ExpressionData | null>(null);
-  const [loading, setLoading] = useState(false);
+}: Props) {
+  // Opens on the first gene of the list, as it always did.
+  const [gene, setGene] = useState<string>(() => allGenes[0] ?? '');
+  const [search, setSearch] = useState('');
 
-  // Parse comparison name to get conditions
-  const conditions = useMemo(() => {
-    const parts = comparisonName.split('_vs_');
-    if (parts.length === 2) {
-      return parts;
-    }
-    // Try other separators
-    const altParts = comparisonName.split(/[-_\s]vs[-_\s]/i);
-    if (altParts.length === 2) {
-      return altParts;
-    }
-    return [comparisonName, ''];
-  }, [comparisonName]);
-
-  // Filter genes based on search term (matches symbol OR Ensembl ID)
-  const filteredGenes = useMemo(() => {
-    if (!searchTerm) return [];
-    const term = searchTerm.toLowerCase();
+  const suggestions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return [];
     return allGenes
-      .filter(geneId => {
-        const symbol = geneNameMap?.[geneId] ?? '';
-        return (
-          geneId.toLowerCase().includes(term) ||
-          symbol.toLowerCase().includes(term)
-        );
+      .filter((id) => {
+        const symbol = geneNameMap?.[id] ?? '';
+        return id.toLowerCase().includes(term) || symbol.toLowerCase().includes(term);
       })
-      .slice(0, 50);
-  }, [searchTerm, allGenes, geneNameMap]);
+      .slice(0, MAX_SUGGESTIONS);
+  }, [search, allGenes, geneNameMap]);
 
-  const fetchGeneExpression = useCallback(async (gene: string) => {
-    if (!gene) return;
-    
-    setExpressionData(null);
-    try {
-      setLoading(true);
-      const response = await api.post(`/datasets/${matrixDataset.id}/query`, {
-        gene_ids: [gene],
-        sample_ids: sampleIds,
-        limit: 1
-      });
+  const { data, isLoading } = useGeneExpressionByCondition({
+    matrixDatasetId: matrixDataset.id,
+    gene,
+    comparisonName,
+    sampleIds,
+    conditionBySample: sampleConditionMap,
+  });
 
-      if (response.data.data.length > 0) {
-        const row = response.data.data[0];
-        // Accept any common gene ID column name
-        const geneColNames = ['gene_id', 'gene', 'gene_name', 'geneid'];
-        const columns = response.data.columns.filter(
-          (c: string) => !geneColNames.includes(c.toLowerCase())
-        );
-        
-        // Group samples by condition
-        const condition1Samples: SampleValue[] = [];
-        const condition2Samples: SampleValue[] = [];
-
-        if (sampleConditionMap && Object.keys(sampleConditionMap).length > 0) {
-          // Preferred: use explicit sample→condition mapping from metadata
-          columns.forEach((sample: string) => {
-            const value = parseFloat(row[sample]);
-            if (isNaN(value)) return;
-            const cond = sampleConditionMap[sample];
-            if (cond === conditions[0]) {
-              condition1Samples.push({ sample, value });
-            } else if (cond === conditions[1]) {
-              condition2Samples.push({ sample, value });
-            }
-          });
-        } else {
-          // Fallback: match by sample name containing condition string
-          columns.forEach((sample: string) => {
-            const value = parseFloat(row[sample]);
-            if (isNaN(value)) return;
-            if (conditions[0] && sample.toLowerCase().includes(conditions[0].toLowerCase())) {
-              condition1Samples.push({ sample, value });
-            } else if (conditions[1] && sample.toLowerCase().includes(conditions[1].toLowerCase())) {
-              condition2Samples.push({ sample, value });
-            }
-          });
-        }
-
-        // If neither condition matched any sample, show all samples as a single group
-        if (condition1Samples.length === 0 && condition2Samples.length === 0) {
-          columns.forEach((sample: string) => {
-            const value = parseFloat(row[sample]);
-            if (!isNaN(value)) condition1Samples.push({ sample, value });
-          });
-        }
-        
-        // Calculate statistics for boxplot
-        const calculateBoxplotStats = (values: number[]): BoxplotStats | null => {
-          if (values.length === 0) return null;
-          
-          const sorted = [...values].sort((a, b) => a - b);
-          const q1Index = Math.floor(sorted.length * 0.25);
-          const q2Index = Math.floor(sorted.length * 0.5);
-          const q3Index = Math.floor(sorted.length * 0.75);
-          
-          const q1 = sorted[q1Index];
-          const median = sorted[q2Index];
-          const q3 = sorted[q3Index];
-          const iqr = q3 - q1;
-          
-          const min = Math.max(sorted[0], q1 - 1.5 * iqr);
-          const max = Math.min(sorted[sorted.length - 1], q3 + 1.5 * iqr);
-          const mean = values.reduce((a, b) => a + b, 0) / values.length;
-          
-          return { min, q1, median, q3, max, mean, values: sorted };
-        };
-        
-        const cond1Values = condition1Samples.map(s => s.value);
-        const cond2Values = condition2Samples.map(s => s.value);
-        
-        setExpressionData({
-          gene,
-          condition1: {
-            name: conditions[0] || 'All samples',
-            samples: condition1Samples,
-            stats: calculateBoxplotStats(cond1Values)
-          },
-          condition2: {
-            name: conditions[1] || '',
-            samples: condition2Samples,
-            stats: calculateBoxplotStats(cond2Values)
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Failed to fetch gene expression:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [conditions, matrixDataset.id, sampleConditionMap, sampleIds]);
-
-  // Load top DEG on mount
-  useEffect(() => {
-    if (allGenes.length > 0 && !selectedGene) {
-      const topGene = allGenes[0];
-      setSelectedGene(topGene);
-      setSearchTerm(geneNameMap?.[topGene] ?? topGene);
-      fetchGeneExpression(topGene);
-    }
-  }, [allGenes, fetchGeneExpression, geneNameMap, selectedGene]);
-
-  const handleGeneSelect = (gene: string) => {
-    setSelectedGene(gene);
-    setSearchTerm(geneNameMap?.[gene] ?? gene);
-    setShowDropdown(false);
-    fetchGeneExpression(gene);
-  };
+  const label = geneNameMap?.[gene] ?? gene;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">Gene Expression Query</h3>
-      
-      {/* Autocomplete input */}
-      <div className="relative mb-4">
+    <div className="space-y-3">
+      <div className="relative">
         <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setShowDropdown(true);
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search a gene by symbol or id"
+          aria-label="Search a gene"
+          className="w-full px-3 py-2 text-sm"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-control)',
+            color: 'var(--text-primary)',
           }}
-          onFocus={() => setShowDropdown(true)}
-          placeholder="Search for a gene (symbol or Ensembl ID, e.g. TP53, ENSG00000141510)..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary placeholder:text-gray-400"
         />
-        
-        {/* Dropdown */}
-        {showDropdown && filteredGenes.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-            {filteredGenes.map((geneId) => {
-              const symbol = geneNameMap?.[geneId];
-              return (
+        {suggestions.length > 0 && (
+          <ul
+            className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto py-1"
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-panel)',
+            }}
+          >
+            {suggestions.map((id) => (
+              <li key={id}>
                 <button
-                  key={geneId}
-                  onClick={() => handleGeneSelect(geneId)}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  type="button"
+                  onClick={() => {
+                    setGene(id);
+                    setSearch('');
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm"
+                  style={{ color: 'var(--text-primary)' }}
                 >
-                  {symbol ? (
-                    <span>
-                      <span className="font-medium">{symbol}</span>
-                      <span className="ml-2 text-xs text-gray-400">{geneId}</span>
+                  <span className="gene-symbol">{geneNameMap?.[id] ?? id}</span>
+                  {geneNameMap?.[id] ? (
+                    <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {id}
                     </span>
-                  ) : (
-                    geneId
-                  )}
+                  ) : null}
                 </button>
-              );
-            })}
-          </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
-      {/* Loading state */}
-      {loading && <div className="text-center py-4">Loading expression data...</div>}
-
-      {/* Expression data display */}
-      {!loading && expressionData && (expressionData.condition1.stats || expressionData.condition2.stats) && (
-        <div>
-          <div className="mb-6 p-4 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded-lg border border-brand-primary/20">
-            <span className="text-base font-semibold text-gray-700">Gene: </span>
-            {geneNameMap?.[expressionData.gene] ? (
-              <>
-                <span className="text-lg text-brand-primary font-mono font-bold">{geneNameMap[expressionData.gene]}</span>
-                <span className="ml-2 text-sm text-gray-400">{expressionData.gene}</span>
-              </>
-            ) : (
-              <span className="text-lg text-brand-primary font-mono font-bold">{expressionData.gene}</span>
-            )}
-          </div>
-          
-          {/* Boxplot visualization */}
-          <div className="mb-6">
-            <Plot
-              data={[
-                ...(expressionData.condition1.stats ? [{
-                  y: expressionData.condition1.stats.values,
-                  type: 'box' as const,
-                  name: expressionData.condition1.name,
-                  marker: { color: '#3b82f6' },
-                  boxmean: 'sd' as const,
-                  boxpoints: 'all' as const,
-                  jitter: 0.3,
-                  pointpos: -1.8,
-                }] : []),
-                ...(expressionData.condition2.stats ? [{
-                  y: expressionData.condition2.stats.values,
-                  type: 'box' as const,
-                  name: expressionData.condition2.name,
-                  marker: { color: '#ef4444' },
-                  boxmean: 'sd' as const,
-                  boxpoints: 'all' as const,
-                  jitter: 0.3,
-                  pointpos: -1.8,
-                }] : []),
-              ] as Partial<PlotData>[]}
-              layout={{
-                title: {
-                  text: `Expression of ${geneNameMap?.[expressionData.gene] ?? expressionData.gene}`,
-                  font: { size: 16, weight: 600 }
-                },
-                yaxis: {
-                  title: 'Expression Level',
-                  gridcolor: '#e5e7eb'
-                },
-                xaxis: {
-                  title: 'Conditions'
-                },
-                plot_bgcolor: '#f9fafb',
-                paper_bgcolor: '#ffffff',
-                showlegend: false,
-                margin: { l: 60, r: 40, t: 60, b: 60 },
-                height: 400,
-              } as Partial<Layout>}
-              config={{
-                displayModeBar: true,
-                displaylogo: false,
-                modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-                toImageButtonOptions: {
-                  format: 'png',
-                  filename: `${expressionData.gene}_expression`,
-                  height: 600,
-                  width: 800,
-                }
-              }}
-              style={{ width: '100%' }}
-              useResizeHandler={true}
-            />
-          </div>
-
-          {/* Fold change */}
-          {expressionData.condition1.stats && expressionData.condition2.stats && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-            <div className="text-base">
-              <span className="font-bold text-gray-900">Fold Change: </span>
-              <span className={`font-mono text-lg font-bold ${
-                expressionData.condition2.stats.mean > expressionData.condition1.stats.mean 
-                  ? 'text-red-600' 
-                  : 'text-blue-600'
-              }`}>
-                {(expressionData.condition2.stats.mean / (expressionData.condition1.stats.mean || 1)).toFixed(2)}x
-              </span>
-            </div>
-          </div>
-          )}
-        </div>
-      )}
-
-      {!loading && !expressionData && selectedGene && (
-        <div className="text-center py-4 text-gray-500">
-          No expression data found for {selectedGene}
-        </div>
-      )}
+      <div>
+        <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {label || 'No gene selected'}
+        </p>
+        <GeneExpressionBoxplot data={data} loading={isLoading} height={340} showModeBar />
+      </div>
     </div>
   );
 }

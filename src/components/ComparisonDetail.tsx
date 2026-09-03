@@ -679,7 +679,17 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                     <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
-                    <SelectionCard dataset={degDataset} comparisonName={actualComparisonName} />
+                    <SelectionCard
+                      dataset={degDataset}
+                      comparisonName={actualComparisonName}
+                      matrixDataset={matrixDataset}
+                      enrichmentDataset={enrichmentDataset}
+                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                      conditionBySample={
+                        Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                      }
+                      geneNameMap={geneMap.nameByGene}
+                    />
                   </div>
                 </div>
 

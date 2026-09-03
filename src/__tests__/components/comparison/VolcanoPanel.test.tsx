@@ -269,9 +269,9 @@ describe('clicking a point', () => {
     await clickPoint(2, 1);
     await clickPoint(1, 0, { shift: true });
 
-    // the shift-clicked gene takes focus, and the first one is listed as also selected
+    // the shift-clicked gene takes focus, and the first one stays reachable as a chip
     expect(await screen.findByTitle('DOWN_GENE')).toBeInTheDocument();
-    expect(screen.getByText('Also selected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Back to the 2 selected/ })).toBeInTheDocument();
     expect(screen.getByTitle('Show UP_GENE')).toBeInTheDocument();
   });
 
