@@ -1,9 +1,13 @@
 import {
+  PARAM_GENE,
   PARAM_LOGFC,
   PARAM_PADJ,
+  readFocusedGene,
   readThresholds,
   thresholdsAreImplicit,
   thresholdsMatchUrl,
+  urlMatchesState,
+  writeExplorerState,
   writeThresholds,
 } from '@/components/comparison/explorerUrl';
 import { DEFAULT_THRESHOLDS } from '@/utils/volcano';
@@ -123,5 +127,75 @@ describe('thresholdsAreImplicit', () => {
     expect(thresholdsAreImplicit(DEFAULT_THRESHOLDS)).toBe(true);
     expect(thresholdsAreImplicit({ padj: 0.9, logfc: 0 })).toBe(true);
     expect(thresholdsAreImplicit({ padj: 0.01, logfc: 0.58 })).toBe(false);
+  });
+});
+
+describe('readFocusedGene', () => {
+  it('reads a gene, keeping the spelling the link used', () => {
+    // Upper-casing here would render a mouse gene Sox9 as SOX9
+    expect(readFocusedGene(params('gene=Sox9'))).toBe('Sox9');
+    expect(readFocusedGene(params('gene=ENSG00000141510'))).toBe('ENSG00000141510');
+    expect(readFocusedGene(params('gene=HLA-DRB1'))).toBe('HLA-DRB1');
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(readFocusedGene(params('gene=%20TP53%20'))).toBe('TP53');
+  });
+
+  it('returns null when no gene is named', () => {
+    expect(readFocusedGene(params(''))).toBeNull();
+    expect(readFocusedGene(params('gene='))).toBeNull();
+    expect(readFocusedGene(params('gene=%20%20'))).toBeNull();
+    expect(readFocusedGene(null)).toBeNull();
+  });
+
+  // A bad key would otherwise travel into lookups and into the card's heading.
+  it('rejects a value that cannot be a gene key', () => {
+    expect(readFocusedGene(params('gene=' + encodeURIComponent('TP53 OR 1=1')))).toBeNull();
+    expect(readFocusedGene(params('gene=' + encodeURIComponent('<script>')))).toBeNull();
+    expect(readFocusedGene(params('gene=' + 'A'.repeat(65)))).toBeNull();
+  });
+});
+
+describe('writeExplorerState', () => {
+  it('writes the gene alongside the thresholds', () => {
+    const written = writeExplorerState(params(''), { padj: 0.01, logfc: 2 }, 'TP53');
+
+    expect(written.get(PARAM_GENE)).toBe('TP53');
+    expect(written.get(PARAM_PADJ)).toBe('0.01');
+    expect(written.get(PARAM_LOGFC)).toBe('2');
+  });
+
+  it('drops the gene when nothing is focused', () => {
+    expect(writeExplorerState(params('gene=TP53'), DEFAULT_THRESHOLDS, null).toString()).toBe('');
+    expect(
+      writeExplorerState(params('gene=TP53'), DEFAULT_THRESHOLDS, '   ').toString()
+    ).toBe('');
+  });
+
+  it('leaves unrelated parameters alone and never mutates its input', () => {
+    const original = params('tab=deg');
+    const written = writeExplorerState(original, DEFAULT_THRESHOLDS, 'TP53');
+
+    expect(written.get('tab')).toBe('deg');
+    expect(original.has(PARAM_GENE)).toBe(false);
+  });
+
+  it('round-trips through readFocusedGene', () => {
+    const written = writeExplorerState(params(''), DEFAULT_THRESHOLDS, 'Sox9');
+    expect(readFocusedGene(written)).toBe('Sox9');
+  });
+});
+
+describe('urlMatchesState', () => {
+  it('is true when a write would change nothing', () => {
+    expect(urlMatchesState(params('gene=TP53'), DEFAULT_THRESHOLDS, 'TP53')).toBe(true);
+    expect(urlMatchesState(params(''), DEFAULT_THRESHOLDS, null)).toBe(true);
+  });
+
+  it('is false when the gene or a threshold differs', () => {
+    expect(urlMatchesState(params(''), DEFAULT_THRESHOLDS, 'TP53')).toBe(false);
+    expect(urlMatchesState(params('gene=TP53'), DEFAULT_THRESHOLDS, 'SOX9')).toBe(false);
+    expect(urlMatchesState(params('gene=TP53'), { padj: 0.01, logfc: 0.58 }, 'TP53')).toBe(false);
   });
 });

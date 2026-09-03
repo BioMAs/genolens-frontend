@@ -5,15 +5,6 @@ import { DEFAULT_THRESHOLDS, type VolcanoPoint } from '@/utils/volcano';
 export type { VolcanoPoint };
 
 /**
- * Interface pour les paramètres du volcano plot
- */
-export interface VolcanoPlotParams {
-  padj_threshold?: number;
-  logfc_threshold?: number;
-  top_n?: number;
-}
-
-/**
  * Réponse réelle de `GET /datasets/{id}/volcano-plot/{comparison}`.
  *
  * L'interface précédente déclarait des tableaux parallèles (`genes`, `log2FoldChange`, `padj`,
@@ -101,47 +92,6 @@ export interface EnrichmentData {
   genes?: string[];
   category?: string;
   regulation?: string;
-}
-
-/**
- * Hook pour récupérer les données du volcano plot avec cache
- * Utilise l'endpoint optimisé du backend avec cache multi-niveaux
- * Supporte les seuils dynamiques (padj_threshold, logfc_threshold)
- */
-export function useVolcanoPlot(
-  datasetId: string,
-  comparisonName: string,
-  params: VolcanoPlotParams = {},
-  enabled: boolean = true
-) {
-  // Default thresholds
-  const padjThreshold = params.padj_threshold ?? 0.05;
-  const logfcThreshold = params.logfc_threshold ?? 0.58;
-  const maxPoints = params.top_n ?? 5000;
-
-  return useQuery({
-    queryKey: ['visualization', 'volcano', datasetId, comparisonName, padjThreshold, logfcThreshold, maxPoints],
-    queryFn: async () => {
-      // Utilise l'endpoint existant /volcano-plot/ avec thresholds dynamiques
-      const response = await api.get<VolcanoPlotData>(
-        `/datasets/${datasetId}/volcano-plot/${encodeURIComponent(comparisonName)}`,
-        {
-          params: {
-            max_points: maxPoints,
-            padj_threshold: padjThreshold,
-            logfc_threshold: logfcThreshold,
-          },
-        }
-      );
-      return response.data;
-    },
-    staleTime: 1000 * 60 * 10, // 10 minutes - les calculs sont mis en cache backend par threshold
-    gcTime: 1000 * 60 * 20, // 20 minutes
-    enabled: !!datasetId && !!comparisonName && enabled,
-    // Pas de refetch automatique car données statiques une fois calculées
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
 }
 
 /** Nombre de points demandés au serveur. Le nuage entier tient sous ce plafond. */
@@ -342,18 +292,24 @@ export function usePrefetchVisualizations() {
 
   return {
     /**
-     * Précharge volcano plot au survol d'une comparaison
+     * Précharge le nuage du volcano au survol d'une comparaison.
+     *
+     * La clé doit être **exactement** celle de `useVolcanoPoints`, sinon le survol chaufferait
+     * une entrée de cache que personne ne lit — le préchargement cesserait de servir en silence.
      */
-    prefetchVolcano: (datasetId: string, comparisonName: string, params: VolcanoPlotParams = {}) => {
-      const padjThreshold = params.padj_threshold ?? 0.05;
-      const logfcThreshold = params.logfc_threshold ?? 0.58;
-      const maxPoints = params.top_n ?? 5000;
+    prefetchVolcano: (datasetId: string, comparisonName: string) => {
       queryClient.prefetchQuery({
-        queryKey: ['visualization', 'volcano', datasetId, comparisonName, padjThreshold, logfcThreshold, maxPoints],
+        queryKey: ['visualization', 'volcano-cloud', datasetId, comparisonName, VOLCANO_MAX_POINTS],
         queryFn: async () => {
           const response = await api.get<VolcanoPlotData>(
             `/datasets/${datasetId}/volcano-plot/${encodeURIComponent(comparisonName)}`,
-            { params: { max_points: maxPoints, padj_threshold: padjThreshold, logfc_threshold: logfcThreshold } }
+            {
+              params: {
+                max_points: VOLCANO_MAX_POINTS,
+                padj_threshold: DEFAULT_THRESHOLDS.padj,
+                logfc_threshold: DEFAULT_THRESHOLDS.logfc,
+              },
+            }
           );
           return response.data;
         },

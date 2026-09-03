@@ -1,12 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Settings } from 'lucide-react';
 import BookmarkButton from './BookmarkButton';
 import ExportMenu from './ExportMenu';
 import { PValToken } from './ui/pval-token';
-import { useThresholds } from '@/contexts/ComparisonSelectionContext';
+import {
+  useComparisonActions,
+  useSelection,
+  useThresholds,
+  useViewPreferences,
+} from '@/contexts/ComparisonSelectionContext';
+import { normalizeGeneKey } from '@/utils/geneKeys';
 import {
   DEG_MAX_PAGE_SIZE,
   useDegGenes,
@@ -14,7 +20,6 @@ import {
   type DegSortField,
 } from '@/hooks/useDegGenes';
 import { getPalette } from '@/utils/chartPalettes';
-import { useViewPreferences } from '@/contexts/ComparisonSelectionContext';
 
 interface DEGTableProps {
   dataset: Dataset;
@@ -45,8 +50,17 @@ const COLUMN_LABELS = {
  */
 export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const thresholds = useThresholds();
+  const selection = useSelection();
   const { colorblind } = useViewPreferences();
+  const { selectGenes, toggleGene } = useComparisonActions();
   const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+
+  // Normalised, because the table's gene_id and the volcano's gene key need not be spelled
+  // the same way — that is exactly what geneKeys exists to reconcile.
+  const selectedKeys = useMemo(
+    () => new Set(selection.genes.map(normalizeGeneKey).filter(Boolean)),
+    [selection.genes]
+  );
 
   const [sortField, setSortField] = useState<DegSortField>('padj');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -286,10 +300,29 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             )}
             {rows.map((row) => {
               const isUp = row.regulation?.toUpperCase() === 'UP';
+              const isSelected = selectedKeys.has(normalizeGeneKey(row.gene_id));
               return (
-                <tr key={row.gene_id}>
+                <tr
+                  key={row.gene_id}
+                  onClick={(event) => {
+                    // Shift or meta adds to the selection, matching the volcano's gesture.
+                    if (event.shiftKey || event.metaKey || event.ctrlKey) {
+                      toggleGene(row.gene_id, 'table');
+                    } else {
+                      selectGenes([row.gene_id], 'table');
+                    }
+                  }}
+                  aria-selected={isSelected}
+                  className="cursor-pointer"
+                  style={
+                    isSelected
+                      ? { background: 'color-mix(in srgb, var(--sl-teal) 12%, transparent)' }
+                      : undefined
+                  }
+                >
                   {visibleColumns.bookmark && (
-                    <td className="whitespace-nowrap">
+                    // Stop the row's click: starring a gene should not also select it.
+                    <td className="whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
                       <BookmarkButton
                         projectId={dataset.project_id}
                         geneSymbol={row.gene_id}

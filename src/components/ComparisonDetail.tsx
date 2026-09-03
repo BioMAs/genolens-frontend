@@ -8,7 +8,8 @@ import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Act
 import { useChatMode } from '@/contexts/ChatModeContext';
 import DEGBarChart from './DEGBarChart';
 import Link from 'next/link';
-import VolcanoPlot from './VolcanoPlot';
+import VolcanoPanel from './comparison/explorer/VolcanoPanel';
+import SelectionCard from './comparison/explorer/SelectionCard';
 import DEGTable from './DEGTable';
 import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
@@ -27,8 +28,6 @@ import CosmeticsTab from './cosmetics/CosmeticsTab';
 import { useUserProfile } from '@/hooks/useCosmetics';
 import { formatDate } from '@/utils/formatters';
 import { StatChip } from '@/components/ui/stat-chip';
-import { Chip } from '@/components/ui/chip';
-import { Dot } from '@/components/ui/dot';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
@@ -891,19 +890,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     </Link>
                   </div>
 
-                  <VolcanoPlot dataset={degDataset} comparisonName={actualComparisonName} />
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    <span className="inline-flex items-center gap-1">
-                      <Dot variant="ready" size={7} /> Upregulated
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Dot variant="failed" size={7} /> Downregulated
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Dot variant="pending" size={7} /> Not significant
-                    </span>
-                    {stats ? <Chip>{stats.degTotal.toLocaleString('en-US')} significant genes</Chip> : null}
+                  {/* The plot takes the room; the card stays beside it and fills from
+                      whatever is selected. The legend lives in the panel itself now, so the
+                      dot row that used to duplicate it is gone. */}
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
+                    <SelectionCard dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>
 
