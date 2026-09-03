@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronRight, ChevronDown, ExternalLink, Network, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -214,6 +214,8 @@ function TreeSkeleton() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function GOTreePanel({ datasetId, comparisonName, regulation }: GOTreePanelProps) {
+  /** Observed so the ancestor traversal is only asked for once the panel is scrolled near. */
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeNs, setActiveNs] = useState<NamespaceKey>('biological_process');
   const [hierarchy, setHierarchy] = useState<GOHierarchyResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -242,9 +244,36 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
     }
   }, [datasetId, comparisonName, regulation]);
 
-  // Trigger load on mount (and when key props change)
+  /**
+   * Fetched when scrolled near, not on mount.
+   *
+   * The layout promise of the approved enrichment spec is untouched: the tree stays pinned
+   * below the sub-tabs, always visible, no click to reveal. What changes is *when* it is
+   * fetched. `go-hierarchy` is an ancestor traversal over the enriched terms, and this panel
+   * now sits roughly two thousand pixels down a merged screen — a cost the spec never had to
+   * price, because it assumed a tab of its own that only opened on demand.
+   *
+   * Reverting is one line: call `loadHierarchy()` unconditionally again.
+   */
   useEffect(() => {
-    loadHierarchy();
+    const element = containerRef.current;
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      // No observer to lean on — fetch as before rather than never showing the tree.
+      loadHierarchy();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          loadHierarchy();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [loadHierarchy]);
 
   const toggleExpand = useCallback((id: string) => {
@@ -271,7 +300,15 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
     : 0;
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+    <div
+      ref={containerRef}
+      className="overflow-hidden"
+      style={{
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-panel)',
+        background: 'var(--surface)',
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-indigo-50/50">
         <div className="flex items-center gap-3">
