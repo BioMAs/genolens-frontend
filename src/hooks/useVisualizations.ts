@@ -1,5 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
+import { DEFAULT_THRESHOLDS, type VolcanoPoint } from '@/utils/volcano';
+
+export type { VolcanoPoint };
 
 /**
  * Interface pour les paramètres du volcano plot
@@ -11,14 +14,29 @@ export interface VolcanoPlotParams {
 }
 
 /**
- * Interface pour les données du volcano plot
+ * Réponse réelle de `GET /datasets/{id}/volcano-plot/{comparison}`.
+ *
+ * L'interface précédente déclarait des tableaux parallèles (`genes`, `log2FoldChange`, `padj`,
+ * `significant`) que le backend n'a jamais renvoyés : `VolcanoPlot` lisait déjà `data.points` en
+ * contournant le type par une assertion. Corrigé ici d'après `datasets.py:2036-2050` (chemin en
+ * cache) et `:2143-2162` (chemin Parquet à froid).
+ *
+ * Attention à `total_genes` : les deux chemins serveur ne lui donnent pas le même sens —
+ * `len(points)`, donc les points renvoyés, sur le chemin en cache (`:2039`), contre
+ * `len(df_valid)`, donc les gènes réellement testés, sur le chemin à froid (`:2159`). Ne pas
+ * l'afficher comme « gènes testés » ; passer par `deriveSignificance` pour tout décompte.
  */
 export interface VolcanoPlotData {
-  genes: string[];
-  log2FoldChange: number[];
-  padj: number[];
-  significant: boolean[];
-  labels?: string[];
+  dataset_id: string;
+  comparison_name: string;
+  points: VolcanoPoint[];
+  /** Sens divergent selon le chemin serveur — voir ci-dessus. */
+  total_genes: number;
+  /** Décompte du serveur aux seuils qu'il a reçus ; recalculé côté client. */
+  significant_genes: number;
+  downsampled?: boolean;
+  cached?: boolean;
+  thresholds?: { padj: number; logfc: number };
 }
 
 /**
@@ -105,7 +123,7 @@ export function useVolcanoPlot(
     queryKey: ['visualization', 'volcano', datasetId, comparisonName, padjThreshold, logfcThreshold, maxPoints],
     queryFn: async () => {
       // Utilise l'endpoint existant /volcano-plot/ avec thresholds dynamiques
-      const response = await api.get(
+      const response = await api.get<VolcanoPlotData>(
         `/datasets/${datasetId}/volcano-plot/${encodeURIComponent(comparisonName)}`,
         {
           params: {
@@ -121,6 +139,52 @@ export function useVolcanoPlot(
     gcTime: 1000 * 60 * 20, // 20 minutes
     enabled: !!datasetId && !!comparisonName && enabled,
     // Pas de refetch automatique car données statiques une fois calculées
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+}
+
+/** Nombre de points demandés au serveur. Le nuage entier tient sous ce plafond. */
+export const VOLCANO_MAX_POINTS = 5000;
+
+/**
+ * Nuage du volcano, récupéré **une seule fois**, indépendamment des seuils.
+ *
+ * L'endpoint ne filtre pas par seuil : sur le chemin en cache il renvoie tout le nuage et ne
+ * recalcule que `is_significant` (`datasets.py:2014-2044`), et sur le chemin à froid il garde
+ * toujours tous les points significatifs (`:2124-2136`). Les seuils sont donc **absents de la clé
+ * React Query** : changer un seuil ne déclenche aucune requête, la significativité est dérivée
+ * côté client par `deriveSignificance`.
+ *
+ * Sain sur les deux chemins uniquement parce que les seuils ne peuvent que resserrer : la requête
+ * part aux seuils d'ingestion, et resserrer ne fait que réduire un ensemble déjà présent dans le
+ * nuage. Voir `src/utils/volcano.ts`.
+ *
+ * `useVolcanoPlot` reste en place pour les appelants qui laissent encore le serveur trancher.
+ */
+export function useVolcanoPoints(
+  datasetId: string,
+  comparisonName: string,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: ['visualization', 'volcano-cloud', datasetId, comparisonName, VOLCANO_MAX_POINTS],
+    queryFn: async () => {
+      const response = await api.get<VolcanoPlotData>(
+        `/datasets/${datasetId}/volcano-plot/${encodeURIComponent(comparisonName)}`,
+        {
+          params: {
+            max_points: VOLCANO_MAX_POINTS,
+            padj_threshold: DEFAULT_THRESHOLDS.padj,
+            logfc_threshold: DEFAULT_THRESHOLDS.logfc,
+          },
+        }
+      );
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 20,
+    enabled: !!datasetId && !!comparisonName && enabled,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });

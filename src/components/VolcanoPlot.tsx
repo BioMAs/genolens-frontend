@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { useVolcanoPlot } from '@/hooks/useVisualizations';
+import type { VolcanoPoint } from '@/utils/volcano';
 import { Dataset } from '@/types';
 import { getPalette } from '@/utils/chartPalettes';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
@@ -11,14 +12,6 @@ import AIChartAssistant from '@/components/AIChartAssistant';
 interface VolcanoPlotProps {
   dataset: Dataset;
   comparisonName: string;
-}
-
-interface VolcanoPoint {
-  gene: string;
-  x: number;
-  y: number;
-  padj: number;
-  is_significant: boolean;
 }
 
 export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProps) {
@@ -40,7 +33,7 @@ export default function VolcanoPlot({ dataset, comparisonName }: VolcanoPlotProp
     }
   );
 
-  const data = (volcanoData?.points || []) as VolcanoPoint[];
+  const data: VolcanoPoint[] = volcanoData?.points ?? [];
   const totalGenes = volcanoData?.total_genes || 0;
   const significantGenes = volcanoData?.significant_genes || 0;
   const isCached = volcanoData?.cached || false;
