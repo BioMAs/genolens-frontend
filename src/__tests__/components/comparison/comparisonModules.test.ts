@@ -1,9 +1,11 @@
 import {
   buildComparisonModules,
   countModuleStates,
+  groupModulesByView,
   type ComparisonModule,
   type ComparisonModulesInput,
 } from '@/components/comparison/comparisonModules';
+import { VIEW_ORDER } from '@/components/comparison/comparisonRoutes';
 
 const FULL_ACCESS: ComparisonModulesInput = {
   hasMatrix: true,
@@ -156,5 +158,126 @@ describe('countModuleStates', () => {
 
     // claim, reporting, signature, drug-discovery
     expect(countModuleStates(modules).locked).toBe(4);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Three-screen restructure
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('view assignment', () => {
+  it('places every module in one of the four views', () => {
+    for (const entry of buildComparisonModules(FULL_ACCESS)) {
+      expect(VIEW_ORDER).toContain(entry.view);
+      expect(entry.panel).toBeTruthy();
+    }
+  });
+
+  it('assigns a panel unique to each module, so no two share an anchor', () => {
+    const panels = buildComparisonModules(FULL_ACCESS).map((m) => m.panel);
+    expect(new Set(panels).size).toBe(panels.length);
+  });
+
+  it('keeps the gene-level work together in Explore', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    for (const id of ['deg', 'metrics', 'clustering']) {
+      expect(byId(modules, id).view).toBe('explorer');
+    }
+  });
+
+  it('sends interpretation to Understand and add-ons to Tools', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    expect(byId(modules, 'enrichment').view).toBe('comprendre');
+    expect(byId(modules, 'signature').view).toBe('comprendre');
+    expect(byId(modules, 'integrations').view).toBe('comprendre');
+    expect(byId(modules, 'claim').view).toBe('outils');
+    expect(byId(modules, 'drug-discovery').view).toBe('outils');
+    expect(byId(modules, 'reporting').view).toBe('partager');
+  });
+
+  it('keeps a locked add-on in its view, with its tab and add-on id intact', () => {
+    const modules = buildComparisonModules({ ...FULL_ACCESS, cosmeticsUnlocked: false });
+    const claim = byId(modules, 'claim');
+
+    expect(claim.state).toBe('locked');
+    expect(claim.view).toBe('outils');
+    expect(claim.panel).toBe('cosmetics');
+    // the tab is withheld because no pane renders it, but the add-on stays requestable
+    expect(claim.tab).toBeNull();
+    expect(claim.addOnId).toBe('claim');
+  });
+});
+
+describe('groupModulesByView', () => {
+  it('returns the four views in their fixed order, even when one is empty', () => {
+    const groups = groupModulesByView(buildComparisonModules(FULL_ACCESS));
+    expect(groups.map((g) => g.view)).toEqual([...VIEW_ORDER]);
+  });
+
+  it('loses no module and duplicates none', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    const grouped = groupModulesByView(modules).flatMap((g) => g.modules);
+
+    expect(grouped).toHaveLength(modules.length);
+    expect(new Set(grouped.map((m) => m.id)).size).toBe(modules.length);
+  });
+
+  it('labels and describes every group', () => {
+    for (const group of groupModulesByView(buildComparisonModules(FULL_ACCESS))) {
+      expect(group.label).toBeTruthy();
+      expect(group.description).toBeTruthy();
+    }
+  });
+
+  // The point of bucketing rather than re-sorting: buildComparisonModules already ordered the
+  // list ready -> needs-data -> locked, and preserving input order inherits that for free.
+  it('inherits the ready-first order inside each group, with no second sort', () => {
+    const modules = buildComparisonModules({
+      ...FULL_ACCESS,
+      hasMatrix: false,
+      cosmeticsUnlocked: false,
+      drugDiscoveryUnlocked: false,
+    });
+    const order = { ready: 0, 'needs-data': 1, locked: 2 } as const;
+
+    for (const group of groupModulesByView(modules)) {
+      const ranks = group.modules.map((m) => order[m.state]);
+      expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+    }
+  });
+
+  it('preserves the same relative order the flat list had', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    const flatIndex = new Map(modules.map((m, i) => [m.id, i]));
+
+    for (const group of groupModulesByView(modules)) {
+      const indices = group.modules.map((m) => flatIndex.get(m.id)!);
+      expect(indices).toEqual([...indices].sort((a, b) => a - b));
+    }
+  });
+
+  it('counts states per group, not across the whole catalogue', () => {
+    const modules = buildComparisonModules({
+      ...FULL_ACCESS,
+      cosmeticsUnlocked: false,
+      drugDiscoveryUnlocked: false,
+    });
+    const groups = groupModulesByView(modules);
+    const outils = groups.find((g) => g.view === 'outils')!;
+
+    // claim and drug-discovery are the only Tools modules today, and both are locked
+    expect(outils.counts.locked).toBe(2);
+    expect(outils.counts.ready).toBe(0);
+
+    for (const group of groups) {
+      const summed = group.counts.ready + group.counts['needs-data'] + group.counts.locked;
+      expect(summed).toBe(group.modules.length);
+    }
+  });
+
+  it('survives an empty catalogue', () => {
+    const groups = groupModulesByView([]);
+    expect(groups).toHaveLength(VIEW_ORDER.length);
+    expect(groups.every((g) => g.modules.length === 0)).toBe(true);
   });
 });
