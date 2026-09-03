@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Les composants React sont organisés dans `src/components/` avec une structure par domaine fonctionnel. Les composants utilisent **shadcn/ui** comme base et des bibliothèques de visualisation (Recharts, Plotly.js, D3).
+Les composants React sont organisés dans `src/components/` avec une structure par domaine fonctionnel. Les primitives de `ui/` sont **écrites à la main** dans le style shadcn, mais le projet n'utilise **ni shadcn/ui ni Radix** : pas de `components.json`, pas de `@radix-ui/*`, pas de `class-variance-authority`. Bibliothèques de visualisation : Recharts, Plotly.js, D3.
 
 ---
 
@@ -16,7 +16,7 @@ components/
 ├── heatmap/            # Visualisation heatmaps
 ├── profile/            # Composants profil/subscription
 ├── tools/              # Outils bioinformatiques
-├── ui/                 # Composants UI de base (shadcn/ui)
+├── ui/                 # Primitives UI écrites à la main (style shadcn, sans Radix)
 ├── wizard/             # Wizard d'analyse auto-service
 │   └── steps/          # Étapes du wizard
 └── [composants globaux]
@@ -26,7 +26,7 @@ components/
 
 ## Composants UI de base (`ui/`)
 
-Composants shadcn/ui réutilisables :
+Primitives réutilisables, écrites à la main (aucune dépendance Radix) :
 
 | Composant | Usage |
 |---|---|
@@ -93,26 +93,15 @@ Composants shadcn/ui réutilisables :
 | Composant | Description |
 |---|---|
 | `DEGTable` | Tableau des gènes différentiellement exprimés |
-| `DEGTableMemo` | Version memoized de DEGTable (performance) |
-| `DEGTableWithAdvancedFilters` | DEGTable avec filtres avancés |
-| `AdvancedFilterBuilder` | Builder de filtres avancés pour les tableaux |
 
 #### Visualisations scientifiques
 
 | Composant | Description | Bibliothèque |
 |---|---|---|
-| `VolcanoPlot` | Volcano plot (log2FC vs -log10(p)) | Plotly.js |
-| `VolcanoPlotMemo` | Version memoized | Plotly.js |
+| `VolcanoPlot` | Volcano plot (log2FC vs -log10(p)) | Recharts |
 | `PCAPlot` | Analyse en composantes principales | Recharts |
-| `PCAPlotMemo` | Version memoized | Recharts |
 | `UMAPPlot` | Uniform Manifold Approximation | Recharts |
-| `UMAPPlotMemo` | Version memoized | Recharts |
-| `HeatmapPlot` | Heatmap d'expression | Custom (D3) |
-| `HeatmapVisualization` | Visualiseur heatmap complet | D3 + React |
-| `HeatmapControls` | Contrôles de la heatmap | — |
-| `HeatmapModal` | Modal de détails heatmap | — |
 | `EnrichmentPlot` | Plot d'enrichissement | Recharts |
-| `EnrichmentPlotMemo` | Version memoized | Recharts |
 | `EnrichmentHistogram` | Histogramme d'enrichissement | Recharts |
 | `EnrichmentRadarPlot` | Radar chart enrichment (Up/Down) | Recharts |
 | `GOEnrichmentPlot` | Visualisation GO enrichment | — |
@@ -128,7 +117,6 @@ Composants shadcn/ui réutilisables :
 | `GSEAAnalysis` | Interface d'analyse GSEA |
 | `GSEATable` | Table des résultats GSEA |
 | `GOForceGraph` | Graph force-directed des termes GO |
-| `GOHierarchyGraph` | Visualisation hiérarchique GO |
 | `GOTreePanel` | Panneau arbre des termes GO |
 
 #### Comparaisons & Venn
@@ -137,8 +125,6 @@ Composants shadcn/ui réutilisables :
 |---|---|
 | `ComparisonDetail` | Détail d'une comparaison |
 | `MultiComparisonVenn` | Diagramme de Venn multi-comparaison |
-| `VennDiagram` | Diagramme de Venn standard |
-| `UpSetPlot` | Plot UpSet (intersection de sets) |
 
 #### Clustering & Analysis
 
@@ -146,7 +132,6 @@ Composants shadcn/ui réutilisables :
 |---|---|
 | `ClusteringAnalysis` | Interface de clustering |
 | `EnrichmentAnalysis` | Interface d'enrichissement |
-| `MultipleTestingPanel` | Panel correction tests multiples |
 
 ### IA & Chat
 
@@ -220,25 +205,24 @@ Wizard d'analyse auto-service avec étapes guidées :
 | `AnalysisResultsHub` | Hub central des résultats |
 | `AnalysisStatusCard` | Carte de statut d'une analyse |
 | `ComparisonGrid` | Grille de comparaisons DEG |
-| `PCAResults` | Résultats PCA |
 | `PreprocessingResults` | Résultats du preprocessing |
 
 ---
 
 ## Composants Heatmap (`heatmap/`)
 
-Module dédié à la visualisation heatmap :
+Logique partagée uniquement — **plus aucun composant de rendu**. Les composants et le baril
+`index.ts` ont été supprimés : ils n'étaient atteignables que l'un par l'autre. Voir
+`src/components/heatmap/README.md`.
 
 | Fichier | Description |
 |---|---|
-| `HeatmapPlot.tsx` | Composant heatmap principal |
-| `HeatmapVisualization.tsx` | Visualiseur complet avec contrôles |
-| `HeatmapControls.tsx` | Contrôles (couleur, clustering...) |
-| `HeatmapModal.tsx` | Modal de détails |
-| `heatmapConfig.ts` | Configuration des couleurs et options |
-| `types.ts` | Types TypeScript du module |
-| `useHeatmapData.ts` | Hook de données heatmap |
-| `index.ts` | Export barrel |
+| `useHeatmapData.ts` | Récupération + clustering serveur (`POST /cluster-heatmap`) |
+| `heatmapConfig.ts` | Échelles de couleur, hauteurs par point de rupture, options Top N |
+| `types.ts` | `ClusteringParams`, `HeatmapData`, `HeatmapConfig`, `TopNOption` |
+
+Le rendu Plotly vit chez les consommateurs, qui importent **par chemin direct** :
+`analysis/DEGClusteringView.tsx` et `analysis/ClusteringAnalysis.tsx`.
 
 ---
 
@@ -261,24 +245,22 @@ Module dédié à la visualisation heatmap :
 
 ## Patterns de composants
 
-### 1. Memoization pour les plots lourds
+### 1. Chargement des plots lourds
 
-Les composants de visualisation sont memoized pour éviter les re-renders inutiles :
+Les enrobages `*Memo` documentés ici auparavant n'ont jamais été importés et ont été supprimés.
+Les deux patterns réellement en vigueur :
+
+**Plotly — toujours en import dynamique**, sinon le rendu serveur casse (`window` au montage) :
 
 ```tsx
-// VolcanoPlotMemo.tsx
-import { memo } from 'react';
-import VolcanoPlot from './VolcanoPlot';
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+```
 
-const VolcanoPlotMemo = memo(({ data, options }) => {
-  return <VolcanoPlot data={data} options={options} />;
-}, (prev, next) => {
-  // Custom comparison pour éviter les re-renders
-  return prev.data === next.data && 
-         JSON.stringify(prev.options) === JSON.stringify(next.options);
-});
+**Recharts — `isAnimationActive={false}` obligatoire.** recharts 3.6 + React 19 bloque l'animation
+et laisse des échardes de 1 px :
 
-export default VolcanoPlotMemo;
+```tsx
+<Bar dataKey="value" isAnimationActive={false} />
 ```
 
 ### 2. Props pattern pour les visualisations
@@ -352,14 +334,14 @@ AppShell
     │   │   └── UploadButton
     │   ├── AnalysisResultsHub
     │   │   ├── DEGTable / DEGTableMemo
-    │   │   ├── EnrichmentPlot / EnrichmentPlotMemo
+    │   │   ├── EnrichmentPlot
     │   │   ├── GSEATable
     │   │   └── GOEnrichmentTable
     │   ├── VisualizationPanel
-    │   │   ├── PCAPlot / PCAPlotMemo
-    │   │   ├── UMAPPlot / UMAPPlotMemo
-    │   │   ├── VolcanoPlot / VolcanoPlotMemo
-    │   │   └── HeatmapVisualization
+    │   │   ├── PCAPlot
+    │   │   ├── UMAPPlot
+    │   │   ├── VolcanoPlot
+    │   │   └── DEGClusteringView
     │   ├── AIChartAssistant
     │   └── CommentsSection
     │       └── CommentThread
