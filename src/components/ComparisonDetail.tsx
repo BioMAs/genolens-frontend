@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
-import { Project, Dataset, DatasetType, DatasetStatus } from '@/types';
-import { ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Database, Calendar, Activity, Download, Sparkles, Lock } from 'lucide-react';
+import { DatasetStatus } from '@/types';
+import { ArrowLeft, Database, Download, Lock } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
+import { useQueryClient } from '@tanstack/react-query';
 import DEGBarChart from './DEGBarChart';
 import Link from 'next/link';
 import VolcanoPanel from './comparison/explorer/VolcanoPanel';
@@ -18,7 +19,6 @@ import CustomVisualizationPanel from './CustomVisualizationPanel';
 import SignatureScorePanel from './SignatureScorePanel';
 import DrugDiscoveryComparisonPanel from './tools/dd/DrugDiscoveryComparisonPanel';
 import ExportMenu from './ExportMenu';
-import ComparisonReportButton from './ComparisonReportButton';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
 import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
@@ -27,12 +27,12 @@ import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
 import { useUserProfile } from '@/hooks/useCosmetics';
-import { formatDate } from '@/utils/formatters';
-import { StatChip } from '@/components/ui/stat-chip';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules } from './comparison/comparisonModules';
+import { useComparisonContext } from './comparison/useComparisonContext';
+import ComparisonHeader from './comparison/ComparisonHeader';
 import {
   resolveView,
   upgradeLegacyQuery,
@@ -52,18 +52,6 @@ interface ComparisonDetailProps {
 
 type GenericRow = Record<string, unknown>;
 
-type EnrichmentRow = {
-  pathway_id?: string;
-  term?: string;
-  description?: string;
-  pvalue?: number;
-  padj?: number;
-  geneRatio?: string;
-  count?: number | string;
-  genes?: string[];
-  category?: string;
-  regulation?: 'ALL' | 'UP' | 'DOWN' | string;
-};
 
 /**
  * Thresholds and, later, the gene selection are shared by every pane of this screen, so the
@@ -82,6 +70,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
   const { openChatWith } = useChatMode();
+  const queryClient = useQueryClient();
 
   // The open screen IS the URL — no local copy to keep in sync. Derived during render, not
   // redirected in an effect: a cold `?tab=enrichment` link must paint Understand on the first
@@ -144,23 +133,36 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     }
   }, [moduleProfile, scientificUnlocked, enrichmentMode]);
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * All the comparison's data, resolved once. The resolution chain moved out verbatim: the
+   * scoping to `analysisId` records a real bug fix, and every lookup prefers a READY dataset.
+   */
+  const {
+    project,
+    decodedName,
+    actualComparisonName,
+    degDataset,
+    enrichmentDataset,
+    matrixDataset,
+    samples,
+    geneMap,
+    isLoading: loading,
+    isError,
+  } = useComparisonContext({ projectId, comparisonName, analysisId, globalDatasetId });
 
-  const [relevantSamples, setRelevantSamples] = useState<string[]>([]);
-  const [sampleConditionMap, setSampleConditionMap] = useState<Record<string, string>>({});
+  // Kept under their previous names so the panels below are untouched by this extraction.
+  const relevantSamples = samples.sampleIds;
+  const sampleConditionMap = samples.conditionMap;
+  const allMatrixGenes = geneMap.genes;
+
   const [reprocessing, setReprocessing] = useState(false);
+  const [reprocessError, setReprocessError] = useState<string | null>(null);
 
-  // State for statistics - must be declared before any conditional returns
+  // Still here on purpose: this effect does not only read, it `api.patch`es the computed
+  // statistics back onto the dataset. That write-on-read has to become an explicit mutation
+  // before it can move into a hook, which is a ticket of its own.
   const [stats, setStats] = useState<{degUp: number, degDown: number, degTotal: number, genesTested?: number} | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  
-  // State for all genes from matrix dataset (for gene expression query)
-  const [allMatrixGenes, setAllMatrixGenes] = useState<string[]>([]);
-  // Map ensemblId -> gene symbol (populated when matrix has a gene_name column)
-  const [geneNameMap, setGeneNameMap] = useState<Record<string, string>>({});
 
   const handleReprocessDEG = async () => {
     if (!degDataset) return;
@@ -180,18 +182,18 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
           if (resp.data.status === DatasetStatus.READY) {
             clearInterval(pollInterval);
-            // Refresh datasets
-            const dsResp = await api.get(`/datasets/project/${projectId}`);
-            setDatasets(dsResp.data);
+            // Invalidate rather than re-fetch by hand: the datasets query is shared with the
+            // sidebar, so one invalidation refreshes both.
+            queryClient.invalidateQueries({ queryKey: ['datasets', 'project', projectId] });
             setReprocessing(false);
           } else if (resp.data.status === DatasetStatus.FAILED) {
             clearInterval(pollInterval);
             setReprocessing(false);
-            setError('Heatmap regeneration failed');
+            setReprocessError('Heatmap regeneration failed');
           } else if (pollCount >= maxPolls) {
             clearInterval(pollInterval);
             setReprocessing(false);
-            setError('Heatmap regeneration timed out after 10 minutes');
+            setReprocessError('Heatmap regeneration timed out after 10 minutes');
           }
         } catch (err: unknown) {
           // Ignore ECONNABORTED errors during polling
@@ -205,241 +207,11 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     } catch (err) {
       console.error('Failed to reprocess dataset:', err);
       setReprocessing(false);
-      setError('Failed to start heatmap regeneration');
+      setReprocessError('Failed to start heatmap regeneration');
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
 
-        // Parallel fetch: project and datasets
-        const [projResp, dsResp] = await Promise.all([
-          api.get(`/projects/${projectId}`),
-          api.get(`/datasets/project/${projectId}`)
-        ]);
-        setProject(projResp.data);
-        const allDatasets = dsResp.data;
-        setDatasets(allDatasets);
-        setLoading(false);
-
-        // Fetch Sample Metadata in parallel (don't block main loading)
-        const metadataDataset = allDatasets.find((d: Dataset) => d.type === DatasetType.METADATA_SAMPLE && d.status === DatasetStatus.READY);
-        if (metadataDataset) {
-            try {
-                // Reduced from 10,000 to 500 for performance - only need samples for this comparison
-                const metaResp = await api.post(`/datasets/${metadataDataset.id}/query`, { limit: 500 });
-                const metaData: GenericRow[] = Array.isArray(metaResp.data.data) ? metaResp.data.data : [];
-
-                // Resolve actual column names from column_mapping (fallback to common alternatives)
-                const cm = metadataDataset.column_mapping ?? {};
-                const sampleCol: string = cm.sample_id || cm.sample || 'sample_id';
-                const conditionCol: string = cm.condition || 'condition';
-
-                const getSample = (row: GenericRow): string | undefined => {
-                  const value = row[sampleCol] ?? row.sample ?? row['ini.sample.name'];
-                  return value == null ? undefined : String(value);
-                };
-                const getCondition = (row: GenericRow): string | undefined => {
-                  const value = row[conditionCol] ?? row.condition;
-                  return value == null ? undefined : String(value);
-                };
-
-                // Parse comparison name to find relevant samples
-                // Expected format: ConditionA_vs_ConditionB
-                const decodedName = decodeURIComponent(comparisonName);
-                const parts = decodedName.split('_vs_');
-
-                if (parts.length === 2) {
-                    const [cond1, cond2] = parts;
-                    const filteredMeta = metaData.filter((row: GenericRow) => {
-                        const cond = getCondition(row);
-                        return cond === cond1 || cond === cond2;
-                    });
-                    const relevant = filteredMeta.map(getSample).filter(Boolean) as string[];
-                    setRelevantSamples(relevant);
-
-                    // Build sample→condition map for GeneExpressionViewer
-                    const condMap: Record<string, string> = {};
-                    filteredMeta.forEach((row: GenericRow) => {
-                        const sampleName = getSample(row);
-                        const cond = getCondition(row);
-                        if (sampleName && cond) condMap[sampleName] = cond;
-                    });
-                    setSampleConditionMap(condMap);
-                } else {
-                    const filteredMeta = metaData.filter((row: GenericRow) => {
-                        const cond = getCondition(row);
-                        return cond && decodedName.includes(cond);
-                    });
-                    const relevant = filteredMeta.map(getSample).filter(Boolean) as string[];
-                    setRelevantSamples(relevant);
-
-                    const condMap: Record<string, string> = {};
-                    filteredMeta.forEach((row: GenericRow) => {
-                        const sampleName = getSample(row);
-                        const cond = getCondition(row);
-                        if (sampleName && cond) condMap[sampleName] = cond;
-                    });
-                    setSampleConditionMap(condMap);
-                }
-
-            } catch (err) {
-                console.error('Failed to fetch sample metadata:', err);
-            }
-        }
-
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-        setError('Failed to load comparison details.');
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [projectId, comparisonName]);
-
-  // Compute derived values using useMemo to ensure they're available before early returns
-  const decodedName = useMemo(() => decodeURIComponent(comparisonName), [comparisonName]);
-
-  // Scope candidate datasets to the current analysis (when known) so comparisons
-  // from OTHER analyses sharing the same name don't bleed in ("mélange entre
-  // analyses"). Falls back to the full project list if the analysis has none.
-  const scopedDatasets = useMemo(() => {
-    if (!datasets || datasets.length === 0) return [];
-    if (analysisId) {
-      const inAnalysis = datasets.filter(d => d.dataset_metadata?.analysis_id === analysisId);
-      if (inAnalysis.length > 0) return inAnalysis;
-    }
-    return datasets;
-  }, [datasets, analysisId]);
-
-  const degDataset = useMemo(() => {
-    if (globalDatasetId) {
-      return datasets.find(d => d.id === globalDatasetId);
-    }
-    if (scopedDatasets.length === 0) return undefined;
-    const matches = scopedDatasets.filter(d =>
-      d.type === DatasetType.DEG && (
-        d.dataset_metadata?.comparison_name === decodedName ||
-        d.name === decodedName ||
-        (Array.isArray(d.dataset_metadata?.comparisons) && (d.dataset_metadata.comparisons as unknown[]).includes(decodedName)) ||
-        (d.dataset_metadata?.comparisons && typeof d.dataset_metadata.comparisons === 'object' && !Array.isArray(d.dataset_metadata.comparisons) && decodedName in (d.dataset_metadata.comparisons as object))
-      )
-    );
-    // Prefer a READY dataset so failed/old duplicates are never picked.
-    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
-  }, [scopedDatasets, datasets, globalDatasetId, decodedName]);
-
-  // Derive the actual comparison name from dataset metadata.
-  // When the URL contains the dataset display name (e.g. "DEG Analysis — KO vs WT")
-  // instead of the stored comparison key (e.g. "KO_vs_WT"), extract the correct key.
-  const actualComparisonName = useMemo(() => {
-    if (!degDataset) return decodedName;
-    const meta = degDataset.dataset_metadata;
-    if (meta?.comparison_name) return meta.comparison_name;
-    if (Array.isArray(meta?.comparisons) && meta.comparisons.length > 0) return meta.comparisons[0];
-    return decodedName;
-  }, [degDataset, decodedName]);
-
-  const enrichmentDataset = useMemo(() => {
-    if (scopedDatasets.length === 0) return undefined;
-
-    const byName = scopedDatasets.filter(d => d.type === DatasetType.ENRICHMENT && (
-      d.dataset_metadata?.comparison_name === actualComparisonName ||
-      d.dataset_metadata?.comparison_name === decodedName ||
-      d.name === decodedName
-    ));
-
-    // Also match enrichment files via enrichment_comparisons metadata
-    const byComparisons = scopedDatasets.filter(d =>
-      d.type === DatasetType.ENRICHMENT &&
-      Array.isArray(d.dataset_metadata?.enrichment_comparisons) &&
-      ((d.dataset_metadata.enrichment_comparisons as unknown[]).includes(actualComparisonName) ||
-       (d.dataset_metadata.enrichment_comparisons as unknown[]).includes(decodedName))
-    );
-
-    const matches = byName.length > 0 ? byName : byComparisons;
-    // Prefer a READY dataset so failed/old duplicates are never picked.
-    return matches.find(d => d.status === DatasetStatus.READY) ?? matches[0];
-  }, [scopedDatasets, decodedName, actualComparisonName]);
-
-  const matrixDataset = useMemo(() => {
-    if (!datasets || datasets.length === 0) return undefined;
-    return datasets.find(d => d.type === DatasetType.MATRIX && d.status === DatasetStatus.READY);
-  }, [datasets]);
-
-  // Fetch all genes from matrix dataset for gene expression query
-  useEffect(() => {
-    if (!matrixDataset) return;
-
-    const fetchAllGenes = async () => {
-      // Strategy 1: use /genes/map endpoint (new backend) — fast, alignment-safe
-      try {
-        const mapResp = await api.get(`/datasets/${matrixDataset.id}/genes/map`, {
-          params: { primary_column: 'gene_id', secondary_column: 'gene_name' }
-        });
-        const geneMap: Record<string, string> = mapResp.data.gene_map || {};
-        if (Object.keys(geneMap).length > 0) {
-          setAllMatrixGenes(Object.keys(geneMap));
-          setGeneNameMap(geneMap);
-          return;
-        }
-      } catch {
-        // endpoint absent or columns missing — fall through
-      }
-
-      // Strategy 2: query endpoint with gene_id + gene_name columns — works with any
-      // backend version; builds the map row-by-row to avoid alignment issues.
-      try {
-        const queryResp = await api.post(`/datasets/${matrixDataset.id}/query`, {
-          limit: 100000,
-          columns: ['gene_id', 'gene_name'],
-        });
-          const rows: GenericRow[] = Array.isArray(queryResp.data.data) ? queryResp.data.data : [];
-        const availableCols: string[] = queryResp.data.columns || [];
-
-        const hasGeneId = availableCols.includes('gene_id');
-        const hasGeneName = availableCols.includes('gene_name');
-
-        if (hasGeneId) {
-          const geneIds: string[] = [];
-          const map: Record<string, string> = {};
-            rows.forEach((row: GenericRow) => {
-            const id = row['gene_id'];
-            if (!id) return;
-            geneIds.push(String(id));
-            const name = row['gene_name'];
-            if (name) map[String(id)] = String(name);
-          });
-          setAllMatrixGenes(geneIds);
-          if (Object.keys(map).length > 0) setGeneNameMap(map);
-          return;
-        }
-
-        // No gene_id column — matrix uses gene_name as primary key
-        if (hasGeneName) {
-            const geneNames = rows.map((r: GenericRow) => r['gene_name']).filter(Boolean).map(String);
-          setAllMatrixGenes(geneNames);
-          return;
-        }
-      } catch {
-        // query endpoint failed — fall through to /genes/list
-      }
-
-      // Strategy 3: last resort — gene_id list only (no symbol search)
-      try {
-        const listResp = await api.get(`/datasets/${matrixDataset.id}/genes/list`, {
-          params: { gene_column: 'gene_id' }
-        });
-        setAllMatrixGenes(listResp.data.genes || []);
-      } catch (err) {
-        console.error('Failed to fetch matrix genes:', err);
-      }
-    };
-
-    fetchAllGenes();
-  }, [matrixDataset]);
 
   // Calculate or fetch statistics from DEG dataset
   useEffect(() => {
@@ -713,9 +485,27 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     ]
   );
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
-  if (!project) return <div className="p-8 text-center">Project not found</div>;
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        Loading…
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        Failed to load comparison details.
+      </div>
+    );
+  }
+  if (!project) {
+    return (
+      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        Project not found
+      </div>
+    );
+  }
 
   if (!degDataset) {
     return (
@@ -734,94 +524,32 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   return (
     <div className="page-container">
-      <Link
-        href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        <ArrowLeft className="h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
-      </Link>
+      <ComparisonHeader
+        projectId={projectId}
+        analysisId={analysisId}
+        project={project}
+        degDataset={degDataset}
+        decodedName={decodedName}
+        actualComparisonName={actualComparisonName}
+        stats={stats}
+        statsLoading={statsLoading}
+        reportUnlocked={reportCustomizationUnlocked}
+        reprocessing={reprocessing}
+        onReprocess={handleReprocessDEG}
+        onOpenChat={() =>
+          openChatWith({
+            projectId,
+            datasetId: degDataset.id,
+            comparisonName: actualComparisonName,
+          })
+        }
+      />
 
-      <div className="gl-card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="page-title">{decodedName}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              <span className="inline-flex items-center gap-1.5">
-                <Database className="h-4 w-4" /> Project: {project.name}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" /> Created {formatDate(degDataset.created_at)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                openChatWith({
-                  projectId,
-                  datasetId: degDataset.id,
-                  comparisonName: actualComparisonName,
-                })
-              }
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-              style={{ background: 'var(--sl-purple)' }}
-              title="Open the AI Assistant for this comparison"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              AI Assistant
-            </button>
-            {reportCustomizationUnlocked && (
-              <ComparisonReportButton datasetId={degDataset.id} comparisonName={actualComparisonName} />
-            )}
-            <button
-              onClick={handleReprocessDEG}
-              disabled={reprocessing}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
-              {reprocessing ? 'Reprocessing…' : 'Reprocess'}
-            </button>
-          </div>
-        </div>
-
-        {statsLoading ? (
-          <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-            <RefreshCw className="h-4 w-4 animate-spin" /> Calculating DEG statistics...
-          </div>
-        ) : stats ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <StatChip
-              icon={<TrendingUp className="h-4 w-4" />}
-              value={stats.degUp}
-              label="Upregulated"
-              tone="teal"
-            />
-            <StatChip
-              icon={<TrendingDown className="h-4 w-4" />}
-              value={stats.degDown}
-              label="Downregulated"
-              tone="purple"
-            />
-            <StatChip
-              icon={<Activity className="h-4 w-4" />}
-              value={stats.degTotal}
-              label="Total DEGs"
-              tone="neutral"
-            />
-            {stats.genesTested ? (
-              <StatChip
-                icon={<Database className="h-4 w-4" />}
-                value={stats.genesTested}
-                label="Genes tested"
-                tone="neutral"
-              />
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      {reprocessError ? (
+        <p className="mt-2 text-sm" style={{ color: 'var(--sl-red)' }}>
+          {reprocessError}
+        </p>
+      ) : null}
 
       {/* The synthesis is true of every screen, so it sits above them rather than inside one —
           which is also what dissolves the old overview view. */}
@@ -1198,397 +926,3 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     );
     }
 
-// Component for enrichment table
-function EnrichmentTable({ dataset, comparisonName }: { dataset: Dataset, comparisonName: string }) {
-  const [data, setData] = useState<EnrichmentRow[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filterText, setFilterText] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
-    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-    const [padjThreshold, setPadjThreshold] = useState(0.05);
-    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    const [itemsPerPage, setItemsPerPage] = useState(25);
-    const [regulationFilter, setRegulationFilter] = useState<'ALL' | 'UP' | 'DOWN'>('ALL');
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                console.log('[EnrichmentTable] Fetching enrichment for comparison:', comparisonName);
-                console.log('[EnrichmentTable] Dataset ID:', dataset.id);
-
-                // NEW: Use database API for much faster loading (<100ms vs 2-5s)
-                const response = await api.get(
-                    `/datasets/${dataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
-                    {
-                        params: {
-                            regulation: regulationFilter,
-                            page: 1,
-                            page_size: 1000, // Max allowed by backend
-                            padj_max: 1.0, // Load all, filter client-side
-                            sort_by: 'padj',
-                            sort_order: 'asc'
-                        }
-                    }
-                );
-
-                console.log('[EnrichmentTable] API Response:', response.data);
-                const pathways = response.data.pathways || [];
-                console.log('[EnrichmentTable] Pathways count:', pathways.length);
-
-                // If no data from database, throw error to trigger Parquet fallback
-                if (pathways.length === 0) {
-                    console.warn('[EnrichmentTable] ⚠️ No pathways from database - triggering Parquet fallback');
-                    throw new Error('No pathways in database, using Parquet fallback');
-                }
-
-                // Extract unique categories
-                const categories = [...new Set(pathways.map((p: GenericRow) => p.category).filter(Boolean).map(String))];
-                setAvailableCategories(categories as string[]);
-
-                // Transform database format to component format
-                const processedData: EnrichmentRow[] = pathways.map((pathway: GenericRow) => {
-                  const geneRatioValue = Number(pathway.gene_ratio);
-                  const geneCountValue = Number(pathway.gene_count);
-                  const bgRatioValue = Number(pathway.bg_ratio);
-
-                  const row: EnrichmentRow = {
-                    pathway_id: pathway.pathway_id ? String(pathway.pathway_id) : undefined,
-                    term: pathway.pathway_name ? String(pathway.pathway_name) : undefined,
-                    description: pathway.description ? String(pathway.description) : undefined,
-                    pvalue: Number(pathway.pvalue ?? pathway.padj),
-                    padj: Number(pathway.padj),
-                    geneRatio: Number.isFinite(geneRatioValue)
-                      ? geneRatioValue.toFixed(3)
-                      : (Number.isFinite(geneCountValue) && Number.isFinite(bgRatioValue)
-                        ? (geneCountValue * bgRatioValue).toFixed(3)
-                        : 'N/A'),
-                    count: Number.isFinite(geneCountValue) ? geneCountValue : 'N/A',
-                    genes: Array.isArray(pathway.genes) ? pathway.genes.map(String) : [],
-                    category: pathway.category ? String(pathway.category) : undefined,
-                    regulation: pathway.regulation ? String(pathway.regulation) : 'ALL',
-                  };
-
-                  return row;
-                });
-
-                console.log(`[EnrichmentTable] Processed ${processedData.length} pathways from database`);
-                console.log('[EnrichmentTable] First pathway sample:', processedData[0]);
-                
-                setData(processedData);
-                console.log('[EnrichmentTable] ✅ setData called with', processedData.length, 'pathways');
-                
-                if (processedData.length === 0) {
-                    console.warn('[EnrichmentTable] ⚠️ No enrichment data found for this comparison');
-                }
-            } catch (err) {
-                console.error('Failed to fetch enrichment table from database:', err);
-                // Fallback to old method if database API fails
-                console.warn('[EnrichmentTable] Falling back to Parquet loading');
-                try {
-                    const response = await api.post(`/datasets/${dataset.id}/query`, {
-                        limit: 50000 // Increased to load all pathways
-                    });
-
-                    let rawData = response.data.data;
-                    const cols = response.data.columns;
-                    
-                    console.log('[EnrichmentTable] 📦 Parquet fallback - Raw data count:', rawData.length);
-                    console.log('[EnrichmentTable] 📦 Columns:', cols);
-
-                    // Filter by comparison
-                    const clusterCol = cols.find((c: string) =>
-                        c.toLowerCase() === 'gene_cluster' ||
-                        c.toLowerCase() === 'genecluster' ||
-                        c.toLowerCase() === 'gene.cluster' ||
-                        c.toLowerCase() === 'cluster'
-                    );
-
-                    if (clusterCol) {
-                        rawData = rawData.filter((row: GenericRow) => {
-                            const clusterValue = String(row[clusterCol] || '');
-                            const cleanCluster = clusterValue.includes(':') ? clusterValue.split(':').pop() : clusterValue;
-                            return cleanCluster?.includes(comparisonName) ||
-                                   cleanCluster?.replace(/_up|_down|_upregulated|_downregulated/gi, '') === comparisonName;
-                        });
-                    }
-
-                    // Find columns
-                    const termCol = cols.find((c: string) => c.toLowerCase() === 'term' || c.toLowerCase().includes('description'));
-                    const pvalCol = cols.find((c: string) => c === 'adj.p.hyper.enri' || c.toLowerCase().includes('adj.p'));
-                    const rCol = cols.find((c: string) => c === 'r');
-                    const rExpectedCol = cols.find((c: string) => c === 'rExpected');
-                    const categoryCol = cols.find((c: string) => c.toLowerCase() === 'category');
-                    const genesCol = cols.find((c: string) => c.toLowerCase() === 'genes');
-                    
-                    console.log('[EnrichmentTable] 🔍 Column mapping:', { termCol, pvalCol, rCol, rExpectedCol, categoryCol, genesCol });
-
-                    // Sort by p-value and process all
-                      const processedData: EnrichmentRow[] = rawData
-                        .filter((row: GenericRow) => pvalCol ? Number(row[pvalCol]) > 0 : false)
-                        .sort((a: GenericRow, b: GenericRow) => {
-                            if (!pvalCol) return 0;
-                            return Number(a[pvalCol]) - Number(b[pvalCol]);
-                        })
-                        .map((row: GenericRow) => ({
-                            term: termCol ? String(row[termCol] ?? '') : undefined,
-                            pvalue: pvalCol ? Number(row[pvalCol]) : undefined,
-                            padj: pvalCol ? Number(row[pvalCol]) : undefined,
-                            geneRatio: rCol && rExpectedCol ? (Number(row[rCol]) / Number(row[rExpectedCol])).toFixed(3) : 'N/A',
-                            count: rCol ? Number(row[rCol]) : 'N/A',
-                            category: categoryCol && row[categoryCol] ? String(row[categoryCol]) : undefined,
-                            genes: genesCol ? (row[genesCol] ? String(row[genesCol]).split('|') : []) : []
-                        }));
-
-                    console.log(`[EnrichmentTable] 📦 Loaded ${processedData.length} pathways from Parquet fallback`);
-                    console.log('[EnrichmentTable] 📦 First fallback pathway:', processedData[0]);
-
-                    // Extract unique categories for fallback data
-                      const categories = [...new Set(processedData.map((p) => p.category).filter(Boolean).map(String))];
-                    setAvailableCategories(categories as string[]);
-
-                    setData(processedData);
-                    console.log('[EnrichmentTable] ✅ Fallback setData called with', processedData.length, 'pathways');
-                } catch (fallbackErr) {
-                    console.error('Fallback also failed:', fallbackErr);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [dataset, comparisonName, regulationFilter]);
-
-    console.log('[EnrichmentTable] 🎨 Render - loading:', loading, 'data.length:', data.length);
-    
-    if (loading) return <div className="text-sm text-gray-500">Loading enrichment data...</div>;
-    if (data.length === 0) {
-        console.error('[EnrichmentTable] ❌ Rendering empty state - data.length is 0');
-        return <div className="text-sm text-gray-500">No enrichment data available for this comparison.</div>;
-    }
-
-    // Filter data based on search, categories, and padj threshold
-    const filteredData = data.filter(row => {
-        const matchesText = !filterText || row.term?.toLowerCase().includes(filterText.toLowerCase());
-        const matchesCategory = categoryFilter.length === 0 || categoryFilter.includes(row.category || '');
-        const matchesPadj = !row.padj || row.padj <= padjThreshold;
-        return matchesText && matchesCategory && matchesPadj;
-    });
-
-    return (
-        <div className="space-y-4">
-          {/* Filters - Compact Bar */}
-          <div className="flex gap-4 items-center flex-wrap bg-gray-50 px-4 py-3 rounded-md border border-gray-200">
-            {/* Search Input */}
-            <div className="flex-1 min-w-50">
-              <input
-                type="text"
-                placeholder="Search pathways..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm px-3 py-1.5 border"
-              />
-            </div>
-            
-            {/* Category Multi-Select */}
-            {availableCategories.length > 0 && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-sm"
-                >
-                  <span className="text-gray-700">
-                    {categoryFilter.length === 0 
-                      ? 'All Categories' 
-                      : `${categoryFilter.length} selected`}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {showCategoryDropdown && (
-                  <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg">
-                    <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-                      <label className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={categoryFilter.length === 0}
-                          onChange={() => setCategoryFilter([])}
-                          className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                        />
-                        <span className="text-sm text-gray-700">All Categories</span>
-                      </label>
-                      {availableCategories.map((cat) => (
-                        <label key={cat} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={categoryFilter.includes(cat)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setCategoryFilter([...categoryFilter, cat]);
-                              } else {
-                                setCategoryFilter(categoryFilter.filter(c => c !== cat));
-                              }
-                            }}
-                            className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                          />
-                          <span className="text-sm text-gray-700">{cat}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Regulation Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Regulation:</label>
-              <select
-                value={regulationFilter}
-                onChange={(e) => setRegulationFilter(e.target.value as 'ALL' | 'UP' | 'DOWN')}
-                className="px-3 py-1.5 border border-gray-300 rounded-md bg-white text-sm"
-              >
-                <option value="ALL">All genes</option>
-                <option value="UP">↑ Upregulated</option>
-                <option value="DOWN">↓ Downregulated</option>
-              </select>
-            </div>
-            
-            {/* Padj Threshold Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">adj. p ≤</label>
-              <input
-                type="number"
-                min="0"
-                max="1"
-                step="0.001"
-                value={padjThreshold}
-                onChange={(e) => setPadjThreshold(parseFloat(e.target.value))}
-                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
-              />
-            </div>
-            
-            {/* Items per page */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Show</label>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                className="px-2 py-1 border border-gray-300 rounded text-sm"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={500}>500</option>
-                <option value={filteredData.length}>All</option>
-              </select>
-            </div>
-            
-            {/* Export Menu */}
-            {filteredData.length > 0 && (
-              <ExportMenu
-                data={filteredData.map(row => ({
-                  pathway_id: row.pathway_id || '',
-                  pathway: row.term || '',
-                  category: row.category || '',
-                  gene_ratio: row.geneRatio || '',
-                  count: row.count || '',
-                  pvalue: row.pvalue ? row.pvalue.toExponential(3) : '',
-                  padj: row.padj ? row.padj.toExponential(3) : '',
-                  genes: Array.isArray(row.genes) ? row.genes.join('; ') : ''
-                }))}
-                filename={`enrichment_${comparisonName}_${new Date().toISOString().split('T')[0]}`}
-                formats={['csv', 'json', 'html']}
-                csvColumns={[
-                  { key: 'pathway_id', label: 'Pathway ID' },
-                  { key: 'pathway', label: 'Pathway' },
-                  { key: 'category', label: 'Category' },
-                  { key: 'gene_ratio', label: 'Gene Ratio' },
-                  { key: 'count', label: 'Count' },
-                  { key: 'pvalue', label: 'P-value' },
-                  { key: 'padj', label: 'adj. P-value' },
-                  { key: 'genes', label: 'Genes' }
-                ]}
-                htmlConfig={{
-                  title: `Enrichment Results - ${comparisonName}`,
-                  metadata: {
-                    'Comparison': comparisonName,
-                    'Total Pathways': data.length,
-                    'Filtered Pathways': filteredData.length,
-                    'Regulation': regulationFilter,
-                    'adj. p-value threshold': `≤ ${padjThreshold}`,
-                    'Generated': new Date().toLocaleString()
-                  }
-                }}
-                variant="outline"
-                size="sm"
-              />
-            )}
-            
-            {/* Results Count */}
-            <div className="text-xs text-gray-500 whitespace-nowrap">
-              {filteredData.length} / {data.length} pathways
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto border border-gray-200 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pathway</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regulation</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gene Ratio</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">adj.p-value</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredData.slice(0, itemsPerPage).map((row, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 text-sm text-gray-900">
-                              <div className="font-medium">{row.term}</div>
-                              {row.pathway_id && (
-                                <div className="text-xs text-gray-500 mt-1">{row.pathway_id}</div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {row.category ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                  {row.category}
-                                </span>
-                              ) : '-'}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {row.regulation === 'UP' ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                  ↑ UP
-                                </span>
-                              ) : row.regulation === 'DOWN' ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                  ↓ DOWN
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                  ALL
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">{row.geneRatio}</td>
-                            <td className="px-6 py-4 text-sm text-gray-600">{row.count}</td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {row.padj ? row.padj.toExponential(2) : (row.pvalue ? row.pvalue.toExponential(2) : 'N/A')}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-          </div>
-        </div>
-    );
-}
