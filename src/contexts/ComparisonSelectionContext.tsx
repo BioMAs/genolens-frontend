@@ -37,6 +37,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import {
   readFocusedGene,
+  readGeneListId,
   readThresholds,
   urlMatchesState,
   writeExplorerState,
@@ -76,6 +77,13 @@ export interface ComparisonSelection {
   source: SelectionSource;
   /** Human label for a multi-gene selection, e.g. a pathway or gene-list name. */
   label?: string;
+  /**
+   * The saved gene list this selection came from, when it came from one.
+   *
+   * A set of genes is only shareable as a link once it has been saved, so this — not the gene
+   * array — is what reaches the URL.
+   */
+  listId?: string;
 }
 
 const EMPTY_SELECTION: ComparisonSelection = {
@@ -94,6 +102,7 @@ type Action =
   | { type: 'setThresholds'; value: Partial<VolcanoThresholds> }
   | { type: 'setColorblind'; value: boolean }
   | { type: 'selectGenes'; genes: string[]; source: SelectionSource; label?: string }
+  | { type: 'selectGeneList'; listId: string; name: string; genes: string[] }
   | { type: 'toggleGene'; gene: string; source: SelectionSource }
   | { type: 'setFocusedGene'; gene: string | null }
   | { type: 'clearSelection' };
@@ -104,6 +113,8 @@ export interface ComparisonActions {
   setColorblind(value: boolean): void;
   /** Replace the selection. The first gene becomes the focused one. */
   selectGenes(genes: string[], source: SelectionSource, label?: string): void;
+  /** Select a saved gene list, which is the one multi-gene selection a URL can carry. */
+  selectGeneList(listId: string, name: string, genes: string[]): void;
   /** Add a gene, or remove it if already selected — the shift-click gesture. */
   toggleGene(gene: string, source?: SelectionSource): void;
   /** Change which selected gene the detail card describes. */
@@ -144,7 +155,10 @@ function reducer(state: State, action: Action): State {
     }
     case 'selectGenes': {
       const genes = dedupeGenes(action.genes);
-      const focusedGene = genes[0] ?? null;
+      // One gene is its own subject; a set is not. A click focuses what it hit, a lasso of three
+      // hundred genes focuses nothing and lets the card describe the set instead of arbitrarily
+      // promoting whichever point happened to come first.
+      const focusedGene = genes.length === 1 ? genes[0] : null;
       const { selection } = state;
       // Re-clicking the same point must not produce a new array: a fresh identity would
       // invalidate every memoised consumer downstream for no change at all.
@@ -158,7 +172,27 @@ function reducer(state: State, action: Action): State {
       }
       return {
         ...state,
+        // A fresh selection is no longer the saved list it may have replaced.
         selection: { genes, focusedGene, source: action.source, label: action.label },
+      };
+    }
+    case 'selectGeneList': {
+      const genes = dedupeGenes(action.genes);
+      if (
+        state.selection.listId === action.listId &&
+        sameGenes(genes, state.selection.genes)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        selection: {
+          genes,
+          focusedGene: null,
+          source: 'geneList',
+          label: action.name,
+          listId: action.listId,
+        },
       };
     }
     case 'toggleGene': {
@@ -204,6 +238,7 @@ function reducer(state: State, action: Action): State {
 const ThresholdsContext = createContext<VolcanoThresholds | null>(null);
 const ViewPreferencesContext = createContext<ViewPreferences | null>(null);
 const SelectionContext = createContext<ComparisonSelection | null>(null);
+const PendingGeneListContext = createContext<string | null>(null);
 const ActionsContext = createContext<ComparisonActions | null>(null);
 
 export function ComparisonSelectionProvider({ children }: { children: ReactNode }) {
@@ -222,12 +257,20 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
     };
   });
 
+  /**
+   * A `?geneList=` link cannot be resolved here: its genes are not in the URL, they are in the
+   * API. The id is exposed instead, and `GeneListDeepLink` fetches the list and applies it.
+   */
+  const pendingGeneListId = readGeneListId(searchParams);
+
   const actions = useMemo<ComparisonActions>(
     () => ({
       setThresholds: (value) => dispatch({ type: 'setThresholds', value }),
       setColorblind: (value) => dispatch({ type: 'setColorblind', value }),
       selectGenes: (genes, source, label) =>
         dispatch({ type: 'selectGenes', genes, source, label }),
+      selectGeneList: (listId, name, genes) =>
+        dispatch({ type: 'selectGeneList', listId, name, genes }),
       toggleGene: (gene, source = 'volcano') => dispatch({ type: 'toggleGene', gene, source }),
       setFocusedGene: (gene) => dispatch({ type: 'setFocusedGene', gene }),
       clearSelection: () => dispatch({ type: 'clearSelection' }),
@@ -239,13 +282,17 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
 
   return (
     <ActionsContext.Provider value={actions}>
-      <ViewPreferencesContext.Provider value={state.prefs}>
-        <SelectionContext.Provider value={state.selection}>
-          <ThresholdsContext.Provider value={state.thresholds}>
-            {children}
-          </ThresholdsContext.Provider>
-        </SelectionContext.Provider>
-      </ViewPreferencesContext.Provider>
+      <PendingGeneListContext.Provider
+        value={state.selection.genes.length === 0 ? pendingGeneListId : null}
+      >
+        <ViewPreferencesContext.Provider value={state.prefs}>
+          <SelectionContext.Provider value={state.selection}>
+            <ThresholdsContext.Provider value={state.thresholds}>
+              {children}
+            </ThresholdsContext.Provider>
+          </SelectionContext.Provider>
+        </ViewPreferencesContext.Provider>
+      </PendingGeneListContext.Provider>
     </ActionsContext.Provider>
   );
 }
@@ -268,6 +315,7 @@ function useExplorerUrlSync(
 ): void {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusedGene = selection.focusedGene;
+  const listId = selection.listId ?? null;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -275,9 +323,9 @@ function useExplorerUrlSync(
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const current = new URLSearchParams(window.location.search);
-      if (urlMatchesState(current, thresholds, focusedGene)) return;
+      if (urlMatchesState(current, thresholds, focusedGene, listId)) return;
 
-      const next = writeExplorerState(current, thresholds, focusedGene).toString();
+      const next = writeExplorerState(current, thresholds, focusedGene, listId).toString();
       const url = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`;
       window.history.replaceState(null, '', url);
     }, URL_WRITE_DEBOUNCE_MS);
@@ -285,7 +333,7 @@ function useExplorerUrlSync(
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [thresholds, focusedGene]);
+  }, [thresholds, focusedGene, listId]);
 }
 
 function useRequiredContext<T>(context: React.Context<T | null>, hookName: string): T {
@@ -315,6 +363,16 @@ export function useSelection(): ComparisonSelection {
 /** Chart preferences shared across the screen. Does not re-render on a threshold change. */
 export function useViewPreferences(): ViewPreferences {
   return useRequiredContext(ViewPreferencesContext, 'useViewPreferences');
+}
+
+/**
+ * The gene list a URL points at, when the selection has not been resolved from it yet.
+ *
+ * Null once something is selected, so applying the list is a one-shot: the user is then free to
+ * change the selection without the link pulling it back.
+ */
+export function usePendingGeneListId(): string | null {
+  return useContext(PendingGeneListContext);
 }
 
 /** Stable dispatchers. This context never re-renders, so it is safe in a dependency array. */

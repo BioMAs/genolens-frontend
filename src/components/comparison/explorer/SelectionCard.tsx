@@ -22,6 +22,7 @@ import { getPalette } from '@/utils/chartPalettes';
 import { PValToken } from '@/components/ui/pval-token';
 import BookmarkButton from '@/components/BookmarkButton';
 import { GeneToken } from '@/components/ui/gene-token';
+import MultiSelectionCard from './MultiSelectionCard';
 
 interface Props {
   dataset: Dataset;
@@ -80,7 +81,12 @@ export default function SelectionCard({ dataset, comparisonName }: Props) {
     );
   }
 
-  if (selection.genes.length === 1 || selection.focusedGene) {
+  // A focused gene wins: it is what the user last pointed at. Otherwise a set describes itself.
+  if (!selection.focusedGene && selection.genes.length > 1) {
+    return shell(<MultiSelectionCard dataset={dataset} comparisonName={comparisonName} />);
+  }
+
+  {
     const gene = selection.focusedGene ?? selection.genes[0];
     const point = pointByGene.get(normalizeGeneKey(gene));
     const others = selection.genes.filter((g) => normalizeGeneKey(g) !== normalizeGeneKey(gene));
@@ -156,6 +162,14 @@ export default function SelectionCard({ dataset, comparisonName }: Props) {
             <p className="mb-2 text-xs" style={{ color: 'var(--text-muted)' }}>
               Also selected
             </p>
+            <button
+              type="button"
+              onClick={() => setFocusedGene(null)}
+              className="mb-2 text-xs underline"
+              style={{ color: 'var(--sl-teal-dark)' }}
+            >
+              Back to the {(others.length + 1).toLocaleString('en-US')} selected
+            </button>
             <div className="flex flex-wrap gap-1.5">
               {others.slice(0, 12).map((other) => (
                 <button
@@ -188,37 +202,4 @@ export default function SelectionCard({ dataset, comparisonName }: Props) {
     );
   }
 
-  // Several genes and none focused — a placeholder until the multi-selection card lands.
-  return shell(
-    <>
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-        {selection.genes.length.toLocaleString('en-US')} genes selected
-      </h3>
-      {selection.label ? (
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-          {selection.label}
-        </p>
-      ) : null}
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {selection.genes.slice(0, 24).map((gene) => (
-          <button
-            key={gene}
-            type="button"
-            onClick={() => setFocusedGene(gene)}
-            title={`Show ${gene}`}
-          >
-            <GeneToken symbol={gene} />
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={clearSelection}
-        className="mt-4 text-xs underline"
-        style={{ color: 'var(--sl-teal-dark)' }}
-      >
-        Clear selection
-      </button>
-    </>
-  );
 }

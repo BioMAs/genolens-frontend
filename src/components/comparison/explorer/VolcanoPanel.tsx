@@ -13,8 +13,9 @@
  * Plotly is already a dependency used by nine other components through the identical
  * `dynamic(..., { ssr: false })` line, so this adds nothing to the bundle.
  *
- * Lasso and box selection are deliberately **not** enabled yet: `onSelected` is a later slice,
- * and offering a lasso that does nothing would be worse than not offering it. Click selects.
+ * Click selects one gene; lasso or box selection takes a set. Both write into the same shared
+ * state, and a selection made in the table is written back into the plot, so the two stay in
+ * agreement whichever one the user touched.
  */
 
 import { useCallback, useMemo } from 'react';
@@ -79,6 +80,10 @@ interface PlotClickEvent {
   event?: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean };
 }
 
+interface PlotSelectionEvent {
+  points?: ClickedPoint[];
+}
+
 interface Props {
   dataset: Dataset;
   comparisonName: string;
@@ -133,16 +138,49 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
     });
   }, [buckets, selection.genes]);
 
+  /** Genes behind a list of Plotly point references, skipping the sentinel. */
+  const genesOf = useCallback(
+    (points: ClickedPoint[]): string[] => {
+      const genes: string[] = [];
+      for (const hit of points) {
+        const trace = TRACE_ORDER[hit.curveNumber];
+        const gene = trace ? buckets[trace].genes[hit.pointNumber] : undefined;
+        if (gene && gene !== UNKNOWN_GENE) genes.push(gene);
+      }
+      return genes;
+    },
+    [buckets]
+  );
+
+  const handleSelected = useCallback(
+    (event?: PlotSelectionEvent) => {
+      // Plotly fires this while the lasso is still being drawn, and again with nothing when a
+      // selection is dismissed; an empty payload is not an instruction to clear, which is what
+      // onDeselect is for.
+      const points = event?.points;
+      if (!points || points.length === 0) return;
+
+      const genes = genesOf(points);
+      if (genes.length === 0) return;
+
+      selectGenes(
+        genes,
+        'volcano',
+        `Lasso · ${genes.length.toLocaleString('en-US')} gene${genes.length === 1 ? '' : 's'}`
+      );
+    },
+    [genesOf, selectGenes]
+  );
+
   const handleClick = useCallback(
     (event: PlotClickEvent) => {
       const hit = event.points?.[0];
       if (!hit) return;
 
-      const trace = TRACE_ORDER[hit.curveNumber];
-      const gene = trace ? buckets[trace].genes[hit.pointNumber] : undefined;
-      // The backend substitutes this sentinel when a dataset has no recognisable gene column;
-      // selecting it would put a non-gene in the card and in the URL.
-      if (!gene || gene === UNKNOWN_GENE) return;
+      // The backend substitutes the Unknown sentinel when a dataset has no recognisable gene
+      // column; selecting it would put a non-gene in the card and in the URL.
+      const [gene] = genesOf([hit]);
+      if (!gene) return;
 
       const additive = event.event?.shiftKey || event.event?.metaKey || event.event?.ctrlKey;
       if (additive) {
@@ -151,7 +189,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
         selectGenes([gene], 'volcano');
       }
     },
-    [buckets, selectGenes, toggleGene]
+    [genesOf, selectGenes, toggleGene]
   );
 
   const traces = useMemo(
@@ -289,7 +327,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
               Clear selection
             </button>
           ) : (
-            <span>Click a point to inspect a gene · shift-click to add</span>
+            <span>Click a point to inspect a gene · shift-click to add · lasso for a set</span>
           )}
         </div>
         <ColorblindToggle value={colorblind} onChange={setColorblind} />
@@ -309,16 +347,16 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
           data={traces}
           layout={layout}
           onClick={handleClick}
+          onSelected={handleSelected}
+          onDeselect={clearSelection}
           useResizeHandler
           style={{ width: '100%', height: '100%' }}
           config={{
             displaylogo: false,
             responsive: true,
-            // Lasso and box selection arrive with the multi-selection card; a lasso that
-            // selected nothing would read as a broken control.
+            // select2d and lasso2d are kept — they are the feature here, where every other
+            // Plotly component in the app removes them.
             modeBarButtonsToRemove: [
-              'select2d',
-              'lasso2d',
               'autoScale2d',
               'toggleSpikelines',
               'hoverClosestCartesian',
