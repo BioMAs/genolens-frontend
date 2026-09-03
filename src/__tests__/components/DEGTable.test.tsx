@@ -16,7 +16,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import api from '@/utils/api';
 import DEGTable from '@/components/DEGTable';
-import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionContext';
+import {
+  ComparisonSelectionProvider,
+  useComparisonActions,
+  type SelectionSource,
+} from '@/contexts/ComparisonSelectionContext';
 import type { Dataset } from '@/types';
 
 jest.mock('@/utils/api');
@@ -64,11 +68,21 @@ function degResponse(total = 4321, page = 1, pageSize = 25) {
   };
 }
 
-function renderTable() {
+/** Applies a selection made somewhere other than the table, the way a lasso would. */
+function Seed({ genes, source }: { genes: string[]; source: SelectionSource }) {
+  const { selectGenes } = useComparisonActions();
+  React.useEffect(() => {
+    selectGenes(genes, source, 'Lasso');
+  }, [genes, source, selectGenes]);
+  return null;
+}
+
+function renderTable(seed?: { genes: string[]; source: SelectionSource }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <ComparisonSelectionProvider>
+        {seed ? <Seed genes={seed.genes} source={seed.source} /> : null}
         <DEGTable dataset={DATASET} comparisonName={COMPARISON} />
       </ComparisonSelectionProvider>
     </QueryClientProvider>
@@ -245,5 +259,50 @@ describe('rows drive the shared selection', () => {
     await userEvent.click(row.querySelector('button')!);
 
     expect(row).toHaveAttribute('aria-selected', 'false');
+  });
+});
+
+describe('the table follows a selection made elsewhere', () => {
+  const IN_TABLE = ['ENSG00000000001', 'ENSG00000000003'];
+
+  it('narrows to the selected genes', async () => {
+    renderTable({ genes: IN_TABLE, source: 'volcano' });
+
+    expect(await screen.findByText(/Showing the 2 selected genes/)).toBeInTheDocument();
+    expect(screen.getByText('GENE1')).toBeInTheDocument();
+    expect(screen.getByText('GENE3')).toBeInTheDocument();
+    expect(screen.queryByText('GENE2')).toBeNull();
+  });
+
+  // deg_genes only holds genes that were already significant at ingestion, so a volcano point
+  // outside that set has statistics on the plot and none here. Saying so beats hiding it.
+  it('counts the selected genes that have no row, rather than dropping them silently', async () => {
+    renderTable({ genes: [...IN_TABLE, 'NOT_INGESTED'], source: 'volcano' });
+
+    expect(await screen.findByText(/1 selected gene has no row at these thresholds/)).toBeInTheDocument();
+  });
+
+  it('says so when none of the selection has a row', async () => {
+    renderTable({ genes: ['NOT_INGESTED'], source: 'volcano' });
+
+    expect(
+      await screen.findByText(/None of the selected genes has a row at these thresholds/)
+    ).toBeInTheDocument();
+  });
+
+  // The trap this avoids: collapsing to the row the user just clicked would leave them unable
+  // to click a different one without clearing the selection first.
+  it('does NOT narrow to a selection the table itself made', async () => {
+    renderTable();
+    await tableRendered();
+
+    await userEvent.click(screen.getByText('GENE1').closest('tr')!);
+
+    await waitFor(() =>
+      expect(screen.getByText('GENE1').closest('tr')!).toHaveAttribute('aria-selected', 'true')
+    );
+    // every other row is still there to be clicked
+    expect(screen.getByText('GENE2')).toBeInTheDocument();
+    expect(screen.queryByText(/Showing the 1 selected gene/)).toBeNull();
   });
 });

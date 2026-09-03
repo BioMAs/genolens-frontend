@@ -62,6 +62,15 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
     [selection.genes]
   );
 
+  /**
+   * The table narrows to a selection made **elsewhere** — a lasso, a pathway, a saved list.
+   *
+   * Not to one it made itself: collapsing to the row the user just clicked would leave them
+   * unable to click a different one without clearing first. `selection.source` exists for
+   * exactly this, so a panel does not echo its own change back at itself.
+   */
+  const isFiltered = selectedKeys.size > 0 && selection.source !== 'table';
+
   const [sortField, setSortField] = useState<DegSortField>('padj');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [regulation, setRegulation] = useState<DegRegulationFilter>('all');
@@ -80,7 +89,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   // Anything that changes which rows exist invalidates the current page number. Adjusted during
   // render — React's documented way to reconcile state with changed inputs — rather than in an
   // effect, which would cascade an extra render and trip the project's set-state-in-effect rule.
-  const resultsKey = `${thresholds.padj}|${thresholds.logfc}|${regulation}|${pageSize}`;
+  const resultsKey = `${thresholds.padj}|${thresholds.logfc}|${regulation}|${pageSize}|${isFiltered ? selection.genes.length : 0}`;
   const [lastResultsKey, setLastResultsKey] = useState(resultsKey);
   if (lastResultsKey !== resultsKey) {
     setLastResultsKey(resultsKey);
@@ -95,18 +104,42 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
     query
   );
 
-  // The export has always covered at most one 1000-row page; keeping it on its own query
-  // preserves that exactly instead of silently narrowing it to the visible page. Its key omits
-  // `page`, so turning pages does not refetch it.
-  const { data: exportData } = useDegGenes(dataset.id, comparisonName, thresholds, {
+  // A 1000-row page, sorted and filtered like the visible one but without `page` in its key.
+  // It serves two jobs: the export, whose reach has always been one such page, and the
+  // selection view below — there is no `gene_ids` parameter on the endpoint yet, so filtering
+  // to a selection happens here rather than in SQL.
+  const { data: wideData } = useDegGenes(dataset.id, comparisonName, thresholds, {
     ...query,
     page: 1,
     pageSize: DEG_MAX_PAGE_SIZE,
   });
 
-  const rows = data?.genes ?? [];
-  const total = data?.pagination.total ?? 0;
-  const totalPages = data?.pagination.totalPages ?? 0;
+  /**
+   * When something is selected, the table *is* the selection.
+   *
+   * A selected gene can legitimately have no row: `deg_genes` only ever received genes that
+   * were already significant at ingestion, so a volcano point outside that set has statistics
+   * on the plot and none in the table. The count of those is shown rather than hidden.
+   */
+  const selectionView = useMemo(() => {
+    if (!isFiltered) return null;
+    const all = wideData?.genes ?? [];
+    const matched = all.filter((row) => selectedKeys.has(normalizeGeneKey(row.gene_id)));
+    const found = new Set(matched.map((row) => normalizeGeneKey(row.gene_id)));
+    const missing = [...selectedKeys].filter((key) => !found.has(key)).length;
+    return { matched, missing };
+  }, [isFiltered, wideData?.genes, selectedKeys]);
+
+  const serverRows = data?.genes ?? [];
+  const serverTotal = data?.pagination.total ?? 0;
+
+  const total = selectionView ? selectionView.matched.length : serverTotal;
+  const totalPages = selectionView
+    ? Math.ceil(total / pageSize)
+    : (data?.pagination.totalPages ?? 0);
+  const rows = selectionView
+    ? selectionView.matched.slice((page - 1) * pageSize, page * pageSize)
+    : serverRows;
   const firstRow = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastRow = Math.min(page * pageSize, total);
 
@@ -171,9 +204,28 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             <option value="down">DOWN</option>
           </select>
 
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {total.toLocaleString('en-US')} gene{total === 1 ? '' : 's'} at the current thresholds
-          </span>
+          {selectionView ? (
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Showing the {total.toLocaleString('en-US')} selected gene
+              {total === 1 ? '' : 's'}
+              {selectionView.missing > 0 ? (
+                <>
+                  {' · '}
+                  <span
+                    style={{ color: 'var(--text-muted)' }}
+                    title="deg_genes only holds genes that were already significant when the dataset was ingested, so a selected gene outside that set has no row here."
+                  >
+                    {selectionView.missing.toLocaleString('en-US')} selected gene
+                    {selectionView.missing === 1 ? ' has' : 's have'} no row at these thresholds
+                  </span>
+                </>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {total.toLocaleString('en-US')} gene{total === 1 ? '' : 's'} at the current thresholds
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -234,7 +286,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           </div>
 
           <ExportMenu
-            data={(exportData?.genes ?? []).map((row) => ({
+            data={(selectionView ? selectionView.matched : (wideData?.genes ?? [])).map((row) => ({
               gene_id: row.gene_id,
               gene_symbol: row.gene_name || '',
               log2_fold_change: row.log_fc.toFixed(3),
@@ -294,7 +346,9 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>
-                  No gene passes these thresholds.
+                  {isFiltered
+                    ? 'None of the selected genes has a row at these thresholds.'
+                    : 'No gene passes these thresholds.'}
                 </td>
               </tr>
             )}
