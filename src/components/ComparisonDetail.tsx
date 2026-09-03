@@ -33,6 +33,8 @@ import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules, type ComparisonModuleTab } from './comparison/comparisonModules';
+import SynthesisStrip from './comparison/explorer/SynthesisStrip';
+import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionContext';
 
 interface ComparisonDetailProps {
   projectId: string;
@@ -67,7 +69,20 @@ type EnrichmentRow = {
   regulation?: 'ALL' | 'UP' | 'DOWN' | string;
 };
 
-export default function ComparisonDetail({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
+/**
+ * Thresholds and, later, the gene selection are shared by every pane of this screen, so the
+ * provider sits above the pane switch — mounted inside a pane, the state would reset on every
+ * tab change.
+ */
+export default function ComparisonDetail(props: ComparisonDetailProps) {
+  return (
+    <ComparisonSelectionProvider>
+      <ComparisonDetailInner {...props} />
+    </ComparisonSelectionProvider>
+  );
+}
+
+function ComparisonDetailInner({ projectId, comparisonName, analysisId }: ComparisonDetailProps) {
   const searchParams = useSearchParams();
   const globalDatasetId = searchParams.get('datasetId');
   const { openChatWith } = useChatMode();
@@ -854,18 +869,19 @@ export default function ComparisonDetail({ projectId, comparisonName, analysisId
             {/* DEG */}
             {activeTab === 'deg' && (
               <div className="space-y-6">
+                {/* One significance control for the whole pane, with the counts it produces. */}
+                <SynthesisStrip
+                  datasetId={degDataset.id}
+                  comparisonName={actualComparisonName}
+                />
+
                 {/* Volcano plot — the whole comparison at a glance, next to the
                     table it filters down to. */}
                 <div className="gl-card p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                        Volcano plot
-                      </h2>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        log2FC threshold: 0.58 · padj: 0.05
-                      </p>
-                    </div>
+                    <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      Volcano plot
+                    </h2>
                     <Link
                       href={`/projects/${projectId}/datasets/${degDataset.id}`}
                       className="text-xs font-semibold"

@@ -1,316 +1,229 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import api from '@/utils/api';
+import { useState } from 'react';
 import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Settings } from 'lucide-react';
 import BookmarkButton from './BookmarkButton';
 import ExportMenu from './ExportMenu';
+import { PValToken } from './ui/pval-token';
+import { useThresholds } from '@/contexts/ComparisonSelectionContext';
+import {
+  DEG_MAX_PAGE_SIZE,
+  useDegGenes,
+  type DegRegulationFilter,
+  type DegSortField,
+} from '@/hooks/useDegGenes';
+import { getPalette } from '@/utils/chartPalettes';
+import { useViewPreferences } from '@/contexts/ComparisonSelectionContext';
 
 interface DEGTableProps {
   dataset: Dataset;
   comparisonName: string;
 }
 
-interface DEGRow {
-  gene_id: string;
-  logFC: number;
-  padj: number;
-  regulation: 'up' | 'down';
-  gene_name?: string;
-  biological_process?: string;
-  pathways?: string;
-}
+const COLUMN_LABELS = {
+  gene_id: 'Gene ID',
+  gene_name: 'Gene Symbol',
+  log_fc: 'Log2FC',
+  padj: 'Padj',
+  regulation: 'Regulation',
+} as const;
 
-interface DEGApiRow {
-  gene_id: string;
-  log_fc: number;
-  padj: number;
-  regulation?: string;
-  gene_name?: string;
-}
-
+/**
+ * Every gene of one comparison, filtered, sorted and paginated by the server.
+ *
+ * Two bugs fixed relative to the previous version:
+ *
+ * - It no longer owns thresholds. They come from `ComparisonSelectionContext`, shared with the
+ *   volcano above, so the two can no longer describe different populations.
+ * - It no longer truncates. It used to fetch `page_size: 1000` once and then sort, filter and
+ *   paginate in memory: any comparison with more than a thousand significant genes lost the
+ *   remainder silently, "Showing X of Y" counted the truncated set, and the regulation filter
+ *   ran *after* the truncation, so filtering to UP could hide UP genes that existed. All of
+ *   these are real server parameters (`datasets.py:1833-1935`) and `pagination.total` is a real
+ *   count, so the work now happens where the data is.
+ */
 export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
-  const [data, setData] = useState<DEGRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<'gene_id' | 'logFC' | 'padj'>('padj');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [filterRegulation, setFilterRegulation] = useState<'all' | 'up' | 'down'>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [showColumnSelector, setShowColumnSelector] = useState(false);
-  
-  // Filter options
-  const [logFCThreshold, setLogFCThreshold] = useState(0.58); // Default to match original analysis
-  const [padjThreshold, setPadjThreshold] = useState(0.05); // Default standard threshold
+  const thresholds = useThresholds();
+  const { colorblind } = useViewPreferences();
+  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
 
+  const [sortField, setSortField] = useState<DegSortField>('padj');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [regulation, setRegulation] = useState<DegRegulationFilter>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     bookmark: true,
     gene_id: true,
     gene_name: true,
-    logFC: true,
+    log_fc: true,
     padj: true,
-    regulation: true
+    regulation: true,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  // Anything that changes which rows exist invalidates the current page number. Adjusted during
+  // render — React's documented way to reconcile state with changed inputs — rather than in an
+  // effect, which would cascade an extra render and trip the project's set-state-in-effect rule.
+  const resultsKey = `${thresholds.padj}|${thresholds.logfc}|${regulation}|${pageSize}`;
+  const [lastResultsKey, setLastResultsKey] = useState(resultsKey);
+  if (lastResultsKey !== resultsKey) {
+    setLastResultsKey(resultsKey);
+    setPage(1);
+  }
 
-        console.log('[DEGTable] Comparison name:', comparisonName);
-        console.log('[DEGTable] Dataset ID:', dataset.id);
+  const query = { regulation, page, pageSize, sortBy: sortField, sortOrder };
+  const { data, isLoading, isError, isPlaceholderData } = useDegGenes(
+    dataset.id,
+    comparisonName,
+    thresholds,
+    query
+  );
 
-        // Build query parameters based on filter settings
-        const padjMax = padjThreshold; // Use dynamic threshold
-        const logfcMin = logFCThreshold;
+  // The export has always covered at most one 1000-row page; keeping it on its own query
+  // preserves that exactly instead of silently narrowing it to the visible page. Its key omits
+  // `page`, so turning pages does not refetch it.
+  const { data: exportData } = useDegGenes(dataset.id, comparisonName, thresholds, {
+    ...query,
+    page: 1,
+    pageSize: DEG_MAX_PAGE_SIZE,
+  });
 
-        console.log('[DEGTable] Fetching from database API with filters:', {
-          padj_max: padjMax,
-          logfc_min: logfcMin
-        });
+  const rows = data?.genes ?? [];
+  const total = data?.pagination.total ?? 0;
+  const totalPages = data?.pagination.totalPages ?? 0;
+  const firstRow = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastRow = Math.min(page * pageSize, total);
 
-        // Fetch DEG data from database (much faster than loading Parquet)
-        const response = await api.get(
-          `/datasets/${dataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
-          {
-            params: {
-              page: 1,
-              page_size: 1000, // Maximum allowed by backend
-              padj_max: padjMax,
-              logfc_min: logfcMin,
-              sort_by: 'padj',
-              sort_order: 'asc'
-            }
-          }
-        );
-
-        const genes = (response.data.genes || []) as DEGApiRow[];
-        const total = response.data.pagination?.total || 0;
-
-        console.log('[DEGTable] Fetched from database:', genes.length, 'genes');
-        console.log('[DEGTable] Total matching genes:', total);
-
-        // Transform database format to component format
-        const degs: DEGRow[] = genes.map((gene) => ({
-          gene_id: gene.gene_id,
-          logFC: gene.log_fc,
-          padj: gene.padj,
-          regulation: gene.regulation?.toLowerCase() === 'up' ? 'up' : 'down',
-          gene_name: gene.gene_name,
-          biological_process: undefined, // These columns are not in deg_genes table yet
-          pathways: undefined
-        }));
-
-        console.log('[DEGTable] Processed DEGs:', degs.length);
-        console.log('[DEGTable] First 5 DEGs:', degs.slice(0, 5));
-
-        setData(degs);
-      } catch (err) {
-        console.error('Failed to fetch DEG data:', err);
-        setError('Failed to load data.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (dataset && comparisonName) {
-      fetchData();
-    }
-  }, [dataset, comparisonName, logFCThreshold, padjThreshold]);
-
-  const handleSort = (field: 'gene_id' | 'logFC' | 'padj') => {
+  const handleSort = (field: DegSortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection(field === 'padj' ? 'asc' : 'desc');
+      // padj reads best smallest-first; a fold change and a gene id read best the other way.
+      setSortOrder(field === 'padj' ? 'asc' : 'desc');
     }
+    setPage(1);
   };
 
-  const getFilteredAndSortedData = () => {
-    let filtered = data;
-    
-    if (filterRegulation !== 'all') {
-      filtered = filtered.filter(row => row.regulation === filterRegulation);
-    }
-    
-    return filtered.sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      const multiplier = sortDirection === 'asc' ? 1 : -1;
-      
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return (aVal - bVal) * multiplier;
-      }
-      return String(aVal).localeCompare(String(bVal)) * multiplier;
-    });
-  };
-
-  if (loading) return <div className="py-4">Loading DEG table...</div>;
-  if (error) return <div className="text-red-500 py-4">{error}</div>;
-
-  const sortedData = getFilteredAndSortedData();
-  
-  // Pagination
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
-  
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const goToPage = (next: number) => {
+    setPage(Math.min(Math.max(1, next), Math.max(1, totalPages)));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push(-1); // ellipsis
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push(-1);
-        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push(-1);
-        pages.push(currentPage - 1);
-        pages.push(currentPage);
-        pages.push(currentPage + 1);
-        pages.push(-1);
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
+
+  const pageNumbers = (): number[] => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (page <= 3) return [1, 2, 3, 4, -1, totalPages];
+    if (page >= totalPages - 2) return [1, -1, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, -1, page - 1, page, page + 1, -1, totalPages];
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+        Loading DEG table…
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+        Failed to load the gene table.
+      </div>
+    );
+  }
+
+  const controlStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-control)',
+    color: 'var(--text-primary)',
   };
 
   return (
-    <div className="mt-6">
-      {/* Compact Filter Bar */}
-      <div className="flex justify-between items-center mb-4 gap-3">
-        <div className="flex items-center gap-3">
-          {/* Regulation Filter */}
+    <div className="mt-6" style={{ opacity: isPlaceholderData ? 0.6 : 1 }}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
-            value={filterRegulation}
-            onChange={(e) => {
-              setFilterRegulation(e.target.value as 'all' | 'up' | 'down');
-              setCurrentPage(1);
-            }}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            aria-label="Regulation filter"
+            value={regulation}
+            onChange={(e) => setRegulation(e.target.value as DegRegulationFilter)}
+            className="px-3 py-2 text-sm"
+            style={controlStyle}
           >
             <option value="all">All</option>
             <option value="up">UP</option>
             <option value="down">DOWN</option>
           </select>
-          
-          {/* LogFC Filter */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="logfc-threshold" className="text-sm text-gray-600">
-              |FC| &gt;
-            </label>
-            <select
-              id="logfc-threshold"
-              value={logFCThreshold}
-              onChange={(e) => setLogFCThreshold(parseFloat(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="0">0</option>
-              <option value="0.25">0.25</option>
-              <option value="0.5">0.5</option>
-              <option value="0.58">0.58</option>
-              <option value="1">1.0</option>
-              <option value="1.5">1.5</option>
-              <option value="2">2.0</option>
-            </select>
-          </div>
 
-          {/* Padj Filter */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="padj-threshold" className="text-sm text-gray-600">
-              padj &lt;
-            </label>
-            <input
-              type="number"
-              id="padj-threshold"
-              min="0.001"
-              max="0.1"
-              step="0.001"
-              value={padjThreshold}
-              onChange={(e) => setPadjThreshold(parseFloat(e.target.value))}
-              className="w-24 px-2 py-2 border border-gray-300 rounded-md text-sm"
-            />
-          </div>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {total.toLocaleString('en-US')} gene{total === 1 ? '' : 's'} at the current thresholds
+          </span>
         </div>
-        
-        <div className="flex gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
           <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            aria-label="Rows per page"
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="px-3 py-2 text-sm"
+            style={controlStyle}
           >
-            <option value={25}>25 per page</option>
-            <option value={50}>50 per page</option>
-            <option value={100}>100 per page</option>
-            <option value={200}>200 per page</option>
+            {[25, 50, 100, 200].map((size) => (
+              <option key={size} value={size}>
+                {size} per page
+              </option>
+            ))}
           </select>
-          
+
           <div className="relative">
             <button
               onClick={() => setShowColumnSelector(!showColumnSelector)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-3 py-2 text-sm"
+              style={controlStyle}
             >
               <Settings className="mr-2 h-4 w-4" />
               Columns
             </button>
-            
+
             {showColumnSelector && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Show/Hide Columns</div>
+              <div
+                className="absolute right-0 z-10 mt-2 w-64 p-3"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-panel)',
+                }}
+              >
+                <div className="mb-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                  Show/Hide Columns
+                </div>
                 <div className="space-y-2">
-                  {Object.entries({
-                    gene_id: 'Gene ID',
-                    gene_name: 'Gene Symbol',
-                    logFC: 'Log2 Fold Change',
-                    padj: 'Adjusted P-value',
-                    regulation: 'Regulation'
-                  }).map(([key, label]) => (
-                    <label key={key} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  {Object.entries(COLUMN_LABELS).map(([key, label]) => (
+                    <label key={key} className="flex cursor-pointer items-center gap-2 rounded p-1">
                       <input
                         type="checkbox"
                         checked={visibleColumns[key as keyof typeof visibleColumns]}
-                        onChange={(e) => setVisibleColumns({
-                          ...visibleColumns,
-                          [key]: e.target.checked
-                        })}
-                        className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                        onChange={(e) =>
+                          setVisibleColumns({ ...visibleColumns, [key]: e.target.checked })
+                        }
                       />
-                      <span className="text-sm">{label}</span>
+                      <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                        {label}
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
             )}
           </div>
-          
+
           <ExportMenu
-            data={getFilteredAndSortedData().map(row => ({
+            data={(exportData?.genes ?? []).map((row) => ({
               gene_id: row.gene_id,
               gene_symbol: row.gene_name || '',
-              log2_fold_change: row.logFC.toFixed(3),
+              log2_fold_change: row.log_fc.toFixed(3),
               adjusted_p_value: row.padj.toExponential(2),
               regulation: row.regulation,
             }))}
@@ -323,156 +236,170 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div
+        className="overflow-x-auto"
+        style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-panel)' }}
+      >
+        <table className="data-table min-w-full">
+          <thead>
             <tr>
-              {visibleColumns.bookmark && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ⭐
-                </th>
-              )}
-              {visibleColumns.gene_id && (
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('gene_id')}
-                >
-                  <div className="flex items-center">
-                    Gene ID
-                    {sortField === 'gene_id' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                    )}
-                  </div>
-                </th>
-              )}
-              {visibleColumns.gene_name && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Gene Symbol
-                </th>
-              )}
-              {visibleColumns.logFC && (
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('logFC')}
-                >
-                  <div className="flex items-center">
-                    Log2FC
-                    {sortField === 'logFC' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                    )}
-                  </div>
-                </th>
-              )}
-              {visibleColumns.padj && (
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('padj')}
-                >
-                  <div className="flex items-center">
-                    Padj
-                    {sortField === 'padj' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                    )}
-                  </div>
-                </th>
-              )}
-              {visibleColumns.regulation && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Regulation
-                </th>
-              )}
+              {visibleColumns.bookmark && <th aria-label="Bookmark" />}
+              {(['gene_id', 'gene_name', 'log_fc', 'padj', 'regulation'] as const)
+                .filter((key) => visibleColumns[key])
+                .map((key) => {
+                  const sortable = key === 'gene_id' || key === 'log_fc' || key === 'padj';
+                  if (!sortable) return <th key={key}>{COLUMN_LABELS[key]}</th>;
+                  return (
+                    <th
+                      key={key}
+                      className="cursor-pointer"
+                      onClick={() => handleSort(key)}
+                      aria-sort={
+                        sortField === key
+                          ? sortOrder === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <span className="flex items-center">
+                        {COLUMN_LABELS[key]}
+                        {sortField === key &&
+                          (sortOrder === 'asc' ? (
+                            <ChevronUp className="ml-1 h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                          ))}
+                      </span>
+                    </th>
+                  );
+                })}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedData.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                {visibleColumns.bookmark && (
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <BookmarkButton
-                      projectId={dataset.project_id}
-                      geneSymbol={row.gene_id}
-                      size="sm"
-                      variant="icon"
-                    />
-                  </td>
-                )}
-                {visibleColumns.gene_id && (
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {row.gene_id}
-                  </td>
-                )}
-                {visibleColumns.gene_name && (
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-mono">
-                    {row.gene_name || <span className="text-gray-400">–</span>}
-                  </td>
-                )}
-                {visibleColumns.logFC && (
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    <span className={`font-mono ${row.logFC > 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                      {row.logFC > 0 ? '+' : ''}{row.logFC.toFixed(2)}
-                    </span>
-                  </td>
-                )}
-                {visibleColumns.padj && (
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-700">
-                    {row.padj.toExponential(2)}
-                  </td>
-                )}
-                {visibleColumns.regulation && (
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                      row.regulation === 'up' 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {row.regulation === 'up' ? '↑ Up' : '↓ Down'}
-                    </span>
-                  </td>
-                )}
+          <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>
+                  No gene passes these thresholds.
+                </td>
               </tr>
-            ))}
+            )}
+            {rows.map((row) => {
+              const isUp = row.regulation?.toUpperCase() === 'UP';
+              return (
+                <tr key={row.gene_id}>
+                  {visibleColumns.bookmark && (
+                    <td className="whitespace-nowrap">
+                      <BookmarkButton
+                        projectId={dataset.project_id}
+                        geneSymbol={row.gene_id}
+                        size="sm"
+                        variant="icon"
+                      />
+                    </td>
+                  )}
+                  {visibleColumns.gene_id && (
+                    <td className="whitespace-nowrap font-medium">{row.gene_id}</td>
+                  )}
+                  {visibleColumns.gene_name && (
+                    <td className="whitespace-nowrap">
+                      {row.gene_name ? (
+                        <span className="gene-symbol">{row.gene_name}</span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>–</span>
+                      )}
+                    </td>
+                  )}
+                  {visibleColumns.log_fc && (
+                    <td className="whitespace-nowrap">
+                      <span
+                        className="font-mono"
+                        style={{ color: row.log_fc > 0 ? palette.up : palette.down }}
+                      >
+                        {row.log_fc > 0 ? '+' : ''}
+                        {row.log_fc.toFixed(2)}
+                      </span>
+                    </td>
+                  )}
+                  {visibleColumns.padj && (
+                    <td className="whitespace-nowrap">
+                      <PValToken value={row.padj.toExponential(2)} />
+                    </td>
+                  )}
+                  {visibleColumns.regulation && (
+                    <td className="whitespace-nowrap">
+                      <span
+                        className="px-2 py-1 text-xs font-semibold"
+                        style={{
+                          borderRadius: 6,
+                          color: isUp ? palette.up : palette.down,
+                          background: `color-mix(in srgb, ${isUp ? palette.up : palette.down} 14%, transparent)`,
+                        }}
+                      >
+                        {isUp ? '↑ Up' : '↓ Down'}
+                      </span>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-      
-      {/* Pagination */}
+
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} genes
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Showing {firstRow.toLocaleString('en-US')} to {lastRow.toLocaleString('en-US')} of{' '}
+            {total.toLocaleString('en-US')} genes
           </div>
-          
+
           <div className="flex gap-1">
             <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              style={controlStyle}
             >
               Previous
             </button>
-            
-            {getPageNumbers().map((page, idx) => (
-              page === -1 ? (
-                <span key={`ellipsis-${idx}`} className="px-3 py-1 text-gray-500">...</span>
+
+            {pageNumbers().map((entry, idx) =>
+              entry === -1 ? (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="px-3 py-1"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  …
+                </span>
               ) : (
                 <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 border rounded-md text-sm ${
-                    currentPage === page
-                      ? 'bg-brand-primary text-white border-brand-primary'
-                      : 'border-gray-300 hover:bg-gray-50'
-                  }`}
+                  key={entry}
+                  onClick={() => goToPage(entry)}
+                  aria-current={page === entry ? 'page' : undefined}
+                  className="px-3 py-1 text-sm"
+                  style={
+                    page === entry
+                      ? {
+                          background: 'var(--sl-teal)',
+                          border: '1px solid var(--sl-teal)',
+                          borderRadius: 'var(--radius-control)',
+                          color: '#fff',
+                        }
+                      : controlStyle
+                  }
                 >
-                  {page}
+                  {entry}
                 </button>
               )
-            ))}
-            
+            )}
+
             <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              onClick={() => goToPage(page + 1)}
+              disabled={page === totalPages}
+              className="px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              style={controlStyle}
             >
               Next
             </button>
