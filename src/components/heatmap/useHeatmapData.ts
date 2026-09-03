@@ -5,12 +5,32 @@ import { ClusteringParams, HeatmapData } from './types';
 
 const PREVIEW_GENES = 25; // genes per group (UP + DOWN) for instant preview
 
+/** A gene the caller already knows about, standing in for one the hook would have discovered. */
+export interface HeatmapGeneRow {
+  gene_id: string;
+  logFC: number;
+  padj: number;
+}
+
 interface UseHeatmapDataProps {
   degDataset: Dataset;
   matrixDataset: Dataset;
   sampleIds?: string[];
   comparisonName: string;
   params: ClusteringParams;
+  /**
+   * Genes to plot instead of discovering them.
+   *
+   * The endpoint always accepted explicit `up_gene_ids` / `down_gene_ids`; only the *discovery*
+   * was hard-coded here, bounded by `padj_max: 0.05` and `logfc_min: 1.0`. So a caller who
+   * already knows which genes it wants — a lasso, a pathway, a saved list — had no way to say
+   * so, even though the server would have obliged.
+   *
+   * Rows rather than two gene lists on purpose: everything downstream — the tooltip metadata,
+   * the UP/DOWN split, the top-N limit, the logFC sidebar — is built from these, so supplying
+   * them substitutes for the discovery and changes nothing else.
+   */
+  genesOverride?: HeatmapGeneRow[];
 }
 
 interface UseHeatmapDataReturn {
@@ -48,6 +68,7 @@ export function useHeatmapData({
   sampleIds,
   comparisonName,
   params,
+  genesOverride,
 }: UseHeatmapDataProps): UseHeatmapDataReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,34 +89,41 @@ export function useHeatmapData({
       // Strategy B: fall back to /query (Parquet) for legacy single-comparison datasets
       // where deg_genes table may be empty.
 
-      let degRows: Array<{ gene_id: string; logFC: number; padj: number }> = [];
+      let degRows: HeatmapGeneRow[] = [];
+
+      // The caller knows which genes it wants, so neither strategy runs.
+      if (genesOverride && genesOverride.length > 0) {
+        degRows = genesOverride;
+      }
 
       // --- Strategy A: DB deg-genes endpoint ---
-      try {
-        const dbResp = await api.get(
-          `/datasets/${degDataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
-          {
-            params: {
-              padj_max: 0.05,
-              logfc_min: 1.0,
-              sort_by: 'padj',
-              sort_order: 'asc',
-              page: 1,
-              page_size: 5000,
-            },
+      if (degRows.length === 0) {
+        try {
+          const dbResp = await api.get(
+            `/datasets/${degDataset.id}/deg-genes/${encodeURIComponent(comparisonName)}`,
+            {
+              params: {
+                padj_max: 0.05,
+                logfc_min: 1.0,
+                sort_by: 'padj',
+                sort_order: 'asc',
+                page: 1,
+                page_size: 5000,
+              },
+            }
+          );
+          const genes = (dbResp.data.genes ?? []) as LooseRow[];
+          if (genes.length > 0) {
+            degRows = genes.map((g) => ({
+              gene_id: toStringValue(g.gene_id),
+              // The DB stores the field as log_fc; normalise to logFC here
+              logFC: toNumber(g.log_fc ?? g.logFC ?? g.log2FoldChange, 0),
+              padj: toNumber(g.padj, 1),
+            }));
           }
-        );
-        const genes = (dbResp.data.genes ?? []) as LooseRow[];
-        if (genes.length > 0) {
-          degRows = genes.map((g) => ({
-            gene_id: toStringValue(g.gene_id),
-            // The DB stores the field as log_fc; normalise to logFC here
-            logFC: toNumber(g.log_fc ?? g.logFC ?? g.log2FoldChange, 0),
-            padj: toNumber(g.padj, 1),
-          }));
+        } catch {
+          // Endpoint absent or no data → fall through to Strategy B
         }
-      } catch {
-        // Endpoint absent or no data → fall through to Strategy B
       }
 
       // --- Strategy B: Parquet /query fallback ---
@@ -170,7 +198,11 @@ export function useHeatmapData({
       }
 
       if (degRows.length === 0) {
-        setError('No significant DEGs found.');
+        setError(
+          genesOverride
+            ? 'None of the selected genes is in the expression matrix.'
+            : 'No significant DEGs found.'
+        );
         setLoading(false);
         return;
       }
@@ -265,7 +297,7 @@ export function useHeatmapData({
       setError(detail || typedErr.message || 'Failed to load heatmap');
       setLoading(false);
     }
-  }, [degDataset, matrixDataset, sampleIds, comparisonName, params]);
+  }, [degDataset, matrixDataset, sampleIds, comparisonName, params, genesOverride]);
 
   useEffect(() => {
     fetchHeatmapData();

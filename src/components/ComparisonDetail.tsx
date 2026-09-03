@@ -12,6 +12,7 @@ import Link from 'next/link';
 import VolcanoPanel from './comparison/explorer/VolcanoPanel';
 import SelectionCard from './comparison/explorer/SelectionCard';
 import GeneListDeepLink from './comparison/explorer/GeneListDeepLink';
+import HeatmapSection from './comparison/explorer/HeatmapSection';
 import DEGTable from './DEGTable';
 import MethodStatsPanel from './MethodStatsPanel';
 import AIInterpretationPanel from './AIInterpretationPanel';
@@ -23,7 +24,6 @@ import ReportCustomizationPanel from './report/ReportCustomizationPanel';
 import PPINetworkSection from './network/PPINetworkSection';
 import StringEnrichmentPanel from './integrations/StringEnrichmentPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
-import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
@@ -905,21 +905,15 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {activeView === 'explorer' && (
               <section id="heatmap" className="scroll-mt-24">
               {matrixDataset && degDataset ? (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — DEG Genes</h2>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Visualization of differentially expressed genes (DEGs) for the samples in this comparison only.
-                    </p>
-                    <DEGClusteringView
-                      degDataset={degDataset}
-                      matrixDataset={matrixDataset}
-                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                      comparisonName={actualComparisonName}
-                      sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-                    />
-                  </div>
-                </div>
+                  <HeatmapSection
+                    degDataset={degDataset}
+                    matrixDataset={matrixDataset}
+                    comparisonName={actualComparisonName}
+                    sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                    sampleConditionMap={
+                      Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                    }
+                  />
               ) : matrixDataset ? (
                 <ClusteringAnalysis
                   projectId={projectId}

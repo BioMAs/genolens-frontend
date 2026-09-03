@@ -13,11 +13,12 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Bookmark, Check, ListPlus, Loader2 } from 'lucide-react';
+import { Bookmark, Check, ListPlus, Loader2, Sparkles } from 'lucide-react';
 import { Dataset } from '@/types';
 import { useComparisonActions, useSelection, useThresholds, useViewPreferences } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useCreateBookmarksBatch, useCreateGeneList } from '@/hooks/useBookmarks';
+import { useIntersectionEnrichment } from '@/hooks/useIntersectionEnrichment';
 import { isSignificant, type VolcanoPoint } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import { getPalette } from '@/utils/chartPalettes';
@@ -48,6 +49,17 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
 
   const createList = useCreateGeneList();
   const bookmarkAll = useCreateBookmarksBatch();
+
+  /**
+   * Enrichment of an arbitrary gene list.
+   *
+   * `POST /datasets/{id}/intersection-enrichment` takes a plain list of genes, so it answers
+   * "what are these genes about" for a lasso just as well as for the Venn intersection it was
+   * written for. No new endpoint, and no waiting for the comparison-wide enrichment to be
+   * recomputed.
+   */
+  const enrichment = useIntersectionEnrichment(dataset.id);
+  const enrichRunning = enrichment.status === 'PENDING' || enrichment.status === 'RUNNING';
 
   const [listName, setListName] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -258,6 +270,23 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
             Bookmark all
           </button>
 
+          <button
+            type="button"
+            onClick={() =>
+              enrichment.run(selection.genes, selection.label ?? `${comparisonName} selection`)
+            }
+            disabled={enrichRunning || selection.genes.length === 0}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs disabled:opacity-50"
+            style={actionStyle}
+          >
+            {enrichRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            {enrichRunning ? 'Enriching…' : 'Enrich these'}
+          </button>
+
           <ExportMenu
             data={exportRows}
             filename={`${comparisonName}_selection`}
@@ -267,6 +296,43 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
             size="sm"
           />
         </div>
+
+        {enrichment.error ? (
+          <p className="text-xs" style={{ color: 'var(--sl-red)' }}>
+            {enrichment.error}
+          </p>
+        ) : enrichment.result ? (
+          <div className="pt-1">
+            <p className="mb-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {enrichment.result.length === 0
+                ? 'No pathway is enriched in this selection'
+                : `Enriched in ${enrichment.result.length.toLocaleString('en-US')} pathway${
+                    enrichment.result.length === 1 ? '' : 's'
+                  }`}
+            </p>
+            <ul className="space-y-1">
+              {enrichment.result.slice(0, 5).map((row) => (
+                <li
+                  key={row.pathway_id}
+                  className="flex items-baseline justify-between gap-2 text-xs"
+                >
+                  <span
+                    className="truncate"
+                    style={{ color: 'var(--text-primary)' }}
+                    title={row.pathway_name}
+                  >
+                    {row.pathway_name}
+                  </span>
+                  {row.padj !== null ? (
+                    <span className="shrink-0 font-mono text-[11px]" style={{ color: 'var(--sl-purple)' }}>
+                      {row.padj.toExponential(1)}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {notice ? (
           <p className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--sl-teal-dark)' }}>
