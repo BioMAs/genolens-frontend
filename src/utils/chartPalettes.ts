@@ -2,8 +2,12 @@ export type PaletteMode = 'standard' | 'colorblind';
 
 export const PALETTES = {
   standard: {
-    up: '#ef4444',
-    down: '#00BFA5',
+    // Up is green and down is red across the app: these are the literal values of the
+    // --dc-up / --dc-down tokens, and DEGBarChart records that saying the opposite was a bug
+    // it had to fix. This palette still said the opposite (up in red, down in teal), so the
+    // volcano and the DEG table contradicted the overview's bar chart on the same comparison.
+    up: '#22c55e',
+    down: '#ef4444',
     ns: '#d1d5db',
     categorical: [
       '#2A2E5B', '#00BFA5', '#7C3AED', '#ffc658',

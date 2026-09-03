@@ -10,7 +10,7 @@
  *    truncating silently and counting "Showing X of Y" over the truncated set. The remaining
  *    tests assert every one of those now travels to the server.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -192,5 +192,58 @@ describe('empty and error states', () => {
     await waitFor(() =>
       expect(screen.getByText(/Failed to load the gene table/i)).toBeInTheDocument()
     );
+  });
+});
+
+describe('rows drive the shared selection', () => {
+  it('marks the clicked row as selected', async () => {
+    renderTable();
+    await tableRendered();
+
+    const row = screen.getByText('GENE1').closest('tr')!;
+    expect(row).toHaveAttribute('aria-selected', 'false');
+
+    await userEvent.click(row);
+
+    await waitFor(() => expect(row).toHaveAttribute('aria-selected', 'true'));
+  });
+
+  it('replaces the selection on a plain click', async () => {
+    renderTable();
+    await tableRendered();
+
+    const first = screen.getByText('GENE1').closest('tr')!;
+    const second = screen.getByText('GENE2').closest('tr')!;
+
+    await userEvent.click(first);
+    await userEvent.click(second);
+
+    await waitFor(() => expect(second).toHaveAttribute('aria-selected', 'true'));
+    expect(first).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('adds to the selection on a shift-click, matching the volcano gesture', async () => {
+    renderTable();
+    await tableRendered();
+
+    const first = screen.getByText('GENE1').closest('tr')!;
+    const second = screen.getByText('GENE2').closest('tr')!;
+
+    await userEvent.click(first);
+    fireEvent.click(second, { shiftKey: true });
+
+    await waitFor(() => expect(second).toHaveAttribute('aria-selected', 'true'));
+    expect(first).toHaveAttribute('aria-selected', 'true');
+  });
+
+  // Starring a gene and selecting it are different intents; the row must not swallow both.
+  it('does not select the row when the bookmark button is clicked', async () => {
+    renderTable();
+    await tableRendered();
+
+    const row = screen.getByText('GENE1').closest('tr')!;
+    await userEvent.click(row.querySelector('button')!);
+
+    expect(row).toHaveAttribute('aria-selected', 'false');
   });
 });

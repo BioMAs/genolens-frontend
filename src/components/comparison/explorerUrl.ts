@@ -4,10 +4,14 @@
  * Kept free of React, like `comparisonModules.ts`, so the codec can be unit-tested on its own —
  * URL round-tripping is exactly the kind of logic that rots silently inside a component.
  *
- * Only the thresholds live here for now. They earn a place in the URL because "this comparison
- * at padj < 0.01" is a genuinely shareable statement, and because a cold deep link must render
- * the same screen as a warm one. A lasso of 300 genes does not go in the URL — its shareable
- * form is a saved gene list.
+ * Two things earn a place in the URL: the thresholds, because "this comparison at padj < 0.01"
+ * is a genuinely shareable statement, and **one** focused gene, because "look at TP53 in this
+ * comparison" is the single most valuable link the screen can produce. Both must survive a cold
+ * deep link and render the same screen as a warm one.
+ *
+ * A lasso of three hundred genes does **not** go in the URL. Length aside, it is not a stable
+ * artifact worth a permalink; its shareable form is a saved gene list, which is durable and
+ * permissioned. A multi-gene selection therefore contributes only its focused gene.
  *
  * Defaults are omitted on write, mirroring how `selectTab` already deletes `tab` for the default
  * view: a URL only ever names what departs from the default.
@@ -22,6 +26,15 @@ import {
 
 export const PARAM_PADJ = 'padj';
 export const PARAM_LOGFC = 'lfc';
+export const PARAM_GENE = 'gene';
+
+/**
+ * Longest gene key accepted from a URL.
+ *
+ * Gene symbols run to a dozen characters and Ensembl accessions to about twenty; anything much
+ * longer is a mangled link, not a gene, and should not reach a query as a filter value.
+ */
+const MAX_GENE_KEY_LENGTH = 64;
 
 /**
  * Read the thresholds a URL asks for, falling back to the defaults for anything unusable.
@@ -96,4 +109,59 @@ function applyParam(
   // Number#toString drops trailing zeros, so 0.010 and 0.01 produce the same URL — which keeps
   // `thresholdsMatchUrl` from seeing a difference that does not exist.
   params.set(key, String(value));
+}
+
+/**
+ * Read the focused gene a URL asks for, or null when it names none.
+ *
+ * The value is returned **as written**, not upper-cased: normalising here would display a mouse
+ * gene `Sox9` as `SOX9`. Matching it against a dataset is `geneKeys`' job.
+ *
+ * Anything implausible is rejected rather than passed along — an over-long value or one carrying
+ * whitespace or separators is a mangled link, and a bad gene key would otherwise travel into
+ * lookups and into the card's heading.
+ */
+export function readFocusedGene(params: URLSearchParams | null | undefined): string | null {
+  const raw = params?.get(PARAM_GENE);
+  if (!raw) return null;
+
+  const gene = raw.trim();
+  if (!gene || gene.length > MAX_GENE_KEY_LENGTH) return null;
+  // Gene keys are word characters plus the few separators real symbols use (HLA-DRB1, MT-CO1).
+  if (!/^[A-Za-z0-9_.:-]+$/.test(gene)) return null;
+
+  return gene;
+}
+
+/**
+ * Apply the shareable state — thresholds plus the focused gene — to a copy of `params`.
+ *
+ * Returns a new `URLSearchParams`; the input is never mutated, so a caller can compare the
+ * serialised result against the current URL and skip a history write that changes nothing.
+ */
+export function writeExplorerState(
+  params: URLSearchParams | null | undefined,
+  thresholds: VolcanoThresholds,
+  focusedGene: string | null | undefined
+): URLSearchParams {
+  const next = writeThresholds(params, thresholds);
+
+  const gene = focusedGene?.trim();
+  if (gene) {
+    next.set(PARAM_GENE, gene);
+  } else {
+    next.delete(PARAM_GENE);
+  }
+
+  return next;
+}
+
+/** True when writing this state would leave the query string byte-identical. */
+export function urlMatchesState(
+  params: URLSearchParams | null | undefined,
+  thresholds: VolcanoThresholds,
+  focusedGene: string | null | undefined
+): boolean {
+  const current = new URLSearchParams(params ?? undefined);
+  return writeExplorerState(current, thresholds, focusedGene).toString() === current.toString();
 }
