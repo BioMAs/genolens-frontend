@@ -27,10 +27,20 @@ describe('buildComparisonModules', () => {
   it('marks every module ready when the data and the add-ons are there', () => {
     const modules = buildComparisonModules(FULL_ACCESS);
 
-    expect(modules).toHaveLength(9);
+    // 12 since the three-screen restructure: the AI reading and the exports gained catalogue
+    // entries of their own, and custom-viz — a valid ?tab= value nothing ever linked to —
+    // finally became reachable.
+    // The integrations panel keeps one entry until the network rewrite splits it in two.
+    expect(modules).toHaveLength(12);
     expect(modules.every((m) => m.state === 'ready')).toBe(true);
     expect(byId(modules, 'claim').tab).toBe('cosmetics');
     expect(byId(modules, 'reporting').tab).toBe('report');
+
+    // The network module inherits the old integrations tab's legacy key
+    expect(byId(modules, 'network').tab).toBe('integrations');
+    // and the two that never had a tab say so, rather than looking locked
+    expect(byId(modules, 'ai').tab).toBeNull();
+    expect(byId(modules, 'exports').tab).toBeNull();
   });
 
   it('explains what is missing when the project has no expression matrix', () => {
@@ -144,7 +154,8 @@ describe('countModuleStates', () => {
       reportUnlocked: false,
     });
 
-    expect(countModuleStates(modules)).toEqual({ ready: 5, 'needs-data': 2, locked: 2 });
+    // clustering, signature and custom-viz all need the matrix; claim and reporting are locked
+    expect(countModuleStates(modules)).toEqual({ ready: 7, 'needs-data': 3, locked: 2 });
   });
 
   it('counts every add-on as locked when none is unlocked', () => {
@@ -187,12 +198,15 @@ describe('view assignment', () => {
 
   it('sends interpretation to Understand and add-ons to Tools', () => {
     const modules = buildComparisonModules(FULL_ACCESS);
+    expect(byId(modules, 'ai').view).toBe('comprendre');
     expect(byId(modules, 'enrichment').view).toBe('comprendre');
     expect(byId(modules, 'signature').view).toBe('comprendre');
-    expect(byId(modules, 'integrations').view).toBe('comprendre');
+    expect(byId(modules, 'network').view).toBe('comprendre');
     expect(byId(modules, 'claim').view).toBe('outils');
     expect(byId(modules, 'drug-discovery').view).toBe('outils');
+    expect(byId(modules, 'custom-viz').view).toBe('outils');
     expect(byId(modules, 'reporting').view).toBe('partager');
+    expect(byId(modules, 'exports').view).toBe('partager');
   });
 
   it('keeps a locked add-on in its view, with its tab and add-on id intact', () => {
@@ -265,9 +279,9 @@ describe('groupModulesByView', () => {
     const groups = groupModulesByView(modules);
     const outils = groups.find((g) => g.view === 'outils')!;
 
-    // claim and drug-discovery are the only Tools modules today, and both are locked
+    // claim and drug-discovery are locked here; custom-viz is not
     expect(outils.counts.locked).toBe(2);
-    expect(outils.counts.ready).toBe(0);
+    expect(outils.counts.ready).toBe(1);
 
     for (const group of groups) {
       const summed = group.counts.ready + group.counts['needs-data'] + group.counts.locked;

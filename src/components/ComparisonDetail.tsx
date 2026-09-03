@@ -31,7 +31,15 @@ import { StatChip } from '@/components/ui/stat-chip';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
-import { buildComparisonModules, type ComparisonModuleTab } from './comparison/comparisonModules';
+import { buildComparisonModules } from './comparison/comparisonModules';
+import {
+  resolveView,
+  upgradeLegacyQuery,
+  VIEW_DESCRIPTIONS,
+  VIEW_LABELS,
+  type ComparisonPanel,
+  type ComparisonView,
+} from './comparison/comparisonRoutes';
 import SynthesisStrip from './comparison/explorer/SynthesisStrip';
 import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionContext';
 
@@ -39,18 +47,6 @@ interface ComparisonDetailProps {
   projectId: string;
   comparisonName: string;
   analysisId?: string;
-}
-
-type TabType = 'overview' | 'deg' | 'metrics' | 'enrichment' | 'cosmetics' | 'report' | 'clustering' | 'integrations' | 'custom-viz' | 'signature' | 'drug-discovery';
-
-const TAB_VALUES: readonly TabType[] = [
-  'overview', 'deg', 'metrics', 'enrichment', 'cosmetics', 'report',
-  'clustering', 'integrations', 'custom-viz', 'signature', 'drug-discovery',
-];
-
-/** Guards the `?tab=` parameter so a hand-edited URL can't select a dead pane. */
-function isTabType(value: string | null): value is TabType {
-  return !!value && (TAB_VALUES as readonly string[]).includes(value);
 }
 
 type GenericRow = Record<string, unknown>;
@@ -86,31 +82,42 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   const globalDatasetId = searchParams.get('datasetId');
   const { openChatWith } = useChatMode();
 
-  // The open tab IS the `?tab=` parameter — no local copy to keep in sync. A
-  // refresh stays where the user was, the view is linkable, and the sidebar can
-  // point straight at a module.
-  const tabParam = searchParams.get('tab');
-  const activeTab: TabType = isTabType(tabParam) ? tabParam : 'overview';
+  // The open screen IS the URL — no local copy to keep in sync. Derived during render, not
+  // redirected in an effect: a cold `?tab=enrichment` link must paint Understand on the first
+  // frame, where an effect-based redirect would flash Explore first.
+  const activeView: ComparisonView = resolveView(searchParams);
 
-  /** Switches tab through the URL, without a server round-trip. */
-  const selectTab = useCallback((tab: TabType) => {
+  /** Switches screen through the URL, without a server round-trip. */
+  const selectView = useCallback((view: ComparisonView, panel?: ComparisonPanel) => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
-    if (tab === 'overview') url.searchParams.delete('tab');
-    else url.searchParams.set('tab', tab);
-    // Native history update: useSearchParams reflects it (Next.js ≥ 14.1), so
-    // this re-renders the page without refetching it. replaceState, not push:
-    // switching tabs shouldn't pile up history entries.
+    url.searchParams.delete('tab');
+    if (view === 'explorer') url.searchParams.delete('view');
+    else url.searchParams.set('view', view);
+    url.hash = panel ? `#${panel}` : '';
+    // Native history update: useSearchParams reflects it (Next.js ≥ 14.1), so this re-renders
+    // the page without refetching it. replaceState, not push: switching screens shouldn't
+    // pile up history entries.
     window.history.replaceState(null, '', url.toString());
   }, []);
+
+  // Cosmetic only: the right screen is already rendering, thanks to the derivation above. This
+  // just rewrites an old link to the current contract so the address bar stops advertising a
+  // parameter that no longer exists.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const current = new URLSearchParams(window.location.search);
+    const upgraded = upgradeLegacyQuery(current);
+    if (upgraded === null) return;
+    const url = `${window.location.pathname}${upgraded ? `?${upgraded}` : ''}${window.location.hash}`;
+    window.history.replaceState(null, '', url);
+  }, [searchParams]);
   // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
   const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
 
-  // Add-on module gating: show the Skin-effect / Customization tabs only when the
-  // module is unlocked (admins keep full access by role; otherwise the explicit
-  // per-user flag). A locked module keeps no tab — it would open an empty pane;
-  // it appears instead as a locked card in the overview's module grid, where
-  // access can be requested.
+  // Add-on module gating: render a module's section only when it is unlocked (admins keep
+  // full access by role; otherwise the explicit per-user flag). A locked module appears as a
+  // locked card under Tools, where access can be requested.
   const { data: moduleProfile } = useUserProfile();
   const isModuleAdmin =
     moduleProfile?.role === 'ADMIN' || moduleProfile?.role === 'SCILICIUM_ADMIN';
@@ -122,27 +129,11 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_scientific_module === true);
   const drugDiscoveryUnlocked =
     !!moduleProfile && (isModuleAdmin || moduleProfile.has_drug_discovery_module === true);
-  // A `?tab=` pointing at an add-on the user has no access to would render an
-  // empty pane, so fall back to the overview once the profile is known.
-  useEffect(() => {
-    if (!moduleProfile) return;
-    if (
-      (activeTab === 'cosmetics' && !cosmeticsUnlocked) ||
-      (activeTab === 'report' && !reportCustomizationUnlocked) ||
-      (activeTab === 'signature' && !scientificUnlocked) ||
-      (activeTab === 'drug-discovery' && !drugDiscoveryUnlocked)
-    ) {
-      selectTab('overview');
-    }
-  }, [
-    moduleProfile,
-    activeTab,
-    cosmeticsUnlocked,
-    reportCustomizationUnlocked,
-    scientificUnlocked,
-    drugDiscoveryUnlocked,
-    selectTab,
-  ]);
+  // No redirect for a locked add-on any more. `?tab=cosmetics` resolves to Tools, where the
+  // locked card and its "Request access" action actually live, and a screen is a group of
+  // sections rather than a single pane — so a locked module simply does not render its own
+  // section instead of leaving the whole view blank. That is strictly better than the previous
+  // behaviour, which bounced such a link to an empty overview.
 
   // GSEA is part of the scientific add-on — never leave the enrichment tab on it
   // for a user without the module.
@@ -831,43 +822,47 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         ) : null}
       </div>
 
-      {/* Module panel — navigation lives in the sidebar, under Analyses. */}
+      {/* The synthesis is true of every screen, so it sits above them rather than inside one —
+          which is also what dissolves the old overview view. */}
+      <div className="mt-4">
+        <ComparisonSynthesis
+          comparisonName={decodedName}
+          stats={stats}
+          sampleConditionMap={sampleConditionMap}
+          loading={statsLoading}
+        />
+      </div>
+
+      {/* One screen at a time; within it, anchored sections rather than exclusive panes. */}
       <div className="mt-4 gl-card overflow-hidden">
-          <div className="p-5">
-            {/* Overview */}
-            {activeTab === 'overview' && (
-              <div className="space-y-4">
-                <ComparisonSynthesis
-                  comparisonName={decodedName}
-                  stats={stats}
-                  sampleConditionMap={sampleConditionMap}
-                  loading={statsLoading}
-                />
+          <div className="p-5 space-y-8">
+            <div>
+              <h2 className="font-display text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {VIEW_LABELS[activeView]}
+              </h2>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {VIEW_DESCRIPTIONS[activeView]}
+              </p>
+            </div>
 
-                {/* The AI reading opens the page: the numbers above give the
-                    verdict, this says what it means. */}
-                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-
-                {/* Then the evidence behind it: which genes moved, and what they do. */}
+            {/* ── Explore ───────────────────────────────────────────────── */}
+            {activeView === 'explorer' && (
+              <section id="summary" className="scroll-mt-24">
+                {/* The two arrival questions, kept adjacent as the overview had them:
+                    which genes moved, and what they do. */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
                   <OverviewTopPathways
                     enrichmentDataset={enrichmentDataset}
                     comparisonName={actualComparisonName}
-                    onOpenEnrichment={() => selectTab('enrichment')}
+                    onOpenEnrichment={() => selectView('comprendre', 'enrichment')}
                   />
                 </div>
-
-                <ComparisonModuleGrid
-                  modules={comparisonModules}
-                  onOpen={(tab: ComparisonModuleTab) => selectTab(tab)}
-                />
-              </div>
+              </section>
             )}
 
-            {/* DEG */}
-            {activeTab === 'deg' && (
-              <div className="space-y-6">
+            {activeView === 'explorer' && (
+              <section id="genes" className="scroll-mt-24 space-y-6">
                 {/* One significance control for the whole pane, with the counts it produces. */}
                 <SynthesisStrip
                   datasetId={degDataset.id}
@@ -934,17 +929,28 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Method statistics (per-method p-values + Stouffer) */}
-            {activeTab === 'metrics' && (
-              <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            {activeView === 'explorer' && (
+              <section id="methods" className="scroll-mt-24">
+                <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+              </section>
             )}
 
-            {/* Enrichment */}
-            {activeTab === 'enrichment' && (
-              degDataset ? (
+            {/* ── Understand ────────────────────────────────────────────── */}
+            {activeView === 'comprendre' && (
+              <section id="ai" className="scroll-mt-24">
+                {/* The AI reading opens the screen: the synthesis above gives the numbers,
+                    this says what they mean, and the sections below are the evidence. */}
+                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+              </section>
+            )}
+
+            {activeView === 'comprendre' && (
+              <section id="enrichment" className="scroll-mt-24">
+              {degDataset ? (
                 <div className="space-y-4">
                   {/* Sub-mode toggle: over-representation vs ranked GSEA */}
                   <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
@@ -1001,25 +1007,79 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     Enrichment requires a DEG dataset associated with this comparison.
                   </p>
                 </div>
-              )
+              )}
+              </section>
             )}
 
-            {/* Skin effect (Cosmetics) — only when the module is unlocked */}
-            {activeTab === 'cosmetics' && cosmeticsUnlocked && (
-              <CosmeticsTab
-                datasetId={degDataset?.id}
-                comparisonName={actualComparisonName}
-              />
+            {/* ── Tools ─────────────────────────────────────────────────── */}
+            {activeView === 'outils' && cosmeticsUnlocked && (
+              <section id="cosmetics" className="scroll-mt-24">
+                <CosmeticsTab
+                  datasetId={degDataset?.id}
+                  comparisonName={actualComparisonName}
+                />
+              </section>
             )}
 
-            {/* Report customization — only when the module is unlocked */}
-            {activeTab === 'report' && reportCustomizationUnlocked && (
-              <ReportCustomizationPanel />
+            {/* ── Share ─────────────────────────────────────────────────── */}
+            {activeView === 'partager' && (
+              <section id="exports" className="scroll-mt-24 space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Exports
+                  </h3>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    The gene table of this comparison, and its per-method p-values.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ExportMenu
+                    filename={`${actualComparisonName}_comparison`}
+                    formats={['csv', 'json']}
+                    variant="outline"
+                    size="sm"
+                  />
+                  <button
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-control)',
+                      color: 'var(--text-secondary)',
+                    }}
+                    onClick={async () => {
+                      try {
+                        const response = await api.get(
+                          `/datasets/${degDataset.id}/deg-stats/export`,
+                          { params: { comparison: actualComparisonName }, responseType: 'blob' }
+                        );
+                        const url = URL.createObjectURL(new Blob([response.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `deg_stats_${actualComparisonName}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      } catch (e) {
+                        console.error('DEG stats download failed', e);
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                    Per-method p-values (.csv)
+                  </button>
+                </div>
+              </section>
             )}
 
-            {/* Clustering */}
-            {activeTab === 'clustering' && (
-              matrixDataset && degDataset ? (
+            {activeView === 'partager' && reportCustomizationUnlocked && (
+              <section id="report" className="scroll-mt-24">
+                <ReportCustomizationPanel />
+              </section>
+            )}
+
+            {/* Heatmap & clustering */}
+            {activeView === 'explorer' && (
+              <section id="heatmap" className="scroll-mt-24">
+              {matrixDataset && degDataset ? (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Heatmap — DEG Genes</h2>
@@ -1050,19 +1110,22 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
                   </p>
                 </div>
-              )
+              )}
+              </section>
             )}
 
-            {/* External Integrations */}
-            {activeTab === 'integrations' && (
-              <ExternalIntegrationsPanel
-                genesToPreload={allMatrixGenes.slice(0, 50)}
-              />
+            {activeView === 'comprendre' && (
+              <section id="network" className="scroll-mt-24">
+                <ExternalIntegrationsPanel
+                  genesToPreload={allMatrixGenes.slice(0, 50)}
+                />
+              </section>
             )}
 
             {/* Signature scoring */}
-            {activeTab === 'signature' && scientificUnlocked && (
-              matrixDataset ? (
+            {activeView === 'comprendre' && scientificUnlocked && (
+              <section id="signature" className="scroll-mt-24">
+              {matrixDataset ? (
                 <SignatureScorePanel
                   projectId={projectId}
                   matrixDatasetId={matrixDataset.id}
@@ -1077,12 +1140,14 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     Signature scoring requires an expression matrix (count matrix) for this project.
                   </p>
                 </div>
-              )
+              )}
+              </section>
             )}
 
             {/* Drug targets — la comparaison face au classement de cibles (mode B) */}
-            {activeTab === 'drug-discovery' && drugDiscoveryUnlocked && (
-              degDataset ? (
+            {activeView === 'outils' && drugDiscoveryUnlocked && (
+              <section id="drug-discovery" className="scroll-mt-24">
+              {degDataset ? (
                 /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
                    que porte `deg_genes.comparison_name` côté base. */
                 <DrugDiscoveryComparisonPanel
@@ -1098,18 +1163,30 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     comparison, so it needs the DEG results to be available.
                   </p>
                 </div>
-              )
+              )}
+              </section>
             )}
 
-            {/* Custom Visualizations */}
-            {activeTab === 'custom-viz' && (
-              <div>
+            {/* The whole catalogue, so a locked add-on stays requestable and every screen
+                remains discoverable from one place. */}
+            {activeView === 'outils' && (
+              <section id="catalogue" className="scroll-mt-24">
+                <ComparisonModuleGrid
+                  modules={comparisonModules}
+                  onOpen={(view, panel) => selectView(view, panel)}
+                />
+              </section>
+            )}
+
+            {/* Custom Visualizations — a valid ?tab= value nothing ever linked to, until now */}
+            {activeView === 'outils' && (
+              <section id="custom-viz" className="scroll-mt-24">
                 <CustomVisualizationPanel
                   datasetId={degDataset.id}
                   comparisonName={actualComparisonName}
                   allGenes={allMatrixGenes}
                 />
-              </div>
+              </section>
             )}
           </div>
         </div>

@@ -12,9 +12,10 @@
 
 import {
   Activity,
-  Boxes,
+  Download,
   FileText,
   FlaskConical,
+  LineChart,
   Network,
   Pill,
   Sigma,
@@ -31,7 +32,13 @@ import {
   type ComparisonView,
 } from './comparisonRoutes';
 
-/** Tabs a module card can open — a subset of ComparisonDetail's TabType. */
+/**
+ * Legacy `?tab=` key a module used to answer to.
+ *
+ * No longer the navigation target — `view` plus `panel` is — and no longer a gate on whether a
+ * module can be opened, which is `state === 'ready'`. Kept so an old link still resolves, and
+ * null for a module that never had a tab of its own.
+ */
 export type ComparisonModuleTab =
   | 'deg'
   | 'metrics'
@@ -41,7 +48,8 @@ export type ComparisonModuleTab =
   | 'signature'
   | 'drug-discovery'
   | 'cosmetics'
-  | 'report';
+  | 'report'
+  | 'custom-viz';
 
 /**
  * `ready`      — open it now.
@@ -52,12 +60,7 @@ export type ComparisonModuleState = 'ready' | 'needs-data' | 'locked';
 
 export interface ComparisonModule {
   id: string;
-  /**
-   * Legacy `?tab=` key, or null when the module is locked (its tab is not rendered).
-   *
-   * Superseded by `view` + `panel` as the navigation target; kept so old links keep resolving
-   * while the three-screen restructure lands.
-   */
+  /** Legacy `?tab=` key, or null for a module that never had one. See the type's note. */
   tab: ComparisonModuleTab | null;
   /** Which of the three merged screens this module belongs to. */
   view: ComparisonView;
@@ -126,6 +129,18 @@ export function buildComparisonModules({
         : 'Browse all genes',
     },
     {
+      id: 'ai',
+      view: 'comprendre',
+      panel: 'ai',
+      // It never had a tab: it lived on the overview, which the three-screen model dissolves.
+      tab: null,
+      title: 'AI reading',
+      description: 'What this comparison means, in plain language',
+      icon: Sparkles,
+      state: 'ready',
+      metric: 'Plain-language interpretation',
+    },
+    {
       id: 'metrics',
       view: 'explorer',
       panel: 'methods',
@@ -168,15 +183,18 @@ export function buildComparisonModules({
         : { hint: ADD_ON }),
     },
     {
-      id: 'integrations',
+      id: 'network',
       view: 'comprendre',
       panel: 'network',
       tab: 'integrations',
-      title: 'Integrations',
-      description: 'Look these genes up in public databases',
-      icon: Boxes,
+      title: 'Interactions & databases',
+      // Still the whole ExternalIntegrationsPanel: the PPI network, STRING enrichment and the
+      // GEO search. Splitting it — and giving the database lookups their own Tools entry — is
+      // the network rewrite's job; until then one entry describes what the panel really holds.
+      description: 'Protein interactions and public database lookups',
+      icon: Network,
       state: 'ready',
-      metric: 'External resources',
+      metric: 'STRING · GEO',
     },
     {
       id: 'clustering',
@@ -216,6 +234,30 @@ export function buildComparisonModules({
       state: cosmeticsUnlocked ? 'ready' : 'locked',
       addOnId: 'claim',
       ...(cosmeticsUnlocked ? { metric: 'Claim scores · Skin Stack' } : { hint: ADD_ON }),
+    },
+    {
+      id: 'exports',
+      view: 'partager',
+      panel: 'exports',
+      tab: null,
+      title: 'Exports',
+      description: 'Gene tables and figures, as files',
+      icon: Download,
+      state: 'ready',
+      metric: 'CSV · JSON',
+    },
+    {
+      id: 'custom-viz',
+      view: 'outils',
+      panel: 'custom-viz',
+      tab: 'custom-viz',
+      title: 'Free-form charts',
+      description: 'Build a chart from any genes of this comparison',
+      icon: LineChart,
+      // A valid ?tab= value that no card and no sidebar entry pointed at: reachable only by
+      // hand-typing a URL. It finally has a home.
+      state: hasMatrix ? 'ready' : 'needs-data',
+      ...(hasMatrix ? { metric: 'Pick genes and axes' } : { hint: NEEDS_MATRIX }),
     },
     {
       id: 'reporting',
