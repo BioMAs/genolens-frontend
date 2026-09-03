@@ -13,6 +13,7 @@
 import {
   Activity,
   Download,
+  Boxes,
   FileText,
   FlaskConical,
   LineChart,
@@ -187,14 +188,11 @@ export function buildComparisonModules({
       view: 'comprendre',
       panel: 'network',
       tab: 'integrations',
-      title: 'Interactions & databases',
-      // Still the whole ExternalIntegrationsPanel: the PPI network, STRING enrichment and the
-      // GEO search. Splitting it — and giving the database lookups their own Tools entry — is
-      // the network rewrite's job; until then one entry describes what the panel really holds.
-      description: 'Protein interactions and public database lookups',
+      title: 'Interaction network',
+      description: 'How these proteins are known to interact',
       icon: Network,
       state: 'ready',
-      metric: 'STRING · GEO',
+      metric: 'STRING interactions',
     },
     {
       id: 'clustering',
@@ -234,6 +232,17 @@ export function buildComparisonModules({
       state: cosmeticsUnlocked ? 'ready' : 'locked',
       addOnId: 'claim',
       ...(cosmeticsUnlocked ? { metric: 'Claim scores · Skin Stack' } : { hint: ADD_ON }),
+    },
+    {
+      id: 'external-lookup',
+      view: 'outils',
+      panel: 'external-lookup',
+      tab: 'integrations',
+      title: 'Database lookup',
+      description: 'Annotate a gene list against public databases',
+      icon: Boxes,
+      state: 'ready',
+      metric: 'STRING enrichment',
     },
     {
       id: 'exports',

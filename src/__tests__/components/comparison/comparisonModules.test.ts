@@ -27,17 +27,18 @@ describe('buildComparisonModules', () => {
   it('marks every module ready when the data and the add-ons are there', () => {
     const modules = buildComparisonModules(FULL_ACCESS);
 
-    // 12 since the three-screen restructure: the AI reading and the exports gained catalogue
-    // entries of their own, and custom-viz — a valid ?tab= value nothing ever linked to —
-    // finally became reachable.
-    // The integrations panel keeps one entry until the network rewrite splits it in two.
-    expect(modules).toHaveLength(12);
+    // 13 since the three-screen restructure: the AI reading and the exports gained catalogue
+    // entries of their own, custom-viz — a valid ?tab= value nothing ever linked to — finally
+    // became reachable, and the old integrations tab split into a network module and a
+    // database-lookup one once the network was rewritten.
+    expect(modules).toHaveLength(13);
     expect(modules.every((m) => m.state === 'ready')).toBe(true);
     expect(byId(modules, 'claim').tab).toBe('cosmetics');
     expect(byId(modules, 'reporting').tab).toBe('report');
 
-    // The network module inherits the old integrations tab's legacy key
+    // Both halves of the old integrations tab still answer to its legacy key
     expect(byId(modules, 'network').tab).toBe('integrations');
+    expect(byId(modules, 'external-lookup').tab).toBe('integrations');
     // and the two that never had a tab say so, rather than looking locked
     expect(byId(modules, 'ai').tab).toBeNull();
     expect(byId(modules, 'exports').tab).toBeNull();
@@ -155,7 +156,7 @@ describe('countModuleStates', () => {
     });
 
     // clustering, signature and custom-viz all need the matrix; claim and reporting are locked
-    expect(countModuleStates(modules)).toEqual({ ready: 7, 'needs-data': 3, locked: 2 });
+    expect(countModuleStates(modules)).toEqual({ ready: 8, 'needs-data': 3, locked: 2 });
   });
 
   it('counts every add-on as locked when none is unlocked', () => {
@@ -205,6 +206,7 @@ describe('view assignment', () => {
     expect(byId(modules, 'claim').view).toBe('outils');
     expect(byId(modules, 'drug-discovery').view).toBe('outils');
     expect(byId(modules, 'custom-viz').view).toBe('outils');
+    expect(byId(modules, 'external-lookup').view).toBe('outils');
     expect(byId(modules, 'reporting').view).toBe('partager');
     expect(byId(modules, 'exports').view).toBe('partager');
   });
@@ -279,9 +281,9 @@ describe('groupModulesByView', () => {
     const groups = groupModulesByView(modules);
     const outils = groups.find((g) => g.view === 'outils')!;
 
-    // claim and drug-discovery are locked here; custom-viz is not
+    // claim and drug-discovery are locked here; custom-viz and the lookup are not
     expect(outils.counts.locked).toBe(2);
-    expect(outils.counts.ready).toBe(1);
+    expect(outils.counts.ready).toBe(2);
 
     for (const group of groups) {
       const summed = group.counts.ready + group.counts['needs-data'] + group.counts.locked;

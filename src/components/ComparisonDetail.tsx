@@ -20,7 +20,8 @@ import SignatureScorePanel from './SignatureScorePanel';
 import DrugDiscoveryComparisonPanel from './tools/dd/DrugDiscoveryComparisonPanel';
 import ExportMenu from './ExportMenu';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
-import ExternalIntegrationsPanel from './ExternalIntegrationsPanel';
+import PPINetworkSection from './network/PPINetworkSection';
+import StringEnrichmentPanel from './integrations/StringEnrichmentPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import DEGClusteringView from './analysis/DEGClusteringView';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
@@ -921,9 +922,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {activeView === 'comprendre' && (
               <section id="network" className="scroll-mt-24" ref={attachNetwork}>
                 {networkVisible ? (
-                  <ExternalIntegrationsPanel genesToPreload={allMatrixGenes.slice(0, 50)} />
+                  <PPINetworkSection
+                    dataset={degDataset}
+                    comparisonName={actualComparisonName}
+                  />
                 ) : (
-                  <SectionPlaceholder label="Interactions & databases" onReveal={revealNetwork} />
+                  <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
                 )}
               </section>
             )}
@@ -972,6 +976,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                   </p>
                 </div>
               )}
+              </section>
+            )}
+
+            {activeView === 'outils' && (
+              <section id="external-lookup" className="scroll-mt-24">
+                <StringEnrichmentPanel />
               </section>
             )}
 
