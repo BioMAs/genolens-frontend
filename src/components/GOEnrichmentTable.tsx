@@ -4,9 +4,11 @@ import { useState, useMemo, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Focus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BookmarkButton from './BookmarkButton';
+import { useSelection } from '@/contexts/ComparisonSelectionContext';
+import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
 
 interface GOTerm {
@@ -32,12 +34,34 @@ interface DegGeneInfo {
 
 interface GOEnrichmentTableProps {
   terms: GOTerm[];
-  onTermSelect?: (goId: string) => void;
+  /**
+   * Look through this pathway.
+   *
+   * Carries the whole term, not just its id: its `study_genes` are what the network re-seeds
+   * from and the signature panel pre-fills with, and the caller would otherwise have to look
+   * the term up again to find them.
+   *
+   * The prop existed for a long time with no caller at all — a cross-filter sketched and left
+   * unconnected.
+   */
+  onTermSelect?: (term: GOTerm) => void;
   projectId?: string;
   degGeneMap?: Record<string, DegGeneInfo>;
 }
 
 export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
+  // Passive cross-filter: a selection made in Explorer becomes legible here without anyone
+  // navigating anywhere. Reads the context directly rather than being drilled a prop, since
+  // this table sits several levels down.
+  const selection = useSelection();
+  const selectedKeys = useMemo(
+    () => new Set(selection.genes.map(normalizeGeneKey).filter(Boolean)),
+    [selection.genes]
+  );
+  const overlapOf = (term: GOTerm) =>
+    selectedKeys.size === 0
+      ? null
+      : (term.study_genes ?? []).filter((gene) => selectedKeys.has(normalizeGeneKey(gene))).length;
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'fdr' | 'pvalue' | 'ratio'>('fdr');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -282,6 +306,23 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
                           <div className="text-sm text-muted-foreground">{term.go_id}</div>
+                          {(() => {
+                            const overlap = overlapOf(term);
+                            if (overlap === null) return null;
+                            return (
+                              <div
+                                className="text-xs"
+                                style={{
+                                  color:
+                                    overlap > 0 ? 'var(--sl-teal-dark)' : 'var(--text-muted)',
+                                }}
+                                title="Genes of this pathway that are in your current selection"
+                              >
+                                {overlap.toLocaleString('en-US')} /{' '}
+                                {(term.study_genes?.length ?? 0).toLocaleString('en-US')} selected
+                              </div>
+                            );
+                          })()}
                           {term.description && (
                             <div className="text-xs text-gray-500 italic max-w-sm leading-snug">{term.description}</div>
                           )}
@@ -319,13 +360,16 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                               <ChevronDown className="w-4 h-4" />
                             )}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onTermSelect?.(term.go_id)}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
+                          {onTermSelect ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onTermSelect(term)}
+                              title={`Look through ${term.go_name}`}
+                            >
+                              <Focus className="w-4 h-4" />
+                            </Button>
+                          ) : null}
                         </div>
                       </td>
                     </tr>

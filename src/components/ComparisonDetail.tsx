@@ -35,6 +35,7 @@ import { buildComparisonModules } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
+import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
 import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import {
@@ -46,7 +47,11 @@ import {
   type ComparisonView,
 } from './comparison/comparisonRoutes';
 import SynthesisStrip from './comparison/explorer/SynthesisStrip';
-import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionContext';
+import {
+  ComparisonSelectionProvider,
+  useComparisonActions,
+  useFocusedTerm,
+} from '@/contexts/ComparisonSelectionContext';
 
 interface ComparisonDetailProps {
   projectId: string;
@@ -112,6 +117,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   const activeView: ComparisonView = resolveView(searchParams);
 
   /** Switches screen through the URL, without a server round-trip. */
+  const { selectGenes, focusTerm } = useComparisonActions();
+  const focusedTerm = useFocusedTerm();
+
   const selectView = useCallback((view: ComparisonView, panel?: ComparisonPanel) => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
@@ -741,6 +749,18 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
             {/* ── Understand ────────────────────────────────────────────── */}
             {activeView === 'comprendre' && (
+              <PathwayFocusBar
+                onShowInExplorer={(genes, label) => {
+                  // Explicit and user-initiated. The only crossing between screens in the
+                  // whole cross-filter; everything else happens in place.
+                  selectGenes(genes, 'pathway', label);
+                  focusTerm(null);
+                  selectView('explorer', 'genes');
+                }}
+              />
+            )}
+
+            {activeView === 'comprendre' && (
               <section id="ai" className="scroll-mt-24">
                 {/* The AI reading opens the screen: the synthesis above gives the numbers,
                     this says what they mean, and the sections below are the evidence. */}
@@ -943,6 +963,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                   matrixDatasetId={matrixDataset.id}
                   samples={relevantSamples.length > 0 ? relevantSamples : undefined}
                   sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                  initialGenes={focusedTerm?.genes}
+                  initialLabel={focusedTerm?.name}
                 />
               ) : (
                 <div className="text-center py-16">

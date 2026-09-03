@@ -12,6 +12,7 @@ import { Settings2, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-
 import GOEnrichmentTable from './GOEnrichmentTable';
 import EnrichmentHistogram from './EnrichmentHistogram';
 import GOTreePanel from './GOTreePanel';
+import { useComparisonActions } from '@/contexts/ComparisonSelectionContext';
 import dynamic from 'next/dynamic';
 
 const EnrichmentRadarPlot = dynamic(() => import('./EnrichmentRadarPlot'), { ssr: false });
@@ -185,6 +186,7 @@ const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
 ];
 
 export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichmentDataset }: GOEnrichmentAnalysisProps) {
+  const { focusTerm } = useComparisonActions();
   // Pathways live on the ENRICHMENT dataset (annoDB); DEG genes on the DEG dataset.
   const enrichmentDatasetId = enrichmentDataset?.id ?? dataset.id;
   const [isRunning, setIsRunning] = useState(true);
@@ -498,7 +500,20 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                 />
               )}
               {activeTab === 'table' && (
-                <GOEnrichmentTable terms={displayTerms} degGeneMap={degGeneMap} />
+                <GOEnrichmentTable
+                  terms={displayTerms}
+                  degGeneMap={degGeneMap}
+                  // The wire that was sketched and left unconnected: clicking a term now
+                  // re-seeds the network and the signature panel on the same screen, rather
+                  // than navigating anywhere.
+                  onTermSelect={(term) =>
+                    focusTerm({
+                      id: term.go_id,
+                      name: term.go_name,
+                      genes: term.study_genes ?? [],
+                    })
+                  }
+                />
               )}
             </CardContent>
           </Card>

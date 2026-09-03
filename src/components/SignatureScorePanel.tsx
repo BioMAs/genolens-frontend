@@ -20,6 +20,15 @@ interface SignatureScorePanelProps {
   matrixDatasetId: string;
   samples?: string[];
   sampleConditionMap?: Record<string, string>;
+  /**
+   * Genes to start from, e.g. the pathway being looked through on this screen.
+   *
+   * The panel had no way to receive a gene list at all — only its own picker and paste box —
+   * so a pathway a scroll above could not become a signature without retyping it.
+   */
+  initialGenes?: string[];
+  /** Names where those genes came from, so the pre-filled box is not mysterious. */
+  initialLabel?: string;
 }
 
 function median(xs: number[]): number {
@@ -47,13 +56,35 @@ export default function SignatureScorePanel({
   matrixDatasetId,
   samples,
   sampleConditionMap,
+  initialGenes,
+  initialLabel,
 }: SignatureScorePanelProps) {
   const { data: geneLists } = useGeneLists(projectId);
   const { loading, result, error, run } = useSignatureScore(matrixDatasetId);
 
-  const [source, setSource] = useState<'list' | 'paste'>('list');
+  // Opens on the pasted-genes tab when a caller supplied some, so what arrived is visible.
+  const [source, setSource] = useState<'list' | 'paste'>(
+    initialGenes && initialGenes.length > 0 ? 'paste' : 'list'
+  );
   const [selectedListId, setSelectedListId] = useState<string>('');
-  const [pasted, setPasted] = useState('');
+  const [pasted, setPasted] = useState(() => (initialGenes ?? []).join('\n'));
+
+  /**
+   * Adopt a new incoming list, without stamping on edits.
+   *
+   * Reconciled during render rather than in an effect: an effect would overwrite whatever the
+   * reader had typed on the render after they typed it. Keyed on the incoming genes, so it only
+   * fires when the *source* changes — a different pathway, not a keystroke.
+   */
+  const incomingKey = (initialGenes ?? []).join('|');
+  const [lastIncoming, setLastIncoming] = useState(incomingKey);
+  if (lastIncoming !== incomingKey) {
+    setLastIncoming(incomingKey);
+    if (incomingKey) {
+      setPasted((initialGenes ?? []).join('\n'));
+      setSource('paste');
+    }
+  }
   const [method, setMethod] = useState<ScoringMethod>('mean_z');
 
   const pastedGenes = useMemo(
@@ -126,6 +157,15 @@ export default function SignatureScorePanel({
                 Paste genes
               </button>
             </div>
+
+            {/* Says where a pre-filled list came from, so it is not mysterious. */}
+            {initialLabel && source === 'paste' && pastedGenes.length > 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Pre-filled from <strong>{initialLabel}</strong> —{' '}
+                {pastedGenes.length.toLocaleString('en-US')} gene
+                {pastedGenes.length === 1 ? '' : 's'}. Edit freely.
+              </p>
+            ) : null}
 
             {source === 'list' ? (
               <select
