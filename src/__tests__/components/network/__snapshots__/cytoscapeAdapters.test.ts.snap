@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`buildStylesheet matches its snapshot 1`] = `
+[
+  {
+    "selector": "node",
+    "style": {
+      "background-color": "#8b93a0",
+      "border-color": "#ffffff",
+      "border-width": 1.5,
+      "color": "#1a1f2e",
+      "font-size": 10,
+      "height": "mapData(degree, 1, 20, 18, 46)",
+      "label": "data(label)",
+      "min-zoomed-font-size": 8,
+      "text-halign": "center",
+      "text-valign": "center",
+      "width": "mapData(degree, 1, 20, 18, 46)",
+    },
+  },
+  {
+    "selector": "node.up",
+    "style": {
+      "background-color": "#22c55e",
+    },
+  },
+  {
+    "selector": "node.down",
+    "style": {
+      "background-color": "#ef4444",
+    },
+  },
+  {
+    "selector": "node.neutral",
+    "style": {
+      "background-color": "#8b93a0",
+    },
+  },
+  {
+    "selector": "node:selected",
+    "style": {
+      "border-color": "#1a1f2e",
+      "border-width": 3,
+    },
+  },
+  {
+    "selector": "edge",
+    "style": {
+      "curve-style": "straight",
+      "line-color": "#c7ccd4",
+      "line-opacity": 0.55,
+      "width": "mapData(score, 0.4, 1, 0.8, 3.5)",
+    },
+  },
+]
+`;
