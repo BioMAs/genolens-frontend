@@ -1,17 +1,16 @@
 'use client';
 
 import { Check, ChevronRight, Loader2, Lock, X } from 'lucide-react';
-import {
-  countModuleStates,
-  type ComparisonModule,
-  type ComparisonModuleTab,
-} from './comparisonModules';
+import { countModuleStates, type ComparisonModule } from './comparisonModules';
+import type { ComparisonPanel, ComparisonView } from './comparisonRoutes';
 import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
 
 interface Props {
   modules: ComparisonModule[];
-  /** Opens the module's tab on this same page. */
-  onOpen: (tab: ComparisonModuleTab) => void;
+  /** Opens the module's screen on this same page, scrolled to its section. */
+  onOpen: (view: ComparisonView, panel: ComparisonPanel) => void;
+  /** Overrides the heading, which differs between the whole catalogue and one group. */
+  title?: string;
 }
 
 // Only transform and shadow transition: `transition-all` would also animate the
@@ -67,7 +66,11 @@ function ModuleBody({ module }: { module: ComparisonModule }) {
  * always says whether it is ready, what input it is waiting for, or that access
  * can be requested.
  */
-export default function ComparisonModuleGrid({ modules, onOpen }: Props) {
+export default function ComparisonModuleGrid({
+  modules,
+  onOpen,
+  title = 'Everything this comparison offers',
+}: Props) {
   const { request, pending, notice, requested } = useModuleAccessRequest();
   const counts = countModuleStates(modules);
 
@@ -87,7 +90,7 @@ export default function ComparisonModuleGrid({ modules, onOpen }: Props) {
             className="font-display text-[17px] font-semibold tracking-[-0.3px]"
             style={{ color: 'var(--text-primary)' }}
           >
-            Explore this comparison
+            {title}
           </h2>
           <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
             {summary}
@@ -97,13 +100,13 @@ export default function ComparisonModuleGrid({ modules, onOpen }: Props) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => {
-          if (module.state === 'ready' && module.tab) {
-            const tab = module.tab;
+          if (module.state === 'ready') {
+            const { view, panel } = module;
             return (
               <button
                 key={module.id}
                 type="button"
-                onClick={() => onOpen(tab)}
+                onClick={() => onOpen(view, panel)}
                 aria-label={`Open ${module.title}`}
                 className={`${CARD_BASE} group hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                 style={{
