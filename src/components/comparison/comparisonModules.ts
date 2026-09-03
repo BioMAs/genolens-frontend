@@ -23,6 +23,13 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ModuleId } from '@/components/modules/ModuleSelector';
+import {
+  VIEW_DESCRIPTIONS,
+  VIEW_LABELS,
+  VIEW_ORDER,
+  type ComparisonPanel,
+  type ComparisonView,
+} from './comparisonRoutes';
 
 /** Tabs a module card can open — a subset of ComparisonDetail's TabType. */
 export type ComparisonModuleTab =
@@ -45,8 +52,17 @@ export type ComparisonModuleState = 'ready' | 'needs-data' | 'locked';
 
 export interface ComparisonModule {
   id: string;
-  /** Target tab, or null when the module is locked (its tab is not rendered). */
+  /**
+   * Legacy `?tab=` key, or null when the module is locked (its tab is not rendered).
+   *
+   * Superseded by `view` + `panel` as the navigation target; kept so old links keep resolving
+   * while the three-screen restructure lands.
+   */
   tab: ComparisonModuleTab | null;
+  /** Which of the three merged screens this module belongs to. */
+  view: ComparisonView;
+  /** The anchor within that screen. */
+  panel: ComparisonPanel;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -98,6 +114,8 @@ export function buildComparisonModules({
   const modules: ComparisonModule[] = [
     {
       id: 'deg',
+      view: 'explorer',
+      panel: 'genes',
       tab: 'deg',
       title: 'DEG table',
       description: 'Every gene of this comparison, with filters and sorting',
@@ -109,6 +127,8 @@ export function buildComparisonModules({
     },
     {
       id: 'metrics',
+      view: 'explorer',
+      panel: 'methods',
       tab: 'metrics',
       title: 'Method statistics',
       description: 'Per-method p-values and the Stouffer consensus',
@@ -118,6 +138,8 @@ export function buildComparisonModules({
     },
     {
       id: 'enrichment',
+      view: 'comprendre',
+      panel: 'enrichment',
       tab: 'enrichment',
       title: 'Enrichment',
       description: 'Pathways behind the differential expression',
@@ -133,6 +155,8 @@ export function buildComparisonModules({
     },
     {
       id: 'drug-discovery',
+      view: 'outils',
+      panel: 'drug-discovery',
       tab: drugDiscoveryUnlocked ? 'drug-discovery' : null,
       title: 'Drug targets',
       description: 'Druggable targets ranked from these DEGs',
@@ -145,6 +169,8 @@ export function buildComparisonModules({
     },
     {
       id: 'integrations',
+      view: 'comprendre',
+      panel: 'network',
       tab: 'integrations',
       title: 'Integrations',
       description: 'Look these genes up in public databases',
@@ -154,6 +180,8 @@ export function buildComparisonModules({
     },
     {
       id: 'clustering',
+      view: 'explorer',
+      panel: 'heatmap',
       tab: 'clustering',
       title: 'Heatmap & clustering',
       description: 'DEG expression across the samples of this comparison',
@@ -163,6 +191,8 @@ export function buildComparisonModules({
     },
     {
       id: 'signature',
+      view: 'comprendre',
+      panel: 'signature',
       tab: scienceUnlocked ? 'signature' : null,
       title: 'Signature score',
       description: 'Score a gene signature sample by sample',
@@ -177,6 +207,8 @@ export function buildComparisonModules({
     },
     {
       id: 'claim',
+      view: 'outils',
+      panel: 'cosmetics',
       tab: cosmeticsUnlocked ? 'cosmetics' : null,
       title: 'Skin claims',
       description: 'Turn this comparison into scored cosmetic claims',
@@ -187,6 +219,8 @@ export function buildComparisonModules({
     },
     {
       id: 'reporting',
+      view: 'partager',
+      panel: 'report',
       tab: reportUnlocked ? 'report' : null,
       title: 'Reporting',
       description: 'Branded, editable PDF report of this comparison',
@@ -205,6 +239,38 @@ export function buildComparisonModules({
         STATE_ORDER[a.module.state] - STATE_ORDER[b.module.state] || a.index - b.index
     )
     .map(({ module }) => module);
+}
+
+/** One of the merged screens, with the modules it holds. */
+export interface ComparisonViewGroup {
+  view: ComparisonView;
+  label: string;
+  description: string;
+  modules: ComparisonModule[];
+  counts: Record<ComparisonModuleState, number>;
+}
+
+/**
+ * Bucket modules into the four screens, in fixed order.
+ *
+ * Order *within* a group comes free: `buildComparisonModules` already returns modules sorted
+ * `ready -> needs-data -> locked`, and bucketing preserves input order, so no second sort is
+ * needed and the existing sort tests keep guarding it.
+ *
+ * Every view appears in the result, even with no modules — a screen that exists but happens to
+ * be empty for this comparison is information, and the caller decides how to show it.
+ */
+export function groupModulesByView(modules: ComparisonModule[]): ComparisonViewGroup[] {
+  return VIEW_ORDER.map((view) => {
+    const inView = modules.filter((m) => m.view === view);
+    return {
+      view,
+      label: VIEW_LABELS[view],
+      description: VIEW_DESCRIPTIONS[view],
+      modules: inView,
+      counts: countModuleStates(inView),
+    };
+  });
 }
 
 /** Counts per state, for the one-line summary above the grid. */
