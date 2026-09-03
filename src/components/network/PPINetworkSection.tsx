@@ -8,17 +8,23 @@
  * from `allMatrixGenes.slice(0, 50)`, arbitrary genes rather than the ones anyone was looking
  * at. Every one of those is addressed here.
  *
- * **Where the genes come from**, in order: the shared selection, so a lasso in the volcano
- * becomes a network; failing that, the comparison's strongest DEGs — never arbitrary matrix
- * genes — and the panel says which it is using, so the graph is never silently wrong about
- * what it shows.
+ * **Where the genes come from**, in order: a pathway being looked through, so clicking an
+ * enriched term a scroll away rebuilds the graph around it; then the shared selection, so a
+ * lasso in the volcano becomes a network; failing both, the comparison's strongest DEGs —
+ * never arbitrary matrix genes. The panel always says which of the three it is using, so the
+ * graph is never silently wrong about what it shows.
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AlertTriangle, Maximize2 } from 'lucide-react';
 import { Dataset } from '@/types';
-import { useSelection, useComparisonActions, useThresholds } from '@/contexts/ComparisonSelectionContext';
+import {
+  useComparisonActions,
+  useFocusedTerm,
+  useSelection,
+  useThresholds,
+} from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useStringNetwork } from '@/hooks/useStringNetwork';
 import { isSignificant, UNKNOWN_GENE } from '@/utils/volcano';
@@ -56,6 +62,7 @@ interface Props {
 
 export default function PPINetworkSection({ dataset, comparisonName }: Props) {
   const selection = useSelection();
+  const focusedTerm = useFocusedTerm();
   const thresholds = useThresholds();
   const { selectGenes } = useComparisonActions();
 
@@ -93,8 +100,16 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
       .map((point) => point.gene);
   }, [cloud?.points, thresholds]);
 
-  const fromSelection = selection.genes.length > 0;
-  const seeds = fromSelection ? selection.genes : topDegs;
+  // A pathway wins over a lasso: it is the more deliberate act, and the one the reader just
+  // performed on this very screen.
+  const source: 'pathway' | 'selection' | 'top' =
+    focusedTerm && focusedTerm.genes.length > 0
+      ? 'pathway'
+      : selection.genes.length > 0
+        ? 'selection'
+        : 'top';
+  const seeds =
+    source === 'pathway' ? focusedTerm!.genes : source === 'selection' ? selection.genes : topDegs;
 
   const { data, isLoading, isError } = useStringNetwork({
     symbols: seeds,
@@ -158,7 +173,13 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
     <div className="space-y-3" data-testid="ppi-network-section">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {fromSelection ? (
+          {source === 'pathway' ? (
+            <>
+              Built from the <strong>{focusedTerm!.genes.length.toLocaleString('en-US')}</strong>{' '}
+              gene{focusedTerm!.genes.length === 1 ? '' : 's'} of{' '}
+              <strong>{focusedTerm!.name}</strong>
+            </>
+          ) : source === 'selection' ? (
             <>
               Built from your selection of{' '}
               <strong>{selection.genes.length.toLocaleString('en-US')}</strong> gene

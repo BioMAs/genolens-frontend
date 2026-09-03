@@ -86,6 +86,19 @@ export interface ComparisonSelection {
   listId?: string;
 }
 
+/**
+ * An enriched pathway the reader is currently looking through.
+ *
+ * Shared rather than local to the enrichment panel, because three sibling sections react to
+ * it: the network re-seeds from its genes, the signature panel pre-fills with them, and a focus
+ * bar names it. Drilling one piece of state into three siblings is what a context is for.
+ */
+export interface FocusedTerm {
+  id: string;
+  name: string;
+  genes: string[];
+}
+
 const EMPTY_SELECTION: ComparisonSelection = {
   genes: [],
   focusedGene: null,
@@ -96,6 +109,7 @@ interface State {
   thresholds: VolcanoThresholds;
   prefs: ViewPreferences;
   selection: ComparisonSelection;
+  focusedTerm: FocusedTerm | null;
 }
 
 type Action =
@@ -105,7 +119,8 @@ type Action =
   | { type: 'selectGeneList'; listId: string; name: string; genes: string[] }
   | { type: 'toggleGene'; gene: string; source: SelectionSource }
   | { type: 'setFocusedGene'; gene: string | null }
-  | { type: 'clearSelection' };
+  | { type: 'clearSelection' }
+  | { type: 'focusTerm'; term: FocusedTerm | null };
 
 export interface ComparisonActions {
   /** Tighten one or both thresholds. Values are clamped to what ingestion honoured. */
@@ -120,6 +135,8 @@ export interface ComparisonActions {
   /** Change which selected gene the detail card describes. */
   setFocusedGene(gene: string | null): void;
   clearSelection(): void;
+  /** Look through one enriched pathway. Pass null to stop. */
+  focusTerm(term: FocusedTerm | null): void;
 }
 
 /** Deduplicate by normalised key while keeping the first spelling seen, and drop empties. */
@@ -230,6 +247,10 @@ function reducer(state: State, action: Action): State {
       }
       return { ...state, selection: EMPTY_SELECTION };
     }
+    case 'focusTerm': {
+      if (state.focusedTerm?.id === action.term?.id) return state;
+      return { ...state, focusedTerm: action.term };
+    }
     default:
       return state;
   }
@@ -239,6 +260,7 @@ const ThresholdsContext = createContext<VolcanoThresholds | null>(null);
 const ViewPreferencesContext = createContext<ViewPreferences | null>(null);
 const SelectionContext = createContext<ComparisonSelection | null>(null);
 const PendingGeneListContext = createContext<string | null>(null);
+const FocusedTermContext = createContext<FocusedTerm | null | undefined>(undefined);
 const ActionsContext = createContext<ComparisonActions | null>(null);
 
 export function ComparisonSelectionProvider({ children }: { children: ReactNode }) {
@@ -251,6 +273,7 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
     return {
       thresholds: readThresholds(searchParams),
       prefs: { colorblind: false },
+      focusedTerm: null,
       selection: gene
         ? { genes: [gene], focusedGene: gene, source: 'url' as SelectionSource }
         : EMPTY_SELECTION,
@@ -274,6 +297,7 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
       toggleGene: (gene, source = 'volcano') => dispatch({ type: 'toggleGene', gene, source }),
       setFocusedGene: (gene) => dispatch({ type: 'setFocusedGene', gene }),
       clearSelection: () => dispatch({ type: 'clearSelection' }),
+      focusTerm: (term) => dispatch({ type: 'focusTerm', term }),
     }),
     []
   );
@@ -285,6 +309,7 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
       <PendingGeneListContext.Provider
         value={state.selection.genes.length === 0 ? pendingGeneListId : null}
       >
+      <FocusedTermContext.Provider value={state.focusedTerm}>
         <ViewPreferencesContext.Provider value={state.prefs}>
           <SelectionContext.Provider value={state.selection}>
             <ThresholdsContext.Provider value={state.thresholds}>
@@ -292,6 +317,7 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
             </ThresholdsContext.Provider>
           </SelectionContext.Provider>
         </ViewPreferencesContext.Provider>
+      </FocusedTermContext.Provider>
       </PendingGeneListContext.Provider>
     </ActionsContext.Provider>
   );
@@ -358,6 +384,15 @@ export function useThresholds(): VolcanoThresholds {
  */
 export function useSelection(): ComparisonSelection {
   return useRequiredContext(SelectionContext, 'useSelection');
+}
+
+/** The pathway being looked through, or null. */
+export function useFocusedTerm(): FocusedTerm | null {
+  const value = useContext(FocusedTermContext);
+  if (value === undefined) {
+    throw new Error('useFocusedTerm must be used inside <ComparisonSelectionProvider>');
+  }
+  return value;
 }
 
 /** Chart preferences shared across the screen. Does not re-render on a threshold change. */
