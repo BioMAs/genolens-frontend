@@ -1,12 +1,3 @@
-import { Dataset } from '@/types';
-
-export interface HeatmapPlotProps {
-  degDataset: Dataset;
-  matrixDataset: Dataset;
-  sampleIds?: string[];
-  comparisonName?: string;
-}
-
 export interface ClusteringParams {
   top_n_genes: number;
   method: string;
@@ -40,5 +31,3 @@ export interface TopNOption {
   label: string;
   description: string;
 }
-
-export type ExportFormat = 'png' | 'svg';
