@@ -33,6 +33,9 @@ import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
+import SectionRail, { type RailEntry } from './comparison/SectionRail';
+import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
+import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import {
   resolveView,
   upgradeLegacyQuery,
@@ -52,6 +55,36 @@ interface ComparisonDetailProps {
 
 type GenericRow = Record<string, unknown>;
 
+
+/**
+ * Stands in for a section that has not been mounted yet.
+ *
+ * Not a spinner: nothing is loading. It reserves the height so the rail's anchors do not jump
+ * as sections arrive, names what will appear, and offers to build it now for anyone who would
+ * rather not scroll.
+ */
+function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () => void }) {
+  return (
+    <div
+      className="flex min-h-40 flex-col items-center justify-center gap-2 text-center"
+      style={{
+        border: '1px dashed var(--border)',
+        borderRadius: 'var(--radius-panel)',
+        color: 'var(--text-muted)',
+      }}
+    >
+      <p className="text-sm">{label}</p>
+      <button
+        type="button"
+        onClick={onReveal}
+        className="text-xs underline"
+        style={{ color: 'var(--sl-teal-dark)' }}
+      >
+        Load this section
+      </button>
+    </div>
+  );
+}
 
 /**
  * Thresholds and, later, the gene selection are shared by every pane of this screen, so the
@@ -102,8 +135,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     const url = `${window.location.pathname}${upgraded ? `?${upgraded}` : ''}${window.location.hash}`;
     window.history.replaceState(null, '', url);
   }, [searchParams]);
-  // Enrichment tab sub-mode: over-representation (ORA) vs ranked GSEA
-  const [enrichmentMode, setEnrichmentMode] = useState<'ora' | 'gsea'>('ora');
+
 
   // Add-on module gating: render a module's section only when it is unlocked (admins keep
   // full access by role; otherwise the explicit per-user flag). A locked module appears as a
@@ -125,13 +157,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   // section instead of leaving the whole view blank. That is strictly better than the previous
   // behaviour, which bounced such a link to an empty overview.
 
-  // GSEA is part of the scientific add-on — never leave the enrichment tab on it
-  // for a user without the module.
-  useEffect(() => {
-    if (moduleProfile && !scientificUnlocked && enrichmentMode === 'gsea') {
-      setEnrichmentMode('ora');
-    }
-  }, [moduleProfile, scientificUnlocked, enrichmentMode]);
+  // Over-representation or ranked GSEA, read from the fragment so a GSEA result is linkable.
+  // The add-on guard lives in the hook, which is why the effect that used to force it back is
+  // gone: the mode is simply never 'gsea' for a user without the module.
+  const [enrichmentMode, setEnrichmentMode] = useEnrichmentMode(scientificUnlocked);
 
   /**
    * All the comparison's data, resolved once. The resolution chain moved out verbatim: the
@@ -463,6 +492,22 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   }, [degDataset, decodedName, globalDatasetId]);
 
   // What this comparison offers, and why a module is out of reach.
+  // The two heavy panels of Understand: one builds a hand-rolled SVG over a STRING round-trip,
+  // the other asks for a per-sample scoring. Behind a tab they mounted on click; on a merged
+  // screen they would mount on arrival, so they wait until they are scrolled near.
+  // Destructured, not held as an object: the React compiler rule reads a member access on a
+  // hook result that feeds a `ref` prop as a ref access during render.
+  const {
+    attach: attachNetwork,
+    visible: networkVisible,
+    reveal: revealNetwork,
+  } = useMountOnIntersection<HTMLDivElement>();
+  const {
+    attach: attachSignature,
+    visible: signatureVisible,
+    reveal: revealSignature,
+  } = useMountOnIntersection<HTMLDivElement>();
+
   const comparisonModules = useMemo(
     () =>
       buildComparisonModules({
@@ -484,6 +529,16 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       stats,
     ]
   );
+
+  /** Sections of the open screen, for the rail. Only what actually renders. */
+  const railEntries = useMemo<RailEntry[]>(
+    () =>
+      comparisonModules
+        .filter((m) => m.view === activeView && m.state === 'ready')
+        .map((m) => ({ panel: m.panel, label: m.title })),
+    [comparisonModules, activeView]
+  );
+
 
   if (loading) {
     return (
@@ -573,6 +628,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 {VIEW_DESCRIPTIONS[activeView]}
               </p>
             </div>
+
+            <SectionRail entries={railEntries} viewKey={activeView} />
 
             {/* ── Explore ───────────────────────────────────────────────── */}
             {activeView === 'explorer' && (
@@ -684,8 +741,13 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               <section id="enrichment" className="scroll-mt-24">
               {degDataset ? (
                 <div className="space-y-4">
-                  {/* Sub-mode toggle: over-representation vs ranked GSEA */}
-                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                  {/* Sub-mode toggle: over-representation vs ranked GSEA. It carries the
+                      #gsea anchor itself, so the fragment always has something to land on. */}
+                  <div
+                    id={GSEA_HASH}
+                    className="inline-flex scroll-mt-32 rounded-lg p-1"
+                    style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border)' }}
+                  >
                     <button
                       onClick={() => setEnrichmentMode('ora')}
                       className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
@@ -847,17 +909,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             )}
 
             {activeView === 'comprendre' && (
-              <section id="network" className="scroll-mt-24">
-                <ExternalIntegrationsPanel
-                  genesToPreload={allMatrixGenes.slice(0, 50)}
-                />
+              <section id="network" className="scroll-mt-24" ref={attachNetwork}>
+                {networkVisible ? (
+                  <ExternalIntegrationsPanel genesToPreload={allMatrixGenes.slice(0, 50)} />
+                ) : (
+                  <SectionPlaceholder label="Interactions & databases" onReveal={revealNetwork} />
+                )}
               </section>
             )}
 
             {/* Signature scoring */}
             {activeView === 'comprendre' && scientificUnlocked && (
-              <section id="signature" className="scroll-mt-24">
-              {matrixDataset ? (
+              <section id="signature" className="scroll-mt-24" ref={attachSignature}>
+              {!signatureVisible ? (
+                <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
+              ) : matrixDataset ? (
                 <SignatureScorePanel
                   projectId={projectId}
                   matrixDatasetId={matrixDataset.id}
