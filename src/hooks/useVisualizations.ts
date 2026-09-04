@@ -94,7 +94,18 @@ export interface EnrichmentData {
   regulation?: string;
 }
 
-/** Nombre de points demandés au serveur. Le nuage entier tient sous ce plafond. */
+/**
+ * Budget de points demandé au serveur — pour la **toile de fond non significative uniquement**.
+ *
+ * Le commentaire précédent affirmait que « le nuage entier tient sous ce plafond » : c'était faux,
+ * et c'est ce qui masquait un sous-comptage. Sur un dataset de 13 k gènes, une comparaison compte
+ * jusqu'à 6 430 gènes significatifs — le nuage renvoyé dépasse donc ce chiffre.
+ *
+ * Les deux chemins serveur conservent désormais **tous** les gènes significatifs et ne
+ * sous-échantillonnent que les non significatifs (`data_processor.py`, `datasets.py:2131-2138`).
+ * C'est ce qui rend `deriveSignificance` exact : resserrer un seuil ne peut que réduire un
+ * ensemble déjà entièrement présent dans le nuage.
+ */
 export const VOLCANO_MAX_POINTS = 5000;
 
 /**
