@@ -1,7 +1,11 @@
 'use client';
 
 import { Check, ChevronRight, Loader2, Lock, X } from 'lucide-react';
-import { countModuleStates, type ComparisonModule } from './comparisonModules';
+import {
+  countModuleStates,
+  describeModuleStates,
+  type ComparisonModule,
+} from './comparisonModules';
 import type { ComparisonPanel, ComparisonView } from './comparisonRoutes';
 import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
 
@@ -11,6 +15,8 @@ interface Props {
   onOpen: (view: ComparisonView, panel: ComparisonPanel) => void;
   /** Overrides the heading, which differs between the whole catalogue and one group. */
   title?: string;
+  /** False when the caller already names the grid — a collapsed block whose summary does. */
+  showHeader?: boolean;
 }
 
 // Only transform and shadow transition: `transition-all` would also animate the
@@ -70,33 +76,30 @@ export default function ComparisonModuleGrid({
   modules,
   onOpen,
   title = 'Everything this comparison offers',
+  showHeader = true,
 }: Props) {
   const { request, pending, notice, requested } = useModuleAccessRequest();
   const counts = countModuleStates(modules);
 
-  const summary = [
-    counts.ready > 0 ? `${counts.ready} ready` : null,
-    counts['needs-data'] > 0 ? `${counts['needs-data']} waiting on data` : null,
-    counts.locked > 0 ? `${counts.locked} locked` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const summary = describeModuleStates(counts);
 
   return (
     <section>
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2
-            className="font-display text-[17px] font-semibold tracking-[-0.3px]"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {title}
-          </h2>
-          <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
-            {summary}
-          </p>
+      {showHeader ? (
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              className="font-display text-[17px] font-semibold tracking-[-0.3px]"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {title}
+            </h2>
+            <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+              {summary}
+            </p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => {

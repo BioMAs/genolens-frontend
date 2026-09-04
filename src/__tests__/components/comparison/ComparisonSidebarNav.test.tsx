@@ -115,17 +115,22 @@ describe('grouping', () => {
     expect(screen.getByRole('link', { name: 'Enrichment' })).toBeInTheDocument();
   });
 
-  it('keeps Tools collapsed until it is the open group', () => {
+  it('treats all four groups alike, with none folded away behind a disclosure', () => {
     renderNav();
-    const tools = screen.getByRole('link', { name: 'Tools' }).closest('details');
-    expect(tools).not.toBeNull();
-    expect(tools).not.toHaveAttribute('open');
 
+    for (const view of VIEW_ORDER) {
+      expect(
+        screen.getByRole('link', { name: VIEW_LABELS[view] }).closest('details')
+      ).toBeNull();
+    }
+  });
+
+  // `?view=outils` is a saved link from before Tools became Apply: it must still open a group.
+  it('follows a retired view name to the group that replaced it', () => {
     mockSearch = 'view=outils';
     renderNav();
-    expect(screen.getAllByRole('link', { name: 'Tools' })[1].closest('details')).toHaveAttribute(
-      'open'
-    );
+
+    expect(screen.getByRole('link', { name: 'Signature score' })).toBeInTheDocument();
   });
 });
 

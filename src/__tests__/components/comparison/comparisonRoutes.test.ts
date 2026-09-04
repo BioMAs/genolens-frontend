@@ -12,6 +12,7 @@ import {
   LEGACY_TAB_ROUTES,
   resolveLegacyTab,
   resolveView,
+  resolveViewAlias,
   upgradeLegacyQuery,
   VIEW_LABELS,
   VIEW_ORDER,
@@ -37,7 +38,11 @@ const params = (query: string) => new URLSearchParams(query);
 
 describe('the view vocabulary', () => {
   it('has exactly four views, in a fixed order the nav and the grid can both rely on', () => {
-    expect(VIEW_ORDER).toEqual(['explorer', 'comprendre', 'partager', 'outils']);
+    expect(VIEW_ORDER).toEqual(['explorer', 'comprendre', 'appliquer', 'partager']);
+  });
+
+  it('orders the views as the workflow the hub numbers, Apply before Share', () => {
+    expect(VIEW_ORDER.indexOf('appliquer')).toBeLessThan(VIEW_ORDER.indexOf('partager'));
   });
 
   it('opens on Explorer by default', () => {
@@ -72,8 +77,8 @@ describe('resolveLegacyTab', () => {
     expect(Object.keys(LEGACY_TAB_ROUTES).sort()).toEqual([...EVERY_LEGACY_TAB].sort());
   });
 
-  it('lands overview on Explorer with no anchor, its content having been split', () => {
-    expect(resolveLegacyTab('overview')).toEqual({ view: 'explorer', panel: null });
+  it('anchors overview on the summary section that outlived the rest of that tab', () => {
+    expect(resolveLegacyTab('overview')).toEqual({ view: 'explorer', panel: 'summary' });
   });
 
   it('keeps the three analysis tabs together in Explorer', () => {
@@ -82,9 +87,8 @@ describe('resolveLegacyTab', () => {
     expect(resolveLegacyTab('metrics')).toEqual({ view: 'explorer', panel: 'methods' });
   });
 
-  it('sends the interpretation tabs to Understand', () => {
+  it('sends enrichment to Understand', () => {
     expect(resolveLegacyTab('enrichment')).toEqual({ view: 'comprendre', panel: 'enrichment' });
-    expect(resolveLegacyTab('signature')).toEqual({ view: 'comprendre', panel: 'signature' });
   });
 
   // That tab did three jobs, now split across two views; the network was the headline.
@@ -92,20 +96,26 @@ describe('resolveLegacyTab', () => {
     expect(resolveLegacyTab('integrations')).toEqual({ view: 'comprendre', panel: 'network' });
   });
 
-  // Strictly better than today, which bounces a locked add-on link to a blank overview:
-  // Tools is where the locked card and its Request access action actually live.
-  it('retargets a locked add-on to Tools rather than nowhere', () => {
-    expect(resolveLegacyTab('cosmetics')).toEqual({ view: 'outils', panel: 'cosmetics' });
+  // Strictly better than the old behaviour, which bounced a locked add-on link to a blank
+  // overview: Apply is where the locked card and its Request access action actually live.
+  it('retargets a locked add-on to Apply rather than nowhere', () => {
+    expect(resolveLegacyTab('cosmetics')).toEqual({ view: 'appliquer', panel: 'cosmetics' });
     expect(resolveLegacyTab('drug-discovery')).toEqual({
-      view: 'outils',
+      view: 'appliquer',
       panel: 'drug-discovery',
     });
   });
 
+  // Scoring a signature is an add-on, and add-ons are what Apply is for — the screen it used
+  // to sit on, Understand, is now only about what the genes mean together.
+  it('lands the signature score in Apply', () => {
+    expect(resolveLegacyTab('signature')).toEqual({ view: 'appliquer', panel: 'signature' });
+  });
+
   // custom-viz was a valid tab value no card and no sidebar entry pointed at — reachable only
-  // by hand-typing a URL. The restructure finally gives it a home.
-  it('gives custom-viz a home in Tools', () => {
-    expect(resolveLegacyTab('custom-viz')).toEqual({ view: 'outils', panel: 'custom-viz' });
+  // by hand-typing a URL. Charting arbitrary genes is exploration, so that is where it lands.
+  it('gives custom-viz a home in Explorer', () => {
+    expect(resolveLegacyTab('custom-viz')).toEqual({ view: 'explorer', panel: 'custom-viz' });
   });
 
   // Returning null, not a default, preserves the intent of the old isTabType guard: a
@@ -129,7 +139,19 @@ describe('resolveView', () => {
   });
 
   it('prefers view over tab when a URL carries both', () => {
-    expect(resolveView(params('tab=enrichment&view=outils'))).toBe('outils');
+    expect(resolveView(params('tab=enrichment&view=partager'))).toBe('partager');
+  });
+
+  // `outils` ("Tools") became `appliquer` when its two exploration modules moved out. A saved
+  // `?view=outils` must not fall through to the default as if it were a typo.
+  it('resolves the retired outils view to Apply', () => {
+    expect(resolveView(params('view=outils'))).toBe('appliquer');
+    expect(resolveViewAlias('outils')).toBe('appliquer');
+  });
+
+  it('does not treat the retired view as a current one', () => {
+    expect(isComparisonView('outils')).toBe(false);
+    expect(resolveViewAlias('elsewhere')).toBeNull();
   });
 
   it('falls back to Explorer for an empty, absent or nonsensical URL', () => {
@@ -157,7 +179,7 @@ describe('buildViewHref', () => {
   });
 
   it('treats a null panel as no anchor', () => {
-    expect(buildViewHref(base, 'outils', null)).toBe(`${base}?view=outils`);
+    expect(buildViewHref(base, 'appliquer', null)).toBe(`${base}?view=appliquer`);
   });
 
   it('round-trips through resolveView for every view', () => {
@@ -170,10 +192,28 @@ describe('buildViewHref', () => {
 });
 
 describe('upgradeLegacyQuery', () => {
-  it('leaves a URL with no legacy tab alone, so the tidy-up writes no history entry', () => {
+  it('leaves a URL with nothing legacy alone, so the tidy-up writes no history entry', () => {
     expect(upgradeLegacyQuery(params(''))).toBeNull();
-    expect(upgradeLegacyQuery(params('view=outils'))).toBeNull();
+    expect(upgradeLegacyQuery(params('view=appliquer'))).toBeNull();
     expect(upgradeLegacyQuery(null)).toBeNull();
+  });
+
+  // An unrecognised view already resolves to the default; rewriting it would spend a history
+  // entry on a typo.
+  it('leaves an unrecognised view alone', () => {
+    expect(upgradeLegacyQuery(params('view=elsewhere'))).toBeNull();
+  });
+
+  it('rewrites the retired outils view even with no tab present', () => {
+    expect(upgradeLegacyQuery(params('view=outils'))).toBe('view=appliquer');
+  });
+
+  // resolveView reads view first, so a rewrite that preferred the tab would move the user to a
+  // different screen than the URL selected.
+  it('keeps a current view when a legacy tab disagrees with it', () => {
+    const upgraded = upgradeLegacyQuery(params('tab=enrichment&view=partager'));
+    expect(upgraded).toBe('view=partager');
+    expect(resolveView(params(upgraded!))).toBe('partager');
   });
 
   it('replaces tab with view and leaves no residue', () => {

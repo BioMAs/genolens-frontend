@@ -12,6 +12,7 @@
 
 import {
   Activity,
+  BarChart3,
   Download,
   Boxes,
   FileText,
@@ -41,6 +42,7 @@ import {
  * null for a module that never had a tab of its own.
  */
 export type ComparisonModuleTab =
+  | 'overview'
   | 'deg'
   | 'metrics'
   | 'enrichment'
@@ -63,7 +65,7 @@ export interface ComparisonModule {
   id: string;
   /** Legacy `?tab=` key, or null for a module that never had one. See the type's note. */
   tab: ComparisonModuleTab | null;
-  /** Which of the three merged screens this module belongs to. */
+  /** Which of the four screens this module belongs to. */
   view: ComparisonView;
   /** The anchor within that screen. */
   panel: ComparisonPanel;
@@ -116,6 +118,19 @@ export function buildComparisonModules({
   stats,
 }: ComparisonModulesInput): ComparisonModule[] {
   const modules: ComparisonModule[] = [
+    {
+      id: 'overview',
+      view: 'explorer',
+      panel: 'summary',
+      tab: 'overview',
+      title: 'Overview',
+      description: 'Up- and down-regulated counts, and the pathways they point at',
+      icon: BarChart3,
+      // The section it anchors has always rendered; it simply had no catalogue entry, so the
+      // rail, the sidebar and the per-view counts all pretended it was not there.
+      state: 'ready',
+      metric: 'Counts · top pathways',
+    },
     {
       id: 'deg',
       view: 'explorer',
@@ -171,7 +186,7 @@ export function buildComparisonModules({
     },
     {
       id: 'drug-discovery',
-      view: 'outils',
+      view: 'appliquer',
       panel: 'drug-discovery',
       tab: drugDiscoveryUnlocked ? 'drug-discovery' : null,
       title: 'Drug targets',
@@ -207,7 +222,7 @@ export function buildComparisonModules({
     },
     {
       id: 'signature',
-      view: 'comprendre',
+      view: 'appliquer',
       panel: 'signature',
       tab: scienceUnlocked ? 'signature' : null,
       title: 'Signature score',
@@ -223,7 +238,7 @@ export function buildComparisonModules({
     },
     {
       id: 'claim',
-      view: 'outils',
+      view: 'appliquer',
       panel: 'cosmetics',
       tab: cosmeticsUnlocked ? 'cosmetics' : null,
       title: 'Skin claims',
@@ -235,7 +250,7 @@ export function buildComparisonModules({
     },
     {
       id: 'external-lookup',
-      view: 'outils',
+      view: 'explorer',
       panel: 'external-lookup',
       tab: 'integrations',
       title: 'Database lookup',
@@ -257,7 +272,7 @@ export function buildComparisonModules({
     },
     {
       id: 'custom-viz',
-      view: 'outils',
+      view: 'explorer',
       panel: 'custom-viz',
       tab: 'custom-viz',
       title: 'Free-form charts',
@@ -322,6 +337,24 @@ export function groupModulesByView(modules: ComparisonModule[]): ComparisonViewG
       counts: countModuleStates(inView),
     };
   });
+}
+
+/**
+ * The state counts as one line — "9 ready · 3 waiting on data · 2 locked".
+ *
+ * Lives here rather than in the grid because two surfaces now say it: the grid's own heading and
+ * the collapsed "All modules" summary on the results page. One wording, one place.
+ */
+export function describeModuleStates(
+  counts: Record<ComparisonModuleState, number>
+): string {
+  return [
+    counts.ready > 0 ? `${counts.ready} ready` : null,
+    counts['needs-data'] > 0 ? `${counts['needs-data']} waiting on data` : null,
+    counts.locked > 0 ? `${counts.locked} locked` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /** Counts per state, for the one-line summary above the grid. */

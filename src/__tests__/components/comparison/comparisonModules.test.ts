@@ -27,11 +27,11 @@ describe('buildComparisonModules', () => {
   it('marks every module ready when the data and the add-ons are there', () => {
     const modules = buildComparisonModules(FULL_ACCESS);
 
-    // 13 since the three-screen restructure: the AI reading and the exports gained catalogue
-    // entries of their own, custom-viz — a valid ?tab= value nothing ever linked to — finally
-    // became reachable, and the old integrations tab split into a network module and a
-    // database-lookup one once the network was rewritten.
-    expect(modules).toHaveLength(13);
+    // 14: the AI reading and the exports gained catalogue entries of their own, custom-viz —
+    // a valid ?tab= value nothing ever linked to — finally became reachable, the old
+    // integrations tab split into a network module and a database-lookup one, and the overview
+    // section was added once the hub started counting what each screen holds.
+    expect(modules).toHaveLength(14);
     expect(modules.every((m) => m.state === 'ready')).toBe(true);
     expect(byId(modules, 'claim').tab).toBe('cosmetics');
     expect(byId(modules, 'reporting').tab).toBe('report');
@@ -156,7 +156,7 @@ describe('countModuleStates', () => {
     });
 
     // clustering, signature and custom-viz all need the matrix; claim and reporting are locked
-    expect(countModuleStates(modules)).toEqual({ ready: 8, 'needs-data': 3, locked: 2 });
+    expect(countModuleStates(modules)).toEqual({ ready: 9, 'needs-data': 3, locked: 2 });
   });
 
   it('counts every add-on as locked when none is unlocked', () => {
@@ -197,18 +197,40 @@ describe('view assignment', () => {
     }
   });
 
-  it('sends interpretation to Understand and add-ons to Tools', () => {
+  it('keeps Understand to what the genes mean together', () => {
     const modules = buildComparisonModules(FULL_ACCESS);
     expect(byId(modules, 'ai').view).toBe('comprendre');
     expect(byId(modules, 'enrichment').view).toBe('comprendre');
-    expect(byId(modules, 'signature').view).toBe('comprendre');
     expect(byId(modules, 'network').view).toBe('comprendre');
-    expect(byId(modules, 'claim').view).toBe('outils');
-    expect(byId(modules, 'drug-discovery').view).toBe('outils');
-    expect(byId(modules, 'custom-viz').view).toBe('outils');
-    expect(byId(modules, 'external-lookup').view).toBe('outils');
     expect(byId(modules, 'reporting').view).toBe('partager');
     expect(byId(modules, 'exports').view).toBe('partager');
+  });
+
+  // The three modules that turn this comparison into something else: a target ranking, a claim
+  // set, a per-sample score. They are also the three business add-ons, which is why the screen
+  // they used to share with a database lookup and a chart builder read as a billing bucket.
+  it('sends the downstream applications to Apply', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    expect(byId(modules, 'drug-discovery').view).toBe('appliquer');
+    expect(byId(modules, 'claim').view).toBe('appliquer');
+    expect(byId(modules, 'signature').view).toBe('appliquer');
+  });
+
+  // Annotating a gene list and charting arbitrary genes are exploration whatever menu they
+  // used to hang under — this is the misfiling the restructure set out to correct.
+  it('moves the two plain tools back into Explorer', () => {
+    const modules = buildComparisonModules(FULL_ACCESS);
+    expect(byId(modules, 'external-lookup').view).toBe('explorer');
+    expect(byId(modules, 'custom-viz').view).toBe('explorer');
+  });
+
+  // Its section always rendered; without a catalogue entry it was absent from the rail, the
+  // sidebar and every per-screen count.
+  it('gives the overview section a catalogue entry of its own', () => {
+    const overview = byId(buildComparisonModules(FULL_ACCESS), 'overview');
+    expect(overview.view).toBe('explorer');
+    expect(overview.panel).toBe('summary');
+    expect(overview.state).toBe('ready');
   });
 
   it('keeps a locked add-on in its view, with its tab and add-on id intact', () => {
@@ -216,7 +238,7 @@ describe('view assignment', () => {
     const claim = byId(modules, 'claim');
 
     expect(claim.state).toBe('locked');
-    expect(claim.view).toBe('outils');
+    expect(claim.view).toBe('appliquer');
     expect(claim.panel).toBe('cosmetics');
     // the tab is withheld because no pane renders it, but the add-on stays requestable
     expect(claim.tab).toBeNull();
@@ -279,11 +301,11 @@ describe('groupModulesByView', () => {
       drugDiscoveryUnlocked: false,
     });
     const groups = groupModulesByView(modules);
-    const outils = groups.find((g) => g.view === 'outils')!;
+    const apply = groups.find((g) => g.view === 'appliquer')!;
 
-    // claim and drug-discovery are locked here; custom-viz and the lookup are not
-    expect(outils.counts.locked).toBe(2);
-    expect(outils.counts.ready).toBe(2);
+    // claim and drug-discovery are locked here; the signature score is not
+    expect(apply.counts.locked).toBe(2);
+    expect(apply.counts.ready).toBe(1);
 
     for (const group of groups) {
       const summed = group.counts.ready + group.counts['needs-data'] + group.counts.locked;
