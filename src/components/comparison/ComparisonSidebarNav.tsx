@@ -21,8 +21,8 @@ interface Props {
  *
  * Before this, eleven modules were eleven flat sidebar entries — the same eleven mutually
  * exclusive panes the tab bar used to show, one level over. Grouping them into Explore,
- * Understand, Share and Tools puts three intentions in front of the reader instead of eleven
- * destinations, and the add-ons fold away until wanted.
+ * Understand, Apply and Share puts four intentions in front of the reader instead of eleven
+ * destinations. The same four, in the same order, are the cards at the top of the results page.
  *
  * Each group heading links to its view; each panel links to an anchor inside it. A module the
  * project has no data for, or an add-on the user has no access to, is listed but not a link —
@@ -110,7 +110,7 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
               aria-disabled
               title={
                 locked
-                  ? `${module.title} — add-on module, request access from Tools`
+                  ? `${module.title} — add-on module, request access from "All modules"`
                   : `${module.title} — ${module.hint}`
               }
               className={`${itemClass} !pl-6 !text-[11px] cursor-default`}
@@ -121,18 +121,6 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
             </span>
           );
         });
-
-        // Tools folds away: it holds the add-ons and the niche panels, which are not what
-        // someone arriving at a comparison is looking for. `<details>` because the design
-        // system has no Accordion, and adding one for a single use would be out of proportion.
-        if (group.view === 'outils') {
-          return (
-            <details key={group.view} open={activeView === 'outils'}>
-              <summary className="list-none">{heading}</summary>
-              {panels}
-            </details>
-          );
-        }
 
         return (
           <div key={group.view}>

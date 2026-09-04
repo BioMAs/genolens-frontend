@@ -30,8 +30,14 @@ import CosmeticsTab from './cosmetics/CosmeticsTab';
 import { useUserProfile } from '@/hooks/useCosmetics';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
+import ComparisonViewHub from './comparison/ComparisonViewHub';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
-import { buildComparisonModules } from './comparison/comparisonModules';
+import {
+  buildComparisonModules,
+  countModuleStates,
+  describeModuleStates,
+  groupModulesByView,
+} from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
@@ -41,8 +47,6 @@ import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import {
   resolveView,
   upgradeLegacyQuery,
-  VIEW_DESCRIPTIONS,
-  VIEW_LABELS,
   type ComparisonPanel,
   type ComparisonView,
 } from './comparison/comparisonRoutes';
@@ -539,6 +543,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     ]
   );
 
+  /** The four screens with their modules, for the hub's cards and their counts. */
+  const viewGroups = useMemo(() => groupModulesByView(comparisonModules), [comparisonModules]);
+
   /** Sections of the open screen, for the rail. Only what actually renders. */
   const railEntries = useMemo<RailEntry[]>(
     () =>
@@ -626,18 +633,38 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         />
       </div>
 
+      {/* The four screens, named and numbered. Without this the split lived only in the
+          sidebar, so from here you could see the screen you were on and nothing else. */}
+      <div className="mt-4">
+        <ComparisonViewHub
+          groups={viewGroups}
+          activeView={activeView}
+          onSelect={(view) => selectView(view)}
+        />
+      </div>
+
+      {/* Collapsed rather than a screen of its own: it answers "what else is there", which is a
+          question you ask once, and it is the only surface carrying the add-on requests — so it
+          has to be reachable from all four screens, not just the one it used to hide in. */}
+      <details className="mt-3 gl-card px-4 py-3">
+        <summary className="cursor-pointer text-[12.5px] font-semibold list-none" style={{ color: 'var(--text-secondary)' }}>
+          All modules of this comparison
+          <span className="ml-2 font-normal" style={{ color: 'var(--text-muted)' }}>
+            {describeModuleStates(countModuleStates(comparisonModules))}
+          </span>
+        </summary>
+        <div className="mt-4">
+          <ComparisonModuleGrid
+            modules={comparisonModules}
+            onOpen={(view, panel) => selectView(view, panel)}
+            showHeader={false}
+          />
+        </div>
+      </details>
+
       {/* One screen at a time; within it, anchored sections rather than exclusive panes. */}
       <div className="mt-4 gl-card overflow-hidden">
           <div className="p-5 space-y-8">
-            <div>
-              <h2 className="font-display text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {VIEW_LABELS[activeView]}
-              </h2>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {VIEW_DESCRIPTIONS[activeView]}
-              </p>
-            </div>
-
             <SectionRail entries={railEntries} viewKey={activeView} />
 
             {/* ── Explore ───────────────────────────────────────────────── */}
@@ -740,10 +767,56 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               </section>
             )}
 
-            {/* Method statistics (per-method p-values + Stouffer) */}
             {activeView === 'explorer' && (
               <section id="methods" className="scroll-mt-24">
                 <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+              </section>
+            )}
+
+            {activeView === 'explorer' && (
+              <section id="heatmap" className="scroll-mt-24">
+              {matrixDataset && degDataset ? (
+                  <HeatmapSection
+                    degDataset={degDataset}
+                    matrixDataset={matrixDataset}
+                    comparisonName={actualComparisonName}
+                    sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                    sampleConditionMap={
+                      Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                    }
+                  />
+              ) : matrixDataset ? (
+                <ClusteringAnalysis
+                  projectId={projectId}
+                  datasetId={matrixDataset.id}
+                  datasetName={matrixDataset.name}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Clustering requires an expression matrix (count matrix).
+                    Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
+                  </p>
+                </div>
+              )}
+              </section>
+            )}
+
+            {activeView === 'explorer' && (
+              <section id="external-lookup" className="scroll-mt-24">
+                <StringEnrichmentPanel />
+              </section>
+            )}
+
+            {activeView === 'explorer' && (
+              <section id="custom-viz" className="scroll-mt-24">
+                <CustomVisualizationPanel
+                  datasetId={degDataset.id}
+                  comparisonName={actualComparisonName}
+                  allGenes={allMatrixGenes}
+                />
               </section>
             )}
 
@@ -836,8 +909,68 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               </section>
             )}
 
-            {/* ── Tools ─────────────────────────────────────────────────── */}
-            {activeView === 'outils' && cosmeticsUnlocked && (
+            {activeView === 'comprendre' && (
+              <section id="network" className="scroll-mt-24" ref={attachNetwork}>
+                {networkVisible ? (
+                  <PPINetworkSection
+                    dataset={degDataset}
+                    comparisonName={actualComparisonName}
+                  />
+                ) : (
+                  <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
+                )}
+              </section>
+            )}
+
+            {/* ── Apply ─────────────────────────────────────────────────── */}
+            {activeView === 'appliquer' && drugDiscoveryUnlocked && (
+              <section id="drug-discovery" className="scroll-mt-24">
+              {degDataset ? (
+                /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
+                   que porte `deg_genes.comparison_name` côté base. */
+                <DrugDiscoveryComparisonPanel
+                  datasetId={degDataset.id}
+                  comparisonName={actualComparisonName}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG results</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Drug target scoring is built from the differentially expressed genes of this
+                    comparison, so it needs the DEG results to be available.
+                  </p>
+                </div>
+              )}
+              </section>
+            )}
+
+            {activeView === 'appliquer' && scientificUnlocked && (
+              <section id="signature" className="scroll-mt-24" ref={attachSignature}>
+              {!signatureVisible ? (
+                <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
+              ) : matrixDataset ? (
+                <SignatureScorePanel
+                  projectId={projectId}
+                  matrixDatasetId={matrixDataset.id}
+                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+                  initialGenes={focusedTerm?.genes}
+                  initialLabel={focusedTerm?.name}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    Signature scoring requires an expression matrix (count matrix) for this project.
+                  </p>
+                </div>
+              )}
+              </section>
+            )}
+
+            {activeView === 'appliquer' && cosmeticsUnlocked && (
               <section id="cosmetics" className="scroll-mt-24">
                 <CosmeticsTab
                   datasetId={degDataset?.id}
@@ -898,128 +1031,6 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {activeView === 'partager' && reportCustomizationUnlocked && (
               <section id="report" className="scroll-mt-24">
                 <ReportCustomizationPanel />
-              </section>
-            )}
-
-            {/* Heatmap & clustering */}
-            {activeView === 'explorer' && (
-              <section id="heatmap" className="scroll-mt-24">
-              {matrixDataset && degDataset ? (
-                  <HeatmapSection
-                    degDataset={degDataset}
-                    matrixDataset={matrixDataset}
-                    comparisonName={actualComparisonName}
-                    sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                    sampleConditionMap={
-                      Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
-                    }
-                  />
-              ) : matrixDataset ? (
-                <ClusteringAnalysis
-                  projectId={projectId}
-                  datasetId={matrixDataset.id}
-                  datasetName={matrixDataset.name}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Clustering requires an expression matrix (count matrix).
-                    Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {activeView === 'comprendre' && (
-              <section id="network" className="scroll-mt-24" ref={attachNetwork}>
-                {networkVisible ? (
-                  <PPINetworkSection
-                    dataset={degDataset}
-                    comparisonName={actualComparisonName}
-                  />
-                ) : (
-                  <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
-                )}
-              </section>
-            )}
-
-            {/* Signature scoring */}
-            {activeView === 'comprendre' && scientificUnlocked && (
-              <section id="signature" className="scroll-mt-24" ref={attachSignature}>
-              {!signatureVisible ? (
-                <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
-              ) : matrixDataset ? (
-                <SignatureScorePanel
-                  projectId={projectId}
-                  matrixDatasetId={matrixDataset.id}
-                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
-                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-                  initialGenes={focusedTerm?.genes}
-                  initialLabel={focusedTerm?.name}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Signature scoring requires an expression matrix (count matrix) for this project.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {/* Drug targets — la comparaison face au classement de cibles (mode B) */}
-            {activeView === 'outils' && drugDiscoveryUnlocked && (
-              <section id="drug-discovery" className="scroll-mt-24">
-              {degDataset ? (
-                /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
-                   que porte `deg_genes.comparison_name` côté base. */
-                <DrugDiscoveryComparisonPanel
-                  datasetId={degDataset.id}
-                  comparisonName={actualComparisonName}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG results</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Drug target scoring is built from the differentially expressed genes of this
-                    comparison, so it needs the DEG results to be available.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {activeView === 'outils' && (
-              <section id="external-lookup" className="scroll-mt-24">
-                <StringEnrichmentPanel />
-              </section>
-            )}
-
-            {/* The whole catalogue, so a locked add-on stays requestable and every screen
-                remains discoverable from one place. */}
-            {activeView === 'outils' && (
-              <section id="catalogue" className="scroll-mt-24">
-                <ComparisonModuleGrid
-                  modules={comparisonModules}
-                  onOpen={(view, panel) => selectView(view, panel)}
-                />
-              </section>
-            )}
-
-            {/* Custom Visualizations — a valid ?tab= value nothing ever linked to, until now */}
-            {activeView === 'outils' && (
-              <section id="custom-viz" className="scroll-mt-24">
-                <CustomVisualizationPanel
-                  datasetId={degDataset.id}
-                  comparisonName={actualComparisonName}
-                  allGenes={allMatrixGenes}
-                />
               </section>
             )}
           </div>

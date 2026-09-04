@@ -415,6 +415,18 @@ body {
   border-color: rgba(15, 157, 107, 0.22);
 }
 
+/* Teal text that stays readable on a dark surface. `--sl-teal-dark` is a light-theme value
+   with no dark counterpart, so applying it directly leaves text dimmer than the plain
+   `--text-primary` beside it — which inverts the emphasis on anything marked as current.
+   Same remedy as `.dark .nav-item.active` above, factored out so components can reuse it. */
+.gl-teal-text {
+  color: var(--sl-teal-dark);
+}
+
+.dark .gl-teal-text {
+  color: #34d39e;
+}
+
 .nav-icon {
   width: 18px;
   height: 18px;
