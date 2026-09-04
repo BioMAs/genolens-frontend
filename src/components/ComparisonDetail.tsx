@@ -29,15 +29,10 @@ import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
 import { useUserProfile } from '@/hooks/useCosmetics';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
-import ComparisonModuleGrid from './comparison/ComparisonModuleGrid';
+import ComparisonModuleDisclosure from './comparison/ComparisonModuleDisclosure';
 import ComparisonViewHub from './comparison/ComparisonViewHub';
 import OverviewTopPathways from './comparison/OverviewTopPathways';
-import {
-  buildComparisonModules,
-  countModuleStates,
-  describeModuleStates,
-  groupModulesByView,
-} from './comparison/comparisonModules';
+import { buildComparisonModules, groupModulesByView } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
@@ -546,6 +541,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   /** The four screens with their modules, for the hub's cards and their counts. */
   const viewGroups = useMemo(() => groupModulesByView(comparisonModules), [comparisonModules]);
 
+  /** The open screen's group, which the module accordion below details. */
+  const activeGroup = useMemo(
+    () => viewGroups.find((group) => group.view === activeView),
+    [viewGroups, activeView]
+  );
+
   /** Sections of the open screen, for the rail. Only what actually renders. */
   const railEntries = useMemo<RailEntry[]>(
     () =>
@@ -643,24 +644,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         />
       </div>
 
-      {/* Collapsed rather than a screen of its own: it answers "what else is there", which is a
-          question you ask once, and it is the only surface carrying the add-on requests — so it
-          has to be reachable from all four screens, not just the one it used to hide in. */}
-      <details className="mt-3 gl-card px-4 py-3">
-        <summary className="cursor-pointer text-[12.5px] font-semibold list-none" style={{ color: 'var(--text-secondary)' }}>
-          All modules of this comparison
-          <span className="ml-2 font-normal" style={{ color: 'var(--text-muted)' }}>
-            {describeModuleStates(countModuleStates(comparisonModules))}
-          </span>
-        </summary>
-        <div className="mt-4">
-          <ComparisonModuleGrid
-            modules={comparisonModules}
-            onOpen={(view, panel) => selectView(view, panel)}
-            showHeader={false}
-          />
-        </div>
-      </details>
+      <ComparisonModuleDisclosure
+        group={activeGroup}
+        onOpen={(view, panel) => selectView(view, panel)}
+      />
 
       {/* One screen at a time; within it, anchored sections rather than exclusive panes. */}
       <div className="mt-4 gl-card overflow-hidden">
