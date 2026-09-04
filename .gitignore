@@ -46,3 +46,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated code-graph cache (graphify) — never belongs in the repo.
+graphify-out/
