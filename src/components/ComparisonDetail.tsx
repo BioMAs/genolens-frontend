@@ -39,6 +39,7 @@ import SectionRail, { type RailEntry } from './comparison/SectionRail';
 import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
 import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
+import { useDeferredAnchorScroll } from '@/hooks/useDeferredAnchorScroll';
 import {
   resolveView,
   upgradeLegacyQuery,
@@ -119,6 +120,11 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   const { selectGenes, focusTerm } = useComparisonActions();
   const focusedTerm = useFocusedTerm();
 
+  // Without this, `selectView` wrote the hash and the page stayed where it was: `replaceState`
+  // does not honour anchors. Retried against `activeView` so a cross-screen jump waits for its
+  // section to mount. See the hook for the whole story.
+  const requestScroll = useDeferredAnchorScroll(activeView);
+
   const selectView = useCallback((view: ComparisonView, panel?: ComparisonPanel) => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
@@ -130,7 +136,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     // the page without refetching it. replaceState, not push: switching screens shouldn't
     // pile up history entries.
     window.history.replaceState(null, '', url.toString());
-  }, []);
+    if (panel) requestScroll(panel);
+  }, [requestScroll]);
 
   // Cosmetic only: the right screen is already rendering, thanks to the derivation above. This
   // just rewrites an old link to the current contract so the address bar stops advertising a

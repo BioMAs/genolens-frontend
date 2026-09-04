@@ -18,6 +18,7 @@ import ComparisonGrid from './ComparisonGrid';
 import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 import { useScientificModule } from '@/hooks/useAddOnModules';
+import { scrollToId } from '@/utils/scrollToId';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -421,14 +422,6 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 // ---------------------------------------------------------------------------
 
 type IconType = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-
-function scrollToId(id: string) {
-  if (typeof window === 'undefined') return;
-  const el = document.getElementById(id);
-  if (!el) return;
-  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-}
 
 function StatTile({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
