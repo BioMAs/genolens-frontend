@@ -3,9 +3,9 @@
 /**
  * Up / down counts at the current thresholds, above the plot and the table they govern.
  *
- * The counts are derived from the volcano's point cloud, not from a separate request:
- * `useVolcanoPoints` is keyed without thresholds, so this component and the plot below it share
- * one React Query entry. Tightening a threshold recounts in memory and issues no request at all.
+ * Counts come from `useSignificanceSummary`, the page's single DEG definition — the same hook the
+ * header reads, so this strip can no longer contradict it. See that hook for why the two used to
+ * disagree.
  *
  * Deliberately not read from the response's `significant_genes`: that is the server's verdict at
  * whatever thresholds the request carried, and the request always carries the ingestion defaults.
@@ -13,10 +13,8 @@
  * the cached path (`datasets.py:2039`) versus genes tested on the cold path (`:2159`).
  */
 
-import { useMemo } from 'react';
-import { useThresholds, useViewPreferences } from '@/contexts/ComparisonSelectionContext';
-import { useVolcanoPoints } from '@/hooks/useVisualizations';
-import { deriveSignificance } from '@/utils/volcano';
+import { useViewPreferences } from '@/contexts/ComparisonSelectionContext';
+import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
 import { getPalette } from '@/utils/chartPalettes';
 import ThresholdControl from './ThresholdControl';
 
@@ -28,19 +26,13 @@ interface Props {
 }
 
 export default function SynthesisStrip({ datasetId, comparisonName, conditions }: Props) {
-  const thresholds = useThresholds();
   const { colorblind } = useViewPreferences();
   const palette = getPalette(colorblind ? 'colorblind' : 'standard');
 
-  const { data, isLoading, isError } = useVolcanoPoints(datasetId, comparisonName);
+  const { summary, isLoading, isError } = useSignificanceSummary(datasetId, comparisonName);
 
-  const summary = useMemo(
-    () => deriveSignificance(data?.points ?? [], thresholds),
-    [data?.points, thresholds]
-  );
-
-  const total = summary.significant;
-  const upShare = total > 0 ? (summary.up / total) * 100 : 50;
+  const total = summary?.significant ?? 0;
+  const upShare = total > 0 ? ((summary?.up ?? 0) / total) * 100 : 50;
 
   return (
     <div
@@ -54,7 +46,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
             <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
               Counting significant genes…
             </span>
-          ) : isError ? (
+          ) : isError || !summary ? (
             <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
               Counts unavailable
             </span>
@@ -90,7 +82,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
 
       {/* Balance bar — the two conditions anchored at its ends, the idiom the overview
           already uses. Hidden while there is nothing to weigh. */}
-      {!isLoading && !isError && total > 0 && (
+      {!isLoading && !isError && summary && total > 0 && (
         <div className="mt-3">
           <div
             className="flex h-2 w-full overflow-hidden"
