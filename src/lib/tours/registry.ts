@@ -27,7 +27,7 @@ export const TOURS: Record<TourId, TourDefinition> = {
         popover: {
           title: 'Navigation',
           description:
-            'Reach your dashboard and tools from this side menu.',
+            'Reach your dashboard, projects, comparisons and tools from this side menu.',
           side: 'right',
           align: 'start',
         },
