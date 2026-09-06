@@ -11,7 +11,8 @@ import { X, ArrowUpCircle } from 'lucide-react';
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  /** Optional: the project list cache is invalidated here regardless. */
+  onSuccess?: () => void;
 }
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProjectModalProps) {
@@ -40,7 +41,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
       await queryClient.invalidateQueries({ queryKey: ['subscription'] });
       setName('');
       setDescription('');
-      onSuccess();
+      onSuccess?.();
       onClose();
       // Redirect to guided setup wizard
       router.push(`/projects/${res.data.id}/setup`);
