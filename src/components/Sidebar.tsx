@@ -30,10 +30,16 @@ interface SidebarProps {
   userRole: string | null;
 }
 
+/**
+ * `match: 'exact'` keeps a workspace item dark once you descend into a project:
+ * /projects/{id}/… belongs to the Project group rendered below, not to Projects.
+ */
 const primaryNav = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/tools', label: 'Tools', icon: Wrench },
-];
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, match: 'exact' },
+  { href: '/projects', label: 'Projects', icon: FolderKanban, match: 'exact' },
+  { href: '/comparisons', label: 'Comparisons', icon: GitCompareArrows, match: 'exact' },
+  { href: '/tools', label: 'Tools', icon: Wrench, match: 'prefix' },
+] as const;
 
 const projectNav = [
   { key: 'overview', suffix: '', label: 'Overview', icon: FolderKanban },
@@ -78,10 +84,12 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
     .slice(0, 2)
     .toUpperCase();
 
-  const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
-    return pathname.startsWith(href);
-  };
+  // 'prefix' matches the route and its children only — plain startsWith would
+  // also light up on an unrelated sibling such as /toolsmith.
+  const isActive = (href: string, match: 'exact' | 'prefix' = 'prefix') =>
+    match === 'exact'
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   const isProjectActive = (target: string) => pathname === target || pathname.startsWith(`${target}/`);
 
@@ -107,11 +115,11 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
         <div className="mb-4">
           <span className="nav-section-label">Workspace</span>
           <div className="mt-1.5 space-y-0.5" data-tour="sidebar-workspace">
-            {primaryNav.map(({ href, label, icon: Icon }) => (
+            {primaryNav.map(({ href, label, icon: Icon, match }) => (
               <Link
                 key={href}
                 href={href}
-                className={`nav-item${isActive(href) ? ' active' : ''}`}
+                className={`nav-item${isActive(href, match) ? ' active' : ''}`}
               >
                 <Icon className="nav-icon" />
                 {label}
