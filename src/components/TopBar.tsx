@@ -7,7 +7,9 @@ import HelpTourButton from './onboarding/HelpTourButton';
 
 /** Map route segments to human-readable page titles. */
 function resolvePageTitle(pathname: string): string {
-  if (pathname === '/dashboard') return 'Projects';
+  if (pathname === '/dashboard') return 'Dashboard';
+  if (pathname === '/projects') return 'Projects';
+  if (pathname === '/comparisons') return 'Comparisons';
   if (pathname === '/tools') return 'Tools';
   if (pathname.startsWith('/tools/ontology') && pathname.length > '/tools/ontology'.length) return 'GO Term';
   if (pathname.startsWith('/tools/ontology')) return 'Gene Ontology Browser';

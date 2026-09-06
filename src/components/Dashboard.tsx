@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import ProjectList from './ProjectList';
+import Link from 'next/link';
 import CreateProjectModal from './CreateProjectModal';
 import DashboardWelcomeBanner from './DashboardWelcomeBanner';
 import DashboardKpiBar from './DashboardKpiBar';
@@ -77,12 +77,40 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
         <div className="lg:col-span-8">
-          <h3
-            className="font-display text-sm font-semibold mb-3"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            Recent projects
-          </h3>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3
+              className="font-display text-sm font-semibold"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Recent projects
+            </h3>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/projects"
+                className="text-xs font-medium hover:underline"
+                style={{ color: 'var(--sl-purple)' }}
+              >
+                View all →
+              </Link>
+              <button
+                data-tour="dashboard-new-project"
+                onClick={() => !isAtProjectLimit && setIsModalOpen(true)}
+                disabled={isAtProjectLimit}
+                title={isAtProjectLimit ? `Project limit reached (${subscription?.project_count}/${subscription?.max_projects}). Upgrade your plan.` : undefined}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--sl-purple)' }}
+                onMouseEnter={(e) => {
+                  if (!isAtProjectLimit) (e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)';
+                }}
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')
+                }
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New Project
+              </button>
+            </div>
+          </div>
           <RecentProjectsSection
             projects={projects}
             statsMap={statsMap}
@@ -106,48 +134,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Divider */}
-      <div
-        className="mb-6"
-        style={{ borderTop: '1px solid var(--border-subtle)' }}
-      />
-
-      {/* All Projects */}
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h2
-          className="font-display font-bold tracking-tight"
-          style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}
-        >
-          All Projects
-        </h2>
-        <button
-          data-tour="dashboard-new-project"
-          onClick={() => !isAtProjectLimit && setIsModalOpen(true)}
-          disabled={isAtProjectLimit}
-          title={isAtProjectLimit ? `Project limit reached (${subscription?.project_count}/${subscription?.max_projects}). Upgrade your plan.` : undefined}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: 'var(--sl-purple)' }}
-          onMouseEnter={(e) => {
-            if (!isAtProjectLimit) (e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)';
-          }}
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')
-          }
-        >
-          <Plus className="h-4 w-4" />
-          New Project
-        </button>
-      </div>
-
-      <ProjectList onCreateClick={() => setIsModalOpen(true)} />
-
-      <CreateProjectModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          // Cache invalidation happens inside CreateProjectModal via React Query
-        }}
-      />
+      <CreateProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }
