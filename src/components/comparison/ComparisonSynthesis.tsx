@@ -20,9 +20,15 @@ interface Props {
   /** sample → condition, for the per-condition sample counts. */
   sampleConditionMap: Record<string, string>;
   loading?: boolean;
-  /** Thresholds applied upstream, shown so the numbers can be read in context. */
-  padjThreshold?: number;
-  log2fcThreshold?: number;
+  /**
+   * Thresholds the counts were derived at, shown so the numbers can be read in context.
+   *
+   * Required on purpose. These used to carry defaults of 0.05 / 0.58 that no caller ever
+   * overrode, so the caption stated a rule the numbers had not been computed with — the counts
+   * came frozen from ingestion while the caption claimed the UI's own thresholds.
+   */
+  padjThreshold: number;
+  log2fcThreshold: number;
 }
 
 /**
@@ -38,8 +44,8 @@ export default function ComparisonSynthesis({
   stats,
   sampleConditionMap,
   loading = false,
-  padjThreshold = 0.05,
-  log2fcThreshold = 0.58,
+  padjThreshold,
+  log2fcThreshold,
 }: Props) {
   const [testCondition, referenceCondition] = useMemo(() => {
     const parts = comparisonName.split('_vs_');
@@ -81,7 +87,7 @@ export default function ComparisonSynthesis({
 
   const context = [
     genesTested ? `of ${num(genesTested)} genes tested` : null,
-    `padj ≤ ${padjThreshold}`,
+    `padj < ${padjThreshold}`,
     `|log2FC| > ${log2fcThreshold}`,
     totalSamples > 0
       ? `${totalSamples} sample${totalSamples === 1 ? '' : 's'}${sampleDetail ? ` (${sampleDetail})` : ''}`

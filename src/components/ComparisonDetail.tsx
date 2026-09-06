@@ -40,6 +40,7 @@ import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
 import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import { useDeferredAnchorScroll } from '@/hooks/useDeferredAnchorScroll';
+import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
 import {
   resolveView,
   upgradeLegacyQuery,
@@ -51,6 +52,7 @@ import {
   ComparisonSelectionProvider,
   useComparisonActions,
   useFocusedTerm,
+  useThresholds,
 } from '@/contexts/ComparisonSelectionContext';
 
 interface ComparisonDetailProps {
@@ -58,9 +60,6 @@ interface ComparisonDetailProps {
   comparisonName: string;
   analysisId?: string;
 }
-
-type GenericRow = Record<string, unknown>;
-
 
 /**
  * Stands in for a section that has not been mounted yet.
@@ -202,11 +201,13 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   const [reprocessing, setReprocessing] = useState(false);
   const [reprocessError, setReprocessError] = useState<string | null>(null);
 
-  // Still here on purpose: this effect does not only read, it `api.patch`es the computed
-  // statistics back onto the dataset. That write-on-read has to become an explicit mutation
-  // before it can move into a hook, which is a ticket of its own.
-  const [stats, setStats] = useState<{degUp: number, degDown: number, degTotal: number, genesTested?: number} | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
+  // Genes that entered the test — the denominator of "of N genes tested". A row count, blind to
+  // thresholds, and the one figure the volcano cloud cannot supply: the cloud is capped at
+  // VOLCANO_MAX_POINTS, so its length is a floor rather than the tested count.
+  //
+  // The up/down/total counts are NOT read from here. They come from useSignificanceSummary below,
+  // which is the page's single DEG definition.
+  const [genesTested, setGenesTested] = useState<number | undefined>(undefined);
 
   const handleReprocessDEG = async () => {
     if (!degDataset) return;
@@ -257,254 +258,86 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
 
 
-  // Calculate or fetch statistics from DEG dataset
+  // Fetch the denominator only.
+  //
+  // This effect used to compute and display the DEG counts, and to `api.patch` them back onto
+  // `dataset_metadata` — a write-on-read that froze client-computed numbers into the dataset and
+  // is precisely how the page ended up with two contradictory counts. Both write-backs and the
+  // 100k-row legacy fallback are gone; the counts now come from useSignificanceSummary.
   useEffect(() => {
     if (!degDataset) return;
 
     const metadata = degDataset.dataset_metadata as Record<string, unknown> | undefined;
-    const toNumber = (value: unknown): number => {
-      if (typeof value === 'number') return value;
+    const toNumber = (value: unknown): number | undefined => {
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
       if (typeof value === 'string') {
         const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : 0;
+        return Number.isFinite(parsed) ? parsed : undefined;
       }
-      return 0;
+      return undefined;
     };
     const comparisons =
       metadata?.comparisons && typeof metadata.comparisons === 'object' && !Array.isArray(metadata.comparisons)
         ? (metadata.comparisons as Record<string, Record<string, unknown>>)
         : undefined;
 
-    // Check if stats already exist in metadata
-    if (metadata?.deg_up !== undefined && metadata?.deg_down !== undefined) {
-      const degUp = toNumber(metadata.deg_up);
-      const degDown = toNumber(metadata.deg_down);
-      const degTotal = metadata.deg_total !== undefined ? toNumber(metadata.deg_total) : degUp + degDown;
-
-      // Stats exist at top level (for individual comparison datasets)
-      setStats({
-        degUp,
-        degDown,
-        degTotal,
-        genesTested: metadata.deg_tested !== undefined ? toNumber(metadata.deg_tested) : undefined,
-      });
+    // Already known from a previous ingestion or visit.
+    const fromMetadata = globalDatasetId
+      ? toNumber(comparisons?.[decodedName]?.deg_tested)
+      : toNumber(metadata?.deg_tested);
+    if (fromMetadata !== undefined) {
+      setGenesTested(fromMetadata);
       return;
     }
 
-    if (globalDatasetId && comparisons?.[decodedName]) {
-      const compData = comparisons[decodedName];
-      if (compData.deg_up !== undefined && compData.deg_down !== undefined) {
-        // Stats exist in comparisons metadata (for global DEG files)
-        setStats({
-          degUp: toNumber(compData.deg_up),
-          degDown: toNumber(compData.deg_down),
-          degTotal: toNumber(compData.deg_total),
-          genesTested: compData.deg_tested !== undefined ? toNumber(compData.deg_tested) : undefined,
-        });
-        return;
-      }
-    }
-
-    // Stats don't exist - fetch them using optimized endpoint
-    const fetchStatsFromAPI = async () => {
-      setStatsLoading(true);
+    let cancelled = false;
+    (async () => {
       try {
-        // OPTIMIZATION: Use new /stats endpoint instead of fetching 100K rows
-        // Old: Fetch 100K rows + calculate in JavaScript (5-15 MB + 1-2s CPU)
-        // New: Backend calculates stats (<1 KB, <500ms)
         const response = await api.get(`/datasets/${degDataset.id}/stats`, {
-          params: globalDatasetId ? { comparison_name: decodedName } : {}
+          params: globalDatasetId ? { comparison_name: decodedName } : {},
         });
-
-        const { up_genes, down_genes, total_genes, significant_genes } = response.data;
-        
-        // Convert to expected format
-        const newStats = {
-          degUp: up_genes || 0,
-          degDown: down_genes || 0,
-          degTotal: significant_genes || total_genes || 0,
-          // Denominator of the response — shown as "of N genes tested".
-          genesTested: typeof total_genes === 'number' ? total_genes : undefined,
-        };
-        
-        setStats(newStats);
-
-        // Save statistics back to database metadata for future use
-        const updatedMetadata = globalDatasetId
-          ? {
-              comparisons: {
-                ...comparisons,
-                [decodedName]: {
-                  ...comparisons?.[decodedName],
-                  deg_up: newStats.degUp,
-                  deg_down: newStats.degDown,
-                  deg_total: newStats.degTotal,
-                  deg_tested: newStats.genesTested
-                }
-              }
-            }
-          : {
-              ...metadata,
-              deg_up: newStats.degUp,
-              deg_down: newStats.degDown,
-              deg_total: newStats.degTotal,
-              deg_tested: newStats.genesTested
-            };
-
-        await api.patch(`/datasets/${degDataset.id}`, {
-          dataset_metadata: updatedMetadata
-        });
-
-        console.log('DEG statistics fetched and saved:', newStats);
-        setStatsLoading(false);
+        if (cancelled) return;
+        setGenesTested(toNumber(response.data?.total_genes));
       } catch (err) {
-        console.error('Failed to fetch DEG statistics from API:', err);
-        // Fallback to old computation method
-        await computeAndSaveStatsLegacy();
+        // A missing denominator only drops the "of N genes tested" clause; the counts stand.
+        console.error('Failed to fetch genes-tested count:', err);
+        if (!cancelled) setGenesTested(undefined);
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-
-    // Legacy fallback computation method (kept for compatibility)
-    const computeAndSaveStatsLegacy = async () => {
-      setStatsLoading(true);
-      try {
-        // Query the dataset to get all DEG data
-        const response = await api.post(`/datasets/${degDataset.id}/query`, {
-          limit: 100000 // Get all genes
-        });
-
-        const data = response.data.data;
-        const columns = response.data.columns;
-
-        // Find the relevant columns for this comparison
-        let logFCCol: string | null = null;
-        let padjCol: string | null = null;
-
-        // For global dataset, find columns for this comparison
-        if (globalDatasetId) {
-          const compData = comparisons?.[decodedName];
-          logFCCol = typeof compData?.logFC === 'string' ? compData.logFC : null;
-          padjCol = typeof compData?.padj === 'string' ? compData.padj : null;
-        } else {
-          // For individual comparison dataset, find any logFC/padj columns
-          logFCCol = columns.find((c: string) =>
-            c.includes('log2FoldChange') || c.includes('logFC')
-          ) || null;
-          padjCol = columns.find((c: string) =>
-            c.includes('padj') || c.includes('adj.P.Val') || c.includes('FDR')
-          ) || null;
-        }
-
-        if (!logFCCol || !padjCol) {
-          console.warn('Could not find logFC or padj columns');
-          setStats({ degUp: 0, degDown: 0, degTotal: 0 });
-          return;
-        }
-
-        // Calculate statistics using EXACT same logic as DEG table
-        // Check if contrast column exists
-        const contrastCol = `contrast:${decodedName}`;
-        const hasContrastCol = columns.includes(contrastCol);
-
-        console.log('[ComparisonDetail] Contrast column:', contrastCol, 'Found:', hasContrastCol);
-
-        let degUp = 0;
-        let degDown = 0;
-        let degTotal = 0;
-
-          if (hasContrastCol) {
-          // Use contrast column to count (matches DEG table logic exactly)
-            (Array.isArray(data) ? data : []).forEach((row: GenericRow) => {
-            const contrastValue = row[contrastCol];
-
-            // Only count rows with non-empty contrast values
-            if (contrastValue && contrastValue !== '' && contrastValue !== null) {
-              const upperValue = String(contrastValue).toUpperCase();
-              if (upperValue === 'UP') {
-                degUp++;
-                degTotal++;
-              } else if (upperValue === 'DOWN') {
-                degDown++;
-                degTotal++;
-              }
-            }
-          });
-        } else {
-          // Fallback: use logFC sign (old method)
-          const logFCThreshold = 0.58;
-          const padjThreshold = 0.05;
-
-            const logFCCol = columns.find((c: string) => c.includes('log2FoldChange') || c.includes('logFC'));
-            const padjCol = columns.find((c: string) => c.includes('padj') || c.includes('adj.P.Val') || c.includes('FDR'));
-
-            if (!logFCCol || !padjCol) {
-              setStats({ degUp: 0, degDown: 0, degTotal: 0 });
-              return;
-            }
-
-            (Array.isArray(data) ? data : []).forEach((row: GenericRow) => {
-              const logFC = Number(row[logFCCol]);
-              const padj = Number(row[padjCol]);
-
-            // Filter: padj < 0.05 AND |logFC| > 0.58
-              if (Number.isFinite(logFC) && Number.isFinite(padj) && padj < padjThreshold && Math.abs(logFC) > logFCThreshold) {
-              degTotal++;
-              if (logFC > 0) {
-                degUp++;
-              } else {
-                degDown++;
-              }
-            }
-          });
-        }
-
-        console.log('[ComparisonDetail] Calculated stats:', { degUp, degDown, degTotal });
-
-        const newStats = {
-          degUp,
-          degDown,
-          degTotal,
-          genesTested: Array.isArray(data) ? data.length : undefined,
-        };
-        setStats(newStats);
-
-        // Save statistics back to database
-        const updatedMetadata = globalDatasetId
-          ? {
-              comparisons: {
-                ...comparisons,
-                [decodedName]: {
-                  ...comparisons?.[decodedName],
-                  deg_up: degUp,
-                  deg_down: degDown,
-                  deg_total: degTotal,
-                  deg_tested: newStats.genesTested
-                }
-              }
-            }
-          : {
-              ...metadata,
-              deg_up: degUp,
-              deg_down: degDown,
-              deg_total: degTotal,
-              deg_tested: newStats.genesTested
-            };
-
-        await api.patch(`/datasets/${degDataset.id}`, {
-          dataset_metadata: updatedMetadata
-        });
-
-        console.log('DEG statistics calculated and saved:', newStats);
-      } catch (err) {
-        console.error('Failed to compute DEG statistics:', err);
-        setStats({ degUp: 0, degDown: 0, degTotal: 0 });
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-
-    fetchStatsFromAPI();
   }, [degDataset, decodedName, globalDatasetId]);
+
+  // The page's single DEG count, recomputed at the live thresholds. Every consumer below — the
+  // response synthesis, the header chips, the module subtitles — reads this, so they cannot drift
+  // apart the way the header and the overview had. The overview strip calls the same hook and
+  // shares its React Query entry, so this costs no extra request.
+  const { summary: significance, isLoading: significanceLoading } = useSignificanceSummary(
+    degDataset?.id ?? '',
+    actualComparisonName,
+    !!degDataset
+  );
+
+  // Same thresholds the counts were derived at, so the caption below states the rule that
+  // actually produced them rather than a hardcoded guess.
+  const thresholds = useThresholds();
+
+  /** Shape the existing consumers already take, now fed from one source. */
+  const stats = useMemo(
+    () =>
+      significance
+        ? {
+            degUp: significance.up,
+            degDown: significance.down,
+            degTotal: significance.significant,
+            genesTested,
+          }
+        : null,
+    [significance, genesTested]
+  );
+  const statsLoading = significanceLoading;
 
   // What this comparison offers, and why a module is out of reach.
   // The two heavy panels of Understand: one builds a hand-rolled SVG over a STRING round-trip,
@@ -638,6 +471,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           stats={stats}
           sampleConditionMap={sampleConditionMap}
           loading={statsLoading}
+          padjThreshold={thresholds.padj}
+          log2fcThreshold={thresholds.logfc}
         />
       </div>
 

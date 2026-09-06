@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useProjects, usePrefetchProject } from '@/hooks/useProjects';
+import { useProjects, usePrefetchProject, type ProjectFilters } from '@/hooks/useProjects';
 import { useProjectDashboardStats } from '@/hooks/useProjectDashboardStats';
 import { Folder, Plus, Calendar, ChevronRight, AlertCircle, Database, GitCompare, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -32,10 +32,18 @@ function ProjectCardStats({ project }: { project: Project }) {
 
 interface ProjectListProps {
   onCreateClick: () => void;
+  /**
+   * Query filters for the underlying list. Passed in rather than fetched here so
+   * the owning page controls search and sort — and so the page and the grid share
+   * one request instead of issuing two under different cache keys.
+   */
+  filters?: ProjectFilters;
+  /** Shown instead of the "no projects yet" pitch when a search returns nothing. */
+  emptyState?: React.ReactNode;
 }
 
-export default function ProjectList({ onCreateClick }: ProjectListProps) {
-  const { data, isLoading, error } = useProjects();
+export default function ProjectList({ onCreateClick, filters, emptyState }: ProjectListProps) {
+  const { data, isLoading, error } = useProjects(filters);
   const { prefetchProject } = usePrefetchProject();
   const projects = data?.items || [];
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -74,6 +82,7 @@ export default function ProjectList({ onCreateClick }: ProjectListProps) {
 
   /* ── Empty state ──────────────────────────────────────────── */
   if (projects.length === 0) {
+    if (emptyState) return <>{emptyState}</>;
     return (
       <div
         className="flex flex-col items-center justify-center py-20 rounded-xl border-2 border-dashed animate-fade-up"
