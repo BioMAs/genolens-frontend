@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Key, Plus, Copy, CheckCheck, Ban, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import api from '@/utils/api';
+import { usePricing } from '@/hooks/usePricing';
+import { plansOrdered } from '@/types/pricing';
 
 interface LicenseRecord {
   id: string;
@@ -77,14 +79,20 @@ function CopyButton({ value }: { value: string }) {
   );
 }
 
-const PLANS = ['starter', 'professional', 'enterprise'];
+// Plan ids for an issued licence come from the pricing grid. This list used to
+// read ['starter', 'professional', 'enterprise'] — a fourth plan vocabulary
+// that matched no enum anywhere, so every licence carried a plan name the app
+// could not interpret. The licence payload's `plan` is not yet used for
+// enforcement, but it should at least name a real plan.
 
 export default function LicenseManagement() {
   const qc = useQueryClient();
+  const { data: pricingGrid } = usePricing();
+  const plans = pricingGrid ? plansOrdered(pricingGrid) : [];
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     client_id: '',
-    plan: 'professional',
+    plan: '',
     expires_at_date: '',
     notes: '',
   });
@@ -101,7 +109,7 @@ export default function LicenseManagement() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-licenses'] });
       setShowModal(false);
-      setForm({ client_id: '', plan: 'professional', expires_at_date: '', notes: '' });
+      setForm({ client_id: '', plan: '', expires_at_date: '', notes: '' });
       setFormError(null);
     },
     onError: (err: ApiErrorShape) => {
@@ -131,7 +139,7 @@ export default function LicenseManagement() {
     setFormError(null);
     issueMutation.mutate({
       client_id: form.client_id.trim(),
-      plan: form.plan,
+      plan: form.plan || plans[0]?.id || '',
       expires_at,
       notes: form.notes.trim() || undefined,
     });
@@ -251,12 +259,12 @@ export default function LicenseManagement() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
                 <select
-                  value={form.plan}
+                  value={form.plan || plans[0]?.id || ''}
                   onChange={(e) => setForm((f) => ({ ...f, plan: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
-                  {PLANS.map((p) => (
-                    <option key={p} value={p} className="capitalize">{p}</option>
+                  {plans.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name_en}</option>
                   ))}
                 </select>
               </div>

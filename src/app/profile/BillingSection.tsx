@@ -4,35 +4,29 @@ import { useEffect, useState } from 'react';
 import { CreditCard, Zap, FolderOpen, HardDrive, ExternalLink, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useBilling, SubscriptionInfo } from '@/hooks/useBilling';
-import { normalizePlan, type PlanKey } from '@/utils/plan';
+import { normalizePlan } from '@/utils/plan';
+import { usePricing } from '@/hooks/usePricing';
+import { findPlan, plansOrdered, resolveLimit, type PricingGrid } from '@/types/pricing';
 
-// Quotas mirror the authoritative properties on the backend User model
-// (backend/app/models/models.py: max_projects, comparisons_quota,
-// ai_interpretations_remaining). Infinity = unlimited (the API sends null).
-const PLAN_LIMITS = {
-  STARTER: { projects: 15, comparisons: 30, aiInterpretations: 0 },
-  TEAM: { projects: Infinity, comparisons: 150, aiInterpretations: Infinity },
-  ON_PREMISE: { projects: Infinity, comparisons: Infinity, aiInterpretations: Infinity },
-} as const;
+// Quotas and plan names come from GET /pricing. This file used to carry its own
+// copy of the limits, which meant any backend change silently desynced this
+// page — and it was one of four competing plan-name tables in the frontend.
+// `null` = unlimited, matching both the API and the grid.
 
-function PlanBadge({ plan }: { plan: PlanKey }) {
-  if (plan === 'ON_PREMISE') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-        Enterprise
-      </span>
-    );
-  }
-  if (plan === 'TEAM') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-        Pro
-      </span>
-    );
-  }
+function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
+  const gridPlan = findPlan(grid, plan);
+  const label = gridPlan?.name_en ?? normalizePlan(plan);
+  // Tone by position in the grid, so adding a tier needs no code change here.
+  const order = gridPlan?.order ?? 1;
+  const tone =
+    order >= 3
+      ? 'bg-purple-100 text-purple-800'
+      : order === 2
+        ? 'bg-teal-100 text-teal-800'
+        : 'bg-gray-100 text-gray-700';
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-      Starter
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tone}`}>
+      {label}
     </span>
   );
 }
@@ -76,12 +70,27 @@ export default function BillingSection() {
     }
   };
 
+  const { data: grid } = usePricing();
   const planKey = subscription ? normalizePlan(subscription.plan) : 'STARTER';
-  const limits = PLAN_LIMITS[planKey];
+  const gridPlan = findPlan(grid, subscription?.plan ?? planKey)
+    ?? (grid ? plansOrdered(grid)[0] : undefined);
+
+  // Prefer the live values the API already sends over the grid's list value:
+  // an account can be on a negotiated cap. null = unlimited in both.
+  const maxProjects = subscription?.max_projects
+    ?? (gridPlan ? resolveLimit(gridPlan.max_projects) : null);
+  const comparisonsQuota = gridPlan ? resolveLimit(gridPlan.contrast_quota) : null;
+  const quotaPeriod = gridPlan?.quota_period ?? 'monthly';
+
   const aiUsed = subscription?.ai_interpretations_used ?? 0;
-  const aiLimit = limits.aiInterpretations;
+  const aiMode = gridPlan?.entitlements?.ai_interpretation;
   const hasStripeCustomer = Boolean(subscription?.stripe_customer_id);
-  const isPaidPlan = planKey === 'TEAM' || planKey === 'ON_PREMISE';
+  // A plan is paid if the grid lists a price for it. Starter is €100/month, so
+  // excluding it here (as the hard-coded TEAM/ON_PREMISE test did) denied a
+  // paying customer their billing portal — the same mistake as labelling them
+  // "Free". Still gated on actually having a Stripe customer to manage.
+  const isPaidPlan = gridPlan != null
+    && (gridPlan.price_monthly != null || gridPlan.price_annual != null);
 
   return (
     <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
@@ -137,7 +146,7 @@ export default function BillingSection() {
                 <CreditCard className="h-4 w-4" /> Current Plan
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex items-center gap-3">
-                <PlanBadge plan={planKey} />
+                <PlanBadge plan={subscription.plan ?? planKey} grid={grid} />
                 <StatusBadge isActive={subscription.is_active} />
               </dd>
             </div>
@@ -148,17 +157,17 @@ export default function BillingSection() {
                 <FolderOpen className="h-4 w-4" /> Max projects
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {limits.projects === Infinity ? 'Unlimited' : limits.projects}
+                {maxProjects === null ? 'Unlimited' : maxProjects}
               </dd>
             </div>
 
             {/* Monthly comparisons */}
             <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <HardDrive className="h-4 w-4" /> Comparisons / month
+                <HardDrive className="h-4 w-4" /> Analyses / {quotaPeriod === 'annual' ? 'year' : 'month'}
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {limits.comparisons === Infinity ? 'Unlimited' : limits.comparisons}
+                {comparisonsQuota === null ? 'Unlimited' : comparisonsQuota}
               </dd>
             </div>
 
@@ -168,19 +177,14 @@ export default function BillingSection() {
                 <Zap className="h-4 w-4" /> AI Interpretations
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {aiLimit === 0 ? (
+                {aiMode === 'none' ? (
                   <span className="text-gray-400">Not included in this plan</span>
-                ) : aiLimit === Infinity ? (
+                ) : aiMode === 'metered_a_la_carte' ? (
+                  <>Billed per report — {aiUsed} generated</>
+                ) : aiMode === 'quota' ? (
                   <>Unlimited — {aiUsed} used this month</>
                 ) : (
-                  <>
-                    {aiUsed} / {aiLimit} used this month
-                    {aiUsed >= aiLimit && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Limit reached
-                      </span>
-                    )}
-                  </>
+                  <span className="text-gray-400">—</span>
                 )}
               </dd>
             </div>

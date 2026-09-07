@@ -7,8 +7,8 @@ import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
 import { Meter } from '@/components/ui/meter';
 import { normalizePlan, isPrivilegedRole } from '@/utils/plan';
-
-const FREE_QUOTA = 15;
+import { usePricing } from '@/hooks/usePricing';
+import { findPlan, plansOrdered, resolveLimit } from '@/types/pricing';
 
 interface DashboardSubscriptionCardProps {
   subscription?: SubscriptionInfo | null;
@@ -17,6 +17,8 @@ interface DashboardSubscriptionCardProps {
 }
 
 function PlanBadge({ plan, role }: { plan: string; role?: string }) {
+  const { data: grid } = usePricing();
+
   if (role === 'ADMIN') {
     return (
       <span
@@ -28,105 +30,103 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
       </span>
     );
   }
-  if (normalizePlan(plan) === 'ON_PREMISE' || normalizePlan(plan) === 'TEAM') {
+
+  // The plan's commercial name comes from the grid — the only naming authority.
+  // This badge used to label every non-TEAM plan "Free", so a Starter customer
+  // paying €100/month was told they were on a free tier.
+  const gridPlan = findPlan(grid, plan);
+  const label = gridPlan?.name_en ?? normalizePlan(plan);
+  // Highlight anything above the entry tier, without hard-coding which that is.
+  const isEntryTier = !!grid && !!gridPlan && plansOrdered(grid)[0]?.id === gridPlan.id;
+
+  if (gridPlan && !isEntryTier) {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-linear-to-r from-purple-500 to-indigo-500 text-white">
         <Sparkles className="w-3 h-3" />
-        Advanced
+        {label}
       </span>
     );
   }
+
   return (
     <span
       className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
       style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
     >
-      Free
+      {label}
     </span>
   );
 }
 
-/** Circular SVG arc gauge. radius=28 → circumference≈175.9 */
-function ArcGauge({ pct, tone }: { pct: number; tone: 'teal' | 'purple' | 'red' }) {
-  const r = 28;
-  const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - Math.max(0, Math.min(1, pct / 100)));
-  const color: Record<string, string> = {
-    teal: 'var(--sl-teal)',
-    purple: 'var(--sl-purple)',
-    red: 'var(--sl-red)',
-  };
-  return (
-    <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx="36" cy="36" r={r} fill="none" stroke="var(--surface-raised)" strokeWidth="7" />
-      <circle
-        cx="36" cy="36" r={r} fill="none"
-        stroke={color[tone]} strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={circ}
-        strokeDashoffset={offset}
-        style={{ transition: 'stroke-dashoffset .4s ease' }}
-      />
-    </svg>
-  );
-}
-
 function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
+  const { data: grid } = usePricing();
   const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
+  const gridPlan = findPlan(grid, plan);
+  const isAdmin = isPrivilegedRole(profile?.role);
 
-  if (normalizePlan(plan) === 'ON_PREMISE' || normalizePlan(plan) === 'TEAM') {
-    return (
-      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
-        <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited</p>
-        </div>
-      </div>
-    );
-  }
-
-  const freeUsed = subscription?.ai_interpretations_used ?? profile?.ai_interpretations_used ?? 0;
-  const freeRemaining = Math.max(0, FREE_QUOTA - freeUsed);
-  const freePct = Math.min(100, (freeUsed / FREE_QUOTA) * 100);
-  const tone = freePct >= 90 ? 'red' : 'teal';
+  // How AI is dispensed is stated by the grid, not guessed from the plan name.
+  // Three modes, because a plan can grant access while billing every act.
+  const mode = isAdmin ? 'quota' : gridPlan?.entitlements?.ai_interpretation;
 
   const tokensPurchased = subscription?.ai_tokens_purchased ?? profile?.ai_tokens_purchased ?? 0;
   const tokensUsed = subscription?.ai_tokens_used ?? profile?.ai_tokens_used ?? 0;
   const tokensRemaining = Math.max(0, tokensPurchased - tokensUsed);
 
-  return (
-    <div className="space-y-2.5">
-      {/* Arc gauge + stat */}
-      <div className="flex items-center gap-4">
-        <div className="relative shrink-0">
-          <ArcGauge pct={freePct} tone={tone} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: '1px' }}>
-            <span className="text-base font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{freeRemaining}</span>
-            <span className="text-[9px] leading-none" style={{ color: 'var(--text-muted)' }}>left</span>
+  const purchasedTokensMeter = tokensPurchased > 0 && (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+        <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />Purchased tokens</span>
+        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{tokensRemaining} / {tokensPurchased}</span>
+      </div>
+      <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" height={8} />
+    </div>
+  );
+
+  if (mode === 'quota') {
+    return (
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
+          <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
+          <div>
+            <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited</p>
           </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {freeUsed} used · {freeRemaining} / {FREE_QUOTA} remaining
-          </p>
-          {freeRemaining <= 3 && (
-            <p className="text-xs mt-1" style={{ color: 'var(--sl-red)' }}>Almost out — upgrade for more.</p>
-          )}
+        {purchasedTokensMeter}
+      </div>
+    );
+  }
+
+  if (mode === 'metered_a_la_carte') {
+    return (
+      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
+        <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
+        <div>
+          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Billed per report</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Purchased tokens */}
-      {tokensPurchased > 0 && (
+  // mode === 'none' (or the grid has not arrived yet).
+  //
+  // This branch used to render a gauge of "15 free interpretations" against a
+  // hard-coded FREE_QUOTA. No such allowance exists: the backend returns -1 for
+  // this plan and every AI endpoint answers 403, so the gauge promised credits
+  // that could not be spent. Say what is true instead.
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
+        <Lock className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
         <div>
-          <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />Purchased tokens</span>
-            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{tokensRemaining} / {tokensPurchased}</span>
-          </div>
-          <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" height={8} />
+          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {mode === 'none' ? 'Not included in this plan' : '—'}
+          </p>
         </div>
-      )}
+      </div>
+      {purchasedTokensMeter}
     </div>
   );
 }
@@ -179,11 +179,19 @@ function StatBar({
 }
 
 function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
+  const { data: grid } = usePricing();
   const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
   const role = profile?.role;
   const count = subscription?.project_count ?? 0;
-  const max = subscription?.max_projects ?? null;
-  const unlimited = normalizePlan(plan) !== 'STARTER' || isPrivilegedRole(role) || max === null;
+
+  // `max_projects` is optional on the subscription payload. This used to treat
+  // its absence as "unlimited", so a capped plan silently displayed ∞ whenever
+  // the field was missing — failing open on a limit. The grid is the fallback,
+  // and only the grid (or a privileged role) may declare a plan uncapped.
+  const gridPlan = findPlan(grid, plan);
+  const gridMax = gridPlan ? resolveLimit(gridPlan.max_projects) : undefined;
+  const max = subscription?.max_projects ?? gridMax ?? null;
+  const unlimited = isPrivilegedRole(role) || (gridPlan != null && gridMax === null);
 
   return (
     <StatBar
@@ -252,20 +260,34 @@ export default function DashboardSubscriptionCard({
   userProfile,
   isLoading,
 }: DashboardSubscriptionCardProps) {
-  const { initiateCheckout, getBillingPortal, loading: billingLoading } = useBilling();
+  const { getBillingPortal, loading: billingLoading } = useBilling();
   const [redirecting, setRedirecting] = useState(false);
 
   const plan = subscription?.plan ?? userProfile?.subscription_plan ?? 'STARTER';
   const role = userProfile?.role;
+  const { data: grid } = usePricing();
 
-  const handleUpgrade = async () => {
-    setRedirecting(true);
-    try {
-      const url = await initiateCheckout('advanced');
-      window.location.href = url;
-    } finally {
-      setRedirecting(false);
-    }
+  // The tier above the current one, derived from the grid rather than named in
+  // code — the label used to read "Upgrade to Advanced", a plan that no longer
+  // exists. A plan quoted per deal is skipped: there is nothing to self-serve.
+  const currentOrder = findPlan(grid, plan)?.order;
+  const nextTier = grid && currentOrder != null
+    ? plansOrdered(grid).find((p) => p.order > currentOrder && p.price_monthly != null)
+    : undefined;
+
+  // Only an existing Stripe customer has a portal to manage.
+  const hasBillingPortal = !!subscription?.stripe_customer_id;
+
+  // Upgrades go through /pricing, the one flow that works end to end.
+  //
+  // This used to call initiateCheckout('advanced'). 'advanced' is not a value
+  // of any plan enum — not PlanKey, not the admin list, not the backend's
+  // SubscriptionPlan — so the backend rejected it with 400 and the dashboard's
+  // only upgrade button was dead. It also competed with the pricing page's
+  // email-request flow. Stripe checkout stays available via useBilling for
+  // when per-plan prices are wired up.
+  const handleUpgrade = () => {
+    window.location.href = '/pricing';
   };
 
   const handleManageBilling = async () => {
@@ -332,7 +354,7 @@ export default function DashboardSubscriptionCard({
       {/* CTA — hidden for admin */}
       {role !== 'ADMIN' && (
         <div className="mt-auto">
-          {normalizePlan(plan) !== 'STARTER' ? (
+          {hasBillingPortal ? (
             <button
               onClick={handleManageBilling}
               disabled={billingLoading || redirecting}
@@ -360,7 +382,7 @@ export default function DashboardSubscriptionCard({
               }
             >
               <ArrowUpCircle className="h-3.5 w-3.5" />
-              {redirecting ? 'Redirecting…' : 'Upgrade to Advanced'}
+              {redirecting ? 'Redirecting…' : nextTier ? `Upgrade to ${nextTier.name_en}` : 'Upgrade plan'}
             </button>
           )}
         </div>
