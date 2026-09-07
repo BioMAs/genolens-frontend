@@ -5,6 +5,8 @@ import Image from 'next/image';
 import api from '@/utils/api';
 import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, FlaskConical } from 'lucide-react';
 import ModuleSelector, { ModuleId } from '@/components/modules/ModuleSelector';
+import { usePricing } from '@/hooks/usePricing';
+import { plansOrdered } from '@/types/pricing';
 
 interface User {
   id: string;
@@ -119,7 +121,11 @@ export default function UserManagement() {
   const [assigningDemo, setAssigningDemo] = useState<string | null>(null);
 
   const roles = ['admin', 'user', 'analyst', 'viewer'];
-  const plans = ['STARTER', 'TEAM', 'ON_PREMISE'];
+  // Assignable plans come from the pricing grid, so a new tier appears in this
+  // selector without a code change — and a retired one disappears instead of
+  // producing a 422 on save.
+  const { data: pricingGrid } = usePricing();
+  const plans = pricingGrid ? plansOrdered(pricingGrid).map((p) => p.id) : [];
 
 
   const fetchUsers = async () => {

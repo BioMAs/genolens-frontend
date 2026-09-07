@@ -5,112 +5,33 @@ import { Check, Loader2, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
+import { usePricing } from '@/hooks/usePricing';
+import { plansOrdered, type Plan } from '@/types/pricing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 
 // ---------------------------------------------------------------------------
-// Plan definitions
+// Plans, prices and card copy all come from GET /pricing — the single source
+// of truth (backend/app/data/pricing.json). There is deliberately no local
+// plan table here: this page used to carry one of four competing copies, and
+// they had drifted apart (a paying Starter customer was labelled "Free" on the
+// dashboard). Never reintroduce hard-coded prices or plan names.
 // ---------------------------------------------------------------------------
 
-type PlanKey = 'STARTER' | 'TEAM' | 'ON_PREMISE';
 type BillingCycle = 'monthly' | 'annual';
 
 const SALES_EMAIL = 'contact@scilicium.com';
 
-interface PlanFeature {
-  label: string;
-  included: boolean;
-}
+/** Enterprise-style plan: quoted per deal rather than listed. */
+const isQuoted = (plan: Plan) => plan.price_monthly == null && plan.price_annual == null;
 
-interface PlanConfig {
-  key: PlanKey;
-  displayName: string;
-  monthlyPrice: string;
-  annualPrice: string;
-  annualMonthlyEquiv: string;
-  priceNote: string;
-  engagement: string;
-  description: string;
-  features: PlanFeature[];
-  ctaLabel: string;
-  highlight: boolean;
-  isEnterprise?: boolean;
-}
-
-const PLANS: PlanConfig[] = [
-  {
-    key: 'STARTER',
-    displayName: 'Starter',
-    monthlyPrice: '€100',
-    annualPrice: '€1,000',
-    annualMonthlyEquiv: '≈ €83 / month',
-    priceNote: '/ month',
-    engagement: 'Monthly or annual billing',
-    description: 'Get started with RNA-seq analysis and all the essential features you need.',
-    highlight: false,
-    ctaLabel: 'Request Starter',
-    features: [
-      { label: '5 datasets', included: true },
-      { label: 'Differential expression analysis', included: true },
-      { label: 'Basic clustering (K-means)', included: true },
-      { label: 'GO enrichment (Biological Process)', included: true },
-      { label: 'Volcano plot & heatmap export', included: true },
-      { label: '6-month data retention', included: true },
-      { label: 'Community forum support', included: true },
-      { label: 'AI interpretation', included: false },
-      { label: 'GSEA', included: false },
-      { label: 'API access', included: false },
-      { label: 'Team collaboration', included: false },
-    ],
-  },
-  {
-    key: 'TEAM',
-    displayName: 'Pro',
-    monthlyPrice: '€250',
-    annualPrice: '€2,500',
-    annualMonthlyEquiv: '≈ €208 / month',
-    priceNote: '/ month',
-    engagement: 'Monthly or annual billing',
-    description: 'For researchers and postdocs with advanced analytical needs and higher data volumes.',
-    highlight: true,
-    ctaLabel: 'Request Pro',
-    features: [
-      { label: '25 datasets', included: true },
-      { label: 'Multi-contrast differential analysis', included: true },
-      { label: 'Full clustering suite (K-means, hierarchical)', included: true },
-      { label: 'GO + KEGG + Reactome enrichment', included: true },
-      { label: 'GSEA with leading-edge analysis', included: true },
-      { label: 'AI interpretation (50 reports / month)', included: true },
-      { label: 'REST API (120 req/min)', included: true },
-      { label: '1-year data retention', included: true },
-      { label: 'Email support (48h)', included: true },
-      { label: 'Team collaboration', included: true },
-      { label: 'Custom gene sets', included: true },
-    ],
-  },
-  {
-    key: 'ON_PREMISE',
-    displayName: 'Enterprise',
-    monthlyPrice: 'On request',
-    annualPrice: 'On request',
-    annualMonthlyEquiv: '',
-    priceNote: '',
-    engagement: 'Fully custom terms',
-    description: 'For labs, institutions and organisations with specific requirements. Fully custom.',
-    highlight: false,
-    ctaLabel: 'Contact sales',
-    isEnterprise: true,
-    features: [
-      { label: 'Custom users & datasets', included: true },
-      { label: 'On-premise or private cloud', included: true },
-      { label: 'SSO / SAML', included: true },
-      { label: 'Advanced integrations', included: true },
-      { label: 'Team collaboration', included: true },
-      { label: 'Priority support', included: true },
-    ],
-  },
-];
+const money = (amount: number, currency: string) =>
+  new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
 
 // ---------------------------------------------------------------------------
 // Page
@@ -120,7 +41,8 @@ export default function PricingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [billing, setBilling] = useState<BillingCycle>('monthly');
-  const [submitting, setSubmitting] = useState<PlanKey | null>(null);
+  const [submitting, setSubmitting] = useState<string | null>(null);
+  const { data: grid, isLoading: gridLoading, isError: gridError } = usePricing();
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   // Fetch authenticated user profile (for the current-plan badge + email)
@@ -145,14 +67,14 @@ export default function PricingPage() {
   }, []);
 
   const isLoggedIn = !!profile;
-  const currentPlan = (profile?.subscription_plan as string | undefined)?.toUpperCase() as PlanKey | undefined;
+  const currentPlan = (profile?.subscription_plan as string | undefined)?.toUpperCase();
 
   // Plan changes are handled as a request: notify the team by email, then confirm.
-  const submitRequest = async (plan: PlanConfig, details: string) => {
+  const submitRequest = async (plan: Plan, details: string) => {
     setNotice(null);
-    setSubmitting(plan.key);
+    setSubmitting(plan.id);
     try {
-      await api.post('/users/requests', { type: 'plan', item: plan.displayName, details });
+      await api.post('/users/requests', { type: 'plan', item: plan.name_en, details });
       setNotice({ kind: 'success', text: "Request sent — we'll get back to you soon." });
     } catch {
       setNotice({ kind: 'error', text: `Couldn't send your request. Please email ${SALES_EMAIL}.` });
@@ -161,14 +83,15 @@ export default function PricingPage() {
     }
   };
 
-  const requestPlan = (plan: PlanConfig) => {
-    const cycle = billing === 'annual' ? 'annual' : 'monthly';
-    const price = billing === 'annual' ? plan.annualPrice : plan.monthlyPrice;
-    const period = billing === 'annual' ? '/ year' : plan.priceNote;
-    submitRequest(plan, `${price} ${period}, ${cycle} billing`);
+  const requestPlan = (plan: Plan) => {
+    const currency = grid?.currency ?? 'EUR';
+    const annual = billing === 'annual';
+    const amount = annual ? plan.price_annual : plan.price_monthly;
+    const price = amount != null ? money(amount, currency) : (plan.pricing_display_en ?? 'On request');
+    submitRequest(plan, `${price} ${annual ? '/ year' : '/ month'}, ${annual ? 'annual' : 'monthly'} billing`);
   };
 
-  const contactSales = (plan: PlanConfig) => submitRequest(plan, 'Enterprise enquiry — custom terms');
+  const contactSales = (plan: Plan) => submitRequest(plan, 'Enterprise enquiry — custom terms');
 
   return (
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
@@ -223,31 +146,53 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* Plan cards */}
+      {/* Plan cards — rendered from the grid, never from a local table */}
+      {gridLoading ? (
+        <div className="mx-auto max-w-5xl flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
+        </div>
+      ) : gridError || !grid ? (
+        <div className="mx-auto max-w-3xl rounded-xl border px-4 py-3 text-sm text-center"
+             style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
+          <span style={{ color: 'var(--text-primary)' }}>
+            Couldn&apos;t load our plans just now. Please email{' '}
+            <a href={`mailto:${SALES_EMAIL}`} className="underline">{SALES_EMAIL}</a> and we&apos;ll help.
+          </span>
+        </div>
+      ) : (
       <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {PLANS.map((plan) => {
-          const isCurrent = isLoggedIn && currentPlan === plan.key;
-          const isSubmitting = submitting === plan.key;
+        {plansOrdered(grid).map((plan) => {
+          const isCurrent = isLoggedIn && currentPlan === plan.id.toUpperCase();
+          const isSubmitting = submitting === plan.id;
+          const quoted = isQuoted(plan);
+          const currency = grid.currency ?? 'EUR';
 
-          const displayPrice = plan.isEnterprise ? plan.monthlyPrice : billing === 'annual' ? plan.annualPrice : plan.monthlyPrice;
-          const displayPriceNote = plan.isEnterprise ? plan.priceNote : billing === 'annual' ? '/ year' : plan.priceNote;
-          const displayEquiv = !plan.isEnterprise && billing === 'annual' ? plan.annualMonthlyEquiv : null;
+          const amount = billing === 'annual' ? plan.price_annual : plan.price_monthly;
+          const displayPrice = amount != null
+            ? money(amount, currency)
+            : (plan.pricing_display_en ?? 'On request');
+          const displayPriceNote = quoted ? '' : billing === 'annual' ? '/ year' : '/ month';
+          // Monthly equivalent of the annual commitment, derived rather than stored:
+          // one number to keep in step instead of two.
+          const displayEquiv = !quoted && billing === 'annual' && plan.price_annual != null
+            ? `≈ ${money(Math.round(plan.price_annual / 12), currency)} / month`
+            : null;
 
           return (
-            <div key={plan.key} className="relative flex flex-col">
-              {plan.highlight && (
+            <div key={plan.id} className="relative flex flex-col">
+              {plan.most_popular && (
                 <div className="flex justify-center mb-2">
                   <Badge variant="teal" className="text-xs font-semibold px-3 py-0.5">Most popular</Badge>
                 </div>
               )}
 
-              <Card className={`flex flex-col h-full ${plan.highlight ? 'ring-2 ring-brand-teal shadow-lg' : ''}`}>
+              <Card className={`flex flex-col h-full ${plan.most_popular ? 'ring-2 ring-brand-teal shadow-lg' : ''}`}>
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <CardTitle className="text-xl">{plan.displayName}</CardTitle>
+                    <CardTitle className="text-xl">{plan.name_en}</CardTitle>
                     {isCurrent && <Badge variant="success" className="text-xs">Current plan</Badge>}
                   </div>
-                  <CardDescription className="mt-1">{plan.description}</CardDescription>
+                  {plan.description_en && <CardDescription className="mt-1">{plan.description_en}</CardDescription>}
 
                   {/* Price */}
                   <div className="mt-4">
@@ -256,14 +201,14 @@ export default function PricingPage() {
                       {displayPriceNote && <span className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>{displayPriceNote}</span>}
                     </div>
                     {displayEquiv && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{displayEquiv}</p>}
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{plan.engagement}</p>
+                    {plan.engagement_en && <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{plan.engagement_en}</p>}
                   </div>
                 </CardHeader>
 
-                {/* Feature list */}
+                {/* Feature list — commercial promises, not entitlements */}
                 <CardContent className="flex-1">
                   <ul className="space-y-2.5">
-                    {plan.features.map((feature) => (
+                    {(plan.marketing_features ?? []).map((feature) => (
                       <li key={feature.label} className="flex items-center gap-2.5 text-sm">
                         {feature.included ? (
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--sl-teal-light)' }}>
@@ -286,19 +231,19 @@ export default function PricingPage() {
                     <Button variant="outline" className="w-full" disabled>
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </Button>
-                  ) : plan.isEnterprise ? (
+                  ) : quoted ? (
                     <Button variant="outline" size="lg" className="w-full" disabled={isSubmitting} onClick={() => contactSales(plan)}>
-                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : plan.ctaLabel}
+                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : (plan.cta_label_en ?? 'Contact sales')}
                     </Button>
                   ) : (
                     <Button
-                      variant={plan.highlight ? 'teal' : isCurrent ? 'secondary' : 'outline'}
+                      variant={plan.most_popular ? 'teal' : isCurrent ? 'secondary' : 'outline'}
                       size="lg"
                       className="w-full"
                       disabled={isCurrent || isSubmitting}
                       onClick={() => requestPlan(plan)}
                     >
-                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : isCurrent ? 'Current plan' : plan.ctaLabel}
+                      {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /><span>Sending…</span></>) : isCurrent ? 'Current plan' : (plan.cta_label_en ?? `Request ${plan.name_en}`)}
                     </Button>
                   )}
                 </CardFooter>
@@ -307,6 +252,7 @@ export default function PricingPage() {
           );
         })}
       </div>
+      )}
 
       {/* Footer note */}
       <p className="mt-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
