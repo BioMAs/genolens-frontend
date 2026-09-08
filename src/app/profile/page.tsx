@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { Mail, Calendar, Shield, Clock, Blocks } from 'lucide-react'
 import BillingSection from './BillingSection'
+import UsageSection from './UsageSection'
 import MyModules from './MyModules'
 
 function fmt(date?: string | null) {
@@ -83,6 +84,10 @@ export default async function ProfilePage() {
         </p>
         <MyModules />
       </section>
+
+      {/* Usage avant facturation : « ce qu'il me reste » se lit plus souvent
+          que « comment je paie ». */}
+      <UsageSection />
 
       <BillingSection />
     </div>
