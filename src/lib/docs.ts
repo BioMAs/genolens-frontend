@@ -110,11 +110,51 @@ export function extractHeadings(markdown: string): Heading[] {
 }
 
 /**
- * Parse un guide. Retourne null si le frontmatter n'a pas de titre — mieux vaut
- * un guide absent de l'index qu'un guide sans nom.
+ * Retire le premier titre h1 rencontré hors bloc de code.
+ *
+ * Même suivi de clôtures que `extractHeadings` : un bloc shell ou YAML en
+ * tête de guide peut contenir une ligne « # commentaire » qui ne doit pas
+ * être confondue avec le titre. Le contenu de la ligne est vidé plutôt que la
+ * ligne supprimée, pour rester identique au comportement de l'ancien
+ * `content.replace(/^\s*#\s+.*$/m, '')` quand le h1 est la première ligne du
+ * corps (cas des dix guides livrés) : l'appelant applique ensuite
+ * `trimStart()`.
+ */
+function stripLeadingH1(markdown: string): string {
+  const lines = markdown.split('\n');
+  let inFence = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    if (/^\s*#\s+.*$/.test(line)) {
+      lines[i] = '';
+      break;
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Parse un guide. Retourne null si le frontmatter n'a pas de titre, ou si le
+ * YAML est syntaxiquement invalide — mieux vaut un guide absent de l'index
+ * qu'un `next build` cassé par un deux-points mal échappé dans un `title`.
  */
 export function parseDoc(slug: string, raw: string): Doc | null {
-  const { data, content } = matter(raw);
+  let parsed: matter.GrayMatterFile<string>;
+  try {
+    parsed = matter(raw);
+  } catch {
+    return null;
+  }
+  const { data, content } = parsed;
+
   const title = typeof data.title === 'string' ? data.title.trim() : '';
   if (!title) return null;
 
@@ -124,7 +164,7 @@ export function parseDoc(slug: string, raw: string): Doc | null {
 
   // Le titre est rendu par la page depuis le frontmatter : garder le h1 du
   // corps l'afficherait deux fois.
-  const body = content.replace(/^\s*#\s+.*$/m, '').trimStart();
+  const body = stripLeadingH1(content).trimStart();
 
   return {
     slug,

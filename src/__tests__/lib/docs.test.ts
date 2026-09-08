@@ -119,6 +119,63 @@ describe('parseDoc', () => {
     expect(doc.order).toBe(999);
     expect(doc.description).toBe('');
   });
+
+  it('returns null when the YAML frontmatter is syntactically invalid', () => {
+    // gray-matter jette sur un YAML mal formé (ici un flow collection non
+    // fermé) : sans garde, un titre mal echappé ferait echouer next build
+    // entier plutot que d'ecarter ce seul guide.
+    const invalidYaml = '---\ntitle: [unclosed\n---\n\nbody\n';
+    expect(parseDoc('invalid-yaml', invalidYaml)).toBeNull();
+  });
+
+  it('keeps a "#" line inside a fenced code block when the body has no real h1', () => {
+    // Un guide sans h1 dont le premier bloc de code contient un commentaire
+    // shell "# ..." : sans suivi des clotures, ce commentaire serait pris
+    // pour le titre et efface.
+    const noH1 = [
+      '---',
+      'title: Fenced without h1',
+      'category: analysis',
+      '---',
+      '',
+      '```bash',
+      '# not a heading',
+      '```',
+      '',
+      'body text',
+      '',
+    ].join('\n');
+    const doc = parseDoc('fenced-without-h1', noH1)!;
+    expect(doc.content).toContain('# not a heading');
+    expect(doc.content).toContain('body text');
+  });
+
+  it('strips the real h1 even when a fenced "#" line comes before it', () => {
+    // Le h1 reel arrive apres un bloc de code contenant un "#" : ce dernier
+    // ne doit pas etre confondu avec le titre a retirer.
+    const fencedThenH1 = [
+      '---',
+      'title: Fenced then h1',
+      'category: analysis',
+      '---',
+      '',
+      '```bash',
+      '# not a heading',
+      '```',
+      '',
+      '# Real Title',
+      '',
+      '## Section',
+      '',
+      'body text',
+      '',
+    ].join('\n');
+    const doc = parseDoc('fenced-then-h1', fencedThenH1)!;
+    expect(doc.content).toContain('# not a heading');
+    expect(doc.content).not.toContain('# Real Title');
+    expect(doc.content).toContain('## Section');
+    expect(doc.content).toContain('body text');
+  });
 });
 
 // ── couche fichier ─────────────────────────────────────────────────────────
@@ -135,6 +192,10 @@ describe('listDocs', () => {
   it('never exposes a doc with a broken frontmatter', () => {
     expect(listDocs(FIXTURES).map((d) => d.slug)).not.toContain('broken');
   });
+
+  it('never exposes a doc with syntactically invalid YAML frontmatter', () => {
+    expect(listDocs(FIXTURES).map((d) => d.slug)).not.toContain('malformed-yaml');
+  });
 });
 
 describe('getDoc', () => {
@@ -149,6 +210,15 @@ describe('getDoc', () => {
   it('returns null on a slug that escapes the docs directory', () => {
     // Les slugs viennent de generateStaticParams, mais une route dynamique
     // accepte n'importe quoi : un slug traversant lirait un fichier arbitraire.
+    // Quatre niveaux au-dessus de FIXTURES (<cwd>/src/__tests__/fixtures/docs)
+    // se retrouvent a la racine du depot, donc sans le garde-fou
+    // `^[a-z0-9-]+$` ce slug resoudrait vers content/docs/gsea.md, un guide
+    // reel — contrairement a une traversee vers un fichier absent, que le
+    // try/catch de readFileSync intercepterait deja meme sans le garde-fou.
+    expect(getDoc('../../../../content/docs/gsea', FIXTURES)).toBeNull();
+  });
+
+  it('returns null on a slug with path separators to a plainly unknown file', () => {
     expect(getDoc('../../../package', FIXTURES)).toBeNull();
   });
 });
