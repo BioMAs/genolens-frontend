@@ -205,7 +205,13 @@ function readAll(dir: string): Doc[] {
 
 /** Métadonnées de tous les guides, triées par catégorie puis par `order`. */
 export function listDocs(dir: string = DEFAULT_DIR): DocMeta[] {
-  return readAll(dir).map(({ content: _content, headings: _headings, ...meta }) => meta);
+  return readAll(dir).map((doc) => ({
+    slug: doc.slug,
+    title: doc.title,
+    description: doc.description,
+    category: doc.category,
+    order: doc.order,
+  }));
 }
 
 /** Un guide, ou null si le slug est inconnu ou traversant. */

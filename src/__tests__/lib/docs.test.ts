@@ -16,6 +16,7 @@ import {
 } from '@/lib/docs';
 
 const FIXTURES = path.join(process.cwd(), 'src/__tests__/fixtures/docs');
+const TIEBREAK_FIXTURES = path.join(process.cwd(), 'src/__tests__/fixtures/docs-tiebreak');
 
 // ── extractHeadings ────────────────────────────────────────────────────────
 
@@ -195,6 +196,21 @@ describe('listDocs', () => {
 
   it('never exposes a doc with syntactically invalid YAML frontmatter', () => {
     expect(listDocs(FIXTURES).map((d) => d.slug)).not.toContain('malformed-yaml');
+  });
+});
+
+describe('listDocs tie-breaks', () => {
+  it('breaks a same-category tie by order, then by title', () => {
+    // order-tiebreak-*: meme categorie (enrichment), ordres 5 et 20 ; le
+    // titre alphabetique irait dans l'autre sens si l'ordre ne l'emportait
+    // pas. title-tiebreak-*: meme categorie (explore) ET meme ordre (10) ;
+    // seul le titre les depage.
+    expect(listDocs(TIEBREAK_FIXTURES).map((d) => d.slug)).toEqual([
+      'order-tiebreak-low', // enrichment, order 5 — titre "Zzz..." (dernier alphabetiquement)
+      'order-tiebreak-high', // enrichment, order 20 — titre "Aaa..." (premier alphabetiquement)
+      'title-tiebreak-a', // explore, order 10, titre "Alpha tie"
+      'title-tiebreak-b', // explore, order 10, titre "Bravo tie"
+    ]);
   });
 });
 
