@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { nextMonthlyReset, quotaTone, useQuotas } from '@/hooks/useQuotas';
+import { nextMonthlyReset, quotaTone, useProjectLimit, useQuotas } from '@/hooks/useQuotas';
 
 jest.mock('@/utils/api', () => ({
   __esModule: true,
@@ -293,5 +293,66 @@ describe('useQuotas', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.maxDatasetsPerProject).toBe(5);
+  });
+});
+
+// ── useProjectLimit ────────────────────────────────────────────────────────
+
+/**
+ * La barrière de création de projet était écrite deux fois, mot pour mot, dans
+ * `Dashboard.tsx` et `ProjectsView.tsx`, et les deux copies lisaient
+ * `subscription.max_projects` — un champ que `/billing/subscription` ne
+ * renvoie pas. La comparaison portait donc toujours sur `undefined` : personne
+ * n'était jamais bloqué.
+ */
+describe('useProjectLimit', () => {
+  it('blocks at the cap and says so', async () => {
+    mockEndpoints({ ...PROFILE, project_count: 15, max_projects: 15 });
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.blocked).toBe(true));
+    expect(result.current.reason).toMatch(/15\/15/);
+    expect(result.current.reason).toMatch(/upgrade/i);
+  });
+
+  it('blocks past the cap, not only exactly at it', async () => {
+    mockEndpoints({ ...PROFILE, project_count: 17, max_projects: 15 });
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.blocked).toBe(true));
+  });
+
+  it('does not block below the cap', async () => {
+    mockEndpoints({ ...PROFILE, project_count: 4, max_projects: 15 });
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.blocked).toBe(false));
+    expect(result.current.reason).toBeUndefined();
+  });
+
+  it('does not block an unlimited plan', async () => {
+    mockEndpoints({ ...PROFILE, role: 'ADMIN', project_count: 300, max_projects: null });
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.blocked).toBe(false));
+  });
+
+  it('does not block while the profile is in flight', () => {
+    // Sans cette garde, profil indéfini donne 0 >= 0 : le bouton « New
+    // project » serait désactivé avec « Project limit reached (0/0) » à chaque
+    // chargement, pour tout le monde.
+    mockEndpoints(PROFILE);
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    expect(result.current.blocked).toBe(false);
+  });
+
+  it('does not block when the profile never arrived', async () => {
+    // Bloquer par défaut sur une erreur réseau empêcherait une création
+    // légitime ; le backend refuse de toute façon au-delà du plafond.
+    mockApi.get.mockRejectedValue(new Error('500'));
+    const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.blocked).toBe(false), { timeout: 5000 });
   });
 });

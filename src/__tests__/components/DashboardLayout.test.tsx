@@ -30,13 +30,26 @@ jest.mock('@/hooks/useUserDashboardStats', () => ({
   }),
 }));
 jest.mock('@/hooks/useSubscription', () => ({
-  useSubscription: () => ({
-    data: { max_projects: 10, project_count: 1 },
-    isLoading: false,
-  }),
+  useSubscription: () => ({ data: { plan: 'STARTER', is_active: true }, isLoading: false }),
 }));
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: { ai_interpretations_used: 3 } }),
+jest.mock('@/hooks/useUserProfile', () => ({
+  useUserProfile: () => ({ data: { id: 'u1', role: 'USER', subscription_plan: 'STARTER' } }),
+}));
+
+// La barriere de creation vit dans useProjectLimit. Ce mock remplacait tout
+// `@tanstack/react-query` par un useQuery renvoyant un profil sans champ de
+// quota : apres le passage a useQuotas, la barriere y lisait 0 >= 0 et
+// desactivait le bouton — le test « leaves the create button usable below the
+// limit » tombait sur un faux positif de la barriere, pas sur une regression
+// du dashboard.
+let projectLimit: { blocked: boolean; reason?: string } = { blocked: false };
+jest.mock('@/hooks/useQuotas', () => ({
+  ...jest.requireActual('@/hooks/useQuotas'),
+  useProjectLimit: () => projectLimit,
+}));
+jest.mock('@/components/QuotaMeters', () => ({
+  __esModule: true,
+  default: () => <div data-testid="quota-meters" />,
 }));
 
 // The dashboard's children each pull their own data; this suite is about the
@@ -77,7 +90,10 @@ jest.mock('@/components/ProjectList', () => ({
 
 import Dashboard from '@/components/Dashboard';
 
-beforeEach(() => projectListSpy.mockClear());
+beforeEach(() => {
+  projectListSpy.mockClear();
+  projectLimit = { blocked: false };
+});
 
 describe('dashboard composition', () => {
   it('keeps the home-page blocks', () => {
@@ -86,6 +102,7 @@ describe('dashboard composition', () => {
     expect(screen.getByTestId('welcome-banner')).toBeInTheDocument();
     expect(screen.getByTestId('jump-back-in')).toBeInTheDocument();
     expect(screen.getByTestId('kpi-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('quota-meters')).toBeInTheDocument();
     expect(screen.getByTestId('recent-projects')).toBeInTheDocument();
     expect(screen.getByTestId('plan-card')).toBeInTheDocument();
   });
@@ -127,5 +144,14 @@ describe('project limit', () => {
   it('leaves the create button usable below the limit', () => {
     render(<Dashboard />);
     expect(screen.getByRole('button', { name: /new project/i })).toBeEnabled();
+  });
+
+  it('disables it at the limit, with the reason as its title', () => {
+    projectLimit = { blocked: true, reason: 'Project limit reached (10/10). Upgrade your plan.' };
+    render(<Dashboard />);
+
+    const button = screen.getByRole('button', { name: /new project/i });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('title', 'Project limit reached (10/10). Upgrade your plan.');
   });
 });

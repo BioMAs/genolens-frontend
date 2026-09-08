@@ -150,3 +150,39 @@ export function useQuotas(): QuotaState {
     isError,
   };
 }
+
+export interface ProjectLimit {
+  /** Vrai seulement quand on SAIT que le plafond est atteint. */
+  blocked: boolean;
+  /** Libellé prêt à afficher, absent quand rien ne bloque. */
+  reason?: string;
+}
+
+/**
+ * Barrière de création de projet, partagée par le dashboard et /projects.
+ *
+ * Elle était écrite deux fois, mot pour mot, et les deux copies lisaient
+ * `subscription.max_projects` — un champ que `/billing/subscription` ne renvoie
+ * pas. La comparaison portait donc toujours sur `undefined`, et personne
+ * n'était jamais bloqué : la barrière existait sans agir.
+ *
+ * Elle échoue OUVERT, délibérément, dans les deux cas d'incertitude : profil en
+ * vol et profil jamais arrivé. Bloquer par défaut empêcherait une création
+ * légitime, alors que le backend refuse de toute façon au-delà du plafond.
+ * Sans cette garde, un profil indéfini donne 0 >= 0 et désactive le bouton
+ * avec « Project limit reached (0/0) » à chaque chargement.
+ */
+export function useProjectLimit(): ProjectLimit {
+  const { projects, isLoading, hasProfile } = useQuotas();
+
+  if (isLoading || !hasProfile || projects.unlimited || projects.max === null) {
+    return { blocked: false };
+  }
+  if (projects.used < projects.max) {
+    return { blocked: false };
+  }
+  return {
+    blocked: true,
+    reason: `Project limit reached (${projects.used}/${projects.max}). Upgrade your plan.`,
+  };
+}

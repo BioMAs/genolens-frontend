@@ -13,9 +13,9 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useProjects } from '@/hooks/useProjects';
 import { useUserDashboardStats } from '@/hooks/useUserDashboardStats';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useQuery } from '@tanstack/react-query';
-import api from '@/utils/api';
-import { UserProfile } from '@/types';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useProjectLimit } from '@/hooks/useQuotas';
+import QuotaMeters from './QuotaMeters';
 import { useAutoTour } from '@/hooks/useAutoTour';
 
 export default function Dashboard() {
@@ -30,25 +30,19 @@ export default function Dashboard() {
 
   const { data: subscription, isLoading: subLoading } = useSubscription();
 
-  // Derive project limit state from subscription data
-  const isAtProjectLimit =
-    subscription?.max_projects != null &&
-    (subscription?.project_count ?? 0) >= subscription.max_projects;
+  // La barriere vit dans useProjectLimit, partagee avec /projects. Les deux
+  // ecrans en portaient une copie mot pour mot, lisant `max_projects` sur la
+  // charge utile d'abonnement — un champ qu'elle ne contient pas, donc une
+  // comparaison qui portait toujours sur `undefined` et ne bloquait personne.
+  const projectLimit = useProjectLimit();
 
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile'],
-    queryFn: async () => {
-      const res = await api.get<UserProfile>('/users/me');
-      return res.data;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
+  // `useUserProfile` remplace un useQuery inline sur la cle ['user-profile'] :
+  // le meme endpoint sous une seconde identite de cache, donc un second appel
+  // et deux verites possibles a l'ecran.
+  const { data: userProfile } = useUserProfile();
 
   const recentProject = [...projects]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
-
-  const aiInterpretationsUsed =
-    subscription?.ai_interpretations_used ?? userProfile?.ai_interpretations_used ?? 0;
 
   return (
     <>
@@ -56,9 +50,6 @@ export default function Dashboard() {
         <DashboardWelcomeBanner
           userName={user?.name ?? user?.email}
           recentProjectName={recentProject?.name}
-          totalComparisons={aggregated.total_comparisons}
-          activityLast7Days={aggregated.activity_last_7_days}
-          aiInterpretationsUsed={aiInterpretationsUsed}
           resumeHref={recentProject ? `/projects/${recentProject.id}` : undefined}
         />
       </div>
@@ -70,7 +61,12 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Global KPI bar */}
+      {/* Rangee 3 — qu'est-ce qu'il me reste */}
+      <div className="mb-6">
+        <QuotaMeters layout="row" />
+      </div>
+
+      {/* Rangee 4 — qu'est-ce que j'ai produit */}
       <div data-tour="dashboard-kpis">
         <DashboardKpiBar stats={aggregated} isLoading={statsLoading && projects.length === 0} />
       </div>
@@ -94,13 +90,13 @@ export default function Dashboard() {
               </Link>
               <button
                 data-tour="dashboard-new-project"
-                onClick={() => !isAtProjectLimit && setIsModalOpen(true)}
-                disabled={isAtProjectLimit}
-                title={isAtProjectLimit ? `Project limit reached (${subscription?.project_count}/${subscription?.max_projects}). Upgrade your plan.` : undefined}
+                onClick={() => !projectLimit.blocked && setIsModalOpen(true)}
+                disabled={projectLimit.blocked}
+                title={projectLimit.reason}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: 'var(--sl-purple)' }}
                 onMouseEnter={(e) => {
-                  if (!isAtProjectLimit) (e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)';
+                  if (!projectLimit.blocked) (e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)';
                 }}
                 onMouseLeave={(e) =>
                   ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple)')

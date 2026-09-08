@@ -1,6 +1,6 @@
 'use client';
 
-import { Folder, GitCompare, Dna, Sparkles } from 'lucide-react';
+import { GitCompare, Dna, Activity } from 'lucide-react';
 import type { AggregatedStats } from '@/hooks/useUserDashboardStats';
 import { StatChip } from '@/components/ui/stat-chip';
 
@@ -10,35 +10,33 @@ interface DashboardKpiBarProps {
 }
 
 export default function DashboardKpiBar({ stats, isLoading }: DashboardKpiBarProps) {
+  // Trois tuiles, pas quatre. « Total Projects » est parti : la rangee de
+  // quotas le donne en utilise/max, ce qui est plus informatif et evitait de
+  // servir deux chiffres pour la meme grandeur. « AI + Activity » aussi : son
+  // libelle annoncait deux grandeurs pour la valeur d'une seule.
   const cards: { icon: React.ReactNode; value: number; label: string; tone: 'teal' | 'purple' }[] = [
-    {
-      icon: <Folder className="h-4 w-4" />,
-      value: stats.total_projects,
-      label: 'Total Projects',
-      tone: 'teal',
-    },
     {
       icon: <GitCompare className="h-4 w-4" />,
       value: stats.total_comparisons,
-      label: 'Comparisons',
+      label: 'Comparisons run',
       tone: 'purple',
     },
     {
       icon: <Dna className="h-4 w-4" />,
       value: stats.total_deg_genes,
-      label: 'DEGs Identified',
+      label: 'DEGs identified',
       tone: 'teal',
     },
     {
-      icon: <Sparkles className="h-4 w-4" />,
+      icon: <Activity className="h-4 w-4" />,
       value: stats.activity_last_7_days,
-      label: 'AI + Activity',
+      label: 'Activity (7d)',
       tone: 'purple',
     },
   ];
 
   return (
-    <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
       {cards.map((card, i) => (
         <StatChip
           key={card.label}
