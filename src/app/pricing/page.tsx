@@ -93,6 +93,18 @@ export default function PricingPage() {
 
   const contactSales = (plan: Plan) => submitRequest(plan, 'Enterprise enquiry — custom terms');
 
+  // Remise annuelle affichée : dérivée de la grille, jamais écrite en dur.
+  // Les deux plans listés n'ont plus la même remise depuis l'alignement sur
+  // genolens.com (Starter 15 %, Pro 20 %), donc un pourcentage unique en dur
+  // serait faux pour au moins l'un des deux. On annonce la meilleure remise,
+  // comme le site, et « up to » évite de la promettre sur les deux.
+  const annualDiscountPct = (() => {
+    const rates = (grid?.plans ?? [])
+      .filter((p) => p.price_monthly != null && p.price_annual != null)
+      .map((p) => 1 - p.price_annual! / (p.price_monthly! * 12));
+    return rates.length ? Math.round(Math.max(...rates) * 100) : null;
+  })();
+
   return (
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       {/* Header */}
@@ -122,7 +134,11 @@ export default function PricingPage() {
         </button>
         <span className={billing === 'annual' ? 'font-semibold' : ''} style={{ color: billing === 'annual' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
           Annual{' '}
-          <Badge variant="secondary" className="ml-1 text-xs">−17%</Badge>
+          {annualDiscountPct != null && (
+            <Badge variant="secondary" className="ml-1 text-xs">
+              up to −{annualDiscountPct}%
+            </Badge>
+          )}
         </span>
       </div>
 
@@ -256,7 +272,7 @@ export default function PricingPage() {
 
       {/* Footer note */}
       <p className="mt-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        Plan changes are handled by our team — click a plan to send a prefilled request. Annual billing saves ~17% (2 months free). Enterprise pricing is on request. Prices exclude VAT.
+        Plan changes are handled by our team — click a plan to send a prefilled request. {annualDiscountPct != null ? `Annual billing saves up to ${annualDiscountPct}%. ` : ''}Enterprise pricing is on request. Prices exclude VAT.
       </p>
     </div>
   );
