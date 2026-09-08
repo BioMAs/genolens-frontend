@@ -23,6 +23,8 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.includes('/comparisons/')) return 'Comparison';
   if (pathname.includes('/datasets/')) return 'Dataset';
   if (pathname.startsWith('/projects/')) return 'Project';
+  if (pathname === '/docs') return 'Documentation';
+  if (pathname.startsWith('/docs/')) return 'Guide';
   return 'GenoLens';
 }
 

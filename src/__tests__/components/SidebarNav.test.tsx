@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe('Workspace navigation', () => {
-  it('offers the four workspace destinations', () => {
+  it('offers the five workspace destinations', () => {
     renderAt('/dashboard');
     const group = workspaceGroup();
 
@@ -71,6 +71,7 @@ describe('Workspace navigation', () => {
       'Projects',
       'Comparisons',
       'Tools',
+      'Documentation',
     ]);
   });
 
@@ -81,6 +82,7 @@ describe('Workspace navigation', () => {
     expect(workspaceLink('Projects')).toHaveAttribute('href', '/projects');
     expect(workspaceLink('Comparisons')).toHaveAttribute('href', '/comparisons');
     expect(workspaceLink('Tools')).toHaveAttribute('href', '/tools');
+    expect(workspaceLink('Documentation')).toHaveAttribute('href', '/docs');
   });
 });
 
@@ -120,5 +122,16 @@ describe('active state', () => {
   it('does not treat a sibling route as a Tools sub-route', () => {
     renderAt('/toolsmith');
     expect(workspaceLink('Tools').className).not.toContain('active');
+  });
+
+  it('links to the documentation library from the workspace group', () => {
+    renderAt('/dashboard');
+    expect(workspaceLink('Documentation')).toHaveAttribute('href', '/docs');
+  });
+
+  it('keeps the documentation item active inside a guide', () => {
+    // `match: 'prefix'` : sur /docs/gsea, l'entrée doit rester allumée.
+    renderAt('/docs/gsea');
+    expect(workspaceLink('Documentation')).toHaveClass('active');
   });
 });
