@@ -779,3 +779,67 @@ body {
   box-shadow: 0 0 0 2px var(--auth-bg), 0 0 0 4px var(--auth-accent);
   outline: none;
 }
+
+/* Corps des guides de /docs — react-markdown rend du HTML sans classe. */
+.doc-prose {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.doc-prose h2 {
+  font-family: var(--font-syne);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2rem 0 0.75rem;
+  scroll-margin-top: calc(var(--topbar-height) + 1rem);
+}
+.doc-prose h3 {
+  font-family: var(--font-syne);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 1.5rem 0 0.5rem;
+  scroll-margin-top: calc(var(--topbar-height) + 1rem);
+}
+.doc-prose p,
+.doc-prose ul,
+.doc-prose ol {
+  margin: 0.75rem 0;
+}
+.doc-prose ul { list-style: disc; padding-left: 1.25rem; }
+.doc-prose ol { list-style: decimal; padding-left: 1.25rem; }
+.doc-prose li { margin: 0.25rem 0; }
+.doc-prose strong { color: var(--text-primary); font-weight: 600; }
+.doc-prose a { color: var(--sl-purple); text-decoration: underline; }
+.doc-prose code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.85em;
+  background: var(--surface-raised);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.doc-prose pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.doc-prose pre code { background: none; padding: 0; font-size: 0.82em; }
+.doc-prose table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+.doc-prose th,
+.doc-prose td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+}
+.doc-prose th { background: var(--surface-raised); color: var(--text-primary); font-weight: 600; }
+.doc-prose blockquote {
+  border-left: 3px solid var(--sl-teal);
+  padding-left: 0.9rem;
+  margin: 1rem 0;
+  color: var(--text-muted);
+}
+.doc-prose hr { border: none; border-top: 1px solid var(--border); margin: 1.75rem 0; }

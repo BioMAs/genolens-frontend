@@ -18,6 +18,7 @@ import {
   Moon,
   Sun,
   Lock,
+  BookOpen,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import QuotaDisplay from './QuotaDisplay';
@@ -39,6 +40,8 @@ const primaryNav = [
   { href: '/projects', label: 'Projects', icon: FolderKanban, match: 'exact' },
   { href: '/comparisons', label: 'Comparisons', icon: GitCompareArrows, match: 'exact' },
   { href: '/tools', label: 'Tools', icon: Wrench, match: 'prefix' },
+  // 'prefix' : l'entrée reste allumée sur /docs/<slug>.
+  { href: '/docs', label: 'Documentation', icon: BookOpen, match: 'prefix' },
 ] as const;
 
 const projectNav = [
