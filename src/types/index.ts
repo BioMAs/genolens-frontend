@@ -96,12 +96,6 @@ export interface UserProfile {
   analyses_used_this_month?: number;
   analyses_quota?: number | null;
   analyses_remaining?: number | null;
-  /** @deprecated Ancien nom, encore servi par le backend. Lire `analyses_used_this_month`. */
-  comparisons_used_this_month?: number;
-  /** @deprecated Ancien nom. Lire `analyses_quota`. */
-  comparisons_quota?: number | null;
-  /** @deprecated Ancien nom. Lire `analyses_remaining`. */
-  comparisons_remaining?: number | null;
   max_projects?: number | null;
   max_datasets_per_project?: number | null;
   /** Projets POSSÉDÉS (pas possédés-ou-partagés) — le prédicat qu'applique la limite backend. */

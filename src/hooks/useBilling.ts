@@ -40,12 +40,6 @@ export interface SubscriptionInfo {
   analyses_used_this_month: number;
   analyses_quota: number | null;
   analyses_remaining: number | null;
-  /** @deprecated Ancien nom, encore servi par le backend. */
-  comparisons_used_this_month?: number;
-  /** @deprecated Ancien nom. */
-  comparisons_quota?: number | null;
-  /** @deprecated Ancien nom. */
-  comparisons_remaining?: number | null;
   can_use_ai: boolean;
   can_use_multi_comparison: boolean;
 }
