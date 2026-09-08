@@ -91,9 +91,16 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
-  // Quota fields from /users/me (UserSelf)
+  // Quota d'analyses, servi par /users/me (UserSelf). L'unité est l'analyse :
+  // une analyse coûte une unité, quel que soit son nombre de contrastes.
+  analyses_used_this_month?: number;
+  analyses_quota?: number | null;
+  analyses_remaining?: number | null;
+  /** @deprecated Ancien nom, encore servi par le backend. Lire `analyses_used_this_month`. */
   comparisons_used_this_month?: number;
+  /** @deprecated Ancien nom. Lire `analyses_quota`. */
   comparisons_quota?: number | null;
+  /** @deprecated Ancien nom. Lire `analyses_remaining`. */
   comparisons_remaining?: number | null;
   max_projects?: number | null;
   max_datasets_per_project?: number | null;
