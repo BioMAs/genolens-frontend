@@ -150,6 +150,32 @@ export function plansOrdered(grid: PricingGrid): Plan[] {
   return [...grid.plans].sort((a, b) => a.order - b.order);
 }
 
+/**
+ * Meilleure remise annuelle de la grille, en pourcentage entier, ou `null`.
+ *
+ * La page tarifaire écrivait « −17% » en dur. La valeur ne tenait que parce
+ * que les deux plans listés avaient alors la même remise (1000/1200 et
+ * 2500/3000 font 16,7 % chacun). Depuis l'alignement sur genolens.com les
+ * remises diffèrent — Starter 15 %, Pro 20 % — donc un pourcentage unique
+ * serait faux pour au moins l'un des deux plans. On retient la meilleure et
+ * l'appelant l'annonce en « up to », comme le site.
+ *
+ * Renvoie `null` quand aucun plan ne porte les deux prix, et aussi quand la
+ * meilleure « remise » est nulle ou négative : une grille mal saisie ne doit
+ * pas afficher « up to −0% » ni « up to −-8% », mais rien du tout.
+ */
+export function annualDiscountPct(grid: PricingGrid | undefined): number | null {
+  const rates = (grid?.plans ?? [])
+    .filter((p) => p.price_monthly != null && p.price_annual != null)
+    .map((p) => 1 - p.price_annual! / (p.price_monthly! * 12))
+    .filter((rate) => rate > 0);
+
+  if (!rates.length) return null;
+
+  const pct = Math.round(Math.max(...rates) * 100);
+  return pct > 0 ? pct : null;
+}
+
 /** Add-ons in display order. */
 export function addonsOrdered(grid: PricingGrid): Addon[] {
   return [...grid.addons].sort((a, b) => a.order - b.order);
