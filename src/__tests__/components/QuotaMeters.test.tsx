@@ -20,7 +20,7 @@ const { useQuotas } = require('@/hooks/useQuotas');
 
 function state(overrides: Partial<QuotaState> = {}): QuotaState {
   return {
-    comparisons: { used: 6, max: 30, remaining: 24, unlimited: false },
+    analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
     projects: { used: 4, max: 15, remaining: 11, unlimited: false },
     ai: { credits: 18, unlimited: false },
     maxDatasetsPerProject: 5,
@@ -35,21 +35,21 @@ function state(overrides: Partial<QuotaState> = {}): QuotaState {
 
 beforeEach(() => jest.clearAllMocks());
 
-it('leads with the number of comparisons left, not the number used', () => {
+it('leads with the number of analyses left, not the number used', () => {
   useQuotas.mockReturnValue(state());
   render(<QuotaMeters />);
 
-  const cell = screen.getByTestId('quota-comparisons');
+  const cell = screen.getByTestId('quota-analyses');
   expect(cell).toHaveTextContent('24');
   expect(cell).toHaveTextContent(/of 30/i);
-  expect(cell).toHaveTextContent(/comparisons left/i);
+  expect(cell).toHaveTextContent(/analyses left/i);
 });
 
 it('names the month the quota resets', () => {
   useQuotas.mockReturnValue(state());
   render(<QuotaMeters />);
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent(/resets/i);
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent(/october/i);
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent(/resets/i);
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent(/october/i);
 });
 
 it('shows the project usage against its cap', () => {
@@ -68,21 +68,21 @@ it('shows AI credits', () => {
 it('renders infinity instead of a meter when unlimited', () => {
   useQuotas.mockReturnValue(
     state({
-      comparisons: { used: 120, max: null, remaining: null, unlimited: true },
+      analyses: { used: 120, max: null, remaining: null, unlimited: true },
       projects: { used: 30, max: null, remaining: null, unlimited: true },
       ai: { credits: null, unlimited: true },
     })
   );
   render(<QuotaMeters />);
 
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent('∞');
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent('∞');
   expect(screen.getByTestId('quota-ai')).toHaveTextContent(/unlimited/i);
 });
 
 it('offers an upgrade link as soon as the tone is low', () => {
   useQuotas.mockReturnValue(
     state({
-      comparisons: { used: 25, max: 30, remaining: 5, unlimited: false },
+      analyses: { used: 25, max: 30, remaining: 5, unlimited: false },
       tone: 'low',
     })
   );
@@ -94,14 +94,14 @@ it('offers an upgrade link as soon as the tone is low', () => {
 it('offers an upgrade link when exhausted', () => {
   useQuotas.mockReturnValue(
     state({
-      comparisons: { used: 30, max: 30, remaining: 0, unlimited: false },
+      analyses: { used: 30, max: 30, remaining: 0, unlimited: false },
       tone: 'exhausted',
     })
   );
   render(<QuotaMeters />);
 
   expect(screen.getByRole('link', { name: /upgrade/i })).toBeInTheDocument();
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent(/no comparison left/i);
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent(/no analysis left/i);
 });
 
 it('offers no upgrade link while the tone is ok', () => {
@@ -115,7 +115,7 @@ it('offers no upgrade link while the tone is ok', () => {
 it('renders placeholders while loading', () => {
   useQuotas.mockReturnValue(state({ isLoading: true, hasProfile: false }));
   render(<QuotaMeters />);
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent('—');
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent('—');
 });
 
 it('offers no upgrade link while loading', () => {
@@ -126,7 +126,7 @@ it('offers no upgrade link while loading', () => {
     state({
       isLoading: true,
       hasProfile: false,
-      comparisons: { used: 0, max: 0, remaining: 0, unlimited: false },
+      analyses: { used: 0, max: 0, remaining: 0, unlimited: false },
       projects: { used: 0, max: 0, remaining: 0, unlimited: false },
       ai: { credits: 0, unlimited: false },
       tone: 'exhausted',
@@ -135,8 +135,8 @@ it('offers no upgrade link while loading', () => {
   render(<QuotaMeters />);
 
   expect(screen.queryByRole('link', { name: /upgrade/i })).not.toBeInTheDocument();
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent('—');
-  expect(screen.getByTestId('quota-comparisons')).not.toHaveTextContent(/no comparison left/i);
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent('—');
+  expect(screen.getByTestId('quota-analyses')).not.toHaveTextContent(/no analysis left/i);
 });
 
 it('renders placeholders rather than a free allowance when the profile never arrived', () => {

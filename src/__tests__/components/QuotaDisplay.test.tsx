@@ -23,7 +23,7 @@ const { useQuotas } = require('@/hooks/useQuotas');
 
 function state(overrides: Partial<QuotaState> = {}): QuotaState {
   return {
-    comparisons: { used: 6, max: 30, remaining: 24, unlimited: false },
+    analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
     projects: { used: 4, max: 15, remaining: 11, unlimited: false },
     ai: { credits: 18, unlimited: false },
     maxDatasetsPerProject: 5,

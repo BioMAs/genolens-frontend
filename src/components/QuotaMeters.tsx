@@ -4,9 +4,12 @@
  * Rangée de quotas : la réponse à « qu'est-ce qu'il me reste ».
  *
  * Elle met en avant le nombre **restant**, pas le nombre consommé. L'ancienne
- * carte de plan répondait en « utilisé / quota » sous le libellé « Analyses /
- * month », ce qui obligeait le lecteur à faire la soustraction pour obtenir la
- * seule information qu'il cherchait.
+ * carte de plan répondait en « utilisé / quota », ce qui obligeait le lecteur à
+ * faire la soustraction pour obtenir la seule information qu'il cherchait.
+ *
+ * L'unité affichée est l'ANALYSE : une analyse compte pour une, quel que soit
+ * son nombre de contrastes. Le libellé disait « comparaisons », ce que la
+ * grille tarifaire elle-même signale comme trompeur.
  *
  * Le composant ne prend aucune prop de données : il lit `useQuotas`, seule
  * autorité sur les quotas. Aucune règle ne doit être recalculée ici.
@@ -73,7 +76,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
   const known = quotas.hasProfile && !quotas.isLoading;
   const tone: QuotaTone = known ? quotas.tone : 'ok';
 
-  const { comparisons, projects, ai } = quotas;
+  const { analyses, projects, ai } = quotas;
   const resetLabel = quotas.resetsOn.toLocaleDateString('en-GB', {
     month: 'long',
     day: 'numeric',
@@ -89,21 +92,21 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
       }
     >
       <Cell
-        testId="quota-comparisons"
+        testId="quota-analyses"
         icon={<GitCompare className="h-3.5 w-3.5" aria-hidden />}
-        label="Comparisons"
+        label="Analyses"
       >
         {!known ? (
           <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
-        ) : comparisons.unlimited ? (
+        ) : analyses.unlimited ? (
           <>
             <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Unlimited comparisons
+              Unlimited analyses
             </p>
           </>
         ) : (
@@ -112,19 +115,19 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
               className="mt-1 font-display text-2xl font-semibold tabular-nums"
               style={{ color: VALUE_COLOR[tone] }}
             >
-              {comparisons.remaining}{' '}
+              {analyses.remaining}{' '}
               <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>
-                of {comparisons.max}
+                of {analyses.max}
               </span>
             </p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              {comparisons.remaining === 0
-                ? 'No comparison left this month'
-                : 'comparisons left this month'}
+              {analyses.remaining === 0
+                ? 'No analysis left this month'
+                : 'analyses left this month'}
             </p>
             <div className="mt-2">
               <Meter
-                value={comparisons.max ? comparisons.used / comparisons.max : 0}
+                value={analyses.max ? analyses.used / analyses.max : 0}
                 tone={METER_TONE[tone]}
                 height={8}
               />

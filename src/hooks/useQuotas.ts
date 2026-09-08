@@ -1,6 +1,12 @@
 /**
  * Seule autorité du frontend sur « ce qu'il me reste ».
  *
+ * L'unité est l'ANALYSE : une analyse coûte une unité, quel que soit le nombre
+ * de contrastes de son fichier (`billable_unit` de la grille tarifaire). Les
+ * champs d'API s'appellent encore `comparisons_*` — le renommage côté backend
+ * est un lot à part, et ce hook est l'unique endroit du frontend où le lien
+ * entre les deux vocabulaires est fait.
+ *
  * Avant ce hook, chaque surface portait sa propre règle : le calcul des
  * crédits IA vivait dans `QuotaDisplay` avec son quota gratuit de 15 codé en
  * dur, la limite de projets était lue sur `GET /billing/subscription` — qui ne
@@ -34,12 +40,13 @@ export interface QuotaSlice {
 }
 
 export interface QuotaState {
-  comparisons: QuotaSlice;
+  /** Unité facturable : une analyse, quel que soit son nombre de contrastes. */
+  analyses: QuotaSlice;
   projects: QuotaSlice;
   ai: { credits: number | null; unlimited: boolean };
   maxDatasetsPerProject: number | null;
   resetsOn: Date;
-  /** Ton des comparaisons : le quota mis en avant sur le dashboard. */
+  /** Ton du quota d'analyses : celui mis en avant sur le dashboard. */
   tone: QuotaTone;
   isLoading: boolean;
   /** Faux tant que le profil n'est pas arrivé, erreur comprise. */
@@ -102,12 +109,12 @@ export function useQuotas(): QuotaState {
 
   const privileged = isPrivilegedRole(profile?.role);
 
-  const comparisonsUsed = profile?.comparisons_used_this_month ?? 0;
-  const comparisonsMax = readCap(profile?.comparisons_quota, privileged);
-  const comparisonsRemaining =
-    comparisonsMax === null
+  const analysesUsed = profile?.comparisons_used_this_month ?? 0;
+  const analysesMax = readCap(profile?.comparisons_quota, privileged);
+  const analysesRemaining =
+    analysesMax === null
       ? null
-      : (profile?.comparisons_remaining ?? Math.max(0, comparisonsMax - comparisonsUsed));
+      : (profile?.comparisons_remaining ?? Math.max(0, analysesMax - analysesUsed));
 
   const projectsUsed = profile?.project_count ?? 0;
   const projectsMax = readCap(profile?.max_projects, privileged);
@@ -120,11 +127,11 @@ export function useQuotas(): QuotaState {
   const hasProfile = !!profile;
 
   return {
-    comparisons: {
-      used: comparisonsUsed,
-      max: comparisonsMax,
-      remaining: comparisonsRemaining,
-      unlimited: comparisonsMax === null,
+    analyses: {
+      used: analysesUsed,
+      max: analysesMax,
+      remaining: analysesRemaining,
+      unlimited: analysesMax === null,
     },
     projects: {
       used: projectsUsed,
@@ -144,7 +151,7 @@ export function useQuotas(): QuotaState {
     // Pendant le chargement on reste neutre : le ton dérivé d'un profil absent
     // vaudrait « exhausted » (max 0, reste 0), donc un placeholder rouge et un
     // CTA « Upgrade » à chaque chargement du dashboard.
-    tone: hasProfile ? quotaTone(comparisonsRemaining, comparisonsMax) : 'ok',
+    tone: hasProfile ? quotaTone(analysesRemaining, analysesMax) : 'ok',
     isLoading,
     hasProfile,
     isError,
