@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 import { usePricing } from '@/hooks/usePricing';
-import { plansOrdered, type Plan } from '@/types/pricing';
+import { annualDiscountPct, plansOrdered, type Plan } from '@/types/pricing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -93,6 +93,11 @@ export default function PricingPage() {
 
   const contactSales = (plan: Plan) => submitRequest(plan, 'Enterprise enquiry — custom terms');
 
+  // Remise annuelle affichée : dérivée de la grille, jamais écrite en dur.
+  // Le calcul vit dans `types/pricing.ts` avec les autres lecteurs de grille,
+  // pour être testable sans monter la page.
+  const discountPct = annualDiscountPct(grid);
+
   return (
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       {/* Header */}
@@ -122,7 +127,11 @@ export default function PricingPage() {
         </button>
         <span className={billing === 'annual' ? 'font-semibold' : ''} style={{ color: billing === 'annual' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
           Annual{' '}
-          <Badge variant="secondary" className="ml-1 text-xs">−17%</Badge>
+          {discountPct != null && (
+            <Badge variant="secondary" className="ml-1 text-xs">
+              up to −{discountPct}%
+            </Badge>
+          )}
         </span>
       </div>
 
@@ -256,7 +265,7 @@ export default function PricingPage() {
 
       {/* Footer note */}
       <p className="mt-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        Plan changes are handled by our team — click a plan to send a prefilled request. Annual billing saves ~17% (2 months free). Enterprise pricing is on request. Prices exclude VAT.
+        Plan changes are handled by our team — click a plan to send a prefilled request. {discountPct != null ? `Annual billing saves up to ${discountPct}%. ` : ''}Enterprise pricing is on request. Prices exclude VAT.
       </p>
     </div>
   );

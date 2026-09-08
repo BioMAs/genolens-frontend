@@ -1,5 +1,6 @@
 import {
   addonsOrdered,
+  annualDiscountPct,
   findPlan,
   planDisplayName,
   plansOrdered,
@@ -135,5 +136,58 @@ describe('project cap resolution (the fail-open regression)', () => {
     // The old expression `plan !== 'STARTER' || max === null` returned true
     // here, showing ∞ for a plan it had never heard of.
     expect(capOf('mystery').unlimited).toBe(false);
+  });
+});
+
+// ── annualDiscountPct ──────────────────────────────────────────────────────
+
+/**
+ * La page tarifaire annonçait « −17% » en dur. La valeur tenait tant que les
+ * deux plans listés avaient la même remise annuelle ; l'alignement sur
+ * genolens.com a cassé la coïncidence (Starter 15 %, Pro 20 %), rendant un
+ * pourcentage unique faux pour au moins l'un des deux.
+ */
+describe('annualDiscountPct', () => {
+  const withPrices = (prices: Array<[number | null, number | null]>): PricingGrid => ({
+    ...grid,
+    plans: prices.map(([monthly, annual], i) => ({
+      ...grid.plans[0],
+      id: `P${i}`,
+      order: i,
+      price_monthly: monthly,
+      price_annual: annual,
+    })),
+  });
+
+  it('retains the best discount across plans', () => {
+    // Starter 1020/an contre 100/mois = 15 % ; Pro 2400 contre 250 = 20 %.
+    expect(annualDiscountPct(withPrices([[100, 1020], [250, 2400]]))).toBe(20);
+  });
+
+  it('rounds to the nearest whole percent', () => {
+    // 1000/1200 = 16,67 % — l'ancienne valeur écrite en dur.
+    expect(annualDiscountPct(withPrices([[100, 1000]]))).toBe(17);
+  });
+
+  it('ignores a quoted plan that carries no price', () => {
+    expect(annualDiscountPct(withPrices([[100, 1020], [null, null]]))).toBe(15);
+  });
+
+  it('ignores a plan priced monthly only', () => {
+    expect(annualDiscountPct(withPrices([[100, null], [250, 2400]]))).toBe(20);
+  });
+
+  it('returns null when no plan has both prices, so the badge disappears', () => {
+    // Plutôt que d'annoncer « up to −0% ».
+    expect(annualDiscountPct(withPrices([[100, null], [null, null]]))).toBeNull();
+  });
+
+  it('returns null on an undefined grid', () => {
+    expect(annualDiscountPct(undefined)).toBeNull();
+  });
+
+  it('never reports a negative discount when the annual price is the worse deal', () => {
+    // Une grille mal saisie ne doit pas afficher « up to −-8% ».
+    expect(annualDiscountPct(withPrices([[100, 1300]]))).toBeNull();
   });
 });
