@@ -8,6 +8,7 @@ import { render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 
 import ComparisonQuotaNotice, {
+  declaredComparisons,
   useComparisonQuotaBlocked,
 } from '@/components/analyses/ComparisonQuotaNotice';
 import type { QuotaState } from '@/hooks/useQuotas';
@@ -139,5 +140,94 @@ describe('useComparisonQuotaBlocked', () => {
     );
     const { result } = renderHook(() => useComparisonQuotaBlocked());
     expect(result.current).toBe(false);
+  });
+});
+
+// ── le nombre de comparaisons que l'analyse demande ───────────────────────
+
+/**
+ * Le backend refuse un lancement dont le fichier de contrastes declare plus de
+ * lignes que le reste du mois (`analyses.py`, `_declared_comparisons`, cle
+ * `rows`). Ne bloquer qu'a zero restant laissait donc passer un lancement
+ * condamne — et le rappel rassurait l'utilisateur au passage.
+ */
+describe('declaredComparisons', () => {
+  it('reads the row count the ingestion writes', () => {
+    expect(declaredComparisons({ rows: 5 })).toBe(5);
+  });
+
+  it('falls back to total_rows when only that is present', () => {
+    expect(declaredComparisons({ total_rows: 3 })).toBe(3);
+  });
+
+  it('is unknown while the dataset is still being processed', () => {
+    expect(declaredComparisons({})).toBeNull();
+    expect(declaredComparisons(undefined)).toBeNull();
+  });
+
+  it('rejects a boolean, which is not a row count', () => {
+    // `typeof true === 'boolean'` mais le pendant Python de ce garde-fou
+    // existe parce que `isinstance(True, int)` vaut True.
+    expect(declaredComparisons({ rows: true })).toBeNull();
+  });
+
+  it('rejects a non-positive or fractional count', () => {
+    expect(declaredComparisons({ rows: 0 })).toBeNull();
+    expect(declaredComparisons({ rows: -2 })).toBeNull();
+    expect(declaredComparisons({ rows: 2.5 })).toBeNull();
+  });
+});
+
+describe('useComparisonQuotaBlocked avec un nombre demande', () => {
+  it('blocks a run that declares more comparisons than remain', () => {
+    useQuotas.mockReturnValue(
+      state({ comparisons: { used: 28, max: 30, remaining: 2, unlimited: false } })
+    );
+    const { result } = renderHook(() => useComparisonQuotaBlocked(5));
+    expect(result.current).toBe(true);
+  });
+
+  it('allows a run that fits exactly in what remains', () => {
+    useQuotas.mockReturnValue(
+      state({ comparisons: { used: 28, max: 30, remaining: 2, unlimited: false } })
+    );
+    const { result } = renderHook(() => useComparisonQuotaBlocked(2));
+    expect(result.current).toBe(false);
+  });
+
+  it('allows any size on an unlimited plan', () => {
+    useQuotas.mockReturnValue(
+      state({ comparisons: { used: 120, max: null, remaining: null, unlimited: true } })
+    );
+    const { result } = renderHook(() => useComparisonQuotaBlocked(50));
+    expect(result.current).toBe(false);
+  });
+
+  it('falls back to the zero-remaining rule when the count is unknown', () => {
+    // Dataset encore en traitement : on ne peut pas comparer, donc on ne
+    // bloque que sur le cas certain.
+    useQuotas.mockReturnValue(
+      state({ comparisons: { used: 28, max: 30, remaining: 2, unlimited: false } })
+    );
+    const { result } = renderHook(() => useComparisonQuotaBlocked(null));
+    expect(result.current).toBe(false);
+  });
+});
+
+describe('le rappel nomme le manque', () => {
+  it('says how many the run needs when it exceeds what remains', () => {
+    useQuotas.mockReturnValue(
+      state({ comparisons: { used: 28, max: 30, remaining: 2, unlimited: false }, tone: 'low' })
+    );
+    render(<ComparisonQuotaNotice declared={5} />);
+
+    expect(screen.getByText(/needs 5/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /upgrade/i })).toBeInTheDocument();
+  });
+
+  it('says nothing about the count when the run fits', () => {
+    useQuotas.mockReturnValue(state());
+    render(<ComparisonQuotaNotice declared={5} />);
+    expect(screen.queryByText(/needs 5/i)).not.toBeInTheDocument();
   });
 });

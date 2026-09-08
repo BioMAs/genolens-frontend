@@ -356,3 +356,24 @@ describe('useProjectLimit', () => {
     await waitFor(() => expect(result.current.blocked).toBe(false), { timeout: 5000 });
   });
 });
+
+it('useProjectLimit ne bloque pas sur un plafond absent de la charge utile', async () => {
+  // `readCap` echoue ferme sur 0 pour l'AFFICHAGE — un champ manquant ne doit
+  // pas passer pour un illimite. Mais la barriere ne doit pas en deduire un
+  // plafond de zero projet : aucun plan n'en vend, et bloquer la creation avec
+  // « (4/0) » sur une donnee manquante contredit son contrat de fail-open.
+  mockEndpoints({
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'STARTER',
+    project_count: 4,
+    ai_interpretations_used: 0,
+    ai_tokens_purchased: 0,
+    ai_tokens_used: 0,
+  });
+  const { result } = renderHook(() => useProjectLimit(), { wrapper: createWrapper() });
+
+  await waitFor(() => expect(result.current.blocked).toBe(false));
+  expect(result.current.reason).toBeUndefined();
+});

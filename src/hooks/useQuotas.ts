@@ -175,7 +175,12 @@ export interface ProjectLimit {
 export function useProjectLimit(): ProjectLimit {
   const { projects, isLoading, hasProfile } = useQuotas();
 
-  if (isLoading || !hasProfile || projects.unlimited || projects.max === null) {
+  // `max === 0` n'est pas un plafond de zero projet : aucun plan n'en vend, et
+  // c'est la valeur que `readCap` produit quand le champ est ABSENT de la
+  // charge utile. Le traiter comme un plafond reel bloquerait la creation avec
+  // « (4/0) » sur une donnee manquante — la troisieme incertitude, a traiter
+  // comme les deux autres.
+  if (isLoading || !hasProfile || projects.unlimited || !projects.max) {
     return { blocked: false };
   }
   if (projects.used < projects.max) {

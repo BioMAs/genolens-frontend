@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
 import ComparisonQuotaNotice, {
+  declaredComparisons,
   useComparisonQuotaBlocked,
 } from '@/components/analyses/ComparisonQuotaNotice';
 import { useProjectDatasets } from '@/hooks/useProjectData';
@@ -73,8 +74,11 @@ export default function StepLaunch({
     }
   }, [analysis?.status, analysisId, onComplete]);
 
-  // Le quota se depense ici, et nulle part ailleurs dans le wizard.
-  const quotaBlocked = useComparisonQuotaBlocked();
+  // Le quota se depense ici, et nulle part ailleurs dans le wizard. Le
+  // nombre de contrastes declares par le fichier vient de la meme cle de
+  // metadonnee que celle sur laquelle le backend fonde son refus.
+  const declared = declaredComparisons(contrastsDs?.dataset_metadata);
+  const quotaBlocked = useComparisonQuotaBlocked(declared);
 
   const handleLaunch = async () => {
     setLaunchError(null);
@@ -127,7 +131,7 @@ export default function StepLaunch({
       </div>
 
       {/* Rappel de quota — juste avant l'action qui le depense */}
-      {!analysisId && <ComparisonQuotaNotice />}
+      {!analysisId && <ComparisonQuotaNotice declared={declared} />}
 
       {/* Summary card */}
       {!analysisId && (
@@ -247,7 +251,13 @@ export default function StepLaunch({
             type="button"
             onClick={handleLaunch}
             disabled={createAnalysis.isPending || quotaBlocked}
-            title={quotaBlocked ? 'No comparison left this month. Upgrade to continue.' : undefined}
+            title={
+              quotaBlocked
+                ? declared != null
+                  ? `This run needs ${declared} comparisons and your monthly quota cannot cover it. Upgrade to continue.`
+                  : 'No comparison left this month. Upgrade to continue.'
+                : undefined
+            }
             className="ml-auto inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40"
           >
             {createAnalysis.isPending ? (

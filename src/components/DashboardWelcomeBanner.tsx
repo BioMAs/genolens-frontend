@@ -120,8 +120,13 @@ export default function DashboardWelcomeBanner({
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
               style={{ background: 'var(--sl-purple)' }}
             >
-              Resume {recentProjectName}
-              <ArrowRight className="h-3.5 w-3.5" />
+              {/* Un nom de projet va jusqu'a 255 caracteres : sans borne, le
+                  bouton s'etirait hors de sa colonne et faisait deborder la
+                  page. Le nom complet reste dans l'infobulle. */}
+              <span className="max-w-[16ch] truncate sm:max-w-[24ch]" title={recentProjectName}>
+                Resume {recentProjectName}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
             </Link>
           ) : (
             <Link
