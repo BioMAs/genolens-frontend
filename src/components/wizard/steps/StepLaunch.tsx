@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
+import ComparisonQuotaNotice, {
+  useComparisonQuotaBlocked,
+} from '@/components/analyses/ComparisonQuotaNotice';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import {
   SelfServiceAnalysisStatus,
@@ -70,6 +73,9 @@ export default function StepLaunch({
     }
   }, [analysis?.status, analysisId, onComplete]);
 
+  // Le quota se depense ici, et nulle part ailleurs dans le wizard.
+  const quotaBlocked = useComparisonQuotaBlocked();
+
   const handleLaunch = async () => {
     setLaunchError(null);
     try {
@@ -119,6 +125,9 @@ export default function StepLaunch({
           Review your configuration and launch the multi-method differential expression analysis.
         </p>
       </div>
+
+      {/* Rappel de quota — juste avant l'action qui le depense */}
+      {!analysisId && <ComparisonQuotaNotice />}
 
       {/* Summary card */}
       {!analysisId && (
@@ -237,7 +246,8 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={handleLaunch}
-            disabled={createAnalysis.isPending}
+            disabled={createAnalysis.isPending || quotaBlocked}
+            title={quotaBlocked ? 'No comparison left this month. Upgrade to continue.' : undefined}
             className="ml-auto inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40"
           >
             {createAnalysis.isPending ? (

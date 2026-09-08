@@ -73,6 +73,11 @@ export function useCreateAnalysis() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['analyses', data.project_id] });
+      // Un lancement consomme des comparaisons : le rappel du wizard et la
+      // rangee de quotas lisent /users/me, cache 5 minutes. Sans ca, le solde
+      // affiche reste celui d'avant le lancement — la ou il est le plus
+      // visible, juste apres l'action qui vient de le reduire.
+      qc.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }
