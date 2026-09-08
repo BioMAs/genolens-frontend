@@ -37,9 +37,15 @@ export interface SubscriptionInfo {
   /** ISO 8601 en String(50) cote modele, formate par le client. */
   subscription_starts_at: string | null;
   subscription_ends_at: string | null;
-  comparisons_used_this_month: number;
-  comparisons_quota: number | null;
-  comparisons_remaining: number | null;
+  analyses_used_this_month: number;
+  analyses_quota: number | null;
+  analyses_remaining: number | null;
+  /** @deprecated Ancien nom, encore servi par le backend. */
+  comparisons_used_this_month?: number;
+  /** @deprecated Ancien nom. */
+  comparisons_quota?: number | null;
+  /** @deprecated Ancien nom. */
+  comparisons_remaining?: number | null;
   can_use_ai: boolean;
   can_use_multi_comparison: boolean;
 }

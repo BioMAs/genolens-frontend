@@ -382,3 +382,129 @@ it('useProjectLimit ne bloque pas sur un plafond absent de la charge utile', asy
   await waitFor(() => expect(result.current.blocked).toBe(false));
   expect(result.current.reason).toBeUndefined();
 });
+
+// ── les deux vocabulaires de l'API ────────────────────────────────────────
+
+/**
+ * Le backend sert `analyses_*` depuis le renommage et garde `comparisons_*` en
+ * alias le temps de la transition. Ce frontend et ce backend se déploient
+ * indépendamment (Vercel / GitHub Actions) : le hook doit donc fonctionner
+ * contre les deux versions, dans les deux sens.
+ */
+describe('lecture des champs de quota', () => {
+  const BASE = {
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'STARTER',
+    ai_interpretations_used: 0,
+    ai_tokens_purchased: 0,
+    ai_tokens_used: 0,
+    max_projects: 15,
+    project_count: 1,
+  };
+
+  it('lit les nouveaux noms quand le backend les sert', async () => {
+    mockEndpoints({
+      ...BASE,
+      analyses_used_this_month: 6,
+      analyses_quota: 30,
+      analyses_remaining: 24,
+    });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.analyses).toEqual({
+      used: 6,
+      max: 30,
+      remaining: 24,
+      unlimited: false,
+    });
+  });
+
+  it('se replie sur les anciens noms contre un backend anterieur', async () => {
+    mockEndpoints({
+      ...BASE,
+      comparisons_used_this_month: 6,
+      comparisons_quota: 30,
+      comparisons_remaining: 24,
+    });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.analyses).toEqual({
+      used: 6,
+      max: 30,
+      remaining: 24,
+      unlimited: false,
+    });
+  });
+
+  it('donne la priorite aux nouveaux noms quand les deux sont servis', async () => {
+    // Cas réel de la transition : le backend sert les deux. Si les alias
+    // divergeaient un jour, c'est la source à jour qui doit gagner.
+    mockEndpoints({
+      ...BASE,
+      analyses_used_this_month: 6,
+      analyses_quota: 30,
+      analyses_remaining: 24,
+      comparisons_used_this_month: 99,
+      comparisons_quota: 99,
+      comparisons_remaining: 0,
+    });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.analyses.used).toBe(6);
+    expect(result.current.analyses.max).toBe(30);
+    expect(result.current.analyses.remaining).toBe(24);
+  });
+
+  it('distingue toujours le plafond nul de l\'illimite, sur les nouveaux noms', async () => {
+    // `analyses_quota: null` = illimité, dit explicitement par le backend.
+    mockEndpoints({ ...BASE, analyses_used_this_month: 400, analyses_quota: null });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.analyses.unlimited).toBe(true);
+  });
+});
+
+it('lit un illimite annonce par l\'ancien nom seul', async () => {
+  // Backend anterieur au renommage : seul `comparisons_quota` existe, a null.
+  mockEndpoints({
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'ON_PREMISE',
+    ai_interpretations_used: 0,
+    ai_tokens_purchased: 0,
+    ai_tokens_used: 0,
+    comparisons_used_this_month: 400,
+    comparisons_quota: null,
+    comparisons_remaining: null,
+  });
+  const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  expect(result.current.analyses.unlimited).toBe(true);
+  expect(result.current.tone).toBe('ok');
+});
+
+it('echoue ferme quand aucun des deux noms n\'est servi', async () => {
+  // Ni l'un ni l'autre : un champ absent n'autorise rien.
+  mockEndpoints({
+    id: 'u1',
+    email: 'a@b.c',
+    role: 'USER',
+    subscription_plan: 'STARTER',
+    ai_interpretations_used: 0,
+    ai_tokens_purchased: 0,
+    ai_tokens_used: 0,
+  });
+  const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  expect(result.current.analyses.unlimited).toBe(false);
+  expect(result.current.analyses.max).toBe(0);
+});
