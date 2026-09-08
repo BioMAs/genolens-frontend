@@ -63,6 +63,9 @@ export function useCreateProject() {
     onSuccess: () => {
       // Invalide le cache de la liste des projets pour forcer un refresh
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // `project_count` vit sur /users/me, cache 5 minutes : c'est lui que
+      // lisent la jauge de projets et la barriere de creation.
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }
@@ -111,6 +114,9 @@ export function useDeleteProject() {
       queryClient.removeQueries({ queryKey: ['project', projectId] });
       // Invalide la liste des projets
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // Une suppression libere une place : sans ca la barriere resterait
+      // fermee jusqu'a expiration du cache.
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }

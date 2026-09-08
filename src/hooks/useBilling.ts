@@ -15,23 +15,33 @@ interface PortalResponse {
   portal_url: string;
 }
 
-export type UserStatus = "pending" | "active" | "suspended" | "cancelled";
-
+/**
+ * Charge utile EXACTE de `GET /billing/subscription`.
+ *
+ * Ce type declarait huit champs que la route ne renvoie pas, et ne renvoyait
+ * deja pas sur main : `status`, `ai_interpretations_used`,
+ * `ai_tokens_purchased`, `ai_tokens_used`, `project_count`, `max_projects`,
+ * `storage_used_bytes`, `max_storage_bytes`. Les trois `ai_*` etaient meme
+ * declares NON optionnels, ce qui explique que tout compilait alors que
+ * chaque lecture recevait `undefined` — d'ou la barriere de projets qui ne
+ * bloquait personne, la jauge bloquee a zero, et un bloc de dates que
+ * personne n'a jamais vu.
+ *
+ * Les quotas et l'usage se lisent sur `/users/me`, via `useQuotas`. Ne rien
+ * rajouter ici sans l'avoir vu dans la reponse de la route.
+ */
 export interface SubscriptionInfo {
   plan: string;
   is_active: boolean;
-  status: UserStatus;
+  stripe_customer_id: string | null;
+  /** ISO 8601 en String(50) cote modele, formate par le client. */
   subscription_starts_at: string | null;
   subscription_ends_at: string | null;
-  stripe_customer_id: string | null;
-  ai_interpretations_used: number;
-  ai_tokens_purchased: number;
-  ai_tokens_used: number;
-  // Usage metrics (populated by /billing/subscription)
-  project_count?: number;
-  max_projects?: number | null;
-  storage_used_bytes?: number;
-  max_storage_bytes?: number | null;
+  comparisons_used_this_month: number;
+  comparisons_quota: number | null;
+  comparisons_remaining: number | null;
+  can_use_ai: boolean;
+  can_use_multi_comparison: boolean;
 }
 
 export function useBilling() {

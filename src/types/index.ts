@@ -97,6 +97,8 @@ export interface UserProfile {
   comparisons_remaining?: number | null;
   max_projects?: number | null;
   max_datasets_per_project?: number | null;
+  /** Projets POSSÉDÉS (pas possédés-ou-partagés) — le prédicat qu'applique la limite backend. */
+  project_count?: number;
   can_use_ai?: boolean;
   can_use_multi_comparison?: boolean;
   can_export_advanced?: boolean;

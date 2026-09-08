@@ -1,14 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
 
+/**
+ * Le bandeau ne porte plus aucune metrique.
+ *
+ * Il narrait « Last session: N comparisons analyzed · M AI interpretations
+ * used » et affichait une tuile « Activity (7d) » : les deux premiers chiffres
+ * etaient repetes par la barre de KPI juste en dessous, et le troisieme aussi.
+ * Le meme ecran donnait donc deux fois la meme grandeur, a deux endroits, sans
+ * dire lequel faisait autorite. Sa seule question est desormais « que fais-je
+ * maintenant », et il y repond par UNE action.
+ */
 interface DashboardWelcomeBannerProps {
   userName?: string;
+  /** Nom du projet a reprendre. Absent = aucun projet. */
   recentProjectName?: string;
-  totalComparisons: number;
-  activityLast7Days: number;
-  aiInterpretationsUsed: number;
+  /** Lien de reprise. Absent = la CTA pointe vers /docs. */
   resumeHref?: string;
 }
 
@@ -50,9 +59,6 @@ function buildScatter(seed = 777) {
 export default function DashboardWelcomeBanner({
   userName,
   recentProjectName,
-  totalComparisons,
-  activityLast7Days,
-  aiInterpretationsUsed,
   resumeHref,
 }: DashboardWelcomeBannerProps) {
   const firstName = getFirstName(userName);
@@ -94,40 +100,44 @@ export default function DashboardWelcomeBanner({
             {firstName ? `Welcome back, ${firstName}` : 'Welcome back'}
           </h2>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Last session: <b>{totalComparisons}</b> comparisons analyzed
             {recentProjectName ? (
               <>
-                {' '}
-                in <b>{recentProjectName}</b>
+                Pick up where you left off in <b>{recentProjectName}</b>.
               </>
-            ) : null}{' '}
-            · <b>{aiInterpretationsUsed}</b> AI interpretations used
+            ) : (
+              'Start with the guides — they walk through an analysis end to end.'
+            )}
           </p>
         </div>
 
+        {/* Une seule action. La creation de projet est deja proposee par
+            l'en-tete des projets recents et par l'etat vide de la liste : la
+            proposer ici en faisait la troisieme sur le meme ecran. */}
         <div className="flex items-center gap-2.5">
-          <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface)' }}>
-            <div
-              className="font-display font-bold leading-none"
-              style={{ color: 'var(--sl-teal)', fontSize: '1.2rem' }}
-            >
-              {activityLast7Days}
-            </div>
-            <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              Activity (7d)
-            </div>
-          </div>
-
           {resumeHref ? (
             <Link
               href={resumeHref}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
               style={{ background: 'var(--sl-purple)' }}
             >
-              Resume
-              <ArrowRight className="h-3.5 w-3.5" />
+              {/* Un nom de projet va jusqu'a 255 caracteres : sans borne, le
+                  bouton s'etirait hors de sa colonne et faisait deborder la
+                  page. Le nom complet reste dans l'infobulle. */}
+              <span className="max-w-[16ch] truncate sm:max-w-[24ch]" title={recentProjectName}>
+                Resume {recentProjectName}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
             </Link>
-          ) : null}
+          ) : (
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
+              style={{ background: 'var(--sl-purple)' }}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Read the guides
+            </Link>
+          )}
         </div>
       </div>
     </div>

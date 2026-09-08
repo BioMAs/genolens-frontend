@@ -5,7 +5,7 @@ import { Plus, Search } from 'lucide-react';
 import ProjectList from '@/components/ProjectList';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useProjectLimit } from '@/hooks/useQuotas';
 import type { ProjectFilters } from '@/hooks/useProjects';
 
 type SortValue = 'updated_at' | 'created_at' | 'name';
@@ -34,10 +34,10 @@ export default function ProjectsView() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const { data: subscription } = useSubscription();
-  const isAtProjectLimit =
-    subscription?.max_projects != null &&
-    (subscription?.project_count ?? 0) >= subscription.max_projects;
+  // Meme barriere que le dashboard, desormais partagee : les deux ecrans en
+  // portaient une copie mot pour mot, lisant `max_projects` et `project_count`
+  // sur la charge utile de /billing/subscription, qui ne les contient pas.
+  const projectLimit = useProjectLimit();
 
   const filters: ProjectFilters = {
     page_size: 100,
@@ -63,17 +63,13 @@ export default function ProjectsView() {
         </div>
 
         <button
-          onClick={() => !isAtProjectLimit && setIsModalOpen(true)}
-          disabled={isAtProjectLimit}
-          title={
-            isAtProjectLimit
-              ? `Project limit reached (${subscription?.project_count}/${subscription?.max_projects}). Upgrade your plan.`
-              : undefined
-          }
+          onClick={() => !projectLimit.blocked && setIsModalOpen(true)}
+          disabled={projectLimit.blocked}
+          title={projectLimit.reason}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) => {
-            if (!isAtProjectLimit)
+            if (!projectLimit.blocked)
               (e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)';
           }}
           onMouseLeave={(e) =>

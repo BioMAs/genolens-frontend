@@ -39,6 +39,11 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
       });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      // La jauge de projets et la barriere de creation lisent `project_count`
+      // sur /users/me, cache 5 minutes : sans cette invalidation, creer le
+      // 15e projet laisse le compteur a 14 et le bouton actif, jusqu'a ce que
+      // le backend refuse.
+      await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setName('');
       setDescription('');
       onSuccess?.();

@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CreditCard, Zap, FolderOpen, HardDrive, ExternalLink, AlertCircle } from 'lucide-react';
+import { CreditCard, Zap, ExternalLink, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useBilling, SubscriptionInfo } from '@/hooks/useBilling';
 import { normalizePlan } from '@/utils/plan';
 import { usePricing } from '@/hooks/usePricing';
-import { findPlan, plansOrdered, resolveLimit, type PricingGrid } from '@/types/pricing';
+import { findPlan, plansOrdered, type PricingGrid } from '@/types/pricing';
 
 // Quotas and plan names come from GET /pricing. This file used to carry its own
 // copy of the limits, which meant any backend change silently desynced this
@@ -75,15 +75,6 @@ export default function BillingSection() {
   const gridPlan = findPlan(grid, subscription?.plan ?? planKey)
     ?? (grid ? plansOrdered(grid)[0] : undefined);
 
-  // Prefer the live values the API already sends over the grid's list value:
-  // an account can be on a negotiated cap. null = unlimited in both.
-  const maxProjects = subscription?.max_projects
-    ?? (gridPlan ? resolveLimit(gridPlan.max_projects) : null);
-  const comparisonsQuota = gridPlan ? resolveLimit(gridPlan.contrast_quota) : null;
-  const quotaPeriod = gridPlan?.quota_period ?? 'monthly';
-
-  const aiUsed = subscription?.ai_interpretations_used ?? 0;
-  const aiMode = gridPlan?.entitlements?.ai_interpretation;
   const hasStripeCustomer = Boolean(subscription?.stripe_customer_id);
   // A plan is paid if the grid lists a price for it. Starter is €100/month, so
   // excluding it here (as the hard-coded TEAM/ON_PREMISE test did) denied a
@@ -122,22 +113,6 @@ export default function BillingSection() {
           </div>
         )}
 
-        {subscription?.status === "pending" && (
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 mb-4 mx-4 mt-4">
-            <p className="text-yellow-800 text-sm">
-              <strong>Account pending activation.</strong> Check your email for an invitation link.
-            </p>
-          </div>
-        )}
-        {subscription?.status === "cancelled" && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 mb-4 mx-4 mt-4">
-            <p className="text-red-800 text-sm">
-              <strong>Subscription expired.</strong>{" "}
-              <a href="/pricing" className="underline font-medium">Renew now</a> to continue using GenoLens.
-            </p>
-          </div>
-        )}
-
         {subscription && (
           <dl className="sm:divide-y sm:divide-gray-200">
             {/* Current plan */}
@@ -151,43 +126,12 @@ export default function BillingSection() {
               </dd>
             </div>
 
-            {/* Projects */}
-            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <FolderOpen className="h-4 w-4" /> Max projects
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {maxProjects === null ? 'Unlimited' : maxProjects}
-              </dd>
-            </div>
-
-            {/* Monthly comparisons */}
-            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <HardDrive className="h-4 w-4" /> Analyses / {quotaPeriod === 'annual' ? 'year' : 'month'}
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {comparisonsQuota === null ? 'Unlimited' : comparisonsQuota}
-              </dd>
-            </div>
-
-            {/* AI interpretations */}
-            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <Zap className="h-4 w-4" /> AI Interpretations
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {aiMode === 'none' ? (
-                  <span className="text-gray-400">Not included in this plan</span>
-                ) : aiMode === 'metered_a_la_carte' ? (
-                  <>Billed per report — {aiUsed} generated</>
-                ) : aiMode === 'quota' ? (
-                  <>Unlimited — {aiUsed} used this month</>
-                ) : (
-                  <span className="text-gray-400">—</span>
-                )}
-              </dd>
-            </div>
+            {/* Les plafonds et la consommation ne sont plus ici : ils vivent
+                dans <UsageSection />, qui lit useQuotas — la meme autorite que
+                le dashboard. Cette page affichait le plafond de la grille sans
+                jamais montrer la consommation, et lisait `max_projects` et
+                `ai_interpretations_used` sur une charge utile qui ne les
+                contient pas. */}
 
             {/* Renewal date */}
             {subscription.subscription_ends_at && (

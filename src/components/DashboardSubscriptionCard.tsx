@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, FolderOpen, GitCompare, Check, Lock, FlaskConical, FileText, Pill } from 'lucide-react';
+import { Sparkles, ExternalLink, ArrowUpCircle, CreditCard, GitCompare, Check, Lock, FlaskConical, FileText, Pill } from 'lucide-react';
 import type { SubscriptionInfo } from '@/hooks/useBilling';
 import type { UserProfile } from '@/types';
 import { useBilling } from '@/hooks/useBilling';
-import { Meter } from '@/components/ui/meter';
-import { normalizePlan, isPrivilegedRole } from '@/utils/plan';
+import { normalizePlan } from '@/utils/plan';
 import { usePricing } from '@/hooks/usePricing';
-import { findPlan, plansOrdered, resolveLimit } from '@/types/pricing';
+import { findPlan, plansOrdered } from '@/types/pricing';
 
 interface DashboardSubscriptionCardProps {
   subscription?: SubscriptionInfo | null;
@@ -55,167 +54,6 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
     >
       {label}
     </span>
-  );
-}
-
-function AiCreditsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
-  const { data: grid } = usePricing();
-  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
-  const gridPlan = findPlan(grid, plan);
-  const isAdmin = isPrivilegedRole(profile?.role);
-
-  // How AI is dispensed is stated by the grid, not guessed from the plan name.
-  // Three modes, because a plan can grant access while billing every act.
-  const mode = isAdmin ? 'quota' : gridPlan?.entitlements?.ai_interpretation;
-
-  const tokensPurchased = subscription?.ai_tokens_purchased ?? profile?.ai_tokens_purchased ?? 0;
-  const tokensUsed = subscription?.ai_tokens_used ?? profile?.ai_tokens_used ?? 0;
-  const tokensRemaining = Math.max(0, tokensPurchased - tokensUsed);
-
-  const purchasedTokensMeter = tokensPurchased > 0 && (
-    <div>
-      <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />Purchased tokens</span>
-        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{tokensRemaining} / {tokensPurchased}</span>
-      </div>
-      <Meter value={Math.min(1, tokensUsed / tokensPurchased)} tone="purple" height={8} />
-    </div>
-  );
-
-  if (mode === 'quota') {
-    return (
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
-          <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-          <div>
-            <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited</p>
-          </div>
-        </div>
-        {purchasedTokensMeter}
-      </div>
-    );
-  }
-
-  if (mode === 'metered_a_la_carte') {
-    return (
-      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
-        <Sparkles className="w-4 h-4 shrink-0" style={{ color: 'var(--sl-teal)' }} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Billed per report</p>
-        </div>
-      </div>
-    );
-  }
-
-  // mode === 'none' (or the grid has not arrived yet).
-  //
-  // This branch used to render a gauge of "15 free interpretations" against a
-  // hard-coded FREE_QUOTA. No such allowance exists: the backend returns -1 for
-  // this plan and every AI endpoint answers 403, so the gauge promised credits
-  // that could not be spent. Say what is true instead.
-  return (
-    <div className="space-y-2.5">
-      <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-raised)' }}>
-        <Lock className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI interpretations</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {mode === 'none' ? 'Not included in this plan' : '—'}
-          </p>
-        </div>
-      </div>
-      {purchasedTokensMeter}
-    </div>
-  );
-}
-
-function StatBar({
-  icon,
-  label,
-  used,
-  max,
-  unlimited,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  used: number;
-  max?: number | null;
-  unlimited?: boolean;
-}) {
-  if (unlimited || max === null || max === undefined) {
-    return (
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {icon}{label}
-        </span>
-        <span className="text-xs font-semibold" style={{ color: 'var(--sl-teal)' }}>∞</span>
-      </div>
-    );
-  }
-  const pct = Math.min(100, (used / max) * 100);
-  const isNear = pct >= 80;
-  const isAt = used >= max;
-  const tone = isAt ? 'red' : isNear ? 'purple' : 'teal';
-  const valueColor = isAt ? 'var(--sl-red)' : isNear ? 'var(--sl-orange, #f97316)' : 'var(--text-primary)';
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {icon}{label}
-        </span>
-        <span className="text-xs font-semibold tabular-nums" style={{ color: valueColor }}>
-          {used} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>/ {max}</span>
-        </span>
-      </div>
-      <Meter value={pct / 100} tone={tone} height={8} />
-      {isAt && (
-        <p className="mt-1 text-xs" style={{ color: 'var(--sl-red)' }}>Limit reached — upgrade to continue.</p>
-      )}
-    </div>
-  );
-}
-
-function ProjectsBar({ subscription, profile }: { subscription?: SubscriptionInfo | null; profile?: UserProfile | null }) {
-  const { data: grid } = usePricing();
-  const plan = subscription?.plan ?? profile?.subscription_plan ?? 'STARTER';
-  const role = profile?.role;
-  const count = subscription?.project_count ?? 0;
-
-  // `max_projects` is optional on the subscription payload. This used to treat
-  // its absence as "unlimited", so a capped plan silently displayed ∞ whenever
-  // the field was missing — failing open on a limit. The grid is the fallback,
-  // and only the grid (or a privileged role) may declare a plan uncapped.
-  const gridPlan = findPlan(grid, plan);
-  const gridMax = gridPlan ? resolveLimit(gridPlan.max_projects) : undefined;
-  const max = subscription?.max_projects ?? gridMax ?? null;
-  const unlimited = isPrivilegedRole(role) || (gridPlan != null && gridMax === null);
-
-  return (
-    <StatBar
-      icon={<FolderOpen className="w-3.5 h-3.5" />}
-      label="Projects"
-      used={count}
-      max={max}
-      unlimited={unlimited}
-    />
-  );
-}
-
-function ComparisonsBar({ profile }: { profile?: UserProfile | null }) {
-  const used = profile?.comparisons_used_this_month ?? 0;
-  const quota = profile?.comparisons_quota ?? null;
-
-  return (
-    <StatBar
-      icon={<GitCompare className="w-3.5 h-3.5" />}
-      label="Analyses / month"
-      used={used}
-      max={quota}
-      unlimited={quota === null || quota === undefined}
-    />
   );
 }
 
@@ -316,7 +154,7 @@ export default function DashboardSubscriptionCard({
   const subsEnd = subscription?.subscription_ends_at;
 
   const fmt = (d: string) =>
-    new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <div className="gl-card p-5 h-full flex flex-col gap-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
@@ -331,14 +169,10 @@ export default function DashboardSubscriptionCard({
         <PlanBadge plan={plan} role={role} />
       </div>
 
-      {/* AI credits */}
-      <AiCreditsBar subscription={subscription} profile={userProfile} />
-
-      {/* Projects quota */}
-      <ProjectsBar subscription={subscription} profile={userProfile} />
-
-      {/* Analyses quota */}
-      <ComparisonsBar profile={userProfile} />
+      {/* Les quotas ne sont plus ici : ils vivent dans <QuotaMeters />, en
+          position primaire sur le dashboard. Les repeter dans cette carte
+          donnait deux chiffres pour la meme grandeur — et celui d'ici etait
+          faux, faute d'etre servi par /billing/subscription. */}
 
       {/* Unlocked features */}
       <UnlockedModules profile={userProfile} />
