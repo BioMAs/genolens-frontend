@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@/utils/supabase/server';
 import { getDoc, listDocs } from '@/lib/docs';
 import DocArticle from '@/components/docs/DocArticle';
 
-export function generateStaticParams() {
-  return listDocs().map((doc) => ({ slug: doc.slug }));
-}
+// Pas de `generateStaticParams` : la page lit la session pour sa garde
+// d'authentification, elle est donc rendue à la demande. Pré-générer les dix
+// slugs ne ferait qu'annoncer un rendu statique que la lecture des cookies
+// abandonne aussitôt.
 
 export async function generateMetadata({
   params,
@@ -21,6 +23,17 @@ export async function generateMetadata({
 }
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Garde avant toute lecture de guide : un visiteur anonyme ne doit ni lire
+  // le contenu, ni distinguer un slug existant d'un slug inconnu.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/');
+  }
+
   const { slug } = await params;
   const doc = getDoc(slug);
   if (!doc) notFound();
