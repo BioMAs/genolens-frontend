@@ -12,25 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 
-export const DOC_CATEGORIES = [
-  'getting-started',
-  'analysis',
-  'enrichment',
-  'explore',
-  'collaboration',
-  'account',
-] as const;
-
-export type DocCategory = (typeof DOC_CATEGORIES)[number];
-
-export const CATEGORY_LABELS: Record<DocCategory, string> = {
-  'getting-started': 'Getting started',
-  analysis: 'Analysis',
-  enrichment: 'Enrichment',
-  explore: 'Explore',
-  collaboration: 'Collaboration',
-  account: 'Account',
-};
+export { DOC_CATEGORIES, CATEGORY_LABELS, type DocCategory } from './docs-categories';
+import { DOC_CATEGORIES, type DocCategory } from './docs-categories';
 
 export interface Heading {
   depth: 2 | 3;
