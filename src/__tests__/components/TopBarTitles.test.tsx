@@ -36,3 +36,18 @@ it('titles a single guide', () => {
   render(<TopBar />);
   expect(screen.getByRole('heading', { name: 'Guide' })).toBeInTheDocument();
 });
+
+// Les règles `/docs` ont été ajoutées après un bloc de `includes()` : le slug
+// d'un guide qui contient un mot-clé d'analyse était capté par la règle
+// antérieure, et la page de documentation s'intitulait « Multi-Comparison ».
+it('titles a guide whose slug contains an analysis keyword', () => {
+  usePathname.mockReturnValue('/docs/multi-comparison');
+  render(<TopBar />);
+  expect(screen.getByRole('heading', { name: 'Guide' })).toBeInTheDocument();
+});
+
+it('still titles the analysis page itself', () => {
+  usePathname.mockReturnValue('/projects/p1/multi-comparison');
+  render(<TopBar />);
+  expect(screen.getByRole('heading', { name: 'Multi-Comparison' })).toBeInTheDocument();
+});

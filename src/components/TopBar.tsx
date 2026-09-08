@@ -17,14 +17,16 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith('/tools/drug-discovery')) return 'Drug Discovery';
   if (pathname === '/profile') return 'Profile';
   if (pathname === '/admin') return 'Administration';
+  // Avant le bloc de `includes()` ci-dessous : un slug de guide contient un
+  // mot-clé d'analyse (/docs/multi-comparison) et serait capté par lui.
+  if (pathname === '/docs') return 'Documentation';
+  if (pathname.startsWith('/docs/')) return 'Guide';
   if (pathname.includes('/multi-comparison')) return 'Multi-Comparison';
   if (pathname.includes('/clustering')) return 'Clustering Analysis';
   if (pathname.includes('/enrichment')) return 'Enrichment Analysis';
   if (pathname.includes('/comparisons/')) return 'Comparison';
   if (pathname.includes('/datasets/')) return 'Dataset';
   if (pathname.startsWith('/projects/')) return 'Project';
-  if (pathname === '/docs') return 'Documentation';
-  if (pathname.startsWith('/docs/')) return 'Guide';
   return 'GenoLens';
 }
 
