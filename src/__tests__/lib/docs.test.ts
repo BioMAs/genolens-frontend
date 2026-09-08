@@ -17,6 +17,7 @@ import {
 
 const FIXTURES = path.join(process.cwd(), 'src/__tests__/fixtures/docs');
 const TIEBREAK_FIXTURES = path.join(process.cwd(), 'src/__tests__/fixtures/docs-tiebreak');
+const SLUG_FIXTURES = path.join(process.cwd(), 'src/__tests__/fixtures/docs-slugs');
 
 // ── extractHeadings ────────────────────────────────────────────────────────
 
@@ -63,6 +64,28 @@ describe('extractHeadings', () => {
 
   it('returns an empty list when there is no heading', () => {
     expect(extractHeadings('just a paragraph\n')).toEqual([]);
+  });
+
+  it('suffixes a repeated section title instead of reusing its anchor', () => {
+    // Trois guides livrés répètent un titre (`## Overview` puis `### Overview`
+    // dans gsea.md). Sans suffixe les deux titres portent le même `id` : le
+    // navigateur saute toujours au premier, et React voit deux clés égales.
+    const md = '## Overview\n\ntext\n\n### Overview\n\ntext\n\n## Overview\n';
+    expect(extractHeadings(md).map((h) => h.id)).toEqual([
+      'overview',
+      'overview-2',
+      'overview-3',
+    ]);
+  });
+
+  it('numbers duplicates per title, not globally', () => {
+    const md = '## Backend\n\n## Frontend\n\n## Backend\n\n## Frontend\n';
+    expect(extractHeadings(md).map((h) => h.id)).toEqual([
+      'backend',
+      'frontend',
+      'backend-2',
+      'frontend-2',
+    ]);
   });
 });
 
@@ -199,6 +222,21 @@ describe('listDocs', () => {
   });
 });
 
+describe('listDocs et getDoc restent d’accord', () => {
+  // `readAll` dérivait le slug de n’importe quel `*.md` alors que `getDoc`
+  // refuse tout ce qui sort de `[a-z0-9-]+` : un fichier `Bad_Name.md` était
+  // listé sur l’index, et sa page répondait 404 sur un lien rendu par l’app.
+  it('ignores a filename whose slug getDoc would reject', () => {
+    expect(listDocs(SLUG_FIXTURES).map((d) => d.slug)).toEqual(['good-name']);
+  });
+
+  it('resolves every slug it lists', () => {
+    for (const doc of listDocs(SLUG_FIXTURES)) {
+      expect(getDoc(doc.slug, SLUG_FIXTURES)).not.toBeNull();
+    }
+  });
+});
+
 describe('listDocs tie-breaks', () => {
   it('breaks a same-category tie by order, then by title', () => {
     // order-tiebreak-*: meme categorie (enrichment), ordres 5 et 20 ; le
@@ -265,5 +303,23 @@ describe('shipped documentation', () => {
   it('has no duplicate slug', () => {
     const slugs = listDocs().map((d) => d.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
+  it('gives every section of every guide a unique anchor', () => {
+    // gsea.md répète « Overview » et « Troubleshooting », gene-search.md
+    // « Backend » et « Frontend », multi-comparison.md « Backend API ».
+    // Deux ancres égales renvoient le lecteur au mauvais paragraphe.
+    for (const meta of listDocs()) {
+      const ids = getDoc(meta.slug)!.headings.map((h) => h.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+  });
+
+  it('never leaves a section without an anchor', () => {
+    for (const meta of listDocs()) {
+      for (const heading of getDoc(meta.slug)!.headings) {
+        expect(heading.id).not.toBe('');
+      }
+    }
   });
 });

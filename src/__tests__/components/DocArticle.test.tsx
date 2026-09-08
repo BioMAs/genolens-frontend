@@ -130,3 +130,31 @@ it('gives a heading with a bold word and a link the same id its TOC link points 
     '#filtering-by-threshold'
   );
 });
+
+// Titre répété dans le même guide : les deux sections doivent porter des
+// ancres distinctes, et chaque entrée du sommaire tomber sur la sienne. Sans
+// ça le lecteur de gsea.md qui clique le second « Troubleshooting » remonte
+// 500 lignes plus haut, sur le premier.
+it('gives two identically titled sections distinct ids matching their own TOC links', () => {
+  const doc: Doc = {
+    ...DOC,
+    content: '## Overview\n\nfirst\n\n### Overview\n\nsecond\n',
+    headings: [
+      { depth: 2, text: 'Overview', id: 'overview' },
+      { depth: 3, text: 'Overview', id: 'overview-2' },
+    ],
+  };
+  const { container } = render(<DocArticle doc={doc} previous={null} next={null} />);
+
+  const first = screen.getByRole('heading', { level: 2, name: 'Overview' });
+  const second = screen.getByRole('heading', { level: 3, name: 'Overview' });
+
+  expect(first).toHaveAttribute('id', 'overview');
+  expect(second).toHaveAttribute('id', 'overview-2');
+  expect(container.querySelectorAll('#overview')).toHaveLength(1);
+  expect(container.querySelector('#overview')).toBe(first);
+  expect(container.querySelector('#overview-2')).toBe(second);
+
+  const links = screen.getAllByRole('link', { name: 'Overview' });
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(['#overview', '#overview-2']);
+});

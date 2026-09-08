@@ -41,6 +41,14 @@ export interface SearchEntry extends DocMeta {
 
 const DEFAULT_DIR = path.join(process.cwd(), 'content/docs');
 
+/**
+ * Slugs acceptés, aussi bien pour un nom de fichier que pour un segment de
+ * route. `readAll` et `getDoc` doivent appliquer le même filtre : sinon un
+ * fichier `Single_Cell.md` serait listé sur l'index avec un lien vers une
+ * page que le garde-fou de `getDoc` renvoie en 404.
+ */
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+
 /** Identifiant d'ancre stable pour un titre de section. */
 function slugify(text: string): string {
   return text
@@ -65,9 +73,17 @@ function stripInline(text: string): string {
  * Le suivi des clôtures de blocs de code est nécessaire : les guides
  * contiennent des blocs shell et YAML où « ## » ouvre un commentaire, et le
  * sommaire se remplirait de bruit sans ça.
+ *
+ * Les ancres sont uniques : plusieurs guides répètent un titre de section
+ * (`## Overview` puis `### Overview` dans gsea.md, `### Backend API` deux
+ * fois dans multi-comparison.md). Deux `id` égaux renvoient toujours le
+ * lecteur au premier des deux, et donnent deux clés React identiques dans le
+ * sommaire. Le suffixe suit l'ordre d'apparition ; c'est aussi celui dans
+ * lequel `DocArticle` consomme cette liste pour étiqueter les titres rendus.
  */
 export function extractHeadings(markdown: string): Heading[] {
   const headings: Heading[] = [];
+  const used = new Map<string, number>();
   let inFence = false;
 
   for (const line of markdown.split('\n')) {
@@ -82,10 +98,15 @@ export function extractHeadings(markdown: string): Heading[] {
 
     const text = stripInline(match[2]);
     if (!text) continue;
+
+    const base = slugify(text);
+    const seen = (used.get(base) ?? 0) + 1;
+    used.set(base, seen);
+
     headings.push({
       depth: match[1].length as 2 | 3,
       text,
-      id: slugify(text),
+      id: seen === 1 ? base : `${base}-${seen}`,
     });
   }
 
@@ -171,10 +192,13 @@ function readAll(dir: string): Doc[] {
   const docs: Doc[] = [];
   for (const file of files) {
     if (!file.endsWith('.md')) continue;
-    const doc = parseDoc(
-      file.replace(/\.md$/, ''),
-      fs.readFileSync(path.join(dir, file), 'utf8')
-    );
+
+    // Même filtre que `getDoc` : lister un slug que la page refuse ferait
+    // pointer l'index vers une 404.
+    const slug = file.replace(/\.md$/, '');
+    if (!SLUG_PATTERN.test(slug)) continue;
+
+    const doc = parseDoc(slug, fs.readFileSync(path.join(dir, file), 'utf8'));
     if (doc) docs.push(doc);
   }
 
@@ -201,7 +225,7 @@ export function listDocs(dir: string = DEFAULT_DIR): DocMeta[] {
 export function getDoc(slug: string, dir: string = DEFAULT_DIR): Doc | null {
   // Le slug vient d'une route dynamique, qui accepte n'importe quoi : sans ce
   // filtre, « ../../../package » lirait un fichier arbitraire du dépôt.
-  if (!/^[a-z0-9-]+$/.test(slug)) return null;
+  if (!SLUG_PATTERN.test(slug)) return null;
 
   const file = path.join(dir, `${slug}.md`);
   let raw: string;

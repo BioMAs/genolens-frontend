@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { CATEGORY_LABELS } from '@/lib/docs-categories';
-import type { Doc, DocMeta } from '@/lib/docs';
+import type { Doc, DocMeta, Heading } from '@/lib/docs';
 
 interface DocArticleProps {
   doc: Doc;
@@ -12,13 +12,25 @@ interface DocArticleProps {
   next: DocMeta | null;
 }
 
-/** Les titres du corps portent l'ancre calculée par extractHeadings, pour que
- *  les liens du sommaire tombent au bon endroit. */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+/**
+ * Étiquette les titres rendus avec les ancres calculées par `extractHeadings`.
+ *
+ * Un `slugify` local recalculait l'ancre depuis le texte du titre, et
+ * divergeait dès qu'un guide répétait un titre de section : `extractHeadings`
+ * suffixe le second (`overview-2`), un slug recalculé rendait `overview` deux
+ * fois — le sommaire renvoyait alors au premier des deux, et React voyait
+ * deux clés identiques. `doc.headings` est donc la seule source d'ancres, et
+ * la file est consommée dans l'ordre du document, celui dans lequel
+ * react-markdown rend les titres.
+ */
+function createAnchorReader(headings: Heading[]): (text: string) => string | undefined {
+  const queues = new Map<string, string[]>();
+  for (const heading of headings) {
+    const queue = queues.get(heading.text);
+    if (queue) queue.push(heading.id);
+    else queues.set(heading.text, [heading.id]);
+  }
+  return (text) => queues.get(text)?.shift();
 }
 
 /**
@@ -37,6 +49,9 @@ function textOf(node: React.ReactNode): string {
 }
 
 export default function DocArticle({ doc, previous, next }: DocArticleProps) {
+  // Créé à chaque rendu : la file est consommée par les titres de ce rendu-là.
+  const anchorFor = createAnchorReader(doc.headings);
+
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_200px]">
       <article className="min-w-0">
@@ -57,8 +72,8 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              h2: ({ children }) => <h2 id={slugify(textOf(children))}>{children}</h2>,
-              h3: ({ children }) => <h3 id={slugify(textOf(children))}>{children}</h3>,
+              h2: ({ children }) => <h2 id={anchorFor(textOf(children))}>{children}</h2>,
+              h3: ({ children }) => <h3 id={anchorFor(textOf(children))}>{children}</h3>,
               // Les tables GFM des guides débordent sur mobile : le défilement
               // reste dans le tableau, jamais sur le corps de la page.
               table: ({ children }) => (
