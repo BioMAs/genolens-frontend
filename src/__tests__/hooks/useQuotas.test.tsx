@@ -6,6 +6,11 @@
  * QuotaDisplay, la limite de projets était lue sur une charge utile qui ne la
  * contient pas, et huit lecteurs appelaient /users/me sous quatre identités de
  * cache.
+ *
+ * L'unité du quota mensuel est l'ANALYSE : une analyse coûte une unité, quel
+ * que soit son nombre de contrastes. Les champs d'API s'appellent encore
+ * `comparisons_*` ; ce hook est le seul endroit du frontend qui fait le lien
+ * entre les deux vocabulaires, et ces tests épinglent ce lien.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -109,12 +114,12 @@ describe('nextMonthlyReset', () => {
 // ── useQuotas ──────────────────────────────────────────────────────────────
 
 describe('useQuotas', () => {
-  it('maps the comparison quota from /users/me', async () => {
+  it('maps the analysis quota from /users/me', async () => {
     mockEndpoints(PROFILE);
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.comparisons).toEqual({
+    expect(result.current.analyses).toEqual({
       used: 6,
       max: 30,
       remaining: 24,
@@ -199,13 +204,13 @@ describe('useQuotas', () => {
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.comparisons.unlimited).toBe(true);
+    expect(result.current.analyses.unlimited).toBe(true);
     expect(result.current.projects.unlimited).toBe(true);
     expect(result.current.ai.unlimited).toBe(true);
     expect(result.current.tone).toBe('ok');
   });
 
-  it('reports exhausted when no comparison remains', async () => {
+  it('reports exhausted when no analysis remains', async () => {
     mockEndpoints({
       ...PROFILE,
       comparisons_used_this_month: 30,
@@ -232,8 +237,8 @@ describe('useQuotas', () => {
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.comparisons.unlimited).toBe(false);
-    expect(result.current.comparisons.max).toBe(0);
+    expect(result.current.analyses.unlimited).toBe(false);
+    expect(result.current.analyses.max).toBe(0);
     expect(result.current.tone).toBe('exhausted');
   });
 

@@ -5,7 +5,8 @@
  *
  * Ces chiffres vivaient dans `BillingSection`, qui affichait le plafond de la
  * grille tarifaire sans jamais montrer la consommation : la ligne « Analyses /
- * month » annonçait 30 quel que soit le nombre déjà consommé. Ils viennent
+ * month » annonçait 30 quel que soit le nombre déjà consommé — un libellé
+ * juste, du reste : l'unité facturable EST l'analyse. Ils viennent
  * désormais de `useQuotas`, comme sur le dashboard, via le même composant —
  * une seule autorité, un seul rendu, aucune chance de divergence entre les
  * deux surfaces.
@@ -27,7 +28,8 @@ export default function UsageSection() {
         <Gauge className="h-4 w-4" style={{ color: 'var(--sl-teal)' }} /> Usage &amp; quotas
       </h2>
       <p className="mb-3 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
-        What is left on your plan this month. Comparison quotas reset on the first of each month.
+        What is left on your plan this month. One analysis counts as one, whatever its
+        number of contrasts. Quotas reset on the first of each month.
       </p>
       <QuotaMeters layout="column" />
     </section>

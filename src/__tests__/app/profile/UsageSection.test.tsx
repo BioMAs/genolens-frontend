@@ -20,7 +20,7 @@ jest.mock('@/hooks/useQuotas', () => ({
 const { useQuotas } = require('@/hooks/useQuotas');
 
 const STATE: QuotaState = {
-  comparisons: { used: 6, max: 30, remaining: 24, unlimited: false },
+  analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
   projects: { used: 4, max: 15, remaining: 11, unlimited: false },
   ai: { credits: 18, unlimited: false },
   maxDatasetsPerProject: 5,
@@ -43,7 +43,7 @@ it('titles the section', () => {
 
 it('shows what is left, from the same source as the dashboard', () => {
   render(<UsageSection />);
-  expect(screen.getByTestId('quota-comparisons')).toHaveTextContent('24');
+  expect(screen.getByTestId('quota-analyses')).toHaveTextContent('24');
   expect(screen.getByTestId('quota-projects')).toHaveTextContent('4');
   expect(screen.getByTestId('quota-ai')).toHaveTextContent('18');
 });

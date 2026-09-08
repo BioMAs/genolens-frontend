@@ -59,7 +59,7 @@ jest.mock('@/hooks/useUserProfile', () => ({
 }));
 
 const QUOTAS: QuotaState = {
-  comparisons: { used: 6, max: 30, remaining: 24, unlimited: false },
+  analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
   projects: { used: 4, max: 15, remaining: 11, unlimited: false },
   ai: { credits: 18, unlimited: false },
   maxDatasetsPerProject: 5,
@@ -111,7 +111,7 @@ it('orders the four rows by question', () => {
 
   const order = Array.from(
     container.querySelectorAll(
-      '[data-tour="dashboard-welcome"], [data-testid="jump-back-in"], [data-testid="quota-comparisons"], [data-tour="dashboard-kpis"]'
+      '[data-tour="dashboard-welcome"], [data-testid="jump-back-in"], [data-testid="quota-analyses"], [data-tour="dashboard-kpis"]'
     )
   ).map((el) =>
     el.getAttribute('data-tour') ?? el.getAttribute('data-testid')
@@ -120,7 +120,7 @@ it('orders the four rows by question', () => {
   expect(order).toEqual([
     'dashboard-welcome',
     'jump-back-in',
-    'quota-comparisons',
+    'quota-analyses',
     'dashboard-kpis',
   ]);
 });
