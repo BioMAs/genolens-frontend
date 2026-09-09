@@ -53,7 +53,20 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const { data: membersData } = useProjectMembers(projectId);
   const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
   const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
-  const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
+
+  // Deux droits distincts, parce que le backend en applique deux et qu'un seul
+  // booléen mentait sur l'un des deux.
+  //
+  // `canAdminProject` reflète `_check_project_admin` (datasets.py:84) : le
+  // propriétaire OU un membre ADMIN peut modifier et reprocesser un dataset.
+  //
+  // `canIngestData` reflète le filtre `Project.owner_id == current_user.user_id`
+  // que portent `POST /datasets/upload` et `POST /analyses` : eux n'acceptent
+  // QUE le propriétaire. Les afficher à un membre ADMIN promettait un droit que
+  // le backend refuse — et il le refuse en 404 « Project not found », sur un
+  // projet que l'utilisateur a sous les yeux.
+  const canAdminProject = isOwner || currentMember?.access_level === 'ADMIN';
+  const canIngestData = isOwner;
 
   // React Query: datasets complets pour les onglets QC, PCA, Data Management
   const { data: datasets = [], isLoading: datasetsLoading, refetch: refetchDatasets } = useProjectDatasets(projectId);
@@ -470,7 +483,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                                     <Eye className="h-4 w-4" />
                                 </Link>
                                 )}
-                                {canManageData && (
+                                {canAdminProject && (
                                 <button
                                 onClick={() => handleReprocess(ds.id)}
                                 className="text-gray-400 hover:text-brand-primary"
@@ -479,7 +492,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                                 <RefreshCw className="h-4 w-4" />
                                 </button>
                                 )}
-                                {canManageData && (
+                                {canAdminProject && (
                                 <button
                                 onClick={() => {
                                     setEditingDataset(ds);
@@ -503,7 +516,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             </div>
 
             {/* Right Column: Upload Form */}
-            {canManageData && (
+            {canIngestData && (
             <div>
                 <div className="bg-white shadow sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">

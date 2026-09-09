@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useProjectSummary, useProjectDatasets } from '@/hooks/useProjectData';
 import { useAnalyses } from '@/hooks/useAnalyses';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useProjectMembers } from '@/hooks/useProjectMembers';
 import { DatasetStatus, DatasetType, SelfServiceAnalysisStatus, Dataset } from '@/types';
 import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
@@ -54,7 +53,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const { data: summary, isLoading } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
   const { data: analysesData } = useAnalyses(projectId);
-  const { data: membersData } = useProjectMembers(projectId);
 
   const [activeTab, setActiveTab] = useState<ProjectTab>('analyses');
   const [isBookmarkModalOpen, setBookmarkModalOpen] = useState(false);
@@ -79,8 +77,14 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   }, [analysesData?.items]);
 
   const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
-  const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
-  const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
+
+  // Upload et New Analysis pointent vers /setup, dont les deux appels backend
+  // (`POST /datasets/upload`, `POST /analyses`) filtrent sur
+  // `Project.owner_id == current_user.user_id`. Un membre ADMIN y était envoyé
+  // et se prenait un 404 « Project not found » sur son propre écran de projet.
+  // Le partage ADMIN ouvre les opérations de `_check_project_admin` (éditer,
+  // reprocesser, supprimer), pas l'ingestion.
+  const canIngestData = isOwner;
 
   const runningAnalyses = analyses.filter(
     (a) =>
@@ -347,7 +351,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
             <DatasetListCard datasets={sourceDatasets} />
 
-            {canManageData ? (
+            {canIngestData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
@@ -366,7 +370,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               Source datasets
             </h2>
-            {canManageData ? (
+            {canIngestData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
@@ -405,7 +409,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               Analyses ({analyses.length})
             </h2>
-            {canManageData ? (
+            {canIngestData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
@@ -420,7 +424,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
               title="No analyses yet"
               description="Launch your first self-service analysis to run DESeq2, generate PCA and QC reports."
               action={
-                canManageData ? (
+                canIngestData ? (
                   <Link
                     href={`/projects/${projectId}/setup`}
                     className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
