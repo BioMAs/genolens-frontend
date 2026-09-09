@@ -32,6 +32,32 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+/**
+ * Pose la classe `dark` AVANT le premier paint.
+ *
+ * `globals.css` ne sélectionne le thème sombre que par la classe `.dark` — pas
+ * de `prefers-color-scheme`. Cette classe était posée par un `useEffect` du
+ * `ThemeProvider`, donc APRÈS le premier rendu : un utilisateur en thème
+ * sombre voyait un flash de thème clair à chaque chargement complet.
+ *
+ * Ce script s'exécute pendant l'analyse du document, avant que quoi que ce
+ * soit ne soit peint. Il duplique volontairement la règle de `resolveTheme`
+ * (`src/contexts/ThemeContext.tsx`) : il tourne avant React, il ne peut pas
+ * l'importer. Toute modification de l'une doit être reportée dans l'autre.
+ *
+ * Le `try/catch` n'est pas décoratif : `localStorage` lève en navigation
+ * privée sur certains navigateurs, et une exception ici casserait le rendu de
+ * toute la page pour une question de couleur.
+ */
+const THEME_BOOT_SCRIPT = `
+try {
+  var saved = localStorage.getItem('theme');
+  var dark = saved === 'dark' ||
+    (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (dark) document.documentElement.classList.add('dark');
+} catch (e) {}
+`;
+
 export const metadata: Metadata = {
   title: "GenoLens — Transcriptomics Platform",
   description: "Advanced transcriptomics data visualization and analysis powered by AI",
@@ -57,10 +83,14 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className="h-full">
+    // `suppressHydrationWarning` : le script ci-dessous ajoute une classe sur
+    // <html> avant l'hydratation, et c'est le but. Sans ça React signalerait
+    // l'attribut `class` comme un écart.
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${geistMono.variable} antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <ErrorBoundary>
           <QueryProvider>
             <ThemeProvider>
