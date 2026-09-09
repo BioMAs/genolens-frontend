@@ -4,11 +4,11 @@
  * L'unité est l'ANALYSE : une analyse coûte une unité, quel que soit le nombre
  * de contrastes de son fichier (`billable_unit` de la grille tarifaire).
  *
- * Ce hook est l'unique endroit du frontend qui lit les champs de quota, et il
- * lit les DEUX vocabulaires : `analyses_*` d'abord, `comparisons_*` en repli.
- * Le backend sert les deux le temps de la transition, et ce repli rend ce
- * frontend deployable avant, après ou entre les deux déploiements — ils sont
- * indépendants (Vercel d'un côté, GitHub Actions de l'autre).
+ * Ce hook est l'unique endroit du frontend qui lit les champs de quota. Il a
+ * porté un temps un repli sur les anciens noms `comparisons_*`, le backend
+ * servant les deux vocabulaires pendant la transition ; les alias ont été
+ * retirés, et `readCap` reste le seul endroit qui distingue le champ à `null`
+ * (illimité, dit par le backend) du champ absent (rien n'est autorisé).
  *
  * Avant ce hook, chaque surface portait sa propre règle : le calcul des
  * crédits IA vivait dans `QuotaDisplay` avec son quota gratuit de 15 codé en
@@ -95,23 +95,6 @@ export function nextMonthlyReset(from: Date = new Date()): Date {
 }
 
 /**
- * Valeur d'un champ de quota, en choisissant la source par PRÉSENCE de la clé.
- *
- * Pas par `??` : `analyses_quota` à `null` veut dire « illimité », et `??`
- * ferait alors tomber sur l'ancien nom — donc, s'il est absent, sur un plafond
- * de 0. Exactement la confusion entre « champ absent » et « champ à null » que
- * `readCap` existe pour éviter, réintroduite par la porte du repli.
- */
-function pickQuotaField<K extends keyof UserProfile>(
-  profile: UserProfile | undefined,
-  current: K,
-  deprecated: K
-): UserProfile[K] | undefined {
-  if (!profile) return undefined;
-  return current in profile ? profile[current] : profile[deprecated];
-}
-
-/**
  * Plafond servi par l'API, en distinguant les deux sens de l'absence.
  *
  * `null` veut dire « illimité » — le backend l'écrit explicitement. `undefined`
@@ -134,17 +117,12 @@ export function useQuotas(): QuotaState {
   // et garde `comparisons_*` en alias le temps de la transition. Le repli fait
   // que ce hook fonctionne contre les deux versions du backend — donc que ce
   // frontend peut se deployer avant, apres, ou entre les deux.
-  const analysesUsed =
-    pickQuotaField(profile, 'analyses_used_this_month', 'comparisons_used_this_month') ?? 0;
-  const analysesMax = readCap(
-    pickQuotaField(profile, 'analyses_quota', 'comparisons_quota'),
-    privileged
-  );
+  const analysesUsed = profile?.analyses_used_this_month ?? 0;
+  const analysesMax = readCap(profile?.analyses_quota, privileged);
   const analysesRemaining =
     analysesMax === null
       ? null
-      : (pickQuotaField(profile, 'analyses_remaining', 'comparisons_remaining') ??
-          Math.max(0, analysesMax - analysesUsed));
+      : (profile?.analyses_remaining ?? Math.max(0, analysesMax - analysesUsed));
 
   const projectsUsed = profile?.project_count ?? 0;
   const projectsMax = readCap(profile?.max_projects, privileged);

@@ -8,9 +8,9 @@
  * cache.
  *
  * L'unité du quota mensuel est l'ANALYSE : une analyse coûte une unité, quel
- * que soit son nombre de contrastes. Les champs d'API s'appellent encore
- * `comparisons_*` ; ce hook est le seul endroit du frontend qui fait le lien
- * entre les deux vocabulaires, et ces tests épinglent ce lien.
+ * que soit son nombre de contrastes. L'API la nomme ainsi (`analyses_*`) ; les
+ * anciens noms `comparisons_*`, servis en alias pendant la transition, ont été
+ * retirés des deux côtés.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -45,9 +45,9 @@ const PROFILE = {
   ai_interpretations_used: 4,
   ai_tokens_purchased: 10,
   ai_tokens_used: 3,
-  comparisons_used_this_month: 6,
-  comparisons_quota: 30,
-  comparisons_remaining: 24,
+  analyses_used_this_month: 6,
+  analyses_quota: 30,
+  analyses_remaining: 24,
   max_projects: 15,
   max_datasets_per_project: 5,
   project_count: 4,
@@ -197,8 +197,8 @@ describe('useQuotas', () => {
     mockEndpoints({
       ...PROFILE,
       role: 'ADMIN',
-      comparisons_quota: null,
-      comparisons_remaining: null,
+      analyses_quota: null,
+      analyses_remaining: null,
       max_projects: null,
     });
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
@@ -213,8 +213,8 @@ describe('useQuotas', () => {
   it('reports exhausted when no analysis remains', async () => {
     mockEndpoints({
       ...PROFILE,
-      comparisons_used_this_month: 30,
-      comparisons_remaining: 0,
+      analyses_used_this_month: 30,
+      analyses_remaining: 0,
     });
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
@@ -383,13 +383,13 @@ it('useProjectLimit ne bloque pas sur un plafond absent de la charge utile', asy
   expect(result.current.reason).toBeUndefined();
 });
 
-// ── les deux vocabulaires de l'API ────────────────────────────────────────
+// ── les champs de quota lus par le hook ───────────────────────────────────
 
 /**
- * Le backend sert `analyses_*` depuis le renommage et garde `comparisons_*` en
- * alias le temps de la transition. Ce frontend et ce backend se déploient
- * indépendamment (Vercel / GitHub Actions) : le hook doit donc fonctionner
- * contre les deux versions, dans les deux sens.
+ * Le backend a servi un temps `analyses_*` ET `comparisons_*`, le temps que ce
+ * frontend bascule ; le hook portait alors un repli sur les anciens noms. Les
+ * alias ont été retirés des deux côtés, et ces tests verrouillent l'état final :
+ * seuls les noms en `analyses_*` sont lus, et un champ absent n'autorise rien.
  */
 describe('lecture des champs de quota', () => {
   const BASE = {
@@ -404,7 +404,7 @@ describe('lecture des champs de quota', () => {
     project_count: 1,
   };
 
-  it('lit les nouveaux noms quand le backend les sert', async () => {
+  it('lit les champs analyses_*', async () => {
     mockEndpoints({
       ...BASE,
       analyses_used_this_month: 6,
@@ -422,7 +422,10 @@ describe('lecture des champs de quota', () => {
     });
   });
 
-  it('se replie sur les anciens noms contre un backend anterieur', async () => {
+  it('ignore les anciens noms, et echoue ferme s\'ils sont seuls', async () => {
+    // Verrou du retrait : une charge utile qui ne porterait plus que
+    // `comparisons_*` ne doit pas etre lue comme un quota valide. Sans cette
+    // assertion, quelqu'un pourrait remettre un repli sans que rien ne le dise.
     mockEndpoints({
       ...BASE,
       comparisons_used_this_month: 6,
@@ -432,79 +435,27 @@ describe('lecture des champs de quota', () => {
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.analyses).toEqual({
-      used: 6,
-      max: 30,
-      remaining: 24,
-      unlimited: false,
-    });
+    expect(result.current.analyses.used).toBe(0);
+    expect(result.current.analyses.max).toBe(0);
+    expect(result.current.analyses.unlimited).toBe(false);
   });
 
-  it('donne la priorite aux nouveaux noms quand les deux sont servis', async () => {
-    // Cas réel de la transition : le backend sert les deux. Si les alias
-    // divergeaient un jour, c'est la source à jour qui doit gagner.
-    mockEndpoints({
-      ...BASE,
-      analyses_used_this_month: 6,
-      analyses_quota: 30,
-      analyses_remaining: 24,
-      comparisons_used_this_month: 99,
-      comparisons_quota: 99,
-      comparisons_remaining: 0,
-    });
-    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.analyses.used).toBe(6);
-    expect(result.current.analyses.max).toBe(30);
-    expect(result.current.analyses.remaining).toBe(24);
-  });
-
-  it('distingue toujours le plafond nul de l\'illimite, sur les nouveaux noms', async () => {
+  it('distingue le plafond nul de l\'illimite', async () => {
     // `analyses_quota: null` = illimité, dit explicitement par le backend.
     mockEndpoints({ ...BASE, analyses_used_this_month: 400, analyses_quota: null });
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.analyses.unlimited).toBe(true);
+    expect(result.current.tone).toBe('ok');
   });
-});
 
-it('lit un illimite annonce par l\'ancien nom seul', async () => {
-  // Backend anterieur au renommage : seul `comparisons_quota` existe, a null.
-  mockEndpoints({
-    id: 'u1',
-    email: 'a@b.c',
-    role: 'USER',
-    subscription_plan: 'ON_PREMISE',
-    ai_interpretations_used: 0,
-    ai_tokens_purchased: 0,
-    ai_tokens_used: 0,
-    comparisons_used_this_month: 400,
-    comparisons_quota: null,
-    comparisons_remaining: null,
+  it('echoue ferme quand le champ de plafond est absent', async () => {
+    mockEndpoints(BASE);
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.analyses.unlimited).toBe(false);
+    expect(result.current.analyses.max).toBe(0);
   });
-  const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
-
-  await waitFor(() => expect(result.current.isLoading).toBe(false));
-  expect(result.current.analyses.unlimited).toBe(true);
-  expect(result.current.tone).toBe('ok');
-});
-
-it('echoue ferme quand aucun des deux noms n\'est servi', async () => {
-  // Ni l'un ni l'autre : un champ absent n'autorise rien.
-  mockEndpoints({
-    id: 'u1',
-    email: 'a@b.c',
-    role: 'USER',
-    subscription_plan: 'STARTER',
-    ai_interpretations_used: 0,
-    ai_tokens_purchased: 0,
-    ai_tokens_used: 0,
-  });
-  const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
-
-  await waitFor(() => expect(result.current.isLoading).toBe(false));
-  expect(result.current.analyses.unlimited).toBe(false);
-  expect(result.current.analyses.max).toBe(0);
 });
