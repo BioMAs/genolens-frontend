@@ -78,11 +78,11 @@ function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () =
         color: 'var(--text-muted)',
       }}
     >
-      <p className="text-sm">{label}</p>
+      <p className="text-body-sm">{label}</p>
       <button
         type="button"
         onClick={onReveal}
-        className="text-xs underline"
+        className="text-caption underline"
         style={{ color: 'var(--sl-teal-dark)' }}
       >
         Load this section
@@ -399,21 +399,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Loading…
       </div>
     );
   }
   if (isError) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Failed to load comparison details.
       </div>
     );
   }
   if (!project) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Project not found
       </div>
     );
@@ -423,7 +423,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     return (
       <div className="min-h-screen bg-surface-2 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-secondary hover:text-primary mb-4">
+          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-body-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
           <div className="bg-yellow-50 p-4 rounded-md mt-4">
@@ -457,7 +457,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       />
 
       {reprocessError ? (
-        <p className="mt-2 text-sm" style={{ color: 'var(--sl-red)' }}>
+        <p className="mt-2 text-body-sm" style={{ color: 'var(--sl-red)' }}>
           {reprocessError}
         </p>
       ) : null}
@@ -526,12 +526,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     table it filters down to. */}
                 <div className="gl-card p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    <h2 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
                       Volcano plot
                     </h2>
                     <Link
                       href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                      className="text-xs font-semibold"
+                      className="text-caption font-semibold"
                       style={{ color: 'var(--sl-teal-dark)' }}
                     >
                       View dataset
@@ -563,9 +563,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 {/* DEG Table */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-primary">Differentially Expressed Genes</h2>
+                    <h2 className="text-heading font-bold text-primary">Differentially Expressed Genes</h2>
                     <button
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary"
                       onClick={async () => {
                         try {
                           const response = await api.get(
@@ -590,7 +590,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                       Download DEG — per-method p-values (.csv)
                     </button>
                   </div>
-                  <p className="text-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
+                  <p className="text-body-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
                   <div className="bg-surface border border-line rounded-lg overflow-hidden">
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
@@ -625,8 +625,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-primary mb-2">No expression matrix</h3>
-                  <p className="text-sm text-secondary max-w-sm mx-auto">
+                  <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
+                  <p className="text-body-sm text-secondary max-w-sm mx-auto">
                     Clustering requires an expression matrix (count matrix).
                     Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
                   </p>
@@ -710,7 +710,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     ) : (
                       <span
                         title="GSEA is part of the Scientific tools add-on — request access from the comparison overview"
-                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-muted"
+                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-body-sm font-medium text-muted"
                       >
                         <Lock className="h-3.5 w-3.5" />
                         GSEA (ranked)
@@ -734,8 +734,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-primary mb-2">No DEG data</h3>
-                  <p className="text-sm text-secondary max-w-sm mx-auto">
+                  <h3 className="text-title font-medium text-primary mb-2">No DEG data</h3>
+                  <p className="text-body-sm text-secondary max-w-sm mx-auto">
                     Enrichment requires a DEG dataset associated with this comparison.
                   </p>
                 </div>
@@ -769,8 +769,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-primary mb-2">No DEG results</h3>
-                  <p className="text-sm text-secondary max-w-sm mx-auto">
+                  <h3 className="text-title font-medium text-primary mb-2">No DEG results</h3>
+                  <p className="text-body-sm text-secondary max-w-sm mx-auto">
                     Drug target scoring is built from the differentially expressed genes of this
                     comparison, so it needs the DEG results to be available.
                   </p>
@@ -795,8 +795,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-primary mb-2">No expression matrix</h3>
-                  <p className="text-sm text-secondary max-w-sm mx-auto">
+                  <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
+                  <p className="text-body-sm text-secondary max-w-sm mx-auto">
                     Signature scoring requires an expression matrix (count matrix) for this project.
                   </p>
                 </div>
@@ -817,10 +817,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {activeView === 'partager' && (
               <section id="exports" className="scroll-mt-24 space-y-3">
                 <div>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     Exports
                   </h3>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
                     The gene table of this comparison, and its per-method p-values.
                   </p>
                 </div>
@@ -832,7 +832,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     size="sm"
                   />
                   <button
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm"
                     style={{
                       border: '1px solid var(--border)',
                       borderRadius: 'var(--radius-control)',

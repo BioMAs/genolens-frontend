@@ -25,7 +25,7 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
         ? 'bg-teal-100 text-teal-800'
         : 'bg-gray-100 text-gray-700';
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tone}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${tone}`}>
       {label}
     </span>
   );
@@ -33,11 +33,11 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return isActive ? (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium bg-green-100 text-green-800">
       Active
     </span>
   ) : (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium bg-red-100 text-red-800">
       Inactive
     </span>
   );
@@ -88,8 +88,8 @@ export default function BillingSection() {
       {/* Header */}
       <div className="bg-brand-primary px-4 py-5 sm:px-6 flex items-center justify-between">
         <div>
-          <h3 className="text-lg leading-6 font-medium text-on-accent">Subscription &amp; Billing</h3>
-          <p className="mt-1 max-w-2xl text-sm text-brand-secondary/80">
+          <h3 className="text-title leading-6 font-medium text-on-accent">Subscription &amp; Billing</h3>
+          <p className="mt-1 max-w-2xl text-body-sm text-brand-secondary/80">
             Your current plan and usage details.
           </p>
         </div>
@@ -101,14 +101,14 @@ export default function BillingSection() {
       {/* Body */}
       <div className="border-t border-line px-4 py-5 sm:p-0">
         {fetchError && (
-          <div className="flex items-center gap-2 px-6 py-4 text-sm text-red-700 bg-red-50">
+          <div className="flex items-center gap-2 px-6 py-4 text-body-sm text-red-700 bg-red-50">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {fetchError}
           </div>
         )}
 
         {isFetching && (
-          <div className="px-6 py-8 text-sm text-secondary text-center animate-pulse">
+          <div className="px-6 py-8 text-body-sm text-secondary text-center animate-pulse">
             Loading subscription info…
           </div>
         )}
@@ -117,10 +117,10 @@ export default function BillingSection() {
           <dl className="sm:divide-y sm:divide-line">
             {/* Current plan */}
             <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-secondary flex items-center gap-2">
+              <dt className="text-body-sm font-medium text-secondary flex items-center gap-2">
                 <CreditCard className="h-4 w-4" /> Current Plan
               </dt>
-              <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2 flex items-center gap-3">
+              <dd className="mt-1 text-body-sm text-primary sm:mt-0 sm:col-span-2 flex items-center gap-3">
                 <PlanBadge plan={subscription.plan ?? planKey} grid={grid} />
                 <StatusBadge isActive={subscription.is_active} />
               </dd>
@@ -136,8 +136,8 @@ export default function BillingSection() {
             {/* Renewal date */}
             {subscription.subscription_ends_at && (
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-secondary">Renewal Date</dt>
-                <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2">
+                <dt className="text-body-sm font-medium text-secondary">Renewal Date</dt>
+                <dd className="mt-1 text-body-sm text-primary sm:mt-0 sm:col-span-2">
                   {new Date(subscription.subscription_ends_at).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
@@ -153,7 +153,7 @@ export default function BillingSection() {
                 <button
                   onClick={handleManageBilling}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <ExternalLink className="h-4 w-4" />
                   {portalLoading ? 'Opening portal…' : 'Manage Billing'}
@@ -161,14 +161,14 @@ export default function BillingSection() {
               ) : (
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
                 >
                   <Zap className="h-4 w-4" />
                   Upgrade Plan
                 </Link>
               )}
               {error && (
-                <p className="mt-2 text-sm text-red-600">{error}</p>
+                <p className="mt-2 text-body-sm text-red-600">{error}</p>
               )}
             </div>
           </dl>

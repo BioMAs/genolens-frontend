@@ -12,7 +12,7 @@ export default function OntologyPage() {
                     <Link href="/tools" className="flex items-center text-secondary hover:text-primary mb-4">
                         <ArrowLeft className="h-4 w-4 mr-1"/> Back to Tools
                     </Link>
-                    <h1 className="text-3xl font-bold text-primary">Gene Ontology Browser</h1>
+                    <h1 className="text-display font-bold text-primary">Gene Ontology Browser</h1>
                     <p className="mt-2 text-secondary">
                         Search and explore the Gene Ontology (GO) hierarchy. Find terms, view definitions, and navigate relationships.
                     </p>

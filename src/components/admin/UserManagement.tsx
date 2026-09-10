@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status?: string }) {
   };
   const s = status ?? "active";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[s] ?? "bg-surface-2 text-primary"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${styles[s] ?? "bg-surface-2 text-primary"}`}>
       {s}
     </span>
   );
@@ -365,9 +365,9 @@ export default function UserManagement() {
           <div>
             <div className="flex items-center gap-3">
               <Users className="h-6 w-6 text-brand-primary" />
-              <h2 className="text-xl font-semibold text-primary">User Management</h2>
+              <h2 className="text-heading font-semibold text-primary">User Management</h2>
             </div>
-            <p className="mt-1 text-sm text-secondary">
+            <p className="mt-1 text-body-sm text-secondary">
               Manage user roles and permissions. Total users: {users.length}
             </p>
           </div>
@@ -393,25 +393,25 @@ export default function UserManagement() {
           <table className="min-w-full divide-y divide-line">
             <thead className="bg-surface-2">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Subscription
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   AI Usage
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Role
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Last Sign In
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -425,24 +425,24 @@ export default function UserManagement() {
                         <Image className="h-10 w-10 rounded-full" src={user.avatar_url} alt="" width={40} height={40} />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-brand-primary flex items-center justify-center">
-                          <span className="text-on-accent font-medium text-sm">
+                          <span className="text-on-accent font-medium text-body-sm">
                             {user.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                           </span>
                         </div>
                       )}
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-primary">
+                        <div className="text-body-sm font-medium text-primary">
                           {user.full_name || user.email || 'Unnamed User'}
                         </div>
-                        <div className="text-xs text-muted truncate max-w-[150px]" title={user.id}>
+                        <div className="text-caption text-muted truncate max-w-[150px]" title={user.id}>
                           {user.id.substring(0, 8)}...
                         </div>
-                        <div className="text-xs text-secondary">{user.email || '-'}</div>
+                        <div className="text-caption text-secondary">{user.email || '-'}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${
                       user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' :
                       user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
                       'bg-surface-2 text-primary'
@@ -452,10 +452,10 @@ export default function UserManagement() {
                       {user.subscription_plan || 'STARTER'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                     <div className="flex flex-col gap-1">
                       <div>Used: {user.ai_interpretations_used} ({user.ai_tokens_used} paid)</div>
-                      <div className="text-xs">
+                      <div className="text-caption">
                         Remaining: {user.ai_interpretations_remaining === -1 ? 'Unlimited' : user.ai_interpretations_remaining}
                       </div>
                     </div>
@@ -464,17 +464,17 @@ export default function UserManagement() {
                     <StatusBadge status={user.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${getRoleBadgeColor(user.role)}`}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                     {user.last_sign_in_at
                       ? new Date(user.last_sign_in_at).toLocaleDateString()
                       : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-2">
                       {user.status === "pending" ? (
                         <button
@@ -487,7 +487,7 @@ export default function UserManagement() {
                               alert("Failed to resend invitation. Please try again.");
                             }
                           }}
-                          className="text-xs text-yellow-600 hover:text-yellow-800 underline"
+                          className="text-caption text-yellow-600 hover:text-yellow-800 underline"
                         >
                           Resend invite
                         </button>
@@ -503,7 +503,7 @@ export default function UserManagement() {
                               alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
                             }
                           }}
-                          className="text-xs text-secondary hover:text-primary underline"
+                          className="text-caption text-secondary hover:text-primary underline"
                         >
                           {user.status === "active" ? "Suspend" : "Activate"}
                         </button>
@@ -565,8 +565,8 @@ export default function UserManagement() {
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-primary">Invite User</h3>
-                <p className="text-xs text-secondary mt-0.5">Creates a pending account and sends an invitation email.</p>
+                <h3 className="text-title font-semibold text-primary">Invite User</h3>
+                <p className="text-caption text-secondary mt-0.5">Creates a pending account and sends an invitation email.</p>
               </div>
               <button onClick={() => setShowInviteModal(false)} className="text-muted hover:text-secondary">
                 <X className="h-5 w-5" />
@@ -574,7 +574,7 @@ export default function UserManagement() {
             </div>
             <form onSubmit={handleInvite} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Email *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Email *</label>
                 <input
                   type="email"
                   required
@@ -585,7 +585,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={inviteForm.full_name}
@@ -595,7 +595,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Plan</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Plan</label>
                 <select
                   value={inviteForm.plan}
                   onChange={(e) => setInviteForm({ ...inviteForm, plan: e.target.value })}
@@ -607,7 +607,7 @@ export default function UserManagement() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Access expires on <span className="text-muted font-normal">(optional)</span>
                 </label>
                 <input
@@ -643,7 +643,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-primary">Create New User</h3>
+              <h3 className="text-title font-semibold text-primary">Create New User</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-muted hover:text-secondary"
@@ -653,7 +653,7 @@ export default function UserManagement() {
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Email *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Email *</label>
                 <input
                   type="email"
                   required
@@ -664,7 +664,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Password *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Password *</label>
                 <input
                   type="password"
                   required
@@ -676,7 +676,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={createForm.full_name}
@@ -686,7 +686,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Role *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Role *</label>
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
@@ -725,7 +725,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-primary">Edit User</h3>
+              <h3 className="text-title font-semibold text-primary">Edit User</h3>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-muted hover:text-secondary"
@@ -735,7 +735,7 @@ export default function UserManagement() {
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={editForm.full_name}
@@ -745,7 +745,7 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Role</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Role</label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
@@ -759,7 +759,7 @@ export default function UserManagement() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Subscription Plan</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Subscription Plan</label>
                 <select
                   value={editForm.subscription_plan}
                   onChange={(e) => setEditForm({ ...editForm, subscription_plan: e.target.value })}
@@ -775,8 +775,8 @@ export default function UserManagement() {
 
               {/* Add-on modules */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-primary">Add-on modules</label>
-                <p className="mb-3 text-xs text-secondary">Toggle to enable instantly — no need to save.</p>
+                <label className="mb-1 block text-body-sm font-medium text-primary">Add-on modules</label>
+                <p className="mb-3 text-caption text-secondary">Toggle to enable instantly — no need to save.</p>
                 <ModuleSelector
                   value={{
                     claim: !!editingUser.cosmetics_module_enabled,
@@ -815,7 +815,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-sm w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-primary">Add AI Tokens</h3>
+              <h3 className="text-title font-semibold text-primary">Add AI Tokens</h3>
               <button
                 onClick={() => setShowTokenModal(false)}
                 className="text-muted hover:text-secondary"
@@ -827,17 +827,17 @@ export default function UserManagement() {
               <div className="bg-yellow-50 p-4 rounded-lg flex items-start gap-3">
                  <Coins className="h-6 w-6 text-yellow-600 mt-1" />
                  <div>
-                   <p className="text-sm font-medium text-yellow-800">
+                   <p className="text-body-sm font-medium text-yellow-800">
                      Adding tokens to {tokenUser.full_name || tokenUser.email}
                    </p>
-                   <p className="text-xs text-yellow-700 mt-1">
+                   <p className="text-caption text-yellow-700 mt-1">
                      Current purchased balance: {tokenUser.ai_tokens_purchased || 0}
                    </p>
                  </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Amount to Add</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Amount to Add</label>
                 <input
                   type="number"
                   min="1"

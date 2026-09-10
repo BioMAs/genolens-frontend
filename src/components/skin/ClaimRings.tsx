@@ -49,16 +49,16 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-[22px] font-bold" style={{ color }}>
+          <span className="font-display text-heading font-bold" style={{ color }}>
             {Math.round(score)}
           </span>
         </div>
       </div>
-      <div className="mt-2.5 text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="mt-2.5 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
         {claim.label}
       </div>
       <div
-        className="mt-1 text-[11px] font-semibold"
+        className="mt-1 text-micro font-semibold"
         style={{ color: favorable ? 'var(--dc-up-dark)' : '#d97706' }}
       >
         {favorable ? '↗ Favorable' : '↘ To watch'}
@@ -75,7 +75,7 @@ export default function ClaimRings({ claims, max = 3 }: { claims: CosmeticClaimS
 
   if (!top.length) {
     return (
-      <div className="text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="text-caption" style={{ color: 'var(--text-secondary)' }}>
         No claim reached a significant activation score for this comparison.
       </div>
     );
@@ -83,7 +83,7 @@ export default function ClaimRings({ claims, max = 3 }: { claims: CosmeticClaimS
 
   return (
     <div>
-      <div className="mb-3.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-3.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
         Top skin claims — <b style={{ color: 'var(--text-primary)' }}>activation score, 0–100</b>
       </div>
       <div className="flex gap-3.5">

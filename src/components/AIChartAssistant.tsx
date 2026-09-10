@@ -107,20 +107,20 @@ export default function AIChartAssistant({
               <Sparkles className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <h3 className="mb-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Chart Assistant</h3>
-              <p className="mb-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <h3 className="mb-1 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Chart Assistant</h3>
+              <p className="mb-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
                 Get AI-powered insights for this chart. Available with PREMIUM or ADVANCED plans.
               </p>
               <div className="flex items-center gap-2">
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3 w-3" />
                   View Plans →
                 </Link>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Starting at $29/month</span>
+                <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Starting at $29/month</span>
               </div>
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function AIChartAssistant({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-[11px] border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--hover-overlay)]"
+        className="flex items-center gap-1.5 rounded-[11px] border px-3 py-1.5 text-caption font-medium transition-colors hover:bg-[var(--hover-overlay)]"
         style={{ background: 'var(--sl-purple-light)', borderColor: 'var(--border)', color: 'var(--sl-purple)' }}
       >
         <Sparkles className="h-3.5 w-3.5" />
@@ -154,10 +154,10 @@ export default function AIChartAssistant({
           >
             <div className="flex items-center gap-2">
               <AIAvatar className="h-5 w-5" />
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
+              <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
               {label && (
                 <span
-                  className="rounded border px-1.5 py-0.5 text-xs"
+                  className="rounded border px-1.5 py-0.5 text-caption"
                   style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                 >
                   {label}
@@ -178,10 +178,10 @@ export default function AIChartAssistant({
           <div className={`${panelClassName ?? 'max-h-72'} flex flex-col gap-3 overflow-y-auto p-4`}>
             {!interpretation && !isInterpreting && (
               <div className="flex flex-col items-center gap-2 py-4 text-center">
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Get an AI reading of this chart.</p>
+                <p className="text-caption" style={{ color: 'var(--text-muted)' }}>Get an AI reading of this chart.</p>
                 <button
                   onClick={() => interpret()}
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
@@ -193,7 +193,7 @@ export default function AIChartAssistant({
               <div className="flex gap-2">
                 <AIAvatar />
                 <div
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-body-sm"
                   style={{ background: 'var(--surface-raised)', color: 'var(--text-muted)' }}
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -218,7 +218,7 @@ export default function AIChartAssistant({
                 {msg.role === 'assistant' && <AIAvatar />}
                 {msg.role === 'user' ? (
                   <div
-                    className="max-w-[85%] rounded-2xl rounded-br-sm px-3 py-2 text-sm leading-relaxed text-on-accent"
+                    className="max-w-[85%] rounded-2xl rounded-br-sm px-3 py-2 text-body-sm leading-relaxed text-on-accent"
                     style={{ background: 'var(--sl-purple)' }}
                   >
                     {msg.content}
@@ -238,7 +238,7 @@ export default function AIChartAssistant({
               <div className="flex gap-2">
                 <AIAvatar />
                 <div
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-body-sm"
                   style={{ background: 'var(--surface-raised)', color: 'var(--text-muted)' }}
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -258,7 +258,7 @@ export default function AIChartAssistant({
               onKeyDown={handleKeyDown}
               placeholder="Ask a follow-up question…"
               disabled={isAsking || isInterpreting}
-              className="flex-1 rounded-xl border px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
+              className="flex-1 rounded-xl border px-3 py-1.5 text-body-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             />
             <button

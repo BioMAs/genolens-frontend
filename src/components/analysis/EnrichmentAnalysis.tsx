@@ -307,7 +307,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             <span
                 key={gene}
                 title={tooltip}
-                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-default ${chipColor}`}
+                className={`inline-flex items-center px-2 py-0.5 rounded text-caption font-medium cursor-default ${chipColor}`}
             >
                 {reg === 'UP' && <span className="mr-0.5 text-red-500">↑</span>}
                 {reg === 'DOWN' && <span className="mr-0.5 text-blue-500">↓</span>}
@@ -330,9 +330,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             <div className="bg-surface p-4 rounded-lg shadow border border-line flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
                     <div>
-                        <label className="block text-sm font-medium text-primary mb-1">Comparison</label>
+                        <label className="block text-body-sm font-medium text-primary mb-1">Comparison</label>
                         <select
-                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={selectedComparison}
                             onChange={(e) => setSelectedComparison(e.target.value)}
                             disabled={loadingComparisons || comparisons.length === 0}
@@ -344,9 +344,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-primary mb-1">Max p-adj</label>
+                        <label className="block text-body-sm font-medium text-primary mb-1">Max p-adj</label>
                         <select 
-                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={maxPadj}
                             onChange={(e) => setMaxPadj(parseFloat(e.target.value))}
                         >
@@ -359,7 +359,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 
                     {viewMode === 'table' && (
                         <div>
-                            <label className="block text-sm font-medium text-primary mb-1">Regulation</label>
+                            <label className="block text-body-sm font-medium text-primary mb-1">Regulation</label>
                             <div className="flex rounded-md shadow-sm">
                                 {['ALL', 'UP', 'DOWN'].map((reg) => (
                                      <button
@@ -367,7 +367,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                         type="button"
                                         onClick={() => setRegulationFilter(reg)}
                                         className={`
-                                            relative inline-flex items-center px-4 py-2 border text-sm font-medium 
+                                            relative inline-flex items-center px-4 py-2 border text-body-sm font-medium 
                                             ${reg === 'ALL' ? 'rounded-l-md' : ''} 
                                             ${reg === 'DOWN' ? 'rounded-r-md' : ''}
                                             ${regulationFilter === reg 
@@ -387,7 +387,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 <div className="flex gap-2">
                      <button
                         onClick={() => setViewMode('table')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
+                        className={`inline-flex items-center px-3 py-2 border rounded-md text-body-sm font-medium ${
                             viewMode === 'table' 
                             ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
@@ -398,7 +398,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                      </button>
                      <button
                         onClick={() => setViewMode('radar')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
+                        className={`inline-flex items-center px-3 py-2 border rounded-md text-body-sm font-medium ${
                             viewMode === 'radar' 
                             ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
@@ -448,7 +448,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(categoryFilter === cat ? "" : cat)}
-                            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                            className={`px-3 py-1 text-caption font-medium rounded-full border transition-colors ${
                                 categoryFilter === cat
                                 ? 'bg-accent border-accent text-on-accent'
                                 : 'bg-surface border-strong text-secondary hover:bg-hover'
@@ -460,7 +460,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     {categoryFilter && (
                         <button
                             onClick={() => setCategoryFilter("")}
-                            className="px-2 py-1 text-xs text-accent-ink hover:text-accent-ink"
+                            className="px-2 py-1 text-caption text-accent-ink hover:text-accent-ink"
                         >
                             Clear filter
                         </button>
@@ -476,7 +476,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         useResizeHandler={true}
                         style={{ width: '100%', height: '100%', minHeight: '500px' }}
                     />
-                    <div className="mt-4 text-center text-sm text-secondary">
+                    <div className="mt-4 text-center text-body-sm text-secondary">
                         Showing top 10 significant pathways per regulation direction (-log10 P-adj).
                     </div>
                  </div>
@@ -500,10 +500,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             {!loading && viewMode === 'table' && filteredResults.length > 0 && (
                 <div className="bg-surface rounded-lg shadow overflow-hidden">
                     <div className="px-4 py-3 border-b border-line bg-surface-2 flex justify-between items-center">
-                        <span className="text-sm text-primary font-medium">
+                        <span className="text-body-sm text-primary font-medium">
                             {filteredResults.length} pathways found
                         </span>
-                        <div className="flex items-center gap-2 text-xs text-secondary">
+                        <div className="flex items-center gap-2 text-caption text-secondary">
                             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-red-100 border border-red-200" /> Upregulated</span>
                             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-200" /> Downregulated</span>
                         </div>
@@ -512,14 +512,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         <table className="min-w-full divide-y divide-line">
                             <thead className="bg-surface-2">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider w-8" />
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">ID</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider w-2/5">Term name &amp; description</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Database</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Genes</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Adj. p-value</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Regulation</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-secondary uppercase tracking-wider">Links</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-8" />
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">ID</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-2/5">Term name &amp; description</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Database</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Genes</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Adj. p-value</th>
+                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Regulation</th>
+                                    <th className="px-4 py-3 text-right text-caption font-medium text-secondary uppercase tracking-wider">Links</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-surface divide-y divide-line">
@@ -543,35 +543,35 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         </button>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-accent-ink">
+                                                <td className="px-4 py-3 whitespace-nowrap text-caption font-mono text-accent-ink">
                                                     {r.pathway_id}
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-primary">
+                                                <td className="px-4 py-3 text-body-sm text-primary">
                                                     <div className="font-medium">{r.pathway_name}</div>
                                                     {r.description && r.description !== r.pathway_name && (
-                                                        <div className="text-xs text-secondary mt-0.5 leading-snug">{r.description}</div>
+                                                        <div className="text-caption text-secondary mt-0.5 leading-snug">{r.description}</div>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryBadgeColor(r.category)}`}>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-caption font-medium ${getCategoryBadgeColor(r.category)}`}>
                                                         {r.category}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-secondary">
+                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm text-secondary">
                                                     {r.gene_count}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-primary">
+                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono text-primary">
                                                     {r.padj.toExponential(2)}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm">
+                                                    <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-full ${
                                                         r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
                                                         r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-surface-2 text-primary'
                                                     }`}>
                                                         {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                                <td className="px-4 py-3 whitespace-nowrap text-right text-body-sm font-medium">
                                                     {(r.category.startsWith('GO:') || r.pathway_id.startsWith('GO:')) && (
                                                         <Link
                                                             href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
@@ -587,7 +587,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                             {isExpanded && r.genes && r.genes.length > 0 && (
                                                 <tr key={`${r.id}-genes`} className="bg-surface-2">
                                                     <td colSpan={8} className="px-6 py-3">
-                                                        <p className="text-xs font-medium text-secondary mb-2">
+                                                        <p className="text-caption font-medium text-secondary mb-2">
                                                             Associated genes ({r.genes.length}) — hover for details
                                                         </p>
                                                         <div className="flex flex-wrap gap-1.5">

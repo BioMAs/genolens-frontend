@@ -57,15 +57,15 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-6 inline-flex items-center text-sm text-secondary hover:text-primary"
+            className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
           <div className="bg-surface rounded-lg shadow p-8 text-center">
             <Lock className="mx-auto mb-4 h-8 w-8 text-muted" />
-            <h1 className="mb-2 text-lg font-semibold text-primary">Scientific tools add-on</h1>
-            <p className="mx-auto max-w-md text-sm text-secondary">
+            <h1 className="mb-2 text-title font-semibold text-primary">Scientific tools add-on</h1>
+            <p className="mx-auto max-w-md text-body-sm text-secondary">
               Contrast scatter is part of the Scientific tools module. Ask an admin to enable
               it for your account, or request access from your profile.
             </p>
@@ -89,14 +89,14 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-6 inline-flex items-center text-sm text-secondary hover:text-primary"
+            className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
           <div className="bg-surface rounded-lg shadow p-8 text-center">
             <div className="text-red-600 mb-4">{error || 'Not enough comparisons'}</div>
-            <p className="text-sm text-secondary">
+            <p className="text-body-sm text-secondary">
               This feature compares two DEG contrasts, so the project needs at least two.
             </p>
           </div>
@@ -111,13 +111,13 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-4 inline-flex items-center text-sm text-secondary hover:text-primary"
+            className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-          <h1 className="text-3xl font-bold text-primary">Contrast comparison</h1>
-          {project && <p className="mt-2 text-sm text-secondary">Project: {project.name}</p>}
+          <h1 className="text-display font-bold text-primary">Contrast comparison</h1>
+          {project && <p className="mt-2 text-body-sm text-secondary">Project: {project.name}</p>}
         </div>
       </div>
 

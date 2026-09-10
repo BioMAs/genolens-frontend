@@ -16,7 +16,7 @@ export default function ComparisonGrid({ projectId, analysisId, comparisons }: C
   if (comparisons.length === 0) {
     return (
       <div className="gl-card p-8 text-center">
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No comparisons available for this analysis.</p>
+        <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>No comparisons available for this analysis.</p>
       </div>
     );
   }
@@ -43,17 +43,17 @@ export default function ComparisonGrid({ projectId, analysisId, comparisons }: C
           }}
         >
           <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{comp.name}</p>
+            <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{comp.name}</p>
             <div className="mt-1 flex items-center gap-3">
-              <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--dc-up-dark)' }}>
+              <span className="inline-flex items-center gap-1 text-caption font-medium" style={{ color: 'var(--dc-up-dark)' }}>
                 <TrendingUp className="h-3 w-3" /> {comp.deg_up} up
               </span>
-              <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--dc-down-dark)' }}>
+              <span className="inline-flex items-center gap-1 text-caption font-medium" style={{ color: 'var(--dc-down-dark)' }}>
                 <TrendingDown className="h-3 w-3" /> {comp.deg_down} down
               </span>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{comp.deg_total} total DEGs</span>
+              <span className="text-caption" style={{ color: 'var(--text-muted)' }}>{comp.deg_total} total DEGs</span>
               {comp.has_enrichment && (
-                <span className="rounded px-1.5 py-0.5 text-xs font-medium" style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}>
+                <span className="rounded px-1.5 py-0.5 text-caption font-medium" style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}>
                   Enrichment
                 </span>
               )}

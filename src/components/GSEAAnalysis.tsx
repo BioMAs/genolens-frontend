@@ -195,12 +195,12 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
-            <p className="text-sm text-secondary mt-1">
+            <h2 className="text-heading font-bold text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
+            <p className="text-body-sm text-secondary mt-1">
               Identify significantly enriched gene sets in your ranked gene list
             </p>
             {isCached && (
-              <span className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 mt-1 text-caption font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5">
                 ✓ Loaded from cache
               </span>
             )}
@@ -209,7 +209,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
           <div className="flex gap-2">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="inline-flex items-center px-4 py-2 border border-strong rounded-md text-sm font-medium text-primary bg-surface hover:bg-hover"
+              className="inline-flex items-center px-4 py-2 border border-strong rounded-md text-body-sm font-medium text-primary bg-surface hover:bg-hover"
             >
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -218,7 +218,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
             <button
               onClick={runGSEA}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
               {loading ? 'Running GSEA...' : results ? 'Re-run GSEA' : 'Run GSEA'}
@@ -231,13 +231,13 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
           <div className="mt-4 p-4 bg-surface-2 border border-line rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Gene Set Database
                 </label>
                 <select
                   value={parameters.gene_set_database}
                   onChange={(e) => setParameters({ ...parameters, gene_set_database: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 >
                   <option value="GO_BP">GO Biological Process</option>
                   <option value="GO_MF">GO Molecular Function</option>
@@ -250,13 +250,13 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Ranking Metric
                 </label>
                 <select
                   value={parameters.ranking_metric}
                   onChange={(e) => setParameters({ ...parameters, ranking_metric: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 >
                   <option value="signed_pvalue">Signed P-value (recommended)</option>
                   <option value="log_fc">Log2 Fold Change</option>
@@ -265,13 +265,13 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   FDR Threshold
                 </label>
                 <select
                   value={parameters.fdr_threshold}
                   onChange={(e) => setParameters({ ...parameters, fdr_threshold: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 >
                   <option value="0.05">0.05 (stringent)</option>
                   <option value="0.1">0.10</option>
@@ -281,7 +281,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Min Gene Set Size
                 </label>
                 <input
@@ -290,12 +290,12 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                   onChange={(e) => setParameters({ ...parameters, min_size: parseInt(e.target.value) })}
                   min="5"
                   max="100"
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Max Gene Set Size
                 </label>
                 <input
@@ -304,18 +304,18 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                   onChange={(e) => setParameters({ ...parameters, max_size: parseInt(e.target.value) })}
                   min="100"
                   max="2000"
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">
+                <label className="block text-body-sm font-medium text-primary mb-1">
                   Permutations
                 </label>
                 <select
                   value={parameters.n_permutations}
                   onChange={(e) => setParameters({ ...parameters, n_permutations: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
                 >
                   <option value="100">100 (fast)</option>
                   <option value="500">500</option>
@@ -326,7 +326,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               </div>
             </div>
 
-            <div className="mt-3 text-xs text-secondary">
+            <div className="mt-3 text-caption text-secondary">
               <strong>Note:</strong> More permutations increase accuracy but take longer to compute.
               Standard is 1000 permutations.
             </div>
@@ -342,7 +342,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Running indicator (GSEA runs as a background job, can take minutes) */}
         {loading && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm flex items-center gap-3">
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-body-sm flex items-center gap-3">
             <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             Running GSEA over the full gene-set database — this runs in the background and can take a few minutes. You can keep this tab open.
           </div>
@@ -352,27 +352,27 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       {/* Summary Stats */}
       {results && (
         <div className="bg-surface border border-line rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Analysis Summary</h3>
+          <h3 className="text-title font-semibold mb-4">Analysis Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{results.summary.total_genes}</div>
-              <div className="text-sm text-secondary">Total Genes</div>
+              <div className="text-heading font-bold text-primary">{results.summary.total_genes}</div>
+              <div className="text-body-sm text-secondary">Total Genes</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{results.summary.total_gene_sets_tested}</div>
-              <div className="text-sm text-secondary">Gene Sets Tested</div>
+              <div className="text-heading font-bold text-primary">{results.summary.total_gene_sets_tested}</div>
+              <div className="text-body-sm text-secondary">Gene Sets Tested</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{results.summary.significant_gene_sets}</div>
-              <div className="text-sm text-secondary">Significant (FDR ≤ {parameters.fdr_threshold})</div>
+              <div className="text-heading font-bold text-green-600">{results.summary.significant_gene_sets}</div>
+              <div className="text-body-sm text-secondary">Significant (FDR ≤ {parameters.fdr_threshold})</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{results.summary.enriched_in_phenotype_pos}</div>
-              <div className="text-sm text-secondary">Positive NES</div>
+              <div className="text-heading font-bold text-red-600">{results.summary.enriched_in_phenotype_pos}</div>
+              <div className="text-body-sm text-secondary">Positive NES</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{results.summary.enriched_in_phenotype_neg}</div>
-              <div className="text-sm text-secondary">Negative NES</div>
+              <div className="text-heading font-bold text-blue-600">{results.summary.enriched_in_phenotype_neg}</div>
+              <div className="text-body-sm text-secondary">Negative NES</div>
             </div>
           </div>
         </div>
@@ -394,7 +394,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-surface border-b border-line p-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Enrichment Plot: {selectedGeneSet}</h3>
+              <h3 className="text-title font-semibold">Enrichment Plot: {selectedGeneSet}</h3>
               <button
                 onClick={() => {
                   setSelectedGeneSet(null);
@@ -429,11 +429,11 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       {!results && !loading && (
         <div className="bg-surface border border-line rounded-lg p-12 text-center">
           <Play className="h-16 w-16 text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-primary mb-2">Ready to Run GSEA</h3>
+          <h3 className="text-title font-semibold text-primary mb-2">Ready to Run GSEA</h3>
           <p className="text-secondary mb-4">
             Click &quot;Run GSEA&quot; to start the analysis. You can adjust settings before running.
           </p>
-          <p className="text-sm text-secondary">
+          <p className="text-body-sm text-secondary">
             GSEA will analyze {comparisonName} to identify enriched gene sets.
           </p>
         </div>

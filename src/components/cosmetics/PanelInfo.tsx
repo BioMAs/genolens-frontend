@@ -44,7 +44,7 @@ export default function PanelInfo({ title, children }: PanelInfoProps) {
             aria-modal="true"
           >
             <div className="mb-3 flex items-start justify-between gap-4">
-              <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-body font-bold" style={{ color: 'var(--text-primary)' }}>
                 {title}
               </h3>
               <button
@@ -57,7 +57,7 @@ export default function PanelInfo({ title, children }: PanelInfoProps) {
               </button>
             </div>
             <div
-              className="space-y-3 text-sm leading-relaxed [&_b]:font-semibold [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px] [&_li]:ml-4 [&_li]:list-disc"
+              className="space-y-3 text-body-sm leading-relaxed [&_b]:font-semibold [&_code]:rounded [&_code]:bg-surface-2 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-caption [&_li]:ml-4 [&_li]:list-disc"
               style={{ color: 'var(--text-secondary)' }}
             >
               {children}

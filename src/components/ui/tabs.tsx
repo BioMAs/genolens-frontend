@@ -82,7 +82,7 @@ function TabsTrigger({ value, children, className = '', disabled = false }: Tabs
       disabled={disabled}
       onClick={() => !disabled && onValueChange(value)}
       className={[
-        'relative px-4 pb-2.5 pt-2 text-sm font-medium transition-colors select-none',
+        'relative px-4 pb-2.5 pt-2 text-body-sm font-medium transition-colors select-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:rounded-t',
         'disabled:pointer-events-none disabled:opacity-40',
         isActive

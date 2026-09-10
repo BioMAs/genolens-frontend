@@ -89,7 +89,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
         {/* Back link */}
         <Link
           href={`/projects/${projectId}`}
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary"
+          className="mb-6 inline-flex items-center gap-1.5 text-body-sm text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           {projectName}
@@ -97,8 +97,8 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Page title */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-primary">New Analysis</h1>
-          <p className="mt-1 text-sm text-secondary">
+          <h1 className="text-heading font-bold text-primary">New Analysis</h1>
+          <p className="mt-1 text-body-sm text-secondary">
             {selectedDataType
               ? 'Follow the steps below to configure and launch your transcriptomics analysis.'
               : 'Select a data type to get started.'}

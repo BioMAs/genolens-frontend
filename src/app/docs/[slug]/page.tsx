@@ -46,7 +46,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
     <div className="page-container">
       <Link
         href="/docs"
-        className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+        className="mb-4 inline-flex items-center gap-1.5 text-caption font-medium hover:underline"
         style={{ color: 'var(--sl-purple)' }}
       >
         <ArrowLeft className="h-3.5 w-3.5" />

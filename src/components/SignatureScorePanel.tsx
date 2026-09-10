@@ -130,9 +130,9 @@ export default function SignatureScorePanel({
       <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center gap-2 mb-1">
           <Activity className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold text-primary">Signature scoring</h2>
+          <h2 className="text-heading font-bold text-primary">Signature scoring</h2>
         </div>
-        <p className="text-sm text-secondary mb-4">
+        <p className="text-body-sm text-secondary mb-4">
           Score a custom gene signature across every sample, then compare scores between conditions.
         </p>
 
@@ -142,7 +142,7 @@ export default function SignatureScorePanel({
             <div className="inline-flex rounded-lg border border-line bg-surface-2 p-1 mb-3">
               <button
                 onClick={() => setSource('list')}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
+                className={`px-3 py-1 text-body-sm font-medium rounded-md ${
                   source === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
                 }`}
               >
@@ -150,7 +150,7 @@ export default function SignatureScorePanel({
               </button>
               <button
                 onClick={() => setSource('paste')}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
+                className={`px-3 py-1 text-body-sm font-medium rounded-md ${
                   source === 'paste' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function SignatureScorePanel({
 
             {/* Says where a pre-filled list came from, so it is not mysterious. */}
             {initialLabel && source === 'paste' && pastedGenes.length > 0 ? (
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
                 Pre-filled from <strong>{initialLabel}</strong> —{' '}
                 {pastedGenes.length.toLocaleString('en-US')} gene
                 {pastedGenes.length === 1 ? '' : 's'}. Edit freely.
@@ -171,7 +171,7 @@ export default function SignatureScorePanel({
               <select
                 value={selectedListId}
                 onChange={(e) => setSelectedListId(e.target.value)}
-                className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
               >
                 <option value="">Select a gene list…</option>
                 {(geneLists ?? []).map((gl) => (
@@ -186,22 +186,22 @@ export default function SignatureScorePanel({
                 onChange={(e) => setPasted(e.target.value)}
                 placeholder="Paste gene symbols separated by spaces, commas, or newlines…"
                 rows={4}
-                className="w-full px-3 py-2 border border-strong rounded-md text-sm font-mono"
+                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm font-mono"
               />
             )}
             {source === 'paste' && (
-              <p className="mt-1 text-xs text-secondary">{pastedGenes.length} genes parsed</p>
+              <p className="mt-1 text-caption text-secondary">{pastedGenes.length} genes parsed</p>
             )}
           </div>
 
           {/* Method + run */}
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-primary mb-1">Scoring method</label>
+              <label className="block text-body-sm font-medium text-primary mb-1">Scoring method</label>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as ScoringMethod)}
-                className="w-full px-3 py-2 border border-strong rounded-md text-sm"
+                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
               >
                 <option value="mean_z">Mean z-score (recommended)</option>
                 <option value="mean_rank">Mean rank (AUCell-like)</option>
@@ -210,7 +210,7 @@ export default function SignatureScorePanel({
             <button
               onClick={handleRun}
               disabled={!canRun}
-              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Scoring…' : 'Score signature'}
             </button>
@@ -218,7 +218,7 @@ export default function SignatureScorePanel({
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-body-sm">
             {error}
           </div>
         )}
@@ -228,10 +228,10 @@ export default function SignatureScorePanel({
       {result && chart && (
         <div className="bg-surface border border-line rounded-lg p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h3 className="text-lg font-semibold text-primary">
+            <h3 className="text-title font-semibold text-primary">
               Score by condition{result.signature_name ? ` — ${result.signature_name}` : ''}
             </h3>
-            <div className="text-sm text-secondary">
+            <div className="text-body-sm text-secondary">
               {result.test ? (
                 <>
                   <span className="font-medium">{result.test}</span>: p = {fmtP(result.pvalue)}
@@ -242,7 +242,7 @@ export default function SignatureScorePanel({
             </div>
           </div>
 
-          <p className="text-xs text-secondary mb-3">
+          <p className="text-caption text-secondary mb-3">
             {result.n_genes_used}/{result.n_genes_requested} signature genes found · {result.n_samples} samples ·
             method: {result.method === 'mean_z' ? 'mean z-score' : 'mean rank'}
           </p>
@@ -278,7 +278,7 @@ export default function SignatureScorePanel({
                   const p = payload[0].payload as { sample?: string; y: number };
                   if (!p.sample) return null;
                   return (
-                    <div className="bg-surface border border-line rounded shadow px-3 py-2 text-xs">
+                    <div className="bg-surface border border-line rounded shadow px-3 py-2 text-caption">
                       <div className="font-semibold text-primary">{p.sample}</div>
                       <div>score: {p.y.toFixed(3)}</div>
                     </div>
@@ -308,7 +308,7 @@ export default function SignatureScorePanel({
 
           {/* Group summary */}
           <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-body-sm">
               <thead>
                 <tr className="text-left text-secondary">
                   <th className="px-3 py-2 font-medium">Condition</th>

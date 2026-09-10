@@ -52,7 +52,7 @@ function PathwayTooltip({
   const p = payload[0].payload;
   return (
     <div
-      className="max-w-xs rounded-lg border px-3 py-2 text-xs shadow-lg"
+      className="max-w-xs rounded-lg border px-3 py-2 text-caption shadow-lg"
       style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
     >
       <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{p.name}</div>
@@ -160,11 +160,11 @@ export default function OverviewTopPathways({
           : `No pathway reaches adj. p ≤ ${PADJ_MAX}.`;
       return (
         <div className="flex h-[260px] flex-col items-center justify-center gap-2 text-center">
-          <p className="max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>{message}</p>
+          <p className="max-w-xs text-body-sm" style={{ color: 'var(--text-muted)' }}>{message}</p>
           <button
             type="button"
             onClick={onOpenEnrichment}
-            className="text-xs font-semibold"
+            className="text-caption font-semibold"
             style={{ color: 'var(--sl-teal-dark)' }}
           >
             Open Enrichment →
@@ -215,10 +215,10 @@ export default function OverviewTopPathways({
     <div className="gl-card p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
             Top enriched pathways
           </h2>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
             Ranked by adjusted p-value · adj. p ≤ {PADJ_MAX}
           </p>
         </div>
@@ -226,7 +226,7 @@ export default function OverviewTopPathways({
           <button
             type="button"
             onClick={onOpenEnrichment}
-            className="text-xs font-semibold"
+            className="text-caption font-semibold"
             style={{ color: 'var(--sl-teal-dark)' }}
           >
             All pathways →

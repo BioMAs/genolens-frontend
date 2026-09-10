@@ -79,14 +79,14 @@ export default function CommentThread({
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent-ink">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-body-sm font-medium text-accent-ink">
               {comment.user_id.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-primary">
+              <p className="text-body-sm font-medium text-primary">
                 User {comment.user_id.slice(0, 8)}
               </p>
-              <p className="text-xs text-secondary">
+              <p className="text-caption text-secondary">
                 {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                 {comment.updated_at !== comment.created_at && ' (edited)'}
               </p>
@@ -95,7 +95,7 @@ export default function CommentThread({
 
           <div className="flex items-center gap-2">
             {comment.is_resolved && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-caption font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
                 <Check className="h-3 w-3" />
                 Resolved
               </span>
@@ -120,7 +120,7 @@ export default function CommentThread({
                             setIsEditing(true);
                             setShowActions(false);
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-hover"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-body-sm text-primary hover:bg-hover"
                         >
                           <Edit2 className="h-4 w-4" />
                           Edit
@@ -130,7 +130,7 @@ export default function CommentThread({
                             handleDelete();
                             setShowActions(false);
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-hover dark:text-red-400"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-body-sm text-red-600 hover:bg-hover dark:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete
@@ -142,7 +142,7 @@ export default function CommentThread({
                         handleToggleResolved();
                         setShowActions(false);
                       }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-hover"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-body-sm text-primary hover:bg-hover"
                     >
                       {comment.is_resolved ? (
                         <>
@@ -188,7 +188,7 @@ export default function CommentThread({
           <div className="mt-3">
             <button
               onClick={() => setIsReplying(!isReplying)}
-              className="flex items-center gap-1 text-sm text-accent-ink hover:text-accent-ink"
+              className="flex items-center gap-1 text-body-sm text-accent-ink hover:text-accent-ink"
             >
               <Reply className="h-4 w-4" />
               Reply

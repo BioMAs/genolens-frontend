@@ -53,7 +53,7 @@ export default function SignatureFilters({
   return (
     <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="text-sm">
+        <label className="text-body-sm">
           <span className="block text-primary">Max adjusted p-value</span>
           <input
             type="number"
@@ -67,7 +67,7 @@ export default function SignatureFilters({
           />
         </label>
 
-        <label className="text-sm">
+        <label className="text-body-sm">
           <span className="block text-primary">Min |log2FC|</span>
           <input
             type="number"
@@ -81,7 +81,7 @@ export default function SignatureFilters({
           />
         </label>
 
-        <label className="text-sm">
+        <label className="text-body-sm">
           <span className="block text-primary">Directions</span>
           <select
             value={filters.directions}
@@ -97,7 +97,7 @@ export default function SignatureFilters({
           </select>
         </label>
 
-        <label className="text-sm">
+        <label className="text-body-sm">
           <span className="block text-primary">Max genes per arm</span>
           <input
             type="number"
@@ -111,7 +111,7 @@ export default function SignatureFilters({
           />
         </label>
 
-        <label className="text-sm">
+        <label className="text-body-sm">
           <span className="block text-primary">
             Seed
             <span
@@ -134,31 +134,31 @@ export default function SignatureFilters({
       {/* Le plafond n'est pas décoratif : au-delà de ~20 % de l'univers classé, le percentile
           moyen dégénère vers 0,5 et le test cesse de discriminer. */}
       {filters.maxGenesPerCondition > 1500 && (
-        <p className="text-xs text-amber-800">
+        <p className="text-caption text-amber-800">
           Above ~1500 genes per arm the mean-percentile statistic loses discriminating power: the
           signature starts to cover a large share of the ~15,000 ranked genes.
         </p>
       )}
 
       <div>
-        <h4 className="text-sm font-medium text-primary">What will be sent</h4>
-        {isLoading && <p className="mt-1 text-sm text-secondary">Counting genes…</p>}
+        <h4 className="text-body-sm font-medium text-primary">What will be sent</h4>
+        {isLoading && <p className="mt-1 text-body-sm text-secondary">Counting genes…</p>}
         {!isLoading && preview && preview.conditions.length === 0 && (
-          <p className="mt-1 text-sm text-secondary">
+          <p className="mt-1 text-body-sm text-secondary">
             No gene passes these thresholds. Loosen padj or |log2FC|.
           </p>
         )}
         {!isLoading && preview && preview.conditions.length > 0 && (
           <ul className="mt-2 space-y-3">
             {preview.conditions.map((condition) => (
-              <li key={condition.name} className="text-sm">
+              <li key={condition.name} className="text-body-sm">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="font-medium text-primary">{condition.name}</span>
                   <span
                     className={
                       condition.direction === 'UP'
-                        ? 'text-xs font-medium text-red-600'
-                        : 'text-xs font-medium text-blue-600'
+                        ? 'text-caption font-medium text-red-600'
+                        : 'text-caption font-medium text-blue-600'
                     }
                   >
                     {condition.direction}
@@ -172,7 +172,7 @@ export default function SignatureFilters({
                     )}
                   </span>
                 </div>
-                <label className="mt-1 flex items-center gap-2 text-xs text-secondary">
+                <label className="mt-1 flex items-center gap-2 text-caption text-secondary">
                   <span>Replicates</span>
                   <input
                     type="number"
@@ -202,7 +202,7 @@ export default function SignatureFilters({
           </ul>
         )}
         {!isLoading && preview && preview.warnings.length > 0 && (
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-amber-800">
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-caption text-amber-800">
             {preview.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}

@@ -86,7 +86,7 @@ export default function GeneExpressionBoxplot({
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center text-xs"
+        className="flex items-center justify-center text-caption"
         style={{ height, color: 'var(--text-muted)' }}
       >
         Loading expression…
@@ -97,7 +97,7 @@ export default function GeneExpressionBoxplot({
   if (!data || data.groups.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-center text-xs"
+        className="flex items-center justify-center text-center text-caption"
         style={{ height, color: 'var(--text-muted)' }}
       >
         No expression values for this gene in the samples of this comparison.

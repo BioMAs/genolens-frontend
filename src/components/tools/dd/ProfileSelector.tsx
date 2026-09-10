@@ -21,7 +21,7 @@ const LABELS: Record<string, string> = {
 
 export default function ProfileSelector({ profiles, value, onChange }: ProfileSelectorProps) {
   return (
-    <label className="block text-sm">
+    <label className="block text-body-sm">
       <span className="mb-1 block font-medium text-primary">Weighting profile</span>
       <select
         value={value}

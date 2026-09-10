@@ -220,7 +220,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Namespace filters */}
-      <div className="flex items-center gap-4 px-3 py-2 bg-surface-2 border-b border-subtle text-xs">
+      <div className="flex items-center gap-4 px-3 py-2 bg-surface-2 border-b border-subtle text-caption">
         {ALL_NS.map(ns => (
           <label key={ns} className="flex items-center gap-1.5 cursor-pointer select-none">
             <input
@@ -237,7 +237,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
       </div>
 
       {graphData.truncatedBanner && (
-        <div className="px-3 py-1 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
+        <div className="px-3 py-1 bg-amber-50 border-b border-amber-100 text-caption text-amber-700">
           More than 150 terms — showing enriched terms only
         </div>
       )}
@@ -247,7 +247,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
 
         {tooltip && (
           <div
-            className="absolute z-10 bg-surface border border-line rounded-lg shadow-lg p-2 text-xs pointer-events-none max-w-48"
+            className="absolute z-10 bg-surface border border-line rounded-lg shadow-lg p-2 text-caption pointer-events-none max-w-48"
             style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
           >
             <div className="font-semibold text-primary mb-1 leading-snug">{tooltip.node.go_name}</div>

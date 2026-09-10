@@ -170,7 +170,7 @@ export default function ContrastBuilder({
   // ── States before the builder is usable ─────────────────────────────────────
   if (!enabled) {
     return (
-      <div className="rounded-lg border border-line bg-surface-2 px-4 py-6 text-center text-sm text-secondary">
+      <div className="rounded-lg border border-line bg-surface-2 px-4 py-6 text-center text-body-sm text-secondary">
         Upload and process the <span className="font-medium">Sample Metadata</span> file first —
         its conditions will populate the comparison builder.
       </div>
@@ -179,7 +179,7 @@ export default function ContrastBuilder({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-6 text-sm text-secondary">
+      <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-6 text-body-sm text-secondary">
         <Clock className="h-4 w-4 animate-spin text-indigo-400" />
         Reading conditions from the sample sheet…
       </div>
@@ -188,7 +188,7 @@ export default function ContrastBuilder({
 
   if (isError) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-body-sm text-red-700">
         <AlertCircle className="h-4 w-4 shrink-0" />
         Could not read the sample sheet. Try re-uploading it, or upload a contrast file instead.
       </div>
@@ -197,7 +197,7 @@ export default function ContrastBuilder({
 
   if (conditionValues.length < 2) {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-body-sm text-amber-800">
         <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
         <div>
           <p>
@@ -206,7 +206,7 @@ export default function ContrastBuilder({
           </p>
           {columns.length > 1 && (
             <div className="mt-3 max-w-xs">
-              <label className="block text-xs font-medium text-amber-800 mb-1">Grouping column</label>
+              <label className="block text-caption font-medium text-amber-800 mb-1">Grouping column</label>
               <Select value={conditionColumn} onValueChange={setConditionColumn}>
                 <SelectTrigger><SelectValue placeholder="Choose a column" /></SelectTrigger>
                 <SelectContent>
@@ -225,19 +225,19 @@ export default function ContrastBuilder({
     <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
       <div className="flex items-center gap-2">
         <Wand2 className="h-4 w-4 text-accent-ink" />
-        <h3 className="text-sm font-semibold text-primary">Build comparisons from conditions</h3>
+        <h3 className="text-body-sm font-semibold text-primary">Build comparisons from conditions</h3>
       </div>
 
       {/* Grouping column selector */}
       <div className="max-w-xs">
-        <label className="block text-xs font-medium text-secondary mb-1">Grouping (condition) column</label>
+        <label className="block text-caption font-medium text-secondary mb-1">Grouping (condition) column</label>
         <Select value={conditionColumn} onValueChange={setConditionColumn}>
           <SelectTrigger><SelectValue placeholder="Choose a column" /></SelectTrigger>
           <SelectContent>
             {columns.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <p className="mt-1 text-[11px] text-muted">
+        <p className="mt-1 text-micro text-muted">
           {conditionValues.length} conditions detected: {conditionValues.join(', ')}
         </p>
       </div>
@@ -245,7 +245,7 @@ export default function ContrastBuilder({
       {/* Comparison rows */}
       <div className="space-y-3">
         {/* Header (desktop) */}
-        <div className="hidden sm:grid grid-cols-[1fr_auto_1fr_1.2fr_auto] items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted">
+        <div className="hidden sm:grid grid-cols-[1fr_auto_1fr_1.2fr_auto] items-center gap-2 px-1 text-micro font-medium uppercase tracking-wide text-muted">
           <span>Test condition</span>
           <span className="px-2" />
           <span>Reference condition</span>
@@ -281,7 +281,7 @@ export default function ContrastBuilder({
               value={row.name}
               placeholder="Comparison name"
               onChange={(e) => patchRow(row.id, { name: e.target.value, nameEdited: true })}
-              className="h-10 w-full rounded-md border border-strong bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1"
+              className="h-10 w-full rounded-md border border-strong bg-surface px-3 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1"
             />
 
             <button
@@ -300,7 +300,7 @@ export default function ContrastBuilder({
       <button
         type="button"
         onClick={addRow}
-        className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-strong px-3 py-1.5 text-xs font-medium text-secondary hover:border-accent-ring hover:text-accent-ink"
+        className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-strong px-3 py-1.5 text-caption font-medium text-secondary hover:border-accent-ring hover:text-accent-ink"
       >
         <Plus className="h-3.5 w-3.5" />
         Add a comparison
@@ -308,16 +308,16 @@ export default function ContrastBuilder({
 
       {/* Errors + confirm */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        <p className="text-xs text-red-600">{uploadError ?? ''}</p>
+        <p className="text-caption text-red-600">{uploadError ?? ''}</p>
         <div className="flex items-center gap-3">
           {validationError && (
-            <span className="text-[11px] text-muted">{validationError}</span>
+            <span className="text-micro text-muted">{validationError}</span>
           )}
           <button
             type="button"
             onClick={handleConfirm}
             disabled={!!validationError || uploading}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {uploading ? (
               <><Clock className="h-4 w-4 animate-spin" /> Creating…</>

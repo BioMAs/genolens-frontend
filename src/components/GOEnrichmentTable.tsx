@@ -174,7 +174,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     return (
       <span
         key={gene}
-        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border cursor-help ${chipClass}`}
+        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-caption font-medium border cursor-help ${chipClass}`}
         onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHoveredGene(null)}
       >
@@ -195,7 +195,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-lg shadow-xl p-3 text-xs max-w-xs"
+            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-lg shadow-xl p-3 text-caption max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
             <div className="font-semibold text-primary">{hoveredGene.gene}</div>
@@ -305,13 +305,13 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                       <td className="p-3">
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
-                          <div className="text-sm text-muted-foreground">{term.go_id}</div>
+                          <div className="text-body-sm text-muted-foreground">{term.go_id}</div>
                           {(() => {
                             const overlap = overlapOf(term);
                             if (overlap === null) return null;
                             return (
                               <div
-                                className="text-xs"
+                                className="text-caption"
                                 style={{
                                   color:
                                     overlap > 0 ? 'var(--sl-teal-dark)' : 'var(--text-muted)',
@@ -324,7 +324,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                             );
                           })()}
                           {term.description && (
-                            <div className="text-xs text-secondary italic max-w-sm leading-snug">{term.description}</div>
+                            <div className="text-caption text-secondary italic max-w-sm leading-snug">{term.description}</div>
                           )}
                         </div>
                       </td>
@@ -333,17 +333,17 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                           {getNamespaceLabel(term.namespace)}
                         </Badge>
                       </td>
-                      <td className="p-3 text-right font-mono text-sm">
+                      <td className="p-3 text-right font-mono text-body-sm">
                         {term.fdr.toExponential(2)}
                       </td>
-                      <td className="p-3 text-right font-mono text-sm">
+                      <td className="p-3 text-right font-mono text-body-sm">
                         {term.pvalue.toExponential(2)}
                       </td>
                       <td className="p-3 text-right font-semibold">
                         {term.enrichment_ratio.toFixed(2)}x
                       </td>
                       <td className="p-3 text-right">
-                        <span className="text-sm">
+                        <span className="text-body-sm">
                           {term.study_count} / {term.background_count}
                         </span>
                       </td>
@@ -377,7 +377,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                       <tr className="border-t bg-muted/30">
                         <td colSpan={7} className="p-4">
                           <div className="space-y-2">
-                            <div className="font-medium text-sm">
+                            <div className="font-medium text-body-sm">
                               Genes ({term.study_count}):
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -414,7 +414,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       )}
 
       {filteredTerms.length > 0 && (
-        <div className="flex items-center justify-between gap-4 text-sm">
+        <div className="flex items-center justify-between gap-4 text-body-sm">
           <span className="text-muted-foreground">
             Showing {Math.min((page - 1) * pageSize + 1, filteredTerms.length)}–{Math.min(page * pageSize, filteredTerms.length)} of {filteredTerms.length} terms
           </span>
@@ -452,7 +452,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-            className="border rounded px-2 py-1 text-sm bg-background"
+            className="border rounded px-2 py-1 text-body-sm bg-background"
           >
             {[10, 25, 50, 100].map(s => (
               <option key={s} value={s}>{s} / page</option>

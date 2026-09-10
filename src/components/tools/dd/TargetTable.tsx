@@ -46,7 +46,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-secondary">
+      <div className="mb-4 flex flex-wrap items-center gap-4 text-body-sm text-secondary">
         <span className="font-medium text-primary">{data.n_ranked} targets ranked</span>
         <span>{data.n_excluded_insufficient_evidence} excluded for insufficient evidence</span>
         <span>{data.n_disqualified_common_essential} disqualified (common essential)</span>
@@ -67,8 +67,8 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-surface-2 text-left text-xs uppercase text-secondary">
+        <table className="min-w-full text-body-sm">
+          <thead className="bg-surface-2 text-left text-caption uppercase text-secondary">
             <tr>
               <th className="p-2">
                 <button type="button" onClick={() => setSortBy('rank')}>Rank</button>
@@ -98,7 +98,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
                 <td className="p-2 text-secondary">{target.rank}</td>
                 <td className="p-2 font-medium text-primary">
                   {target.symbol}
-                  <span className="ml-2 text-xs text-muted">{target.gene_id}</span>
+                  <span className="ml-2 text-caption text-muted">{target.gene_id}</span>
                 </td>
                 <td className="p-2">{fmt(target.composite)}</td>
                 <td className="p-2">{fmt(target.percentile)}</td>

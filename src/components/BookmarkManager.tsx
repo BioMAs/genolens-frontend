@@ -110,8 +110,8 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
         <Star className="mb-4 h-12 w-12 text-gray-300" />
-        <p className="text-lg font-medium text-primary">No bookmarks yet</p>
-        <p className="mt-1 text-sm text-secondary">
+        <p className="text-title font-medium text-primary">No bookmarks yet</p>
+        <p className="mt-1 text-body-sm text-secondary">
           Click the star icon next to genes to bookmark them
         </p>
       </div>
@@ -123,8 +123,8 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
       {/* Header */}
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Bookmarked Genes</h2>
-          <p className="mt-1 text-sm text-secondary">{bookmarks.length} genes</p>
+          <h2 className="text-title font-semibold text-primary">Bookmarked Genes</h2>
+          <p className="mt-1 text-body-sm text-secondary">{bookmarks.length} genes</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
@@ -176,11 +176,11 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                   <div className="flex items-center gap-3">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     <div>
-                      <h3 className="font-mono text-lg font-semibold text-primary">
+                      <h3 className="font-mono text-title font-semibold text-primary">
                         {bookmark.gene_symbol}
                       </h3>
                       {bookmark.gene_id && (
-                        <p className="text-xs text-secondary">{bookmark.gene_id}</p>
+                        <p className="text-caption text-secondary">{bookmark.gene_id}</p>
                       )}
                     </div>
                   </div>
@@ -210,24 +210,24 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                   <div className="mt-4 space-y-3">
                     {/* Notes */}
                     <div>
-                      <label className="block text-sm font-medium text-primary">Notes</label>
+                      <label className="block text-body-sm font-medium text-primary">Notes</label>
                       <textarea
                         value={editNotes}
                         onChange={(e) => setEditNotes(e.target.value)}
                         placeholder="Add notes about this gene..."
-                        className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                        className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                         rows={3}
                       />
                     </div>
 
                     {/* Tags */}
                     <div>
-                      <label className="block text-sm font-medium text-primary">Tags</label>
+                      <label className="block text-body-sm font-medium text-primary">Tags</label>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {editTags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm text-accent-ink"
+                            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-body-sm text-accent-ink"
                           >
                             {tag}
                             <button
@@ -246,11 +246,11 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                           onChange={(e) => setNewTag(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && addTag()}
                           placeholder="Add tag..."
-                          className="flex-1 rounded-md border border-strong px-3 py-1 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                          className="flex-1 rounded-md border border-strong px-3 py-1 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                         />
                         <button
                           onClick={addTag}
-                          className="rounded-md bg-surface-2 px-3 py-1 text-sm text-primary hover:bg-gray-200"
+                          className="rounded-md bg-surface-2 px-3 py-1 text-body-sm text-primary hover:bg-gray-200"
                         >
                           Add
                         </button>
@@ -259,11 +259,11 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
 
                     {/* Color */}
                     <div>
-                      <label className="block text-sm font-medium text-primary">Color</label>
+                      <label className="block text-body-sm font-medium text-primary">Color</label>
                       <div className="mt-1 flex items-center gap-2">
                         <button
                           onClick={() => setShowColorPicker(!showColorPicker)}
-                          className="flex items-center gap-2 rounded-md border border-strong px-3 py-2 text-sm hover:bg-hover"
+                          className="flex items-center gap-2 rounded-md border border-strong px-3 py-2 text-body-sm hover:bg-hover"
                         >
                           <Palette className="h-4 w-4" />
                           {editColor ? (
@@ -278,7 +278,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                         {editColor && (
                           <button
                             onClick={() => setEditColor(undefined)}
-                            className="text-sm text-secondary hover:text-primary"
+                            className="text-body-sm text-secondary hover:text-primary"
                           >
                             Clear
                           </button>
@@ -306,14 +306,14 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                     <div className="flex justify-end gap-2 pt-2">
                       <button
                         onClick={cancelEdit}
-                        className="rounded-md border border-strong px-4 py-2 text-sm font-medium text-primary hover:bg-hover"
+                        className="rounded-md border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => saveEdit(bookmark.id)}
                         disabled={updateBookmark.isPending}
-                        className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
                       >
                         <Save className="h-4 w-4" />
                         Save
@@ -323,14 +323,14 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                 ) : (
                   <div className="mt-3 space-y-2">
                     {bookmark.notes && (
-                      <p className="text-sm text-primary">{bookmark.notes}</p>
+                      <p className="text-body-sm text-primary">{bookmark.notes}</p>
                     )}
                     {bookmark.tags && bookmark.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {bookmark.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-primary"
+                            className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-caption text-primary"
                           >
                             <Tag className="h-3 w-3" />
                             {tag}
@@ -338,7 +338,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                         ))}
                       </div>
                     )}
-                    <p className="text-xs text-muted">
+                    <p className="text-caption text-muted">
                       Added {new Date(bookmark.created_at).toLocaleDateString()}
                     </p>
                   </div>

@@ -330,6 +330,16 @@
   --text-display--line-height:    2.125rem;
   --text-display--letter-spacing: -0.028em;
   --text-display--font-weight:    700;
+
+  /* Cran « heros » — un chiffre unique qui porte tout le resultat d'un ecran
+     (la puissance statistique, le n par groupe). L'echelle avait ete calibree
+     sur la grappe 10-15px, qui represente l'ecrasante majorite du code, et
+     manquait cette extremite : trois sites, mais ce sont les seuls endroits ou
+     la taille elle-meme porte du sens. */
+  --text-hero:                    3rem;
+  --text-hero--line-height:       3.25rem;
+  --text-hero--letter-spacing:    -0.032em;
+  --text-hero--font-weight:       700;
 }
 
 /* ============================================================

@@ -42,6 +42,7 @@ describe('cn', () => {
       ['text-caption', 'text-micro'],
       ['text-body-sm', 'text-display'],
       ['text-heading', 'text-body'],
+      ['text-display', 'text-hero'],
     ])('dedoublonne %s + %s', (first, second) => {
       expect(cn(first, second)).toBe(second);
     });

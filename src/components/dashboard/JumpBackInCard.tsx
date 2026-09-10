@@ -51,8 +51,8 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Jump back in</h3>
-        <span className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>Your last result — go straight to what matters</span>
+        <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>Jump back in</h3>
+        <span className="text-micro" style={{ color: 'var(--text-muted)' }}>Your last result — go straight to what matters</span>
       </div>
 
       <div
@@ -63,16 +63,16 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         <div>
           <div className="mb-1.5 flex items-center gap-2">
             <span
-              className="rounded-md px-2 py-0.5 text-[10.5px] font-bold tracking-[0.5px]"
+              className="rounded-md px-2 py-0.5 text-micro font-bold tracking-[0.5px]"
               style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}
             >
               DONE
             </span>
             {comp.has_enrichment && (
-              <span className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>Enrichment ready</span>
+              <span className="text-micro" style={{ color: 'var(--text-muted)' }}>Enrichment ready</span>
             )}
           </div>
-          <div className="font-display text-[16.5px] font-semibold leading-[1.3] tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
+          <div className="font-display text-body font-semibold leading-[1.3] tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
             {title}
           </div>
 
@@ -82,17 +82,17 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 const act = Math.max(0, Math.min(100, zonesById[l.slug]?.activity ?? 0));
                 return (
                   <div key={l.slug} className="flex items-center gap-2.5">
-                    <span className="w-20 text-[11px]" style={{ color: l.color }}>{l.label}</span>
+                    <span className="w-20 text-micro" style={{ color: l.color }}>{l.label}</span>
                     <div className="h-[7px] flex-1 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
                       <div className="h-full rounded" style={{ width: `${act}%`, background: l.fill }} />
                     </div>
-                    <span className="w-8 text-right text-[11px]" style={{ color: 'var(--text-muted)' }}>{act.toFixed(1)}</span>
+                    <span className="w-8 text-right text-micro" style={{ color: 'var(--text-muted)' }}>{act.toFixed(1)}</span>
                   </div>
                 );
               })
             ) : (
               <div>
-                <div className="mb-1.5 flex justify-between text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                <div className="mb-1.5 flex justify-between text-micro" style={{ color: 'var(--text-muted)' }}>
                   <span>{comp.deg_total.toLocaleString()} DEGs</span>
                   <span>{comp.deg_up} up · {comp.deg_down} down</span>
                 </div>
@@ -110,19 +110,19 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
 
         {/* Middle — verdict + claim pills */}
         <div>
-          <div className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
+          <div className="mb-1.5 text-micro font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
             {hasSkin ? 'Verdict' : 'Results'}
           </div>
           {hasSkin ? (
             <>
-              <div className="mb-3 font-display text-[14.5px] font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+              <div className="mb-3 font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
                 {buildVerdict(cos!)}
               </div>
               <div className="flex flex-wrap gap-2">
                 {topClaims.map((c) => (
                   <span
                     key={c.slug}
-                    className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold"
+                    className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-micro font-semibold"
                     style={{
                       background: `color-mix(in oklab, ${c.color} 8%, var(--surface))`,
                       borderColor: `color-mix(in oklab, ${c.color} 22%, var(--surface))`,
@@ -137,18 +137,18 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
             </>
           ) : (
             <>
-              <div className="font-display text-[14.5px] font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+              <div className="font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
                 {comp.deg_total.toLocaleString()} differentially expressed genes
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
+                <span className="rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
                   {comp.deg_up} up
                 </span>
-                <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
+                <span className="rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
                   {comp.deg_down} down
                 </span>
                 <span
-                  className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+                  className="rounded-full px-2.5 py-1 text-micro font-semibold"
                   style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
                 >
                   {comp.has_enrichment ? 'Pathway enrichment ready' : 'Enrichment not run'}
@@ -162,14 +162,14 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         <div className="flex flex-col items-stretch gap-2.5">
           <Link
             href={href}
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-5 py-3 text-[13.5px] font-semibold text-on-accent"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-5 py-3 text-body-sm font-semibold text-on-accent"
             style={{ background: 'var(--sl-purple)', boxShadow: '0 8px 18px -8px rgba(79,70,229,.6)' }}
           >
             View results <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={href}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border px-5 py-2.5 text-[13px] font-semibold"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border px-5 py-2.5 text-body-sm font-semibold"
             style={{ background: 'var(--surface)', borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}
           >
             Generate report

@@ -22,7 +22,7 @@ export default function MyModules() {
     <div className="space-y-3">
       {notice && (
         <div
-          className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-sm"
+          className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-body-sm"
           style={
             notice.kind === 'success'
               ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }

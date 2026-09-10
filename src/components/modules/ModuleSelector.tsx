@@ -133,8 +133,8 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             <Icon className="h-[22px] w-[22px]" />
           </span>
           <div>
-            <div className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
-            <div className="mt-0.5 text-[11.5px]" style={{ color: 'var(--text-secondary)' }}>{tagline}</div>
+            <div className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
+            <div className="mt-0.5 text-micro" style={{ color: 'var(--text-secondary)' }}>{tagline}</div>
           </div>
         </div>
 
@@ -142,7 +142,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
         {readOnly ? (
           active ? (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro font-semibold"
               style={{ background: `color-mix(in oklab, ${color} 14%, var(--surface))`, color }}
             >
               <Check className="h-3 w-3" /> Active
@@ -152,14 +152,14 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
               type="button"
               disabled={busy}
               onClick={() => onRequestAccess(id)}
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-micro font-semibold transition-colors disabled:opacity-60"
               style={{ borderColor: `color-mix(in oklab, ${color} 35%, var(--surface))`, color }}
             >
               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
               {busy ? 'Sending…' : 'Request access'}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
               <Lock className="h-3 w-3" /> Locked
             </span>
           )
@@ -187,7 +187,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
       {/* Capabilities */}
       <ul className="mt-4 flex flex-col gap-2">
         {capabilities.map((cap) => (
-          <li key={cap} className="flex items-center gap-2 text-[12.5px] transition-colors duration-300" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+          <li key={cap} className="flex items-center gap-2 text-caption transition-colors duration-300" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
             <span
               className="grid h-4 w-4 flex-none place-items-center rounded-full transition-all duration-300"
               style={{

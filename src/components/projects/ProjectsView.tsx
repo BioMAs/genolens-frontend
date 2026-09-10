@@ -57,7 +57,7 @@ export default function ProjectsView() {
           >
             Projects
           </h2>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-0.5 text-caption" style={{ color: 'var(--text-muted)' }}>
             Every project you own or have been given access to.
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function ProjectsView() {
           onClick={() => !projectLimit.blocked && setIsModalOpen(true)}
           disabled={projectLimit.blocked}
           title={projectLimit.reason}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) => {
             if (!projectLimit.blocked)
@@ -93,7 +93,7 @@ export default function ProjectsView() {
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search projects…"
             aria-label="Search projects"
-            className="h-9 w-full rounded-lg border pl-9 pr-3 text-sm transition-all focus-visible:border-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+            className="h-9 w-full rounded-lg border pl-9 pr-3 text-body-sm transition-all focus-visible:border-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
             style={controlStyle}
           />
         </div>
@@ -102,7 +102,7 @@ export default function ProjectsView() {
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortValue)}
           aria-label="Sort projects by"
-          className="h-9 rounded-lg border px-3 text-sm"
+          className="h-9 rounded-lg border px-3 text-body-sm"
           style={controlStyle}
         >
           {SORT_OPTIONS.map((option) => (
@@ -125,7 +125,7 @@ export default function ProjectsView() {
                 <button
                   type="button"
                   onClick={() => setSearchInput('')}
-                  className="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent"
+                  className="mt-2 rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   Clear search

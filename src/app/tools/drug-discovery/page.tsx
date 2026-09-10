@@ -13,7 +13,7 @@ export default function DrugDiscoveryPage() {
                 <div className="mb-6">
                     <Link
                         href="/tools"
-                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-sm"
+                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-body-sm"
                     >
                         <ArrowLeft className="h-4 w-4 mr-1" />
                         Back to tools
@@ -23,7 +23,7 @@ export default function DrugDiscoveryPage() {
                             <Target className="h-7 w-7 text-rose-700" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-primary">Drug Discovery</h1>
+                            <h1 className="text-display font-bold text-primary">Drug Discovery</h1>
                             {/* La phrase précédente disait « The module does not read any of your
                                 data ». Elle est devenue fausse le jour où le mode B a été câblé :
                                 l'onglet « Drug targets » d'une comparaison envoie les symboles des
@@ -41,7 +41,7 @@ export default function DrugDiscoveryPage() {
                 </div>
 
                 {/* useSearchParams impose une frontière Suspense en App Router. */}
-                <Suspense fallback={<p className="text-sm text-secondary">Loading…</p>}>
+                <Suspense fallback={<p className="text-body-sm text-secondary">Loading…</p>}>
                     <DrugDiscovery />
                 </Suspense>
             </div>

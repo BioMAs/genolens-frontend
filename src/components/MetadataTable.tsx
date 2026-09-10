@@ -60,8 +60,8 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
   return (
     <div className="bg-surface shadow sm:rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-line">
-        <h3 className="text-lg leading-6 font-medium text-primary">Sample Metadata</h3>
-        <p className="mt-1 max-w-2xl text-sm text-secondary">
+        <h3 className="text-title leading-6 font-medium text-primary">Sample Metadata</h3>
+        <p className="mt-1 max-w-2xl text-body-sm text-secondary">
             {data.length} samples found.
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
                 <th
                   key={col}
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider"
                 >
                   {col}
                 </th>
@@ -84,7 +84,7 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
             {data.map((row, idx) => (
               <tr key={idx} className="hover:bg-hover">
                 {columns.map((col) => (
-                  <td key={`${idx}-${col}`} className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                  <td key={`${idx}-${col}`} className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                     {formatCellValue(row[col])}
                   </td>
                 ))}

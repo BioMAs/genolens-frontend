@@ -43,7 +43,7 @@ export default function ToolsIndexPage() {
                 >
                     Research Tools
                 </h2>
-                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <p className="mt-0.5 text-caption" style={{ color: 'var(--text-muted)' }}>
                     Standalone utilities and databases that work outside a project.
                 </p>
             </div>
@@ -70,13 +70,13 @@ export default function ToolsIndexPage() {
                         </div>
 
                         <h3
-                            className="font-display text-sm font-semibold leading-snug mb-1.5"
+                            className="font-display text-body-sm font-semibold leading-snug mb-1.5"
                             style={{ color: 'var(--text-primary)' }}
                         >
                             {tool.name}
                         </h3>
                         <p
-                            className="text-xs leading-relaxed line-clamp-3"
+                            className="text-caption leading-relaxed line-clamp-3"
                             style={{ color: 'var(--text-secondary)' }}
                         >
                             {tool.description}

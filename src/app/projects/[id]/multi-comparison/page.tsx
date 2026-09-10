@@ -68,7 +68,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-6 inline-flex items-center text-sm text-secondary hover:text-primary"
+            className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
@@ -78,7 +78,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
             <div className="text-red-600 mb-4">
               {error || 'No multi-comparison DEG dataset found'}
             </div>
-            <p className="text-sm text-secondary">
+            <p className="text-body-sm text-secondary">
               This feature requires a DEG dataset with multiple comparisons.
             </p>
           </div>
@@ -94,18 +94,18 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-4 inline-flex items-center text-sm text-secondary hover:text-primary"
+            className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
 
           <div>
-            <h1 className="text-3xl font-bold text-primary">
+            <h1 className="text-display font-bold text-primary">
               Multi-Comparison Analysis
             </h1>
             {project && (
-              <p className="mt-2 text-sm text-secondary">
+              <p className="mt-2 text-body-sm text-secondary">
                 Project: {project.name}
               </p>
             )}

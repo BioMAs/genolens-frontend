@@ -230,9 +230,9 @@ export default function ProjectManagement() {
       <div className="px-6 py-4 border-b border-line">
         <div className="flex items-center gap-3">
           <Database className="h-6 w-6 text-brand-primary" />
-          <h2 className="text-xl font-semibold text-primary">Project Management</h2>
+          <h2 className="text-heading font-semibold text-primary">Project Management</h2>
         </div>
-        <p className="mt-1 text-sm text-secondary">
+        <p className="mt-1 text-body-sm text-secondary">
           View and manage all projects in the system. Total projects: {projects.length}
         </p>
       </div>
@@ -241,19 +241,19 @@ export default function ProjectManagement() {
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-surface-2">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Project Name
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Description
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Owner
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Created
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -269,26 +269,26 @@ export default function ProjectManagement() {
               projects.map((project) => (
                 <tr key={project.id} className="hover:bg-hover">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-primary">{project.name}</div>
-                    <div className="text-xs text-secondary">{project.id}</div>
+                    <div className="text-body-sm font-medium text-primary">{project.name}</div>
+                    <div className="text-caption text-secondary">{project.id}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-secondary max-w-md truncate">
+                    <div className="text-body-sm text-secondary max-w-md truncate">
                       {project.description || '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-primary">
+                    <div className="text-body-sm text-primary">
                       {project.owner_email || project.owner_full_name || '-'}
                     </div>
-                    <div className="text-xs text-secondary truncate max-w-50" title={project.owner_id}>
+                    <div className="text-caption text-secondary truncate max-w-50" title={project.owner_id}>
                       ID: {project.owner_id.substring(0, 8)}...
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                     {new Date(project.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleEdit(project)}
@@ -330,7 +330,7 @@ export default function ProjectManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-primary">Edit Project</h3>
+              <h3 className="text-title font-semibold text-primary">Edit Project</h3>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-muted hover:text-secondary"
@@ -340,7 +340,7 @@ export default function ProjectManagement() {
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Project Name *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Project Name *</label>
                 <input
                   type="text"
                   required
@@ -351,7 +351,7 @@ export default function ProjectManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Description</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Description</label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -362,7 +362,7 @@ export default function ProjectManagement() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-primary mb-1">Owner</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Owner</label>
                 <select
                   value={editForm.owner_id}
                   onChange={(e) => setEditForm({ ...editForm, owner_id: e.target.value })}
@@ -375,7 +375,7 @@ export default function ProjectManagement() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-red-500">
+                <p className="mt-1 text-caption text-red-500">
                   ⚠ Warning: Changing ownership will remove the current owner&apos;s access unless they are a member.
                 </p>
               </div>
@@ -407,8 +407,8 @@ export default function ProjectManagement() {
           <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-primary">Manage Project Members</h3>
-                <p className="text-sm text-secondary mt-1">{selectedProject.name}</p>
+                <h3 className="text-title font-semibold text-primary">Manage Project Members</h3>
+                <p className="text-body-sm text-secondary mt-1">{selectedProject.name}</p>
               </div>
               <button
                 onClick={() => setShowMembersModal(false)}
@@ -421,15 +421,15 @@ export default function ProjectManagement() {
             <div className="flex-1 overflow-y-auto p-6">
               {/* Add Member Form */}
               <div className="mb-6 p-4 bg-surface-2 rounded-lg">
-                <h4 className="text-sm font-semibold text-primary mb-3">Add Member</h4>
+                <h4 className="text-body-sm font-semibold text-primary mb-3">Add Member</h4>
                 <form onSubmit={handleAddMember} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-primary mb-1">User</label>
+                      <label className="block text-caption font-medium text-primary mb-1">User</label>
                       <select
                         value={newMember.user_id}
                         onChange={(e) => setNewMember({ ...newMember, user_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                         required
                       >
                         <option value="">Select user...</option>
@@ -443,11 +443,11 @@ export default function ProjectManagement() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-primary mb-1">Access Level</label>
+                      <label className="block text-caption font-medium text-primary mb-1">Access Level</label>
                       <select
                         value={newMember.access_level}
                         onChange={(e) => setNewMember({ ...newMember, access_level: e.target.value })}
-                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                       >
                         <option value="VIEWER">Viewer</option>
                         <option value="ANALYST">Analyst</option>
@@ -458,7 +458,7 @@ export default function ProjectManagement() {
                   <button
                     type="submit"
                     disabled={addingMember || !newMember.user_id}
-                    className="w-full px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50 text-body-sm flex items-center justify-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     {addingMember ? 'Adding...' : 'Add Member'}
@@ -468,13 +468,13 @@ export default function ProjectManagement() {
 
               {/* Members List */}
               <div>
-                <h4 className="text-sm font-semibold text-primary mb-3">Current Members ({projectMembers.length})</h4>
+                <h4 className="text-body-sm font-semibold text-primary mb-3">Current Members ({projectMembers.length})</h4>
                 {loadingMembers ? (
                   <div className="text-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-brand-primary mx-auto" />
                   </div>
                 ) : projectMembers.length === 0 ? (
-                  <p className="text-center text-secondary py-8 text-sm">No members yet. Add the first member above.</p>
+                  <p className="text-center text-secondary py-8 text-body-sm">No members yet. Add the first member above.</p>
                 ) : (
                   <div className="space-y-2">
                     {projectMembers.map((member) => (
@@ -483,13 +483,13 @@ export default function ProjectManagement() {
                         className="flex items-center justify-between p-3 bg-surface border border-line rounded-md hover:bg-hover"
                       >
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-primary">
+                          <div className="text-body-sm font-medium text-primary">
                             {member.user_full_name || member.user_email || 'Unknown User'}
                           </div>
-                          <div className="text-xs text-secondary">{member.user_email}</div>
+                          <div className="text-caption text-secondary">{member.user_email}</div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                          <span className="px-2 py-1 text-caption font-medium bg-blue-100 text-blue-800 rounded">
                             {member.access_level}
                           </span>
                           <button

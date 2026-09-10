@@ -75,7 +75,7 @@ export default function IndicationPicker({
   return (
     <div>
       {layout === 'compact' ? (
-        <div className="text-sm">
+        <div className="text-body-sm">
           <select
             value={value ?? ''}
             onChange={(event) => onSelect(event.target.value)}
@@ -97,7 +97,7 @@ export default function IndicationPicker({
           {/* Une option désactivée ne peut pas expliquer pourquoi. L'échappatoire reste
               atteignable, mais elle passe par la même confirmation que sur la page outil. */}
           {indications.some((i) => i.excluded) && (
-            <details className="mt-2 text-xs text-secondary">
+            <details className="mt-2 text-caption text-secondary">
               <summary className="cursor-pointer">
                 Why are some indications unavailable?
               </summary>
@@ -125,7 +125,7 @@ export default function IndicationPicker({
           )}
 
           {selected?.excluded && (
-            <p className="mt-2 rounded-md bg-amber-50 p-2 text-xs text-amber-900">
+            <p className="mt-2 rounded-md bg-amber-50 p-2 text-caption text-amber-900">
               {selected.rationale}
             </p>
           )}
@@ -138,18 +138,18 @@ export default function IndicationPicker({
               type="button"
               disabled={indication.excluded}
               onClick={() => onSelect(indication.tcga_project)}
-              className={`w-full rounded-lg border p-3 text-left text-sm ${
+              className={`w-full rounded-lg border p-3 text-left text-body-sm ${
                 value === indication.tcga_project
                   ? 'border-brand-primary bg-accent-soft'
                   : 'border-line bg-surface'
               } ${indication.excluded ? 'cursor-not-allowed opacity-60' : 'hover:shadow-sm'}`}
             >
               <span className="block font-medium text-primary">{indication.disease_name}</span>
-              <span className="block text-xs text-secondary">{indication.tcga_project}</span>
+              <span className="block text-caption text-secondary">{indication.tcga_project}</span>
             </button>
 
             {indication.excluded && (
-              <div className="mt-1 rounded-md bg-amber-50 p-2 text-xs text-amber-900">
+              <div className="mt-1 rounded-md bg-amber-50 p-2 text-caption text-amber-900">
                 <p>{indication.rationale}</p>
                 <button
                   type="button"
@@ -176,11 +176,11 @@ export default function IndicationPicker({
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />
               <div>
-                <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-lg font-medium text-primary">
+                <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-title font-medium text-primary">
                   {pendingForce.tcga_project} — ranking without disease axis
                 </h2>
-                <p className="mt-2 text-sm text-primary">{pendingForce.rationale}</p>
-                <p className="mt-2 text-sm text-primary">
+                <p className="mt-2 text-body-sm text-primary">{pendingForce.rationale}</p>
+                <p className="mt-2 text-body-sm text-primary">
                   The ranking will only cover safety, dependency, tractability, and novelty. It
                   will be indication-agnostic and should not be read as specific to this disease.
                 </p>
@@ -191,7 +191,7 @@ export default function IndicationPicker({
                 ref={cancelButtonRef}
                 type="button"
                 onClick={closeDialog}
-                className="rounded-md border border-strong px-4 py-2 text-sm"
+                className="rounded-md border border-strong px-4 py-2 text-body-sm"
               >
                 Cancel
               </button>
@@ -201,7 +201,7 @@ export default function IndicationPicker({
                   onForceExcluded(pendingForce.tcga_project);
                   closeDialog();
                 }}
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm text-on-accent"
+                className="rounded-md bg-amber-600 px-4 py-2 text-body-sm text-on-accent"
               >
                 I understand, run anyway
               </button>

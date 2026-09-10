@@ -26,6 +26,7 @@ const TYPE_SCALE = [
   'title',
   'heading',
   'display',
+  'hero',
 ] as const;
 
 /** Rayons et elevations nommes, meme traitement que l'echelle typographique. */

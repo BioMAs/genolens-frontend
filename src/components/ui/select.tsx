@@ -54,7 +54,7 @@ export const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerPr
       <button
         ref={ref}
         type="button"
-        className={`flex h-10 w-full items-center justify-between rounded-md border border-strong bg-surface px-3 py-2 text-sm ring-offset-white placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50${className}`}
+        className={`flex h-10 w-full items-center justify-between rounded-md border border-strong bg-surface px-3 py-2 text-body-sm ring-offset-white placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50${className}`}
         onClick={() => context.setOpen(!context.open)}
         {...props}
       >
@@ -128,7 +128,7 @@ export function SelectItem({ value, children, className = '' }: SelectItemProps)
 
   return (
     <div
-      className={`relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm outline-none hover:bg-hover${
+      className={`relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-body-sm outline-none hover:bg-hover${
         isSelected ? 'bg-surface-2 font-medium' : ''
       } ${className}`}
       onClick={() => context.onValueChange(value)}

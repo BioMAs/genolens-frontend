@@ -168,7 +168,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
           placeholder={isTopBar ? "Search genes — TP53, BRCA1..." : "Search genes across projects..."}
           className={
             isTopBar
-              ? "w-full bg-transparent text-[12.5px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
+              ? "w-full bg-transparent text-caption text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
               : "w-full rounded-md border border-strong py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:bg-gray-800 dark:text-white"
           }
         />
@@ -207,17 +207,17 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                           {result.gene_symbol}
                         </span>
                         {result.gene_id && (
-                          <span className="text-xs text-secondary">
+                          <span className="text-caption text-secondary">
                             {result.gene_id}
                           </span>
                         )}
                       </div>
                       
-                      <div className="mt-1 text-sm text-secondary">
+                      <div className="mt-1 text-body-sm text-secondary">
                         {result.project_name}
                       </div>
                       
-                      <div className="mt-1 flex items-center gap-1 text-xs text-secondary">
+                      <div className="mt-1 flex items-center gap-1 text-caption text-secondary">
                         <span>{result.dataset_name}</span>
                         {result.comparison_name && (
                           <>
@@ -230,7 +230,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                       {(result.regulation || result.log_fc != null || result.padj != null) && (
                         <div className="mt-1.5 flex items-center gap-2">
                           {result.regulation && result.regulation !== "NS" && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            <span className={`text-caption px-1.5 py-0.5 rounded font-medium ${
                               result.regulation === "UP"
                                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                 : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -239,12 +239,12 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                             </span>
                           )}
                           {result.log_fc != null && (
-                            <span className="text-xs text-secondary">
+                            <span className="text-caption text-secondary">
                               logFC {result.log_fc > 0 ? "+" : ""}{result.log_fc.toFixed(2)}
                             </span>
                           )}
                           {result.padj != null && (
-                            <span className="text-xs text-muted">
+                            <span className="text-caption text-muted">
                               padj {result.padj < 0.001 ? "< 0.001" : result.padj.toFixed(3)}
                             </span>
                           )}

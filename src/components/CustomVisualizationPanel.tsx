@@ -373,7 +373,7 @@ export default function CustomVisualizationPanel({
         <div className="space-y-6">
             {/* Visualization Type Selector */}
             <div className="bg-surface rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-primary mb-4">Custom Visualization</h2>
+                <h2 className="text-heading font-bold text-primary mb-4">Custom Visualization</h2>
                 
                 <div className="flex gap-3 mb-6">
                     <button
@@ -410,7 +410,7 @@ export default function CustomVisualizationPanel({
 
                 {/* Gene Selection */}
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-primary mb-2">
+                    <label className="block text-body-sm font-medium text-primary mb-2">
                         Gene Selection {vizType === 'boxplot' && <span className="text-red-500">*</span>}
                         <span className="text-secondary font-normal ml-2">
                             ({vizType === 'boxplot' ? 'Required' : 'Optional - leave empty to use all genes'})
@@ -446,7 +446,7 @@ export default function CustomVisualizationPanel({
                             {selectedGenes.map(gene => (
                                 <span
                                     key={gene}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-body-sm"
                                 >
                                     {gene}
                                     <button
@@ -465,7 +465,7 @@ export default function CustomVisualizationPanel({
                 {(vizType === 'pca' || vizType === 'umap') && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
-                            <label className="block text-sm font-medium text-primary mb-2">
+                            <label className="block text-body-sm font-medium text-primary mb-2">
                                 Dimensions
                             </label>
                             <select
@@ -481,7 +481,7 @@ export default function CustomVisualizationPanel({
                         {vizType === 'umap' && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-medium text-primary mb-2">
+                                    <label className="block text-body-sm font-medium text-primary mb-2">
                                         Neighbors
                                     </label>
                                     <input
@@ -494,7 +494,7 @@ export default function CustomVisualizationPanel({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-primary mb-2">
+                                    <label className="block text-body-sm font-medium text-primary mb-2">
                                         Min Distance
                                     </label>
                                     <input

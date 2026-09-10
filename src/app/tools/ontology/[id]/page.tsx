@@ -66,8 +66,8 @@ export default function GoTermPage() {
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold text-primary">{term.id}</h1>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    <h1 className="text-heading font-bold text-primary">{term.id}</h1>
+                                    <span className={`px-2 py-1 rounded-full text-caption font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
                                         'bg-accent-soft text-accent-ink'
@@ -75,14 +75,14 @@ export default function GoTermPage() {
                                         {term.namespace}
                                     </span>
                                 </div>
-                                <h2 className="text-xl text-brand-primary mt-1">{term.name}</h2>
+                                <h2 className="text-heading text-brand-primary mt-1">{term.name}</h2>
                                 <p className="text-secondary mt-4 leading-relaxed bg-surface-2 p-4 rounded border border-subtle">
                                     {term.definition}
                                 </p>
                             </div>
                             <div className="text-right text-muted">
                                 <Network className="h-10 w-10 ml-auto mb-1 opacity-20"/>
-                                <span className="text-sm">Level {term.level}</span>
+                                <span className="text-body-sm">Level {term.level}</span>
                             </div>
                         </div>
                     </div>
@@ -90,7 +90,7 @@ export default function GoTermPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Parents */}
                         <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
-                            <h3 className="flex items-center text-lg font-medium text-primary mb-4 border-b pb-2">
+                            <h3 className="flex items-center text-title font-medium text-primary mb-4 border-b pb-2">
                                 <ArrowUpCircle className="h-5 w-5 mr-2 text-accent-ink"/>
                                 Parent Terms
                             </h3>
@@ -104,7 +104,7 @@ export default function GoTermPage() {
                                             href={`/tools/ontology/${encodeURIComponent(p.id)}`}
                                             className="block group"
                                         >
-                                            <div className="flex items-center text-sm">
+                                            <div className="flex items-center text-body-sm">
                                                 <GitBranch className="h-4 w-4 text-gray-300 mr-2 rotate-180"/>
                                                 <span className="font-mono text-accent-ink group-hover:underline mr-2">{p.id}</span>
                                                 <span className="text-primary truncate">{p.name}</span>
@@ -117,7 +117,7 @@ export default function GoTermPage() {
 
                          {/* Children */}
                         <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
-                            <h3 className="flex items-center text-lg font-medium text-primary mb-4 border-b pb-2">
+                            <h3 className="flex items-center text-title font-medium text-primary mb-4 border-b pb-2">
                                 <ArrowDownCircle className="h-5 w-5 mr-2 text-teal-500"/>
                                 Child Terms
                             </h3>
@@ -131,7 +131,7 @@ export default function GoTermPage() {
                                             href={`/tools/ontology/${encodeURIComponent(c.id)}`}
                                             className="block group"
                                         >
-                                            <div className="flex items-center text-sm">
+                                            <div className="flex items-center text-body-sm">
                                                 <GitBranch className="h-4 w-4 text-gray-300 mr-2"/>
                                                 <span className="font-mono text-teal-600 group-hover:underline mr-2">{c.id}</span>
                                                 <span className="text-primary truncate">{c.name}</span>

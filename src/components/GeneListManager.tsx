@@ -138,8 +138,8 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
       {/* Header */}
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Gene Lists</h2>
-          <p className="mt-1 text-sm text-secondary">
+          <h2 className="text-title font-semibold text-primary">Gene Lists</h2>
+          <p className="mt-1 text-body-sm text-secondary">
             {geneLists?.length || 0} custom lists
           </p>
         </div>
@@ -172,7 +172,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
           )}
           <button
             onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover"
+            className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover"
           >
             <Plus className="h-4 w-4" />
             New List
@@ -193,46 +193,46 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
         {/* Create form */}
         {showCreateForm && (
           <div className="mb-6 rounded-lg border-2 border-accent-ring bg-accent-soft p-4">
-            <h3 className="mb-3 text-lg font-medium text-primary">Create New Gene List</h3>
+            <h3 className="mb-3 text-title font-medium text-primary">Create New Gene List</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-primary">Name *</label>
+                <label className="block text-body-sm font-medium text-primary">Name *</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g., Cancer markers"
-                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary">Description</label>
+                <label className="block text-body-sm font-medium text-primary">Description</label>
                 <input
                   type="text"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Optional description"
-                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary">
+                <label className="block text-body-sm font-medium text-primary">
                   Genes (one per line, or comma/semicolon separated)
                 </label>
                 <textarea
                   value={newGenes}
                   onChange={(e) => setNewGenes(e.target.value)}
                   placeholder="TP53&#10;BRCA1&#10;MYC"
-                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 font-mono text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="mt-1 w-full rounded-md border border-strong px-3 py-2 font-mono text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   rows={5}
                 />
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-primary">Color</label>
+                  <label className="text-body-sm font-medium text-primary">Color</label>
                   <div className="flex gap-1">
                     {PRESET_COLORS.slice(0, 8).map((color) => (
                       <button
@@ -247,7 +247,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                   </div>
                 </div>
 
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-body-sm">
                   <input
                     type="checkbox"
                     checked={newIsPublic}
@@ -261,14 +261,14 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={resetCreateForm}
-                  className="rounded-md border border-strong px-4 py-2 text-sm font-medium text-primary hover:bg-hover"
+                  className="rounded-md border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={!newName.trim() || createList.isPending}
-                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
+                  className="rounded-md bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
                 >
                   Create List
                 </button>
@@ -281,8 +281,8 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
         {!geneLists || geneLists.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <List className="mb-4 h-12 w-12 text-gray-300" />
-            <p className="text-lg font-medium text-primary">No gene lists yet</p>
-            <p className="mt-1 text-sm text-secondary">
+            <p className="text-title font-medium text-primary">No gene lists yet</p>
+            <p className="mt-1 text-body-sm text-secondary">
               Create custom lists to organize genes by theme or function
             </p>
           </div>
@@ -311,13 +311,13 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                           />
                         ) : (
                           <>
-                            <h3 className="text-lg font-semibold text-primary">{list.name}</h3>
+                            <h3 className="text-title font-semibold text-primary">{list.name}</h3>
                             {list.description && (
-                              <p className="mt-1 text-sm text-secondary">{list.description}</p>
+                              <p className="mt-1 text-body-sm text-secondary">{list.description}</p>
                             )}
                           </>
                         )}
-                        <div className="mt-2 flex items-center gap-3 text-xs text-secondary">
+                        <div className="mt-2 flex items-center gap-3 text-caption text-secondary">
                           <span>{list.gene_count} genes</span>
                           {list.is_public ? (
                             <span className="inline-flex items-center gap-1">
@@ -374,8 +374,8 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                   {/* Genes preview */}
                   {list.genes.length > 0 && (
                     <div className="mt-3 rounded bg-surface-2 p-3">
-                      <p className="text-xs font-medium text-primary">Genes:</p>
-                      <p className="mt-1 font-mono text-xs text-secondary">
+                      <p className="text-caption font-medium text-primary">Genes:</p>
+                      <p className="mt-1 font-mono text-caption text-secondary">
                         {list.genes.slice(0, 10).join(', ')}
                         {list.genes.length > 10 && ` ... +${list.genes.length - 10} more`}
                       </p>

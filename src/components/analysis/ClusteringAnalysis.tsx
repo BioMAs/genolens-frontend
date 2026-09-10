@@ -192,17 +192,17 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       {/* Header / Controls */}
       <div className="bg-surface p-4 border-b border-line">
         <div className="flex flex-wrap items-center gap-4">
-            <h2 className="text-lg font-semibold text-primary">Hierarchical Clustering</h2>
+            <h2 className="text-title font-semibold text-primary">Hierarchical Clustering</h2>
             
             <div className="h-6 w-px bg-gray-300"></div>
 
             {/* Inputs */}
             <div className="flex items-center gap-2">
-                <label className="text-sm text-secondary">Genes:</label>
+                <label className="text-body-sm text-secondary">Genes:</label>
                 <select 
                     value={params.top_n_genes} 
                     onChange={e => setParams({...params, top_n_genes: Number(e.target.value)})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded px-2 py-1"
                 >
                     <option value="100">Top 100</option>
                     <option value="500">Top 500</option>
@@ -213,11 +213,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
             <div className="flex items-center gap-2">
-                <label className="text-sm text-secondary">Metric:</label>
+                <label className="text-body-sm text-secondary">Metric:</label>
                 <select 
                     value={params.metric} 
                     onChange={e => setParams({...params, metric: e.target.value})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded px-2 py-1"
                 >
                     <option value="euclidean">Euclidean</option>
                     <option value="correlation">Correlation</option>
@@ -226,11 +226,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
              <div className="flex items-center gap-2">
-                <label className="text-sm text-secondary">Method:</label>
+                <label className="text-body-sm text-secondary">Method:</label>
                 <select
                     value={params.method}
                     onChange={e => setParams({...params, method: e.target.value})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded px-2 py-1"
                 >
                     <option value="ward">Ward</option>
                     <option value="average">Average</option>
@@ -242,19 +242,19 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
             {params.method === 'kmeans' && (
               <div className="flex items-center gap-2">
-                <label className="text-sm text-secondary">k:</label>
+                <label className="text-body-sm text-secondary">k:</label>
                 <input
                   type="number"
                   min={2}
                   max={50}
                   value={params.n_clusters ?? 8}
                   onChange={e => setParams({ ...params, n_clusters: Number(e.target.value) })}
-                  className="text-sm border rounded px-2 py-1 w-16"
+                  className="text-body-sm border rounded px-2 py-1 w-16"
                 />
                 <button
                   onClick={fetchSilhouette}
                   disabled={loadingSilhouette}
-                  className="flex items-center gap-1.5 border border-strong text-primary px-3 py-1.5 rounded text-sm hover:bg-hover disabled:opacity-50"
+                  className="flex items-center gap-1.5 border border-strong text-primary px-3 py-1.5 rounded text-body-sm hover:bg-hover disabled:opacity-50"
                   title="Compute silhouette scores to find the optimal k"
                 >
                   {loadingSilhouette ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -266,7 +266,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <button
                 onClick={() => runClustering()}
                 disabled={loading}
-                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded text-sm hover:bg-brand-primary/90 disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded text-body-sm hover:bg-brand-primary/90 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Play className="h-4 w-4"/>}
                 Run
@@ -274,7 +274,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             
             <div className="flex-grow"></div>
              
-             <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
+             <label className="flex items-center gap-2 text-body-sm text-secondary cursor-pointer">
                 <input
                     type="checkbox"
                     checked={standardize}
@@ -310,10 +310,10 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       {showSilhouette && (
         <div className="bg-surface border-b border-line px-4 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-primary">Silhouette Score by k</span>
+            <span className="text-body-sm font-medium text-primary">Silhouette Score by k</span>
             <div className="flex items-center gap-3">
               {silhouetteData && (
-                <span className="text-xs text-secondary">
+                <span className="text-caption text-secondary">
                   Recommended: <strong className="text-amber-600">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
                 </span>
               )}
@@ -324,11 +324,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           </div>
 
           {silhouetteError && (
-            <p className="text-sm text-red-600 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
+            <p className="text-body-sm text-red-600 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
           )}
 
           {loadingSilhouette && (
-            <div className="flex items-center gap-2 text-sm text-secondary py-4">
+            <div className="flex items-center gap-2 text-body-sm text-secondary py-4">
               <Loader2 className="h-4 w-4 animate-spin" /> Computing silhouette scores…
             </div>
           )}
@@ -372,7 +372,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               </div>
               <button
                 onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
-                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded text-sm font-medium mb-2"
+                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded text-body-sm font-medium mb-2"
               >
                 Use k={silhouetteData.recommended_k}
               </button>

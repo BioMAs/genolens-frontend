@@ -22,7 +22,7 @@ export function ConditionPill({
   style,
   ...props
 }: ConditionPillProps) {
-  const pad = size === 'sm' ? 'px-2.5 py-1 text-[11.5px]' : 'px-[11px] py-1.5 text-[12.5px]';
+  const pad = size === 'sm' ? 'px-2.5 py-1 text-micro' : 'px-[11px] py-1.5 text-caption';
   return (
     <span
       className={`inline-flex items-center gap-[7px] rounded-lg border font-semibold ${pad} ${className}`}

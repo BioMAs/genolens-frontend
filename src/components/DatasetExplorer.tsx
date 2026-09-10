@@ -80,14 +80,14 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
           <div className="rounded-md bg-red-50 p-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
+                <h3 className="text-body-sm font-medium text-red-800">Error</h3>
+                <div className="mt-2 text-body-sm text-red-700">
                   <p>{errorMessage}</p>
                 </div>
                 <div className="mt-4">
                   <Link
                     href={`/projects/${projectId}`}
-                    className="text-sm font-medium text-red-800 hover:text-red-900"
+                    className="text-body-sm font-medium text-red-800 hover:text-red-900"
                   >
                     &larr; Back to Project
                   </Link>
@@ -113,10 +113,10 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-primary">
+              <h1 className="text-heading font-bold text-primary">
                 {dataset?.name || 'Loading...'}
               </h1>
-              <p className="text-sm text-secondary">Dataset Explorer</p>
+              <p className="text-body-sm text-secondary">Dataset Explorer</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             <div className="relative rounded-md shadow-sm">
               <input
                 type="text"
-                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-sm border-strong rounded-md"
+                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-body-sm border-strong rounded-md"
                 placeholder="Search IDs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,7 +135,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             <div className="relative">
               <button
                 onClick={() => setShowColumnSelector(!showColumnSelector)}
-                className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Columns ({selectedColumns.length})
@@ -146,14 +146,14 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   <div className="py-1" role="menu" aria-orientation="vertical">
                     <div className="px-4 py-2 border-b border-subtle">
                       <button 
-                        className="text-xs text-brand-primary hover:text-brand-primary/80"
+                        className="text-caption text-brand-primary hover:text-brand-primary/80"
                         onClick={() => setSelectedColumns(availableColumns)}
                       >
                         Select All
                       </button>
                       <span className="mx-2 text-gray-300">|</span>
                       <button 
-                        className="text-xs text-brand-primary hover:text-brand-primary/80"
+                        className="text-caption text-brand-primary hover:text-brand-primary/80"
                         onClick={() => setSelectedColumns([])}
                       >
                         Clear
@@ -167,7 +167,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                           checked={selectedColumns.includes(col)}
                           onChange={() => toggleColumn(col)}
                         />
-                        <span className="ml-2 text-sm text-primary truncate" title={col}>
+                        <span className="ml-2 text-body-sm text-primary truncate" title={col}>
                           {col}
                         </span>
                       </label>
@@ -177,7 +177,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               )}
             </div>
 
-            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
               <Download className="h-4 w-4 mr-2" />
               Export
             </button>
@@ -194,7 +194,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   viewMode === 'table'
                     ? 'border-brand-primary text-brand-primary'
                     : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center`}
               >
                 <TableIcon className="h-4 w-4 mr-2" />
                 Table View
@@ -205,7 +205,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   viewMode === 'chart'
                     ? 'border-brand-primary text-brand-primary'
                     : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center`}
               >
                 <BarChart2 className="h-4 w-4 mr-2" />
                 Visualization
@@ -214,7 +214,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               {dataset?.type === 'MATRIX' && (
                 <Link
                   href={`/projects/${projectId}/datasets/${datasetId}/clustering`}
-                  className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+                  className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center"
                 >
                   <GitMerge className="h-4 w-4 mr-2" />
                   Clustering
@@ -223,7 +223,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
 
               <Link
                 href={`/projects/${projectId}/datasets/${datasetId}/enrichment`}
-                className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+                className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center"
               >
                 <Grid className="h-4 w-4 mr-2" />
                 Enrichment
@@ -249,7 +249,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                         <th
                           key={col}
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap"
+                          className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider whitespace-nowrap"
                         >
                           {col}
                         </th>
@@ -262,7 +262,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                         {data.columns.map((col) => (
                           <td
                             key={`${idx}-${col}`}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-secondary"
+                            className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary"
                           >
                             {typeof row[col] === 'number' 
                               ? row[col].toLocaleString(undefined, { maximumFractionDigits: 4 }) 
@@ -294,7 +294,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
           <div className="bg-surface border-t border-line px-4 py-3 flex items-center justify-between sm:px-6">
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-primary">
+                <p className="text-body-sm text-primary">
                   Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
                   <span className="font-medium">
                     {Math.min(page * pageSize, data.total_rows)}
@@ -307,7 +307,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-strong bg-surface text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Previous</span>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -315,7 +315,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   <button
                     onClick={() => setPage(p => p + 1)}
                     disabled={page * pageSize >= data.total_rows}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-strong bg-surface text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Next</span>
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />

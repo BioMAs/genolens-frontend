@@ -56,7 +56,7 @@ export default function RecentProjectsSection({
         action={
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-on-accent transition-all"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent transition-all"
             style={{ background: 'var(--sl-purple)' }}
           >
             New Project
@@ -89,7 +89,7 @@ export default function RecentProjectsSection({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p
-                className="font-display text-sm font-semibold truncate"
+                className="font-display text-body-sm font-semibold truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {project.name}
@@ -113,7 +113,7 @@ export default function RecentProjectsSection({
                 )}
               </div>
 
-              <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <div className="mt-2 flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
                 <Dot variant={status.variant} size={7} />
                 {status.label}
               </div>

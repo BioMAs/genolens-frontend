@@ -121,8 +121,8 @@ export default function StepLaunch({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-primary">Launch Analysis</h2>
-        <p className="mt-1 text-sm text-secondary">
+        <h2 className="text-heading font-bold text-primary">Launch Analysis</h2>
+        <p className="mt-1 text-body-sm text-secondary">
           Review your configuration and launch the multi-method differential expression analysis.
         </p>
       </div>
@@ -134,24 +134,24 @@ export default function StepLaunch({
       {!analysisId && (
         <div className="rounded-xl border border-line bg-surface-2 divide-y divide-subtle">
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
-            <div className="space-y-1 text-sm">
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
+            <div className="space-y-1 text-body-sm">
               <SummaryRow label="Count Matrix"    value={matrixDs?.name    ?? matrixDatasetId} />
               <SummaryRow label="Sample Metadata" value={samplesDs?.name   ?? samplesDatasetId} />
               <SummaryRow label="Contrast File"   value={contrastsDs?.name ?? contrastsDatasetId} />
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">Analysis Settings</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Analysis Settings</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-body-sm">
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
               <SummaryRow label="Fold-change" value={`${(2 ** deseq2Params.min_log2fc).toFixed(2)}×`} />
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-1">Analysis Name</p>
-            <p className="text-sm font-medium text-primary">{analysisName}</p>
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-1">Analysis Name</p>
+            <p className="text-body-sm font-medium text-primary">{analysisName}</p>
           </div>
         </div>
       )}
@@ -161,8 +161,8 @@ export default function StepLaunch({
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
           <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Launch failed</p>
-            <p className="text-xs text-red-600 mt-0.5">{launchError}</p>
+            <p className="text-body-sm font-semibold text-red-800">Launch failed</p>
+            <p className="text-caption text-red-600 mt-0.5">{launchError}</p>
           </div>
         </div>
       )}
@@ -180,7 +180,7 @@ export default function StepLaunch({
             {isFailed && <AlertCircle className="h-5 w-5 text-red-500" />}
             {isRunning && <Loader className="h-5 w-5 text-blue-400 animate-spin" />}
             <div>
-              <p className={`text-sm font-semibold ${isDone ? 'text-green-800' : isFailed ? 'text-red-800' : 'text-blue-800'}`}>
+              <p className={`text-body-sm font-semibold ${isDone ? 'text-green-800' : isFailed ? 'text-red-800' : 'text-blue-800'}`}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
                 : currentStep
@@ -188,14 +188,14 @@ export default function StepLaunch({
                   : 'Analysis queued…'}
               </p>
               {analysis?.error_message && (
-                <p className="text-xs text-red-600 mt-0.5">{analysis.error_message}</p>
+                <p className="text-caption text-red-600 mt-0.5">{analysis.error_message}</p>
               )}
             </div>
             {isRunning && (
               <button
                 type="button"
                 onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                className="ml-auto flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-caption text-red-600 hover:bg-red-50"
               >
                 <X className="h-3 w-3" /> Cancel
               </button>
@@ -205,10 +205,10 @@ export default function StepLaunch({
           {/* Progress log */}
           {progressLog.length > 0 && (
             <div className="px-4 py-3">
-              <p className="text-xs font-medium text-secondary mb-2">Progress log</p>
+              <p className="text-caption font-medium text-secondary mb-2">Progress log</p>
               <ul className="space-y-1 max-h-48 overflow-y-auto">
                 {progressLog.map((entry, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
+                  <li key={i} className="flex items-start gap-2 text-caption">
                     <span className="text-muted shrink-0 tabular-nums">
                       {new Date(entry.timestamp).toLocaleTimeString('en-GB')}
                     </span>
@@ -237,7 +237,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-lg border border-strong px-4 py-2 text-sm font-medium text-primary hover:bg-hover"
+            className="rounded-lg border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
           >
             ← Back
           </button>
@@ -251,7 +251,7 @@ export default function StepLaunch({
             title={
               quotaBlocked ? 'No analysis left this month. Upgrade to continue.' : undefined
             }
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
           >
             {createAnalysis.isPending ? (
               <><Loader className="h-4 w-4 animate-spin" /> Launching…</>
@@ -265,7 +265,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={() => analysisId && onComplete(analysisId)}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-on-accent shadow hover:bg-green-700"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-green-700"
           >
             View Results
             <ChevronRight className="h-4 w-4" />

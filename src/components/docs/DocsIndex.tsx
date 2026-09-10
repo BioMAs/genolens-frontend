@@ -35,7 +35,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
           No guide matches “{query}”.
         </p>
       ) : (
@@ -46,7 +46,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
           return (
             <section key={category}>
               <h2
-                className="mb-3 font-display text-[15px] font-semibold"
+                className="mb-3 font-display text-body font-semibold"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {CATEGORY_LABELS[category]}
@@ -65,13 +65,13 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
                     />
                     <span className="min-w-0 flex-1">
                       <span
-                        className="block text-sm font-semibold"
+                        className="block text-body-sm font-semibold"
                         style={{ color: 'var(--text-primary)' }}
                       >
                         {doc.title}
                       </span>
                       <span
-                        className="mt-1 block text-xs"
+                        className="mt-1 block text-caption"
                         style={{ color: 'var(--text-secondary)' }}
                       >
                         {doc.description}

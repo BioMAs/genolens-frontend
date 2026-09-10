@@ -129,15 +129,15 @@ export default function PageModelSelector({
       }`}
     >
       <div className="mb-2 flex justify-center rounded-md bg-surface-2 py-2">{thumb}</div>
-      <div className="text-sm font-medium text-primary">{label}</div>
-      <div className="mt-0.5 text-xs text-secondary">{desc}</div>
+      <div className="text-body-sm font-medium text-primary">{label}</div>
+      <div className="mt-0.5 text-caption text-secondary">{desc}</div>
     </button>
   );
 
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-primary">First page</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">First page</label>
         <div className="flex flex-col gap-2 sm:flex-row">
           {firstPages.map((pg) => (
             <Card
@@ -152,7 +152,7 @@ export default function PageModelSelector({
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-primary">Last page</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Last page</label>
         <div className="flex flex-col gap-2 sm:flex-row">
           {lastPages.map((pg) => (
             <Card

@@ -56,8 +56,8 @@ interface StepDataTypeProps {
 export default function StepDataType({ onSelect }: StepDataTypeProps) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-primary">Select Data Type</h2>
-      <p className="mt-1 mb-6 text-sm text-secondary">
+      <h2 className="text-title font-semibold text-primary">Select Data Type</h2>
+      <p className="mt-1 mb-6 text-body-sm text-secondary">
         Choose the type of omics data you want to analyse.
       </p>
 
@@ -76,7 +76,7 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
           >
             {/* Coming soon badge */}
             {!available && (
-              <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-secondary">
+              <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-micro font-medium text-secondary">
                 <Lock className="h-2.5 w-2.5" />
                 Coming soon
               </span>
@@ -88,14 +88,14 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
             </div>
 
             {/* Label */}
-            <h3 className="text-sm font-semibold text-primary">{label}</h3>
+            <h3 className="text-body-sm font-semibold text-primary">{label}</h3>
 
             {/* Description */}
-            <p className="mt-1 flex-1 text-xs text-secondary leading-relaxed">{description}</p>
+            <p className="mt-1 flex-1 text-caption text-secondary leading-relaxed">{description}</p>
 
             {/* CTA */}
             {available && (
-              <div className={`mt-4 inline-flex items-center gap-1 text-xs font-medium ${color}`}>
+              <div className={`mt-4 inline-flex items-center gap-1 text-caption font-medium ${color}`}>
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </div>
             )}

@@ -112,15 +112,15 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
 
       {/* Content */}
       <div className="flex-1 min-w-0 py-1">
-        <p className="text-sm font-medium text-primary truncate">
+        <p className="text-body-sm font-medium text-primary truncate">
           {buildDescription(entry)}
         </p>
-        <p className="mt-0.5 text-xs text-secondary">{formatDate(entry.created_at)}</p>
+        <p className="mt-0.5 text-caption text-secondary">{formatDate(entry.created_at)}</p>
 
         {hasExtra && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1 flex items-center gap-1 text-xs text-muted hover:text-secondary transition-colors"
+            className="mt-1 flex items-center gap-1 text-caption text-muted hover:text-secondary transition-colors"
           >
             {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             {expanded ? 'Hide details' : 'View details'}
@@ -128,7 +128,7 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
         )}
 
         {expanded && hasExtra && (
-          <pre className="mt-2 rounded bg-surface-2 border border-subtle p-2 text-xs text-secondary overflow-x-auto">
+          <pre className="mt-2 rounded bg-surface-2 border border-subtle p-2 text-caption text-secondary overflow-x-auto">
             {JSON.stringify(entry.extra_metadata, null, 2)}
           </pre>
         )}
@@ -178,15 +178,15 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Project history</h2>
-          <p className="mt-1 text-sm text-secondary">
+          <h2 className="text-title font-semibold text-primary">Project history</h2>
+          <p className="mt-1 text-body-sm text-secondary">
             {total > 0 ? `${total} event${total > 1 ? 's' : ''} recorded` : 'No events yet'}
           </p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center gap-1.5 rounded-md border border-strong bg-surface px-3 py-1.5 text-sm text-primary hover:bg-hover disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
@@ -201,7 +201,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
             setEventTypeFilter((e.target.value as ActivityEventType) || undefined);
             setPage(0);
           }}
-          className="block rounded-md border border-strong bg-surface px-3 py-1.5 text-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="block rounded-md border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         >
           {filterOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -225,11 +225,11 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-700">
           Failed to load history. Please try again.
         </div>
       ) : items.length === 0 ? (
-        <div className="py-10 text-center text-sm text-secondary">
+        <div className="py-10 text-center text-body-sm text-secondary">
           <Clock className="mx-auto mb-3 h-8 w-8 text-gray-300" />
           No events recorded yet.
         </div>
@@ -247,17 +247,17 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           <button
             onClick={() => setPage((p) => p - 1)}
             disabled={!hasPrev}
-            className="rounded-md border border-strong px-3 py-1.5 text-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-md border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
-          <span className="text-xs text-secondary">
+          <span className="text-caption text-secondary">
             Page {page + 1} / {Math.ceil(total / limit)}
           </span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasNext}
-            className="rounded-md border border-strong px-3 py-1.5 text-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-md border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>

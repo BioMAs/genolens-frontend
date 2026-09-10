@@ -102,8 +102,8 @@ export default function PricingPage() {
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       {/* Header */}
       <div className="mx-auto max-w-3xl text-center mb-10">
-        <h1 className="font-display text-4xl font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
-        <p style={{ color: 'var(--text-secondary)' }} className="text-lg">
+        <h1 className="font-display text-display font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
+        <p style={{ color: 'var(--text-secondary)' }} className="text-title">
           Pick a plan and we&apos;ll set it up for you — no credit card required to get in touch.
         </p>
       </div>
@@ -139,7 +139,7 @@ export default function PricingPage() {
       {notice && (
         <div className="mx-auto max-w-3xl mb-8">
           <div
-            className="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+            className="flex items-start gap-3 rounded-xl border px-4 py-3 text-body-sm"
             style={
               notice.kind === 'success'
                 ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)', color: 'var(--sl-teal)' }
@@ -161,7 +161,7 @@ export default function PricingPage() {
           <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
         </div>
       ) : gridError || !grid ? (
-        <div className="mx-auto max-w-3xl rounded-xl border px-4 py-3 text-sm text-center"
+        <div className="mx-auto max-w-3xl rounded-xl border px-4 py-3 text-body-sm text-center"
              style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
           <span style={{ color: 'var(--text-primary)' }}>
             Couldn&apos;t load our plans just now. Please email{' '}
@@ -198,7 +198,7 @@ export default function PricingPage() {
               <Card className={`flex flex-col h-full ${plan.most_popular ? 'ring-2 ring-brand-teal shadow-lg' : ''}`}>
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <CardTitle className="text-xl">{plan.name_en}</CardTitle>
+                    <CardTitle className="text-heading">{plan.name_en}</CardTitle>
                     {isCurrent && <Badge variant="success">Current plan</Badge>}
                   </div>
                   {plan.description_en && <CardDescription className="mt-1">{plan.description_en}</CardDescription>}
@@ -206,11 +206,11 @@ export default function PricingPage() {
                   {/* Price */}
                   <div className="mt-4">
                     <div className="flex items-end gap-1">
-                      <span className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{displayPrice}</span>
-                      {displayPriceNote && <span className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>{displayPriceNote}</span>}
+                      <span className="font-display text-display font-bold" style={{ color: 'var(--text-primary)' }}>{displayPrice}</span>
+                      {displayPriceNote && <span className="text-body-sm mb-1" style={{ color: 'var(--text-secondary)' }}>{displayPriceNote}</span>}
                     </div>
-                    {displayEquiv && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{displayEquiv}</p>}
-                    {plan.engagement_en && <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{plan.engagement_en}</p>}
+                    {displayEquiv && <p className="text-caption mt-0.5" style={{ color: 'var(--text-muted)' }}>{displayEquiv}</p>}
+                    {plan.engagement_en && <p className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>{plan.engagement_en}</p>}
                   </div>
                 </CardHeader>
 
@@ -218,7 +218,7 @@ export default function PricingPage() {
                 <CardContent className="flex-1">
                   <ul className="space-y-2.5">
                     {(plan.marketing_features ?? []).map((feature) => (
-                      <li key={feature.label} className="flex items-center gap-2.5 text-sm">
+                      <li key={feature.label} className="flex items-center gap-2.5 text-body-sm">
                         {feature.included ? (
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--sl-teal-light)' }}>
                             <Check className="h-3 w-3" style={{ color: 'var(--sl-teal-dark)' }} />
@@ -264,7 +264,7 @@ export default function PricingPage() {
       )}
 
       {/* Footer note */}
-      <p className="mt-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <p className="mt-12 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Plan changes are handled by our team — click a plan to send a prefilled request. {discountPct != null ? `Annual billing saves up to ${discountPct}%. ` : ''}Enterprise pricing is on request. Prices exclude VAT.
       </p>
     </div>

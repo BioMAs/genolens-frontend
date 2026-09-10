@@ -123,9 +123,9 @@ export default function SystemStats() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-secondary truncate">{stat.name}</dt>
+                    <dt className="text-body-sm font-medium text-secondary truncate">{stat.name}</dt>
                     <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-primary">
+                      <div className="text-heading font-semibold text-primary">
                         {stat.isMoney ? `$${stat.value.toLocaleString()}` : stat.value.toLocaleString()}
                       </div>
                     </dd>
@@ -138,12 +138,12 @@ export default function SystemStats() {
       </div>
 
       <div className="bg-surface shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
+        <h3 className="text-title font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {Object.entries(stats.users_by_plan).map(([plan, count]) => (
             <div key={plan} className="bg-surface-2 overflow-hidden rounded-lg p-4 border border-line">
-               <dt className="text-sm font-medium text-secondary truncate">{plan}</dt>
-               <dd className="mt-1 text-2xl font-semibold text-primary">{count}</dd>
+               <dt className="text-body-sm font-medium text-secondary truncate">{plan}</dt>
+               <dd className="mt-1 text-heading font-semibold text-primary">{count}</dd>
             </div>
           ))}
         </div>

@@ -202,14 +202,14 @@ export default function GSEAEnrichmentPlot({
 
       {/* Tooltip */}
       {hoveredGene && (
-        <div className="absolute top-4 right-4 bg-surface border border-strong rounded-lg shadow-lg p-3 text-sm">
+        <div className="absolute top-4 right-4 bg-surface border border-strong rounded-lg shadow-lg p-3 text-body-sm">
           <div className="font-semibold">{hoveredGene.gene}</div>
           <div className="text-secondary">Metric: {hoveredGene.metric.toFixed(3)}</div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+      <div className="mt-4 flex items-center justify-center gap-6 text-body-sm">
         <div className="flex items-center gap-2">
           <div className="w-4 h-1 bg-red-600"></div>
           <span>Positive Enrichment</span>
@@ -229,7 +229,7 @@ export default function GSEAEnrichmentPlot({
       </div>
 
       {/* Info */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-body-sm">
         <p className="font-semibold mb-2">How to interpret this plot:</p>
         <ul className="list-disc list-inside space-y-1 text-primary">
           <li>The line shows the running enrichment score across all ranked genes</li>

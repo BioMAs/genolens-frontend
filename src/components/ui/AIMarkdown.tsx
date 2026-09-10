@@ -93,7 +93,7 @@ export default function AIMarkdown({ text, className = '' }: AIMarkdownProps) {
         level === 2 ? (
           <h4
             key={key++}
-            className="mt-2 text-sm font-semibold"
+            className="mt-2 text-body-sm font-semibold"
             style={{ color: 'var(--text-primary)' }}
           >
             {renderInline(content)}
@@ -101,7 +101,7 @@ export default function AIMarkdown({ text, className = '' }: AIMarkdownProps) {
         ) : (
           <h5
             key={key++}
-            className="mt-1 text-[13px] font-semibold"
+            className="mt-1 text-body-sm font-semibold"
             style={{ color: 'var(--text-primary)' }}
           >
             {renderInline(content)}
@@ -128,7 +128,7 @@ export default function AIMarkdown({ text, className = '' }: AIMarkdownProps) {
 
   return (
     <div
-      className={`space-y-3 text-sm leading-relaxed ${className}`}
+      className={`space-y-3 text-body-sm leading-relaxed ${className}`}
       style={{ color: 'var(--text-primary)' }}
     >
       {blocks}

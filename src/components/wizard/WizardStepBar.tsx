@@ -35,7 +35,7 @@ export default function WizardStepBar({ currentStep }: WizardStepBarProps) {
               <li className="flex flex-col items-center shrink-0">
                 {/* Circle — emerald when done, indigo when active, neutral when upcoming */}
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 text-body-sm font-semibold transition-colors"
                   style={
                     isDone
                       ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)', color: 'var(--sl-teal)' }
@@ -49,12 +49,12 @@ export default function WizardStepBar({ currentStep }: WizardStepBarProps) {
                 {/* Labels — hidden on small screens */}
                 <div className="mt-1.5 hidden text-center sm:block">
                   <p
-                    className="text-xs font-semibold leading-tight"
+                    className="text-caption font-semibold leading-tight"
                     style={{ color: isCurrent ? 'var(--text-primary)' : isDone ? 'var(--sl-teal)' : 'var(--text-muted)' }}
                   >
                     {step.label}
                   </p>
-                  <p className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-micro leading-tight" style={{ color: 'var(--text-muted)' }}>
                     {step.description}
                   </p>
                 </div>

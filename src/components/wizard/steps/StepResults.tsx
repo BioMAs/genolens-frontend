@@ -56,12 +56,12 @@ export default function StepResults({
       {/* Success header */}
       <div className="rounded-xl bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 p-6 text-center">
         <CheckCircle className="mx-auto h-10 w-10 text-green-500 mb-3" />
-        <h2 className="text-xl font-bold text-green-900">Analysis Complete!</h2>
-        <p className="mt-1 text-sm text-green-700">
+        <h2 className="text-heading font-bold text-green-900">Analysis Complete!</h2>
+        <p className="mt-1 text-body-sm text-green-700">
           Your multi-method analysis has finished. Explore your results below.
         </p>
         {analysis?.name && (
-          <p className="mt-2 text-xs text-green-600 font-medium">{analysis.name}</p>
+          <p className="mt-2 text-caption text-green-600 font-medium">{analysis.name}</p>
         )}
       </div>
 
@@ -81,7 +81,7 @@ export default function StepResults({
                 <Link
                   key={c.name}
                   href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                  className="flex items-center justify-between rounded-md bg-accent-soft px-3 py-1.5 text-xs hover:bg-accent-soft"
+                  className="flex items-center justify-between rounded-md bg-accent-soft px-3 py-1.5 text-caption hover:bg-accent-soft"
                 >
                   <span className="font-medium text-accent-ink truncate">{c.name}</span>
                   <span className="ml-2 shrink-0 text-accent-ink">
@@ -92,14 +92,14 @@ export default function StepResults({
               {comparisons.length > 4 && (
                 <Link
                   href={`/projects/${projectId}`}
-                  className="block text-center text-xs text-accent-ink hover:underline"
+                  className="block text-center text-caption text-accent-ink hover:underline"
                 >
                   + {comparisons.length - 4} more — View all
                 </Link>
               )}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-muted">Results are being indexed…</p>
+            <p className="mt-2 text-caption text-muted">Results are being indexed…</p>
           )}
         </ResultCard>
 
@@ -112,11 +112,11 @@ export default function StepResults({
         >
           <Link
             href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering?${clusteringParams}`}
-            className="mt-3 block w-full rounded-lg bg-accent px-3 py-2 text-center text-xs font-semibold text-on-accent hover:bg-accent-hover"
+            className="mt-3 block w-full rounded-lg bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
           >
             Explore Clustering →
           </Link>
-          <p className="mt-1.5 text-[10px] text-muted text-center">
+          <p className="mt-1.5 text-micro text-muted text-center">
             {clusteringConfig.method} · {clusteringConfig.metric} · top {clusteringConfig.top_n_genes} genes
           </p>
         </ResultCard>
@@ -132,16 +132,16 @@ export default function StepResults({
             <>
               <Link
                 href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-xs font-semibold text-on-accent hover:bg-teal-700"
+                className="mt-3 block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
               >
                 Explore Enrichment →
               </Link>
-              <p className="mt-1.5 text-[10px] text-muted text-center">
+              <p className="mt-1.5 text-micro text-muted text-center">
                 {enrichmentConfig.databases === null ? 'All databases (anno.db)' : enrichmentConfig.databases.join(', ')} · FDR {enrichmentConfig.fdr}
               </p>
             </>
           ) : (
-            <p className="mt-2 text-xs text-muted">Results are being indexed…</p>
+            <p className="mt-2 text-caption text-muted">Results are being indexed…</p>
           )}
         </ResultCard>
       </div>
@@ -150,14 +150,14 @@ export default function StepResults({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-subtle">
         <Link
           href={`/projects/${projectId}`}
-          className="flex items-center gap-2 text-sm text-secondary hover:text-primary"
+          className="flex items-center gap-2 text-body-sm text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Project
         </Link>
         <button
           type="button"
           onClick={onRunNew}
-          className="flex items-center gap-2 rounded-lg border border-accent-ring bg-accent-soft px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-soft"
+          className="flex items-center gap-2 rounded-lg border border-accent-ring bg-accent-soft px-4 py-2 text-body-sm font-medium text-accent-ink hover:bg-accent-soft"
         >
           <RotateCcw className="h-4 w-4" /> Run New Analysis
         </button>
@@ -189,10 +189,10 @@ function ResultCard({
       <div className="flex items-start gap-3">
         <div className="rounded-lg bg-surface-2 p-2">{icon}</div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-primary">{title}</p>
-          <p className="text-xs text-secondary mt-0.5">{description}</p>
+          <p className="text-body-sm font-semibold text-primary">{title}</p>
+          <p className="text-caption text-secondary mt-0.5">{description}</p>
           {badge && (
-            <span className="mt-1 inline-block rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-secondary">
+            <span className="mt-1 inline-block rounded-full bg-surface-2 px-2 py-0.5 text-micro text-secondary">
               {badge}
             </span>
           )}

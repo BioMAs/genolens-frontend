@@ -126,10 +126,10 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Réseau Pathway → Claim
           </h3>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
             Pathways d'évidence connectés aux claims qu'ils soutiennent. Cliquez sur un claim pour isoler.
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
             <button
               key={d}
               onClick={() => { setFilterDir(d); setSelectedClaim(null); }}
-              className="rounded px-3 py-1 text-xs font-medium transition-colors"
+              className="rounded px-3 py-1 text-caption font-medium transition-colors"
               style={{
                 background: filterDir === d
                   ? d === 'UP' ? UP_COLOR : d === 'DOWN' ? DOWN_COLOR : '#374151'
@@ -153,7 +153,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
           {selectedClaim && (
             <button
               onClick={() => setSelectedClaim(null)}
-              className="rounded px-3 py-1 text-xs font-medium"
+              className="rounded px-3 py-1 text-caption font-medium"
               style={{ background: 'var(--surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)' }}
             >
               ✕ Réinitialiser
@@ -163,7 +163,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="flex items-center gap-5 text-micro" style={{ color: 'var(--text-secondary)' }}>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-full" style={{ background: UP_COLOR }} />
           UP-régulé
@@ -176,7 +176,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
           <span className="inline-block h-4 w-4 rounded-full border-2" style={{ borderColor: '#6b7280' }} />
           Claim (taille ∝ score)
         </span>
-        <span className="ml-auto text-[10px] opacity-60">{pathways.length} pathways · {activeClaims.length} claims</span>
+        <span className="ml-auto text-micro opacity-60">{pathways.length} pathways · {activeClaims.length} claims</span>
       </div>
 
       {/* SVG area */}
@@ -186,7 +186,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
         onMouseLeave={() => setTooltip(null)}
       >
         {!hasData ? (
-          <div className="flex items-center justify-center py-20 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <div className="flex items-center justify-center py-20 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
             Aucun pathway d'évidence disponible{filterDir !== 'ALL' ? ` pour la direction ${filterDir}` : ''}.
           </div>
         ) : (
@@ -394,7 +394,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
         {/* Tooltip */}
         {tooltip && (
           <div
-            className="pointer-events-none absolute z-20 rounded-lg px-3 py-2 text-xs shadow-xl"
+            className="pointer-events-none absolute z-20 rounded-lg px-3 py-2 text-caption shadow-xl"
             style={{
               left: tooltip.x,
               top: tooltip.y,

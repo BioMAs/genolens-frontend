@@ -57,18 +57,18 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 shrink-0 rounded-full" style={{ background: claim.color }} />
-            <h4 className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <h4 className="truncate text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {claim.label}
             </h4>
           </div>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
             {claim.description}
           </p>
         </div>
 
         {/* Verdict badge */}
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          className="shrink-0 rounded-full px-2.5 py-1 text-micro font-semibold"
           style={{ background: verdict.bg, color: verdict.color }}
         >
           {verdict.icon} {verdict.label}
@@ -78,12 +78,12 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
       {/* ── Score bar ── */}
       <div className="px-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold" style={{ color: verdict.color }}>
+          <span className="text-heading font-bold" style={{ color: verdict.color }}>
             {claim.score}
-            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
+            <span className="text-body-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
           </span>
           {/* Reliability sub-info — small and unobtrusive */}
-          <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-micro" style={{ color: 'var(--text-secondary)' }}>
             {claim.confidence} reliability
           </span>
         </div>
@@ -93,7 +93,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
             style={{ width: `${claim.score}%`, background: verdict.color }}
           />
         </div>
-        <div className="mt-1.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+        <div className="mt-1.5 text-micro" style={{ color: 'var(--text-secondary)' }}>
           {claim.n_supporting} supporting · {claim.n_contradicting} contradicting pathways
         </div>
       </div>
@@ -104,7 +104,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
           {claim.top_genes.slice(0, 6).map((g) => (
             <span
               key={g}
-              className="rounded border border-subtle bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-secondary"
+              className="rounded border border-subtle bg-surface-2 px-1.5 py-0.5 font-mono text-micro text-secondary"
             >
               {g}
             </span>
@@ -117,7 +117,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
         <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: 'var(--border-default)' }}>
           <button
             onClick={onToggle}
-            className="flex items-center gap-1 text-xs font-medium"
+            className="flex items-center gap-1 text-caption font-medium"
             style={{ color: 'var(--sl-teal-dark, #0f766e)' }}
           >
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -151,7 +151,7 @@ export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] })
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Claim details
         </h3>
         <PanelInfo title="Claim details — how to read each card">

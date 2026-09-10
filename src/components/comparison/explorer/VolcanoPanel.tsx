@@ -39,7 +39,7 @@ import AIChartAssistant from '@/components/AIChartAssistant';
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-96 items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
+    <div className="flex h-96 items-center justify-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
       Loading plot…
     </div>
   ),
@@ -299,14 +299,14 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex h-96 items-center justify-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Loading plot data…
       </div>
     );
   }
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex h-96 items-center justify-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Failed to load plot data.
       </div>
     );
@@ -315,7 +315,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
   return (
     <div className="w-full">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex items-center gap-3 text-caption" style={{ color: 'var(--text-muted)' }}>
           {isFetching ? <span style={{ color: 'var(--sl-violet)' }}>Loading…</span> : null}
           {selection.genes.length > 0 ? (
             <button
@@ -367,7 +367,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
       </div>
 
       <div
-        className="mt-3 flex flex-wrap items-center gap-4 pt-3 text-xs"
+        className="mt-3 flex flex-wrap items-center gap-4 pt-3 text-caption"
         style={{ borderTop: '1px solid var(--border)', color: 'var(--text-secondary)' }}
       >
         {[

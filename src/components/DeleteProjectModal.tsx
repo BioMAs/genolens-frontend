@@ -43,7 +43,7 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
             <Trash2 className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-semibold text-primary">Supprimer le projet</h2>
+            <h2 className="text-title font-semibold text-primary">Supprimer le projet</h2>
           </div>
           <button
             onClick={handleClose}
@@ -57,13 +57,13 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         <div className="p-6 space-y-4">
           <div className="flex items-start gap-3 rounded-lg p-3 bg-red-50 border border-red-100">
             <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">
+            <p className="text-body-sm text-red-700">
               Cette action est <strong>irréversible</strong>. Tous les datasets, comparaisons et membres associés seront définitivement supprimés.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-primary mb-1.5">
+            <label className="block text-body-sm font-medium text-primary mb-1.5">
               Tapez <span className="font-semibold text-primary">{project.name}</span> pour confirmer
             </label>
             <input
@@ -71,14 +71,14 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
               placeholder={project.name}
-              className="w-full rounded-lg border border-line px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100"
+              className="w-full rounded-lg border border-line px-3 py-2 text-body-sm text-primary placeholder:text-muted focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && isConfirmed && handleDelete()}
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-body-sm text-red-600">{error}</p>
           )}
         </div>
 
@@ -86,14 +86,14 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         <div className="flex items-center justify-end gap-2 border-t border-subtle px-6 py-4">
           <button
             onClick={handleClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"
+            className="rounded-lg px-4 py-2 text-body-sm font-medium text-secondary hover:bg-hover transition-colors"
           >
             Annuler
           </button>
           <button
             onClick={handleDelete}
             disabled={!isConfirmed || deleteMutation.isPending}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: isConfirmed && !deleteMutation.isPending ? '#ef4444' : '#ef4444' }}
           >
             {deleteMutation.isPending ? (

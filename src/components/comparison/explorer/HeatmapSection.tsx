@@ -91,7 +91,7 @@ export default function HeatmapSection({
       onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
       data-testid="heatmap-section"
     >
-      <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <summary className="cursor-pointer text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
         {summary}
       </summary>
 
@@ -115,7 +115,7 @@ export default function HeatmapSection({
                     disabled={disabled}
                     onClick={() => setMode(value)}
                     aria-pressed={mode === value}
-                    className="px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    className="px-3 py-1 text-caption disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
                       borderRadius: 'var(--radius-control)',
                       background: mode === value ? 'var(--surface)' : 'transparent',
@@ -132,7 +132,7 @@ export default function HeatmapSection({
             </div>
 
             {useSelectionMode ? (
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
                 {selectedRows.length.toLocaleString('en-US')} selected gene
                 {selectedRows.length === 1 ? '' : 's'}
                 {significantSelected < selectedRows.length ? (

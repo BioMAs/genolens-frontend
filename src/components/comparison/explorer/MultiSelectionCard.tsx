@@ -174,7 +174,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
   const chipRow = (label: string, entries: SelectedGene[]) =>
     entries.length > 0 ? (
       <div>
-        <p className="mb-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <p className="mb-1.5 text-caption" style={{ color: 'var(--text-muted)' }}>
           {label}
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -196,17 +196,17 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
   return (
     <div className="space-y-4" data-testid="multi-selection-card">
       <div>
-        <h3 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
           {selection.genes.length.toLocaleString('en-US')} genes selected
         </h3>
         {selection.label ? (
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-0.5 text-caption" style={{ color: 'var(--text-muted)' }}>
             {selection.label}
           </p>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-body-sm">
         <span style={{ color: palette.up }}>
           <span className="font-semibold">{summary.up.toLocaleString('en-US')}</span> up
         </span>
@@ -215,7 +215,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
         </span>
         {summary.unknown > 0 ? (
           <span
-            className="text-xs"
+            className="text-caption"
             style={{ color: 'var(--text-muted)' }}
             title="Selected but not significant at these thresholds, or not present in this comparison's plotted points"
           >
@@ -234,7 +234,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
             onChange={(e) => setListName(e.target.value)}
             placeholder={selection.label ?? 'Gene list name'}
             aria-label="Gene list name"
-            className="min-w-0 flex-1 px-2 py-1.5 text-xs"
+            className="min-w-0 flex-1 px-2 py-1.5 text-caption"
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
@@ -246,7 +246,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-caption disabled:opacity-50"
             style={actionStyle}
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ListPlus className="h-3.5 w-3.5" />}
@@ -259,7 +259,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
             type="button"
             onClick={handleBookmarkAll}
             disabled={bookmarkAll.isPending}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-caption disabled:opacity-50"
             style={actionStyle}
           >
             {bookmarkAll.isPending ? (
@@ -276,7 +276,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
               enrichment.run(selection.genes, selection.label ?? `${comparisonName} selection`)
             }
             disabled={enrichRunning || selection.genes.length === 0}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-caption disabled:opacity-50"
             style={actionStyle}
           >
             {enrichRunning ? (
@@ -298,12 +298,12 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
         </div>
 
         {enrichment.error ? (
-          <p className="text-xs" style={{ color: 'var(--sl-red)' }}>
+          <p className="text-caption" style={{ color: 'var(--sl-red)' }}>
             {enrichment.error}
           </p>
         ) : enrichment.result ? (
           <div className="pt-1">
-            <p className="mb-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <p className="mb-1 text-caption" style={{ color: 'var(--text-muted)' }}>
               {enrichment.result.length === 0
                 ? 'No pathway is enriched in this selection'
                 : `Enriched in ${enrichment.result.length.toLocaleString('en-US')} pathway${
@@ -314,7 +314,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
               {enrichment.result.slice(0, 5).map((row) => (
                 <li
                   key={row.pathway_id}
-                  className="flex items-baseline justify-between gap-2 text-xs"
+                  className="flex items-baseline justify-between gap-2 text-caption"
                 >
                   <span
                     className="truncate"
@@ -324,7 +324,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
                     {row.pathway_name}
                   </span>
                   {row.padj !== null ? (
-                    <span className="shrink-0 font-mono text-[11px]" style={{ color: 'var(--sl-purple)' }}>
+                    <span className="shrink-0 font-mono text-micro" style={{ color: 'var(--sl-purple)' }}>
                       {row.padj.toExponential(1)}
                     </span>
                   ) : null}
@@ -335,7 +335,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
         ) : null}
 
         {notice ? (
-          <p className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--sl-teal-dark)' }}>
+          <p className="inline-flex items-center gap-1.5 text-caption" style={{ color: 'var(--sl-teal-dark)' }}>
             <Check className="h-3.5 w-3.5" />
             {notice}
           </p>
@@ -344,7 +344,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
         <button
           type="button"
           onClick={clearSelection}
-          className="block text-xs underline"
+          className="block text-caption underline"
           style={{ color: 'var(--sl-teal-dark)' }}
         >
           Clear selection

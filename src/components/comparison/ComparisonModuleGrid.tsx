@@ -52,12 +52,12 @@ function ModuleBody({ module }: { module: ComparisonModule }) {
   return (
     <>
       <h3
-        className="mt-3 font-display text-[14px] font-semibold"
+        className="mt-3 font-display text-body-sm font-semibold"
         style={{ color: 'var(--text-primary)' }}
       >
         {module.title}
       </h3>
-      <p className="mt-0.5 text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mt-0.5 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>
         {module.description}
       </p>
     </>
@@ -89,12 +89,12 @@ export default function ComparisonModuleGrid({
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2
-              className="font-display text-[17px] font-semibold tracking-[-0.3px]"
+              className="font-display text-title font-semibold tracking-[-0.3px]"
               style={{ color: 'var(--text-primary)' }}
             >
               {title}
             </h2>
-            <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+            <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
               {summary}
             </p>
           </div>
@@ -122,7 +122,7 @@ export default function ComparisonModuleGrid({
                 <ModuleBody module={module} />
                 {module.metric && (
                   <span
-                    className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium"
+                    className="mt-2 inline-flex items-center gap-1 text-micro font-medium"
                     style={{ color: 'var(--sl-teal-dark)' }}
                   >
                     <ChevronRight className="h-3 w-3" />
@@ -143,7 +143,7 @@ export default function ComparisonModuleGrid({
               >
                 <ModuleIcon module={module} />
                 <ModuleBody module={module} />
-                <span className="mt-2 text-[11.5px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                <span className="mt-2 text-micro font-medium" style={{ color: 'var(--text-muted)' }}>
                   {module.hint}
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function ComparisonModuleGrid({
               <div className="flex items-start justify-between gap-2">
                 <ModuleIcon module={module} />
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10.5px] font-semibold"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-micro font-semibold"
                   style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}
                 >
                   <Lock className="h-3 w-3" /> {module.hint}
@@ -170,7 +170,7 @@ export default function ComparisonModuleGrid({
                   type="button"
                   disabled={sending || alreadyRequested}
                   onClick={() => request(module.addOnId!)}
-                  className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-[11.5px] font-semibold transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-micro font-semibold transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
                     borderColor: 'var(--sl-purple-muted)',
                     color: alreadyRequested ? 'var(--text-muted)' : 'var(--sl-purple)',
@@ -196,7 +196,7 @@ export default function ComparisonModuleGrid({
       {notice && (
         <div
           role="status"
-          className="mt-3 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-sm"
+          className="mt-3 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-body-sm"
           style={
             notice.kind === 'success'
               ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }

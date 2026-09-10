@@ -105,7 +105,7 @@ export default function ProjectMembersModal({
           {/* Invite Section - Project Admins Only */}
           {isProjectAdmin && (
             <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold mb-3">Invite Member</h3>
+              <h3 className="text-title font-semibold mb-3">Invite Member</h3>
               <form onSubmit={handleInvite} className="space-y-3">
                 <div>
                   <Label htmlFor="email">Email Address</Label>
@@ -141,7 +141,7 @@ export default function ProjectMembersModal({
               </form>
 
               {/* Note about email invitation */}
-              <p className="text-sm text-secondary mt-2">
+              <p className="text-body-sm text-secondary mt-2">
                 ⚠️ Note: Email-based invitation is not yet fully implemented.
                 The user must already have an account in the system.
               </p>
@@ -150,7 +150,7 @@ export default function ProjectMembersModal({
 
           {/* Members List */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Current Members</h3>
+            <h3 className="text-title font-semibold mb-3">Current Members</h3>
 
             {isLoading ? (
               <p className="text-secondary">Loading members...</p>
@@ -226,7 +226,7 @@ function MemberRow({
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as UserRole)}
-              className="px-2 py-1 text-sm border rounded"
+              className="px-2 py-1 text-body-sm border rounded"
             >
               <option value={UserRole.USER}>User</option>
               <option value={UserRole.ADMIN}>Admin</option>

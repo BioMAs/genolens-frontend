@@ -31,7 +31,7 @@ export default function EnrichmentPage() {
                 <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="h-5 w-px bg-gray-300 mx-1"></div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-body-sm">
                  <Link href={`/projects/${projectId}`} className="text-secondary hover:underline">
                     Project
                  </Link>
@@ -50,8 +50,8 @@ export default function EnrichmentPage() {
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                   <h1 className="text-2xl font-bold text-primary tracking-tight">Functional Enrichment Analysis</h1>
-                   <p className="text-sm text-secondary mt-1">
+                   <h1 className="text-heading font-bold text-primary tracking-tight">Functional Enrichment Analysis</h1>
+                   <p className="text-body-sm text-secondary mt-1">
                        Explore enriched pathways and gene sets (GO, KEGG, Reactome) for your differential expression comparisons.
                    </p>
                 </div>

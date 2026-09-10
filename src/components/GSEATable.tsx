@@ -87,8 +87,8 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
       {/* Controls */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold">GSEA Results</h3>
-          <div className="flex gap-2 text-sm">
+          <h3 className="text-title font-semibold">GSEA Results</h3>
+          <div className="flex gap-2 text-body-sm">
             <span className="px-2 py-1 bg-red-100 text-red-700 rounded inline-flex items-center">
               <TrendingUp className="h-3 w-3 mr-1" />
               {positiveCount} Enriched (Pos)
@@ -109,7 +109,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-sm w-64"
+            className="px-3 py-2 border border-strong rounded-md text-body-sm w-64"
           />
 
           <select
@@ -118,7 +118,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-sm"
+            className="px-3 py-2 border border-strong rounded-md text-body-sm"
           >
             <option value={10}>10 per page</option>
             <option value={25}>25 per page</option>
@@ -135,7 +135,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               }
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-sm"
+            className="px-3 py-2 border border-strong rounded-md text-body-sm"
           >
             <option value="all">All ({results.length})</option>
             <option value="positive">Positive NES ({positiveCount})</option>
@@ -187,11 +187,11 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-surface-2">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider w-12">
+              <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-12">
                 #
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('gene_set_name')}
               >
                 <div className="flex items-center">
@@ -202,7 +202,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('gene_set_size')}
               >
                 <div className="flex items-center">
@@ -213,7 +213,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('enrichment_score')}
               >
                 <div className="flex items-center">
@@ -224,7 +224,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('normalized_enrichment_score')}
               >
                 <div className="flex items-center">
@@ -235,7 +235,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('p_value')}
               >
                 <div className="flex items-center">
@@ -246,7 +246,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('fdr_q_value')}
               >
                 <div className="flex items-center">
@@ -256,10 +256,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                   )}
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Leading Edge
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-caption font-medium text-secondary uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -271,10 +271,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
 
               return (
                 <tr key={idx} className={`hover:bg-hover${isSignificant ? 'bg-green-50/30' : ''}`}>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-secondary">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm text-secondary">
                     {globalIdx}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-primary max-w-md">
+                  <td className="px-4 py-3 text-body-sm font-medium text-primary max-w-md">
                     <div className="flex items-center gap-2">
                       {row.normalized_enrichment_score > 0 ? (
                         <TrendingUp className="h-4 w-4 text-red-600 flex-shrink-0" />
@@ -286,34 +286,34 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-primary">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm text-primary">
                     {row.gene_set_size}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono">
                     <span className={row.enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
                       {row.enrichment_score.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono font-semibold">
                     <span className={row.normalized_enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
                       {row.normalized_enrichment_score.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-primary">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono text-primary">
                     {row.p_value.toExponential(2)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
+                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono">
                     <span className={isSignificant ? 'text-green-700 font-semibold' : 'text-primary'}>
                       {row.fdr_q_value.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-secondary max-w-xs">
+                  <td className="px-4 py-3 text-body-sm text-secondary max-w-xs">
                     <div className="truncate" title={row.leading_edge_genes.join(', ')}>
                       {row.leading_edge_genes.slice(0, 3).join(', ')}
                       {row.leading_edge_genes.length > 3 && ` +${row.leading_edge_genes.length - 3} more`}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-body-sm">
                     {onViewEnrichmentPlot && (
                       <button
                         onClick={() => onViewEnrichmentPlot(row.gene_set_name)}
@@ -334,7 +334,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-primary">
+          <div className="text-body-sm text-primary">
             Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} gene sets
           </div>
 
@@ -342,7 +342,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-strong rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
+              className="px-3 py-1 border border-strong rounded-md text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
             >
               Previous
             </button>
@@ -363,7 +363,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 <button
                   key={i}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 border rounded-md text-sm ${
+                  className={`px-3 py-1 border rounded-md text-body-sm ${
                     currentPage === pageNum
                       ? 'bg-brand-primary text-on-accent border-brand-primary'
                       : 'border-strong hover:bg-hover'
@@ -377,7 +377,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-strong rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
+              className="px-3 py-1 border border-strong rounded-md text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
             >
               Next
             </button>

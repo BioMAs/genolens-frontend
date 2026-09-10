@@ -25,11 +25,11 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
     <div>
       <div className="mb-2.5 flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: color }} />
-        <span className="text-[13.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           {claim.label}
         </span>
         <span
-          className="ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+          className="ml-auto rounded-full px-2.5 py-0.5 text-micro font-semibold"
           style={{
             background: favorable ? 'var(--sl-teal-light)' : 'var(--sl-red-light)',
             color: favorable ? 'var(--dc-up-dark)' : 'var(--dc-down-dark)',
@@ -45,7 +45,7 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
           return (
             <div key={p.term_id} className="flex items-center gap-3">
               <span
-                className="w-[34px] flex-none rounded-[5px] py-[3px] text-center text-[10px] font-bold"
+                className="w-[34px] flex-none rounded-[5px] py-[3px] text-center text-micro font-bold"
                 style={{
                   background: up ? 'var(--sl-teal-light)' : 'var(--sl-red-light)',
                   color: up ? 'var(--dc-up-dark)' : 'var(--dc-down-dark)',
@@ -54,9 +54,9 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
                 {up ? 'UP' : 'DN'}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[12.5px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                <div className="truncate text-caption font-medium" style={{ color: 'var(--text-primary)' }}>
                   {p.pathway_name}{' '}
-                  <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  <span className="text-micro" style={{ color: 'var(--text-muted)' }}>
                     {p.term_id}
                   </span>
                 </div>
@@ -70,7 +70,7 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
                   />
                 </div>
               </div>
-              <span className="w-[64px] flex-none text-right text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              <span className="w-[64px] flex-none text-right text-micro" style={{ color: 'var(--text-muted)' }}>
                 padj {p.padj < 0.001 ? '<0.001' : p.padj.toFixed(3)}
               </span>
             </div>
@@ -93,14 +93,14 @@ export default function PathwayThemeGroups({ claims }: { claims: CosmeticClaimSc
     <div className="gl-card p-6">
       <div className="mb-5 flex items-end justify-between">
         <div>
-          <h3 className="font-display text-[17px] font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="font-display text-title font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
             Metabolic pathways driving the effect
           </h3>
-          <div className="mt-1.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+          <div className="mt-1.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
             Grouped by cosmetic claim · ranked by evidence weight
           </div>
         </div>
-        <div className="flex gap-4 text-[11.5px]" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex gap-4 text-micro" style={{ color: 'var(--text-secondary)' }}>
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-4 rounded" style={{ background: 'var(--dc-up)' }} />
             Up-regulated

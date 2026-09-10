@@ -86,8 +86,8 @@ export default function UserConnections() {
                   <kpi.icon className="h-6 w-6 text-on-accent" />
                 </div>
                 <div className="ml-5">
-                  <p className="text-sm font-medium text-secondary truncate">{kpi.label}</p>
-                  <p className="mt-1 text-3xl font-semibold text-primary">{kpi.value}</p>
+                  <p className="text-body-sm font-medium text-secondary truncate">{kpi.label}</p>
+                  <p className="mt-1 text-display font-semibold text-primary">{kpi.value}</p>
                 </div>
               </div>
             </div>
@@ -98,13 +98,13 @@ export default function UserConnections() {
       {/* Chart */}
       <div className="bg-surface shadow rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-primary">Daily connections</h2>
+          <h2 className="text-title font-medium text-primary">Daily connections</h2>
           <div className="flex gap-2">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setDays(opt.value)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-body-sm font-medium transition-colors ${
                   days === opt.value
                     ? 'bg-brand-primary text-on-accent'
                     : 'bg-surface-2 text-secondary hover:bg-gray-200'
@@ -154,21 +154,21 @@ export default function UserConnections() {
       {/* Recent connections table */}
       <div className="bg-surface shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-line">
-          <h2 className="text-lg font-medium text-primary">Recent connections</h2>
-          <p className="text-sm text-secondary mt-0.5">Last 50 entries</p>
+          <h2 className="text-title font-medium text-primary">Recent connections</h2>
+          <p className="text-body-sm text-secondary mt-0.5">Last 50 entries</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-line">
             <thead className="bg-surface-2">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Date &amp; time
                 </th>
               </tr>
@@ -176,26 +176,26 @@ export default function UserConnections() {
             <tbody className="bg-surface divide-y divide-line">
               {data.recent_events.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-secondary">
+                  <td colSpan={3} className="px-6 py-8 text-center text-body-sm text-secondary">
                     No connections recorded yet.
                   </td>
                 </tr>
               ) : (
                 data.recent_events.map((event, idx) => (
                   <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-hover">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
+                    <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium text-primary">
                       {event.full_name ?? (
                         <span className="text-muted italic">Unknown</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                    <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                       {event.email ?? (
-                        <span className="text-muted font-mono text-xs">
+                        <span className="text-muted font-mono text-caption">
                           {event.user_id.slice(0, 8)}…
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                    <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
                       {new Date(event.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: '2-digit',

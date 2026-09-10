@@ -11,7 +11,7 @@ interface ChipProps {
 export function Chip({ children, icon, value, className = '', style }: ChipProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-surface-2 text-primary${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium bg-surface-2 text-primary${className}`}
       style={style}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}

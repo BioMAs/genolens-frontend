@@ -102,14 +102,14 @@ export default function ComparisonSynthesis({
   return (
     <div className="gl-card p-5">
       <div
-        className="text-[11px] font-semibold uppercase tracking-[0.6px]"
+        className="text-micro font-semibold uppercase tracking-[0.6px]"
         style={{ color: 'var(--sl-teal)' }}
       >
         Response
       </div>
 
       <h2
-        className="mt-1 font-display text-[19px] font-semibold leading-[1.3]"
+        className="mt-1 font-display text-title font-semibold leading-[1.3]"
         style={{ color: 'var(--text-primary)' }}
       >
         {degTotal === 0 ? (
@@ -125,7 +125,7 @@ export default function ComparisonSynthesis({
       {degTotal > 0 && (
         <div className="mt-4">
           {/* Ends of the bar name the two sides of the contrast */}
-          <div className="mb-1.5 flex items-baseline justify-between gap-4 text-[12px]">
+          <div className="mb-1.5 flex items-baseline justify-between gap-4 text-caption">
             <span className="font-semibold" style={{ color: 'var(--dc-up-dark)' }}>
               ↑ {num(degUp)} up{testCondition ? ` in ${testCondition}` : ''}
             </span>
@@ -150,7 +150,7 @@ export default function ComparisonSynthesis({
         </div>
       )}
 
-      <p className="mt-3 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mt-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
         {context.join(' · ')}
       </p>
     </div>

@@ -12,7 +12,7 @@ export default function PowerAnalysisPage() {
                 <div className="mb-6">
                     <Link
                         href="/tools"
-                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-sm"
+                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-body-sm"
                     >
                         <ArrowLeft className="h-4 w-4 mr-1" />
                         Back to tools
@@ -22,7 +22,7 @@ export default function PowerAnalysisPage() {
                             <FlaskConical className="h-7 w-7 text-accent-ink" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-primary">
+                            <h1 className="text-display font-bold text-primary">
                                 Power Analysis
                             </h1>
                             <p className="mt-1 text-secondary">

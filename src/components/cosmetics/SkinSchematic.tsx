@@ -40,7 +40,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
   return (
     <div className="gl-card p-4">
       <div className="mb-1 flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Effect on skin
         </h3>
         <PanelInfo title="Effect on skin — how it is computed">
@@ -63,7 +63,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
           </ul>
         </PanelInfo>
       </div>
-      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-caption mb-3" style={{ color: 'var(--text-secondary)' }}>
         Transcriptional engagement per skin compartment. Brighter = more active.
       </p>
 
@@ -113,12 +113,12 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
             const color = ZONE_COLORS[slug];
             return (
               <div key={slug} className="rounded-lg border border-subtle p-2.5">
-                <div className="flex items-center justify-between text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                <div className="flex items-center justify-between text-caption font-medium" style={{ color: 'var(--text-primary)' }}>
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} />
                     {z.label}
                   </span>
-                  <span className="flex items-center gap-1 text-[11px]">
+                  <span className="flex items-center gap-1 text-micro">
                     <DirArrow dir={z.dominant_direction} /> {z.activity}
                   </span>
                 </div>

@@ -54,12 +54,12 @@ export default function CommentEditor({
           onChange={(e) => setContent(e.target.value)}
           placeholder={placeholder}
           disabled={isSubmitting}
-          className="w-full min-h-[100px] rounded-md border border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100"
+          className="w-full min-h-[100px] rounded-md border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100"
           rows={4}
         />
         
         {/* Character count */}
-        <div className="absolute bottom-2 right-2 text-xs text-muted">
+        <div className="absolute bottom-2 right-2 text-caption text-muted">
           {content.length} characters
         </div>
       </div>
@@ -70,12 +70,12 @@ export default function CommentEditor({
           <button
             type="button"
             onClick={() => setIsPreview(!isPreview)}
-            className="text-xs text-secondary hover:text-primary"
+            className="text-caption text-secondary hover:text-primary"
           >
             {isPreview ? 'Edit' : 'Preview'}
           </button>
-          <span className="text-xs text-muted">|</span>
-          <span className="text-xs text-secondary">
+          <span className="text-caption text-muted">|</span>
+          <span className="text-caption text-secondary">
             Markdown supported
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function CommentEditor({
       {/* Preview */}
       {isPreview && content && (
         <div className="mt-3 rounded-md border border-line bg-surface-2 p-3">
-          <p className="text-xs font-medium text-secondary mb-2">
+          <p className="text-caption font-medium text-secondary mb-2">
             Preview:
           </p>
           <div className="prose prose-sm dark:prose-invert max-w-none">

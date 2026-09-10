@@ -24,8 +24,8 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-[17px] font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-        {subtitle && <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+        <h2 className="font-display text-title font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+        {subtitle && <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
       </div>
       {right}
     </div>
@@ -180,7 +180,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         <div className="text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
           <p style={{ color: 'var(--text-secondary)' }}>{message}</p>
-          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-accent-ink hover:underline">
+          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-body-sm text-accent-ink hover:underline">
             ← Back to project
           </Link>
         </div>
@@ -198,7 +198,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         <div>
           <Link
             href={`/projects/${projectId}`}
-            className="inline-flex items-center gap-1.5 text-sm"
+            className="inline-flex items-center gap-1.5 text-body-sm"
             style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft className="h-4 w-4" /> {projectName}
@@ -213,8 +213,8 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                 <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                <h1 className="text-heading font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
+                <p className="text-caption mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   Created {new Date(analysis.created_at).toLocaleString('en-US')}
                 </p>
               </div>
@@ -231,7 +231,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
-                    className="flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-ink hover:bg-accent-soft"
+                    className="flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2.5 py-1 text-caption font-medium text-accent-ink hover:bg-accent-soft"
                   >
                     <Database className="h-3.5 w-3.5" />
                     GEO · {meta.geo_accession}
@@ -241,7 +241,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <StatusBadge status={analysis.status} />
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-medium shadow-sm"
                 style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-secondary)' }}
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Re-run
@@ -365,7 +365,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     key={v}
                     type="button"
                     onClick={() => setStructureView(v)}
-                    className="rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors"
+                    className="rounded-md px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
                     style={
                       structureView === v
                         ? { background: 'var(--sl-teal)', color: '#fff' }
@@ -385,7 +385,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
             )
           ) : (
-            <div className="gl-card p-16 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            <div className="gl-card p-16 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
               No normalized matrix available for {structureView.toUpperCase()}.
             </div>
           )}
@@ -404,7 +404,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           open={paramsOpen}
           onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <summary className="cursor-pointer font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Analysis parameters
           </summary>
           <div className="mt-4">
@@ -426,8 +426,8 @@ type IconType = React.ComponentType<{ className?: string; style?: React.CSSPrope
 function StatTile({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="px-4 py-3" style={{ background: 'var(--surface)' }}>
-      <div className="text-[10.5px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
-      <div className={`mt-1 text-[15px] font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
+      <div className="text-micro font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className={`mt-1 text-body font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
     </div>
   );
 }
@@ -472,11 +472,11 @@ function ModuleCard({
           <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
         )}
       </div>
-      <h3 className="mt-3 font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-      <p className="mt-0.5 text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      <h3 className="mt-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <p className="mt-0.5 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       {(disabled ? disabledHint : metric) && (
         <div
-          className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium"
+          className="mt-2 inline-flex items-center gap-1 text-micro font-medium"
           style={{ color: disabled ? 'var(--text-muted)' : 'var(--sl-teal-dark)' }}
         >
           {!disabled && <ChevronRight className="h-3 w-3" />}
@@ -503,7 +503,7 @@ function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
     [SelfServiceAnalysisStatus.CANCELLED]: 'Cancelled',
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${styles[status]}`}>
       {labels[status]}
     </span>
   );
@@ -534,14 +534,14 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
             className="flex items-center justify-between px-4 py-2.5"
             style={{ background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-raised)' }}
           >
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
-            <span className="text-xs font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{value}</span>
+            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>{label}</span>
+            <span className="text-caption font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{value}</span>
           </div>
         ))}
       </div>
       <Link
         href={`/projects/${analysis.project_id}/setup?rerun=${analysis.id}`}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-on-accent hover:bg-accent-hover"
+        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-caption font-semibold text-on-accent hover:bg-accent-hover"
       >
         <RotateCcw className="h-3.5 w-3.5" /> Re-run with new parameters
       </Link>

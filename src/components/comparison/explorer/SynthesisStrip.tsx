@@ -48,34 +48,34 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           {isLoading ? (
-            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
               Counting significant genes…
             </span>
           ) : isError || !summary ? (
-            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
               Counts unavailable
             </span>
           ) : (
             <>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-xl font-semibold"
+                  className="font-display text-heading font-semibold"
                   style={{ color: palette.up }}
                 >
                   {summary.up.toLocaleString('en-US')}
                 </span>{' '}
                 up
               </span>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-xl font-semibold"
+                  className="font-display text-heading font-semibold"
                   style={{ color: palette.down }}
                 >
                   {summary.down.toLocaleString('en-US')}
                 </span>{' '}
                 down
               </span>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
                 {summary.ns.toLocaleString('en-US')} not significant
               </span>
             </>
@@ -104,7 +104,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
           </div>
           {conditions && (
             <div
-              className="mt-1 flex justify-between text-xs"
+              className="mt-1 flex justify-between text-caption"
               style={{ color: 'var(--text-muted)' }}
             >
               <span className="truncate">{conditions.left}</span>

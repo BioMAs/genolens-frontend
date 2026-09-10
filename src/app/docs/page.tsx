@@ -29,7 +29,7 @@ export default async function DocsPage() {
     <div className="page-container space-y-6">
       <div>
         <h1 className="page-title">Documentation</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
           Guides for analysing, exploring and sharing your transcriptomics results.
         </p>
       </div>

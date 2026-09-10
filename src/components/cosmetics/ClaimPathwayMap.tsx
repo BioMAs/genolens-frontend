@@ -88,7 +88,7 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
       {/* Column headers */}
       {hasBoth && (
         <div
-          className="mb-1 flex text-xs font-semibold"
+          className="mb-1 flex text-caption font-semibold"
           style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%` }}
         >
           <span style={{ width: `${(COL_W / VW) * 100}%`, color: UP_COLOR }}>↑ UP-regulated</span>
@@ -96,12 +96,12 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
         </div>
       )}
       {!hasBoth && upPathways.length > 0 && (
-        <div className="mb-1 text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: UP_COLOR }}>
+        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: UP_COLOR }}>
           ↑ UP-regulated
         </div>
       )}
       {!hasBoth && downPathways.length > 0 && (
-        <div className="mb-1 text-xs font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: DOWN_COLOR }}>
+        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: DOWN_COLOR }}>
           ↓ DOWN-regulated
         </div>
       )}
@@ -216,7 +216,7 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-30 rounded-lg px-3 py-2.5 text-xs shadow-xl"
+          className="pointer-events-none absolute z-30 rounded-lg px-3 py-2.5 text-caption shadow-xl"
           style={{
             left: tooltip.x,
             top: tooltip.y,

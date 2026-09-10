@@ -56,14 +56,14 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_200px]">
       <article className="min-w-0">
         <p
-          className="text-[11px] font-semibold uppercase tracking-wide"
+          className="text-micro font-semibold uppercase tracking-wide"
           style={{ color: 'var(--sl-teal)' }}
         >
           {CATEGORY_LABELS[doc.category]}
         </p>
         <h1 className="page-title mt-1">{doc.title}</h1>
         {doc.description && (
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
             {doc.description}
           </p>
         )}
@@ -95,7 +95,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
             {previous ? (
               <Link
                 href={`/docs/${previous.slug}`}
-                className="gl-card flex items-center gap-2 p-3 text-xs transition-colors hover:border-[var(--sl-purple)]"
+                className="gl-card flex items-center gap-2 p-3 text-caption transition-colors hover:border-[var(--sl-purple)]"
               >
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
                 <span>
@@ -113,7 +113,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
             {next && (
               <Link
                 href={`/docs/${next.slug}`}
-                className="gl-card ml-auto flex items-center gap-2 p-3 text-right text-xs transition-colors hover:border-[var(--sl-purple)]"
+                className="gl-card ml-auto flex items-center gap-2 p-3 text-right text-caption transition-colors hover:border-[var(--sl-purple)]"
               >
                 <span>
                   <span className="block" style={{ color: 'var(--text-muted)' }}>
@@ -133,7 +133,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
       {doc.headings.length > 0 && (
         <nav aria-label="On this page" className="hidden lg:block">
           <p
-            className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
+            className="mb-2 text-micro font-semibold uppercase tracking-wide"
             style={{ color: 'var(--text-muted)' }}
           >
             On this page
@@ -143,7 +143,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
               <li key={heading.id} style={{ paddingLeft: heading.depth === 3 ? 10 : 0 }}>
                 <a
                   href={`#${heading.id}`}
-                  className="text-xs hover:underline"
+                  className="text-caption hover:underline"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   {heading.text}

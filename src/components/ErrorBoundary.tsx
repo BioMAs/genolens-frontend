@@ -98,7 +98,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             
-            <h1 className="text-2xl font-bold text-primary text-center mb-2">
+            <h1 className="text-heading font-bold text-primary text-center mb-2">
               Oops! Something went wrong
             </h1>
             
@@ -108,10 +108,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-6 p-4 bg-surface-2 rounded-lg cursor-pointer">
-                <summary className="font-semibold text-sm text-primary mb-2">
+                <summary className="font-semibold text-body-sm text-primary mb-2">
                   Technical Details (Dev Mode)
                 </summary>
-                <div className="text-xs text-primary font-mono whitespace-pre-wrap break-words">
+                <div className="text-caption text-primary font-mono whitespace-pre-wrap break-words">
                   <strong>Error:</strong> {this.state.error.toString()}
                   {this.state.errorInfo && (
                     <>
@@ -140,7 +140,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
 
-            <p className="text-xs text-secondary text-center mt-6">
+            <p className="text-caption text-secondary text-center mt-6">
               If the problem persists, please contact support.
             </p>
           </div>

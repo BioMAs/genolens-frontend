@@ -32,7 +32,7 @@ export default function QuotaDisplay() {
 
   if (ai.unlimited) {
     return (
-      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-xs font-semibold text-on-accent shadow-sm">
+      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-caption font-semibold text-on-accent shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
         <span>Unlimited</span>
       </div>
@@ -44,7 +44,7 @@ export default function QuotaDisplay() {
   if (credits <= 0) {
     return (
       <div
-        className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
+        className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-caption font-medium"
         style={{
           background: 'var(--sl-red-light)',
           borderColor: 'var(--sl-red-muted)',
@@ -62,7 +62,7 @@ export default function QuotaDisplay() {
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+      className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-caption font-medium transition-colors"
       style={
         isLow
           ? {

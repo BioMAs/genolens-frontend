@@ -65,7 +65,7 @@ export default function AdminPage() {
           <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-primary text-center mb-2">
+          <h2 className="text-heading font-bold text-primary text-center mb-2">
             Access Denied
           </h2>
           <p className="text-secondary text-center mb-6">
@@ -91,7 +91,7 @@ export default function AdminPage() {
             <div className="p-2 bg-brand-primary rounded-lg">
               <Shield className="h-6 w-6 text-on-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-primary">Administration</h1>
+            <h1 className="text-display font-bold text-primary">Administration</h1>
           </div>
           <p className="text-secondary">Manage users, view system statistics, and monitor platform activity.</p>
         </div>
@@ -105,7 +105,7 @@ export default function AdminPage() {
                 activeTab === 'stats'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <BarChart3 className="h-5 w-5" />
               Statistics
@@ -116,7 +116,7 @@ export default function AdminPage() {
                 activeTab === 'users'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <Users className="h-5 w-5" />
               User Management
@@ -127,7 +127,7 @@ export default function AdminPage() {
                 activeTab === 'projects'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <Database className="h-5 w-5" />
               All Projects
@@ -138,7 +138,7 @@ export default function AdminPage() {
                 activeTab === 'ai'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <Bot className="h-5 w-5" />
               AI Activity
@@ -149,7 +149,7 @@ export default function AdminPage() {
                 activeTab === 'connections'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <LogIn className="h-5 w-5" />
               Connexions
@@ -160,7 +160,7 @@ export default function AdminPage() {
                 activeTab === 'licenses'
                   ? 'border-brand-primary text-brand-primary'
                   : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center gap-2`}
             >
               <Key className="h-5 w-5" />
               Licences

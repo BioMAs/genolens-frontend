@@ -69,7 +69,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
   return (
     <div>
       <div
-        className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer text-sm transition-colors
+        className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer text-body-sm transition-colors
           ${isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover'}
           ${!node.is_enriched ? 'opacity-50' : ''}
         `}
@@ -95,12 +95,12 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
         </span>
 
         {node.is_enriched && node.fdr != null && (
-          <span className="text-xs font-semibold text-accent-ink ml-1 flex-shrink-0">
+          <span className="text-caption font-semibold text-accent-ink ml-1 flex-shrink-0">
             {node.fdr < 0.001 ? node.fdr.toExponential(1) : node.fdr.toFixed(3)}
           </span>
         )}
         {!node.is_enriched && (
-          <span className="text-xs text-gray-300 ml-1 flex-shrink-0">not sig.</span>
+          <span className="text-caption text-gray-300 ml-1 flex-shrink-0">not sig.</span>
         )}
       </div>
 
@@ -128,7 +128,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
 function DetailPanel({ node }: { node: GOTreeNode | null }) {
   if (!node) {
     return (
-      <div className="flex items-center justify-center h-full text-sm text-muted-foreground p-6 text-center">
+      <div className="flex items-center justify-center h-full text-body-sm text-muted-foreground p-6 text-center">
         Click a node in the tree to see details.
       </div>
     );
@@ -142,9 +142,9 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <div>
-        <div className="text-xs font-semibold text-accent-ink mb-0.5">{node.go_id}</div>
-        <div className="text-base font-bold text-primary leading-snug mb-2">{node.go_name}</div>
-        <Badge className={`text-xs ${NS_BADGE_CLASS[ns] ?? 'bg-surface-2 text-secondary'}`}>
+        <div className="text-caption font-semibold text-accent-ink mb-0.5">{node.go_id}</div>
+        <div className="text-body font-bold text-primary leading-snug mb-2">{node.go_name}</div>
+        <Badge className={`text-caption ${NS_BADGE_CLASS[ns] ?? 'bg-surface-2 text-secondary'}`}>
           {NS_FULL[ns] ?? node.namespace}
         </Badge>
       </div>
@@ -158,8 +158,8 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
             { label: 'GO level', value: node.level ?? '—' },
           ].map(({ label, value }) => (
             <div key={label} className="bg-surface-2 rounded-lg p-2.5">
-              <div className="text-lg font-bold text-accent-ink">{value}</div>
-              <div className="text-xs text-muted">{label}</div>
+              <div className="text-title font-bold text-accent-ink">{value}</div>
+              <div className="text-caption text-muted">{label}</div>
             </div>
           ))}
         </div>
@@ -167,15 +167,15 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
 
       {node.is_enriched && genes.length > 0 && (
         <div>
-          <div className="text-xs font-bold text-muted uppercase tracking-wide mb-2">Enriched genes</div>
+          <div className="text-caption font-bold text-muted uppercase tracking-wide mb-2">Enriched genes</div>
           <div className="flex flex-wrap gap-1">
             {visibleGenes.map(g => (
-              <span key={g} className="bg-accent-soft text-accent-ink text-xs font-semibold px-1.5 py-0.5 rounded">
+              <span key={g} className="bg-accent-soft text-accent-ink text-caption font-semibold px-1.5 py-0.5 rounded">
                 {g}
               </span>
             ))}
             {extraCount > 0 && (
-              <span className="text-xs text-muted self-center">+{extraCount} more</span>
+              <span className="text-caption text-muted self-center">+{extraCount} more</span>
             )}
           </div>
         </div>
@@ -185,7 +185,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
         <Button
           variant="outline"
           size="sm"
-          className="text-xs"
+          className="text-caption"
           onClick={() => window.open(`https://amigo.geneontology.org/amigo/term/${node.go_id}`, '_blank')}
         >
           <ExternalLink className="w-3 h-3 mr-1" />
@@ -313,9 +313,9 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       <div className="flex items-center justify-between px-4 py-3 border-b border-subtle bg-indigo-50/50">
         <div className="flex items-center gap-3">
           <div>
-            <div className="text-xs font-bold text-accent-ink uppercase tracking-wide">GO Hierarchy</div>
+            <div className="text-caption font-bold text-accent-ink uppercase tracking-wide">GO Hierarchy</div>
             {hierarchy && (
-              <div className="text-xs text-muted mt-0.5">
+              <div className="text-caption text-muted mt-0.5">
                 {enrichedCount} enriched terms · grey = parent context
               </div>
             )}
@@ -324,7 +324,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
         <div className="flex items-center gap-2">
           {viewMode === 'tree' && (
             <>
-              <div className="flex items-center gap-2 text-xs text-secondary">
+              <div className="flex items-center gap-2 text-caption text-secondary">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-accent inline-block" />significant
                 </span>
@@ -332,10 +332,10 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
                   <span className="w-2 h-2 rounded-full bg-gray-200 inline-block" />context only
                 </span>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={expandAll} disabled={!hierarchy}>
+              <Button variant="ghost" size="sm" className="text-caption h-7" onClick={expandAll} disabled={!hierarchy}>
                 Expand all
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={collapseAll} disabled={!hierarchy}>
+              <Button variant="ghost" size="sm" className="text-caption h-7" onClick={collapseAll} disabled={!hierarchy}>
                 Collapse all
               </Button>
             </>
@@ -343,7 +343,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <div className="flex border border-line rounded-md overflow-hidden">
             <button
               onClick={() => setViewMode('tree')}
-              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
+              className={`flex items-center gap-1 px-2 py-1 text-caption transition-colors
                 ${viewMode === 'tree' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
               title="Tree view"
             >
@@ -352,7 +352,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             </button>
             <button
               onClick={() => setViewMode('graph')}
-              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
+              className={`flex items-center gap-1 px-2 py-1 text-caption transition-colors
                 ${viewMode === 'graph' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
               title="Force-directed graph"
             >
@@ -369,7 +369,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <button
             key={ns}
             onClick={() => { setActiveNs(ns); setSelectedNode(null); }}
-            className={`px-4 py-2 text-xs font-semibold transition-colors border-b-2
+            className={`px-4 py-2 text-caption font-semibold transition-colors border-b-2
               ${activeNs === ns
                 ? 'text-accent-ink border-accent bg-surface'
                 : 'text-muted border-transparent hover:text-secondary'
@@ -377,7 +377,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           >
             {NS_FULL[ns]}
             {hierarchy && (
-              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-micro
                 ${activeNs === ns ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-muted'}`}>
                 {hierarchy[ns].length}
               </span>
@@ -390,7 +390,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       {viewMode === 'graph' ? (
         <div style={{ height: 480 }}>
           {loading && <TreeSkeleton />}
-          {error && <div className="p-4 text-sm text-red-500 text-center">{error}</div>}
+          {error && <div className="p-4 text-body-sm text-red-500 text-center">{error}</div>}
           {!loading && !error && hierarchy && (
             <GOForceGraph
               data={hierarchy}
@@ -398,7 +398,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             />
           )}
           {!loading && !error && !hierarchy && loaded && (
-            <div className="p-6 text-sm text-center text-muted-foreground">No hierarchy data available.</div>
+            <div className="p-6 text-body-sm text-center text-muted-foreground">No hierarchy data available.</div>
           )}
         </div>
       ) : (
@@ -407,10 +407,10 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <div className="flex-1 overflow-y-auto border-r border-subtle py-2">
             {loading && <TreeSkeleton />}
             {error && (
-              <div className="p-4 text-sm text-red-500 text-center">{error}</div>
+              <div className="p-4 text-body-sm text-red-500 text-center">{error}</div>
             )}
             {!loading && !error && currentNodes.length === 0 && loaded && (
-              <div className="p-6 text-sm text-center text-muted-foreground">
+              <div className="p-6 text-body-sm text-center text-muted-foreground">
                 No enriched terms for {NS_FULL[activeNs]}.
               </div>
             )}

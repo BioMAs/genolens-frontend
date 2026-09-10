@@ -207,14 +207,14 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
     <div className="space-y-5">
       <div>
         <h2 className="page-title">Multi-comparison</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
           Compare 2–5 comparisons — click a region to inspect its genes and run functional enrichment.
         </p>
       </div>
 
       {/* Comparison selection */}
       <div className="gl-card p-6">
-        <h3 className="mb-4 font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="mb-4 font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
           Select comparisons ({selectedComparisons.length}/5)
         </h3>
 
@@ -237,10 +237,10 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                   className="h-4 w-4 shrink-0 accent-[var(--sl-teal)]"
                 />
                 <div className="ml-3 min-w-0 flex-1">
-                  <div className="break-words text-sm font-medium" style={{ color: 'var(--text-primary)' }} title={comp.label}>
+                  <div className="break-words text-body-sm font-medium" style={{ color: 'var(--text-primary)' }} title={comp.label}>
                     {comp.label}
                   </div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <div className="text-caption" style={{ color: 'var(--text-muted)' }}>
                     {comp.degCount} DEGs
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
         {error && (
           <div
-            className="mt-4 rounded-lg border p-3 text-sm"
+            className="mt-4 rounded-lg border p-3 text-body-sm"
             style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
           >
             {error}
@@ -304,16 +304,16 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
             {/* Verdict / shared core */}
             <div>
-              <div className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.6px]" style={{ color: 'var(--sl-teal)' }}>
+              <div className="mb-2 text-micro font-semibold uppercase tracking-[0.6px]" style={{ color: 'var(--sl-teal)' }}>
                 The verdict
               </div>
               <h3
-                className="font-display text-[22px] font-semibold leading-[1.3] tracking-[-0.4px]"
+                className="font-display text-heading font-semibold leading-[1.3] tracking-[-0.4px]"
                 style={{ color: 'var(--text-primary)' }}
               >
                 A shared {sharedByAll.length}-gene core runs through all {setCount} comparisons
               </h3>
-              <p className="mt-2.5 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
+              <p className="mt-2.5 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 Click any region of the diagram to inspect its genes and run functional enrichment on that exact
                 intersection.
               </p>
@@ -324,7 +324,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
               </div>
               {sharedByAll.length > 0 && (
                 <button
-                  className="mt-4 text-[13px] font-semibold"
+                  className="mt-4 text-body-sm font-semibold"
                   style={{ color: 'var(--sl-purple)' }}
                   onClick={() => selectFromVenn({ name: `Shared by all ${setCount}`, genes: sharedByAll })}
                 >
@@ -341,10 +341,10 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
         <div className="gl-card space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {selection.name}
               </h3>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 {selectedGenes.length} genes in this selection
               </p>
             </div>
@@ -366,7 +366,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
             {selectedGenes.map((g) => (
               <span
                 key={g}
-                className="rounded px-2 py-0.5 font-mono text-xs"
+                className="rounded px-2 py-0.5 font-mono text-caption"
                 style={{ background: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}
               >
                 {g}
@@ -376,7 +376,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
           {enrichment.status === 'FAILED' && (
             <div
-              className="rounded-lg border p-3 text-sm"
+              className="rounded-lg border p-3 text-body-sm"
               style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
             >
               {enrichment.error || 'Enrichment failed'}
@@ -386,7 +386,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
           {enrichment.status === 'DONE' && (
             <div className="border-t pt-5" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h4 className="font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <h4 className="font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                   Functional enrichment ({(enrichment.result || []).length} terms)
                 </h4>
                 <div className="flex gap-2">
@@ -400,7 +400,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
               </div>
 
               {(enrichment.result || []).length === 0 ? (
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                   No enriched terms for this gene set.
                 </p>
               ) : (
@@ -412,7 +412,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                         <button
                           key={c}
                           onClick={() => setCategory(c)}
-                          className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                          className="rounded-full border px-2.5 py-1 text-caption font-medium"
                           style={
                             activeCat
                               ? { background: 'var(--sl-purple)', color: '#fff', borderColor: 'var(--sl-purple)' }
@@ -431,13 +431,13 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                       const v = r.padj ? -Math.log10(r.padj) : 0;
                       return (
                         <div key={`${r.category}-${r.pathway_id}`} className="flex items-center gap-2">
-                          <div className="w-64 truncate text-xs" style={{ color: 'var(--text-secondary)' }} title={r.pathway_name}>
+                          <div className="w-64 truncate text-caption" style={{ color: 'var(--text-secondary)' }} title={r.pathway_name}>
                             {r.pathway_name}
                           </div>
                           <div className="h-3 flex-1 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
                             <div className="h-3 rounded" style={{ width: `${(v / maxNegLog) * 100}%`, background: 'var(--sl-purple)' }} />
                           </div>
-                          <div className="w-16 text-right text-xs" style={{ color: 'var(--text-muted)' }}>
+                          <div className="w-16 text-right text-caption" style={{ color: 'var(--text-muted)' }}>
                             {v.toFixed(2)}
                           </div>
                         </div>
@@ -458,12 +458,12 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                       <tbody>
                         {filteredEnrichment.slice(0, 200).map((r) => (
                           <tr key={`${r.category}-${r.pathway_id}`}>
-                            <td className="whitespace-nowrap text-xs" style={{ color: 'var(--text-muted)' }}>
+                            <td className="whitespace-nowrap text-caption" style={{ color: 'var(--text-muted)' }}>
                               {r.category}
                             </td>
                             <td>
                               <div className="font-medium">{r.pathway_name}</div>
-                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                              <div className="text-caption" style={{ color: 'var(--text-muted)' }}>
                                 {r.pathway_id}
                               </div>
                             </td>
@@ -471,7 +471,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                               {r.padj != null ? r.padj.toExponential(2) : '—'}
                             </td>
                             <td style={{ color: 'var(--text-secondary)' }}>
-                              {r.gene_count} <span className="text-xs" style={{ color: 'var(--text-muted)' }}>({r.gene_ratio})</span>
+                              {r.gene_count} <span className="text-caption" style={{ color: 'var(--text-muted)' }}>({r.gene_ratio})</span>
                             </td>
                           </tr>
                         ))}

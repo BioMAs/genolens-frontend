@@ -38,12 +38,12 @@ export default function PathwayFocusBar({ onShowInExplorer }: Props) {
       }}
       data-testid="pathway-focus-bar"
     >
-      <p className="flex min-w-0 items-center gap-2 text-sm">
+      <p className="flex min-w-0 items-center gap-2 text-body-sm">
         <Focus className="h-4 w-4 shrink-0" style={{ color: 'var(--sl-teal-dark)' }} />
         <span className="truncate font-medium" style={{ color: 'var(--text-primary)' }} title={term.name}>
           {term.name}
         </span>
-        <span className="shrink-0 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span className="shrink-0 text-caption" style={{ color: 'var(--text-muted)' }}>
           {term.genes.length.toLocaleString('en-US')} gene
           {term.genes.length === 1 ? '' : 's'}
         </span>
@@ -54,7 +54,7 @@ export default function PathwayFocusBar({ onShowInExplorer }: Props) {
           <button
             type="button"
             onClick={() => onShowInExplorer(term.genes, term.name)}
-            className="text-xs underline"
+            className="text-caption underline"
             style={{ color: 'var(--sl-teal-dark)' }}
           >
             Show these {term.genes.length.toLocaleString('en-US')} genes in Explore
@@ -64,7 +64,7 @@ export default function PathwayFocusBar({ onShowInExplorer }: Props) {
           type="button"
           onClick={() => focusTerm(null)}
           aria-label="Stop looking through this pathway"
-          className="inline-flex items-center gap-1 text-xs"
+          className="inline-flex items-center gap-1 text-caption"
           style={{ color: 'var(--text-secondary)' }}
         >
           <X className="h-3.5 w-3.5" />

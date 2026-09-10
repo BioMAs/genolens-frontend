@@ -42,7 +42,7 @@ export function Stepper({ steps, current, className = '' }: StepperProps) {
           <React.Fragment key={step.label}>
             <div className="flex flex-none items-center gap-2.5">
               <span
-                className="grid h-[30px] w-[30px] place-items-center rounded-full text-[13px] font-bold"
+                className="grid h-[30px] w-[30px] place-items-center rounded-full text-body-sm font-bold"
                 style={
                   isActive
                     ? { background: 'var(--sl-purple)', color: '#fff' }
@@ -58,7 +58,7 @@ export function Stepper({ steps, current, className = '' }: StepperProps) {
                 {isDone ? <Check className="h-[15px] w-[15px]" strokeWidth={2.5} /> : i + 1}
               </span>
               <span
-                className="text-[13.5px] font-medium"
+                className="text-body-sm font-medium"
                 style={{
                   color: isActive
                     ? 'var(--text-primary)'

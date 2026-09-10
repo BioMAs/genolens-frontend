@@ -58,7 +58,7 @@ export default function ComparisonHeader({
     <>
       <Link
         href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm"
+        className="mb-4 inline-flex items-center gap-1.5 text-body-sm"
         style={{ color: 'var(--text-secondary)' }}
       >
         <ArrowLeft className="h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
@@ -69,7 +69,7 @@ export default function ComparisonHeader({
           <div>
             <h1 className="page-title">{decodedName}</h1>
             <div
-              className="mt-1 flex flex-wrap items-center gap-4 text-sm"
+              className="mt-1 flex flex-wrap items-center gap-4 text-body-sm"
               style={{ color: 'var(--text-secondary)' }}
             >
               <span className="inline-flex items-center gap-1.5">

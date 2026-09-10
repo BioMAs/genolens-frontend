@@ -34,8 +34,8 @@ interface SignatureHitsTableProps {
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-secondary">{label}</dt>
-      <dd className="text-sm font-medium text-primary" title={hint}>
+      <dt className="text-caption uppercase tracking-wide text-secondary">{label}</dt>
+      <dd className="text-body-sm font-medium text-primary" title={hint}>
         {value}
       </dd>
     </div>
@@ -64,7 +64,7 @@ export default function SignatureHitsTable({
 
   if (result.pvalue === null || result.mean_percentile === null) {
     return (
-      <div className="rounded-md border border-line bg-surface-2 p-6 text-sm text-primary">
+      <div className="rounded-md border border-line bg-surface-2 p-6 text-body-sm text-primary">
         <p className="font-medium text-primary">
           None of your genes is in the ranked universe for this indication.
         </p>
@@ -117,15 +117,15 @@ export default function SignatureHitsTable({
       </dl>
 
       {result.confidence === 'low' && (
-        <p className="mb-4 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="mb-4 rounded-md bg-amber-50 p-3 text-body-sm text-amber-900">
           This signature is underpowered (two replicates in at least one condition). Every
           conclusion below is weakened and should be read as exploratory.
         </p>
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-surface-2 text-left text-xs uppercase text-secondary">
+        <table className="min-w-full text-body-sm">
+          <thead className="bg-surface-2 text-left text-caption uppercase text-secondary">
             <tr>
               <th className="p-2">Direction</th>
               <th className="p-2">
@@ -160,8 +160,8 @@ export default function SignatureHitsTable({
                       <span
                         className={
                           direction === 'UP'
-                            ? 'text-xs font-medium text-red-600'
-                            : 'text-xs font-medium text-blue-600'
+                            ? 'text-caption font-medium text-red-600'
+                            : 'text-caption font-medium text-blue-600'
                         }
                       >
                         {direction}
@@ -173,7 +173,7 @@ export default function SignatureHitsTable({
                   <td className="p-2 text-secondary">{target.rank}</td>
                   <td className="p-2 font-medium text-primary">
                     {target.symbol}
-                    <span className="ml-2 text-xs text-muted">{target.gene_id}</span>
+                    <span className="ml-2 text-caption text-muted">{target.gene_id}</span>
                   </td>
                   <td className="p-2">{(target.percentile * 100).toFixed(1)}%</td>
                   <td className="p-2">{fmt(target.composite)}</td>

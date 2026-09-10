@@ -221,8 +221,13 @@ function rewriteLiterals(code) {
   let removed = 0;
   const reviews = [];
 
+  // Volontairement permissif : c'est un pre-filtre bon marche, la conversion
+  // reelle se decide token par token. Une premiere version exigeait une
+  // frontiere d'espace avant l'utilitaire, si bien qu'une classe portant une
+  // variante arbitraire (`[&_code]:bg-gray-100`) faisait rejeter TOUT le
+  // litteral qui la contenait.
   const looksLikeClasses = (body) =>
-    /(?:^|\s)(?:[a-z-]+:)*(?:text|bg|border|divide|ring|accent)-(?:gray|indigo|purple|violet|white)/.test(` ${body}`);
+    /(?:text|bg|border|divide|ring|accent)-(?:gray|indigo|purple|violet|white)/.test(body);
 
   const convert = (body) => {
     if (!looksLikeClasses(body)) return body;

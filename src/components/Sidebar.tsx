@@ -136,7 +136,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
             <div className="mb-1.5 px-3.5">
               <span className="nav-section-label">
                 Project
-                <span className="mt-1.5 flex items-center gap-1.5 font-display text-[12px] normal-case tracking-[-0.01em] text-[var(--text-primary)]">
+                <span className="mt-1.5 flex items-center gap-1.5 font-display text-caption normal-case tracking-[-0.01em] text-[var(--text-primary)]">
                   <Dot variant="ready" size={7} />
                   <span className="truncate" title={projectLabel}>
                     {projectLabel}
@@ -216,7 +216,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
           }`}
         >
           <div
-            className="grid h-7 w-7 place-items-center rounded-full text-[11px] font-bold text-on-accent"
+            className="grid h-7 w-7 place-items-center rounded-full text-micro font-bold text-on-accent"
             style={{
               background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))',
               fontFamily: 'var(--font-syne)',
@@ -225,8 +225,8 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
             {initials || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-xs font-medium text-[var(--text-primary)]">{userName}</p>
-            <p className="truncate text-[10.5px] text-[var(--text-muted)]">
+            <p className="truncate text-caption font-medium text-[var(--text-primary)]">{userName}</p>
+            <p className="truncate text-micro text-[var(--text-muted)]">
               {user.email}
             </p>
           </div>
@@ -244,7 +244,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
             ) : (
               <Sun className="nav-icon" />
             )}
-            <span className="text-[11px]">Theme</span>
+            <span className="text-micro">Theme</span>
           </button>
 
           <form action="/auth/signout" method="post" className="flex-1">
@@ -263,7 +263,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
               }}
             >
               <LogOut className="nav-icon" />
-              <span className="text-[11px]">Sign out</span>
+              <span className="text-micro">Sign out</span>
             </button>
           </form>
         </div>

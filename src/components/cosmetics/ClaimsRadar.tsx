@@ -27,7 +27,7 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
   return (
     <div className="gl-card p-4">
       <div className="mb-1 flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Skin claim profile
         </h3>
         <PanelInfo title="Skin claim profile — how the score is computed">
@@ -51,7 +51,7 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
           </ul>
         </PanelInfo>
       </div>
-      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-caption mb-3" style={{ color: 'var(--text-secondary)' }}>
         Activation score per claim (0–100), based on modulated pathways.
       </p>
       <div style={{ width: '100%', height: 340 }}>

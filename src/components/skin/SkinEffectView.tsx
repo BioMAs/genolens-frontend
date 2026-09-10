@@ -38,13 +38,13 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <div
-              className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.6px]"
+              className="mb-2 text-micro font-semibold uppercase tracking-[0.6px]"
               style={{ color: 'var(--sl-teal)' }}
             >
               The verdict
             </div>
             <h2
-              className="font-display text-[24px] font-semibold leading-[1.25] tracking-[-0.5px]"
+              className="font-display text-heading font-semibold leading-[1.25] tracking-[-0.5px]"
               style={{ color: 'var(--text-primary)', maxWidth: 640 }}
             >
               {headline}
@@ -58,7 +58,7 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
             }}
           >
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--dc-green)' }} />
-            <span className="text-[13px] font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <span className="text-body-sm font-semibold" style={{ color: 'var(--sl-teal)' }}>
               {favorable} favorable {favorable === 1 ? 'claim' : 'claims'} · {toWatch} to watch
             </span>
           </div>
@@ -83,7 +83,7 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
       {/* DETAILED CLAIM BREAKDOWN */}
       <ClaimCards claims={data.claims} />
 
-      <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-micro" style={{ color: 'var(--text-secondary)' }}>
         {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways matched the claim
         referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
       </p>

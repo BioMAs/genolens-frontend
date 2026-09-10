@@ -85,20 +85,20 @@ export default function SuspendedPage() {
         </div>
 
         <span
-          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[9px] font-bold uppercase"
+          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-micro font-bold uppercase"
           style={{ background: tone.bg, color: tone.fg, letterSpacing: "0.12em" }}
         >
           {current.badge}
         </span>
 
         <h1
-          className="font-display text-[22px] font-bold"
+          className="font-display text-heading font-bold"
           style={{ color: "var(--auth-text)", letterSpacing: "-0.02em" }}
         >
           {current.title}
         </h1>
         <p
-          className="mx-auto mt-2.5 max-w-[320px] text-[14px] leading-relaxed"
+          className="mx-auto mt-2.5 max-w-[320px] text-body-sm leading-relaxed"
           style={{ color: "var(--auth-text-2)" }}
         >
           {current.description}
@@ -112,7 +112,7 @@ export default function SuspendedPage() {
         <button
           type="button"
           onClick={signOut}
-          className="auth-link mt-4 text-[13px]"
+          className="auth-link mt-4 text-body-sm"
           style={{ color: "var(--auth-muted)" }}
         >
           Sign out

@@ -176,16 +176,16 @@ export default function DrugDiscoveryComparisonPanel({
   };
 
   if (profile.isLoading) {
-    return <p className="text-sm text-secondary">Loading…</p>;
+    return <p className="text-body-sm text-secondary">Loading…</p>;
   }
 
   if (!allowed) {
     return (
       <div className="rounded-lg border border-line bg-surface p-8 text-center">
-        <h3 className="text-lg font-medium text-primary">
+        <h3 className="text-title font-medium text-primary">
           Drug targets is an add-on module
         </h3>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">
+        <p className="mx-auto mt-2 max-w-xl text-body-sm text-secondary">
           Confront this comparison&apos;s differentially expressed genes with a ranking of
           therapeutic targets across 33 TCGA indications, and get a cited report on the hits.
         </p>
@@ -193,7 +193,7 @@ export default function DrugDiscoveryComparisonPanel({
           type="button"
           onClick={() => requestAccess('drugdiscovery')}
           disabled={accessPending === 'drugdiscovery' || accessRequested.includes('drugdiscovery')}
-          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-on-accent disabled:opacity-60"
+          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-body-sm text-on-accent disabled:opacity-60"
         >
           {accessRequested.includes('drugdiscovery')
             ? 'Request sent'
@@ -203,7 +203,7 @@ export default function DrugDiscoveryComparisonPanel({
         </button>
         {accessNotice && (
           <p
-            className={`mt-2 text-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
+            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
           >
             {accessNotice.text}
           </p>
@@ -214,7 +214,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && !status.data.configured) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
+      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
         Drug Discovery is not configured on this server. Contact an administrator.
       </div>
     );
@@ -222,7 +222,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && status.data.reachable === false) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
+      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
         Drug Discovery is temporarily unreachable. Try again in a moment.
       </div>
     );
@@ -230,7 +230,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && status.data.reachable && status.data.ready === false) {
     return (
-      <div className="rounded-md bg-amber-50 p-4 text-sm text-amber-900">
+      <div className="rounded-md bg-amber-50 p-4 text-body-sm text-amber-900">
         Drug Discovery is reachable, but its reference dataset is incomplete. Contact an
         administrator.
       </div>
@@ -239,7 +239,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-secondary">
+      <p className="text-body-sm text-secondary">
         Sends this comparison&apos;s gene symbols to the Drug Discovery service and reports which
         of them are well-ranked therapeutic targets for the indication you choose, with an
         expression-matched permutation p-value. Only gene symbols and replicate counts are sent —
@@ -248,7 +248,7 @@ export default function DrugDiscoveryComparisonPanel({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <h4 className="mb-1 text-sm font-medium text-primary">Indication</h4>
+          <h4 className="mb-1 text-body-sm font-medium text-primary">Indication</h4>
           {catalogue.data ? (
             <IndicationPicker
               layout="compact"
@@ -264,7 +264,7 @@ export default function DrugDiscoveryComparisonPanel({
               }}
             />
           ) : (
-            <p className="text-sm text-secondary">Loading indications…</p>
+            <p className="text-body-sm text-secondary">Loading indications…</p>
           )}
         </div>
         <div>
@@ -293,38 +293,38 @@ export default function DrugDiscoveryComparisonPanel({
           type="button"
           onClick={launch}
           disabled={!canRun || runQuery.isFetching}
-          className="rounded-md bg-brand-primary px-4 py-2 text-sm text-on-accent disabled:opacity-50"
+          className="rounded-md bg-brand-primary px-4 py-2 text-body-sm text-on-accent disabled:opacity-50"
         >
           {runQuery.isFetching ? 'Running…' : 'Run against the ranking'}
         </button>
         {!indication && (
-          <span className="text-xs text-secondary">Choose an indication first.</span>
+          <span className="text-caption text-secondary">Choose an indication first.</span>
         )}
         {indication && !replicatesComplete && (
-          <span className="text-xs text-amber-800">
+          <span className="text-caption text-amber-800">
             Enter the replicate count for every arm — it is never guessed.
           </span>
         )}
       </div>
 
       {rejection && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-body-sm text-amber-900">
           <p className="font-medium">
             {SIGNATURE_RULES[rejection.rule_id]?.title ?? 'Signature refused'}{' '}
-            <span className="font-mono text-xs">({rejection.rule_id})</span>
+            <span className="font-mono text-caption">({rejection.rule_id})</span>
           </p>
           <p className="mt-1">
             {SIGNATURE_RULES[rejection.rule_id]?.explanation ?? rejection.message}
           </p>
           {rejection.conditions.length > 0 && (
-            <p className="mt-1 text-xs">
+            <p className="mt-1 text-caption">
               Affected condition(s): {rejection.conditions.join(', ')}
             </p>
           )}
           {/* Proposé SEULEMENT après un SIG002. SIG001 (un seul réplicat) est inappelable par
               conception, et offrir une case à cocher laisserait croire le contraire. */}
           {SIGNATURE_RULES[rejection.rule_id]?.appealable && (
-            <label className="mt-3 flex items-center gap-2 text-sm">
+            <label className="mt-3 flex items-center gap-2 text-body-sm">
               <input
                 type="checkbox"
                 checked={allowUnderpowered}
@@ -334,13 +334,13 @@ export default function DrugDiscoveryComparisonPanel({
             </label>
           )}
           {rejection.message && (
-            <p className="mt-2 text-xs text-amber-800/80">{rejection.message}</p>
+            <p className="mt-2 text-caption text-amber-800/80">{rejection.message}</p>
           )}
         </div>
       )}
 
       {runQuery.isError && !rejection && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
+        <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
           <p>The run failed. Try again in a moment.</p>
           {runQuery.exhausted && (
             <button
@@ -357,7 +357,7 @@ export default function DrugDiscoveryComparisonPanel({
       {result && runQuery.data && (
         <div className="space-y-4">
           {runQuery.data.signature.warnings.length > 0 && (
-            <ul className="list-disc space-y-1 rounded-md bg-amber-50 p-3 pl-8 text-xs text-amber-900">
+            <ul className="list-disc space-y-1 rounded-md bg-amber-50 p-3 pl-8 text-caption text-amber-900">
               {runQuery.data.signature.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
@@ -372,7 +372,7 @@ export default function DrugDiscoveryComparisonPanel({
                 key={name}
                 type="button"
                 onClick={() => setTab(name)}
-                className={`px-3 py-2 text-sm ${
+                className={`px-3 py-2 text-body-sm ${
                   tab === name
                     ? 'border-b-2 border-brand-primary font-medium text-primary'
                     : 'text-secondary'
@@ -394,9 +394,9 @@ export default function DrugDiscoveryComparisonPanel({
 
           {tab === 'report' && (
             <>
-              {report.isLoading && <p className="text-sm text-secondary">Building the report…</p>}
+              {report.isLoading && <p className="text-body-sm text-secondary">Building the report…</p>}
               {report.isError && (
-                <p className="rounded-md bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="rounded-md bg-amber-50 p-4 text-body-sm text-amber-900">
                   No report can be produced for this signature. This usually means none of your
                   genes is in the ranked universe for this indication.
                 </p>
