@@ -113,7 +113,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   if (!project) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Project not found.</p>
+        <p className="text-muted">Project not found.</p>
       </div>
     );
   }
@@ -151,8 +151,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
       <div className="mb-3">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-body-sm"
-          style={{ color: 'var(--text-secondary)' }}
+          className="inline-flex items-center gap-1.5 text-body-sm text-secondary"
         >
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
@@ -162,7 +161,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         <div>
           <h1 className="page-title">{project.name}</h1>
           {project.description ? (
-            <p className="mt-1 max-w-3xl text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="mt-1 max-w-3xl text-body-sm text-secondary">
               {project.description}
             </p>
           ) : null}
@@ -241,8 +240,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 action={
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent"
-                    style={{ background: 'var(--sl-purple)' }}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
                   >
                     <Plus className="h-3.5 w-3.5" /> Start Analysis
                   </Link>
@@ -264,14 +262,14 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
             {runningAnalyses.length > 0 ? (
               <div className="gl-card p-4">
-                <div className="mb-2 flex items-center gap-2 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <div className="mb-2 flex items-center gap-2 text-body-sm font-semibold text-primary">
                   <Clock className="h-4 w-4" /> Processing
                 </div>
                 <div className="space-y-2">
                   {runningAnalyses.map((analysis) => (
-                    <div key={analysis.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
-                      <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.name}</span>
-                      <span className="inline-flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-muted)' }}>
+                    <div key={analysis.id} className="flex items-center justify-between rounded-lg px-3 py-2 bg-raised">
+                      <span className="text-body-sm text-secondary">{analysis.name}</span>
+                      <span className="inline-flex items-center gap-1.5 text-caption text-muted">
                         <Dot variant="processing" size={7} /> {analysis.status}
                       </span>
                     </div>
@@ -283,13 +281,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
           <div className="lg:col-span-4 space-y-3">
             <div className="gl-card p-4">
-              <div className="mb-2 text-caption font-semibold uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+              <div className="mb-2 text-caption font-semibold uppercase text-muted tracking-[0.06em]">
                 Add Data
               </div>
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center border-line text-secondary"
               >
                 <Upload className="h-5 w-5" />
                 <span className="text-body-sm">Drop CSV / TSV / Excel or open setup wizard</span>
@@ -302,8 +299,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent"
-                style={{ background: 'var(--sl-purple)' }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
               </Link>
@@ -315,14 +311,13 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
       {activeTab === 'datasets' ? (
         <div className="mt-4 gl-card p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-body-sm font-semibold text-primary">
               Source datasets
             </h2>
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent"
-                style={{ background: 'var(--sl-purple)' }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Upload className="h-3.5 w-3.5" /> Upload
               </Link>
@@ -330,18 +325,18 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           </div>
 
           {sourceDatasets.length === 0 ? (
-            <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-body-sm text-muted">
               No source files uploaded yet.
             </p>
           ) : (
             <div className="space-y-2">
               {sourceDatasets.map((dataset) => (
-                <div key={dataset.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
+                <div key={dataset.id} className="flex items-center justify-between rounded-lg px-3 py-2 bg-raised">
                   <div>
-                    <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{dataset.name}</p>
-                    <p className="text-caption" style={{ color: 'var(--text-muted)' }}>{dataset.type}</p>
+                    <p className="text-body-sm font-medium text-primary">{dataset.name}</p>
+                    <p className="text-caption text-muted">{dataset.type}</p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+                  <span className="inline-flex items-center gap-1.5 text-caption text-secondary">
                     <DatasetStatusDot status={dataset.status} /> {dataset.status}
                   </span>
                 </div>
@@ -354,14 +349,13 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
       {activeTab === 'analyses' ? (
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-body-sm font-semibold text-primary">
               Analyses ({analyses.length})
             </h2>
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent"
-                style={{ background: 'var(--sl-purple)' }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
               </Link>
@@ -375,8 +369,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 canManageData ? (
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent"
-                    style={{ background: 'var(--sl-purple)' }}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
                   >
                     <Plus className="h-3.5 w-3.5" /> New Analysis
                   </Link>
@@ -500,19 +493,23 @@ function ComparisonCard({
     <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
       <div>
         <div className="mb-1 flex flex-wrap items-center gap-1.5">
-          <span className="font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <span className="font-display text-body-sm font-semibold text-primary">
             {name}
           </span>
           <Chip icon={<Activity className="h-3 w-3" />}>DEG</Chip>
           {hasEnrichment ? <Chip icon={<BarChart3 className="h-3 w-3" />}>GSEA</Chip> : null}
         </div>
 
-        <div className="flex items-center gap-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center gap-3 text-caption text-secondary">
           <span>
-            <span style={{ color: 'var(--sl-teal)', fontWeight: 600 }}>↑ {up.toLocaleString()}</span> up
+            {/* La carte disait « down = indigo » quand le nuage de volcan, un
+                clic plus loin, dit rouge. Le datum central du produit etait
+                rendu en quatre palettes selon l'ecran ; --color-up / --color-down
+                sont l'alias chrome de utils/chartPalettes.ts, qui fait autorite. */}
+            <span className="font-semibold text-up">↑ {up.toLocaleString()}</span> up
           </span>
           <span>
-            <span style={{ color: 'var(--sl-purple)', fontWeight: 600 }}>↓ {down.toLocaleString()}</span> down
+            <span className="font-semibold text-down">↓ {down.toLocaleString()}</span> down
           </span>
           <span>{(up + down).toLocaleString()} total DEGs</span>
         </div>
@@ -520,8 +517,7 @@ function ComparisonCard({
 
       <Link
         href={href}
-        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold"
-        style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold border border-line text-secondary"
       >
         Analyze <ArrowRight className="h-3.5 w-3.5" />
       </Link>
@@ -532,18 +528,18 @@ function ComparisonCard({
 function DatasetListCard({ datasets }: { datasets: Dataset[] }) {
   return (
     <div className="gl-card p-4">
-      <div className="mb-2 text-caption font-semibold uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+      <div className="mb-2 text-caption font-semibold uppercase text-muted tracking-[0.06em]">
         Datasets
       </div>
 
       {datasets.length === 0 ? (
-        <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-body-sm text-muted">
           No source datasets yet.
         </p>
       ) : (
         <div className="space-y-2">
           {datasets.slice(0, 6).map((dataset) => (
-            <div key={dataset.id} className="flex items-center justify-between text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div key={dataset.id} className="flex items-center justify-between text-body-sm text-secondary">
               <span className="truncate" title={dataset.name}>
                 {dataset.name}
               </span>
@@ -571,22 +567,21 @@ function InfoTabCard({
 }) {
   return (
     <div className="mt-4 gl-card p-5">
-      <h2 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <h2 className="font-display text-body font-semibold text-primary">
         {title}
       </h2>
-      <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mt-1 text-body-sm text-secondary">
         {description}
       </p>
       {ctaHref ? (
         <Link
           href={ctaHref}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent"
-          style={{ background: 'var(--sl-purple)' }}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
         >
           {ctaLabel} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       ) : (
-        <p className="mt-3 text-caption" style={{ color: 'var(--text-muted)' }}>
+        <p className="mt-3 text-caption text-muted">
           A ready matrix dataset is required first.
         </p>
       )}

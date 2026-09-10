@@ -36,6 +36,7 @@ import { buildComparisonModules, groupModulesByView } from './comparison/compari
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
 import { SegmentedControl } from '@/components/ui/tabs';
+import { buttonClasses } from '@/components/ui/button';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
 import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
@@ -72,19 +73,13 @@ interface ComparisonDetailProps {
 function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () => void }) {
   return (
     <div
-      className="flex min-h-40 flex-col items-center justify-center gap-2 text-center"
-      style={{
-        border: '1px dashed var(--border)',
-        borderRadius: 'var(--radius-panel)',
-        color: 'var(--text-muted)',
-      }}
+      className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-line text-center text-muted"
     >
       <p className="text-body-sm">{label}</p>
       <button
         type="button"
         onClick={onReveal}
-        className="text-caption underline"
-        style={{ color: 'var(--sl-teal-dark)' }}
+        className="cursor-pointer text-caption text-accent-ink underline"
       >
         Load this section
       </button>
@@ -400,21 +395,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Loading…
       </div>
     );
   }
   if (isError) {
     return (
-      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Failed to load comparison details.
       </div>
     );
   }
   if (!project) {
     return (
-      <div className="p-8 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Project not found
       </div>
     );
@@ -458,7 +453,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       />
 
       {reprocessError ? (
-        <p className="mt-2 text-body-sm" style={{ color: 'var(--sl-red)' }}>
+        <p className="mt-2 text-body-sm text-danger">
           {reprocessError}
         </p>
       ) : null}
@@ -527,13 +522,12 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     table it filters down to. */}
                 <div className="gl-card p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    <h2 className="font-display text-body font-semibold text-primary">
                       Volcano plot
                     </h2>
                     <Link
                       href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                      className="text-caption font-semibold"
-                      style={{ color: 'var(--sl-teal-dark)' }}
+                      className="text-caption font-semibold text-accent-ink"
                     >
                       View dataset
                     </Link>
@@ -804,10 +798,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {activeView === 'partager' && (
               <section id="exports" className="scroll-mt-24 space-y-3">
                 <div>
-                  <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <h3 className="text-body-sm font-semibold text-primary">
                     Exports
                   </h3>
-                  <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-caption text-muted">
                     The gene table of this comparison, and its per-method p-values.
                   </p>
                 </div>
@@ -819,12 +813,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     size="sm"
                   />
                   <button
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm"
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-control)',
-                      color: 'var(--text-secondary)',
-                    }}
+                    type="button"
+                    className={buttonClasses({ variant: 'outline', size: 'sm' })}
                     onClick={async () => {
                       try {
                         const response = await api.get(
