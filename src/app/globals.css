@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Tailwind v4 : la variante `dark:` doit suivre la classe .dark posee par
+   ThemeContext + le script anti-FOUC de layout.tsx, PAS prefers-color-scheme.
+   Sans cette ligne les utilitaires dark: suivent le reglage OS et sont donc
+   decouples du toggle de l'application. Le :where() maintient la specificite
+   a 0 pour ne pas prendre le pas sur les regles `.dark .nav-item.active`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================================
    GenoLens V2 — "Skin Stack" Design System (SciLicium)
    ------------------------------------------------------------
