@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -9,16 +9,14 @@ import AppFrame from "@/components/AppFrame";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 
-// "Skin Stack" redesign: Poppins is the display/heading font, Geist the body font.
-// The CSS variable slots keep their historical names (--font-syne = display,
-// --font-dm-sans = body) so the many existing var(--font-*) references keep working.
-const displayFont = Poppins({
-  variable: "--font-syne",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
+// Une seule famille : Geist porte le corps ET le titrage. Poppins, une
+// geometrique arrondie, lisait « startup » plutot que « premium sobre » ; la
+// hierarchie vient desormais du poids, de la taille et du tracking (cf.
+// l'echelle typographique dans globals.css).
+//
+// Le slot --font-syne (« display ») n'est plus charge ici : globals.css le fait
+// resoudre sur --font-dm-sans. Cela evite de toucher les ~100 references a
+// font-display / var(--font-syne) et retire une police du chemin critique.
 const bodyFont = Geist({
   variable: "--font-dm-sans",
   subsets: ["latin"],
@@ -88,7 +86,7 @@ export default async function RootLayout({
     // l'attribut `class` comme un écart.
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${displayFont.variable} ${bodyFont.variable} ${geistMono.variable} antialiased`}
+        className={`${bodyFont.variable} ${geistMono.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <ErrorBoundary>
