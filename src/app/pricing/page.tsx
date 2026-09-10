@@ -120,7 +120,7 @@ export default function PricingPage() {
           style={{ background: billing === 'annual' ? 'var(--sl-teal)' : 'var(--border-strong)' }}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-surface shadow transition-transform${
               billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
             }`}
           />

@@ -49,24 +49,24 @@ export default function GoTermPage() {
         fetchTerm();
     }, [termId]);
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading ontology data...</div>;
+    if (loading) return <div className="p-8 text-center text-secondary">Loading ontology data...</div>;
     if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
     if (!term) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-surface-2 py-8">
              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                  
                  <div className="mb-6">
-                    <Link href="/tools" className="flex items-center text-gray-500 hover:text-gray-700 mb-4">
+                    <Link href="/tools" className="flex items-center text-secondary hover:text-primary mb-4">
                         <ArrowLeft className="h-4 w-4 mr-1"/> Back to Tools
                     </Link>
                     
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                    <div className="bg-surface rounded-lg shadow-sm border border-line p-6 mb-6">
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold text-gray-900">{term.id}</h1>
+                                    <h1 className="text-2xl font-bold text-primary">{term.id}</h1>
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
@@ -76,11 +76,11 @@ export default function GoTermPage() {
                                     </span>
                                 </div>
                                 <h2 className="text-xl text-brand-primary mt-1">{term.name}</h2>
-                                <p className="text-gray-600 mt-4 leading-relaxed bg-gray-50 p-4 rounded border border-gray-100">
+                                <p className="text-secondary mt-4 leading-relaxed bg-surface-2 p-4 rounded border border-subtle">
                                     {term.definition}
                                 </p>
                             </div>
-                            <div className="text-right text-gray-400">
+                            <div className="text-right text-muted">
                                 <Network className="h-10 w-10 ml-auto mb-1 opacity-20"/>
                                 <span className="text-sm">Level {term.level}</span>
                             </div>
@@ -89,13 +89,13 @@ export default function GoTermPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Parents */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4 border-b pb-2">
-                                <ArrowUpCircle className="h-5 w-5 mr-2 text-indigo-500"/>
+                        <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
+                            <h3 className="flex items-center text-lg font-medium text-primary mb-4 border-b pb-2">
+                                <ArrowUpCircle className="h-5 w-5 mr-2 text-accent"/>
                                 Parent Terms
                             </h3>
                             {term.parents.length === 0 ? (
-                                <p className="text-gray-400 italic">Root term (no parents)</p>
+                                <p className="text-muted italic">Root term (no parents)</p>
                             ) : (
                                 <div className="space-y-3">
                                     {term.parents.map(p => (
@@ -106,8 +106,8 @@ export default function GoTermPage() {
                                         >
                                             <div className="flex items-center text-sm">
                                                 <GitBranch className="h-4 w-4 text-gray-300 mr-2 rotate-180"/>
-                                                <span className="font-mono text-indigo-600 group-hover:underline mr-2">{p.id}</span>
-                                                <span className="text-gray-700 truncate">{p.name}</span>
+                                                <span className="font-mono text-accent group-hover:underline mr-2">{p.id}</span>
+                                                <span className="text-primary truncate">{p.name}</span>
                                             </div>
                                         </Link>
                                     ))}
@@ -116,13 +116,13 @@ export default function GoTermPage() {
                         </div>
 
                          {/* Children */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4 border-b pb-2">
+                        <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
+                            <h3 className="flex items-center text-lg font-medium text-primary mb-4 border-b pb-2">
                                 <ArrowDownCircle className="h-5 w-5 mr-2 text-teal-500"/>
                                 Child Terms
                             </h3>
                             {term.children.length === 0 ? (
-                                <p className="text-gray-400 italic">Leaf term (no children)</p>
+                                <p className="text-muted italic">Leaf term (no children)</p>
                             ) : (
                                 <div className="space-y-3">
                                     {term.children.map(c => (
@@ -134,7 +134,7 @@ export default function GoTermPage() {
                                             <div className="flex items-center text-sm">
                                                 <GitBranch className="h-4 w-4 text-gray-300 mr-2"/>
                                                 <span className="font-mono text-teal-600 group-hover:underline mr-2">{c.id}</span>
-                                                <span className="text-gray-700 truncate">{c.name}</span>
+                                                <span className="text-primary truncate">{c.name}</span>
                                             </div>
                                         </Link>
                                     ))}

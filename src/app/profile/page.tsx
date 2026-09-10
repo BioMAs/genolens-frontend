@@ -38,7 +38,7 @@ export default async function ProfilePage() {
       <div className="gl-card flex flex-wrap items-center justify-between gap-5 p-6">
         <div className="flex items-center gap-4">
           <div
-            className="grid h-16 w-16 place-items-center rounded-full font-display text-xl font-bold text-white"
+            className="grid h-16 w-16 place-items-center rounded-full font-display text-xl font-bold text-on-accent"
             style={{ background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))' }}
           >
             {initials}

@@ -84,22 +84,22 @@ export default function BillingSection() {
     && (gridPlan.price_monthly != null || gridPlan.price_annual != null);
 
   return (
-    <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
+    <div className="mt-8 bg-surface shadow rounded-lg overflow-hidden">
       {/* Header */}
       <div className="bg-brand-primary px-4 py-5 sm:px-6 flex items-center justify-between">
         <div>
-          <h3 className="text-lg leading-6 font-medium text-white">Subscription &amp; Billing</h3>
+          <h3 className="text-lg leading-6 font-medium text-on-accent">Subscription &amp; Billing</h3>
           <p className="mt-1 max-w-2xl text-sm text-brand-secondary/80">
             Your current plan and usage details.
           </p>
         </div>
-        <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-white">
+        <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-on-accent">
           <CreditCard className="h-6 w-6" />
         </div>
       </div>
 
       {/* Body */}
-      <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
+      <div className="border-t border-line px-4 py-5 sm:p-0">
         {fetchError && (
           <div className="flex items-center gap-2 px-6 py-4 text-sm text-red-700 bg-red-50">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -108,19 +108,19 @@ export default function BillingSection() {
         )}
 
         {isFetching && (
-          <div className="px-6 py-8 text-sm text-gray-500 text-center animate-pulse">
+          <div className="px-6 py-8 text-sm text-secondary text-center animate-pulse">
             Loading subscription info…
           </div>
         )}
 
         {subscription && (
-          <dl className="sm:divide-y sm:divide-gray-200">
+          <dl className="sm:divide-y sm:divide-line">
             {/* Current plan */}
             <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <dt className="text-sm font-medium text-secondary flex items-center gap-2">
                 <CreditCard className="h-4 w-4" /> Current Plan
               </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex items-center gap-3">
+              <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2 flex items-center gap-3">
                 <PlanBadge plan={subscription.plan ?? planKey} grid={grid} />
                 <StatusBadge isActive={subscription.is_active} />
               </dd>
@@ -136,8 +136,8 @@ export default function BillingSection() {
             {/* Renewal date */}
             {subscription.subscription_ends_at && (
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Renewal Date</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                <dt className="text-sm font-medium text-secondary">Renewal Date</dt>
+                <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2">
                   {new Date(subscription.subscription_ends_at).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
@@ -153,7 +153,7 @@ export default function BillingSection() {
                 <button
                   onClick={handleManageBilling}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <ExternalLink className="h-4 w-4" />
                   {portalLoading ? 'Opening portal…' : 'Manage Billing'}
@@ -161,7 +161,7 @@ export default function BillingSection() {
               ) : (
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
                 >
                   <Zap className="h-4 w-4" />
                   Upgrade Plan

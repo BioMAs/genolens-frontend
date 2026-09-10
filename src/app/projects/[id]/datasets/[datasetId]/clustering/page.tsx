@@ -21,20 +21,20 @@ export default function ClusteringPage() {
   }, [datasetId]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-surface-2">
         {/* Sub-header / Breadcrumb */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div className="bg-surface border-b border-line px-4 py-3 flex items-center gap-3 shadow-sm">
             <Link 
                 href={`/projects/${projectId}/datasets/${datasetId}`}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-secondary hover:text-primary transition-colors"
                 title="Back to Dataset"
             >
                 <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="h-4 w-px bg-gray-300"></div>
-            <span className="text-gray-500 text-sm font-medium">Dataset Analysis</span>
+            <span className="text-secondary text-sm font-medium">Dataset Analysis</span>
             <span className="text-gray-300">/</span>
-            <h1 className="text-gray-900 font-semibold text-sm">
+            <h1 className="text-primary font-semibold text-sm">
                 {datasetName || 'Loading...'} 
             </h1>
             <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium ml-2">

@@ -8,12 +8,12 @@ export default async function NewAnalysisPage({ params }: { params: Promise<{ id
       <div className="mb-6">
         <Link
           href={`/projects/${id}/analyses`}
-          className="text-sm text-indigo-600 hover:underline"
+          className="text-sm text-accent hover:underline"
         >
           ← Back to analyses
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">New Multi-Method Analysis</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="mt-2 text-2xl font-bold text-primary">New Multi-Method Analysis</h1>
+        <p className="mt-1 text-sm text-secondary">
           Upload your count matrix, sample metadata, and comparisons file.
           Results will be produced by DESeq2 + edgeR + limma-voom combined with Stouffer&apos;s method.
         </p>

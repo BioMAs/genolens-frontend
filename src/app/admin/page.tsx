@@ -49,10 +49,10 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-2 flex items-center justify-center">
         <div className="text-center">
           <Activity className="h-12 w-12 text-brand-primary animate-pulse mx-auto mb-4" />
-          <p className="text-gray-600">Verifying admin access...</p>
+          <p className="text-secondary">Verifying admin access...</p>
         </div>
       </div>
     );
@@ -60,20 +60,20 @@ export default function AdminPage() {
 
   if (error || !hasAccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+      <div className="min-h-screen bg-surface-2 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface shadow-lg rounded-lg p-8">
           <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          <h2 className="text-2xl font-bold text-primary text-center mb-2">
             Access Denied
           </h2>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-secondary text-center mb-6">
             {error || 'You do not have permission to access this page.'}
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full bg-brand-primary text-white py-2 px-4 rounded-md hover:bg-brand-primary/90 transition-colors"
+            className="w-full bg-brand-primary text-on-accent py-2 px-4 rounded-md hover:bg-brand-primary/90 transition-colors"
           >
             Return to Dashboard
           </button>
@@ -83,28 +83,28 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-surface-2 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-brand-primary rounded-lg">
-              <Shield className="h-6 w-6 text-white" />
+              <Shield className="h-6 w-6 text-on-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Administration</h1>
+            <h1 className="text-3xl font-bold text-primary">Administration</h1>
           </div>
-          <p className="text-gray-600">Manage users, view system statistics, and monitor platform activity.</p>
+          <p className="text-secondary">Manage users, view system statistics, and monitor platform activity.</p>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-line mb-6">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('stats')}
               className={`${
                 activeTab === 'stats'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <BarChart3 className="h-5 w-5" />
@@ -115,7 +115,7 @@ export default function AdminPage() {
               className={`${
                 activeTab === 'users'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <Users className="h-5 w-5" />
@@ -126,7 +126,7 @@ export default function AdminPage() {
               className={`${
                 activeTab === 'projects'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <Database className="h-5 w-5" />
@@ -137,7 +137,7 @@ export default function AdminPage() {
               className={`${
                 activeTab === 'ai'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <Bot className="h-5 w-5" />
@@ -148,7 +148,7 @@ export default function AdminPage() {
               className={`${
                 activeTab === 'connections'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <LogIn className="h-5 w-5" />
@@ -159,7 +159,7 @@ export default function AdminPage() {
               className={`${
                 activeTab === 'licenses'
                   ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-secondary hover:text-primary hover:border-strong'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
             >
               <Key className="h-5 w-5" />

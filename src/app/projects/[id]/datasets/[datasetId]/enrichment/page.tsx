@@ -20,27 +20,27 @@ export default function EnrichmentPage() {
   }, [datasetId]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-surface-2">
         {/* Sub-header / Breadcrumb */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div className="bg-surface border-b border-line px-4 py-3 flex items-center gap-3 shadow-sm">
             <Link 
                 href={`/projects/${projectId}/datasets/${datasetId}`}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-secondary hover:text-primary transition-colors"
                 title="Back to Dataset"
             >
                 <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="h-5 w-px bg-gray-300 mx-1"></div>
             <div className="flex items-center gap-2 text-sm">
-                 <Link href={`/projects/${projectId}`} className="text-gray-600 hover:underline">
+                 <Link href={`/projects/${projectId}`} className="text-secondary hover:underline">
                     Project
                  </Link>
-                 <span className="text-gray-400">/</span>
-                 <Link href={`/projects/${projectId}/datasets/${datasetId}`} className="text-gray-600 hover:underline font-medium">
+                 <span className="text-muted">/</span>
+                 <Link href={`/projects/${projectId}/datasets/${datasetId}`} className="text-secondary hover:underline font-medium">
                     {datasetName || datasetId}
                  </Link>
-                 <span className="text-gray-400">/</span>
-                 <span className="text-indigo-600 font-semibold flex items-center gap-1">
+                 <span className="text-muted">/</span>
+                 <span className="text-accent font-semibold flex items-center gap-1">
                     <Grid className="h-3 w-3" />
                     Enrichment Analysis
                  </span>
@@ -50,8 +50,8 @@ export default function EnrichmentPage() {
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                   <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Functional Enrichment Analysis</h1>
-                   <p className="text-sm text-gray-500 mt-1">
+                   <h1 className="text-2xl font-bold text-primary tracking-tight">Functional Enrichment Analysis</h1>
+                   <p className="text-sm text-secondary mt-1">
                        Explore enriched pathways and gene sets (GO, KEGG, Reactome) for your differential expression comparisons.
                    </p>
                 </div>

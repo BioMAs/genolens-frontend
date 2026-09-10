@@ -6,13 +6,13 @@ import { ArrowLeft, FlaskConical } from 'lucide-react';
 
 export default function PowerAnalysisPage() {
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-surface-2 py-8">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6">
                     <Link
                         href="/tools"
-                        className="inline-flex items-center text-gray-500 hover:text-gray-700 mb-4 text-sm"
+                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-sm"
                     >
                         <ArrowLeft className="h-4 w-4 mr-1" />
                         Back to tools
@@ -22,10 +22,10 @@ export default function PowerAnalysisPage() {
                             <FlaskConical className="h-7 w-7 text-purple-700" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
+                            <h1 className="text-3xl font-bold text-primary">
                                 Power Analysis
                             </h1>
-                            <p className="mt-1 text-gray-600">
+                            <p className="mt-1 text-secondary">
                                 Calculate the required sample size or evaluate the statistical
                                 power of a test based on the expected effect, threshold α, and
                                 risk β.
