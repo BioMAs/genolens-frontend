@@ -30,7 +30,7 @@ export default function AnalysesListView({ projectId }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+      <div className="flex items-center justify-center py-16 text-muted text-sm">
         Loading…
       </div>
     );
@@ -48,24 +48,24 @@ export default function AnalysesListView({ projectId }: Props) {
   return (
     <div className="space-y-6" data-tour="analyses-list">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-primary">
           Self-service analyses ({analyses.length})
         </h2>
         <Link
           data-tour="analyses-new"
           href={`/projects/${projectId}/analyses/new`}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700"
+          className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
         >
           + New analysis
         </Link>
       </div>
 
       {analyses.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center">
-          <p className="text-sm text-gray-500">No analyses launched for this project.</p>
+        <div className="rounded-lg border-2 border-dashed border-line p-12 text-center">
+          <p className="text-sm text-secondary">No analyses launched for this project.</p>
           <Link
             href={`/projects/${projectId}/analyses/new`}
-            className="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700"
+            className="mt-4 inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
           >
             Launch your first analysis
           </Link>

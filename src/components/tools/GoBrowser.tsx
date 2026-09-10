@@ -35,23 +35,23 @@ export default function GoBrowser() {
     };
 
     return (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4">
                 <Network className="h-6 w-6 text-brand-primary" />
-                <h2 className="text-xl font-semibold text-gray-900">Gene Ontology Browser</h2>
+                <h2 className="text-xl font-semibold text-primary">Gene Ontology Browser</h2>
             </div>
             
-            <p className="text-gray-600 mb-6">
+            <p className="text-secondary mb-6">
                 Search and explore the Gene Ontology hierarchy. Visualize parent/child relationships.
             </p>
 
             <div className="relative max-w-xl">
                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                    <Search className="h-5 w-5 text-muted" />
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-strong rounded-md leading-5 bg-surface placeholder-gray-500 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
                     placeholder="Search GO Terms (e.g. mitochondrion, GO:0005739)"
                     value={query}
                     onChange={(e) => handleSearch(e.target.value)}
@@ -63,14 +63,14 @@ export default function GoBrowser() {
                     <Link 
                         key={term.id} 
                         href={`/tools/ontology/${encodeURIComponent(term.id)}`}
-                        className="block p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                        className="block p-3 border border-line rounded hover:bg-hover transition-colors"
                     >
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-sm font-medium text-brand-primary">{term.id}</h3>
-                                <p className="text-gray-800">{term.name}</p>
+                                <p className="text-primary">{term.name}</p>
                             </div>
-                            <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                            <span className="text-xs bg-surface-2 px-2 py-1 rounded text-secondary">
                                 {term.database}
                             </span>
                         </div>
@@ -78,7 +78,7 @@ export default function GoBrowser() {
                 ))}
                 
                 {query.length > 1 && results.length === 0 && !loading && (
-                    <p className="text-gray-500 text-sm">No terms found.</p>
+                    <p className="text-secondary text-sm">No terms found.</p>
                 )}
             </div>
         </div>

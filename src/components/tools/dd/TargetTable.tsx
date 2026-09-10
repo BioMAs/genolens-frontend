@@ -46,8 +46,8 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
-        <span className="font-medium text-gray-900">{data.n_ranked} targets ranked</span>
+      <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-secondary">
+        <span className="font-medium text-primary">{data.n_ranked} targets ranked</span>
         <span>{data.n_excluded_insufficient_evidence} excluded for insufficient evidence</span>
         <span>{data.n_disqualified_common_essential} disqualified (common essential)</span>
         <span>{data.n_disqualified_safety_floor} below the safety floor</span>
@@ -57,7 +57,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
           <select
             value={limit}
             onChange={(event) => onLimitChange(Number(event.target.value))}
-            className="rounded border border-gray-300 p-1"
+            className="rounded border border-strong p-1"
           >
             {LIMITS.map((n) => (
               <option key={n} value={n}>{n}</option>
@@ -68,7 +68,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+          <thead className="bg-surface-2 text-left text-xs uppercase text-secondary">
             <tr>
               <th className="p-2">
                 <button type="button" onClick={() => setSortBy('rank')}>Rank</button>
@@ -84,7 +84,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
                 <th key={axis} className="p-2">
                   {axis}
                   {weights[axis] !== undefined && (
-                    <span className="ml-1 font-normal normal-case text-gray-400">
+                    <span className="ml-1 font-normal normal-case text-muted">
                       ({fmt(weights[axis], 2)})
                     </span>
                   )}
@@ -92,13 +92,13 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-subtle">
             {rows.map((target) => (
               <tr key={target.gene_id}>
-                <td className="p-2 text-gray-500">{target.rank}</td>
-                <td className="p-2 font-medium text-gray-900">
+                <td className="p-2 text-secondary">{target.rank}</td>
+                <td className="p-2 font-medium text-primary">
                   {target.symbol}
-                  <span className="ml-2 text-xs text-gray-400">{target.gene_id}</span>
+                  <span className="ml-2 text-xs text-muted">{target.gene_id}</span>
                 </td>
                 <td className="p-2">{fmt(target.composite)}</td>
                 <td className="p-2">{fmt(target.percentile)}</td>

@@ -79,7 +79,7 @@ export default function IndicationPicker({
           <select
             value={value ?? ''}
             onChange={(event) => onSelect(event.target.value)}
-            className="w-full rounded border border-gray-300 p-2"
+            className="w-full rounded border border-strong p-2"
           >
             <option value="">Choose an indication…</option>
             {indications.map((indication) => (
@@ -97,7 +97,7 @@ export default function IndicationPicker({
           {/* Une option désactivée ne peut pas expliquer pourquoi. L'échappatoire reste
               atteignable, mais elle passe par la même confirmation que sur la page outil. */}
           {indications.some((i) => i.excluded) && (
-            <details className="mt-2 text-xs text-gray-600">
+            <details className="mt-2 text-xs text-secondary">
               <summary className="cursor-pointer">
                 Why are some indications unavailable?
               </summary>
@@ -140,12 +140,12 @@ export default function IndicationPicker({
               onClick={() => onSelect(indication.tcga_project)}
               className={`w-full rounded-lg border p-3 text-left text-sm ${
                 value === indication.tcga_project
-                  ? 'border-brand-primary bg-indigo-50'
-                  : 'border-gray-200 bg-white'
+                  ? 'border-brand-primary bg-accent-soft'
+                  : 'border-line bg-surface'
               } ${indication.excluded ? 'cursor-not-allowed opacity-60' : 'hover:shadow-sm'}`}
             >
-              <span className="block font-medium text-gray-900">{indication.disease_name}</span>
-              <span className="block text-xs text-gray-500">{indication.tcga_project}</span>
+              <span className="block font-medium text-primary">{indication.disease_name}</span>
+              <span className="block text-xs text-secondary">{indication.tcga_project}</span>
             </button>
 
             {indication.excluded && (
@@ -172,15 +172,15 @@ export default function IndicationPicker({
           aria-labelledby={CONFIRM_DIALOG_TITLE_ID}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         >
-          <div className="max-w-lg rounded-lg bg-white p-6 shadow-xl">
+          <div className="max-w-lg rounded-lg bg-surface p-6 shadow-xl">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />
               <div>
-                <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-lg font-medium text-gray-900">
+                <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-lg font-medium text-primary">
                   {pendingForce.tcga_project} — ranking without disease axis
                 </h2>
-                <p className="mt-2 text-sm text-gray-700">{pendingForce.rationale}</p>
-                <p className="mt-2 text-sm text-gray-700">
+                <p className="mt-2 text-sm text-primary">{pendingForce.rationale}</p>
+                <p className="mt-2 text-sm text-primary">
                   The ranking will only cover safety, dependency, tractability, and novelty. It
                   will be indication-agnostic and should not be read as specific to this disease.
                 </p>
@@ -191,7 +191,7 @@ export default function IndicationPicker({
                 ref={cancelButtonRef}
                 type="button"
                 onClick={closeDialog}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm"
+                className="rounded-md border border-strong px-4 py-2 text-sm"
               >
                 Cancel
               </button>
@@ -201,7 +201,7 @@ export default function IndicationPicker({
                   onForceExcluded(pendingForce.tcga_project);
                   closeDialog();
                 }}
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm text-white"
+                className="rounded-md bg-amber-600 px-4 py-2 text-sm text-on-accent"
               >
                 I understand, run anyway
               </button>

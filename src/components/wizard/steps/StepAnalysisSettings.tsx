@@ -118,15 +118,15 @@ export default function StepAnalysisSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Analysis Settings</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-xl font-bold text-primary">Analysis Settings</h2>
+        <p className="mt-1 text-sm text-secondary">
           Configure how your analysis will run. You can always re-run with different settings.
         </p>
       </div>
 
       {/* Analysis name */}
       <div>
-        <label htmlFor="analysis-name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="analysis-name" className="block text-sm font-medium text-primary mb-1">
           Analysis Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -135,19 +135,19 @@ export default function StepAnalysisSettings({
           value={analysisName}
           onChange={e => onChangeName(e.target.value)}
           placeholder="e.g. Treatment A vs Control — Batch 1"
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="block w-full rounded-lg border border-strong px-3 py-2 text-sm shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
       </div>
 
       {/* Mode toggle */}
-      <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+      <div className="flex items-center gap-1 rounded-lg bg-surface-2 p-1 w-fit">
         <button
           type="button"
           onClick={() => setMode('standard')}
           className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
             mode === 'standard'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-surface text-primary shadow-sm'
+              : 'text-secondary hover:text-primary'
           }`}
         >
           <Zap className="h-3.5 w-3.5" />
@@ -158,8 +158,8 @@ export default function StepAnalysisSettings({
           onClick={() => setMode('advanced')}
           className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
             mode === 'advanced'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-surface text-primary shadow-sm'
+              : 'text-secondary hover:text-primary'
           }`}
         >
           <Settings className="h-3.5 w-3.5" />
@@ -169,10 +169,10 @@ export default function StepAnalysisSettings({
 
       {/* Standard mode — read-only summary */}
       {mode === 'standard' && (
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 space-y-3">
+        <div className="rounded-xl border border-indigo-100 bg-accent-soft p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4 text-indigo-400" />
-            <p className="text-sm font-semibold text-indigo-800">
+            <p className="text-sm font-semibold text-accent">
               Standard mode — recommended defaults will be used
             </p>
           </div>
@@ -193,21 +193,21 @@ export default function StepAnalysisSettings({
                 `Top N genes: ${clusteringConfig.top_n_genes}`,
               ]}
             />
-            <div className="rounded-lg bg-white border border-indigo-100 p-3">
-              <p className="text-xs font-semibold text-indigo-700 mb-1.5">Enrichment</p>
+            <div className="rounded-lg bg-surface border border-indigo-100 p-3">
+              <p className="text-xs font-semibold text-accent mb-1.5">Enrichment</p>
               <ul className="space-y-0.5">
-                <li className="text-xs text-gray-600">
-                  <label className="block text-xs text-gray-500 mb-0.5">Species</label>
+                <li className="text-xs text-secondary">
+                  <label className="block text-xs text-secondary mb-0.5">Species</label>
                   <SpeciesSelect value={species} onChange={onChangeSpecies} />
                 </li>
-                <li className="text-xs text-gray-600">
+                <li className="text-xs text-secondary">
                   {`Databases: ${enrichmentConfig.databases === null ? 'All (anno.db)' : enrichmentConfig.databases.length === 0 ? 'None' : enrichmentConfig.databases.join(', ')}`}
                 </li>
-                <li className="text-xs text-gray-600">{`FDR: ${enrichmentConfig.fdr}`}</li>
+                <li className="text-xs text-secondary">{`FDR: ${enrichmentConfig.fdr}`}</li>
               </ul>
             </div>
           </div>
-          <p className="text-xs text-indigo-500">
+          <p className="text-xs text-accent">
             Switch to Advanced mode to customise any of these parameters.
           </p>
         </div>
@@ -217,8 +217,8 @@ export default function StepAnalysisSettings({
       {mode === 'advanced' && (
         <div className="space-y-4">
           {/* Analysis params */}
-          <details open className="rounded-xl border border-gray-200 overflow-hidden">
-            <summary className="cursor-pointer select-none bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">
+          <details open className="rounded-xl border border-line overflow-hidden">
+            <summary className="cursor-pointer select-none bg-surface-2 px-4 py-3 text-sm font-semibold text-primary hover:bg-hover">
               Analysis Parameters
             </summary>
             <div className="p-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -283,10 +283,10 @@ export default function StepAnalysisSettings({
           </details>
 
           {/* Clustering params */}
-          <details className="rounded-xl border border-gray-200 overflow-hidden">
-            <summary className="cursor-pointer select-none bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">
+          <details className="rounded-xl border border-line overflow-hidden">
+            <summary className="cursor-pointer select-none bg-surface-2 px-4 py-3 text-sm font-semibold text-primary hover:bg-hover">
               Clustering Parameters
-              <span className="ml-2 text-xs font-normal text-gray-400">(applied when you explore clustering after analysis)</span>
+              <span className="ml-2 text-xs font-normal text-muted">(applied when you explore clustering after analysis)</span>
             </summary>
             <div className="p-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <NumberField
@@ -320,10 +320,10 @@ export default function StepAnalysisSettings({
           </details>
 
           {/* Enrichment params */}
-          <details className="rounded-xl border border-gray-200 overflow-hidden">
-            <summary className="cursor-pointer select-none bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">
+          <details className="rounded-xl border border-line overflow-hidden">
+            <summary className="cursor-pointer select-none bg-surface-2 px-4 py-3 text-sm font-semibold text-primary hover:bg-hover">
               Enrichment Databases
-              <span className="ml-2 text-xs font-normal text-gray-400">(applied when you explore enrichment after analysis)</span>
+              <span className="ml-2 text-xs font-normal text-muted">(applied when you explore enrichment after analysis)</span>
             </summary>
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 rounded-md bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700">
@@ -332,26 +332,26 @@ export default function StepAnalysisSettings({
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-600">
+                  <p className="text-xs font-medium text-secondary">
                     {enrichmentConfig.databases === null
                       ? 'All available databases (anno.db)'
                       : `${enrichmentConfig.databases.length} databases selected`}
                   </p>
                   <div className="flex gap-2">
                     <button type="button" onClick={selectAllDbs}
-                      className="text-xs text-indigo-600 hover:underline">
+                      className="text-xs text-accent hover:underline">
                       Select all
                     </button>
                     <button type="button" onClick={clearAllDbs}
-                      className="text-xs text-gray-500 hover:underline">
+                      className="text-xs text-secondary hover:underline">
                       Clear
                     </button>
                   </div>
                 </div>
                 {annoLoading ? (
-                  <p className="text-xs text-gray-400">Loading databases...</p>
+                  <p className="text-xs text-muted">Loading databases...</p>
                 ) : availableCategories.length === 0 ? (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted">
                     No categories found for &apos;{species}&apos;. All available databases will be used.
                   </p>
                 ) : (
@@ -363,8 +363,8 @@ export default function StepAnalysisSettings({
                         onClick={() => toggleDb(cat)}
                         className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
                           isDbSelected(cat)
-                            ? 'bg-indigo-600 border-indigo-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400'
+                            ? 'bg-accent border-accent text-on-accent'
+                            : 'bg-surface border-strong text-secondary hover:border-indigo-400'
                         }`}
                       >
                         {cat}
@@ -390,7 +390,7 @@ export default function StepAnalysisSettings({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-lg border border-strong px-4 py-2 text-sm font-medium text-primary hover:bg-hover"
         >
           ← Back
         </button>
@@ -398,7 +398,7 @@ export default function StepAnalysisSettings({
           type="button"
           disabled={!canContinue}
           onClick={onContinue}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Review & Launch
           <ChevronRight className="h-4 w-4" />
@@ -411,11 +411,11 @@ export default function StepAnalysisSettings({
 // ─── Small field components ───────────────────────────────────────────────────
 function SummaryCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-lg bg-white border border-indigo-100 p-3">
-      <p className="text-xs font-semibold text-indigo-700 mb-1.5">{title}</p>
+    <div className="rounded-lg bg-surface border border-indigo-100 p-3">
+      <p className="text-xs font-semibold text-accent mb-1.5">{title}</p>
       <ul className="space-y-0.5">
         {items.map((item, i) => (
-          <li key={i} className="text-xs text-gray-600">{item}</li>
+          <li key={i} className="text-xs text-secondary">{item}</li>
         ))}
       </ul>
     </div>
@@ -433,17 +433,17 @@ function SelectField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-primary mb-1">{label}</label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="block w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="block w-full rounded-md border border-strong px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
       >
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      {hint && <p className="mt-0.5 text-[10px] text-gray-400">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[10px] text-muted">{hint}</p>}
     </div>
   );
 }
@@ -461,7 +461,7 @@ function NumberField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-primary mb-1">{label}</label>
       <input
         type="number"
         value={value}
@@ -469,9 +469,9 @@ function NumberField({
         max={max}
         step={step}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
-        className="block w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="block w-full rounded-md border border-strong px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
       />
-      {hint && <p className="mt-0.5 text-[10px] text-gray-400">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[10px] text-muted">{hint}</p>}
     </div>
   );
 }
@@ -489,7 +489,7 @@ function SpeciesSelect({ value, onChange }: { value: string; onChange: (v: strin
     <select
       value={value || 'human'}
       onChange={e => onChange(e.target.value)}
-      className="rounded-md border border-blue-200 bg-white px-2 py-0.5 text-xs text-blue-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      className="rounded-md border border-blue-200 bg-surface px-2 py-0.5 text-xs text-blue-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
     >
       {SPECIES_OPTIONS.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>

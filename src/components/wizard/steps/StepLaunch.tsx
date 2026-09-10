@@ -121,8 +121,8 @@ export default function StepLaunch({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Launch Analysis</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-xl font-bold text-primary">Launch Analysis</h2>
+        <p className="mt-1 text-sm text-secondary">
           Review your configuration and launch the multi-method differential expression analysis.
         </p>
       </div>
@@ -132,9 +132,9 @@ export default function StepLaunch({
 
       {/* Summary card */}
       {!analysisId && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y divide-gray-100">
+        <div className="rounded-xl border border-line bg-surface-2 divide-y divide-subtle">
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Files</p>
+            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
             <div className="space-y-1 text-sm">
               <SummaryRow label="Count Matrix"    value={matrixDs?.name    ?? matrixDatasetId} />
               <SummaryRow label="Sample Metadata" value={samplesDs?.name   ?? samplesDatasetId} />
@@ -142,7 +142,7 @@ export default function StepLaunch({
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Analysis Settings</p>
+            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">Analysis Settings</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
@@ -150,8 +150,8 @@ export default function StepLaunch({
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Analysis Name</p>
-            <p className="text-sm font-medium text-gray-800">{analysisName}</p>
+            <p className="text-xs font-semibold text-secondary uppercase tracking-wide mb-1">Analysis Name</p>
+            <p className="text-sm font-medium text-primary">{analysisName}</p>
           </div>
         </div>
       )}
@@ -169,7 +169,7 @@ export default function StepLaunch({
 
       {/* Progress section */}
       {analysisId && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-xl border border-line bg-surface overflow-hidden">
           {/* Status header */}
           <div className={`px-4 py-3 flex items-center gap-3 ${
             isDone ? 'bg-green-50 border-b border-green-100'
@@ -205,14 +205,14 @@ export default function StepLaunch({
           {/* Progress log */}
           {progressLog.length > 0 && (
             <div className="px-4 py-3">
-              <p className="text-xs font-medium text-gray-500 mb-2">Progress log</p>
+              <p className="text-xs font-medium text-secondary mb-2">Progress log</p>
               <ul className="space-y-1 max-h-48 overflow-y-auto">
                 {progressLog.map((entry, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs">
-                    <span className="text-gray-400 shrink-0 tabular-nums">
+                    <span className="text-muted shrink-0 tabular-nums">
                       {new Date(entry.timestamp).toLocaleTimeString('en-GB')}
                     </span>
-                    <span className={`${i === progressLog.length - 1 && isRunning ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                    <span className={`${i === progressLog.length - 1 && isRunning ? 'text-blue-600 font-medium' : 'text-secondary'}`}>
                       {entry.step.replace(/_/g, ' ')}
                       {entry.message ? ` — ${entry.message}` : ''}
                     </span>
@@ -237,7 +237,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-strong px-4 py-2 text-sm font-medium text-primary hover:bg-hover"
           >
             ← Back
           </button>
@@ -251,7 +251,7 @@ export default function StepLaunch({
             title={
               quotaBlocked ? 'No analysis left this month. Upgrade to continue.' : undefined
             }
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
           >
             {createAnalysis.isPending ? (
               <><Loader className="h-4 w-4 animate-spin" /> Launching…</>
@@ -265,7 +265,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={() => analysisId && onComplete(analysisId)}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-green-700"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-on-accent shadow hover:bg-green-700"
           >
             View Results
             <ChevronRight className="h-4 w-4" />
@@ -279,8 +279,8 @@ export default function StepLaunch({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className="text-gray-500 shrink-0">{label}:</span>
-      <span className="font-medium text-gray-800 truncate">{value}</span>
+      <span className="text-secondary shrink-0">{label}:</span>
+      <span className="font-medium text-primary truncate">{value}</span>
     </div>
   );
 }

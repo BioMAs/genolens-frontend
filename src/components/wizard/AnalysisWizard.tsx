@@ -84,12 +84,12 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-surface-2 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* Back link */}
         <Link
           href={`/projects/${projectId}`}
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           {projectName}
@@ -97,8 +97,8 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Page title */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">New Analysis</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-primary">New Analysis</h1>
+          <p className="mt-1 text-sm text-secondary">
             {selectedDataType
               ? 'Follow the steps below to configure and launch your transcriptomics analysis.'
               : 'Select a data type to get started.'}
@@ -107,7 +107,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Data type selection (pre-wizard) */}
         {!selectedDataType && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+          <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 shadow-sm">
             <StepDataType onSelect={setSelectedDataType} />
           </div>
         )}
@@ -119,7 +119,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
             <WizardStepBar currentStep={currentStep} />
 
             {/* Step content */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 shadow-sm">
               {currentStep === 1 && (
                 <StepUploadFiles
                   projectId={projectId}

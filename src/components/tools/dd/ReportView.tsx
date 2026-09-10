@@ -77,10 +77,10 @@ export default function ReportView({ report }: ReportViewProps) {
 
       {report.sections.map((section) => (
         <section key={section.title}>
-          <h3 className="mb-2 text-lg font-medium text-gray-900">{section.title}</h3>
+          <h3 className="mb-2 text-lg font-medium text-primary">{section.title}</h3>
           <ul className="space-y-2">
             {section.claims.map((claim) => (
-              <li key={claim.text} className="text-sm text-gray-800">
+              <li key={claim.text} className="text-sm text-primary">
                 {claim.text}{' '}
                 {claim.evidence_ids
                   .filter((id) => citableEvidenceIds.has(id))
@@ -100,8 +100,8 @@ export default function ReportView({ report }: ReportViewProps) {
       <ReportFigures figures={report.figures ?? []} />
 
       <section>
-        <h3 className="mb-2 text-lg font-medium text-gray-900">Evidence</h3>
-        <ol className="space-y-1 text-sm text-gray-700">
+        <h3 className="mb-2 text-lg font-medium text-primary">Evidence</h3>
+        <ol className="space-y-1 text-sm text-primary">
           {report.appendix.map((entry) => {
             const evidenceId = appendixEvidenceId(entry);
             return (
@@ -114,15 +114,15 @@ export default function ReportView({ report }: ReportViewProps) {
       </section>
 
       <section>
-        <h3 className="mb-2 text-lg font-medium text-gray-900">Sources</h3>
-        <ul className="space-y-1 text-sm text-gray-700">
+        <h3 className="mb-2 text-lg font-medium text-primary">Sources</h3>
+        <ul className="space-y-1 text-sm text-primary">
           {report.bibliography.map((entry) => (
             <li key={entry}>{entry}</li>
           ))}
         </ul>
       </section>
 
-      <footer className="border-t border-gray-200 pt-4 text-xs text-gray-500">
+      <footer className="border-t border-line pt-4 text-xs text-secondary">
         <p className="mb-1 font-medium">Attributions</p>
         <ul className="space-y-0.5">
           {report.attributions.map((attribution) => (

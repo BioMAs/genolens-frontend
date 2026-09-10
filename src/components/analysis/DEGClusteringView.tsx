@@ -99,9 +99,9 @@ export default function DEGClusteringView({
   // ---- Loading / Error states ----
   if (loading && !plotData) {
     return (
-      <div className="flex h-96 items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-lg border border-dashed border-line">
         <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-        <span className="ml-2 text-gray-500">Generating DEG heatmap…</span>
+        <span className="ml-2 text-secondary">Generating DEG heatmap…</span>
       </div>
     );
   }
@@ -235,8 +235,8 @@ export default function DEGClusteringView({
         </div>
       )}
       {/* Controls bar */}
-      <div className="flex items-center gap-6 flex-wrap bg-white rounded-lg border border-gray-200 px-4 py-2.5">
-        <span className="text-sm font-medium text-gray-700">Displayed value:</span>
+      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-lg border border-line px-4 py-2.5">
+        <span className="text-sm font-medium text-primary">Displayed value:</span>
         <div className="flex gap-4">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
@@ -247,7 +247,7 @@ export default function DEGClusteringView({
               onChange={() => setDisplayMode('expression')}
               className="text-brand-primary"
             />
-            <span className="text-sm text-gray-700">Normalized expression (z-score)</span>
+            <span className="text-sm text-primary">Normalized expression (z-score)</span>
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
@@ -258,7 +258,7 @@ export default function DEGClusteringView({
               onChange={() => setDisplayMode('log2fc')}
               className="text-brand-primary"
             />
-            <span className="text-sm text-gray-700">Log2FC</span>
+            <span className="text-sm text-primary">Log2FC</span>
           </label>
         </div>
 
@@ -279,7 +279,7 @@ export default function DEGClusteringView({
 
         <button
           onClick={exportMatrixCSV}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-1.5 text-xs text-secondary hover:text-primary"
           title="Export the clustered matrix (genes × samples, in display order) as CSV"
         >
           <Download className="w-3.5 h-3.5" /> Export matrix (.csv)
@@ -290,7 +290,7 @@ export default function DEGClusteringView({
 
       {/* Plotly heatmap with DEG-status sidebar */}
       <div
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+        className="bg-surface rounded-lg border border-line overflow-hidden"
         style={{ height: Math.max(600, Math.min(nDEGs * 1.2 + 200, 900)) }}
       >
         <Plot
@@ -414,7 +414,7 @@ export default function DEGClusteringView({
       </div>
 
       {/* Legend strip */}
-      <div className="flex flex-wrap items-center gap-5 text-xs text-gray-600 bg-gray-50 rounded px-4 py-2">
+      <div className="flex flex-wrap items-center gap-5 text-xs text-secondary bg-surface-2 rounded px-4 py-2">
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#7B2D8B' }} />
           <span>DOWN-regulated</span>
@@ -426,7 +426,7 @@ export default function DEGClusteringView({
         {hasConditions && (
           <>
             <span className="text-gray-300">|</span>
-            <span className="text-gray-500">Condition:</span>
+            <span className="text-secondary">Condition:</span>
             {uniqueConds.map((c, i) => (
               <div key={c} className="flex items-center gap-1.5">
                 <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: condColors[i] }} />
@@ -436,8 +436,8 @@ export default function DEGClusteringView({
           </>
         )}
         <span className="text-gray-300">|</span>
-        <span className="text-gray-500">
-          Comparison: <strong className="text-gray-700">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
+        <span className="text-secondary">
+          Comparison: <strong className="text-primary">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
         </span>
       </div>
     </div>

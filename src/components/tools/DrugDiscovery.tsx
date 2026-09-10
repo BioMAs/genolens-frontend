@@ -101,19 +101,19 @@ export default function DrugDiscovery() {
   const report = useReport(tab === 'report' ? run.data : undefined);
 
   if (profile.isLoading) {
-    return <p className="text-sm text-gray-500">Loading…</p>;
+    return <p className="text-sm text-secondary">Loading…</p>;
   }
 
   if (!allowed) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-        <h2 className="text-xl font-medium text-gray-900">
+      <div className="rounded-lg border border-line bg-surface p-8 text-center">
+        <h2 className="text-xl font-medium text-primary">
           Drug Discovery is an add-on module
         </h2>
         {/* L'argumentaire doit décrire le produit vendu, mode B compris : sans la seconde
             phrase, la carte sous-vend la capacité qui intéresse le plus un utilisateur qui a
             déjà ses propres comparaisons. */}
-        <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600">
+        <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">
           The module ranks therapeutic targets across 33 TCGA indications from curated public
           sources, and produces a cited report for the top candidates. It also confronts your own
           differential-expression comparisons with those rankings, telling you which of your
@@ -124,7 +124,7 @@ export default function DrugDiscovery() {
           type="button"
           onClick={() => requestAccess('drugdiscovery')}
           disabled={accessPending === 'drugdiscovery' || accessRequested.includes('drugdiscovery')}
-          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-white disabled:opacity-60"
+          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-sm text-on-accent disabled:opacity-60"
         >
           {accessRequested.includes('drugdiscovery')
             ? 'Request sent'
@@ -265,8 +265,8 @@ export default function DrugDiscovery() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        {catalogue.isLoading && <p className="text-sm text-gray-500">Loading catalog…</p>}
+      <section className="rounded-lg border border-line bg-surface p-4">
+        {catalogue.isLoading && <p className="text-sm text-secondary">Loading catalog…</p>}
         {catalogue.data && (
           <div className="space-y-4">
             <ProfileSelector
@@ -312,18 +312,18 @@ export default function DrugDiscovery() {
 
       {params && (
         <>
-          <div className="flex gap-2 border-b border-gray-200">
+          <div className="flex gap-2 border-b border-line">
             <button
               type="button"
               onClick={() => setTab('targets')}
-              className={`px-4 py-2 text-sm ${tab === 'targets' ? 'border-b-2 border-brand-primary font-medium' : 'text-gray-500'}`}
+              className={`px-4 py-2 text-sm ${tab === 'targets' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary'}`}
             >
               Targets
             </button>
             <button
               type="button"
               onClick={() => setTab('report')}
-              className={`px-4 py-2 text-sm ${tab === 'report' ? 'border-b-2 border-brand-primary font-medium' : 'text-gray-500'}`}
+              className={`px-4 py-2 text-sm ${tab === 'report' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary'}`}
             >
               Report
             </button>
@@ -382,7 +382,7 @@ export default function DrugDiscovery() {
 
               {((tab === 'targets' && targets.isLoading) ||
                 (tab === 'report' && report.isLoading)) && (
-                <p className="text-sm text-gray-500">Calculating…</p>
+                <p className="text-sm text-secondary">Calculating…</p>
               )}
             </>
           )}

@@ -51,10 +51,10 @@ export default function SignatureFilters({
   ) => onChange({ ...filters, [key]: value });
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+    <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-sm">
-          <span className="block text-gray-700">Max adjusted p-value</span>
+          <span className="block text-primary">Max adjusted p-value</span>
           <input
             type="number"
             step="0.005"
@@ -63,12 +63,12 @@ export default function SignatureFilters({
             value={filters.padjMax}
             disabled={disabled}
             onChange={(event) => set('padjMax', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-gray-300 p-1.5"
+            className="mt-1 w-full rounded border border-strong p-1.5"
           />
         </label>
 
         <label className="text-sm">
-          <span className="block text-gray-700">Min |log2FC|</span>
+          <span className="block text-primary">Min |log2FC|</span>
           <input
             type="number"
             step="0.1"
@@ -77,19 +77,19 @@ export default function SignatureFilters({
             value={filters.logfcMin}
             disabled={disabled}
             onChange={(event) => set('logfcMin', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-gray-300 p-1.5"
+            className="mt-1 w-full rounded border border-strong p-1.5"
           />
         </label>
 
         <label className="text-sm">
-          <span className="block text-gray-700">Directions</span>
+          <span className="block text-primary">Directions</span>
           <select
             value={filters.directions}
             disabled={disabled}
             onChange={(event) =>
               set('directions', event.target.value as DdSignatureFilters['directions'])
             }
-            className="mt-1 w-full rounded border border-gray-300 p-1.5"
+            className="mt-1 w-full rounded border border-strong p-1.5"
           >
             <option value="both">Up and down</option>
             <option value="up">Up-regulated only</option>
@@ -98,7 +98,7 @@ export default function SignatureFilters({
         </label>
 
         <label className="text-sm">
-          <span className="block text-gray-700">Max genes per arm</span>
+          <span className="block text-primary">Max genes per arm</span>
           <input
             type="number"
             step="50"
@@ -107,15 +107,15 @@ export default function SignatureFilters({
             value={filters.maxGenesPerCondition}
             disabled={disabled}
             onChange={(event) => set('maxGenesPerCondition', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-gray-300 p-1.5"
+            className="mt-1 w-full rounded border border-strong p-1.5"
           />
         </label>
 
         <label className="text-sm">
-          <span className="block text-gray-700">
+          <span className="block text-primary">
             Seed
             <span
-              className="ml-1 cursor-help text-gray-400"
+              className="ml-1 cursor-help text-muted"
               title="Recorded and shown so the p-value can be reproduced exactly."
             >
               ?
@@ -126,7 +126,7 @@ export default function SignatureFilters({
             value={filters.seed}
             disabled={disabled}
             onChange={(event) => set('seed', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-gray-300 p-1.5"
+            className="mt-1 w-full rounded border border-strong p-1.5"
           />
         </label>
       </div>
@@ -141,10 +141,10 @@ export default function SignatureFilters({
       )}
 
       <div>
-        <h4 className="text-sm font-medium text-gray-900">What will be sent</h4>
-        {isLoading && <p className="mt-1 text-sm text-gray-500">Counting genes…</p>}
+        <h4 className="text-sm font-medium text-primary">What will be sent</h4>
+        {isLoading && <p className="mt-1 text-sm text-secondary">Counting genes…</p>}
         {!isLoading && preview && preview.conditions.length === 0 && (
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-secondary">
             No gene passes these thresholds. Loosen padj or |log2FC|.
           </p>
         )}
@@ -153,7 +153,7 @@ export default function SignatureFilters({
             {preview.conditions.map((condition) => (
               <li key={condition.name} className="text-sm">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-medium text-gray-900">{condition.name}</span>
+                  <span className="font-medium text-primary">{condition.name}</span>
                   <span
                     className={
                       condition.direction === 'UP'
@@ -163,7 +163,7 @@ export default function SignatureFilters({
                   >
                     {condition.direction}
                   </span>
-                  <span className="text-gray-600">
+                  <span className="text-secondary">
                     {condition.n_genes} gene{condition.n_genes === 1 ? '' : 's'}
                     {condition.truncated && (
                       <span className="ml-1 text-amber-800">
@@ -172,7 +172,7 @@ export default function SignatureFilters({
                     )}
                   </span>
                 </div>
-                <label className="mt-1 flex items-center gap-2 text-xs text-gray-600">
+                <label className="mt-1 flex items-center gap-2 text-xs text-secondary">
                   <span>Replicates</span>
                   <input
                     type="number"
@@ -190,10 +190,10 @@ export default function SignatureFilters({
                     className={`w-20 rounded border p-1 ${
                       replicates[condition.name] === '' || replicates[condition.name] === undefined
                         ? 'border-amber-400 bg-amber-50'
-                        : 'border-gray-300'
+                        : 'border-strong'
                     }`}
                   />
-                  <span className="text-gray-500">
+                  <span className="text-secondary">
                     {SOURCE_LABEL[condition.replicates_source] ?? condition.replicates_source}
                   </span>
                 </label>

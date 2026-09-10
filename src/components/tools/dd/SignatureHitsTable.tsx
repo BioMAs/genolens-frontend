@@ -34,8 +34,8 @@ interface SignatureHitsTableProps {
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-gray-500">{label}</dt>
-      <dd className="text-sm font-medium text-gray-900" title={hint}>
+      <dt className="text-xs uppercase tracking-wide text-secondary">{label}</dt>
+      <dd className="text-sm font-medium text-primary" title={hint}>
         {value}
       </dd>
     </div>
@@ -64,8 +64,8 @@ export default function SignatureHitsTable({
 
   if (result.pvalue === null || result.mean_percentile === null) {
     return (
-      <div className="rounded-md border border-gray-200 bg-gray-50 p-6 text-sm text-gray-700">
-        <p className="font-medium text-gray-900">
+      <div className="rounded-md border border-line bg-surface-2 p-6 text-sm text-primary">
+        <p className="font-medium text-primary">
           None of your genes is in the ranked universe for this indication.
         </p>
         <p className="mt-2">
@@ -79,7 +79,7 @@ export default function SignatureHitsTable({
 
   return (
     <div>
-      <dl className="mb-4 grid grid-cols-2 gap-4 rounded-md border border-gray-200 bg-gray-50 p-4 sm:grid-cols-4 lg:grid-cols-6">
+      <dl className="mb-4 grid grid-cols-2 gap-4 rounded-md border border-line bg-surface-2 p-4 sm:grid-cols-4 lg:grid-cols-6">
         <Stat
           label="p-value"
           value={atFloor ? `≤ ${fmt(result.pvalue)}` : fmt(result.pvalue)}
@@ -125,7 +125,7 @@ export default function SignatureHitsTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+          <thead className="bg-surface-2 text-left text-xs uppercase text-secondary">
             <tr>
               <th className="p-2">Direction</th>
               <th className="p-2">
@@ -142,7 +142,7 @@ export default function SignatureHitsTable({
                 <th key={axis} className="p-2">
                   {axis}
                   {weights[axis] !== undefined && (
-                    <span className="ml-1 font-normal normal-case text-gray-400">
+                    <span className="ml-1 font-normal normal-case text-muted">
                       ({fmt(weights[axis], 2)})
                     </span>
                   )}
@@ -150,7 +150,7 @@ export default function SignatureHitsTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-subtle">
             {rows.map((target) => {
               const direction = directionBySymbol[target.symbol];
               return (
@@ -170,10 +170,10 @@ export default function SignatureHitsTable({
                       <span className="text-gray-300">—</span>
                     )}
                   </td>
-                  <td className="p-2 text-gray-500">{target.rank}</td>
-                  <td className="p-2 font-medium text-gray-900">
+                  <td className="p-2 text-secondary">{target.rank}</td>
+                  <td className="p-2 font-medium text-primary">
                     {target.symbol}
-                    <span className="ml-2 text-xs text-gray-400">{target.gene_id}</span>
+                    <span className="ml-2 text-xs text-muted">{target.gene_id}</span>
                   </td>
                   <td className="p-2">{(target.percentile * 100).toFixed(1)}%</td>
                   <td className="p-2">{fmt(target.composite)}</td>

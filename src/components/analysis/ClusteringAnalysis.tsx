@@ -190,15 +190,15 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
       {/* Header / Controls */}
-      <div className="bg-white p-4 border-b border-gray-200">
+      <div className="bg-surface p-4 border-b border-line">
         <div className="flex flex-wrap items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">Hierarchical Clustering</h2>
+            <h2 className="text-lg font-semibold text-primary">Hierarchical Clustering</h2>
             
             <div className="h-6 w-px bg-gray-300"></div>
 
             {/* Inputs */}
             <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Genes:</label>
+                <label className="text-sm text-secondary">Genes:</label>
                 <select 
                     value={params.top_n_genes} 
                     onChange={e => setParams({...params, top_n_genes: Number(e.target.value)})}
@@ -213,7 +213,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
             <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Metric:</label>
+                <label className="text-sm text-secondary">Metric:</label>
                 <select 
                     value={params.metric} 
                     onChange={e => setParams({...params, metric: e.target.value})}
@@ -226,7 +226,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Method:</label>
+                <label className="text-sm text-secondary">Method:</label>
                 <select
                     value={params.method}
                     onChange={e => setParams({...params, method: e.target.value})}
@@ -242,7 +242,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
             {params.method === 'kmeans' && (
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">k:</label>
+                <label className="text-sm text-secondary">k:</label>
                 <input
                   type="number"
                   min={2}
@@ -254,7 +254,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                 <button
                   onClick={fetchSilhouette}
                   disabled={loadingSilhouette}
-                  className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+                  className="flex items-center gap-1.5 border border-strong text-primary px-3 py-1.5 rounded text-sm hover:bg-hover disabled:opacity-50"
                   title="Compute silhouette scores to find the optimal k"
                 >
                   {loadingSilhouette ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -266,7 +266,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <button
                 onClick={() => runClustering()}
                 disabled={loading}
-                className="flex items-center gap-2 bg-brand-primary text-white px-3 py-1.5 rounded text-sm hover:bg-brand-primary/90 disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded text-sm hover:bg-brand-primary/90 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Play className="h-4 w-4"/>}
                 Run
@@ -274,7 +274,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             
             <div className="flex-grow"></div>
              
-             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+             <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
                 <input
                     type="checkbox"
                     checked={standardize}
@@ -308,16 +308,16 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
       {/* Silhouette Panel */}
       {showSilhouette && (
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="bg-surface border-b border-line px-4 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Silhouette Score by k</span>
+            <span className="text-sm font-medium text-primary">Silhouette Score by k</span>
             <div className="flex items-center gap-3">
               {silhouetteData && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-secondary">
                   Recommended: <strong className="text-amber-600">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
                 </span>
               )}
-              <button onClick={() => setShowSilhouette(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowSilhouette(false)} className="text-muted hover:text-secondary">
                 <ChevronUp className="h-4 w-4" />
               </button>
             </div>
@@ -328,7 +328,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
           {loadingSilhouette && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+            <div className="flex items-center gap-2 text-sm text-secondary py-4">
               <Loader2 className="h-4 w-4 animate-spin" /> Computing silhouette scores…
             </div>
           )}
@@ -372,7 +372,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               </div>
               <button
                 onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
-                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm font-medium mb-2"
+                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded text-sm font-medium mb-2"
               >
                 Use k={silhouetteData.recommended_k}
               </button>
@@ -382,13 +382,13 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       )}
 
       {/* Main Content */}
-      <div className="flex-1 bg-gray-50 p-4 overflow-hidden relative">
+      <div className="flex-1 bg-surface-2 p-4 overflow-hidden relative">
           
           {loading && (
               <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                  <div className="bg-white p-6 rounded-lg shadow-xl text-center">
+                  <div className="bg-surface p-6 rounded-lg shadow-xl text-center">
                       <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-2"/>
-                      <p className="text-gray-600">Calculating clusters...</p>
+                      <p className="text-secondary">Calculating clusters...</p>
                   </div>
               </div>
           )}
@@ -401,7 +401,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
           {result && (
-              <div className="h-full w-full bg-white rounded-lg shadow border border-gray-200 p-2">
+              <div className="h-full w-full bg-surface rounded-lg shadow border border-line p-2">
                    <Plot
                         data={finalPlotData}
                         layout={{
@@ -431,7 +431,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
            {!result && !loading && !error && (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-muted">
                   <div className="text-center">
                       <Settings className="h-12 w-12 mx-auto mb-2 opacity-50"/>
                       <p>Configure parameters and click Run to generate heatmap</p>
