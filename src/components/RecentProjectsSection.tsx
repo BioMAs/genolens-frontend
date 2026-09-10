@@ -56,7 +56,7 @@ export default function RecentProjectsSection({
         action={
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-on-accent transition-all"
             style={{ background: 'var(--sl-purple)' }}
           >
             New Project

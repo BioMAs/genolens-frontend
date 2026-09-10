@@ -421,9 +421,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (!degDataset) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-surface-2 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
           <div className="bg-yellow-50 p-4 rounded-md mt-4">
@@ -443,7 +443,6 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         degDataset={degDataset}
         decodedName={decodedName}
         actualComparisonName={actualComparisonName}
-        stats={stats}
         statsLoading={statsLoading}
         reportUnlocked={reportCustomizationUnlocked}
         reprocessing={reprocessing}
@@ -463,9 +462,16 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         </p>
       ) : null}
 
-      {/* The synthesis is true of every screen, so it sits above them rather than inside one —
-          which is also what dissolves the old overview view. */}
-      <div className="mt-4">
+      {/* Une seule bande d'orientation, plus quatre.
+          L'ecran empilait l'en-tete, la synthese, quatre grandes cartes d'ecran
+          et le repli des modules avant le moindre contenu — environ 500 a 600px
+          de chrome au-dessus du nuage de volcan. La synthese et le commutateur
+          d'ecran se serrent desormais sous l'identite de la comparaison.
+
+          La synthese reste au-dessus des quatre ecrans parce qu'elle est vraie
+          de chacun d'eux ; c'est aussi ce qui a dissous l'ancienne vue
+          « overview ». */}
+      <div className="mt-3 space-y-3">
         <ComparisonSynthesis
           comparisonName={decodedName}
           stats={stats}
@@ -474,11 +480,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           padjThreshold={thresholds.padj}
           log2fcThreshold={thresholds.logfc}
         />
-      </div>
 
-      {/* The four screens, named and numbered. Without this the split lived only in the
-          sidebar, so from here you could see the screen you were on and nothing else. */}
-      <div className="mt-4">
         <ComparisonViewHub
           groups={viewGroups}
           activeView={activeView}
@@ -561,9 +563,9 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 {/* DEG Table */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Differentially Expressed Genes</h2>
+                    <h2 className="text-xl font-bold text-primary">Differentially Expressed Genes</h2>
                     <button
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary"
                       onClick={async () => {
                         try {
                           const response = await api.get(
@@ -588,8 +590,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                       Download DEG — per-method p-values (.csv)
                     </button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <p className="text-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
+                  <div className="bg-surface border border-line rounded-lg overflow-hidden">
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>
@@ -623,8 +625,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                  <h3 className="text-lg font-medium text-primary mb-2">No expression matrix</h3>
+                  <p className="text-sm text-secondary max-w-sm mx-auto">
                     Clustering requires an expression matrix (count matrix).
                     Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
                   </p>
@@ -676,17 +678,20 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 <div className="space-y-4">
                   {/* Sub-mode toggle: over-representation vs ranked GSEA. It carries the
                       #gsea anchor itself, so the fragment always has something to land on. */}
+                  {/* L'etat ACTIF etait `bg-white text-gray-900` : sur
+                      --surface #131720, un bouton blanc a texte quasi noir —
+                      donc l'onglet selectionne etait le seul illisible en
+                      theme sombre. Meme idiome que ComparisonViewHub. */}
                   <div
                     id={GSEA_HASH}
-                    className="inline-flex scroll-mt-32 rounded-lg p-1"
-                    style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border)' }}
+                    className="inline-flex scroll-mt-32 gap-1 rounded-panel border border-line bg-surface-2 p-1"
                   >
                     <button
                       onClick={() => setEnrichmentMode('ora')}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      className={`cursor-pointer rounded-control px-4 py-1.5 text-body-sm font-semibold transition-colors ${
                         enrichmentMode === 'ora'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
+                          ? 'bg-accent text-on-accent'
+                          : 'text-secondary hover:bg-hover hover:text-primary'
                       }`}
                     >
                       Over-representation (ORA)
@@ -694,10 +699,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     {scientificUnlocked ? (
                       <button
                         onClick={() => setEnrichmentMode('gsea')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        className={`cursor-pointer rounded-control px-4 py-1.5 text-body-sm font-semibold transition-colors ${
                           enrichmentMode === 'gsea'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-accent text-on-accent'
+                            : 'text-secondary hover:bg-hover hover:text-primary'
                         }`}
                       >
                         GSEA (ranked)
@@ -705,7 +710,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     ) : (
                       <span
                         title="GSEA is part of the Scientific tools add-on — request access from the comparison overview"
-                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-gray-400"
+                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-muted"
                       >
                         <Lock className="h-3.5 w-3.5" />
                         GSEA (ranked)
@@ -729,8 +734,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG data</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                  <h3 className="text-lg font-medium text-primary mb-2">No DEG data</h3>
+                  <p className="text-sm text-secondary max-w-sm mx-auto">
                     Enrichment requires a DEG dataset associated with this comparison.
                   </p>
                 </div>
@@ -764,8 +769,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG results</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                  <h3 className="text-lg font-medium text-primary mb-2">No DEG results</h3>
+                  <p className="text-sm text-secondary max-w-sm mx-auto">
                     Drug target scoring is built from the differentially expressed genes of this
                     comparison, so it needs the DEG results to be available.
                   </p>
@@ -790,8 +795,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               ) : (
                 <div className="text-center py-16">
                   <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                  <h3 className="text-lg font-medium text-primary mb-2">No expression matrix</h3>
+                  <p className="text-sm text-secondary max-w-sm mx-auto">
                     Signature scoring requires an expression matrix (count matrix) for this project.
                   </p>
                 </div>

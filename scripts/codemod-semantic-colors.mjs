@@ -131,10 +131,9 @@ const EXCLUDED = [
   /\/app\/login\//, /\/app\/auth\//,
   /\/(EnrichmentRadarPlot|ContrastScatter|DEGBarChart|PCAPlot|UMAPPlot|EnrichmentPlot|EnrichmentHistogram|LibrarySizePlot)\.tsx$/,
   /\/components\/heatmap\//, /\/components\/viz\//, /\/components\/network\//,
-  /\/(Dashboard|DashboardKpiBar|DashboardWelcomeBanner|DashboardSubscriptionCard|RecentProjectsSection|QuotaMeters)\.tsx$/,
-  /\/dashboard\//,
-  /\/(ProjectHub|ComparisonDetail)\.tsx$/,
-  /\/components\/comparison\//,
+  // Les ecrans vitrines etaient exclus le temps de leur restructuration, pour
+  // que le balayage mecanique n'entre pas en conflit avec la chirurgie faite a
+  // la main. Celle-ci est faite : ils rejoignent le lot commun.
   /__tests__/, /\.test\.tsx?$/,
 ];
 

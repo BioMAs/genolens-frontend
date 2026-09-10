@@ -85,9 +85,14 @@ export default function ComparisonSynthesis({
     .map((c) => `${c} ${sampleCounts[c]}`)
     .join(' · ');
 
+  // « default » est explicite pour distinguer ces comptes de ceux du
+  // SynthesisStrip d'Explore, qui bougent avec le controle de seuil. Les deux
+  // repetitions sont deliberees — l'une donne la lecture de reference, l'autre
+  // repond au reglage en cours — mais sans etiquette elles se lisaient comme
+  // une incoherence.
   const context = [
     genesTested ? `of ${num(genesTested)} genes tested` : null,
-    `padj < ${padjThreshold}`,
+    `at default thresholds — padj < ${padjThreshold}`,
     `|log2FC| > ${log2fcThreshold}`,
     totalSamples > 0
       ? `${totalSamples} sample${totalSamples === 1 ? '' : 's'}${sampleDetail ? ` (${sampleDetail})` : ''}`

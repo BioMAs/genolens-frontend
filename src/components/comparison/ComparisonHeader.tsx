@@ -1,30 +1,31 @@
 'use client';
 
 /**
- * The comparison's identity and its actions, above whichever screen is open.
+ * L'identite de la comparaison et ses actions, au-dessus de l'ecran ouvert.
  *
- * Shared by all four screens, which is what makes it a header rather than a panel: the title,
- * where the comparison came from, the counts, and the three things you can do to the comparison
- * as a whole. Extracted from `ComparisonDetail` unchanged — this is a move, not a redesign.
+ * L'en-tete ne porte plus de decompte. Il affichait quatre pastilles
+ * (Upregulated / Downregulated / Total DEGs / Genes tested) alors que
+ * ComparisonSynthesis, juste en dessous, enonce la meme repartition en une
+ * phrase et une barre d'equilibre, et que SynthesisStrip la redonne une
+ * troisieme fois a l'interieur d'Explore. Le meme chiffre etait rendu trois
+ * fois dans le premier ecran, dans trois langages visuels differents.
  *
- * The reprocess action stays a prop rather than living here: its handler owns a five-second
- * poll loop that belongs in a mutation, and moving it into a presentational header would bury
- * that rather than fix it.
+ * C'etait aussi le rendu aux mauvaises couleurs : « Upregulated » y etait
+ * emerald et « Downregulated » violet, quand tous les graphiques disent vert
+ * et rouge. La synthese est conservee parce qu'elle est la seule des trois a
+ * expliquer ce que les chiffres signifient.
+ *
+ * L'action de retraitement reste un prop : son gestionnaire porte une boucle
+ * de sondage de cinq secondes qui appartient a une mutation, et la deplacer
+ * ici l'enterrerait au lieu de la corriger.
  */
 
 import Link from 'next/link';
-import { ArrowLeft, Activity, Calendar, Database, RefreshCw, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, Database, RefreshCw, Sparkles } from 'lucide-react';
 import type { Dataset, Project } from '@/types';
 import { formatDate } from '@/utils/formatters';
-import { StatChip } from '@/components/ui/stat-chip';
+import { Button } from '@/components/ui/button';
 import ComparisonReportButton from '@/components/ComparisonReportButton';
-
-export interface ComparisonStats {
-  degUp: number;
-  degDown: number;
-  degTotal: number;
-  genesTested?: number;
-}
 
 interface Props {
   projectId: string;
@@ -33,7 +34,6 @@ interface Props {
   degDataset: Dataset;
   decodedName: string;
   actualComparisonName: string;
-  stats: ComparisonStats | null;
   statsLoading: boolean;
   reportUnlocked: boolean;
   reprocessing: boolean;
@@ -48,7 +48,6 @@ export default function ComparisonHeader({
   degDataset,
   decodedName,
   actualComparisonName,
-  stats,
   statsLoading,
   reportUnlocked,
   reprocessing,
@@ -83,68 +82,26 @@ export default function ComparisonHeader({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenChat}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-              style={{ background: 'var(--sl-purple)' }}
-              title="Open the AI Assistant for this comparison"
-            >
+            <Button size="sm" onClick={onOpenChat} title="Open the AI Assistant for this comparison">
               <Sparkles className="h-3.5 w-3.5" />
               AI Assistant
-            </button>
+            </Button>
             {reportUnlocked && (
               <ComparisonReportButton
                 datasetId={degDataset.id}
                 comparisonName={actualComparisonName}
               />
             )}
-            <button
-              onClick={onReprocess}
-              disabled={reprocessing}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-            >
+            <Button variant="outline" size="sm" onClick={onReprocess} disabled={reprocessing}>
               <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
               {reprocessing ? 'Reprocessing…' : 'Reprocess'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {statsLoading ? (
-          <div
-            className="mt-4 inline-flex items-center gap-2 text-sm"
-            style={{ color: 'var(--text-muted)' }}
-          >
+          <div className="mt-4 inline-flex items-center gap-2 text-body-sm text-muted">
             <RefreshCw className="h-4 w-4 animate-spin" /> Calculating DEG statistics…
-          </div>
-        ) : stats ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <StatChip
-              icon={<TrendingUp className="h-4 w-4" />}
-              value={stats.degUp}
-              label="Upregulated"
-              tone="up"
-            />
-            <StatChip
-              icon={<TrendingDown className="h-4 w-4" />}
-              value={stats.degDown}
-              label="Downregulated"
-              tone="down"
-            />
-            <StatChip
-              icon={<Activity className="h-4 w-4" />}
-              value={stats.degTotal}
-              label="Total DEGs"
-              tone="neutral"
-            />
-            {stats.genesTested ? (
-              <StatChip
-                icon={<Database className="h-4 w-4" />}
-                value={stats.genesTested}
-                label="Genes tested"
-                tone="neutral"
-              />
-            ) : null}
           </div>
         ) : null}
       </div>

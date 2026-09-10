@@ -235,7 +235,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 action={
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-on-accent"
                     style={{ background: 'var(--sl-purple)' }}
                   >
                     <Plus className="h-3.5 w-3.5" /> Start Analysis
@@ -296,7 +296,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
@@ -315,7 +315,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 <Upload className="h-3.5 w-3.5" /> Upload
@@ -354,7 +354,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
@@ -369,7 +369,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 canManageData ? (
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-on-accent"
                     style={{ background: 'var(--sl-purple)' }}
                   >
                     <Plus className="h-3.5 w-3.5" /> New Analysis
@@ -395,12 +395,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isBookmarkModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">My Bookmarks</h2>
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
+              <h2 className="text-lg font-semibold text-primary">My Bookmarks</h2>
               <button
                 onClick={() => setBookmarkModalOpen(false)}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+                className="rounded-full p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -417,12 +417,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isGeneListModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">My Gene Lists</h2>
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
+              <h2 className="text-lg font-semibold text-primary">My Gene Lists</h2>
               <button
                 onClick={() => setGeneListModalOpen(false)}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+                className="rounded-full p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,12 +439,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isGeneSetModalOpen && scienceUnlocked ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">Custom gene sets</h2>
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
+              <h2 className="text-lg font-semibold text-primary">Custom gene sets</h2>
               <button
                 onClick={() => setGeneSetModalOpen(false)}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100"
+                className="rounded-full p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -602,7 +602,7 @@ function InfoTabCard({
       {ctaHref ? (
         <Link
           href={ctaHref}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-accent"
           style={{ background: 'var(--sl-purple)' }}
         >
           {ctaLabel} <ArrowRight className="h-3.5 w-3.5" />

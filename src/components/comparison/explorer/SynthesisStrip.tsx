@@ -40,6 +40,11 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
       style={{ borderRadius: 'var(--radius-panel)' }}
       data-testid="synthesis-strip"
     >
+      {/* Le libelle distingue ces comptes de ceux de ComparisonSynthesis, qui
+          donnent la lecture de reference : ceux-ci suivent le ThresholdControl
+          voisin, ce qui est tout l'interet de l'ecran Explore. */}
+      <div className="mb-2 text-micro uppercase text-muted">At your current thresholds</div>
+
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           {isLoading ? (

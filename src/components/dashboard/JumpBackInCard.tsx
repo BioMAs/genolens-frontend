@@ -162,7 +162,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         <div className="flex flex-col items-stretch gap-2.5">
           <Link
             href={href}
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-5 py-3 text-[13.5px] font-semibold text-white"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-5 py-3 text-[13.5px] font-semibold text-on-accent"
             style={{ background: 'var(--sl-purple)', boxShadow: '0 8px 18px -8px rgba(79,70,229,.6)' }}
           >
             View results <ArrowRight className="h-4 w-4" />
