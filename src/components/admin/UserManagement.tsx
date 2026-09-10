@@ -443,7 +443,7 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.subscription_plan === 'ON_PREMISE' ? 'bg-purple-100 text-purple-800' :
+                      user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent' :
                       user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
                       'bg-surface-2 text-primary'
                     }`}>

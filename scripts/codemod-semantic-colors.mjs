@@ -74,6 +74,34 @@ const MAP = new Map(Object.entries({
   'border-indigo-600': 'border-accent',
   'ring-indigo-500': 'ring-accent',
   'ring-indigo-600': 'ring-accent',
+
+  // Violet / purple -> accent. Verification faite : aucune surface IA ne les
+  // utilise reellement (AIInterpretationPanel est deja sur --sl-purple, donc
+  // sur l'indigo). Partout ailleurs le violet jouait le role d'accent
+  // interactif — bouton segmente actif, anneau de focus, case a cocher — role
+  // que l'indigo possede desormais seul.
+  'bg-purple-50': 'bg-accent-soft',
+  'bg-purple-100': 'bg-accent-soft',
+  'bg-purple-500': 'bg-accent',
+  'bg-purple-600': 'bg-accent',
+  'bg-purple-700': 'bg-accent-hover',
+  'bg-violet-50': 'bg-accent-soft',
+  'bg-violet-100': 'bg-accent-soft',
+  'bg-violet-600': 'bg-accent',
+  'bg-violet-700': 'bg-accent-hover',
+  'text-purple-600': 'text-accent',
+  'text-purple-700': 'text-accent',
+  'text-purple-800': 'text-accent',
+  'text-purple-900': 'text-accent',
+  'text-violet-500': 'text-accent',
+  'text-violet-600': 'text-accent',
+  'text-violet-700': 'text-accent',
+  'border-purple-200': 'border-accent-ring',
+  'border-purple-300': 'border-accent-ring',
+  'border-purple-600': 'border-accent',
+  'border-violet-200': 'border-accent-ring',
+  'ring-purple-500': 'ring-accent',
+  'accent-purple-600': 'accent-accent',
 }));
 
 // Le survol d'un fond gris clair est un voile, pas une surface en creux.
@@ -89,6 +117,9 @@ const REVIEW = new Set([
   'text-gray-300', 'text-gray-200', 'text-gray-100',
   'bg-gray-200', 'bg-gray-300', 'bg-gray-700', 'bg-gray-800', 'bg-gray-900',
   'border-gray-400', 'border-gray-600', 'border-gray-700', 'border-gray-800',
+  'text-purple-300', 'bg-purple-900',
+  // Degrades : de la decoration pure, a arbitrer au cas par cas.
+  'from-purple-500', 'from-purple-50', 'via-purple-500', 'to-purple-500',
 ]);
 
 // Exclusions par chemin.
@@ -193,7 +224,7 @@ function rewriteLiterals(code) {
   const reviews = [];
 
   const looksLikeClasses = (body) =>
-    /(?:^|\s)(?:[a-z-]+:)*(?:text|bg|border|divide|ring)-(?:gray|indigo|white)/.test(` ${body}`);
+    /(?:^|\s)(?:[a-z-]+:)*(?:text|bg|border|divide|ring|accent)-(?:gray|indigo|purple|violet|white)/.test(` ${body}`);
 
   const convert = (body) => {
     if (!looksLikeClasses(body)) return body;

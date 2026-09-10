@@ -105,14 +105,14 @@ export default function StepResults({
 
         {/* Clustering */}
         <ResultCard
-          icon={<Grid className="h-6 w-6 text-violet-500" />}
+          icon={<Grid className="h-6 w-6 text-accent" />}
           title="Clustering"
           description="Interactive heatmap of expression patterns"
           color="violet"
         >
           <Link
             href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering?${clusteringParams}`}
-            className="mt-3 block w-full rounded-lg bg-violet-600 px-3 py-2 text-center text-xs font-semibold text-on-accent hover:bg-violet-700"
+            className="mt-3 block w-full rounded-lg bg-accent px-3 py-2 text-center text-xs font-semibold text-on-accent hover:bg-accent-hover"
           >
             Explore Clustering →
           </Link>

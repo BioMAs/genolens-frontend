@@ -37,7 +37,7 @@ export default function ClusteringPage() {
             <h1 className="text-primary font-semibold text-sm">
                 {datasetName || 'Loading...'} 
             </h1>
-            <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium ml-2">
+            <span className="bg-accent-soft text-accent text-xs px-2 py-0.5 rounded-full font-medium ml-2">
                 Clustering
             </span>
         </div>

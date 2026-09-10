@@ -70,7 +70,7 @@ export default function GoTermPage() {
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-purple-100 text-purple-800'
+                                        'bg-accent-soft text-accent'
                                     }`}>
                                         {term.namespace}
                                     </span>

@@ -36,7 +36,7 @@ export default function CosmeticsLockedOverlay({ children }: { children: ReactNo
             <span className="flex items-center gap-1 rounded-full bg-pink-50 px-2.5 py-1 text-pink-700">
               <Sparkles className="h-3.5 w-3.5" /> Claim radar
             </span>
-            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-violet-700">Skin schematic</span>
+            <span className="rounded-full bg-accent-soft px-2.5 py-1 text-accent">Skin schematic</span>
             <span className="rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">AI narrative</span>
           </div>
           <div
