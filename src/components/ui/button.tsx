@@ -51,7 +51,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
   ghost: 'text-secondary hover:bg-hover hover:text-primary',
 
-  link: 'text-accent underline-offset-4 hover:underline',
+  link: 'text-accent-ink underline-offset-4 hover:underline',
 };
 
 const SIZES: Record<ButtonSize, string> = {

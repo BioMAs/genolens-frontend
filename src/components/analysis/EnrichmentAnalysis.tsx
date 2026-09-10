@@ -371,7 +371,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                             ${reg === 'ALL' ? 'rounded-l-md' : ''} 
                                             ${reg === 'DOWN' ? 'rounded-r-md' : ''}
                                             ${regulationFilter === reg 
-                                                ? 'z-10 bg-accent-soft border-accent text-accent' 
+                                                ? 'z-10 bg-accent-soft border-accent text-accent-ink' 
                                                 : 'bg-surface border-strong text-primary hover:bg-hover'}
  focus:z-10 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
 `}
@@ -389,7 +389,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         onClick={() => setViewMode('table')}
                         className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
                             viewMode === 'table' 
-                            ? 'bg-accent-soft border-accent text-accent' 
+                            ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
                         }`}
                      >
@@ -400,7 +400,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         onClick={() => setViewMode('radar')}
                         className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
                             viewMode === 'radar' 
-                            ? 'bg-accent-soft border-accent text-accent' 
+                            ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
                         }`}
                      >
@@ -460,7 +460,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     {categoryFilter && (
                         <button
                             onClick={() => setCategoryFilter("")}
-                            className="px-2 py-1 text-xs text-accent hover:text-accent"
+                            className="px-2 py-1 text-xs text-accent-ink hover:text-accent-ink"
                         >
                             Clear filter
                         </button>
@@ -543,7 +543,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         </button>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-accent">
+                                                <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-accent-ink">
                                                     {r.pathway_id}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-primary">
@@ -576,7 +576,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         <Link
                                                             href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
                                                             target="_blank"
-                                                            className="text-accent hover:text-indigo-900 inline-flex items-center gap-1"
+                                                            className="text-accent-ink hover:text-indigo-900 inline-flex items-center gap-1"
                                                             title="View in GO browser"
                                                         >
                                                             GO <ExternalLink className="h-3 w-3" />

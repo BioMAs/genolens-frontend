@@ -233,7 +233,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
         <button
           disabled
           className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg
- bg-accent-soft px-4 py-2 text-sm font-medium text-accent"
+ bg-accent-soft px-4 py-2 text-sm font-medium text-accent-ink"
         >
           <Loader2 className="h-4 w-4 animate-spin" />
           Generating Report…

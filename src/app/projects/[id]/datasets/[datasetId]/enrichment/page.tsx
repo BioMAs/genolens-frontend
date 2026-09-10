@@ -40,7 +40,7 @@ export default function EnrichmentPage() {
                     {datasetName || datasetId}
                  </Link>
                  <span className="text-muted">/</span>
-                 <span className="text-accent font-semibold flex items-center gap-1">
+                 <span className="text-accent-ink font-semibold flex items-center gap-1">
                     <Grid className="h-3 w-3" />
                     Enrichment Analysis
                  </span>

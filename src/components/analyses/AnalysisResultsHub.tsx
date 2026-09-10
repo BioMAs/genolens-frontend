@@ -180,7 +180,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         <div className="text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
           <p style={{ color: 'var(--text-secondary)' }}>{message}</p>
-          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-accent hover:underline">
+          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-accent-ink hover:underline">
             ← Back to project
           </Link>
         </div>
@@ -231,7 +231,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
-                    className="flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent-soft"
+                    className="flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-ink hover:bg-accent-soft"
                   >
                     <Database className="h-3.5 w-3.5" />
                     GEO · {meta.geo_accession}

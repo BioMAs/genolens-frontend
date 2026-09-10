@@ -37,7 +37,7 @@ interface StatChipProps {
 /** Fond de la pastille et couleur de son icone, par ton. */
 const TONES: Record<StatChipTone, { chip: string; icon: string }> = {
   neutral: { chip: 'bg-surface-2', icon: 'text-muted' },
-  accent: { chip: 'bg-accent-soft', icon: 'text-accent' },
+  accent: { chip: 'bg-accent-soft', icon: 'text-accent-ink' },
   up: { chip: 'bg-success-soft', icon: 'text-up' },
   down: { chip: 'bg-danger-soft', icon: 'text-down' },
   success: { chip: 'bg-success-soft', icon: 'text-success' },

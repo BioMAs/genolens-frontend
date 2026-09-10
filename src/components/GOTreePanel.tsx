@@ -95,7 +95,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
         </span>
 
         {node.is_enriched && node.fdr != null && (
-          <span className="text-xs font-semibold text-accent ml-1 flex-shrink-0">
+          <span className="text-xs font-semibold text-accent-ink ml-1 flex-shrink-0">
             {node.fdr < 0.001 ? node.fdr.toExponential(1) : node.fdr.toFixed(3)}
           </span>
         )}
@@ -142,7 +142,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <div>
-        <div className="text-xs font-semibold text-accent mb-0.5">{node.go_id}</div>
+        <div className="text-xs font-semibold text-accent-ink mb-0.5">{node.go_id}</div>
         <div className="text-base font-bold text-primary leading-snug mb-2">{node.go_name}</div>
         <Badge className={`text-xs ${NS_BADGE_CLASS[ns] ?? 'bg-surface-2 text-secondary'}`}>
           {NS_FULL[ns] ?? node.namespace}
@@ -158,7 +158,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
             { label: 'GO level', value: node.level ?? '—' },
           ].map(({ label, value }) => (
             <div key={label} className="bg-surface-2 rounded-lg p-2.5">
-              <div className="text-lg font-bold text-accent">{value}</div>
+              <div className="text-lg font-bold text-accent-ink">{value}</div>
               <div className="text-xs text-muted">{label}</div>
             </div>
           ))}
@@ -170,7 +170,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
           <div className="text-xs font-bold text-muted uppercase tracking-wide mb-2">Enriched genes</div>
           <div className="flex flex-wrap gap-1">
             {visibleGenes.map(g => (
-              <span key={g} className="bg-accent-soft text-accent text-xs font-semibold px-1.5 py-0.5 rounded">
+              <span key={g} className="bg-accent-soft text-accent-ink text-xs font-semibold px-1.5 py-0.5 rounded">
                 {g}
               </span>
             ))}
@@ -313,7 +313,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       <div className="flex items-center justify-between px-4 py-3 border-b border-subtle bg-indigo-50/50">
         <div className="flex items-center gap-3">
           <div>
-            <div className="text-xs font-bold text-accent uppercase tracking-wide">GO Hierarchy</div>
+            <div className="text-xs font-bold text-accent-ink uppercase tracking-wide">GO Hierarchy</div>
             {hierarchy && (
               <div className="text-xs text-muted mt-0.5">
                 {enrichedCount} enriched terms · grey = parent context
@@ -371,14 +371,14 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             onClick={() => { setActiveNs(ns); setSelectedNode(null); }}
             className={`px-4 py-2 text-xs font-semibold transition-colors border-b-2
               ${activeNs === ns
-                ? 'text-accent border-accent bg-surface'
+                ? 'text-accent-ink border-accent bg-surface'
                 : 'text-muted border-transparent hover:text-secondary'
               }`}
           >
             {NS_FULL[ns]}
             {hierarchy && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
-                ${activeNs === ns ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted'}`}>
+                ${activeNs === ns ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-muted'}`}>
                 {hierarchy[ns].length}
               </span>
             )}

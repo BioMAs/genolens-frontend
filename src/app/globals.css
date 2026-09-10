@@ -96,6 +96,16 @@
   /* Fond d'avertissement, pendant clair de --dc-amber */
   --warning-soft: rgba(245, 158, 11, 0.12);
 
+  /* Accent en ENCRE, distinct de l'accent en APLAT.
+     --sl-purple (#4f46e5) donne 6,29:1 sur blanc mais seulement 2,85:1 sur la
+     surface sombre #131720 — sous le seuil AA de 4,5:1. C'est exactement le
+     piege deja documente pour l'emerald (voir .gl-teal-text) : une valeur
+     concue pour le theme clair, appliquee telle quelle en sombre, rend le
+     texte accentue plus terne que le texte normal a cote.
+     L'aplat, lui, reste #4f46e5 dans les deux themes : le blanc dessus y tient
+     6,29:1. */
+  --accent-ink: var(--sl-purple);
+
   /* Semantic — light mode */
   --background:          var(--n-0);
   --foreground:          var(--n-800);
@@ -142,6 +152,10 @@
   --elev-2: 0 12px 32px -12px rgb(0 0 0 / .6);
 
   --warning-soft: rgba(245, 158, 11, 0.16);
+
+  /* indigo-400 : 6,01:1 sur #131720. indigo-300 monterait a 8,99:1 mais se
+     delave et ne lit plus comme l'accent de la marque. */
+  --accent-ink: #818cf8;
 
   --background:          #0c1018;
   --foreground:          #dde4ee;
@@ -234,6 +248,7 @@
   --color-accent-hover:       var(--sl-purple-dark);
   --color-accent-soft:        var(--sl-purple-light);
   --color-accent-ring:        var(--sl-purple-muted);
+  --color-accent-ink:         var(--accent-ink);
 
   /* Marque emerald — marque et succes uniquement */
   --color-brand:              var(--sl-teal);
@@ -622,17 +637,14 @@ body {
   border-color: var(--border-subtle);
 }
 
+/* L'element courant porte l'accent interactif, pas l'emerald de marque :
+   « ou je suis » est un etat de navigation, pas un succes. --accent-ink gere
+   la lisibilite dans les deux themes, ce qui rend l'override sombre inutile. */
 .nav-item.active {
-  background: var(--sl-teal-light);
-  color: var(--sl-teal-dark);
+  background: var(--sl-purple-light);
+  color: var(--accent-ink);
   font-weight: 600;
-  border-color: var(--sl-teal-muted);
-}
-
-.dark .nav-item.active {
-  background: rgba(15, 157, 107, 0.14);
-  color: #34d39e;
-  border-color: rgba(15, 157, 107, 0.22);
+  border-color: var(--sl-purple-muted);
 }
 
 /* Teal text that stays readable on a dark surface. `--sl-teal-dark` is a light-theme value
@@ -654,11 +666,7 @@ body {
 }
 
 .nav-item.active .nav-icon {
-  color: var(--sl-teal-dark);
-}
-
-.dark .nav-item.active .nav-icon {
-  color: var(--sl-teal);
+  color: var(--accent-ink);
 }
 
 /* ============================================================

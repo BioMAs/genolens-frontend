@@ -125,7 +125,7 @@ export default function StepUploadFiles({
           type="button"
           onClick={() => setSourceMode('upload')}
           className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            sourceMode === 'upload' ? 'bg-surface text-accent shadow-sm' : 'text-secondary hover:text-primary'
+            sourceMode === 'upload' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary'
           }`}
         >
           <UploadCloud className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default function StepUploadFiles({
           type="button"
           onClick={() => setSourceMode('geo')}
           className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            sourceMode === 'geo' ? 'bg-surface text-accent shadow-sm' : 'text-secondary hover:text-primary'
+            sourceMode === 'geo' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary'
           }`}
         >
           <Database className="h-4 w-4" />
@@ -173,7 +173,7 @@ export default function StepUploadFiles({
             <button
               type="button"
               onClick={() => setContrastMode(contrastMode === 'builder' ? 'upload' : 'builder')}
-              className="text-xs font-medium text-accent hover:text-accent underline underline-offset-2"
+              className="text-xs font-medium text-accent-ink hover:text-accent-ink underline underline-offset-2"
             >
               {contrastMode === 'builder'
                 ? 'Upload a contrast file instead'
@@ -414,7 +414,7 @@ function UploadCardWithProjectId({
         <div className={`rounded-full p-2 ${isActive ? 'bg-accent-soft' : 'bg-surface-2'}`}>
           {uploading
             ? <Clock className="h-5 w-5 text-indigo-400 animate-spin" />
-            : <Upload className={`h-5 w-5 ${isActive ? 'text-accent' : 'text-muted'}`} />}
+            : <Upload className={`h-5 w-5 ${isActive ? 'text-accent-ink' : 'text-muted'}`} />}
         </div>
         <div>
           <p className={`text-sm font-semibold ${isActive ? 'text-primary' : 'text-muted'}`}>
@@ -434,7 +434,7 @@ function UploadCardWithProjectId({
             <p className="text-[10px] text-muted">{config.hint}</p>
           </>
         )}
-        {uploading && <p className="text-xs text-accent">Uploading…</p>}
+        {uploading && <p className="text-xs text-accent-ink">Uploading…</p>}
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
       </div>
       <input

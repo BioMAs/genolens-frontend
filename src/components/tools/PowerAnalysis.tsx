@@ -190,7 +190,7 @@ export default function PowerAnalysis() {
       {/* ── Mode toggle ── */}
       <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Calculator className="h-5 w-5 text-accent" />
+          <Calculator className="h-5 w-5 text-accent-ink" />
           <h2 className="text-base font-semibold text-primary">Calculation mode</h2>
         </div>
         <div className="flex rounded-lg border border-line overflow-hidden">
@@ -348,7 +348,7 @@ export default function PowerAnalysis() {
                 step={0.01}
                 className="w-full accent-accent"
               />
-              <p className="text-center text-sm font-semibold text-accent mt-1">
+              <p className="text-center text-sm font-semibold text-accent-ink mt-1">
                 {(targetPower * 100).toFixed(0)}%
               </p>
             </div>
@@ -385,7 +385,7 @@ export default function PowerAnalysis() {
           <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
             <button
               onClick={() => setShowConverter(!showConverter)}
-              className="flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent w-full text-left"
+              className="flex items-center gap-2 text-sm font-semibold text-accent-ink hover:text-accent-ink w-full text-left"
             >
               <Info className="h-4 w-4 shrink-0" />
               RNA-seq → Cohen&apos;s d converter
@@ -422,9 +422,9 @@ export default function PowerAnalysis() {
                 </div>
                 {computedD !== null && (
                   <div className="flex items-center justify-between bg-accent-soft rounded-md px-3 py-2">
-                    <span className="text-xs text-accent">Estimated Cohen&apos;s d:</span>
+                    <span className="text-xs text-accent-ink">Estimated Cohen&apos;s d:</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-accent">
+                      <span className="text-sm font-bold text-accent-ink">
                         {computedD.toFixed(3)}
                       </span>
                       <button
@@ -509,7 +509,7 @@ export default function PowerAnalysis() {
           {/* Power curve */}
           <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-accent" />
+              <TrendingUp className="h-5 w-5 text-accent-ink" />
               <h3 className="text-sm font-semibold text-primary">Power curve</h3>
               <span className="text-xs text-muted">
                 — α = {alpha}, d = {effectSize.toFixed(2)}

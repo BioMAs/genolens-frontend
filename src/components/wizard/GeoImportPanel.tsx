@@ -59,7 +59,7 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-indigo-100 bg-accent-soft p-3 text-xs text-accent">
+      <div className="rounded-lg border border-indigo-100 bg-accent-soft p-3 text-xs text-accent-ink">
         Search public <strong>NCBI GEO</strong> RNA-seq series. Only human/mouse series with
         NCBI-generated count matrices can be imported — they arrive as a count matrix + sample
         sheet, ready to run through the pipeline.
@@ -158,7 +158,7 @@ function GeoResultCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs font-bold text-accent">
+            <span className="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs font-bold text-accent-ink">
               {ds.accession}
             </span>
             {ds.organism && <span className="text-xs text-secondary">· {ds.organism}</span>}
@@ -171,7 +171,7 @@ function GeoResultCard({
           href={ds.geo_link}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-shrink-0 items-center gap-1 text-xs text-accent hover:underline"
+          className="flex flex-shrink-0 items-center gap-1 text-xs text-accent-ink hover:underline"
         >
           GEO <ExternalLink className="h-3 w-3" />
         </a>
@@ -186,7 +186,7 @@ function GeoResultCard({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 flex items-center gap-0.5 text-xs text-accent hover:text-accent"
+              className="mt-1 flex items-center gap-0.5 text-xs text-accent-ink hover:text-accent-ink"
             >
               {expanded ? <><ChevronUp className="h-3 w-3" /> Collapse</> : <><ChevronDown className="h-3 w-3" /> Read more</>}
             </button>

@@ -19,7 +19,7 @@ export default function PowerAnalysisPage() {
                     </Link>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-accent-soft rounded-lg">
-                            <FlaskConical className="h-7 w-7 text-accent" />
+                            <FlaskConical className="h-7 w-7 text-accent-ink" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-primary">

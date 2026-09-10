@@ -211,7 +211,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={() => setEnrichmentDatabases(null)}
-                className="text-xs text-accent hover:underline">Select all</button>
+                className="text-xs text-accent-ink hover:underline">Select all</button>
               <button type="button" onClick={() => setEnrichmentDatabases([])}
                 className="text-xs text-secondary hover:underline">Clear</button>
             </div>
@@ -286,7 +286,7 @@ function FileInput({
       <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-strong rounded-md cursor-pointer hover:border-indigo-400 transition-colors bg-surface-2 hover:bg-accent-soft">
         <span className="text-xs text-secondary text-center px-2">
           {fileName ? (
-            <span className="text-accent font-medium">{fileName}</span>
+            <span className="text-accent-ink font-medium">{fileName}</span>
           ) : (
             <>Click or drag</>
           )}

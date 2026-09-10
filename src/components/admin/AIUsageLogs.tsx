@@ -126,7 +126,7 @@ export default function AIUsageLogs() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       log.action_type === 'interpretation' 
-                        ? 'bg-accent-soft text-accent' 
+                        ? 'bg-accent-soft text-accent-ink' 
                         : 'bg-blue-100 text-blue-800'
                     }`}>
                       {log.action_type === 'interpretation' ? 'Interpretation' : 'Q&A Chat'}

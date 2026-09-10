@@ -79,7 +79,7 @@ export default function CommentThread({
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent-ink">
               {comment.user_id.slice(0, 2).toUpperCase()}
             </div>
             <div>
@@ -188,7 +188,7 @@ export default function CommentThread({
           <div className="mt-3">
             <button
               onClick={() => setIsReplying(!isReplying)}
-              className="flex items-center gap-1 text-sm text-accent hover:text-accent"
+              className="flex items-center gap-1 text-sm text-accent-ink hover:text-accent-ink"
             >
               <Reply className="h-4 w-4" />
               Reply

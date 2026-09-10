@@ -86,7 +86,7 @@ export default function Dashboard() {
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-title text-primary">Recent projects</h2>
             <div className="flex items-center gap-3">
-              <Link href="/projects" className="text-caption font-medium text-accent hover:underline">
+              <Link href="/projects" className="text-caption font-medium text-accent-ink hover:underline">
                 View all →
               </Link>
               {/* Le survol etait implemente en JavaScript : deux handlers

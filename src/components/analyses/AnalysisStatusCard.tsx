@@ -56,7 +56,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
               target="_blank"
               rel="noopener noreferrer"
               title={`Data imported from NCBI GEO — ${geoAccession}`}
-              className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent hover:bg-accent-soft"
+              className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-ink hover:bg-accent-soft"
             >
               <Database className="h-3 w-3" />
               GEO · {geoAccession}

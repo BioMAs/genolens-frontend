@@ -251,7 +251,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
             style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
           >
             <div className="font-semibold text-primary mb-1 leading-snug">{tooltip.node.go_name}</div>
-            <div className="text-accent mb-1">{tooltip.node.go_id}</div>
+            <div className="text-accent-ink mb-1">{tooltip.node.go_id}</div>
             {tooltip.node.fdr != null && (
               <div className="text-secondary">FDR: <span className="font-medium">{tooltip.node.fdr.toExponential(2)}</span></div>
             )}

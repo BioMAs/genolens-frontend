@@ -172,7 +172,7 @@ export default function StepAnalysisSettings({
         <div className="rounded-xl border border-indigo-100 bg-accent-soft p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4 text-indigo-400" />
-            <p className="text-sm font-semibold text-accent">
+            <p className="text-sm font-semibold text-accent-ink">
               Standard mode — recommended defaults will be used
             </p>
           </div>
@@ -194,7 +194,7 @@ export default function StepAnalysisSettings({
               ]}
             />
             <div className="rounded-lg bg-surface border border-indigo-100 p-3">
-              <p className="text-xs font-semibold text-accent mb-1.5">Enrichment</p>
+              <p className="text-xs font-semibold text-accent-ink mb-1.5">Enrichment</p>
               <ul className="space-y-0.5">
                 <li className="text-xs text-secondary">
                   <label className="block text-xs text-secondary mb-0.5">Species</label>
@@ -207,7 +207,7 @@ export default function StepAnalysisSettings({
               </ul>
             </div>
           </div>
-          <p className="text-xs text-accent">
+          <p className="text-xs text-accent-ink">
             Switch to Advanced mode to customise any of these parameters.
           </p>
         </div>
@@ -339,7 +339,7 @@ export default function StepAnalysisSettings({
                   </p>
                   <div className="flex gap-2">
                     <button type="button" onClick={selectAllDbs}
-                      className="text-xs text-accent hover:underline">
+                      className="text-xs text-accent-ink hover:underline">
                       Select all
                     </button>
                     <button type="button" onClick={clearAllDbs}
@@ -412,7 +412,7 @@ export default function StepAnalysisSettings({
 function SummaryCard({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="rounded-lg bg-surface border border-indigo-100 p-3">
-      <p className="text-xs font-semibold text-accent mb-1.5">{title}</p>
+      <p className="text-xs font-semibold text-accent-ink mb-1.5">{title}</p>
       <ul className="space-y-0.5">
         {items.map((item, i) => (
           <li key={i} className="text-xs text-secondary">{item}</li>

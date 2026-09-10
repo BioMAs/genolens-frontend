@@ -69,7 +69,7 @@ export default function StepResults({
       <div className="grid gap-4 sm:grid-cols-3">
         {/* DEG Results */}
         <ResultCard
-          icon={<BarChart2 className="h-6 w-6 text-accent" />}
+          icon={<BarChart2 className="h-6 w-6 text-accent-ink" />}
           title="Differential Expression"
           description={`${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''} generated`}
           badge={comparisons.length > 0 ? `${comparisons.reduce((a, c) => a + c.deg_total, 0).toLocaleString()} DEGs total` : undefined}
@@ -83,8 +83,8 @@ export default function StepResults({
                   href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
                   className="flex items-center justify-between rounded-md bg-accent-soft px-3 py-1.5 text-xs hover:bg-accent-soft"
                 >
-                  <span className="font-medium text-accent truncate">{c.name}</span>
-                  <span className="ml-2 shrink-0 text-accent">
+                  <span className="font-medium text-accent-ink truncate">{c.name}</span>
+                  <span className="ml-2 shrink-0 text-accent-ink">
                     ↑{c.deg_up} ↓{c.deg_down}
                   </span>
                 </Link>
@@ -92,7 +92,7 @@ export default function StepResults({
               {comparisons.length > 4 && (
                 <Link
                   href={`/projects/${projectId}`}
-                  className="block text-center text-xs text-accent hover:underline"
+                  className="block text-center text-xs text-accent-ink hover:underline"
                 >
                   + {comparisons.length - 4} more — View all
                 </Link>
@@ -105,7 +105,7 @@ export default function StepResults({
 
         {/* Clustering */}
         <ResultCard
-          icon={<Grid className="h-6 w-6 text-accent" />}
+          icon={<Grid className="h-6 w-6 text-accent-ink" />}
           title="Clustering"
           description="Interactive heatmap of expression patterns"
           color="violet"
@@ -157,7 +157,7 @@ export default function StepResults({
         <button
           type="button"
           onClick={onRunNew}
-          className="flex items-center gap-2 rounded-lg border border-accent-ring bg-accent-soft px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+          className="flex items-center gap-2 rounded-lg border border-accent-ring bg-accent-soft px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-soft"
         >
           <RotateCcw className="h-4 w-4" /> Run New Analysis
         </button>

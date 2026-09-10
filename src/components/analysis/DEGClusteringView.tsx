@@ -100,7 +100,7 @@ export default function DEGClusteringView({
   if (loading && !plotData) {
     return (
       <div className="flex h-96 items-center justify-center bg-surface-2 rounded-lg border border-dashed border-line">
-        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        <Loader2 className="w-8 h-8 text-accent-ink animate-spin" />
         <span className="ml-2 text-secondary">Generating DEG heatmap…</span>
       </div>
     );
@@ -271,7 +271,7 @@ export default function DEGClusteringView({
           </span>
         )}
         {loading && plotData && (
-          <span className="text-xs text-accent flex items-center gap-1">
+          <span className="text-xs text-accent-ink flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
             Updating…
           </span>

@@ -252,7 +252,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                     type="checkbox"
                     checked={newIsPublic}
                     onChange={(e) => setNewIsPublic(e.target.checked)}
-                    className="h-4 w-4 rounded border-strong text-accent focus:ring-accent"
+                    className="h-4 w-4 rounded border-strong text-accent-ink focus:ring-accent"
                   />
                   Make public
                 </label>

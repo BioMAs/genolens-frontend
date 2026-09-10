@@ -27,7 +27,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
  */
 const VARIANTS: Record<BadgeVariant, string> = {
   neutral: 'border-line bg-surface-2 text-secondary',
-  accent: 'border-accent-ring bg-accent-soft text-accent',
+  accent: 'border-accent-ring bg-accent-soft text-accent-ink',
   success: 'border-success/25 bg-success-soft text-success',
   warning: 'border-warning/30 bg-warning-soft text-warning',
   danger: 'border-danger/25 bg-danger-soft text-danger',

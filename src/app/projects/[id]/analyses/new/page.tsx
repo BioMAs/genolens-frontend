@@ -8,7 +8,7 @@ export default async function NewAnalysisPage({ params }: { params: Promise<{ id
       <div className="mb-6">
         <Link
           href={`/projects/${id}/analyses`}
-          className="text-sm text-accent hover:underline"
+          className="text-sm text-accent-ink hover:underline"
         >
           ← Back to analyses
         </Link>

@@ -70,7 +70,7 @@ export default function GoTermPage() {
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-accent-soft text-accent'
+                                        'bg-accent-soft text-accent-ink'
                                     }`}>
                                         {term.namespace}
                                     </span>
@@ -91,7 +91,7 @@ export default function GoTermPage() {
                         {/* Parents */}
                         <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
                             <h3 className="flex items-center text-lg font-medium text-primary mb-4 border-b pb-2">
-                                <ArrowUpCircle className="h-5 w-5 mr-2 text-accent"/>
+                                <ArrowUpCircle className="h-5 w-5 mr-2 text-accent-ink"/>
                                 Parent Terms
                             </h3>
                             {term.parents.length === 0 ? (
@@ -106,7 +106,7 @@ export default function GoTermPage() {
                                         >
                                             <div className="flex items-center text-sm">
                                                 <GitBranch className="h-4 w-4 text-gray-300 mr-2 rotate-180"/>
-                                                <span className="font-mono text-accent group-hover:underline mr-2">{p.id}</span>
+                                                <span className="font-mono text-accent-ink group-hover:underline mr-2">{p.id}</span>
                                                 <span className="text-primary truncate">{p.name}</span>
                                             </div>
                                         </Link>

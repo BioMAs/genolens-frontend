@@ -227,7 +227,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                         {editTags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm text-accent"
+                            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm text-accent-ink"
                           >
                             {tag}
                             <button

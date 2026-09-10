@@ -32,7 +32,7 @@ export default function ReportCustomizationLockedOverlay({ children }: { childre
             default Material &amp; Methods and conclusion — applied to every report you generate.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-            <span className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-accent">
+            <span className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-accent-ink">
               <FileText className="h-3.5 w-3.5" /> Custom logo
             </span>
             <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">Brand colours</span>
