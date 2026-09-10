@@ -56,7 +56,7 @@ export default function SystemStats() {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+          <div key={i} className="bg-surface overflow-hidden shadow rounded-lg animate-pulse">
             <div className="p-5">
               <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
               <div className="h-10 bg-gray-200 rounded w-3/4"></div>
@@ -113,19 +113,19 @@ export default function SystemStats() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+          <div key={stat.name} className="bg-surface overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className={`${stat.color} rounded-md p-3`}>
-                    <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                    <stat.icon className="h-6 w-6 text-on-accent" aria-hidden="true" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
+                    <dt className="text-sm font-medium text-secondary truncate">{stat.name}</dt>
                     <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">
+                      <div className="text-2xl font-semibold text-primary">
                         {stat.isMoney ? `$${stat.value.toLocaleString()}` : stat.value.toLocaleString()}
                       </div>
                     </dd>
@@ -137,13 +137,13 @@ export default function SystemStats() {
         ))}
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">User Distribution by Plan</h3>
+      <div className="bg-surface shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {Object.entries(stats.users_by_plan).map(([plan, count]) => (
-            <div key={plan} className="bg-gray-50 overflow-hidden rounded-lg p-4 border border-gray-200">
-               <dt className="text-sm font-medium text-gray-500 truncate">{plan}</dt>
-               <dd className="mt-1 text-2xl font-semibold text-gray-900">{count}</dd>
+            <div key={plan} className="bg-surface-2 overflow-hidden rounded-lg p-4 border border-line">
+               <dt className="text-sm font-medium text-secondary truncate">{plan}</dt>
+               <dd className="mt-1 text-2xl font-semibold text-primary">{count}</dd>
             </div>
           ))}
         </div>

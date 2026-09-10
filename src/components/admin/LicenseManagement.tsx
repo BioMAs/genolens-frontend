@@ -33,7 +33,7 @@ interface ApiErrorShape {
 function StatusBadge({ record }: { record: LicenseRecord }) {
   if (record.is_revoked) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-2 text-secondary">
         <Ban className="h-3 w-3" /> Revoked
       </span>
     );
@@ -72,7 +72,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       onClick={copy}
       title="Copy key"
-      className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+      className="p-1 rounded hover:bg-hover transition-colors text-muted hover:text-primary"
     >
       {copied ? <CheckCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
     </button>
@@ -150,14 +150,14 @@ export default function LicenseManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">On-Premise Licenses</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-lg font-semibold text-primary">On-Premise Licenses</h2>
+          <p className="text-sm text-secondary mt-1">
             Generate and manage license keys for GenoLens on-premise deployments.
           </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-on-accent text-sm font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
           New license
@@ -166,34 +166,34 @@ export default function LicenseManagement() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-400">Loading…</div>
+        <div className="text-center py-12 text-muted">Loading…</div>
       ) : error ? (
         <div className="text-center py-12 text-red-500">Failed to load licenses.</div>
       ) : licenses.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-muted">
           <Key className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p>No licenses issued yet.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto rounded-lg border border-line">
+          <table className="min-w-full divide-y divide-line text-sm">
+            <thead className="bg-surface-2">
               <tr>
                 {['Client', 'Plan', 'Expiration', 'Status', 'Key', 'Notes', 'Actions'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="bg-surface divide-y divide-subtle">
               {licenses.map((lic) => (
                 <tr key={lic.id} className={lic.is_revoked ? 'opacity-50' : ''}>
-                  <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate" title={lic.client_id}>
+                  <td className="px-4 py-3 font-medium text-primary max-w-[160px] truncate" title={lic.client_id}>
                     {lic.client_id}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 capitalize">{lic.plan}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td className="px-4 py-3 text-secondary capitalize">{lic.plan}</td>
+                  <td className="px-4 py-3 text-secondary whitespace-nowrap">
                     {new Date(lic.expires_at * 1000).toLocaleDateString('en-US')}
                   </td>
                   <td className="px-4 py-3">
@@ -201,13 +201,13 @@ export default function LicenseManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <code className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded max-w-[180px] truncate block" title={lic.license_key}>
+                      <code className="text-xs text-secondary bg-surface-2 px-2 py-0.5 rounded max-w-[180px] truncate block" title={lic.license_key}>
                         {lic.license_key.slice(0, 24)}…
                       </code>
                       <CopyButton value={lic.license_key} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 max-w-[160px] truncate" title={lic.notes ?? ''}>
+                  <td className="px-4 py-3 text-secondary max-w-[160px] truncate" title={lic.notes ?? ''}>
                     {lic.notes || '—'}
                   </td>
                   <td className="px-4 py-3">
@@ -234,17 +234,17 @@ export default function LicenseManagement() {
       {/* Issue modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Generate a new license</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                The generated key must be set in the <code className="bg-gray-100 px-1 rounded">GENOLENS_LICENSE_KEY</code> variable of the client deployment.
+          <div className="bg-surface rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-line">
+              <h3 className="text-lg font-semibold text-primary">Generate a new license</h3>
+              <p className="text-sm text-secondary mt-1">
+                The generated key must be set in the <code className="bg-surface-2 px-1 rounded">GENOLENS_LICENSE_KEY</code> variable of the client deployment.
               </p>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-primary mb-1">
                   Client ID <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -252,16 +252,16 @@ export default function LicenseManagement() {
                   placeholder="e.g. acme-biotech or contact@acme.com"
                   value={form.client_id}
                   onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <label className="block text-sm font-medium text-primary mb-1">Plan</label>
                 <select
                   value={form.plan || plans[0]?.id || ''}
                   onChange={(e) => setForm((f) => ({ ...f, plan: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((p) => (
                     <option key={p.id} value={p.id}>{p.name_en}</option>
@@ -270,7 +270,7 @@ export default function LicenseManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-primary mb-1">
                   Expiration date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -278,18 +278,18 @@ export default function LicenseManagement() {
                   value={form.expires_at_date}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setForm((f) => ({ ...f, expires_at_date: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                <label className="block text-sm font-medium text-primary mb-1">Notes (optional)</label>
                 <textarea
                   rows={2}
                   placeholder="Contract #, contact, remarks…"
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
+                  className="w-full border border-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
                 />
               </div>
 
@@ -300,20 +300,20 @@ export default function LicenseManagement() {
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-line flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowModal(false);
                   setFormError(null);
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-primary border border-strong rounded-lg hover:bg-hover transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleIssue}
                 disabled={issueMutation.isPending}
-                className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-on-accent bg-brand-primary rounded-lg hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
               >
                 {issueMutation.isPending ? 'Generating…' : 'Generate key'}
               </button>

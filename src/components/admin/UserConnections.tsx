@@ -29,7 +29,7 @@ export default function UserConnections() {
         {/* KPI skeleton */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+            <div key={i} className="bg-surface overflow-hidden shadow rounded-lg animate-pulse">
               <div className="p-5">
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
                 <div className="h-8 bg-gray-200 rounded w-1/3" />
@@ -38,7 +38,7 @@ export default function UserConnections() {
           ))}
         </div>
         {/* Chart skeleton */}
-        <div className="bg-white shadow rounded-lg p-6 animate-pulse">
+        <div className="bg-surface shadow rounded-lg p-6 animate-pulse">
           <div className="h-48 bg-gray-200 rounded" />
         </div>
       </div>
@@ -79,15 +79,15 @@ export default function UserConnections() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="bg-white overflow-hidden shadow rounded-lg">
+          <div key={kpi.label} className="bg-surface overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className={`shrink-0 ${kpi.color} rounded-md p-3`}>
-                  <kpi.icon className="h-6 w-6 text-white" />
+                  <kpi.icon className="h-6 w-6 text-on-accent" />
                 </div>
                 <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500 truncate">{kpi.label}</p>
-                  <p className="mt-1 text-3xl font-semibold text-gray-900">{kpi.value}</p>
+                  <p className="text-sm font-medium text-secondary truncate">{kpi.label}</p>
+                  <p className="mt-1 text-3xl font-semibold text-primary">{kpi.value}</p>
                 </div>
               </div>
             </div>
@@ -96,9 +96,9 @@ export default function UserConnections() {
       </div>
 
       {/* Chart */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-surface shadow rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Daily connections</h2>
+          <h2 className="text-lg font-medium text-primary">Daily connections</h2>
           <div className="flex gap-2">
             {PERIOD_OPTIONS.map((opt) => (
               <button
@@ -106,8 +106,8 @@ export default function UserConnections() {
                 onClick={() => setDays(opt.value)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                   days === opt.value
-                    ? 'bg-brand-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-brand-primary text-on-accent'
+                    : 'bg-surface-2 text-secondary hover:bg-gray-200'
                 }`}
               >
                 {opt.label}
@@ -152,50 +152,50 @@ export default function UserConnections() {
       </div>
 
       {/* Recent connections table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Recent connections</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Last 50 entries</p>
+      <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-line">
+          <h2 className="text-lg font-medium text-primary">Recent connections</h2>
+          <p className="text-sm text-secondary mt-0.5">Last 50 entries</p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-line">
+            <thead className="bg-surface-2">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Date &amp; time
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-line">
               {data.recent_events.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-secondary">
                     No connections recorded yet.
                   </td>
                 </tr>
               ) : (
                 data.recent_events.map((event, idx) => (
-                  <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-hover">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
                       {event.full_name ?? (
-                        <span className="text-gray-400 italic">Unknown</span>
+                        <span className="text-muted italic">Unknown</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {event.email ?? (
-                        <span className="text-gray-400 font-mono text-xs">
+                        <span className="text-muted font-mono text-xs">
                           {event.user_id.slice(0, 8)}…
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {new Date(event.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: '2-digit',
