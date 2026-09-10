@@ -216,7 +216,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
           }`}
         >
           <div
-            className="grid h-7 w-7 place-items-center rounded-full text-[11px] font-bold text-white"
+            className="grid h-7 w-7 place-items-center rounded-full text-[11px] font-bold text-on-accent"
             style={{
               background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))',
               fontFamily: 'var(--font-syne)',

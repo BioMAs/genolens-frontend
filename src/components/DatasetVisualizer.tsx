@@ -51,7 +51,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
   }, [data]);
 
   if (!data || data.data.length === 0) {
-    return <div className="p-8 text-center text-gray-500">No data to visualize</div>;
+    return <div className="p-8 text-center text-secondary">No data to visualize</div>;
   }
 
   // Check for Volcano Plot candidates (Log2FoldChange vs P-value)
@@ -73,9 +73,9 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Volcano Plot</h3>
-        <div className="text-sm text-gray-500 mb-2">
+        <div className="text-sm text-secondary mb-2">
           X: {volcanoX} | Y: -log10({volcanoY})
         </div>
         <ResponsiveContainer width="100%" height="100%">
@@ -102,7 +102,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     ) || numericColumns[0];
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Enrichment Overview</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -123,7 +123,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             <Bar dataKey={scoreCol} fill="#8884d8" name={scoreCol} />
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 mt-2 text-center">Top 20 items by {scoreCol}</p>
+        <p className="text-sm text-secondary mt-2 text-center">Top 20 items by {scoreCol}</p>
       </div>
     );
   }
@@ -134,7 +134,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     const samplesToPlot = numericColumns.slice(0, 5);
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Expression Distribution (First 5 Samples)</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.slice(0, 50)}>
@@ -148,14 +148,14 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             ))}
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 mt-2 text-center">First 50 genes</p>
+        <p className="text-sm text-secondary mt-2 text-center">First 50 genes</p>
       </div>
     );
   }
 
   // Default Fallback
   return (
-    <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
+    <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
       <h3 className="text-lg font-medium mb-4">Data Overview</h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData.slice(0, 20)}>

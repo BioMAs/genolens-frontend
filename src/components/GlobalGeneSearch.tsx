@@ -144,7 +144,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
           className={
             isTopBar
               ? "h-3.5 w-3.5 text-[var(--text-muted)]"
-              : "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400"
+              : "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted"
           }
         />
         <input
@@ -169,7 +169,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
           className={
             isTopBar
               ? "w-full bg-transparent text-[12.5px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
-              : "w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              : "w-full rounded-md border border-strong py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:bg-gray-800 dark:text-white"
           }
         />
         {isTopBar && <KbdHint>⌘K</KbdHint>}
@@ -179,14 +179,14 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
       {isOpen && (
         <div
           ref={resultsRef}
-          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-line bg-surface shadow-lg"
         >
           {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-secondary">
               Searching...
             </div>
           ) : results.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-secondary">
               No results found for &quot;{debouncedQuery}&quot;
             </div>
           ) : (
@@ -195,8 +195,8 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                 <button
                   key={`${result.project_id}-${result.dataset_id}-${result.comparison_name || "none"}`}
                   onClick={() => handleSelectResult(result)}
-                  className={`w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                    index === safeSelectedIndex ? "bg-gray-100 dark:bg-gray-700" : ""
+                  className={`w-full px-4 py-3 text-left hover:bg-hover transition-colors${
+                    index === safeSelectedIndex ? "bg-surface-2" : ""
                   }`}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
@@ -207,17 +207,17 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                           {result.gene_symbol}
                         </span>
                         {result.gene_id && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-secondary">
                             {result.gene_id}
                           </span>
                         )}
                       </div>
                       
-                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                      <div className="mt-1 text-sm text-secondary">
                         {result.project_name}
                       </div>
                       
-                      <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                      <div className="mt-1 flex items-center gap-1 text-xs text-secondary">
                         <span>{result.dataset_name}</span>
                         {result.comparison_name && (
                           <>
@@ -239,12 +239,12 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                             </span>
                           )}
                           {result.log_fc != null && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-secondary">
                               logFC {result.log_fc > 0 ? "+" : ""}{result.log_fc.toFixed(2)}
                             </span>
                           )}
                           {result.padj != null && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                            <span className="text-xs text-muted">
                               padj {result.padj < 0.001 ? "< 0.001" : result.padj.toFixed(3)}
                             </span>
                           )}
@@ -252,7 +252,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                       )}
                     </div>
                     
-                    <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 ml-2" />
+                    <ChevronRight className="h-5 w-5 text-muted flex-shrink-0 ml-2" />
                   </div>
                 </button>
               ))}

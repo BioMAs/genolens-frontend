@@ -103,7 +103,7 @@ function ChatConversation({
         )}
         {messages.map((m, i) =>
           m.role === 'user' ? (
-            <div key={i} className="self-end rounded-2xl bg-[var(--sl-purple)] px-4 py-2 text-sm text-white">
+            <div key={i} className="self-end rounded-2xl bg-[var(--sl-purple)] px-4 py-2 text-sm text-on-accent">
               {m.content}
             </div>
           ) : (
@@ -161,7 +161,7 @@ function ChatConversation({
           <button
             type="submit"
             disabled={isStreaming || !input.trim()}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sl-purple)] text-white disabled:opacity-40"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sl-purple)] text-on-accent disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </button>

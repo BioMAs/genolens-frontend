@@ -38,16 +38,16 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-2xl ring-1 ring-gray-200">
+      <div className="w-full max-w-md rounded-xl bg-surface shadow-2xl ring-1 ring-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
             <Trash2 className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-semibold text-gray-900">Supprimer le projet</h2>
+            <h2 className="text-lg font-semibold text-primary">Supprimer le projet</h2>
           </div>
           <button
             onClick={handleClose}
-            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+            className="rounded-full p-1 text-muted hover:bg-hover hover:text-secondary"
           >
             <X className="h-5 w-5" />
           </button>
@@ -63,15 +63,15 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Tapez <span className="font-semibold text-gray-900">{project.name}</span> pour confirmer
+            <label className="block text-sm font-medium text-primary mb-1.5">
+              Tapez <span className="font-semibold text-primary">{project.name}</span> pour confirmer
             </label>
             <input
               type="text"
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
               placeholder={project.name}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && isConfirmed && handleDelete()}
             />
@@ -83,17 +83,17 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-subtle px-6 py-4">
           <button
             onClick={handleClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"
           >
             Annuler
           </button>
           <button
             onClick={handleDelete}
             disabled={!isConfirmed || deleteMutation.isPending}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: isConfirmed && !deleteMutation.isPending ? '#ef4444' : '#ef4444' }}
           >
             {deleteMutation.isPending ? (

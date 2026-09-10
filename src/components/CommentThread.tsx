@@ -75,18 +75,18 @@ export default function CommentThread({
 
   return (
     <div className={`${level > 0 ? 'ml-8' : ''}`}>
-      <div className="group relative rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      <div className="group relative rounded-lg border border-line bg-surface p-4">
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-medium text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent">
               {comment.user_id.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-medium text-primary">
                 User {comment.user_id.slice(0, 8)}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-secondary">
                 {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                 {comment.updated_at !== comment.created_at && ' (edited)'}
               </p>
@@ -105,13 +105,13 @@ export default function CommentThread({
             <div className="relative">
               <button
                 onClick={() => setShowActions(!showActions)}
-                className="rounded p-1 text-gray-400 opacity-0 hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                className="rounded p-1 text-muted opacity-0 hover:bg-hover hover:text-secondary group-hover:opacity-100"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
 
               {showActions && (
-                <div className="absolute right-0 z-10 mt-1 w-48 rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                <div className="absolute right-0 z-10 mt-1 w-48 rounded-md border border-line bg-surface shadow-lg">
                   <div className="py-1">
                     {isOwner && (
                       <>
@@ -120,7 +120,7 @@ export default function CommentThread({
                             setIsEditing(true);
                             setShowActions(false);
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-hover"
                         >
                           <Edit2 className="h-4 w-4" />
                           Edit
@@ -130,7 +130,7 @@ export default function CommentThread({
                             handleDelete();
                             setShowActions(false);
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-hover dark:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete
@@ -142,7 +142,7 @@ export default function CommentThread({
                         handleToggleResolved();
                         setShowActions(false);
                       }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-hover"
                     >
                       {comment.is_resolved ? (
                         <>
@@ -176,7 +176,7 @@ export default function CommentThread({
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none">
             {comment.content.split('\n').map((line, idx) => (
-              <p key={idx} className="mb-2 text-gray-700 dark:text-gray-300">
+              <p key={idx} className="mb-2 text-primary">
                 {line || '\u00A0'}
               </p>
             ))}
@@ -188,7 +188,7 @@ export default function CommentThread({
           <div className="mt-3">
             <button
               onClick={() => setIsReplying(!isReplying)}
-              className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+              className="flex items-center gap-1 text-sm text-accent hover:text-accent"
             >
               <Reply className="h-4 w-4" />
               Reply
@@ -198,7 +198,7 @@ export default function CommentThread({
 
         {/* Reply editor */}
         {isReplying && (
-          <div className="mt-3 rounded-md bg-gray-50 p-3 dark:bg-gray-900">
+          <div className="mt-3 rounded-md bg-surface-2 p-3">
             <CommentEditor
               projectId={projectId}
               commentType={comment.comment_type}

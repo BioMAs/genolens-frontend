@@ -175,7 +175,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             title={active ? `Disable ${name}` : `Enable ${name}`}
           >
             <span
-              className="absolute top-0.5 grid h-5 w-5 place-items-center rounded-full bg-white shadow transition-all duration-300"
+              className="absolute top-0.5 grid h-5 w-5 place-items-center rounded-full bg-surface shadow transition-all duration-300"
               style={{ left: active ? '22px' : '2px' }}
             >
               {busy && <Loader2 className="h-3 w-3 animate-spin" style={{ color }} />}

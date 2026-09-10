@@ -195,19 +195,19 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs max-w-xs"
+            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-lg shadow-xl p-3 text-xs max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
-            <div className="font-semibold text-gray-900">{hoveredGene.gene}</div>
+            <div className="font-semibold text-primary">{hoveredGene.gene}</div>
             {info.gene_name && info.gene_name !== hoveredGene.gene && (
-              <div className="text-gray-500 mb-1">{info.gene_name}</div>
+              <div className="text-secondary mb-1">{info.gene_name}</div>
             )}
-            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-gray-600'}`}>
+            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-secondary'}`}>
               {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-gray-600">
-              <span>logFC</span><span className="font-semibold text-gray-900">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
-              <span>Adj. P-value</span><span className="font-semibold text-gray-900">{info.padj?.toExponential(2) ?? 'N/A'}</span>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-secondary">
+              <span>logFC</span><span className="font-semibold text-primary">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
+              <span>Adj. P-value</span><span className="font-semibold text-primary">{info.padj?.toExponential(2) ?? 'N/A'}</span>
             </div>
           </div>,
           document.body
@@ -324,12 +324,12 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                             );
                           })()}
                           {term.description && (
-                            <div className="text-xs text-gray-500 italic max-w-sm leading-snug">{term.description}</div>
+                            <div className="text-xs text-secondary italic max-w-sm leading-snug">{term.description}</div>
                           )}
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge className={`${getNamespaceBadgeColor(term.namespace)} text-white`}>
+                        <Badge className={`${getNamespaceBadgeColor(term.namespace)}text-on-accent`}>
                           {getNamespaceLabel(term.namespace)}
                         </Badge>
                       </td>

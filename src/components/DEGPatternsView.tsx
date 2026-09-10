@@ -109,12 +109,12 @@ export default function DEGPatternsView({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center gap-2 mb-1">
-          <GitBranch className="h-5 w-5 text-gray-700" />
-          <h2 className="text-xl font-bold text-gray-900">DEG patterns</h2>
+          <GitBranch className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold text-primary">DEG patterns</h2>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-secondary mb-4">
           Group the significant DEGs of <strong>{label}</strong> (union across all comparisons) into
           clusters that share an expression trajectory across the analysis&apos; conditions (z-scored).
           Each panel shows a cluster&apos;s median trajectory and its interquartile band.
@@ -122,26 +122,26 @@ export default function DEGPatternsView({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Number of clusters</label>
+            <label className="block text-xs font-medium text-primary mb-1">Number of clusters</label>
             <input
               type="number" min={2} max={20} value={nClusters}
               onChange={(e) => setNClusters(parseInt(e.target.value) || 6)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="w-full px-2 py-1.5 text-sm border border-strong rounded"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Min cluster size</label>
+            <label className="block text-xs font-medium text-primary mb-1">Min cluster size</label>
             <input
               type="number" min={1} max={500} value={minClusterSize}
               onChange={(e) => setMinClusterSize(parseInt(e.target.value) || 15)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="w-full px-2 py-1.5 text-sm border border-strong rounded"
             />
           </div>
           <div className="md:col-span-2 flex justify-end">
             <button
               onClick={() => doRun(groupOrder ?? undefined)}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Clustering…' : result ? 'Re-run' : 'Compute patterns'}
             </button>
@@ -150,25 +150,25 @@ export default function DEGPatternsView({
 
         {/* Group order editor */}
         {groupOrder && groupOrder.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="text-xs font-medium text-gray-700 mb-2">
+          <div className="mt-4 pt-4 border-t border-subtle">
+            <div className="text-xs font-medium text-primary mb-2">
               Condition order (left → right on the x-axis)
             </div>
             <div className="flex flex-wrap gap-2">
               {groupOrder.map((g, i) => (
-                <div key={g} className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs">
-                  <button onClick={() => moveGroup(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+                <div key={g} className="inline-flex items-center gap-1 rounded-md border border-line bg-surface-2 px-2 py-1 text-xs">
+                  <button onClick={() => moveGroup(i, -1)} disabled={i === 0} className="text-muted hover:text-primary disabled:opacity-30">
                     <ArrowLeft className="h-3 w-3" />
                   </button>
-                  <span className="font-medium text-gray-800">{g}</span>
-                  <button onClick={() => moveGroup(i, 1)} disabled={i === groupOrder.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+                  <span className="font-medium text-primary">{g}</span>
+                  <button onClick={() => moveGroup(i, 1)} disabled={i === groupOrder.length - 1} className="text-muted hover:text-primary disabled:opacity-30">
                     <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
               ))}
               <button
                 onClick={() => doRun(groupOrder)}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-strong text-primary hover:bg-hover"
               >
                 Apply order
               </button>
@@ -183,17 +183,17 @@ export default function DEGPatternsView({
 
       {/* Results */}
       {result && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-surface border border-line rounded-lg p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-primary">
               {result.n_clusters} pattern{result.n_clusters !== 1 ? 's' : ''}
             </h3>
-            <button onClick={exportCSV} className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900">
+            <button onClick={exportCSV} className="inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary">
               <Download className="h-4 w-4" /> Export gene → cluster (.csv)
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 mb-4">
+          <p className="text-xs text-secondary mb-4">
             {result.n_genes_clustered}/{result.n_deg_used} genes clustered
             {result.n_deg_used < result.n_deg_requested
               ? ` (of ${result.n_deg_requested} DEGs)`
@@ -206,7 +206,7 @@ export default function DEGPatternsView({
           </p>
 
           {result.clusters.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-secondary">
               No cluster reached the minimum size. Try fewer clusters or a smaller minimum size.
             </p>
           ) : (
@@ -215,9 +215,9 @@ export default function DEGPatternsView({
                 const data = facetData(c, result.groups);
                 const color = palette[ci % palette.length];
                 return (
-                  <div key={c.id} className="border border-gray-100 rounded-lg p-3">
-                    <div className="text-sm font-semibold text-gray-800 mb-1">
-                      Cluster {c.id} <span className="text-gray-400 font-normal">· {c.n_genes} genes</span>
+                  <div key={c.id} className="border border-subtle rounded-lg p-3">
+                    <div className="text-sm font-semibold text-primary mb-1">
+                      Cluster {c.id} <span className="text-muted font-normal">· {c.n_genes} genes</span>
                     </div>
                     <ResponsiveContainer width="100%" height={200}>
                       <ComposedChart data={data} margin={{ top: 5, right: 10, bottom: 25, left: -10 }}>

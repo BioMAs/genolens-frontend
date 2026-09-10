@@ -53,8 +53,8 @@ export default function GenerateReportButton({ analysisId }: Props) {
         onClick={handleDownload}
         disabled={isDownloading}
         className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2
-                   text-sm font-medium text-white transition-colors hover:bg-green-700
-                   disabled:opacity-50"
+ text-sm font-medium text-on-accent transition-colors hover:bg-green-700
+ disabled:opacity-50"
       >
         {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         {isDownloading ? "Downloading…" : "Download Report"}
@@ -88,7 +88,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <button
         disabled
         className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg
-                   bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700"
+ bg-accent-soft px-4 py-2 text-sm font-medium text-accent"
       >
         <Loader2 className="h-4 w-4 animate-spin" />
         Generating Report…
@@ -100,9 +100,9 @@ export default function GenerateReportButton({ analysisId }: Props) {
     <button
       onClick={handleGenerate}
       disabled={trigger.isPending}
-      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2
-                 text-sm font-medium text-white transition-colors hover:bg-indigo-700
-                 disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2
+ text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover
+ disabled:opacity-50"
     >
       {trigger.isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />

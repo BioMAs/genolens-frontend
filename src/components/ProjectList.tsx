@@ -105,7 +105,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
         </p>
         <button
           onClick={onCreateClick}
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all"
+          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent transition-all"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) =>
             ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')

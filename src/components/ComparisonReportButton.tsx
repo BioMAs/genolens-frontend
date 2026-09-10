@@ -167,7 +167,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               </button>
               <button
                 onClick={handleGenerateWithCustomization}
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover"
               >
                 <FileText className="h-4 w-4" /> Generate
               </button>
@@ -186,8 +186,8 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
             onClick={handleDownload}
             disabled={isDownloading}
             className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2
-                       text-sm font-medium text-white transition-colors hover:bg-green-700
-                       disabled:opacity-50"
+ text-sm font-medium text-on-accent transition-colors hover:bg-green-700
+ disabled:opacity-50"
           >
             {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {isDownloading ? "Downloading…" : "Download Report"}
@@ -197,7 +197,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
             disabled={trigger.isPending}
             title="Regenerate with the latest branding and content"
             className="inline-flex items-center gap-2 rounded-lg border px-3 py-2
-                       text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
+ text-sm font-medium transition-colors hover:bg-hover disabled:opacity-50"
             style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
           >
             {trigger.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -233,7 +233,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
         <button
           disabled
           className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg
-                     bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700"
+ bg-accent-soft px-4 py-2 text-sm font-medium text-accent"
         >
           <Loader2 className="h-4 w-4 animate-spin" />
           Generating Report…
@@ -245,9 +245,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
       <button
         onClick={handleGenerate}
         disabled={trigger.isPending}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2
-                   text-sm font-medium text-white transition-colors hover:bg-indigo-700
-                   disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2
+ text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover
+ disabled:opacity-50"
       >
         {trigger.isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" />

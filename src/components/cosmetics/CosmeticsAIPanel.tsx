@@ -60,7 +60,7 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
           <button
             onClick={handleGenerate}
             disabled={disabled || mutation.isPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-on-accent disabled:opacity-50"
             style={{ background: 'var(--sl-teal-dark, #0f766e)' }}
           >
             {mutation.isPending ? (

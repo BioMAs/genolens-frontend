@@ -112,7 +112,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
             const z = byId[slug];
             const color = ZONE_COLORS[slug];
             return (
-              <div key={slug} className="rounded-lg border border-gray-100 p-2.5">
+              <div key={slug} className="rounded-lg border border-subtle p-2.5">
                 <div className="flex items-center justify-between text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} />
@@ -122,7 +122,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
                     <DirArrow dir={z.dominant_direction} /> {z.activity}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div className="mt-1.5 h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${z.activity}%`, background: color }} />
                 </div>
               </div>

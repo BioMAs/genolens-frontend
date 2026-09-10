@@ -106,11 +106,11 @@ function DotPlotTooltip({ active, payload }: DotPlotTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs max-w-60">
-      <div className="font-semibold text-gray-900 mb-1 leading-snug">{d.go_name}</div>
-      <div className="text-indigo-500 mb-2">{d.go_id}</div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
-        <span>FDR</span><span className="font-semibold text-indigo-700">{d.fdr.toExponential(2)}</span>
+    <div className="bg-surface border border-line rounded-lg shadow-lg p-3 text-xs max-w-60">
+      <div className="font-semibold text-primary mb-1 leading-snug">{d.go_name}</div>
+      <div className="text-accent mb-2">{d.go_id}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">
+        <span>FDR</span><span className="font-semibold text-accent">{d.fdr.toExponential(2)}</span>
         <span>Gene ratio</span><span className="font-semibold">{d.x.toFixed(3)}</span>
         <span>Enrichment</span><span className="font-semibold">{d.enrichment_ratio.toFixed(2)}×</span>
         <span>Genes</span><span className="font-semibold">{d.study_count}</span>
@@ -305,9 +305,9 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
       {/* ── Header bar ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-gray-900">Pathway Enrichment</h3>
+          <h3 className="font-semibold text-primary">Pathway Enrichment</h3>
           {isRunning && (
-            <span className="flex items-center gap-1.5 text-xs text-indigo-600">
+            <span className="flex items-center gap-1.5 text-xs text-accent">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Loading…
             </span>
@@ -323,7 +323,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 text-xs gap-1.5 ${showSettings ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500'}`}
+            className={`h-7 text-xs gap-1.5 ${showSettings ? 'text-accent bg-accent-soft' : 'text-secondary'}`}
             onClick={() => setShowSettings(s => !s)}
           >
             <Settings2 className="w-3.5 h-3.5" />
@@ -395,7 +395,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
             <button
               type="button"
               onClick={() => setShowAdvanced(s => !s)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
+              className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary"
             >
               {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               Advanced options
@@ -446,8 +446,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
       {/* ── Loading skeleton (first load) ────────────────────────────────── */}
       {isInitialLoad && isRunning && (
         <div className="space-y-3 animate-pulse">
-          <div className="h-10 bg-gray-100 rounded-lg" />
-          <div className="h-64 bg-gray-50 rounded-xl border border-gray-100" />
+          <div className="h-10 bg-surface-2 rounded-lg" />
+          <div className="h-64 bg-surface-2 rounded-xl border border-subtle" />
         </div>
       )}
 
@@ -475,15 +475,15 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
           {/* Visualization tabs */}
           <Card className={isRunning ? 'opacity-60 pointer-events-none transition-opacity' : 'transition-opacity'}>
-            <div className="flex border-b border-gray-100 bg-gray-50 rounded-t-xl overflow-hidden">
+            <div className="flex border-b border-subtle bg-surface-2 rounded-t-xl overflow-hidden">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-5 py-2.5 text-xs font-semibold border-b-2 transition-colors
                     ${activeTab === tab.id
-                      ? 'text-indigo-600 border-indigo-500 bg-white'
-                      : 'text-gray-400 border-transparent hover:text-gray-600'
+                      ? 'text-accent border-accent bg-surface'
+                      : 'text-muted border-transparent hover:text-secondary'
                     }`}
                 >
                   {tab.label}

@@ -114,7 +114,7 @@ export default function AIChartAssistant({
               <div className="flex items-center gap-2">
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3 w-3" />
@@ -181,7 +181,7 @@ export default function AIChartAssistant({
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Get an AI reading of this chart.</p>
                 <button
                   onClick={() => interpret()}
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
@@ -218,7 +218,7 @@ export default function AIChartAssistant({
                 {msg.role === 'assistant' && <AIAvatar />}
                 {msg.role === 'user' ? (
                   <div
-                    className="max-w-[85%] rounded-2xl rounded-br-sm px-3 py-2 text-sm leading-relaxed text-white"
+                    className="max-w-[85%] rounded-2xl rounded-br-sm px-3 py-2 text-sm leading-relaxed text-on-accent"
                     style={{ background: 'var(--sl-purple)' }}
                   >
                     {msg.content}
@@ -264,7 +264,7 @@ export default function AIChartAssistant({
             <button
               onClick={handleAsk}
               disabled={!question.trim() || isAsking || isInterpreting}
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: 'var(--sl-purple)' }}
               aria-label="Send"
             >

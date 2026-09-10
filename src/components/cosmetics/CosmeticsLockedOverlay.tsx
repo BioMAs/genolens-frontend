@@ -22,7 +22,7 @@ export default function CosmeticsLockedOverlay({ children }: { children: ReactNo
             className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full"
             style={{ background: 'linear-gradient(135deg,#db2777,#8b5cf6)' }}
           >
-            <Lock className="h-6 w-6 text-white" />
+            <Lock className="h-6 w-6 text-on-accent" />
           </div>
           <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
             Cosmetics module
@@ -40,7 +40,7 @@ export default function CosmeticsLockedOverlay({ children }: { children: ReactNo
             <span className="rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">AI narrative</span>
           </div>
           <div
-            className="mt-5 rounded-lg px-4 py-2.5 text-sm font-medium text-white"
+            className="mt-5 rounded-lg px-4 py-2.5 text-sm font-medium text-on-accent"
             style={{ background: 'linear-gradient(135deg,#db2777,#8b5cf6)' }}
           >
             Unlock this module — contact your administrator

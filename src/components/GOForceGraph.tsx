@@ -220,7 +220,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Namespace filters */}
-      <div className="flex items-center gap-4 px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs">
+      <div className="flex items-center gap-4 px-3 py-2 bg-surface-2 border-b border-subtle text-xs">
         {ALL_NS.map(ns => (
           <label key={ns} className="flex items-center gap-1.5 cursor-pointer select-none">
             <input
@@ -233,7 +233,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
             <span style={{ color: NS_COLORS[ns] }} className="font-medium">{NS_LABELS[ns]}</span>
           </label>
         ))}
-        <span className="ml-auto text-gray-400">Scroll to zoom · Drag nodes to reposition</span>
+        <span className="ml-auto text-muted">Scroll to zoom · Drag nodes to reposition</span>
       </div>
 
       {graphData.truncatedBanner && (
@@ -242,21 +242,21 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
         </div>
       )}
 
-      <div ref={containerRef} className="flex-1 relative overflow-hidden bg-white">
+      <div ref={containerRef} className="flex-1 relative overflow-hidden bg-surface">
         <svg ref={svgRef} className="w-full h-full" />
 
         {tooltip && (
           <div
-            className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-2 text-xs pointer-events-none max-w-48"
+            className="absolute z-10 bg-surface border border-line rounded-lg shadow-lg p-2 text-xs pointer-events-none max-w-48"
             style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
           >
-            <div className="font-semibold text-gray-900 mb-1 leading-snug">{tooltip.node.go_name}</div>
-            <div className="text-indigo-500 mb-1">{tooltip.node.go_id}</div>
+            <div className="font-semibold text-primary mb-1 leading-snug">{tooltip.node.go_name}</div>
+            <div className="text-accent mb-1">{tooltip.node.go_id}</div>
             {tooltip.node.fdr != null && (
-              <div className="text-gray-600">FDR: <span className="font-medium">{tooltip.node.fdr.toExponential(2)}</span></div>
+              <div className="text-secondary">FDR: <span className="font-medium">{tooltip.node.fdr.toExponential(2)}</span></div>
             )}
             {tooltip.node.gene_count != null && (
-              <div className="text-gray-600">Genes: <span className="font-medium">{tooltip.node.gene_count}</span></div>
+              <div className="text-secondary">Genes: <span className="font-medium">{tooltip.node.gene_count}</span></div>
             )}
           </div>
         )}

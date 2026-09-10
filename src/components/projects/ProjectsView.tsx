@@ -66,7 +66,7 @@ export default function ProjectsView() {
           onClick={() => !projectLimit.blocked && setIsModalOpen(true)}
           disabled={projectLimit.blocked}
           title={projectLimit.reason}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) => {
             if (!projectLimit.blocked)
@@ -125,7 +125,7 @@ export default function ProjectsView() {
                 <button
                   type="button"
                   onClick={() => setSearchInput('')}
-                  className="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                  className="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   Clear search

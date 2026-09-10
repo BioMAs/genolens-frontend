@@ -18,7 +18,7 @@ export default function LicenseExpiredBanner() {
   return (
     <div
       role="alert"
-      className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white text-sm text-center py-2 px-4 shadow-md"
+      className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-on-accent text-sm text-center py-2 px-4 shadow-md"
     >
       <span className="font-semibold">License expired</span>
       {expiredAt && <span> on {expiredAt}</span>}

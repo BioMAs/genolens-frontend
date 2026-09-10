@@ -239,7 +239,7 @@ export default function ExportMenu({
       {isOpen && !isExporting && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50"
+          className="absolute right-0 mt-2 w-56 bg-surface border border-line rounded-md shadow-lg z-50"
         >
           <div className="py-1">
             {formats.map((format) => {
@@ -252,18 +252,18 @@ export default function ExportMenu({
                   key={format}
                   onClick={() => handleExport(format)}
                   disabled={isFormatExporting}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-start gap-3 disabled:opacity-50"
+                  className="w-full px-4 py-3 text-left hover:bg-hover transition-colors flex items-start gap-3 disabled:opacity-50"
                 >
                   {isFormatExporting ? (
                     <Loader2 className="h-5 w-5 text-brand-primary animate-spin mt-0.5" />
                   ) : (
-                    <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
+                    <Icon className="h-5 w-5 text-secondary mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-sm font-medium text-primary">
                       {meta.label}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-secondary">
                       {meta.description}
                     </div>
                   </div>

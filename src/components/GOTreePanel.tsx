@@ -70,14 +70,14 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
     <div>
       <div
         className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer text-sm transition-colors
-          ${isSelected ? 'bg-indigo-50 border-l-2 border-indigo-500' : 'hover:bg-gray-50'}
+          ${isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover'}
           ${!node.is_enriched ? 'opacity-50' : ''}
         `}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         onClick={() => onSelect(node)}
       >
         <button
-          className="w-4 h-4 flex items-center justify-center text-gray-400 flex-shrink-0"
+          className="w-4 h-4 flex items-center justify-center text-muted flex-shrink-0"
           onClick={(e) => { e.stopPropagation(); if (hasChildren) toggleExpand(node.go_id); }}
         >
           {hasChildren ? (
@@ -90,12 +90,12 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
           style={{ backgroundColor: fdrDotColor(node.fdr) }}
         />
 
-        <span className={`flex-1 truncate ${node.is_enriched ? 'font-medium text-gray-900' : 'text-gray-400'}`}>
+        <span className={`flex-1 truncate ${node.is_enriched ? 'font-medium text-primary' : 'text-muted'}`}>
           {node.go_name}
         </span>
 
         {node.is_enriched && node.fdr != null && (
-          <span className="text-xs font-semibold text-indigo-600 ml-1 flex-shrink-0">
+          <span className="text-xs font-semibold text-accent ml-1 flex-shrink-0">
             {node.fdr < 0.001 ? node.fdr.toExponential(1) : node.fdr.toFixed(3)}
           </span>
         )}
@@ -142,9 +142,9 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <div>
-        <div className="text-xs font-semibold text-indigo-500 mb-0.5">{node.go_id}</div>
-        <div className="text-base font-bold text-gray-900 leading-snug mb-2">{node.go_name}</div>
-        <Badge className={`text-xs ${NS_BADGE_CLASS[ns] ?? 'bg-gray-100 text-gray-600'}`}>
+        <div className="text-xs font-semibold text-accent mb-0.5">{node.go_id}</div>
+        <div className="text-base font-bold text-primary leading-snug mb-2">{node.go_name}</div>
+        <Badge className={`text-xs ${NS_BADGE_CLASS[ns] ?? 'bg-surface-2 text-secondary'}`}>
           {NS_FULL[ns] ?? node.namespace}
         </Badge>
       </div>
@@ -157,9 +157,9 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
             { label: 'Genes', value: node.gene_count ?? '—' },
             { label: 'GO level', value: node.level ?? '—' },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-gray-50 rounded-lg p-2.5">
-              <div className="text-lg font-bold text-indigo-600">{value}</div>
-              <div className="text-xs text-gray-400">{label}</div>
+            <div key={label} className="bg-surface-2 rounded-lg p-2.5">
+              <div className="text-lg font-bold text-accent">{value}</div>
+              <div className="text-xs text-muted">{label}</div>
             </div>
           ))}
         </div>
@@ -167,15 +167,15 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
 
       {node.is_enriched && genes.length > 0 && (
         <div>
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Enriched genes</div>
+          <div className="text-xs font-bold text-muted uppercase tracking-wide mb-2">Enriched genes</div>
           <div className="flex flex-wrap gap-1">
             {visibleGenes.map(g => (
-              <span key={g} className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-1.5 py-0.5 rounded">
+              <span key={g} className="bg-accent-soft text-accent text-xs font-semibold px-1.5 py-0.5 rounded">
                 {g}
               </span>
             ))}
             {extraCount > 0 && (
-              <span className="text-xs text-gray-400 self-center">+{extraCount} more</span>
+              <span className="text-xs text-muted self-center">+{extraCount} more</span>
             )}
           </div>
         </div>
@@ -310,12 +310,12 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-indigo-50/50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-subtle bg-indigo-50/50">
         <div className="flex items-center gap-3">
           <div>
-            <div className="text-xs font-bold text-indigo-600 uppercase tracking-wide">GO Hierarchy</div>
+            <div className="text-xs font-bold text-accent uppercase tracking-wide">GO Hierarchy</div>
             {hierarchy && (
-              <div className="text-xs text-gray-400 mt-0.5">
+              <div className="text-xs text-muted mt-0.5">
                 {enrichedCount} enriched terms · grey = parent context
               </div>
             )}
@@ -324,9 +324,9 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
         <div className="flex items-center gap-2">
           {viewMode === 'tree' && (
             <>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs text-secondary">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />significant
+                  <span className="w-2 h-2 rounded-full bg-accent inline-block" />significant
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-gray-200 inline-block" />context only
@@ -340,11 +340,11 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
               </Button>
             </>
           )}
-          <div className="flex border border-gray-200 rounded-md overflow-hidden">
+          <div className="flex border border-line rounded-md overflow-hidden">
             <button
               onClick={() => setViewMode('tree')}
               className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
-                ${viewMode === 'tree' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                ${viewMode === 'tree' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
               title="Tree view"
             >
               <List className="h-3.5 w-3.5" />
@@ -353,7 +353,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             <button
               onClick={() => setViewMode('graph')}
               className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
-                ${viewMode === 'graph' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                ${viewMode === 'graph' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
               title="Force-directed graph"
             >
               <Network className="h-3.5 w-3.5" />
@@ -364,21 +364,21 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       </div>
 
       {/* Namespace tabs */}
-      <div className="flex border-b border-gray-100 bg-gray-50">
+      <div className="flex border-b border-subtle bg-surface-2">
         {(Object.keys(NS_LABELS) as NamespaceKey[]).map(ns => (
           <button
             key={ns}
             onClick={() => { setActiveNs(ns); setSelectedNode(null); }}
             className={`px-4 py-2 text-xs font-semibold transition-colors border-b-2
               ${activeNs === ns
-                ? 'text-indigo-600 border-indigo-500 bg-white'
-                : 'text-gray-400 border-transparent hover:text-gray-600'
+                ? 'text-accent border-accent bg-surface'
+                : 'text-muted border-transparent hover:text-secondary'
               }`}
           >
             {NS_FULL[ns]}
             {hierarchy && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
-                ${activeNs === ns ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                ${activeNs === ns ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted'}`}>
                 {hierarchy[ns].length}
               </span>
             )}
@@ -404,7 +404,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       ) : (
         <div className="flex" style={{ minHeight: 300, maxHeight: 420 }}>
           {/* Tree pane */}
-          <div className="flex-1 overflow-y-auto border-r border-gray-100 py-2">
+          <div className="flex-1 overflow-y-auto border-r border-subtle py-2">
             {loading && <TreeSkeleton />}
             {error && (
               <div className="p-4 text-sm text-red-500 text-center">{error}</div>

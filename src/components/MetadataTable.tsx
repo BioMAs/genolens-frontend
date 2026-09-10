@@ -41,9 +41,9 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
     }
   }, [dataset.id, dataset.status]);
 
-  if (loading) return <div className="p-4 text-gray-500">Loading metadata...</div>;
+  if (loading) return <div className="p-4 text-secondary">Loading metadata...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!data.length) return <div className="p-4 text-gray-500">No metadata available.</div>;
+  if (!data.length) return <div className="p-4 text-secondary">No metadata available.</div>;
 
   const formatCellValue = (value: unknown): string => {
     if (value === null || value === undefined) return '';
@@ -58,33 +58,33 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
   };
 
   return (
-    <div className="bg-white shadow sm:rounded-lg overflow-hidden">
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Sample Metadata</h3>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500">
+    <div className="bg-surface shadow sm:rounded-lg overflow-hidden">
+      <div className="px-4 py-5 sm:px-6 border-b border-line">
+        <h3 className="text-lg leading-6 font-medium text-primary">Sample Metadata</h3>
+        <p className="mt-1 max-w-2xl text-sm text-secondary">
             {data.length} samples found.
         </p>
       </div>
       <div className="overflow-x-auto max-h-[500px]">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+        <table className="min-w-full divide-y divide-line">
+          <thead className="bg-surface-2 sticky top-0 z-10">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col}
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider"
                 >
                   {col}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
+              <tr key={idx} className="hover:bg-hover">
                 {columns.map((col) => (
-                  <td key={`${idx}-${col}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td key={`${idx}-${col}`} className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                     {formatCellValue(row[col])}
                   </td>
                 ))}

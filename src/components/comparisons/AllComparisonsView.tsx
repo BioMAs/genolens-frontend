@@ -217,7 +217,7 @@ export default function AllComparisonsView() {
                   setSearchInput('');
                   setProjectId('');
                 }}
-                className="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                className="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 Clear filters
@@ -225,7 +225,7 @@ export default function AllComparisonsView() {
             ) : (
               <Link
                 href="/projects"
-                className="mt-2 inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                className="mt-2 inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 Go to projects

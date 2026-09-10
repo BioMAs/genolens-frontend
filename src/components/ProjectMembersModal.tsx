@@ -141,7 +141,7 @@ export default function ProjectMembersModal({
               </form>
 
               {/* Note about email invitation */}
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-secondary mt-2">
                 ⚠️ Note: Email-based invitation is not yet fully implemented.
                 The user must already have an account in the system.
               </p>
@@ -153,7 +153,7 @@ export default function ProjectMembersModal({
             <h3 className="text-lg font-semibold mb-3">Current Members</h3>
 
             {isLoading ? (
-              <p className="text-gray-500">Loading members...</p>
+              <p className="text-secondary">Loading members...</p>
             ) : membersData && membersData.members.length > 0 ? (
               <div className="space-y-2">
                 {membersData.members.map((member) => (
@@ -168,7 +168,7 @@ export default function ProjectMembersModal({
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No members yet. Invite someone to collaborate!</p>
+              <p className="text-secondary">No members yet. Invite someone to collaborate!</p>
             )}
           </div>
         </CardContent>
@@ -214,7 +214,7 @@ function MemberRow({
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-md bg-gray-50 dark:bg-gray-800">
+    <div className="flex items-center justify-between p-3 border rounded-md bg-surface-2">
       <div className="flex-1">
         <p className="font-medium">
           {member.user_email || `User ${member.user_id.slice(0, 8)}...`}

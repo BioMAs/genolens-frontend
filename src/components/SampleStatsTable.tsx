@@ -41,43 +41,43 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
     }
   }, [dataset.id, dataset.status]);
 
-  if (loading) return <div className="p-4 text-gray-500">Loading statistics...</div>;
+  if (loading) return <div className="p-4 text-secondary">Loading statistics...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!data.length) return <div className="p-4 text-gray-500">No data available.</div>;
+  if (!data.length) return <div className="p-4 text-secondary">No data available.</div>;
 
   return (
-    <div className="bg-white shadow sm:rounded-lg overflow-hidden">
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Sample Statistics</h3>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500">
+    <div className="bg-surface shadow sm:rounded-lg overflow-hidden">
+      <div className="px-4 py-5 sm:px-6 border-b border-line">
+        <h3 className="text-lg leading-6 font-medium text-primary">Sample Statistics</h3>
+        <p className="mt-1 max-w-2xl text-sm text-secondary">
             Read counts for {data.length} samples.
         </p>
       </div>
       <div className="overflow-x-auto max-h-[500px]">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+        <table className="min-w-full divide-y divide-line">
+          <thead className="bg-surface-2 sticky top-0 z-10">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Sample ID
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Total Reads
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Genes Detected
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <tr key={idx} className="hover:bg-hover">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
                   {row.sample}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                   {row.reads.toLocaleString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-primary font-medium">
                   {row.genes_detected?.toLocaleString() || '-'}
                 </td>
               </tr>

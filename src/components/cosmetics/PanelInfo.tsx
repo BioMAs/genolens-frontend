@@ -26,7 +26,7 @@ export default function PanelInfo({ title, children }: PanelInfoProps) {
         onClick={() => setOpen(true)}
         title="How to read this"
         aria-label={`How to read: ${title}`}
-        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-muted transition-colors hover:bg-hover hover:text-primary"
       >
         <Info className="h-4 w-4" />
       </button>
@@ -38,7 +38,7 @@ export default function PanelInfo({ title, children }: PanelInfoProps) {
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+            className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -51,7 +51,7 @@ export default function PanelInfo({ title, children }: PanelInfoProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="-mr-1 -mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                className="-mr-1 -mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-primary"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -21,7 +21,7 @@ export default function ReportCustomizationPanel() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400">
+      <div className="flex items-center justify-center py-16 text-muted">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
@@ -30,7 +30,7 @@ export default function ReportCustomizationPanel() {
   if (!unlocked) {
     return (
       <ReportCustomizationLockedOverlay>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow">
+        <div className="rounded-lg border border-line bg-surface p-6 shadow">
           <ReportBrandingEditor demo />
         </div>
       </ReportCustomizationLockedOverlay>
@@ -38,7 +38,7 @@ export default function ReportCustomizationPanel() {
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow">
+    <div className="rounded-lg border border-line bg-surface p-6 shadow">
       <ReportBrandingEditor />
     </div>
   );

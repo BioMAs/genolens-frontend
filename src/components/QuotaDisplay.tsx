@@ -32,7 +32,7 @@ export default function QuotaDisplay() {
 
   if (ai.unlimited) {
     return (
-      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-xs font-semibold text-on-accent shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
         <span>Unlimited</span>
       </div>

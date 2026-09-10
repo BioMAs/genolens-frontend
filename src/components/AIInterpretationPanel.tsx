@@ -314,7 +314,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/pricing"
-                                className="inline-flex items-center gap-2 rounded-[11px] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+                                className="inline-flex items-center gap-2 rounded-[11px] px-5 py-2.5 text-sm font-semibold text-on-accent shadow-sm transition-colors"
                                 style={{ background: 'var(--sl-purple)' }}
                             >
                                 <Zap className="h-4 w-4" />
@@ -382,7 +382,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     {!data && !loading && (
                         <button
                             onClick={() => generateInterpretation(false)}
-                            className="inline-flex items-center gap-2 rounded-[11px] px-4 py-2 text-sm font-medium text-white transition-colors"
+                            className="inline-flex items-center gap-2 rounded-[11px] px-4 py-2 text-sm font-medium text-on-accent transition-colors"
                             style={{ background: 'var(--sl-purple)' }}
                         >
                             <Sparkles className="h-4 w-4" />
@@ -416,7 +416,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             <div className="mt-3">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-white transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-on-accent transition-colors"
                                     style={{ background: 'var(--sl-purple)' }}
                                 >
                                     View Plans →
@@ -437,7 +437,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             <div className="mt-3 flex items-center gap-2">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-white transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-sm font-semibold text-on-accent transition-colors"
                                     style={{ background: 'var(--sl-purple)' }}
                                 >
                                     Upgrade Plan
@@ -513,7 +513,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                 {chatMessages.map((msg, idx) => (
                                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         {msg.role === 'user' ? (
-                                            <div className="max-w-[80%] rounded-2xl px-4 py-2 text-white" style={{ background: 'var(--sl-purple)' }}>
+                                            <div className="max-w-[80%] rounded-2xl px-4 py-2 text-on-accent" style={{ background: 'var(--sl-purple)' }}>
                                                 <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
                                                 <div className="mt-1 text-xs text-white/70">
                                                     {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -560,7 +560,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                     <button
                                         onClick={askQuestion}
                                         disabled={!userQuestion.trim() || chatLoading}
-                                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
                                         style={{ background: 'var(--sl-purple)' }}
                                     >
                                         <Send className="h-4 w-4" />

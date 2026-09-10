@@ -87,7 +87,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
             {claim.confidence} reliability
           </span>
         </div>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${claim.score}%`, background: verdict.color }}
@@ -104,7 +104,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
           {claim.top_genes.slice(0, 6).map((g) => (
             <span
               key={g}
-              className="rounded border border-gray-100 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-600"
+              className="rounded border border-subtle bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-secondary"
             >
               {g}
             </span>

@@ -195,16 +195,16 @@ export default function GSEAEnrichmentPlot({
         ref={canvasRef}
         width={800}
         height={500}
-        className="border border-gray-300 rounded-lg bg-white cursor-crosshair"
+        className="border border-strong rounded-lg bg-surface cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredGene(null)}
       />
 
       {/* Tooltip */}
       {hoveredGene && (
-        <div className="absolute top-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-sm">
+        <div className="absolute top-4 right-4 bg-surface border border-strong rounded-lg shadow-lg p-3 text-sm">
           <div className="font-semibold">{hoveredGene.gene}</div>
-          <div className="text-gray-600">Metric: {hoveredGene.metric.toFixed(3)}</div>
+          <div className="text-secondary">Metric: {hoveredGene.metric.toFixed(3)}</div>
         </div>
       )}
 
@@ -231,7 +231,7 @@ export default function GSEAEnrichmentPlot({
       {/* Info */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
         <p className="font-semibold mb-2">How to interpret this plot:</p>
-        <ul className="list-disc list-inside space-y-1 text-gray-700">
+        <ul className="list-disc list-inside space-y-1 text-primary">
           <li>The line shows the running enrichment score across all ranked genes</li>
           <li>Vertical ticks at the bottom mark where gene set members appear in the ranking</li>
           <li>Peak (or valley) indicates maximum enrichment</li>

@@ -80,7 +80,7 @@ export default function BookmarkButton({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-        className={`inline-flex items-center justify-center rounded-full p-1 transition-colors hover:bg-gray-100 disabled:opacity-50 ${className}`}
+        className={`inline-flex items-center justify-center rounded-full p-1 transition-colors hover:bg-hover disabled:opacity-50${className}`}
         title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
       >
         <Star
@@ -89,7 +89,7 @@ export default function BookmarkButton({
               ? 'fill-yellow-400 text-yellow-400'
               : isHovered
               ? 'text-yellow-400'
-              : 'text-gray-400'
+              : 'text-muted'
           }`}
         />
       </button>
@@ -103,12 +103,12 @@ export default function BookmarkButton({
       className={`inline-flex items-center gap-2 rounded-md border transition-colors disabled:opacity-50 ${
         isBookmarked
           ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
-          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          : 'border-strong bg-surface text-primary hover:bg-hover'
       } ${buttonSizeClasses[size]} ${className}`}
     >
       <Star
         className={`${sizeClasses[size]} ${
-          isBookmarked ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
+          isBookmarked ? 'fill-yellow-400 text-yellow-400' : 'text-muted'
         }`}
       />
       {isBookmarked ? 'Bookmarked' : 'Bookmark'}

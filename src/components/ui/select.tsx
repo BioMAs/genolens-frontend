@@ -54,7 +54,7 @@ export const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerPr
       <button
         ref={ref}
         type="button"
-        className={`flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`flex h-10 w-full items-center justify-between rounded-md border border-strong bg-surface px-3 py-2 text-sm ring-offset-white placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50${className}`}
         onClick={() => context.setOpen(!context.open)}
         {...props}
       >
@@ -106,7 +106,7 @@ export function SelectContent({ children, className = '' }: SelectContentProps) 
         onClick={() => context.setOpen(false)}
       />
       <div
-        className={`absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg ${className}`}
+        className={`absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-lg${className}`}
       >
         {children}
       </div>
@@ -128,8 +128,8 @@ export function SelectItem({ value, children, className = '' }: SelectItemProps)
 
   return (
     <div
-      className={`relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm outline-none hover:bg-gray-100 ${
-        isSelected ? 'bg-gray-50 font-medium' : ''
+      className={`relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm outline-none hover:bg-hover${
+        isSelected ? 'bg-surface-2 font-medium' : ''
       } ${className}`}
       onClick={() => context.onValueChange(value)}
     >
