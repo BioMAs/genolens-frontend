@@ -10,6 +10,8 @@ import { DatasetStatus, DatasetType, SelfServiceAnalysisStatus, Dataset } from '
 import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
 import CustomGeneSetManager from '@/components/CustomGeneSetManager';
+import { buttonClasses } from '@/components/ui/button';
+import { OverflowMenu, type MenuItem } from '@/components/ui/menu';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
 import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
@@ -34,7 +36,6 @@ import {
   Layers,
   Activity,
   BarChart3,
-  Lock,
 } from 'lucide-react';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 import { useScientificModule } from '@/hooks/useAddOnModules';
@@ -109,6 +110,34 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
     );
   }
 
+  // Le motif « fonctionnalite verrouillee » etait recopie mot pour mot a deux
+  // endroits (un <span> desactive + <Lock/>). Represente ici comme une entree
+  // de menu desactivee, ce qui est sa place : l'element reste visible, donc
+  // decouvrable, et sa raison tient dans l'infobulle.
+  const overflowActions: MenuItem[] = [
+    ...(comparisons.length >= 2
+      ? [{
+          label: 'Contrast scatter',
+          icon: <GitCompareArrows className="h-3.5 w-3.5 shrink-0" />,
+          href: `/projects/${projectId}/contrast-scatter`,
+          locked: !scienceUnlocked,
+          lockedHint: SCIENCE_LOCKED_HINT,
+        }]
+      : []),
+    { label: 'Bookmarks', icon: <Star className="h-3.5 w-3.5 shrink-0" />, onSelect: () => setBookmarkModalOpen(true) },
+    { label: 'Gene lists', icon: <List className="h-3.5 w-3.5 shrink-0" />, onSelect: () => setGeneListModalOpen(true) },
+    {
+      label: 'Custom gene sets',
+      icon: <List className="h-3.5 w-3.5 shrink-0" />,
+      onSelect: () => setGeneSetModalOpen(true),
+      locked: !scienceUnlocked,
+      lockedHint: SCIENCE_LOCKED_HINT,
+    },
+    ...(isOwner
+      ? [{ label: 'Members', icon: <Users className="h-3.5 w-3.5 shrink-0" />, onSelect: () => setMembersModalOpen(true) }]
+      : []),
+  ];
+
   return (
     <div className="page-container" data-tour="project-overview">
       <div className="mb-3">
@@ -131,114 +160,31 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           ) : null}
         </div>
 
+        {/* Une seule action primaire. L'en-tete alignait sept boutons de meme
+            poids — Multi-Comparison, Contrast scatter, Bookmarks, Gene Lists,
+            Custom gene sets, Members — chacun portant la MEME declaration de
+            style inline recopiee six fois. Aucun n'etait primaire, et l'action
+            reelle de la page (« New Analysis ») etait enterree dans le rail
+            droit d'un onglet. Quatre de ces boutons ouvrent des modales : ce
+            sont des outils, pas de la navigation, ils vont au depassement. */}
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/projects/${projectId}/setup`}
+            className={buttonClasses({ size: 'sm' })}
+          >
+            <Plus className="h-3.5 w-3.5" /> New analysis
+          </Link>
+
           {comparisons.length >= 2 && (
             <Link
               href={`/projects/${projectId}/multi-comparison`}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-secondary)',
-              }}
+              className={buttonClasses({ variant: 'outline', size: 'sm' })}
             >
-              <Layers className="h-3.5 w-3.5" /> Multi-Comparison
+              <Layers className="h-3.5 w-3.5" /> Multi-comparison
             </Link>
           )}
 
-          {comparisons.length >= 2 && (
-            scienceUnlocked ? (
-              <Link
-                href={`/projects/${projectId}/contrast-scatter`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-                style={{
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <GitCompareArrows className="h-3.5 w-3.5" /> Contrast scatter
-              </Link>
-            ) : (
-              <span
-                title={SCIENCE_LOCKED_HINT}
-                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-muted)',
-                opacity: 0.55,
-              }}
-              >
-                <Lock className="h-3.5 w-3.5" /> Contrast scatter
-              </span>
-            )
-          )}
-
-          <button
-            onClick={() => setBookmarkModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-            style={{
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <Star className="h-3.5 w-3.5" /> Bookmarks
-          </button>
-
-          <button
-            onClick={() => setGeneListModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-            style={{
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <List className="h-3.5 w-3.5" /> Gene Lists
-          </button>
-
-          {scienceUnlocked ? (
-            <button
-              onClick={() => setGeneSetModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              <List className="h-3.5 w-3.5" /> Custom gene sets
-            </button>
-          ) : (
-            <span
-              title={SCIENCE_LOCKED_HINT}
-              className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-muted)',
-                opacity: 0.55,
-              }}
-            >
-              <Lock className="h-3.5 w-3.5" /> Custom gene sets
-            </span>
-          )}
-
-          {isOwner ? (
-            <button
-              onClick={() => setMembersModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
-              style={{
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              <Users className="h-3.5 w-3.5" /> Members
-            </button>
-          ) : null}
+          <OverflowMenu items={overflowActions} />
         </div>
       </div>
 

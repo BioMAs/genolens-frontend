@@ -26,7 +26,6 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
-import path from 'node:path';
 
 // ── Table de correspondance ────────────────────────────────────────────────
 // Verifiee contre :root ET .dark : chaque ligne resout correctement dans les
