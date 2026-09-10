@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { DatasetStatus } from '@/types';
-import { ArrowLeft, Database, Download, Lock } from 'lucide-react';
+import { ArrowLeft, Database, Download } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import { useQueryClient } from '@tanstack/react-query';
 import DEGBarChart from './DEGBarChart';
@@ -35,6 +35,7 @@ import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules, groupModulesByView } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
+import { SegmentedControl } from '@/components/ui/tabs';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
 import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
@@ -676,47 +677,33 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
               <section id="enrichment" className="scroll-mt-24">
               {degDataset ? (
                 <div className="space-y-4">
-                  {/* Sub-mode toggle: over-representation vs ranked GSEA. It carries the
-                      #gsea anchor itself, so the fragment always has something to land on. */}
-                  {/* L'etat ACTIF etait `bg-white text-gray-900` : sur
+                  {/* Bascule ORA / GSEA rankee.
+
+                      L'etat ACTIF etait `bg-white text-gray-900` : sur
                       --surface #131720, un bouton blanc a texte quasi noir —
-                      donc l'onglet selectionne etait le seul illisible en
-                      theme sombre. Meme idiome que ComparisonViewHub. */}
-                  <div
-                    id={GSEA_HASH}
-                    className="inline-flex scroll-mt-32 gap-1 rounded-panel border border-line bg-surface-2 p-1"
-                  >
-                    <button
-                      onClick={() => setEnrichmentMode('ora')}
-                      className={`cursor-pointer rounded-control px-4 py-1.5 text-body-sm font-semibold transition-colors ${
-                        enrichmentMode === 'ora'
-                          ? 'bg-accent text-on-accent'
-                          : 'text-secondary hover:bg-hover hover:text-primary'
-                      }`}
-                    >
-                      Over-representation (ORA)
-                    </button>
-                    {scientificUnlocked ? (
-                      <button
-                        onClick={() => setEnrichmentMode('gsea')}
-                        className={`cursor-pointer rounded-control px-4 py-1.5 text-body-sm font-semibold transition-colors ${
-                          enrichmentMode === 'gsea'
-                            ? 'bg-accent text-on-accent'
-                            : 'text-secondary hover:bg-hover hover:text-primary'
-                        }`}
-                      >
-                        GSEA (ranked)
-                      </button>
-                    ) : (
-                      <span
-                        title="GSEA is part of the Scientific tools add-on — request access from the comparison overview"
-                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-body-sm font-medium text-muted"
-                      >
-                        <Lock className="h-3.5 w-3.5" />
-                        GSEA (ranked)
-                      </span>
-                    )}
-                  </div>
+                      l'onglet selectionne etait le seul illisible en theme
+                      sombre. Troisieme segmente fait main du code, desormais
+                      sur la primitive comme les deux autres.
+
+                      L'ancre #gsea vivait sur le conteneur de la bascule ; la
+                      primitive ne prend pas d'id, elle passe donc sur un point
+                      d'ancrage dedie, pour que le fragment garde ou atterrir. */}
+                  <span id={GSEA_HASH} className="block scroll-mt-32" aria-hidden />
+                  <SegmentedControl
+                    label="Enrichment method"
+                    items={[
+                      { value: 'ora' as const, label: 'Over-representation (ORA)' },
+                      {
+                        value: 'gsea' as const,
+                        label: 'GSEA (ranked)',
+                        locked: !scientificUnlocked,
+                        lockedHint:
+                          'GSEA is part of the Scientific tools add-on — request access from the comparison overview',
+                      },
+                    ]}
+                    value={enrichmentMode}
+                    onValueChange={setEnrichmentMode}
+                  />
 
                   {enrichmentMode === 'ora' ? (
                     <GOEnrichmentAnalysis

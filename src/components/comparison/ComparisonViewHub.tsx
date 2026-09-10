@@ -23,7 +23,7 @@
  * ecran, SectionRail liste deja les sections et marque ou l'on est.
  */
 
-import { cn } from '@/lib/cn';
+import { SegmentedControl, type SegmentItem } from '@/components/ui/tabs';
 import type { ComparisonViewGroup } from './comparisonModules';
 import { VIEW_ICONS, type ComparisonView } from './comparisonRoutes';
 
@@ -51,45 +51,33 @@ function summarise({ counts }: ComparisonViewGroup): string {
 }
 
 export default function ComparisonViewHub({ groups, activeView, onSelect }: Props) {
-  return (
-    <nav aria-label="Screens of this comparison">
-      <ol className="flex flex-wrap gap-1 rounded-panel border border-line bg-surface-2 p-1">
-        {groups.map((group, index) => {
-          const Icon = VIEW_ICONS[group.view];
-          const isActive = group.view === activeView;
+  const items: SegmentItem<ComparisonView>[] = groups.map((group, index) => {
+    const Icon = VIEW_ICONS[group.view];
+    return {
+      value: group.view,
+      label: group.label,
+      icon: (
+        <span className="flex shrink-0 items-center gap-2">
+          {/* Le numero est un repere d'ordre, pas un controle : le lecteur
+              d'ecran tire le meme ordre de la liste elle-meme. */}
+          <span aria-hidden className="tabular-nums opacity-60">
+            {index + 1}
+          </span>
+          <Icon className="h-4 w-4" aria-hidden />
+        </span>
+      ),
+      srOnly: `${group.description} ${summarise(group)}`,
+    };
+  });
 
-          return (
-            <li key={group.view} className="min-w-0 flex-1 list-none">
-              <button
-                type="button"
-                onClick={() => onSelect(group.view)}
-                aria-current={isActive ? 'page' : undefined}
-                aria-label={`Open ${group.label}`}
-                className={cn(
-                  'flex w-full cursor-pointer items-center justify-center gap-2 rounded-control px-3 py-2',
-                  'text-body-sm font-semibold transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1',
-                  isActive
-                    ? 'bg-accent text-on-accent'
-                    : 'text-secondary hover:bg-hover hover:text-primary',
-                )}
-              >
-                {/* Le numero est un repere d'ordre, pas un controle : le lecteur
-                    d'ecran tire le meme ordre de la liste elle-meme. */}
-                <span aria-hidden className="tabular-nums opacity-60">
-                  {index + 1}
-                </span>
-                <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="truncate">{group.label}</span>
-                <span className="sr-only">
-                  {' — '}
-                  {group.description} {summarise(group)}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
+  return (
+    <SegmentedControl
+      stretch
+      label="Screens of this comparison"
+      items={items}
+      value={activeView}
+      onValueChange={onSelect}
+      itemLabel={(item) => `Open ${item.label}`}
+    />
   );
 }

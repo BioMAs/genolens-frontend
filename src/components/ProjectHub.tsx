@@ -12,6 +12,7 @@ import GeneListManager from '@/components/GeneListManager';
 import CustomGeneSetManager from '@/components/CustomGeneSetManager';
 import { buttonClasses } from '@/components/ui/button';
 import { OverflowMenu, type MenuItem } from '@/components/ui/menu';
+import { SegmentedControl, type SegmentItem } from '@/components/ui/tabs';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
 import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
@@ -47,6 +48,13 @@ interface ProjectHubProps {
 }
 
 type ProjectTab = 'analyses' | 'comparisons' | 'datasets' | 'history';
+
+const PROJECT_TABS: SegmentItem<ProjectTab>[] = [
+  { value: 'analyses', label: 'Analyses' },
+  { value: 'comparisons', label: 'Comparisons' },
+  { value: 'datasets', label: 'Datasets' },
+  { value: 'history', label: 'History' },
+];
 
 export default function ProjectHub({ projectId }: ProjectHubProps) {
   useAutoTour('project-overview');
@@ -215,15 +223,13 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         />
       </div>
 
-      <div
-        className="mt-5 inline-flex flex-wrap rounded-xl p-1"
-        style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
-      >
-        <ProjectTabButton id="analyses" activeTab={activeTab} onClick={setActiveTab} label="Analyses" />
-        <ProjectTabButton id="comparisons" activeTab={activeTab} onClick={setActiveTab} label="Comparisons" />
-        <ProjectTabButton id="datasets" activeTab={activeTab} onClick={setActiveTab} label="Datasets" />
-        <ProjectTabButton id="history" activeTab={activeTab} onClick={setActiveTab} label="History" />
-      </div>
+      <SegmentedControl
+        className="mt-5"
+        label="Project sections"
+        items={PROJECT_TABS}
+        value={activeTab}
+        onValueChange={setActiveTab}
+      />
 
       {activeTab === 'comparisons' ? (
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -469,34 +475,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         />
       ) : null}
     </div>
-  );
-}
-
-function ProjectTabButton({
-  id,
-  activeTab,
-  onClick,
-  label,
-}: {
-  id: ProjectTab;
-  activeTab: ProjectTab;
-  onClick: (id: ProjectTab) => void;
-  label: string;
-}) {
-  const active = id === activeTab;
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(id)}
-      className="rounded-lg px-3 py-1.5 text-body-sm font-medium transition-colors"
-      style={
-        active
-          ? { background: 'var(--sl-teal-light)', color: 'var(--sl-teal-dark)' }
-          : { color: 'var(--text-secondary)' }
-      }
-    >
-      {label}
-    </button>
   );
 }
 

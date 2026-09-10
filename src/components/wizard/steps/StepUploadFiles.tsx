@@ -403,7 +403,7 @@ function UploadCardWithProjectId({
         isActive
           ? dragging
             ? 'border-indigo-400 bg-accent-soft'
-            : 'border-dashed border-accent-ring bg-surface hover:border-indigo-400 hover:bg-indigo-50/40'
+            : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft'
           : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none'
       } p-5`}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
