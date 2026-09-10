@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import GlobalGeneSearch from './GlobalGeneSearch';
 import HelpTourButton from './onboarding/HelpTourButton';
+import MobileNavToggle from './MobileNavToggle';
 
 /** Map route segments to human-readable page titles. */
 function resolvePageTitle(pathname: string): string {
@@ -40,7 +41,9 @@ export default function TopBar({ rightSlot }: TopBarProps) {
 
   return (
     <header className="app-topbar">
-      <div className="flex min-w-0 flex-1 items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {/* Sous 768px la sidebar est un tiroir : c'est son unique ouverture. */}
+        <MobileNavToggle />
         <h1 className="page-title truncate !text-[1rem] !font-semibold !tracking-[-0.01em] !leading-none">
           {pageTitle}
         </h1>

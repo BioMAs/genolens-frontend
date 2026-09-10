@@ -514,6 +514,77 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Adaptation aux petits ecrans ────────────────────────────────────────
+   Le shell n'avait AUCUNE media query : .app-sidebar occupait 236px fixes,
+   donc a 375px il restait 139px de contenu. Le bouton d'ouverture vit dans
+   MobileNavToggle, monte dans la TopBar. */
+
+/* Palier intermediaire : c'est entre 1024 et 1280px que la sidebar mange la
+   plus grande part utile du contenu. */
+@media (max-width: 1024px) {
+  :root { --sidebar-width: 200px; }
+  .app-topbar { padding: 0 1.25rem; }
+  .page-container { padding: 1.5rem 1.25rem 3rem; }
+}
+
+@media (max-width: 767px) {
+  /* Le shell rend la hauteur au document : en flex + 100dvh + overflow hidden,
+     le tiroir en position fixe se battrait avec le conteneur de defilement. */
+  .app-shell {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: min(17rem, 82vw);
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: var(--elev-2);
+    overflow-y: auto;
+  }
+
+  /* Identite explicite plutot que `none` : les deux fonctionnent ici, mais
+     une valeur interpolable evite de dependre du traitement de `none` par le
+     moteur au moment de l'animation. */
+  .app-shell[data-nav='open'] .app-sidebar { transform: translateX(0); }
+
+  .mobile-nav-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .app-main { overflow: visible; }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 0 1rem;
+  }
+
+  .app-content { overflow: visible; }
+
+  .page-container { padding: 1rem 1rem 4rem; }
+}
+
+/* Au-dela du palier mobile la sidebar est permanente : le bouton et le voile
+   n'ont plus d'objet. */
+@media (min-width: 768px) {
+  .mobile-nav-toggle,
+  .mobile-nav-scrim { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar { transition: none; }
+}
+
 /* ============================================================
    Sidebar Navigation
    ============================================================ */
