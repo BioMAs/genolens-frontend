@@ -247,13 +247,13 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           icon={<GitCompare className="h-4 w-4" />}
           value={comparisons.length}
           label="Comparisons"
-          tone="teal"
+          tone="neutral"
         />
         <StatChip
           icon={<Database className="h-4 w-4" />}
           value={stats?.total_datasets ?? 0}
           label="Datasets"
-          tone="purple"
+          tone="neutral"
         />
         <StatChip
           icon={<FlaskConical className="h-4 w-4" />}

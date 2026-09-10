@@ -14,24 +14,21 @@ export default function DashboardKpiBar({ stats, isLoading }: DashboardKpiBarPro
   // quotas le donne en utilise/max, ce qui est plus informatif et evitait de
   // servir deux chiffres pour la meme grandeur. « AI + Activity » aussi : son
   // libelle annoncait deux grandeurs pour la valeur d'une seule.
-  const cards: { icon: React.ReactNode; value: number; label: string; tone: 'teal' | 'purple' }[] = [
+  const cards: { icon: React.ReactNode; value: number; label: string }[] = [
     {
       icon: <GitCompare className="h-4 w-4" />,
       value: stats.total_comparisons,
       label: 'Comparisons run',
-      tone: 'purple',
     },
     {
       icon: <Dna className="h-4 w-4" />,
       value: stats.total_deg_genes,
       label: 'DEGs identified',
-      tone: 'teal',
     },
     {
       icon: <Activity className="h-4 w-4" />,
       value: stats.activity_last_7_days,
       label: 'Activity (7d)',
-      tone: 'purple',
     },
   ];
 
@@ -43,7 +40,6 @@ export default function DashboardKpiBar({ stats, isLoading }: DashboardKpiBarPro
           icon={card.icon}
           value={isLoading ? '—' : card.value.toLocaleString()}
           label={card.label}
-          tone={card.tone}
           className="animate-fade-up"
           style={{ animationDelay: `${i * 40}ms` }}
         />

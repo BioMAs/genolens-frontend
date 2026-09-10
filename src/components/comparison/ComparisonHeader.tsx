@@ -123,13 +123,13 @@ export default function ComparisonHeader({
               icon={<TrendingUp className="h-4 w-4" />}
               value={stats.degUp}
               label="Upregulated"
-              tone="teal"
+              tone="up"
             />
             <StatChip
               icon={<TrendingDown className="h-4 w-4" />}
               value={stats.degDown}
               label="Downregulated"
-              tone="purple"
+              tone="down"
             />
             <StatChip
               icon={<Activity className="h-4 w-4" />}

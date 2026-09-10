@@ -312,7 +312,7 @@ export default function AllComparisonsView() {
                     </Td>
                     <Td>
                       {item.has_enrichment ? (
-                        <Badge variant="teal">Yes</Badge>
+                        <Badge variant="success">Yes</Badge>
                       ) : (
                         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                           —

@@ -221,7 +221,7 @@ function MemberRow({
         </p>
         <div className="flex items-center gap-2 mt-1">
           {isProjectOwner ? (
-            <Badge variant="default">Owner</Badge>
+            <Badge variant="neutral">Owner</Badge>
           ) : isEditing ? (
             <select
               value={newRole}
@@ -232,7 +232,7 @@ function MemberRow({
               <option value={UserRole.ADMIN}>Admin</option>
             </select>
           ) : (
-            <Badge variant={member.access_level === UserRole.ADMIN ? "default" : "secondary"}>
+            <Badge variant={member.access_level === UserRole.ADMIN ? "accent" : "neutral"}>
               {member.access_level}
             </Badge>
           )}

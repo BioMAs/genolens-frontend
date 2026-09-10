@@ -1,65 +1,49 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
+
+export type BadgeVariant =
+  | 'neutral'
+  | 'accent'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'ai'
+  | 'outline';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'teal' | 'purple' | 'secondary' | 'destructive' | 'outline' | 'success';
+  variant?: BadgeVariant;
 }
 
 /**
- * Badge — inline label for status, category, or metadata.
- * SciLicium palette: teal for success/active, purple for info/type, red for alert.
+ * Badge — etiquette de statut, categorie ou metadonnee.
+ *
+ * Les variantes passent par des classes et non par un objet `style`. La
+ * version precedente fusionnait `{...variants[variant], ...style}` en inline :
+ * un consommateur ne pouvait donc rien surcharger, et surtout la primitive ne
+ * pouvait exprimer ni `hover:` ni `dark:` — un style inline n'a pas d'etats.
+ *
+ * Le neutre est le defaut. Un badge colore doit signifier quelque chose ;
+ * s'il ne fait que decorer une metadonnee, il reste neutre.
  */
-function Badge({ className = '', variant = 'default', style, ...props }: BadgeProps) {
-  const base =
-    'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors';
+const VARIANTS: Record<BadgeVariant, string> = {
+  neutral: 'border-line bg-surface-2 text-secondary',
+  accent: 'border-accent-ring bg-accent-soft text-accent',
+  success: 'border-success/25 bg-success-soft text-success',
+  warning: 'border-warning/30 bg-warning-soft text-warning',
+  danger: 'border-danger/25 bg-danger-soft text-danger',
+  ai: 'border-ai/25 bg-ai-soft text-ai',
+  outline: 'border-line bg-transparent text-primary',
+};
 
-  const variants: Record<NonNullable<BadgeProps['variant']>, React.CSSProperties> = {
-    // purple — info, type label (uses brand purple)
-    default: {
-      background: 'var(--sl-purple-light)',
-      color: 'var(--sl-purple)',
-      borderColor: 'var(--sl-purple-muted)',
-    },
-    // teal — interactive, selected, in-use
-    teal: {
-      background: 'var(--sl-teal-light)',
-      color: 'var(--sl-teal-dark)',
-      borderColor: 'var(--sl-teal-muted)',
-    },
-    purple: {
-      background: 'var(--sl-purple-light)',
-      color: 'var(--sl-purple)',
-      borderColor: 'var(--sl-purple-muted)',
-    },
-    // success = alias for teal
-    success: {
-      background: 'var(--sl-teal-light)',
-      color: 'var(--sl-teal-dark)',
-      borderColor: 'var(--sl-teal-muted)',
-    },
-    // red — alerts, warnings, destructive
-    destructive: {
-      background: 'var(--sl-red-light)',
-      color: 'var(--sl-red)',
-      borderColor: 'var(--sl-red-muted)',
-    },
-    // neutral secondary
-    secondary: {
-      background: 'var(--surface-secondary)',
-      color: 'var(--text-secondary)',
-      borderColor: 'var(--border)',
-    },
-    // outline only
-    outline: {
-      background: 'transparent',
-      color: 'var(--text-primary)',
-      borderColor: 'var(--border)',
-    },
-  };
-
+function Badge({ className, variant = 'neutral', ...props }: BadgeProps) {
   return (
     <span
-      className={`${base} ${className}`}
-      style={{ ...variants[variant], ...style }}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5',
+        'text-micro font-semibold transition-colors',
+        VARIANTS[variant],
+        className,
+      )}
       {...props}
     />
   );

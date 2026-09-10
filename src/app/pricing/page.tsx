@@ -128,7 +128,7 @@ export default function PricingPage() {
         <span className={billing === 'annual' ? 'font-semibold' : ''} style={{ color: billing === 'annual' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
           Annual{' '}
           {discountPct != null && (
-            <Badge variant="secondary" className="ml-1 text-xs">
+            <Badge variant="neutral" className="ml-1">
               up to −{discountPct}%
             </Badge>
           )}
@@ -191,7 +191,7 @@ export default function PricingPage() {
             <div key={plan.id} className="relative flex flex-col">
               {plan.most_popular && (
                 <div className="flex justify-center mb-2">
-                  <Badge variant="teal" className="text-xs font-semibold px-3 py-0.5">Most popular</Badge>
+                  <Badge variant="accent" className="px-3 py-0.5">Most popular</Badge>
                 </div>
               )}
 
@@ -199,7 +199,7 @@ export default function PricingPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <CardTitle className="text-xl">{plan.name_en}</CardTitle>
-                    {isCurrent && <Badge variant="success" className="text-xs">Current plan</Badge>}
+                    {isCurrent && <Badge variant="success">Current plan</Badge>}
                   </div>
                   {plan.description_en && <CardDescription className="mt-1">{plan.description_en}</CardDescription>}
 
@@ -246,7 +246,7 @@ export default function PricingPage() {
                     </Button>
                   ) : (
                     <Button
-                      variant={plan.most_popular ? 'teal' : isCurrent ? 'secondary' : 'outline'}
+                      variant={plan.most_popular ? 'default' : isCurrent ? 'secondary' : 'outline'}
                       size="lg"
                       className="w-full"
                       disabled={isCurrent || isSubmitting}
