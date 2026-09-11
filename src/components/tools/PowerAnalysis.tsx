@@ -448,7 +448,7 @@ export default function PowerAnalysis() {
           {/* Result card */}
           {result && (
             <div
-              className={`rounded-panel border p-6 ${POWER_STYLES[powerLevel(result.power)].panel}`}
+              className={`rounded-card border p-6 ${POWER_STYLES[powerLevel(result.power)].panel}`}
             >
               <div className="flex items-center gap-3 mb-5">
                 <TrendingUp className={`h-6 w-6 ${POWER_STYLES[powerLevel(result.power)].text}`} />

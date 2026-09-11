@@ -28,6 +28,9 @@ describe('cn', () => {
   it('arbitre les rayons nommes du @theme', () => {
     expect(cn('rounded-lg', 'rounded-card')).toBe('rounded-card');
     expect(cn('rounded-card', 'rounded-full')).toBe('rounded-full');
+    // Le jeu est concentrique : sm 6 < control 10 < card 16 < pill.
+    expect(cn('rounded-sm', 'rounded-control')).toBe('rounded-control');
+    expect(cn('rounded-control', 'rounded-pill')).toBe('rounded-pill');
   });
 
   it('arbitre les elevations nommees du @theme', () => {

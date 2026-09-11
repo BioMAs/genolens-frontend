@@ -259,7 +259,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                 style={{
                   background: 'var(--surface)',
                   border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-panel)',
+                  borderRadius: 'var(--radius-card)',
                 }}
               >
                 <div className="mb-2 text-caption font-semibold" style={{ color: 'var(--text-secondary)' }}>
@@ -304,7 +304,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
 
       <div
         className="overflow-x-auto"
-        style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-panel)' }}
+        style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-card)' }}
       >
         <table className="data-table min-w-full">
           <thead>

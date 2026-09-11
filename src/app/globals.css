@@ -77,13 +77,18 @@
   --sidebar-width:   236px;
   --topbar-height:   64px;
 
-  /* Rayons — sources. @theme inline les re-emet sous --radius-card/panel/
-     control (donc var(--radius-card) continue de resoudre) et fournit en
-     plus les utilitaires rounded-card / rounded-panel / rounded-control.
-     18px -> 16px : c'est le rayon que .gl-card applique deja a l'ecran. */
+  /* Rayons — quatre valeurs, DERIVEES et non choisies.
+     L'ensemble est concentrique : exterieur − retrait = interieur. Un controle
+     (10) pose a 6px dans une carte (16) est geometriquement juste ; un sm (6)
+     a 4px dans un controle (10) aussi. D'ou 10 et non 11 : la relation devient
+     derivable au lieu d'etre memorisee.
+     @theme les re-emet sous --radius-* (donc var(--radius-card) resout) et
+     fournit rounded-sm / rounded-control / rounded-card / rounded-pill.
+     --radius-panel (14px) est supprime : un cran intermediaire que rien ne
+     justifiait, et que 4 usages seulement portaient. */
+  --radius-sm-px:       6px;
+  --radius-control-px:  10px;
   --radius-card-px:     16px;
-  --radius-panel-px:    14px;
-  --radius-control-px:  11px;
 
   /* Elevation — deux niveaux, pas plus. Au-dela, une application dense
      paraît molle. Regle d'emploi :
@@ -92,6 +97,31 @@
        couche flottante (menu, modale)-> elev-2 */
   --elev-1: 0 1px 2px rgb(15 22 41 / .04), 0 1px 1px rgb(15 22 41 / .03);
   --elev-2: 0 8px 24px -8px rgb(15 22 41 / .12), 0 2px 6px -2px rgb(15 22 41 / .06);
+
+  /* ── Mouvement ──────────────────────────────────────────────────────────
+     Deux courbes, quatre durees. Regles d'emploi :
+       - n'animer que opacity, transform, background-color, border-color,
+         color, box-shadow ;
+       - ne JAMAIS animer width, height, top/left, margin, padding (une
+         exception documentee : .gl-bar-grow, qui revele une donnee) ;
+       - le survol est instantane et ne change que la couleur. */
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-instant: 90ms;
+  --duration-fast:    160ms;
+  --duration-base:    240ms;
+  --duration-slow:    400ms;
+
+  /* ── Metriques de page ──────────────────────────────────────────────────
+     La mesure depend du REGIME : la chrome respire, la donnee reste dense.
+     Tout etait a 1380 ou 1280 arbitrairement — la grille 8/4 du dashboard
+     etait etiree, le tableau de genes a l'etroit. */
+  --page-gutter:     2rem;    /* 32px ; 24px sous 1280, 16px sous 768 */
+  --page-top:        2rem;    /* 32px */
+  --page-bottom:     6rem;    /* 96px, depuis 48 */
+  --measure-prose:   760px;
+  --measure-default: 1200px;
+  --measure-wide:    1600px;
 
   /* Fond d'avertissement, pendant clair de --dc-amber */
   --warning-soft: rgba(245, 158, 11, 0.12);
@@ -146,9 +176,14 @@
   /* Le sombre est un jeu de pas choisi, pas une inversion automatique du clair. */
   --dd-bar-color: #3987e5;
 
-  /* En sombre l'elevation se lit comme une clarte de surface : une ombre
-     posee sur #131720 est invisible. Le relief passe par --surface-raised. */
-  --elev-1: none;
+  /* En sombre une ombre portee sur #131720 est invisible : le relief passe
+     par un filet interieur, pas par une ombre.
+
+     Ce n'est pas un detail. Tant que --elev-1 valait `none`, toute surface
+     SANS bordure disparaissait purement et simplement en theme sombre — donc
+     la regle « grouper par le vide et non par la bordure » etait inapplicable.
+     C'est le prerequis de tout le reste. */
+  --elev-1: inset 0 0 0 1px rgb(255 255 255 / .05);
   --elev-2: 0 12px 32px -12px rgb(0 0 0 / .6);
 
   --warning-soft: rgba(245, 158, 11, 0.16);
@@ -277,10 +312,19 @@
   --color-ai:                 var(--sl-violet);
   --color-ai-soft:            var(--sl-violet-light);
 
-  /* Rayons */
-  --radius-card:              var(--radius-card-px);
-  --radius-panel:             var(--radius-panel-px);
+  /* Rayons — quatre, concentriques (cf. :root) */
+  --radius-sm:                var(--radius-sm-px);
   --radius-control:           var(--radius-control-px);
+  --radius-card:              var(--radius-card-px);
+  --radius-pill:              9999px;
+
+  /* Mouvement. 128 des 140 transitions du code ne fixent aucune duree : elles
+     heritent de ces deux variables. Les redefinir ici les retune TOUTES, sans
+     toucher un seul fichier — c'est le changement de mouvement au plus fort
+     levier de la refonte. 150ms par defaut -> 90ms : un survol doit repondre,
+     pas glisser. */
+  --default-transition-duration:        var(--duration-instant);
+  --default-transition-timing-function: var(--ease-out);
 
   /* Elevation — deux niveaux, pas plus (cf. --elev-* dans :root) */
   --shadow-elev-1:            var(--elev-1);
@@ -371,6 +415,40 @@ body {
   transition: background-color 0.2s ease, color 0.15s ease;
 }
 
+/* ============================================================
+   Mouvement reduit — une seule regle, globale
+   ------------------------------------------------------------
+   Remplace trois rustines par animation (.gl-bar-grow, .app-sidebar,
+   .gl-volcano-points) qui ne couvraient que 3 des 9 animations du fichier.
+
+   `1ms` et NON `none`, deliberement : `animation: none` annule le remplissage
+   `both`, donc tout ce qui demarre a opacity:0 resterait invisible pour
+   toujours. C'est exactement pourquoi la rustine du volcan devait rappeler
+   `opacity: var(--o, 1)` a la main. La forme 1ms rend ce rattrapage inutile.
+
+   Le spinner est excepte : sans lui, un chargement n'a plus aucun signe de vie.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-spin { animation-duration: revert !important; }
+}
+
+/* Sur-titre. Absorbe .section-title (11px/700/.09em, supprimee, zero
+   consommateur) et .nav-section-label (10px/700/.1em) : un seul idiome, aligne
+   sur le cran `micro` de l'echelle plutot que sur deux valeurs inventees. */
+.eyebrow {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 /* Display font utility (Tailwind also registers font-display via @theme) */
 .font-display {
   font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
@@ -453,10 +531,6 @@ body {
    the element's own width as the end value, so the class carries no geometry. */
 @keyframes gl-bar-grow { from { width: 0; } }
 .gl-bar-grow { animation: gl-bar-grow .7s cubic-bezier(.22,.61,.36,1) both; }
-@media (prefers-reduced-motion: reduce) {
-  .gl-bar-grow { animation: none; }
-}
-
 .gl-gene-token {
   border-bottom: 1px solid transparent;
   transition: border-color .15s;
@@ -606,10 +680,6 @@ body {
   .mobile-nav-scrim { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .app-sidebar { transition: none; }
-}
-
 /* ============================================================
    Sidebar Navigation
    ============================================================ */
@@ -712,23 +782,7 @@ body {
   color: var(--text-primary);
 }
 
-.section-title {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
 
-.stat-value {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-}
 
 /* ============================================================
    Page Layout
@@ -742,26 +796,8 @@ body {
 /* ============================================================
    Scientific Data Styles
    ============================================================ */
-.plot-container {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.25rem;
-}
 
-.plot-title {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.2rem;
-}
 
-.plot-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.875rem;
-}
 
 /* Data tables */
 .data-table            { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
@@ -879,10 +915,6 @@ body {
 .gl-volcano-points circle {
   opacity: 0;
   animation: glVolcanoIn 0.5s ease-out both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gl-volcano-points circle { animation: none; opacity: var(--o, 1); }
 }
 
 /* ---------- Auth controls ----------

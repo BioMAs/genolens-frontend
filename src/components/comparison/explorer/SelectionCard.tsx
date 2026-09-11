@@ -38,7 +38,7 @@ export default function SelectionCard({
     <aside
       className="gl-card p-4"
       style={{
-        borderRadius: 'var(--radius-panel)',
+        borderRadius: 'var(--radius-card)',
         position: 'sticky',
         top: 'calc(var(--topbar-height) + 1rem)',
       }}

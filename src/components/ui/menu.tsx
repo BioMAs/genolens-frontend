@@ -83,7 +83,7 @@ export function OverflowMenu({ items, label = 'More actions', className }: Overf
           role="menu"
           className={cn(
             'absolute right-0 z-50 mt-1.5 min-w-[13rem] overflow-hidden py-1',
-            'rounded-panel border border-line bg-raised shadow-elev-2',
+            'rounded-card border border-line bg-raised shadow-elev-2',
           )}
         >
           {items.map((item) => {

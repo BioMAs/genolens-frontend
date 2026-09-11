@@ -73,7 +73,7 @@ interface ComparisonDetailProps {
 function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () => void }) {
   return (
     <div
-      className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-line text-center text-muted"
+      className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line text-center text-muted"
     >
       <p className="text-body-sm">{label}</p>
       <button

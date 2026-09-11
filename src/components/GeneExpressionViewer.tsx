@@ -84,7 +84,7 @@ export default function GeneExpressionViewer({
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-panel)',
+              borderRadius: 'var(--radius-card)',
             }}
           >
             {suggestions.map((id) => (

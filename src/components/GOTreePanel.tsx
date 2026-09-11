@@ -305,7 +305,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       className="overflow-hidden"
       style={{
         border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-panel)',
+        borderRadius: 'var(--radius-card)',
         background: 'var(--surface)',
       }}
     >

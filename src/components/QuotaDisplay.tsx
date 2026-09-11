@@ -31,8 +31,11 @@ export default function QuotaDisplay() {
   if (!hasProfile) return null;
 
   if (ai.unlimited) {
+    // Etait un degrade from-purple-500/to-indigo-500 pris a la palette Tailwind
+    // brute — hors systeme, et le dernier degrade de l'application
+    // authentifiee. Un aplat d'accent suffit.
     return (
-      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-caption font-semibold text-on-accent shadow-sm">
+      <div className="flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1 text-caption font-semibold text-on-accent">
         <Sparkles className="h-3.5 w-3.5" />
         <span>Unlimited</span>
       </div>

@@ -30,7 +30,7 @@ const TYPE_SCALE = [
 ] as const;
 
 /** Rayons et elevations nommes, meme traitement que l'echelle typographique. */
-const RADII = ['card', 'panel', 'control'] as const;
+const RADII = ['sm', 'control', 'card', 'pill'] as const;
 const ELEVATIONS = ['elev-1', 'elev-2'] as const;
 
 const twMerge = extendTailwindMerge({

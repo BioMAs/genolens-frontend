@@ -37,7 +37,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
   return (
     <div
       className="gl-card p-4"
-      style={{ borderRadius: 'var(--radius-panel)' }}
+      style={{ borderRadius: 'var(--radius-card)' }}
       data-testid="synthesis-strip"
     >
       {/* Le libelle distingue ces comptes de ceux de ComparisonSynthesis, qui
