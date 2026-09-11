@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import api from '@/utils/api';
 import type { Dataset } from '@/types';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 
 interface Props {
   /** Dataset holding the enrichment pathways; absent → nothing to show yet. */
@@ -181,7 +182,7 @@ export default function OverviewTopPathways({
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 16, left: 4 }}>
           <XAxis
             type="number"
-            tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
             label={{
               value: '−log10(adj. p)',
@@ -195,7 +196,7 @@ export default function OverviewTopPathways({
             dataKey="name"
             width={170}
             tickFormatter={(value: string) => truncate(value)}
-            tick={{ fontSize: 10.5, fill: 'var(--text-secondary)' }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <Tooltip content={<PathwayTooltip />} cursor={{ fill: 'var(--hover-overlay)' }} />

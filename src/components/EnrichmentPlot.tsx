@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from 'recharts';
 import { useDatasetQuery } from '@/hooks/useDatasets';
 import { Dataset } from '@/types';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface EnrichmentPlotProps {
   dataset: Dataset;
@@ -173,7 +174,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
       <div className="h-[800px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 250 }}>
-            <CartesianGrid />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis 
               type="number" 
               dataKey="x" 
@@ -185,7 +186,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
               dataKey="y" 
               name="Pathway" 
               width={230} 
-              tick={{fontSize: 11}} 
+              {...CHART_AXIS} 
               interval={0}
             />
             <ZAxis type="number" dataKey="z" range={[20, 200]} name="Count" />

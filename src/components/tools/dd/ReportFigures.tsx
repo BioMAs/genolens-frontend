@@ -58,6 +58,7 @@ import type {
   DdTopTargetsBar,
   DdTopTargetsFigure,
 } from '@/types/drugDiscovery';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 
 /** Épaisseur de marque, jamais dépassée : l'air restant fait partie du dessin. */
 const BAR_THICKNESS = 24;
@@ -214,9 +215,7 @@ function TopTargetsFigure({ figure }: { figure: DdTopTargetsFigure }) {
               type="number"
               height={X_AXIS_HEIGHT}
               domain={[0, domainMax]}
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+              {...CHART_AXIS}
               tickFormatter={(value: number) => value.toFixed(2)}
             />
             <YAxis

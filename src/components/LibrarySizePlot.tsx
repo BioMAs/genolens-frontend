@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
+import { CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 interface LibrarySizePlotProps {
   dataset: Dataset;
@@ -58,15 +59,13 @@ export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
       <div className="flex-grow min-h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis dataKey="sample" />
             <YAxis tickFormatter={(value) => `${(value / 1e6).toFixed(1)}M`} />
-            <Tooltip
-              formatter={(value: number | string | undefined) => [
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value: number | string | undefined) => [
                 `${Number(value ?? 0).toLocaleString()} reads`,
                 'Library Size',
-              ]}
-            />
+              ]} />
             <Legend />
             <Bar dataKey="reads" fill="#00BFA5" name="Reads" />
           </BarChart>

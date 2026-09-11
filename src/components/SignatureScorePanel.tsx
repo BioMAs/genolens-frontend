@@ -14,6 +14,7 @@ import { Activity } from 'lucide-react';
 import { useGeneLists } from '@/hooks/useBookmarks';
 import { useSignatureScore, type ScoringMethod, type SampleScore } from '@/hooks/useSignatureScore';
 import { getPalette } from '@/utils/chartPalettes';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface SignatureScorePanelProps {
   projectId: string;
@@ -249,20 +250,20 @@ export default function SignatureScorePanel({
 
           <ResponsiveContainer width="100%" height={420}>
             <ScatterChart margin={{ top: 10, right: 20, bottom: 40, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <CartesianGrid {...CHART_GRID} />
               <XAxis
                 type="number"
                 dataKey="x"
                 domain={[-0.5, chart.groups.length - 0.5]}
                 ticks={chart.groups.map((_, i) => i)}
                 tickFormatter={(v: number) => chart.groups[v] ?? ''}
-                tick={{ fontSize: 12 }}
+                {...CHART_AXIS}
                 interval={0}
               />
               <YAxis
                 type="number"
                 dataKey="y"
-                tick={{ fontSize: 12 }}
+                {...CHART_AXIS}
                 label={{
                   value: result.method === 'mean_z' ? 'Signature score (z)' : 'Signature score (rank)',
                   angle: -90,

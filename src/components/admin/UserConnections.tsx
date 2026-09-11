@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { Users, Activity, Calendar } from 'lucide-react';
 import { useLoginStats } from '@/hooks/useLoginStats';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 const PERIOD_OPTIONS = [
   { label: '7 days', value: 7 },
@@ -118,27 +119,24 @@ export default function UserConnections() {
 
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.daily_counts} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11 }}
+              {...CHART_AXIS}
               tickFormatter={(v: string) => {
                 const d = new Date(v);
                 return `${d.getDate()}/${d.getMonth() + 1}`;
               }}
               interval="preserveStartEnd"
             />
-            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-            <Tooltip
-                formatter={(value: number | undefined) => [value ?? 0, 'Connections']}
-              labelFormatter={(label: string) =>
+            <YAxis {...CHART_AXIS} allowDecimals={false} />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value: number | undefined) => [value ?? 0, 'Connections']} labelFormatter={(label: string) =>
                 new Date(label).toLocaleDateString('en-US', {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'short',
                 })
-              }
-            />
+              } />
             <Line
               type="monotone"
               dataKey="count"

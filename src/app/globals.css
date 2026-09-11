@@ -126,6 +126,30 @@
   /* Fond d'avertissement, pendant clair de --dc-amber */
   --warning-soft: rgba(245, 158, 11, 0.12);
 
+  /* ── Couleurs de DONNEES ────────────────────────────────────────────────
+     Distinctes des couleurs de chrome, et dependantes du theme — ce que
+     chartPalettes.ts ne savait pas faire, ses valeurs etant des litteraux
+     uniques pour les deux themes.
+
+     Trois defauts mesures, corriges ici :
+
+     1. --dc-up #22c55e sur blanc donnait 2,28:1, sous le plancher NON TEXTUEL
+        de 3:1. La couleur « sur-exprime », le datum central du produit, etait
+        sous le seuil en theme clair. #16a34a donne 3,30:1.
+
+     2. `ns` #d1d5db sur #131720 donnait 12,17:1 : en theme sombre, les genes
+        NON SIGNIFICATIFS etaient l'element le plus contraste du nuage de
+        volcan. Le bruit criait plus fort que le signal. La valeur sombre est
+        deliberement BASSE — le non-significatif doit reculer.
+
+     3. `zero` #f7f7f7, le point median des echelles divergentes, faisait un
+        trou blanc dans chaque carte de chaleur sombre. Il vaut desormais la
+        surface surelevee, donc il y disparait. */
+  --chart-up:    #16a34a;
+  --chart-down:  #dc2626;
+  --chart-ns:    #c7ccd4;
+  --chart-zero:  #f7f7f7;
+
   /* Accent en ENCRE, distinct de l'accent en APLAT.
      --sl-purple (#4f46e5) donne 6,29:1 sur blanc mais seulement 2,85:1 sur la
      surface sombre #131720 — sous le seuil AA de 4,5:1. C'est exactement le
@@ -187,6 +211,15 @@
   --elev-2: 0 12px 32px -12px rgb(0 0 0 / .6);
 
   --warning-soft: rgba(245, 158, 11, 0.16);
+
+  /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
+     #22c55e y donne 7,87:1, #ef4444 4,77:1. */
+  --chart-up:    #22c55e;
+  --chart-down:  #ef4444;
+  /* 2,38:1 — volontairement bas : le non-significatif doit reculer. */
+  --chart-ns:    #4a5568;
+  /* = --surface-raised : le point median se fond dans le panneau. */
+  --chart-zero:  #1c2438;
 
   /* indigo-400 : 6,01:1 sur #131720. indigo-300 monterait a 8,99:1 mais se
      delave et ne lit plus comme l'accent de la marque. */
@@ -293,9 +326,9 @@
   /* Direction de regulation — reserve a la donnee, jamais a la chrome.
      Alias chrome de utils/chartPalettes.ts, qui fait autorite (c'est la
      seule source qui gere deja le mode daltonien). */
-  --color-up:                 var(--dc-up);
+  --color-up:                 var(--chart-up);
   --color-up-strong:          var(--dc-up-dark);
-  --color-down:               var(--dc-down);
+  --color-down:               var(--chart-down);
   --color-down-strong:        var(--dc-down-dark);
 
   /* Statut. --color-danger et --color-down resolvent aujourd'hui sur la
@@ -413,6 +446,28 @@ body {
   font-size: 0.9375rem;
   line-height: 1.6;
   transition: background-color 0.2s ease, color 0.15s ease;
+}
+
+/* ============================================================
+   Chiffres tabulaires dans les graphiques
+   ------------------------------------------------------------
+   Recharts ET Plotly rendent leur texte en <text> SVG : deux selecteurs
+   couvrent donc les 36 graphiques sans toucher un seul fichier.
+
+   Ce n'est pas cosmetique. Sans chiffres de largeur fixe, une valeur qui change
+   en survolant fait respirer sa boite et deplace le texte sous le curseur ; et
+   dans une colonne d'axe, les graduations ne s'alignent pas verticalement.
+
+   `scattergl` (le nuage de volcan) rend ses MARQUES en WebGL, mais ses axes,
+   graduations, legende et libelles de survol restent du SVG : il est couvert.
+
+   A verifier : que la police Geist embarque bien la fonction `tnum`. C'est un
+   emplacement next/font, et le sous-ensemble compte — sinon la regle est un
+   no-op silencieux.
+   ============================================================ */
+.recharts-wrapper text,
+.js-plotly-plot .plotly text {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================

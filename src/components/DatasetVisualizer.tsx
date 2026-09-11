@@ -14,6 +14,7 @@ import {
   Scatter,
 } from 'recharts';
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 interface DatasetVisualizerProps {
   dataset: Dataset;
@@ -80,10 +81,10 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
         </div>
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <CartesianGrid />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis type="number" dataKey="x" name="Log2 Fold Change" />
             <YAxis type="number" dataKey="y" name="-log10(P-value)" />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Scatter name="Genes" data={volcanoData} fill="#8884d8" />
           </ScatterChart>
         </ResponsiveContainer>
@@ -110,15 +111,15 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             data={chartData.slice(0, 20)} // Top 20
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis type="number" />
             <YAxis 
               dataKey={categoryColumn || 'term'} 
               type="category" 
               width={150} 
-              tick={{fontSize: 12}}
+              {...CHART_AXIS}
             />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
             <Bar dataKey={scoreCol} fill="#8884d8" name={scoreCol} />
           </BarChart>
@@ -138,10 +139,10 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
         <h3 className="text-title font-medium mb-4">Expression Distribution (First 5 Samples)</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.slice(0, 50)}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis dataKey={categoryColumn || 'gene_id'} />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
             {samplesToPlot.map((sample, idx) => (
               <Bar key={sample} dataKey={sample} fill={`hsl(${idx * 60}, 70%, 50%)`} />
@@ -159,10 +160,10 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       <h3 className="text-title font-medium mb-4">Data Overview</h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData.slice(0, 20)}>
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis dataKey={categoryColumn} />
           <YAxis />
-          <Tooltip />
+          <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
           <Legend />
           {numericColumns.slice(0, 3).map((col, idx) => (
             <Bar key={col} dataKey={col} fill={`hsl(${idx * 100}, 70%, 50%)`} />

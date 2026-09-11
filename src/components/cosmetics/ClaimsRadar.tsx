@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
+import { CHART_AXIS, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 interface ClaimsRadarProps {
   claims: CosmeticClaimScore[];
@@ -60,9 +61,9 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
             <PolarGrid stroke="var(--border-subtle, #e5e7eb)" />
             <PolarAngleAxis
               dataKey="claim"
-              tick={{ fontSize: 11, fill: 'var(--text-secondary, #6b7280)' }}
+              {...CHART_AXIS}
             />
-            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9 }} />
+            <PolarRadiusAxis angle={90} domain={[0, 100]} {...CHART_AXIS} />
             <Radar
               name="Score"
               dataKey="score"
@@ -70,7 +71,7 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
               fill="#db2777"
               fillOpacity={0.35}
             />
-            <Tooltip formatter={(value) => [`${value as number}/100`, 'Score']} />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value) => [`${value as number}/100`, 'Score']} />
           </RadarChart>
         </ResponsiveContainer>
       </div>

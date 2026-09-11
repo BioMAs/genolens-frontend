@@ -16,6 +16,7 @@ import {
 import { Download, GitCompareArrows } from 'lucide-react';
 import type { ComparisonRef } from '@/components/MultiComparisonVenn';
 import { useContrastScatter, type Quadrant, type ScatterPoint } from '@/hooks/useContrastScatter';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface ContrastScatterProps {
   pathDatasetId: string;
@@ -263,15 +264,15 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
             )}
             <ResponsiveContainer width="100%" height={480}>
               <ScatterChart margin={{ top: 10, right: 20, bottom: 40, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <CartesianGrid {...CHART_GRID} />
                 <XAxis
                   type="number" dataKey="logfc_a" domain={axisDomain} allowDataOverflow
-                  tick={{ fontSize: 12 }}
+                  {...CHART_AXIS}
                   label={{ value: `log2FC — ${result.comparison_a.label}`, position: 'bottom', offset: 10, fontSize: 12 }}
                 />
                 <YAxis
                   type="number" dataKey="logfc_b" domain={axisDomain} allowDataOverflow
-                  tick={{ fontSize: 12 }}
+                  {...CHART_AXIS}
                   label={{ value: `log2FC — ${result.comparison_b.label}`, angle: -90, position: 'left', offset: -5, fontSize: 12 }}
                 />
                 <ZAxis range={[16, 16]} />

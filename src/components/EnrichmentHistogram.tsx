@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 
 interface GOTerm {
   go_id: string;
@@ -125,18 +126,14 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
           <XAxis
             type="number"
             domain={[0, xMax]}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            {...CHART_AXIS}
             label={{ value: '-log₁₀(FDR)', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#94a3b8' }}
           />
           <YAxis
             type="category"
             dataKey="name"
             width={200}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 10, fill: '#374151' }}
+            {...CHART_AXIS}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
           <ReferenceLine

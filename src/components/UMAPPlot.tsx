@@ -17,6 +17,7 @@ import { Dataset } from '@/types';
 import { getPalette } from '@/utils/chartPalettes';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface UMAPPlotProps {
   dataset: Dataset;
@@ -198,13 +199,13 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
 
       <ResponsiveContainer width="100%" height={440}>
         <ScatterChart margin={{ top: 16, right: 16, bottom: 56, left: 16 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis
             type="number"
             dataKey="x"
             name="UMAP1"
             label={{ value: 'UMAP 1', position: 'bottom', offset: 0, fill: 'var(--text-secondary)' }}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <YAxis
@@ -212,7 +213,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             dataKey="y"
             name="UMAP2"
             label={{ value: 'UMAP 2', angle: -90, position: 'left', fill: 'var(--text-secondary)' }}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <Tooltip

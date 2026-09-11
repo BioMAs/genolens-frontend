@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { Calculator, TrendingUp, AlertCircle, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 // ============================================================================
 // Statistical utility functions (normal approximation – sufficient for planning)
@@ -520,7 +521,7 @@ export default function PowerAnalysis() {
                 data={curveData}
                 margin={{ top: 8, right: 30, left: 0, bottom: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid {...CHART_GRID} />
                 <XAxis
                   dataKey="n"
                   label={{
@@ -529,25 +530,25 @@ export default function PowerAnalysis() {
                     offset: -12,
                     fontSize: 11,
                   }}
-                  tick={{ fontSize: 11 }}
+                  {...CHART_AXIS}
                 />
                 <YAxis
                   domain={[0, 1]}
                   tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
-                  tick={{ fontSize: 11 }}
+                  {...CHART_AXIS}
                 />
                 <Tooltip
+                  content={<ChartTooltip />}
+                  cursor={CHART_TOOLTIP_CURSOR}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(val: any) => [
                     typeof val === 'number' ? `${(val * 100).toFixed(1)}%` : String(val ?? ''),
                     'Power',
-                  ]}
-                  labelFormatter={(label) =>
+                  ]} labelFormatter={(label) =>
                     testType === 'two-sample'
                       ? `n = ${label} per group`
                       : `n = ${label}`
-                  }
-                />
+                  } />
                 <ReferenceLine
                   y={0.8}
                   stroke="#16a34a"

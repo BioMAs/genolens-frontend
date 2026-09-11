@@ -12,6 +12,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer
 } from 'recharts';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -338,13 +339,10 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               <div className="flex-1" style={{ height: 180 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={silhouetteData.profile} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} tick={{ fontSize: 12 }} />
-                    <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} tick={{ fontSize: 12 }} />
-                    <Tooltip
-                      formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']}
-                      labelFormatter={k => `k = ${k}`}
-                    />
+                    <CartesianGrid {...CHART_GRID} />
+                    <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} {...CHART_AXIS} />
+                    <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} {...CHART_AXIS} />
+                    <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']} labelFormatter={k => `k = ${k}`} />
                     <ReferenceLine y={0.5} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: '#94a3b8' }} />
                     <Line
                       type="monotone"

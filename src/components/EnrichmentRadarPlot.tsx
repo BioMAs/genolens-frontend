@@ -7,6 +7,7 @@ import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
 import { canUseAI } from '@/utils/plan';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
@@ -581,13 +582,13 @@ export default function EnrichmentRadarPlot({
             <PolarGrid stroke="#d1d5db" />
             <PolarAngleAxis
               dataKey="shortTerm"
-              tick={{ fill: '#374151', fontSize: 11 }}
+              {...CHART_AXIS}
               tickLine={{ stroke: '#9ca3af' }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[-1, 5]}
-              tick={{ fill: '#6b7280', fontSize: 10 }}
+              {...CHART_AXIS}
               label={{ value: '-log10(p-value)', position: 'insideTop', fill: '#374151', fontSize: 12 }}
             />
             

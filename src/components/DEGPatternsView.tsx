@@ -15,6 +15,7 @@ import {
 import { Download, ArrowLeft, ArrowRight, GitBranch } from 'lucide-react';
 import { useDegPatterns, type PatternCluster, type DegSource } from '@/hooks/useDegPatterns';
 import { getPalette } from '@/utils/chartPalettes';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 interface DEGPatternsViewProps {
   matrixDatasetId: string;
@@ -221,20 +222,11 @@ export default function DEGPatternsView({
                     </div>
                     <ResponsiveContainer width="100%" height={200}>
                       <ComposedChart data={data} margin={{ top: 5, right: 10, bottom: 25, left: -10 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="group" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" interval={0} height={40} />
-                        <YAxis domain={yDomain} tick={{ fontSize: 10 }} />
+                        <CartesianGrid {...CHART_GRID} />
+                        <XAxis dataKey="group" {...CHART_AXIS} angle={-30} textAnchor="end" interval={0} height={40} />
+                        <YAxis domain={yDomain} {...CHART_AXIS} />
                         <ReferenceLine y={0} stroke="#cbd5e1" />
-                        <Tooltip
-                          contentStyle={{ fontSize: 12 }}
-                          formatter={(value, name) => {
-                            if (Array.isArray(value)) {
-                              const [lo, hi] = value as number[];
-                              return [`${lo.toFixed(2)} – ${hi.toFixed(2)}`, 'IQR'];
-                            }
-                            return [(value as number).toFixed(2), name === 'median' ? 'Median z' : String(name)];
-                          }}
-                        />
+                        <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
                         <Area dataKey="band" stroke="none" fill={color} fillOpacity={0.18} isAnimationActive={false} />
                         <Line dataKey="median" stroke={color} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
                       </ComposedChart>

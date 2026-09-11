@@ -96,6 +96,7 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartTooltip, ResponsiveContainer, Cell, ZAxis,
 } from 'recharts';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface DotPlotTooltipProps {
   active?: boolean;
@@ -148,15 +149,15 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
       </div>
       <ResponsiveContainer width="100%" height={Math.max(240, top.length * 26)}>
         <ScatterChart margin={{ top: 4, right: 24, left: 8, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis
             type="number" dataKey="x" name="Gene Ratio"
-            tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false}
+            {...CHART_AXIS} tickLine={false} axisLine={false}
             label={{ value: 'Gene Ratio', position: 'insideBottom', offset: -12, fontSize: 10, fill: '#94a3b8' }}
           />
           <YAxis
             type="category" dataKey="y" width={210}
-            tick={{ fontSize: 10, fill: '#374151' }} tickLine={false} axisLine={false}
+            {...CHART_AXIS} tickLine={false} axisLine={false}
           />
           <ZAxis type="number" dataKey="z" range={[20, 120]} />
           <RechartTooltip content={<DotPlotTooltip />} cursor={{ strokeDasharray: '3 3' }} />
