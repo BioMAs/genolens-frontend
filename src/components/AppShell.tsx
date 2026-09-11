@@ -6,37 +6,31 @@ interface AppShellProps {
   user: User;
   userRole: string | null;
   children: React.ReactNode;
-  topBarRightSlot?: React.ReactNode;
 }
 
 /**
- * AppShell — authenticated layout wrapper.
+ * AppShell — la coquille authentifiee.
  *
- * Server component: no hooks, no client APIs.
- * Renders Sidebar (client) + TopBar (client) + scrollable content area.
+ * Composant SERVEUR : ni hooks ni API client. C'est ce qui oblige le fil
+ * d'Ariane a passer par un contexte plutot que par des props — un nom de projet
+ * charge cote page ne peut pas redescendre jusqu'a la TopBar, qui est cliente.
  *
- * Layout:
- *   ┌─────────────┬────────────────────────────────────┐
- *   │             │  TopBar (52px)                     │
- *   │   Sidebar   ├────────────────────────────────────┤
- *   │   (220px)   │  app-content (scrollable)          │
- *   │             │  {children}                        │
- *   └─────────────┴────────────────────────────────────┘
+ *   ┌──────────────┬────────────────────────────────────┐
+ *   │              │  TopBar (56px) — fil d'Ariane      │
+ *   │   Sidebar    ├────────────────────────────────────┤
+ *   │   (248px)    │  app-content (defile)              │
+ *   │              │  {children}                        │
+ *   └──────────────┴────────────────────────────────────┘
+ *
+ * `topBarRightSlot` a ete retire : AppFrame ne l'a jamais passe.
  */
-export default function AppShell({
-  user,
-  userRole,
-  children,
-  topBarRightSlot,
-}: AppShellProps) {
+export default function AppShell({ user, userRole, children }: AppShellProps) {
   return (
     <div className="app-shell">
       <Sidebar user={user} userRole={userRole} />
       <div className="app-main">
-        <TopBar rightSlot={topBarRightSlot} />
-        <main className="app-content">
-          {children}
-        </main>
+        <TopBar />
+        <main className="app-content">{children}</main>
       </div>
     </div>
   );

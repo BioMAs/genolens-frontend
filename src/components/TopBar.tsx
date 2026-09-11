@@ -1,61 +1,71 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import GlobalGeneSearch from './GlobalGeneSearch';
 import HelpTourButton from './onboarding/HelpTourButton';
 import MobileNavToggle from './MobileNavToggle';
+import Breadcrumb from './Breadcrumb';
+import { useBreadcrumbOverride } from '@/contexts/BreadcrumbContext';
+import { resolveBreadcrumb } from '@/lib/navigation/breadcrumbs';
+import { cn } from '@/lib/cn';
 
-/** Map route segments to human-readable page titles. */
-function resolvePageTitle(pathname: string): string {
-  if (pathname === '/dashboard') return 'Dashboard';
-  if (pathname === '/projects') return 'Projects';
-  if (pathname === '/comparisons') return 'Comparisons';
-  if (pathname === '/tools') return 'Tools';
-  if (pathname.startsWith('/tools/ontology') && pathname.length > '/tools/ontology'.length) return 'GO Term';
-  if (pathname.startsWith('/tools/ontology')) return 'Gene Ontology Browser';
-  if (pathname.startsWith('/tools/power-analysis')) return 'Power Analysis';
-  if (pathname.startsWith('/tools/drug-discovery')) return 'Drug Discovery';
-  if (pathname === '/profile') return 'Profile';
-  if (pathname === '/admin') return 'Administration';
-  // Avant le bloc de `includes()` ci-dessous : un slug de guide contient un
-  // mot-clé d'analyse (/docs/multi-comparison) et serait capté par lui.
-  if (pathname === '/docs') return 'Documentation';
-  if (pathname.startsWith('/docs/')) return 'Guide';
-  if (pathname.includes('/multi-comparison')) return 'Multi-Comparison';
-  if (pathname.includes('/clustering')) return 'Clustering Analysis';
-  if (pathname.includes('/enrichment')) return 'Enrichment Analysis';
-  if (pathname.includes('/comparisons/')) return 'Comparison';
-  if (pathname.includes('/datasets/')) return 'Dataset';
-  if (pathname.startsWith('/projects/')) return 'Project';
-  return 'GenoLens';
-}
-
-interface TopBarProps {
-  rightSlot?: ReactNode;
-}
-
-export default function TopBar({ rightSlot }: TopBarProps) {
+/**
+ * Barre de contexte.
+ *
+ * Elle occupait 64px pour afficher UN mot de 16px, dont le <h1> se battait
+ * contre sa propre classe avec quatre `!important`. Et ce n'etait pas que du
+ * gaspillage : sur sept routes ce mot etait la meme chaine que le <h1> de la
+ * page, donc de la duplication pure ; sur les autres, un nom generique
+ * (« Project », « Comparison », « Guide ») qui n'apprenait rien.
+ *
+ * Elle porte desormais un fil d'Ariane — la seule information que la page
+ * elle-meme ne donne pas : ou l'on se trouve dans la hierarchie, et comment
+ * remonter.
+ *
+ * Elle ne porte PAS de bordure basse. Elle partage le fond de l'application, et
+ * un filet n'apparait qu'une fois le contenu defile. C'est la signature la plus
+ * reconnaissable de ce registre, pour une dizaine de lignes.
+ */
+export default function TopBar() {
   const pathname = usePathname();
-  const pageTitle = resolvePageTitle(pathname);
+  const override = useBreadcrumbOverride();
+  const crumbs = override ?? resolveBreadcrumb(pathname);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Le conteneur qui defile est `.app-content`, pas la fenetre : c'est lui qui
+  // porte `overflow-y: auto` dans la coquille.
+  useEffect(() => {
+    const content = document.querySelector('.app-content');
+    if (!content) return;
+    const onScroll = () => setScrolled(content.scrollTop > 4);
+    onScroll();
+    content.addEventListener('scroll', onScroll, { passive: true });
+    return () => content.removeEventListener('scroll', onScroll);
+  }, [pathname]);
 
   return (
-    <header className="app-topbar">
+    <header
+      className={cn(
+        'app-topbar border-b transition-colors',
+        scrolled ? 'border-line' : 'border-transparent',
+      )}
+    >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {/* Sous 768px la sidebar est un tiroir : c'est son unique ouverture. */}
         <MobileNavToggle />
-        <h1 className="page-title truncate !text-[1rem] !font-semibold !tracking-[-0.01em] !leading-none">
-          {pageTitle}
-        </h1>
+        <Breadcrumb crumbs={crumbs} />
       </div>
 
-      <div className="hidden w-[400px] shrink-0 justify-center md:flex">
+      {/* La recherche occupait 400px fixes de chrome permanente pour une
+          fonction occasionnelle. Ramenee a 240px, elle laisse la place au
+          contexte, qui sert a chaque instant. */}
+      <div className="hidden w-60 shrink-0 justify-center lg:flex">
         <GlobalGeneSearch variant="topbar" />
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+      <div className="flex shrink-0 items-center justify-end gap-1">
         <HelpTourButton />
-        {rightSlot}
       </div>
     </header>
   );
