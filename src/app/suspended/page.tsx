@@ -78,14 +78,14 @@ export default function SuspendedPage() {
     <AuthShell>
       <AuthCard className="text-center">
         <div
-          className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-[14px]"
+          className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-card"
           style={{ background: tone.bg, color: tone.fg }}
         >
           <Icon size={26} aria-hidden="true" />
         </div>
 
         <span
-          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-micro uppercase"
+          className="mb-4 inline-block whitespace-nowrap rounded-pill px-2.5 py-1 text-micro uppercase"
           style={{ background: tone.bg, color: tone.fg, letterSpacing: "0.12em" }}
         >
           {current.badge}
@@ -98,7 +98,7 @@ export default function SuspendedPage() {
           {current.title}
         </h1>
         <p
-          className="mx-auto mt-2.5 max-w-[320px] text-body-sm leading-relaxed"
+          className="mx-auto mt-3 max-w-[320px] text-body-sm leading-relaxed"
           style={{ color: "var(--auth-text-2)" }}
         >
           {current.description}

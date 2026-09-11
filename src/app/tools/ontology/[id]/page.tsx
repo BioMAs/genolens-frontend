@@ -59,12 +59,12 @@ export default function GoTermPage() {
                  
                  <div className="mb-6">
                     
-                    <div className="bg-surface rounded-lg shadow-sm border border-line p-6 mb-6">
+                    <div className="bg-surface rounded-card shadow-sm border border-line p-6 mb-6">
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-heading text-primary">{term.id}</h1>
-                                    <span className={`px-2 py-1 rounded-full text-caption font-medium ${
+                                    <span className={`px-2 py-1 rounded-pill text-caption font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
                                         'bg-accent-soft text-accent-ink'
@@ -73,7 +73,7 @@ export default function GoTermPage() {
                                     </span>
                                 </div>
                                 <h2 className="text-heading text-brand-primary mt-1">{term.name}</h2>
-                                <p className="text-secondary mt-4 leading-relaxed bg-surface-2 p-4 rounded border border-subtle">
+                                <p className="text-secondary mt-4 leading-relaxed bg-surface-2 p-4 rounded-sm border border-subtle">
                                     {term.definition}
                                 </p>
                             </div>
@@ -86,7 +86,7 @@ export default function GoTermPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Parents */}
-                        <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
+                        <div className="bg-surface rounded-card shadow-sm border border-line p-6">
                             <h3 className="flex items-center text-title font-medium text-primary mb-4 border-b pb-2">
                                 <ArrowUpCircle className="h-5 w-5 mr-2 text-accent-ink"/>
                                 Parent Terms
@@ -113,7 +113,7 @@ export default function GoTermPage() {
                         </div>
 
                          {/* Children */}
-                        <div className="bg-surface rounded-lg shadow-sm border border-line p-6">
+                        <div className="bg-surface rounded-card shadow-sm border border-line p-6">
                             <h3 className="flex items-center text-title font-medium text-primary mb-4 border-b pb-2">
                                 <ArrowDownCircle className="h-5 w-5 mr-2 text-teal-500"/>
                                 Child Terms

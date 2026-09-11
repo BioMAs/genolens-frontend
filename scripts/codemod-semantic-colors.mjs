@@ -101,6 +101,20 @@ const MAP = new Map(Object.entries({
   'border-violet-200': 'border-accent-ring',
   'ring-purple-500': 'ring-accent',
   'accent-purple-600': 'accent-accent',
+
+  // Nuances restantes, remontees par le test de garde de geometrie.
+  'bg-indigo-200': 'bg-accent-soft',
+  'text-indigo-300': 'text-accent-ink',
+  'text-indigo-400': 'text-accent-ink',
+  'text-indigo-900': 'text-accent-ink',
+  'border-indigo-100': 'border-accent-ring',
+  'border-indigo-400': 'border-accent',
+  'border-indigo-700': 'border-accent',
+  'ring-indigo-400': 'ring-accent',
+  'border-gray-400': 'border-strong',
+  'border-gray-500': 'border-strong',
+  'border-gray-900': 'border-strong',
+  'divide-gray-400': 'divide-strong',
 }));
 
 // Le survol d'un fond gris clair est un voile, pas une surface en creux.
@@ -115,7 +129,7 @@ const HOVER_OVERRIDES = new Map(Object.entries({
 const REVIEW = new Set([
   'text-gray-300', 'text-gray-200', 'text-gray-100',
   'bg-gray-200', 'bg-gray-300', 'bg-gray-700', 'bg-gray-800', 'bg-gray-900',
-  'border-gray-400', 'border-gray-600', 'border-gray-700', 'border-gray-800',
+  'border-gray-600', 'border-gray-700', 'border-gray-800',
   'text-purple-300', 'bg-purple-900',
   // Degrades : de la decoration pure, a arbitrer au cas par cas.
   'from-purple-500', 'from-purple-50', 'via-purple-500', 'to-purple-500',
@@ -129,8 +143,12 @@ const REVIEW = new Set([
 const EXCLUDED = [
   /\/components\/auth\//,
   /\/app\/login\//, /\/app\/auth\//,
-  /\/(EnrichmentRadarPlot|ContrastScatter|DEGBarChart|PCAPlot|UMAPPlot|EnrichmentPlot|EnrichmentHistogram|LibrarySizePlot)\.tsx$/,
-  /\/components\/heatmap\//, /\/components\/viz\//, /\/components\/network\//,
+  // Les composants de graphiques etaient exclus EN ENTIER, par prudence sur
+  // leurs couleurs de donnees. C'etait trop large : un `text-gray-700` sur un
+  // axe est un LIBELLE, donc de la chrome. Le codemod ne touche de toute facon
+  // aucune valeur hexadecimale — seules les classes utilitaires sont mappees,
+  // et les series de donnees sont declarees en hex. L'exclusion est levee.
+  /\/components\/heatmap\//, /\/components\/viz\//,
   // Les ecrans vitrines etaient exclus le temps de leur restructuration, pour
   // que le balayage mecanique n'entre pas en conflit avec la chirurgie faite a
   // la main. Celle-ci est faite : ils rejoignent le lot commun.
@@ -161,12 +179,19 @@ function convertClassList(raw) {
     const variants = parts;
     const isHover = variants.includes('hover') || variants.includes('group-hover');
 
-    if (REVIEW.has(utility)) {
+    if (REVIEW.has(utility.split('/')[0])) {
       reviews.push(tok);
       return tok;
     }
-    const target = (isHover && HOVER_OVERRIDES.get(utility)) || MAP.get(utility);
-    if (!target) return tok;
+    // Un modificateur d'opacite (`bg-indigo-50/50`) doit etre detache avant le
+    // mappage, sinon le token ne correspond a aucune entree de la table.
+    const slash = utility.indexOf('/');
+    const base = slash === -1 ? utility : utility.slice(0, slash);
+    const alpha = slash === -1 ? '' : utility.slice(slash);
+
+    const mapped = (isHover && HOVER_OVERRIDES.get(base)) || MAP.get(base);
+    if (!mapped) return tok;
+    const target = mapped + alpha;
 
     converted += 1;
     const next = [...variants, target].join(':');

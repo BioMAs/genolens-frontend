@@ -48,7 +48,7 @@ export default function AIUsageLogs() {
   );
 
   return (
-    <div className="bg-surface shadow rounded-lg">
+    <div className="bg-surface shadow rounded-control">
       <div className="px-4 py-5 sm:px-6 border-b border-line flex justify-between items-center">
         <div>
           <h3 className="text-title leading-6 font-medium text-primary">
@@ -60,7 +60,7 @@ export default function AIUsageLogs() {
         </div>
         <button
           onClick={fetchLogs}
-          className="p-2 text-muted hover:text-secondary rounded-full hover:bg-hover"
+          className="p-2 text-muted hover:text-secondary rounded-pill hover:bg-hover"
           title="Refresh logs"
         >
           <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
@@ -68,13 +68,13 @@ export default function AIUsageLogs() {
       </div>
 
       <div className="p-4 border-b border-line bg-surface-2">
-        <div className="relative rounded-md shadow-sm max-w-md">
+        <div className="relative rounded-sm shadow-sm max-w-md">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-5 w-5 text-muted" />
           </div>
           <input
             type="text"
-            className="block w-full rounded-md border-strong pl-10 focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm p-2"
+            className="block w-full rounded-sm border-strong pl-10 focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm p-2"
             placeholder="Search by user or comparison..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -124,7 +124,7 @@ export default function AIUsageLogs() {
                     <div className="text-caption text-secondary">{log.user_id.substring(0, 8)}...</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       log.action_type === 'interpretation' 
                         ? 'bg-accent-soft text-accent-ink' 
                         : 'bg-blue-100 text-blue-800'

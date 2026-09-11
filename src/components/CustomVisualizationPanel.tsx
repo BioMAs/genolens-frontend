@@ -372,13 +372,13 @@ export default function CustomVisualizationPanel({
     return (
         <div className="space-y-6">
             {/* Visualization Type Selector */}
-            <div className="bg-surface rounded-lg shadow p-6">
+            <div className="bg-surface rounded-card shadow p-6">
                 <h2 className="text-heading text-primary mb-4">Custom Visualization</h2>
                 
                 <div className="flex gap-3 mb-6">
                     <button
                         onClick={() => setVizType('pca')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'pca'
                                 ? 'bg-brand-primary text-on-accent'
                                 : 'bg-surface-2 text-primary hover:bg-gray-200'
@@ -388,7 +388,7 @@ export default function CustomVisualizationPanel({
                     </button>
                     <button
                         onClick={() => setVizType('umap')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'umap'
                                 ? 'bg-brand-primary text-on-accent'
                                 : 'bg-surface-2 text-primary hover:bg-gray-200'
@@ -398,7 +398,7 @@ export default function CustomVisualizationPanel({
                     </button>
                     <button
                         onClick={() => setVizType('boxplot')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'boxplot'
                                 ? 'bg-brand-primary text-on-accent'
                                 : 'bg-surface-2 text-primary hover:bg-gray-200'
@@ -423,11 +423,11 @@ export default function CustomVisualizationPanel({
                             value={geneInput}
                             onChange={(e) => setGeneInput(e.target.value)}
                             placeholder="Type to search genes..."
-                            className="w-full px-4 py-2 border border-strong rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                            className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         />
                         
                         {geneSearchResults.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-surface border border-strong rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div className="absolute z-10 w-full mt-1 bg-surface border border-strong rounded-control shadow-lg max-h-60 overflow-y-auto">
                                 {geneSearchResults.map(gene => (
                                     <button
                                         key={gene}
@@ -446,7 +446,7 @@ export default function CustomVisualizationPanel({
                             {selectedGenes.map(gene => (
                                 <span
                                     key={gene}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-body-sm"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-pill text-body-sm"
                                 >
                                     {gene}
                                     <button
@@ -471,7 +471,7 @@ export default function CustomVisualizationPanel({
                             <select
                                 value={nComponents}
                                 onChange={(e) => setNComponents(Number(e.target.value) as 2 | 3)}
-                                className="w-full px-4 py-2 border border-strong rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                             >
                                 <option value={2}>2D</option>
                                 <option value={3}>3D</option>
@@ -490,7 +490,7 @@ export default function CustomVisualizationPanel({
                                         onChange={(e) => setNNeighbors(Number(e.target.value))}
                                         min={2}
                                         max={200}
-                                        className="w-full px-4 py-2 border border-strong rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     />
                                 </div>
                                 <div>
@@ -504,7 +504,7 @@ export default function CustomVisualizationPanel({
                                         min={0}
                                         max={0.99}
                                         step={0.05}
-                                        className="w-full px-4 py-2 border border-strong rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     />
                                 </div>
                             </>
@@ -516,13 +516,13 @@ export default function CustomVisualizationPanel({
                 <button
                     onClick={handleGenerate}
                     disabled={loading || (vizType === 'boxplot' && selectedGenes.length === 0)}
-                    className="w-full bg-brand-primary text-on-accent py-3 px-6 rounded-lg font-medium hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-brand-primary text-on-accent py-3 px-6 rounded-control font-medium hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     {loading ? 'Generating...' : `Generate ${vizType.toUpperCase()}`}
                 </button>
 
                 {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-control text-red-700">
                         {error}
                     </div>
                 )}
@@ -530,7 +530,7 @@ export default function CustomVisualizationPanel({
 
             {/* Visualization Display */}
             {!loading && (
-                <div className="bg-surface rounded-lg shadow p-6">
+                <div className="bg-surface rounded-card shadow p-6">
                     {vizType === 'pca' && pcaData && renderPCAPlot()}
                     {vizType === 'umap' && umapData && renderUMAPPlot()}
                     {vizType === 'boxplot' && boxplotData && renderBoxplot()}

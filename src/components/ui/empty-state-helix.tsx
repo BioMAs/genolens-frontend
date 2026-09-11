@@ -21,7 +21,7 @@ function EmptyStateHelix({
 }: EmptyStateHelixProps) {
   return (
     <div
-      className={`flex flex-col items-center gap-1.5 rounded-xl p-8 text-center ${className}`}
+      className={`flex flex-col items-center gap-2 rounded-card p-8 text-center ${className}`}
       style={{
         border: '1.5px dashed var(--border)',
         background: 'transparent',

@@ -62,7 +62,7 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-          <div className="bg-surface rounded-lg shadow p-8 text-center">
+          <div className="bg-surface rounded-card shadow p-8 text-center">
             <Lock className="mx-auto mb-4 h-8 w-8 text-muted" />
             <h1 className="mb-2 text-title text-primary">Scientific tools add-on</h1>
             <p className="mx-auto max-w-md text-body-sm text-secondary">
@@ -94,7 +94,7 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-          <div className="bg-surface rounded-lg shadow p-8 text-center">
+          <div className="bg-surface rounded-card shadow p-8 text-center">
             <div className="text-red-600 mb-4">{error || 'Not enough comparisons'}</div>
             <p className="text-body-sm text-secondary">
               This feature compares two DEG contrasts, so the project needs at least two.

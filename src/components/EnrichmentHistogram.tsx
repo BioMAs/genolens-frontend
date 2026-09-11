@@ -60,11 +60,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs max-w-64">
-      <div className="font-semibold text-gray-900 mb-1 leading-snug">{d.name}</div>
-      <div className="text-indigo-500 mb-2">{d.go_id}</div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
-        <span>FDR</span><span className="font-semibold text-indigo-700">{d.fdr.toExponential(2)}</span>
+    <div className="bg-surface border border-line rounded-control shadow-lg p-3 text-xs max-w-64">
+      <div className="font-semibold text-primary mb-1 leading-snug">{d.name}</div>
+      <div className="text-accent-ink mb-2">{d.go_id}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">
+        <span>FDR</span><span className="font-semibold text-accent-ink">{d.fdr.toExponential(2)}</span>
         <span>-log₁₀(FDR)</span><span className="font-semibold">{d.value.toFixed(2)}</span>
         <span>Enrichment</span><span className="font-semibold">{d.enrichment_ratio.toFixed(2)}×</span>
         <span>Genes</span><span className="font-semibold">{d.gene_count}</span>
@@ -106,11 +106,11 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
     <div className="w-full">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <span className="text-xs font-semibold text-gray-700">Top {top.length} Enriched Terms</span>
+          <span className="text-xs font-semibold text-primary">Top {top.length} Enriched Terms</span>
           <span className="text-xs text-muted-foreground ml-2">Color = enrichment ratio · Length = -log₁₀(FDR)</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-block w-10 h-3 rounded" style={{ background: 'linear-gradient(to right, rgb(199,210,254), rgb(67,56,202))' }} />
+          <span className="inline-block w-10 h-3 rounded-sm" style={{ background: 'linear-gradient(to right, rgb(199,210,254), rgb(67,56,202))' }} />
           <span>Low → High enrichment</span>
         </div>
       </div>

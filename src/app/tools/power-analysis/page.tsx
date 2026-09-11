@@ -10,7 +10,7 @@ export default function PowerAnalysisPage() {
                 {/* Header */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-accent-soft rounded-lg">
+                        <div className="p-2 bg-accent-soft rounded-control">
                             <FlaskConical className="h-7 w-7 text-accent-ink" />
                         </div>
                         <div>

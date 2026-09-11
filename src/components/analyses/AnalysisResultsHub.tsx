@@ -25,7 +25,7 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h2 className="font-display text-title tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-        {subtitle && <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
       </div>
       {right}
     </div>
@@ -160,7 +160,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   if (analysisLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent-ink" />
       </div>
     );
   }
@@ -198,7 +198,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         <div>
           <Link
             href={`/projects/${projectId}`}
-            className="inline-flex items-center gap-1.5 text-body-sm"
+            className="inline-flex items-center gap-2 text-body-sm"
             style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft className="h-4 w-4" /> {projectName}
@@ -206,15 +206,15 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </div>
 
         {/* ── Analysis information card ── */}
-        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div className="rounded-card shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'var(--sl-teal-light)' }}>
+              <div className="flex h-11 w-11 items-center justify-center rounded-card" style={{ background: 'var(--sl-teal-light)' }}>
                 <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <div>
                 <h1 className="text-heading" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
-                <p className="text-caption mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>
                   Created {new Date(analysis.created_at).toLocaleString('en-US')}
                 </p>
               </div>
@@ -231,7 +231,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
-                    className="flex items-center gap-1 rounded-full border border-accent-ring bg-accent-soft px-2.5 py-1 text-caption font-medium text-accent-ink hover:bg-accent-soft"
+                    className="flex items-center gap-1 rounded-pill border border-accent-ring bg-accent-soft px-2.5 py-1 text-caption font-medium text-accent-ink hover:bg-accent-soft"
                   >
                     <Database className="h-3.5 w-3.5" />
                     GEO · {meta.geo_accession}
@@ -241,7 +241,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <StatusBadge status={analysis.status} />
               <Link
                 href={`/projects/${projectId}/setup?rerun=${analysisId}`}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-medium shadow-sm"
+                className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium shadow-sm"
                 style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-secondary)' }}
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Re-run
@@ -359,13 +359,13 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
             title="Sample structure"
             subtitle="How samples relate to each other, computed from the normalized matrix"
             right={
-              <div className="inline-flex rounded-lg border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+              <div className="inline-flex rounded-control border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
                 {(['pca', 'umap'] as const).map((v) => (
                   <button
                     key={v}
                     type="button"
                     onClick={() => setStructureView(v)}
-                    className="rounded-md px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
+                    className="rounded-sm px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
                     style={
                       structureView === v
                         ? { background: 'var(--sl-teal)', color: '#fff' }
@@ -455,7 +455,7 @@ function ModuleCard({
       onClick={activate}
       disabled={disabled}
       aria-label={`Go to ${title}`}
-      className="group text-left rounded-2xl p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      className="group text-left rounded-card p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
@@ -465,7 +465,7 @@ function ModuleCard({
       }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'var(--sl-teal-light)' }}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-control" style={{ background: 'var(--sl-teal-light)' }}>
           <Icon className="h-4 w-4" style={{ color: 'var(--sl-teal-dark)' }} />
         </div>
         {!disabled && (
@@ -473,7 +473,7 @@ function ModuleCard({
         )}
       </div>
       <h3 className="mt-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-      <p className="mt-0.5 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      <p className="mt-1 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       {(disabled ? disabledHint : metric) && (
         <div
           className="mt-2 inline-flex items-center gap-1 text-micro font-medium"
@@ -503,7 +503,7 @@ function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
     [SelfServiceAnalysisStatus.CANCELLED]: 'Cancelled',
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${styles[status]}`}>
+    <span className={`inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium ${styles[status]}`}>
       {labels[status]}
     </span>
   );
@@ -527,7 +527,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+      <div className="rounded-card overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div
             key={label}
@@ -541,7 +541,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
       </div>
       <Link
         href={`/projects/${analysis.project_id}/setup?rerun=${analysis.id}`}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-caption font-semibold text-on-accent hover:bg-accent-hover"
+        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-caption font-semibold text-on-accent hover:bg-accent-hover"
       >
         <RotateCcw className="h-3.5 w-3.5" /> Re-run with new parameters
       </Link>

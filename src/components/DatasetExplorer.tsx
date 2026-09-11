@@ -77,7 +77,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
     return (
       <div className="p-8">
         <div className="page-container">
-          <div className="rounded-md bg-red-50 p-4">
+          <div className="rounded-sm bg-red-50 p-4">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-body-sm font-medium text-red-800">Error</h3>
@@ -121,10 +121,10 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
           </div>
           <div className="flex items-center gap-2">
             {/* Search */}
-            <div className="relative rounded-md shadow-sm">
+            <div className="relative rounded-sm shadow-sm">
               <input
                 type="text"
-                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-body-sm border-strong rounded-md"
+                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-body-sm border-strong rounded-sm"
                 placeholder="Search IDs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,14 +135,14 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             <div className="relative">
               <button
                 onClick={() => setShowColumnSelector(!showColumnSelector)}
-                className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-sm text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Columns ({selectedColumns.length})
               </button>
               
               {showColumnSelector && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 max-h-96 overflow-y-auto">
+                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-sm shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 max-h-96 overflow-y-auto">
                   <div className="py-1" role="menu" aria-orientation="vertical">
                     <div className="px-4 py-2 border-b border-subtle">
                       <button 
@@ -163,7 +163,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                       <label key={col} className="flex items-center px-4 py-2 hover:bg-hover cursor-pointer">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-strong rounded"
+                          className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-strong rounded-sm"
                           checked={selectedColumns.includes(col)}
                           onChange={() => toggleColumn(col)}
                         />
@@ -177,7 +177,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               )}
             </div>
 
-            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-md text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-sm text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
               <Download className="h-4 w-4 mr-2" />
               Export
             </button>
@@ -237,7 +237,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
       <main className="flex-1 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {viewMode === 'table' ? (
-            <div className="bg-surface shadow rounded-lg overflow-hidden border border-line">
+            <div className="bg-surface shadow rounded-control overflow-hidden border border-line">
               {loading && !data ? (
                 <div className="p-12 text-center text-secondary">Loading data...</div>
               ) : data ? (
@@ -303,11 +303,11 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav className="relative z-0 inline-flex rounded-sm shadow-sm -space-x-px" aria-label="Pagination">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-sm border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Previous</span>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -315,7 +315,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   <button
                     onClick={() => setPage(p => p + 1)}
                     disabled={page * pageSize >= data.total_rows}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-sm border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Next</span>
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />

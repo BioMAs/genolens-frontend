@@ -273,7 +273,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             <div className="gl-card">
                 <div className="flex items-start gap-4 p-6">
                     <div
-                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
+                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-card"
                         style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
                     >
                         <Sparkles className="h-6 w-6" />
@@ -288,7 +288,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         </p>
 
                         <div
-                            className="mb-4 rounded-xl border p-4"
+                            className="mb-4 rounded-card border p-4"
                             style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
                         >
                             <h4
@@ -302,7 +302,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                 {perks.map((perk) => (
                                     <li key={perk} className="flex items-start gap-2">
                                         <Check
-                                            className="mt-0.5 h-4 w-4 flex-shrink-0"
+                                            className="mt-1 h-4 w-4 flex-shrink-0"
                                             style={{ color: 'var(--sl-teal)' }}
                                         />
                                         <span>{perk}</span>
@@ -314,7 +314,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/pricing"
-                                className="inline-flex items-center gap-2 rounded-[11px] px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow-sm transition-colors"
+                                className="inline-flex items-center gap-2 rounded-control px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow-sm transition-colors"
                                 style={{ background: 'var(--sl-purple)' }}
                             >
                                 <Zap className="h-4 w-4" />
@@ -333,11 +333,11 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     if (!aiStatus.available) {
         return (
             <div
-                className="rounded-[14px] border p-4"
+                className="rounded-card border p-4"
                 style={{ background: 'var(--sl-amber-light, rgba(245,158,11,0.10))', borderColor: 'rgba(245,158,11,0.35)' }}
             >
                 <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                    <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
                     <div className="flex-1">
                         <h3 className="mb-2 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                             AI interpretation temporarily unavailable
@@ -358,7 +358,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             <div className="flex items-center justify-between border-b p-4" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-3">
                     <div
-                        className="flex h-10 w-10 items-center justify-center rounded-xl"
+                        className="flex h-10 w-10 items-center justify-center rounded-card"
                         style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
                     >
                         <Sparkles className="h-5 w-5" />
@@ -372,7 +372,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     {data && (
                         <button
                             onClick={() => setShowChat(!showChat)}
-                            className="inline-flex items-center gap-2 rounded-[11px] border px-3 py-1.5 text-body-sm font-medium transition-colors hover:bg-[var(--hover-overlay)]"
+                            className="inline-flex items-center gap-2 rounded-control border px-3 py-1.5 text-body-sm font-medium transition-colors hover:bg-[var(--hover-overlay)]"
                             style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                         >
                             <MessageCircle className="h-4 w-4" />
@@ -382,7 +382,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     {!data && !loading && (
                         <button
                             onClick={() => generateInterpretation(false)}
-                            className="inline-flex items-center gap-2 rounded-[11px] px-4 py-2 text-body-sm font-medium text-on-accent transition-colors"
+                            className="inline-flex items-center gap-2 rounded-control px-4 py-2 text-body-sm font-medium text-on-accent transition-colors"
                             style={{ background: 'var(--sl-purple)' }}
                         >
                             <Sparkles className="h-4 w-4" />
@@ -409,14 +409,14 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             {error && errorType === 'plan' && (
                 <div className="border-t p-4" style={{ background: 'var(--sl-purple-light)', borderColor: 'var(--border)' }}>
                     <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-purple)' }} />
+                        <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-purple)' }} />
                         <div className="flex-1">
                             <p className="text-body-sm font-semibold" style={{ color: 'var(--sl-purple-dark)' }}>Plan Required</p>
                             <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                             <div className="mt-3">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
                                     style={{ background: 'var(--sl-purple)' }}
                                 >
                                     View Plans →
@@ -429,22 +429,22 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             {error && errorType === 'quota' && (
                 <div className="border-t p-4" style={{ background: 'rgba(245,158,11,0.10)', borderColor: 'rgba(245,158,11,0.35)' }}>
                     <div className="flex items-start gap-2">
-                        <Zap className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                        <Zap className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
                         <div className="flex-1">
                             <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Monthly Quota Reached</p>
                             <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
-                            <p className="mt-0.5 text-body-sm" style={{ color: 'var(--text-muted)' }}>Purchase more tokens or upgrade your plan.</p>
+                            <p className="mt-1 text-body-sm" style={{ color: 'var(--text-muted)' }}>Purchase more tokens or upgrade your plan.</p>
                             <div className="mt-3 flex items-center gap-2">
                                 <Link
                                     href="/pricing"
-                                    className="inline-flex items-center gap-1 rounded-[11px] px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
+                                    className="inline-flex items-center gap-1 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
                                     style={{ background: 'var(--sl-purple)' }}
                                 >
                                     Upgrade Plan
                                 </Link>
                                 <Link
                                     href="/profile#billing"
-                                    className="inline-flex items-center gap-1 rounded-[11px] border px-4 py-2 text-body-sm font-semibold transition-colors hover:bg-[var(--hover-overlay)]"
+                                    className="inline-flex items-center gap-1 rounded-control border px-4 py-2 text-body-sm font-semibold transition-colors hover:bg-[var(--hover-overlay)]"
                                     style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                                 >
                                     Buy More Tokens
@@ -457,13 +457,13 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             {error && errorType === 'generic' && (
                 <div className="border-t p-4" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
                     <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-red)' }} />
+                        <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: 'var(--sl-red)' }} />
                         <div className="flex-1">
                             <p className="text-body-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>Error</p>
                             <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                             {error.includes('memory') && (
                                 <div
-                                    className="mt-2 rounded-lg p-2 text-caption"
+                                    className="mt-2 rounded-control p-2 text-caption"
                                     style={{ background: 'var(--sl-red-light)', color: 'var(--sl-red-dark)' }}
                                 >
                                     <strong>Solution:</strong> Increase Docker RAM to 8+ GB in Docker Desktop → Settings → Resources → Memory
@@ -479,7 +479,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 <div className="p-4">
                     {/* Interpretation Text */}
                     <div
-                        className="rounded-xl border p-6"
+                        className="rounded-card border p-6"
                         style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
                     >
                         <AIMarkdown text={data.interpretation} />
@@ -488,7 +488,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     {/* Chat Q&A Section */}
                     {showChat && (
                         <div
-                            className="mt-4 rounded-xl border"
+                            className="mt-4 rounded-card border"
                             style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
                         >
                             <div
@@ -513,15 +513,15 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                 {chatMessages.map((msg, idx) => (
                                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         {msg.role === 'user' ? (
-                                            <div className="max-w-[80%] rounded-2xl px-4 py-2 text-on-accent" style={{ background: 'var(--sl-purple)' }}>
+                                            <div className="max-w-[80%] rounded-card px-4 py-2 text-on-accent" style={{ background: 'var(--sl-purple)' }}>
                                                 <div className="whitespace-pre-wrap text-body-sm">{msg.content}</div>
-                                                <div className="mt-1 text-caption text-white/70">
+                                                <div className="mt-1 text-caption text-on-accent/70">
                                                     {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
                                         ) : (
                                             <div
-                                                className="max-w-[80%] rounded-2xl px-4 py-2"
+                                                className="max-w-[80%] rounded-card px-4 py-2"
                                                 style={{ background: 'var(--surface-raised)' }}
                                             >
                                                 <AIMarkdown text={msg.content} />
@@ -534,7 +534,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                 ))}
                                 {chatLoading && (
                                     <div className="flex justify-start">
-                                        <div className="rounded-2xl px-4 py-2" style={{ background: 'var(--surface-raised)' }}>
+                                        <div className="rounded-card px-4 py-2" style={{ background: 'var(--surface-raised)' }}>
                                             <div className="flex items-center gap-2 text-body-sm" style={{ color: 'var(--text-muted)' }}>
                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                 <span className="animate-pulse">AI is thinking…</span>
@@ -554,13 +554,13 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                         onKeyPress={(e) => e.key === 'Enter' && !chatLoading && askQuestion()}
                                         placeholder="Ask your question (e.g., What are the most important genes?)"
                                         disabled={chatLoading}
-                                        className="flex-1 rounded-xl border px-3 py-2 text-body-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
+                                        className="flex-1 rounded-card border px-3 py-2 text-body-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
                                         style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                                     />
                                     <button
                                         onClick={askQuestion}
                                         disabled={!userQuestion.trim() || chatLoading}
-                                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-card text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
                                         style={{ background: 'var(--sl-purple)' }}
                                     >
                                         <Send className="h-4 w-4" />
@@ -575,7 +575,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         <div className="flex items-center gap-2 text-caption" style={{ color: 'var(--text-muted)' }}>
                             {data.cached && (
                                 <span
-                                    className="inline-flex items-center gap-1 rounded px-2 py-1"
+                                    className="inline-flex items-center gap-1 rounded-sm px-2 py-1"
                                     style={{ background: 'var(--surface-raised)', color: 'var(--text-secondary)' }}
                                 >
                                     <Database className="h-3 w-3" />

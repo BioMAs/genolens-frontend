@@ -32,11 +32,11 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
 
   return (
     <div>
-      <div className="mb-3.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-4 text-caption" style={{ color: 'var(--text-secondary)' }}>
         Transcriptional activity by skin compartment —{' '}
         <b style={{ color: 'var(--text-primary)' }}>deeper fill = more active</b>
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {layers.map((l) => {
           const z = byId[l.slug];
           const act = Math.max(0, Math.min(100, z?.activity ?? 0));
@@ -44,7 +44,7 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
           return (
             <div
               key={l.slug}
-              className="relative overflow-hidden rounded-[14px] border"
+              className="relative overflow-hidden rounded-card border"
               style={{
                 height: l.height,
                 borderColor: `color-mix(in oklab, ${l.color} 32%, var(--surface))`,
@@ -67,7 +67,7 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
                     {l.slug === mostActiveSlug && (act > 0) ? ' · most active layer' : ''}
                   </div>
                 </div>
-                <div className="flex items-baseline gap-0.5" style={{ color: l.color }}>
+                <div className="flex items-baseline gap-1" style={{ color: l.color }}>
                   <span className="font-display text-display leading-none">{act.toFixed(1)}</span>
                   <span className="text-caption" style={{ color: 'var(--text-muted)' }}>/100</span>
                 </div>

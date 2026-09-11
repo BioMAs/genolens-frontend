@@ -29,7 +29,7 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
         <h3 className="text-body-sm font-semibold text-[var(--text-primary)]">Help</h3>
         <button
           onClick={onClose}
-          className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[var(--hover-overlay)]"
+          className="rounded-sm p-1 text-[var(--text-muted)] hover:bg-[var(--hover-overlay)]"
           aria-label="Close help"
         >
           <X className="h-4 w-4" />
@@ -41,11 +41,11 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
           <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Example commands
           </h4>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-2">
             {EXAMPLE_COMMANDS.map((cmd) => (
               <li
                 key={cmd}
-                className="rounded-md bg-[var(--surface-raised)] px-2.5 py-1.5 text-caption text-[var(--text-primary)]"
+                className="rounded-sm bg-[var(--surface-raised)] px-2.5 py-1.5 text-caption text-[var(--text-primary)]"
               >
                 “{cmd}”
               </li>
@@ -53,11 +53,11 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
           </ul>
         </section>
 
-        <section className="mt-5">
+        <section className="mt-6">
           <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Charts the assistant understands
           </h4>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-2">
             {CHART_TYPES.map((c) => (
               <li key={c.name} className="text-caption text-[var(--text-primary)]">
                 <span className="font-medium">{c.name}</span>

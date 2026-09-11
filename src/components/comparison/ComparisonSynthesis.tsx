@@ -63,9 +63,9 @@ export default function ComparisonSynthesis({
   if (loading) {
     return (
       <div className="gl-card p-5">
-        <div className="skeleton h-5 w-2/3 rounded" />
-        <div className="skeleton mt-4 h-2.5 w-full rounded" />
-        <div className="skeleton mt-4 h-3 w-1/2 rounded" />
+        <div className="skeleton h-5 w-2/3 rounded-sm" />
+        <div className="skeleton mt-4 h-2.5 w-full rounded-sm" />
+        <div className="skeleton mt-4 h-3 w-1/2 rounded-sm" />
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function ComparisonSynthesis({
       {degTotal > 0 && (
         <div className="mt-4">
           {/* Ends of the bar name the two sides of the contrast */}
-          <div className="mb-1.5 flex items-baseline justify-between gap-4 text-caption">
+          <div className="mb-2 flex items-baseline justify-between gap-4 text-caption">
             <span className="font-semibold" style={{ color: 'var(--dc-up-dark)' }}>
               ↑ {num(degUp)} up{testCondition ? ` in ${testCondition}` : ''}
             </span>
@@ -138,7 +138,7 @@ export default function ComparisonSynthesis({
           <div
             role="img"
             aria-label={`${num(degUp)} genes upregulated, ${num(degDown)} downregulated`}
-            className="flex h-2.5 overflow-hidden rounded"
+            className="flex h-2.5 overflow-hidden rounded-sm"
             style={{ background: 'var(--n-100)' }}
           >
             <span

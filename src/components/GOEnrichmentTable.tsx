@@ -174,7 +174,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     return (
       <span
         key={gene}
-        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-caption font-medium border cursor-help ${chipClass}`}
+        className={`relative inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium border cursor-help ${chipClass}`}
         onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHoveredGene(null)}
       >
@@ -195,7 +195,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-lg shadow-xl p-3 text-caption max-w-xs"
+            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-card shadow-xl p-3 text-caption max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
             <div className="font-semibold text-primary">{hoveredGene.gene}</div>
@@ -267,7 +267,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-control overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
@@ -452,7 +452,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-            className="border rounded px-2 py-1 text-body-sm bg-background"
+            className="border rounded-sm px-2 py-1 text-body-sm bg-background"
           >
             {[10, 25, 50, 100].map(s => (
               <option key={s} value={s}>{s} / page</option>

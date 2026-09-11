@@ -23,13 +23,13 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
 
   return (
     <div>
-      <div className="mb-2.5 flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: color }} />
+      <div className="mb-3 flex items-center gap-2">
+        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: color }} />
         <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           {claim.label}
         </span>
         <span
-          className="ml-auto rounded-full px-2.5 py-0.5 text-micro"
+          className="ml-auto rounded-pill px-2.5 py-0.5 text-micro"
           style={{
             background: favorable ? 'var(--sl-teal-light)' : 'var(--sl-red-light)',
             color: favorable ? 'var(--dc-up-dark)' : 'var(--dc-down-dark)',
@@ -38,14 +38,14 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
           {favorable ? '▲' : '▼'} {Math.round(claim.score)}
         </span>
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {pathways.map((p) => {
           const up = isUp(p.direction);
           const pct = Math.round((p.weight / maxWeight) * 100);
           return (
             <div key={p.term_id} className="flex items-center gap-3">
               <span
-                className="w-[34px] flex-none rounded-[5px] py-[3px] text-center text-micro"
+                className="w-[34px] flex-none rounded-sm py-[3px] text-center text-micro"
                 style={{
                   background: up ? 'var(--sl-teal-light)' : 'var(--sl-red-light)',
                   color: up ? 'var(--dc-up-dark)' : 'var(--dc-down-dark)',
@@ -61,11 +61,11 @@ function ThemeBlock({ claim }: { claim: CosmeticClaimScore }) {
                   </span>
                 </div>
                 <div
-                  className="mt-1 h-1.5 overflow-hidden rounded"
+                  className="mt-1 h-1.5 overflow-hidden rounded-sm"
                   style={{ background: 'var(--n-100)' }}
                 >
                   <div
-                    className="h-full rounded"
+                    className="h-full rounded-sm"
                     style={{ width: `${pct}%`, background: up ? 'var(--dc-up)' : 'var(--dc-down)' }}
                   />
                 </div>
@@ -91,22 +91,22 @@ export default function PathwayThemeGroups({ claims }: { claims: CosmeticClaimSc
 
   return (
     <div className="gl-card p-6">
-      <div className="mb-5 flex items-end justify-between">
+      <div className="mb-6 flex items-end justify-between">
         <div>
           <h3 className="font-display text-title tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
             Metabolic pathways driving the effect
           </h3>
-          <div className="mt-1.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+          <div className="mt-2 text-caption" style={{ color: 'var(--text-secondary)' }}>
             Grouped by cosmetic claim · ranked by evidence weight
           </div>
         </div>
         <div className="flex gap-4 text-micro" style={{ color: 'var(--text-secondary)' }}>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-4 rounded" style={{ background: 'var(--dc-up)' }} />
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-4 rounded-sm" style={{ background: 'var(--dc-up)' }} />
             Up-regulated
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-4 rounded" style={{ background: 'var(--dc-down)' }} />
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-4 rounded-sm" style={{ background: 'var(--dc-down)' }} />
             Down-regulated
           </span>
         </div>

@@ -20,7 +20,7 @@ const variantColors: Record<DotVariant, string> = {
 export function Dot({ variant = 'pending', size = 8, className = '' }: DotProps) {
   return (
     <span
-      className={`inline-block rounded-full flex-shrink-0 ${className}`}
+      className={`inline-block rounded-pill flex-shrink-0 ${className}`}
       style={{
         width: size,
         height: size,

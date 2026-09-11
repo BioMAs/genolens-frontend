@@ -62,7 +62,7 @@ export default function StepDataValidation({
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-1.5">
+        <div className="rounded-control border border-amber-200 bg-amber-50 p-4 space-y-2">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <p className="text-body-sm font-semibold text-amber-800">Warnings detected</p>
@@ -77,7 +77,7 @@ export default function StepDataValidation({
       )}
 
       {warnings.length === 0 && isMatrixReady && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+        <div className="flex items-center gap-2 rounded-control border border-green-200 bg-green-50 px-4 py-3">
           <CheckCircle className="h-4 w-4 text-green-500" />
           <p className="text-body-sm text-green-800 font-medium">All checks passed — your data looks good!</p>
         </div>
@@ -85,12 +85,12 @@ export default function StepDataValidation({
 
       {/* QC Dashboard */}
       {isMatrixReady ? (
-        <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+        <div className="rounded-card border border-line bg-surface p-4 shadow-sm">
           <h3 className="mb-4 text-body-sm font-semibold text-primary">Library Size & Quality Metrics</h3>
           <QCDashboard datasets={datasets} />
         </div>
       ) : (
-        <div className="rounded-lg border border-line bg-surface-2 p-8 text-center text-body-sm text-muted">
+        <div className="rounded-card border border-line bg-surface-2 p-8 text-center text-body-sm text-muted">
           Processing matrix… QC charts will appear here once ready.
         </div>
       )}
@@ -100,14 +100,14 @@ export default function StepDataValidation({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
+          className="rounded-control border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
         >
           ← Back
         </button>
         <button
           type="button"
           onClick={onContinue}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
         >
           Continue to Settings
           <ChevronRight className="h-4 w-4" />
@@ -121,8 +121,8 @@ export default function StepDataValidation({
 function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset | undefined }) {
   if (!dataset) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-line bg-surface-2 px-4 py-3">
-        <div className="h-2 w-2 rounded-full bg-gray-300" />
+      <div className="flex items-center gap-3 rounded-control border border-line bg-surface-2 px-4 py-3">
+        <div className="h-2 w-2 rounded-pill bg-gray-300" />
         <p className="text-body-sm text-muted">{label} — not uploaded</p>
       </div>
     );
@@ -143,8 +143,8 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3">
-      <div className={`h-2 w-2 rounded-full shrink-0 ${statusColors[dataset.status] ?? 'bg-gray-300'}`} />
+    <div className="flex items-center gap-3 rounded-control border border-line bg-surface px-4 py-3">
+      <div className={`h-2 w-2 rounded-pill shrink-0 ${statusColors[dataset.status] ?? 'bg-gray-300'}`} />
       <div className="min-w-0">
         <p className="text-body-sm font-medium text-primary">{label}</p>
         <p className="text-caption text-muted truncate">{dataset.name} · {statusLabels[dataset.status] ?? dataset.status}</p>

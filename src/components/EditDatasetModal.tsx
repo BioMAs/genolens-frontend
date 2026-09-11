@@ -99,7 +99,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-lg bg-surface p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-title text-primary">Edit Dataset</h2>
           <button onClick={onClose} className="text-muted hover:text-secondary">
@@ -113,7 +113,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
             <input
               type="text"
               required
-              className="mt-1 block w-full rounded-md border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
+              className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -122,7 +122,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
           <div>
             <label className="block text-body-sm font-medium text-primary">Type</label>
             <select
-              className="mt-1 block w-full rounded-md border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
+              className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
               value={type}
               onChange={(e) => setType(e.target.value as DatasetType)}
             >
@@ -137,7 +137,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
           <div>
             <label className="block text-body-sm font-medium text-primary">Description</label>
             <textarea
-              className="mt-1 block w-full rounded-md border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
+              className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -150,7 +150,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                 <input
                   id="edit_is_normalized"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-strong text-brand-primary focus:ring-brand-primary"
+                  className="h-4 w-4 rounded-sm border-strong text-brand-primary focus:ring-brand-primary"
                   checked={isNormalized}
                   onChange={(e) => setIsNormalized(e.target.checked)}
                 />
@@ -162,7 +162,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                 <input
                   id="edit_contains_all_genes"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-strong text-brand-primary focus:ring-brand-primary"
+                  className="h-4 w-4 rounded-sm border-strong text-brand-primary focus:ring-brand-primary"
                   checked={containsAllGenes}
                   onChange={(e) => setContainsAllGenes(e.target.checked)}
                 />
@@ -177,7 +177,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="rounded-md bg-red-50 p-4 border border-red-200">
+            <div className="rounded-sm bg-red-50 p-4 border border-red-200">
               <div className="flex">
                 <div className="flex-1">
                   <h3 className="text-body-sm font-medium text-red-800">Delete Dataset</h3>
@@ -192,7 +192,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
                       disabled={deleting}
-                      className="rounded-md border border-red-300 bg-surface px-3 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                      className="rounded-sm border border-red-300 bg-surface px-3 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -200,7 +200,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                       type="button"
                       onClick={handleDelete}
                       disabled={deleting}
-                      className="inline-flex items-center gap-2 rounded-md border border-transparent bg-red-600 px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-sm border border-transparent bg-red-600 px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                       {deleting ? 'Deleting...' : 'Delete Dataset'}
@@ -217,7 +217,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading || deleting || showDeleteConfirm}
-              className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-surface px-4 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-sm border border-red-300 bg-surface px-4 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -229,14 +229,14 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                 type="button"
                 onClick={onClose}
                 disabled={deleting}
-                className="rounded-md border border-strong bg-surface px-4 py-2 text-body-sm font-medium text-primary shadow-sm hover:bg-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:opacity-50"
+                className="rounded-sm border border-strong bg-surface px-4 py-2 text-body-sm font-medium text-primary shadow-sm hover:bg-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || deleting || showDeleteConfirm}
-                className="inline-flex justify-center rounded-md border border-transparent bg-brand-primary px-4 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:opacity-50"
+                className="inline-flex justify-center rounded-sm border border-transparent bg-brand-primary px-4 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>

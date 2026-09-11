@@ -56,14 +56,14 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
       </div>
 
       <div
-        className="grid grid-cols-1 items-center gap-6 rounded-[18px] border p-6 lg:grid-cols-[1.15fr_1px_1fr_auto]"
+        className="grid grid-cols-1 items-center gap-6 rounded-card border p-6 lg:grid-cols-[1.15fr_1px_1fr_auto]"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 1px 2px rgba(19,22,41,.04)' }}
       >
         {/* Left — identity + mini skin stack (or DEG bars) */}
         <div>
-          <div className="mb-1.5 flex items-center gap-2">
+          <div className="mb-2 flex items-center gap-2">
             <span
-              className="rounded-md px-2 py-0.5 text-micro tracking-[0.5px]"
+              className="rounded-sm px-2 py-0.5 text-micro tracking-[0.5px]"
               style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}
             >
               DONE
@@ -76,15 +76,15 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
             {title}
           </div>
 
-          <div className="mt-3.5 flex flex-col gap-1.5">
+          <div className="mt-4 flex flex-col gap-2">
             {hasSkin ? (
               LAYERS.map((l) => {
                 const act = Math.max(0, Math.min(100, zonesById[l.slug]?.activity ?? 0));
                 return (
-                  <div key={l.slug} className="flex items-center gap-2.5">
+                  <div key={l.slug} className="flex items-center gap-3">
                     <span className="w-20 text-micro" style={{ color: l.color }}>{l.label}</span>
-                    <div className="h-[7px] flex-1 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
-                      <div className="h-full rounded" style={{ width: `${act}%`, background: l.fill }} />
+                    <div className="h-[7px] flex-1 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
+                      <div className="h-full rounded-sm" style={{ width: `${act}%`, background: l.fill }} />
                     </div>
                     <span className="w-8 text-right text-micro" style={{ color: 'var(--text-muted)' }}>{act.toFixed(1)}</span>
                   </div>
@@ -92,11 +92,11 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
               })
             ) : (
               <div>
-                <div className="mb-1.5 flex justify-between text-micro" style={{ color: 'var(--text-muted)' }}>
+                <div className="mb-2 flex justify-between text-micro" style={{ color: 'var(--text-muted)' }}>
                   <span>{comp.deg_total.toLocaleString()} DEGs</span>
                   <span>{comp.deg_up} up · {comp.deg_down} down</span>
                 </div>
-                <div className="flex h-2 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
+                <div className="flex h-2 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
                   <div style={{ width: `${comp.deg_total ? (comp.deg_up / comp.deg_total) * 100 : 50}%`, background: 'var(--dc-up)' }} />
                   <div style={{ width: `${comp.deg_total ? (comp.deg_down / comp.deg_total) * 100 : 50}%`, background: 'var(--dc-down)' }} />
                 </div>
@@ -110,7 +110,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
 
         {/* Middle — verdict + claim pills */}
         <div>
-          <div className="mb-1.5 text-micro uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
+          <div className="mb-2 text-micro uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
             {hasSkin ? 'Verdict' : 'Results'}
           </div>
           {hasSkin ? (
@@ -122,14 +122,14 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 {topClaims.map((c) => (
                   <span
                     key={c.slug}
-                    className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-micro"
+                    className="flex items-center gap-2 rounded-pill border px-2.5 py-1 text-micro"
                     style={{
                       background: `color-mix(in oklab, ${c.color} 8%, var(--surface))`,
                       borderColor: `color-mix(in oklab, ${c.color} 22%, var(--surface))`,
                       color: 'var(--text-primary)',
                     }}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+                    <span className="h-2 w-2 rounded-pill" style={{ background: c.color }} />
                     {c.label} {Math.round(c.score)}
                   </span>
                 ))}
@@ -141,14 +141,14 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 {comp.deg_total.toLocaleString()} differentially expressed genes
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="rounded-full px-2.5 py-1 text-micro" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
+                <span className="rounded-pill px-2.5 py-1 text-micro" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
                   {comp.deg_up} up
                 </span>
-                <span className="rounded-full px-2.5 py-1 text-micro" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
+                <span className="rounded-pill px-2.5 py-1 text-micro" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
                   {comp.deg_down} down
                 </span>
                 <span
-                  className="rounded-full px-2.5 py-1 text-micro"
+                  className="rounded-pill px-2.5 py-1 text-micro"
                   style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
                 >
                   {comp.has_enrichment ? 'Pathway enrichment ready' : 'Enrichment not run'}
@@ -159,17 +159,17 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         </div>
 
         {/* Right — actions */}
-        <div className="flex flex-col items-stretch gap-2.5">
+        <div className="flex flex-col items-stretch gap-3">
           <Link
             href={href}
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-5 py-3 text-body-sm font-semibold text-on-accent"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-card px-5 py-3 text-body-sm font-semibold text-on-accent"
             style={{ background: 'var(--sl-purple)', boxShadow: '0 8px 18px -8px rgba(79,70,229,.6)' }}
           >
             View results <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={href}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border px-5 py-2.5 text-body-sm font-semibold"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-card border px-5 py-2.5 text-body-sm font-semibold"
             style={{ background: 'var(--surface)', borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}
           >
             Generate report

@@ -16,7 +16,7 @@ export default function QCDashboard({ datasets }: QCDashboardProps) {
 
   if (!matrixDataset) {
     return (
-      <div className="text-center py-12 bg-surface rounded-lg shadow">
+      <div className="text-center py-12 bg-surface rounded-control shadow">
         <h3 className="mt-2 text-body-sm font-medium text-primary">No Expression Matrix</h3>
         <p className="mt-1 text-body-sm text-secondary">Upload an expression matrix to view Quality Control metrics.</p>
       </div>
@@ -39,7 +39,7 @@ export default function QCDashboard({ datasets }: QCDashboardProps) {
         {metadataDataset ? (
             <MetadataTable dataset={metadataDataset} />
         ) : (
-            <div className="bg-surface shadow sm:rounded-lg p-6 flex flex-col items-center justify-center text-secondary h-full min-h-[200px]">
+            <div className="bg-surface shadow sm:rounded-card p-6 flex flex-col items-center justify-center text-secondary h-full min-h-[200px]">
                 <p>No metadata file available.</p>
                 <p className="text-body-sm mt-2">Upload a Sample Metadata file to view details.</p>
             </div>

@@ -136,23 +136,23 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-surface border border-line rounded-control p-6">
         <div className="flex items-center gap-2 mb-1">
-          <GitCompareArrows className="h-5 w-5 text-gray-700" />
-          <h2 className="text-xl font-bold text-gray-900">Contrast comparison (log2FC vs log2FC)</h2>
+          <GitCompareArrows className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold text-primary">Contrast comparison (log2FC vs log2FC)</h2>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-secondary mb-4">
           Compare two contrasts gene-by-gene. Genes are classified as concordant, discordant, or
           specific to one contrast based on your significance thresholds.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contrast A (x-axis)</label>
+            <label className="block text-sm font-medium text-primary mb-1">Contrast A (x-axis)</label>
             <select
               value={keyA}
               onChange={(e) => setKeyA(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-strong rounded-sm text-sm"
             >
               {comparisons.map((c) => (
                 <option key={c.key} value={c.key}>{c.label}</option>
@@ -160,11 +160,11 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contrast B (y-axis)</label>
+            <label className="block text-sm font-medium text-primary mb-1">Contrast B (y-axis)</label>
             <select
               value={keyB}
               onChange={(e) => setKeyB(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-strong rounded-sm text-sm"
             >
               {comparisons.map((c) => (
                 <option key={c.key} value={c.key}>{c.label}</option>
@@ -175,28 +175,28 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">P-adj threshold</label>
+            <label className="block text-xs font-medium text-primary mb-1">P-adj threshold</label>
             <input
               type="number" min="0" max="1" step="0.01"
               value={padjThreshold}
               onChange={(e) => setPadjThreshold(parseFloat(e.target.value))}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="w-full px-2 py-1.5 text-sm border border-strong rounded-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">|Log2FC| threshold</label>
+            <label className="block text-xs font-medium text-primary mb-1">|Log2FC| threshold</label>
             <input
               type="number" min="0" max="10" step="0.1"
               value={logfcThreshold}
               onChange={(e) => setLogfcThreshold(parseFloat(e.target.value))}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="w-full px-2 py-1.5 text-sm border border-strong rounded-sm"
             />
           </div>
           <div className="md:col-span-2 flex justify-end">
             <button
               onClick={handleRun}
               disabled={loading || sameSelection || !keyA || !keyB}
-              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 rounded-sm text-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Computing…' : 'Compare contrasts'}
             </button>
@@ -206,7 +206,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
           <p className="mt-2 text-xs text-amber-600">Choose two different contrasts.</p>
         )}
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm">
             {error}
           </div>
         )}
@@ -216,26 +216,26 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
       {result && seriesByQuadrant && (
         <>
           {/* Correlation + counts */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-surface border border-line rounded-control p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{fmt(result.correlation.pearson_r)}</div>
-                <div className="text-xs text-gray-600">Pearson r (n={result.correlation.n})</div>
+                <div className="text-2xl font-bold text-primary">{fmt(result.correlation.pearson_r)}</div>
+                <div className="text-xs text-secondary">Pearson r (n={result.correlation.n})</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{fmt(result.correlation.spearman_r)}</div>
-                <div className="text-xs text-gray-600">Spearman ρ</div>
+                <div className="text-2xl font-bold text-primary">{fmt(result.correlation.spearman_r)}</div>
+                <div className="text-xs text-secondary">Spearman ρ</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{result.counts.concordant}</div>
-                <div className="text-xs text-gray-600">Concordant</div>
+                <div className="text-xs text-secondary">Concordant</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{result.counts.discordant}</div>
-                <div className="text-xs text-gray-600">Discordant</div>
+                <div className="text-xs text-secondary">Discordant</div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 flex flex-wrap gap-x-6 gap-y-1">
+            <div className="mt-3 pt-3 border-t border-subtle text-xs text-secondary flex flex-wrap gap-x-6 gap-y-1">
               <span>Shared genes: <strong>{result.counts.shared}</strong></span>
               <span>Specific to A: <strong>{result.counts.specific_a}</strong></span>
               <span>Specific to B: <strong>{result.counts.specific_b}</strong></span>
@@ -245,12 +245,12 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
           </div>
 
           {/* Scatter */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-surface border border-line rounded-control p-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">log2FC scatter</h3>
+              <h3 className="text-lg font-semibold text-primary">log2FC scatter</h3>
               <button
                 onClick={exportCSV}
-                className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+                className="inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary"
               >
                 <Download className="h-4 w-4" /> Export all genes (.csv)
               </button>
@@ -287,8 +287,8 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                     if (!active || !payload || !payload.length) return null;
                     const p = payload[0].payload as ScatterPoint;
                     return (
-                      <div className="bg-white border border-gray-200 rounded shadow px-3 py-2 text-xs">
-                        <div className="font-semibold text-gray-900">{p.gene}</div>
+                      <div className="bg-surface border border-line rounded-sm shadow px-3 py-2 text-xs">
+                        <div className="font-semibold text-primary">{p.gene}</div>
                         <div>{result.comparison_a.label}: log2FC {fmt(p.logfc_a, 2)}, padj {fmt(p.padj_a)}</div>
                         <div>{result.comparison_b.label}: log2FC {fmt(p.logfc_b, 2)}, padj {fmt(p.padj_b)}</div>
                         <div className="mt-1" style={{ color: QUADRANT_META[p.quadrant].color }}>
@@ -315,14 +315,14 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
 
           {/* Notable genes table */}
           {notableGenes.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            <div className="bg-surface border border-line rounded-control p-6">
+              <h3 className="text-lg font-semibold text-primary mb-3">
                 Discordant &amp; contrast-specific genes ({notableGenes.length})
               </h3>
               <div className="overflow-x-auto max-h-96 overflow-y-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 bg-gray-50">
-                    <tr className="text-left text-gray-600">
+                  <thead className="sticky top-0 bg-surface-2">
+                    <tr className="text-left text-secondary">
                       <th className="px-3 py-2 font-medium">Gene</th>
                       <th className="px-3 py-2 font-medium">log2FC A</th>
                       <th className="px-3 py-2 font-medium">log2FC B</th>
@@ -333,8 +333,8 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                   </thead>
                   <tbody>
                     {notableGenes.slice(0, 500).map((p) => (
-                      <tr key={p.gene_id} className="border-t border-gray-100">
-                        <td className="px-3 py-1.5 font-medium text-gray-900">{p.gene}</td>
+                      <tr key={p.gene_id} className="border-t border-subtle">
+                        <td className="px-3 py-1.5 font-medium text-primary">{p.gene}</td>
                         <td className="px-3 py-1.5">{fmt(p.logfc_a, 2)}</td>
                         <td className="px-3 py-1.5">{fmt(p.logfc_b, 2)}</td>
                         <td className="px-3 py-1.5">{fmt(p.padj_a)}</td>
@@ -348,7 +348,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                 </table>
               </div>
               {notableGenes.length > 500 && (
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-secondary">
                   Showing top 500 by significance. Export CSV for the full list.
                 </p>
               )}

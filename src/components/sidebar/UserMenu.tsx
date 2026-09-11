@@ -46,7 +46,7 @@ export default function UserMenu({ user }: { user: User }) {
   }, [open]);
 
   const itemClass =
-    'flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-body-sm text-primary transition-colors hover:bg-hover';
+    'flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-body-sm text-primary transition-colors hover:bg-hover';
 
   return (
     <div ref={root} className="relative mx-2">
@@ -56,7 +56,7 @@ export default function UserMenu({ user }: { user: User }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex h-14 w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 text-left',
+          'flex h-14 w-full cursor-pointer items-center gap-3 rounded-control px-2.5 text-left',
           'transition-colors hover:bg-hover',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         )}

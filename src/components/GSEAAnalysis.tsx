@@ -192,7 +192,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
   return (
     <div className="space-y-6">
       {/* Header & Controls */}
-      <div className="bg-surface border border-line rounded-lg p-6">
+      <div className="bg-surface border border-line rounded-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-heading text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
@@ -200,7 +200,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               Identify significantly enriched gene sets in your ranked gene list
             </p>
             {isCached && (
-              <span className="inline-flex items-center gap-1 mt-1 text-caption font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 mt-1 text-caption font-medium text-green-700 bg-green-50 border border-green-200 rounded-sm px-2 py-0.5">
                 ✓ Loaded from cache
               </span>
             )}
@@ -209,7 +209,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
           <div className="flex gap-2">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="inline-flex items-center px-4 py-2 border border-strong rounded-md text-body-sm font-medium text-primary bg-surface hover:bg-hover"
+              className="inline-flex items-center px-4 py-2 border border-strong rounded-sm text-body-sm font-medium text-primary bg-surface hover:bg-hover"
             >
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -218,7 +218,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
             <button
               onClick={runGSEA}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-sm shadow-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
               {loading ? 'Running GSEA...' : results ? 'Re-run GSEA' : 'Run GSEA'}
@@ -228,7 +228,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className="mt-4 p-4 bg-surface-2 border border-line rounded-lg">
+          <div className="mt-4 p-4 bg-surface-2 border border-line rounded-card">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-body-sm font-medium text-primary mb-1">
@@ -237,7 +237,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                 <select
                   value={parameters.gene_set_database}
                   onChange={(e) => setParameters({ ...parameters, gene_set_database: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 >
                   <option value="GO_BP">GO Biological Process</option>
                   <option value="GO_MF">GO Molecular Function</option>
@@ -256,7 +256,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                 <select
                   value={parameters.ranking_metric}
                   onChange={(e) => setParameters({ ...parameters, ranking_metric: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 >
                   <option value="signed_pvalue">Signed P-value (recommended)</option>
                   <option value="log_fc">Log2 Fold Change</option>
@@ -271,7 +271,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                 <select
                   value={parameters.fdr_threshold}
                   onChange={(e) => setParameters({ ...parameters, fdr_threshold: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 >
                   <option value="0.05">0.05 (stringent)</option>
                   <option value="0.1">0.10</option>
@@ -290,7 +290,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                   onChange={(e) => setParameters({ ...parameters, min_size: parseInt(e.target.value) })}
                   min="5"
                   max="100"
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 />
               </div>
 
@@ -304,7 +304,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                   onChange={(e) => setParameters({ ...parameters, max_size: parseInt(e.target.value) })}
                   min="100"
                   max="2000"
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 />
               </div>
 
@@ -315,7 +315,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                 <select
                   value={parameters.n_permutations}
                   onChange={(e) => setParameters({ ...parameters, n_permutations: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                  className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
                 >
                   <option value="100">100 (fast)</option>
                   <option value="500">500</option>
@@ -335,15 +335,15 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Error Display */}
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-control text-red-700">
             <strong>Error:</strong> {error}
           </div>
         )}
 
         {/* Running indicator (GSEA runs as a background job, can take minutes) */}
         {loading && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-body-sm flex items-center gap-3">
-            <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-control text-blue-800 text-body-sm flex items-center gap-3">
+            <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-pill animate-spin" />
             Running GSEA over the full gene-set database — this runs in the background and can take a few minutes. You can keep this tab open.
           </div>
         )}
@@ -351,7 +351,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Summary Stats */}
       {results && (
-        <div className="bg-surface border border-line rounded-lg p-6">
+        <div className="bg-surface border border-line rounded-card p-6">
           <h3 className="text-title mb-4">Analysis Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
@@ -380,7 +380,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Results Table */}
       {results && (
-        <div className="bg-surface border border-line rounded-lg p-6">
+        <div className="bg-surface border border-line rounded-card p-6">
           <GSEATable
             results={results.results}
             onViewEnrichmentPlot={viewEnrichmentPlot}
@@ -392,7 +392,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       {/* Enrichment Plot Modal */}
       {selectedGeneSet && enrichmentPlotData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-control max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-surface border-b border-line p-4 flex items-center justify-between">
               <h3 className="text-title">Enrichment Plot: {selectedGeneSet}</h3>
               <button
@@ -427,7 +427,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Initial State */}
       {!results && !loading && (
-        <div className="bg-surface border border-line rounded-lg p-12 text-center">
+        <div className="bg-surface border border-line rounded-card p-12 text-center">
           <Play className="h-16 w-16 text-muted mx-auto mb-4" />
           <h3 className="text-title text-primary mb-2">Ready to Run GSEA</h3>
           <p className="text-secondary mb-4">

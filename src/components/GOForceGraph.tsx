@@ -222,12 +222,12 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
       {/* Namespace filters */}
       <div className="flex items-center gap-4 px-3 py-2 bg-surface-2 border-b border-subtle text-caption">
         {ALL_NS.map(ns => (
-          <label key={ns} className="flex items-center gap-1.5 cursor-pointer select-none">
+          <label key={ns} className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={enabledNs.has(ns)}
               onChange={() => toggleNs(ns)}
-              className="rounded"
+              className="rounded-sm"
               style={{ accentColor: NS_COLORS[ns] }}
             />
             <span style={{ color: NS_COLORS[ns] }} className="font-medium">{NS_LABELS[ns]}</span>
@@ -247,7 +247,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
 
         {tooltip && (
           <div
-            className="absolute z-10 bg-surface border border-line rounded-lg shadow-lg p-2 text-caption pointer-events-none max-w-48"
+            className="absolute z-10 bg-surface border border-line rounded-control shadow-lg p-2 text-caption pointer-events-none max-w-48"
             style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
           >
             <div className="font-semibold text-primary mb-1 leading-snug">{tooltip.node.go_name}</div>

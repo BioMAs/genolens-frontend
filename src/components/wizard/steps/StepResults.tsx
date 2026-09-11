@@ -54,7 +54,7 @@ export default function StepResults({
   return (
     <div className="space-y-6">
       {/* Success header */}
-      <div className="rounded-xl bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 p-6 text-center">
+      <div className="rounded-card bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 p-6 text-center">
         <CheckCircle className="mx-auto h-10 w-10 text-green-500 mb-3" />
         <h2 className="text-heading text-green-900">Analysis Complete!</h2>
         <p className="mt-1 text-body-sm text-green-700">
@@ -76,12 +76,12 @@ export default function StepResults({
           color="indigo"
         >
           {comparisons.length > 0 ? (
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 space-y-2">
               {comparisons.slice(0, 4).map(c => (
                 <Link
                   key={c.name}
                   href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                  className="flex items-center justify-between rounded-md bg-accent-soft px-3 py-1.5 text-caption hover:bg-accent-soft"
+                  className="flex items-center justify-between rounded-sm bg-accent-soft px-3 py-1.5 text-caption hover:bg-accent-soft"
                 >
                   <span className="font-medium text-accent-ink truncate">{c.name}</span>
                   <span className="ml-2 shrink-0 text-accent-ink">
@@ -112,11 +112,11 @@ export default function StepResults({
         >
           <Link
             href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering?${clusteringParams}`}
-            className="mt-3 block w-full rounded-lg bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
+            className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
           >
             Explore Clustering →
           </Link>
-          <p className="mt-1.5 text-micro text-muted text-center">
+          <p className="mt-2 text-micro text-muted text-center">
             {clusteringConfig.method} · {clusteringConfig.metric} · top {clusteringConfig.top_n_genes} genes
           </p>
         </ResultCard>
@@ -132,11 +132,11 @@ export default function StepResults({
             <>
               <Link
                 href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
+                className="mt-3 block w-full rounded-control bg-teal-600 px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
               >
                 Explore Enrichment →
               </Link>
-              <p className="mt-1.5 text-micro text-muted text-center">
+              <p className="mt-2 text-micro text-muted text-center">
                 {enrichmentConfig.databases === null ? 'All databases (anno.db)' : enrichmentConfig.databases.join(', ')} · FDR {enrichmentConfig.fdr}
               </p>
             </>
@@ -157,7 +157,7 @@ export default function StepResults({
         <button
           type="button"
           onClick={onRunNew}
-          className="flex items-center gap-2 rounded-lg border border-accent-ring bg-accent-soft px-4 py-2 text-body-sm font-medium text-accent-ink hover:bg-accent-soft"
+          className="flex items-center gap-2 rounded-control border border-accent-ring bg-accent-soft px-4 py-2 text-body-sm font-medium text-accent-ink hover:bg-accent-soft"
         >
           <RotateCcw className="h-4 w-4" /> Run New Analysis
         </button>
@@ -185,14 +185,14 @@ function ResultCard({
   };
 
   return (
-    <div className={`rounded-xl border ${borderColors[color] ?? borderColors.gray}bg-surface p-4 shadow-sm flex flex-col`}>
+    <div className={`rounded-card border ${borderColors[color] ?? borderColors.gray}bg-surface p-4 shadow-sm flex flex-col`}>
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-surface-2 p-2">{icon}</div>
+        <div className="rounded-control bg-surface-2 p-2">{icon}</div>
         <div className="min-w-0">
           <p className="text-body-sm font-semibold text-primary">{title}</p>
-          <p className="text-caption text-secondary mt-0.5">{description}</p>
+          <p className="text-caption text-secondary mt-1">{description}</p>
           {badge && (
-            <span className="mt-1 inline-block rounded-full bg-surface-2 px-2 py-0.5 text-micro text-secondary">
+            <span className="mt-1 inline-block rounded-pill bg-surface-2 px-2 py-0.5 text-micro text-secondary">
               {badge}
             </span>
           )}

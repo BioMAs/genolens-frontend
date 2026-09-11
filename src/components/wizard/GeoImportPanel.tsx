@@ -59,7 +59,7 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-indigo-100 bg-accent-soft p-3 text-caption text-accent-ink">
+      <div className="rounded-control border border-accent-ring bg-accent-soft p-3 text-caption text-accent-ink">
         Search public <strong>NCBI GEO</strong> RNA-seq series. Only human/mouse series with
         NCBI-generated count matrices can be imported — they arrive as a count matrix + sample
         sheet, ready to run through the pipeline.
@@ -75,13 +75,13 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && runSearch()}
             placeholder="e.g. breast cancer RNA-seq, Alzheimer hippocampus, GSE164073…"
-            className="w-full rounded-lg border border-strong bg-surface py-2 pl-9 pr-4 text-body-sm text-primary focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="w-full rounded-control border border-strong bg-surface py-2 pl-9 pr-4 text-body-sm text-primary focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
         <select
           value={maxResults}
           onChange={(e) => setMaxResults(Number(e.target.value))}
-          className="rounded-lg border border-strong bg-surface px-3 py-2 text-body-sm"
+          className="rounded-control border border-strong bg-surface px-3 py-2 text-body-sm"
           title="Maximum number of results"
         >
           {[5, 10, 20, 50].map((n) => (
@@ -92,7 +92,7 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
           type="button"
           onClick={runSearch}
           disabled={search.isPending || query.trim().length < 3}
-          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
+          className="flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
         >
           {search.isPending
             ? <RefreshCw className="h-4 w-4 animate-spin" />
@@ -102,13 +102,13 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
       </div>
 
       {search.isError && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-control border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           Error searching NCBI GEO. Please try again.
         </div>
       )}
       {importError && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-control border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {importError}
         </div>
@@ -154,11 +154,11 @@ function GeoResultCard({
   const supported = organism !== null;
 
   return (
-    <div className="rounded-lg border border-line bg-surface p-4 transition-colors hover:border-accent-ring">
+    <div className="rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent-ring">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-caption font-bold text-accent-ink">
+            <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 font-mono text-caption font-bold text-accent-ink">
               {ds.accession}
             </span>
             {ds.organism && <span className="text-caption text-secondary">· {ds.organism}</span>}
@@ -186,7 +186,7 @@ function GeoResultCard({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 flex items-center gap-0.5 text-caption text-accent-ink hover:text-accent-ink"
+              className="mt-1 flex items-center gap-1 text-caption text-accent-ink hover:text-accent-ink"
             >
               {expanded ? <><ChevronUp className="h-3 w-3" /> Collapse</> : <><ChevronDown className="h-3 w-3" /> Read more</>}
             </button>
@@ -203,7 +203,7 @@ function GeoResultCard({
           onClick={onImport}
           disabled={!supported || disabled}
           title={supported ? 'Import this series into your project' : 'Only human/mouse series can be imported'}
-          className="flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-caption font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-control bg-accent px-3 py-1.5 text-caption font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           {importing
             ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Importing…</>

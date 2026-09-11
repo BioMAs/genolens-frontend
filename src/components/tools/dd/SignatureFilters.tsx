@@ -51,7 +51,7 @@ export default function SignatureFilters({
   ) => onChange({ ...filters, [key]: value });
 
   return (
-    <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+    <div className="space-y-4 rounded-card border border-line bg-surface p-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-body-sm">
           <span className="block text-primary">Max adjusted p-value</span>
@@ -63,7 +63,7 @@ export default function SignatureFilters({
             value={filters.padjMax}
             disabled={disabled}
             onChange={(event) => set('padjMax', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-strong p-1.5"
+            className="mt-1 w-full rounded-sm border border-strong p-1.5"
           />
         </label>
 
@@ -77,7 +77,7 @@ export default function SignatureFilters({
             value={filters.logfcMin}
             disabled={disabled}
             onChange={(event) => set('logfcMin', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-strong p-1.5"
+            className="mt-1 w-full rounded-sm border border-strong p-1.5"
           />
         </label>
 
@@ -89,7 +89,7 @@ export default function SignatureFilters({
             onChange={(event) =>
               set('directions', event.target.value as DdSignatureFilters['directions'])
             }
-            className="mt-1 w-full rounded border border-strong p-1.5"
+            className="mt-1 w-full rounded-sm border border-strong p-1.5"
           >
             <option value="both">Up and down</option>
             <option value="up">Up-regulated only</option>
@@ -107,7 +107,7 @@ export default function SignatureFilters({
             value={filters.maxGenesPerCondition}
             disabled={disabled}
             onChange={(event) => set('maxGenesPerCondition', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-strong p-1.5"
+            className="mt-1 w-full rounded-sm border border-strong p-1.5"
           />
         </label>
 
@@ -126,7 +126,7 @@ export default function SignatureFilters({
             value={filters.seed}
             disabled={disabled}
             onChange={(event) => set('seed', Number(event.target.value))}
-            className="mt-1 w-full rounded border border-strong p-1.5"
+            className="mt-1 w-full rounded-sm border border-strong p-1.5"
           />
         </label>
       </div>
@@ -187,7 +187,7 @@ export default function SignatureFilters({
                           event.target.value === '' ? '' : Number(event.target.value),
                       })
                     }
-                    className={`w-20 rounded border p-1 ${
+                    className={`w-20 rounded-sm border p-1 ${
                       replicates[condition.name] === '' || replicates[condition.name] === undefined
                         ? 'border-amber-400 bg-amber-50'
                         : 'border-strong'

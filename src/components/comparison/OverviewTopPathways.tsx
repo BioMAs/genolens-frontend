@@ -52,7 +52,7 @@ function PathwayTooltip({
   const p = payload[0].payload;
   return (
     <div
-      className="max-w-xs rounded-lg border px-3 py-2 text-caption shadow-lg"
+      className="max-w-xs rounded-control border px-3 py-2 text-caption shadow-lg"
       style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
     >
       <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{p.name}</div>
@@ -60,7 +60,7 @@ function PathwayTooltip({
         adj. p {p.padj.toExponential(2)} · {p.geneCount} gene{p.geneCount === 1 ? '' : 's'}
         {p.category ? ` · ${p.category}` : ''}
       </div>
-      {p.id && <div className="mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>{p.id}</div>}
+      {p.id && <div className="mt-1 font-mono" style={{ color: 'var(--text-muted)' }}>{p.id}</div>}
     </div>
   );
 }
@@ -146,7 +146,7 @@ export default function OverviewTopPathways({
       return (
         <div className="space-y-2 py-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-5 rounded" style={{ width: `${95 - i * 11}%` }} />
+            <div key={i} className="skeleton h-5 rounded-sm" style={{ width: `${95 - i * 11}%` }} />
           ))}
         </div>
       );

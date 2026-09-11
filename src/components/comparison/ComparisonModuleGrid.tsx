@@ -22,7 +22,7 @@ interface Props {
 // Only transform and shadow transition: `transition-all` would also animate the
 // colours, which makes a light/dark theme switch visibly crawl across the grid.
 const CARD_BASE =
-  'flex flex-col rounded-2xl p-4 text-left shadow-sm transition-[transform,box-shadow] duration-200';
+  'flex flex-col rounded-card p-4 text-left transition-colors';
 
 function cardStyle(dimmed: boolean): React.CSSProperties {
   return {
@@ -37,7 +37,7 @@ function ModuleIcon({ module }: { module: ComparisonModule }) {
   const ready = state === 'ready';
   return (
     <span
-      className="grid h-9 w-9 place-items-center rounded-lg"
+      className="grid h-9 w-9 place-items-center rounded-control"
       style={{
         background: ready ? 'var(--sl-teal-light)' : 'var(--surface-secondary)',
         color: ready ? 'var(--sl-teal-dark)' : 'var(--text-muted)',
@@ -57,7 +57,7 @@ function ModuleBody({ module }: { module: ComparisonModule }) {
       >
         {module.title}
       </h3>
-      <p className="mt-0.5 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mt-1 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>
         {module.description}
       </p>
     </>
@@ -94,7 +94,7 @@ export default function ComparisonModuleGrid({
             >
               {title}
             </h2>
-            <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+            <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>
               {summary}
             </p>
           </div>
@@ -158,7 +158,7 @@ export default function ComparisonModuleGrid({
               <div className="flex items-start justify-between gap-2">
                 <ModuleIcon module={module} />
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-micro"
+                  className="inline-flex items-center gap-1 rounded-pill px-2 py-1 text-micro"
                   style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}
                 >
                   <Lock className="h-3 w-3" /> {module.hint}
@@ -170,7 +170,7 @@ export default function ComparisonModuleGrid({
                   type="button"
                   disabled={sending || alreadyRequested}
                   onClick={() => request(module.addOnId!)}
-                  className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-micro transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  className="mt-3 inline-flex w-fit items-center gap-2 rounded-pill border px-3 py-1 text-micro transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
                     borderColor: 'var(--sl-purple-muted)',
                     color: alreadyRequested ? 'var(--text-muted)' : 'var(--sl-purple)',
@@ -196,7 +196,7 @@ export default function ComparisonModuleGrid({
       {notice && (
         <div
           role="status"
-          className="mt-3 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-body-sm"
+          className="mt-3 flex items-center gap-3 rounded-card border px-4 py-2.5 text-body-sm"
           style={
             notice.kind === 'success'
               ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }

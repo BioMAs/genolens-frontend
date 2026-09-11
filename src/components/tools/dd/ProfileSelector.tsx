@@ -26,7 +26,7 @@ export default function ProfileSelector({ profiles, value, onChange }: ProfileSe
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-strong p-2"
+        className="w-full rounded-sm border border-strong p-2"
       >
         {profiles.map((profile) => (
           <option key={profile} value={profile}>

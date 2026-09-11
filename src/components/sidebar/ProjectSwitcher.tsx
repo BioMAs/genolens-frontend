@@ -61,7 +61,7 @@ export default function ProjectSwitcher({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex h-10 w-full cursor-pointer items-center gap-2 rounded-control px-3 text-left',
+          'flex h-9 w-full cursor-pointer items-center gap-2 rounded-control px-3 text-left',
           'transition-colors hover:bg-hover',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         )}

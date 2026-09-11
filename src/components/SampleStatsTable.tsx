@@ -46,7 +46,7 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
   if (!data.length) return <div className="p-4 text-secondary">No data available.</div>;
 
   return (
-    <div className="bg-surface shadow sm:rounded-lg overflow-hidden">
+    <div className="bg-surface shadow sm:rounded-control overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-line">
         <h3 className="text-title leading-6 font-medium text-primary">Sample Statistics</h3>
         <p className="mt-1 max-w-2xl text-body-sm text-secondary">

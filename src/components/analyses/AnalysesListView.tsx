@@ -37,7 +37,7 @@ export default function AnalysesListView({ projectId }: Props) {
   }
   if (isError) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-700">
+      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700">
         Failed to load analyses.
       </div>
     );
@@ -54,18 +54,18 @@ export default function AnalysesListView({ projectId }: Props) {
         <Link
           data-tour="analyses-new"
           href={`/projects/${projectId}/analyses/new`}
-          className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+          className="inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
         >
           + New analysis
         </Link>
       </div>
 
       {analyses.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-line p-12 text-center">
+        <div className="rounded-control border-2 border-dashed border-line p-12 text-center">
           <p className="text-body-sm text-secondary">No analyses launched for this project.</p>
           <Link
             href={`/projects/${projectId}/analyses/new`}
-            className="mt-4 inline-flex items-center rounded-md bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+            className="mt-4 inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
           >
             Launch your first analysis
           </Link>

@@ -224,7 +224,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
             return (
               <label
                 key={comp.key}
-                className="flex cursor-pointer items-center rounded-xl border p-3.5 transition-all"
+                className="flex cursor-pointer items-center rounded-card border p-3.5 transition-all"
                 style={{
                   borderColor: active ? 'var(--sl-teal-muted)' : 'var(--border)',
                   background: active ? 'var(--sl-teal-light)' : 'var(--surface)',
@@ -251,7 +251,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
         {error && (
           <div
-            className="mt-4 rounded-lg border p-3 text-body-sm"
+            className="mt-4 rounded-control border p-3 text-body-sm"
             style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
           >
             {error}
@@ -366,7 +366,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
             {selectedGenes.map((g) => (
               <span
                 key={g}
-                className="rounded px-2 py-0.5 font-mono text-caption"
+                className="rounded-sm px-2 py-0.5 font-mono text-caption"
                 style={{ background: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}
               >
                 {g}
@@ -376,7 +376,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
           {enrichment.status === 'FAILED' && (
             <div
-              className="rounded-lg border p-3 text-body-sm"
+              className="rounded-control border p-3 text-body-sm"
               style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)', color: 'var(--sl-red-dark)' }}
             >
               {enrichment.error || 'Enrichment failed'}
@@ -412,7 +412,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                         <button
                           key={c}
                           onClick={() => setCategory(c)}
-                          className="rounded-full border px-2.5 py-1 text-caption font-medium"
+                          className="rounded-pill border px-2.5 py-1 text-caption font-medium"
                           style={
                             activeCat
                               ? { background: 'var(--sl-purple)', color: '#fff', borderColor: 'var(--sl-purple)' }
@@ -434,8 +434,8 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                           <div className="w-64 truncate text-caption" style={{ color: 'var(--text-secondary)' }} title={r.pathway_name}>
                             {r.pathway_name}
                           </div>
-                          <div className="h-3 flex-1 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
-                            <div className="h-3 rounded" style={{ width: `${(v / maxNegLog) * 100}%`, background: 'var(--sl-purple)' }} />
+                          <div className="h-3 flex-1 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
+                            <div className="h-3 rounded-sm" style={{ width: `${(v / maxNegLog) * 100}%`, background: 'var(--sl-purple)' }} />
                           </div>
                           <div className="w-16 text-right text-caption" style={{ color: 'var(--text-muted)' }}>
                             {v.toFixed(2)}

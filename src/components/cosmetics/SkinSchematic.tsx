@@ -39,7 +39,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
 
   return (
     <div className="gl-card p-4">
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Effect on skin
         </h3>
@@ -112,18 +112,18 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
             const z = byId[slug];
             const color = ZONE_COLORS[slug];
             return (
-              <div key={slug} className="rounded-lg border border-subtle p-2.5">
+              <div key={slug} className="rounded-control border border-subtle p-2.5">
                 <div className="flex items-center justify-between text-caption font-medium" style={{ color: 'var(--text-primary)' }}>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block h-2.5 w-2.5 rounded-pill" style={{ background: color }} />
                     {z.label}
                   </span>
                   <span className="flex items-center gap-1 text-micro">
                     <DirArrow dir={z.dominant_direction} /> {z.activity}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${z.activity}%`, background: color }} />
+                <div className="mt-2 h-1.5 w-full rounded-pill bg-surface-2 overflow-hidden">
+                  <div className="h-full rounded-pill" style={{ width: `${z.activity}%`, background: color }} />
                 </div>
               </div>
             );

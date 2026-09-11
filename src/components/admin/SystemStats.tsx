@@ -56,10 +56,10 @@ export default function SystemStats() {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-surface overflow-hidden shadow rounded-lg animate-pulse">
+          <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
             <div className="p-5">
-              <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
-              <div className="h-10 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-8 bg-gray-200 rounded-sm w-1/2 mb-4"></div>
+              <div className="h-10 bg-gray-200 rounded-sm w-3/4"></div>
             </div>
           </div>
         ))}
@@ -69,7 +69,7 @@ export default function SystemStats() {
 
   if (error || !stats) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-control p-4">
         <p className="text-red-800">{error || 'Failed to load statistics'}</p>
       </div>
     );
@@ -113,11 +113,11 @@ export default function SystemStats() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-surface overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+          <div key={stat.name} className="bg-surface overflow-hidden shadow rounded-control hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`${stat.color} rounded-md p-3`}>
+                  <div className={`${stat.color} rounded-sm p-3`}>
                     <stat.icon className="h-6 w-6 text-on-accent" aria-hidden="true" />
                   </div>
                 </div>
@@ -137,11 +137,11 @@ export default function SystemStats() {
         ))}
       </div>
 
-      <div className="bg-surface shadow rounded-lg p-6">
+      <div className="bg-surface shadow rounded-card p-6">
         <h3 className="text-title font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {Object.entries(stats.users_by_plan).map(([plan, count]) => (
-            <div key={plan} className="bg-surface-2 overflow-hidden rounded-lg p-4 border border-line">
+            <div key={plan} className="bg-surface-2 overflow-hidden rounded-card p-4 border border-line">
                <dt className="text-body-sm font-medium text-secondary truncate">{plan}</dt>
                <dd className="mt-1 text-heading text-primary">{count}</dd>
             </div>

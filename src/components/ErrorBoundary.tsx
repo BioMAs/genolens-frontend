@@ -81,8 +81,8 @@ export class ErrorBoundary extends Component<Props, State> {
       // Default fallback UI
       return (
         <div className="min-h-screen flex items-center justify-center bg-surface-2 px-4">
-          <div className="max-w-md w-full bg-surface rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+          <div className="max-w-md w-full bg-surface rounded-card shadow-lg p-8">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-pill mb-4">
               <svg
                 className="w-6 h-6 text-red-600"
                 fill="none"
@@ -107,7 +107,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mb-6 p-4 bg-surface-2 rounded-lg cursor-pointer">
+              <details className="mb-6 p-4 bg-surface-2 rounded-card cursor-pointer">
                 <summary className="font-semibold text-body-sm text-primary mb-2">
                   Technical Details (Dev Mode)
                 </summary>
@@ -128,13 +128,13 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={this.handleReset}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-on-accent rounded-md transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-on-accent rounded-sm transition-colors font-medium"
               >
                 Try Again
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-primary rounded-md transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-primary rounded-sm transition-colors font-medium"
               >
                 Go Home
               </button>

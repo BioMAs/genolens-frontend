@@ -162,7 +162,7 @@ function renderKnownFigure(figure: DdKnownFigure, index: number) {
 
 function UnknownFigureNotice({ caption }: { caption: string }) {
   return (
-    <figure className="rounded-md border border-dashed p-4 text-body-sm" style={{ borderColor: 'var(--border-strong)' }}>
+    <figure className="rounded-sm border border-dashed p-4 text-body-sm" style={{ borderColor: 'var(--border-strong)' }}>
       <figcaption className="mb-1 font-medium" style={{ color: 'var(--text-primary)' }}>
         {caption}
       </figcaption>
@@ -291,7 +291,7 @@ export function BarTooltip({ active, payload }: Partial<TooltipContentProps<numb
   const row = payload[0].payload as ChartRow;
   return (
     <div
-      className="rounded-md border p-2 text-caption shadow-sm"
+      className="rounded-sm border p-2 text-caption shadow-sm"
       style={{
         background: 'var(--color-surface)',
         borderColor: 'var(--border)',

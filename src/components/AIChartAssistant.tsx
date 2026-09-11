@@ -22,7 +22,7 @@ interface AIChartAssistantProps {
 function AIAvatar({ className = 'h-6 w-6' }: { className?: string }) {
   return (
     <div
-      className={`flex flex-shrink-0 items-center justify-center rounded-full ${className}`}
+      className={`flex flex-shrink-0 items-center justify-center rounded-pill ${className}`}
       style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
     >
       <Sparkles className="h-3.5 w-3.5" />
@@ -101,7 +101,7 @@ export default function AIChartAssistant({
         <div className="gl-card">
           <div className="flex items-start gap-4 p-4">
             <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-card"
               style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
             >
               <Sparkles className="h-5 w-5" />
@@ -114,7 +114,7 @@ export default function AIChartAssistant({
               <div className="flex items-center gap-2">
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
+                  className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3 w-3" />
@@ -134,7 +134,7 @@ export default function AIChartAssistant({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-[11px] border px-3 py-1.5 text-caption font-medium transition-colors hover:bg-[var(--hover-overlay)]"
+        className="flex items-center gap-2 rounded-control border px-3 py-1.5 text-caption font-medium transition-colors hover:bg-[var(--hover-overlay)]"
         style={{ background: 'var(--sl-purple-light)', borderColor: 'var(--border)', color: 'var(--sl-purple)' }}
       >
         <Sparkles className="h-3.5 w-3.5" />
@@ -144,7 +144,7 @@ export default function AIChartAssistant({
       {/* Panel */}
       {open && (
         <div
-          className="mt-3 overflow-hidden rounded-[14px] border shadow-sm"
+          className="mt-3 overflow-hidden rounded-card border shadow-sm"
           style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           {/* Header */}
@@ -157,7 +157,7 @@ export default function AIChartAssistant({
               <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
               {label && (
                 <span
-                  className="rounded border px-1.5 py-0.5 text-caption"
+                  className="rounded-sm border px-1.5 py-0.5 text-caption"
                   style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                 >
                   {label}
@@ -181,7 +181,7 @@ export default function AIChartAssistant({
                 <p className="text-caption" style={{ color: 'var(--text-muted)' }}>Get an AI reading of this chart.</p>
                 <button
                   onClick={() => interpret()}
-                  className="inline-flex items-center gap-1.5 rounded-[11px] px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
+                  className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
@@ -193,7 +193,7 @@ export default function AIChartAssistant({
               <div className="flex gap-2">
                 <AIAvatar />
                 <div
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-body-sm"
+                  className="flex items-center gap-2 rounded-card px-3 py-2 text-body-sm"
                   style={{ background: 'var(--surface-raised)', color: 'var(--text-muted)' }}
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -204,7 +204,7 @@ export default function AIChartAssistant({
             {interpretation && (
               <div className="flex gap-2">
                 <AIAvatar />
-                <div className="max-w-[85%] rounded-2xl px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
+                <div className="max-w-[85%] rounded-card px-3 py-2" style={{ background: 'var(--surface-raised)' }}>
                   <AIMarkdown text={interpretation} />
                 </div>
               </div>
@@ -218,14 +218,14 @@ export default function AIChartAssistant({
                 {msg.role === 'assistant' && <AIAvatar />}
                 {msg.role === 'user' ? (
                   <div
-                    className="max-w-[85%] rounded-2xl rounded-br-sm px-3 py-2 text-body-sm leading-relaxed text-on-accent"
+                    className="max-w-[85%] rounded-card rounded-br-sm px-3 py-2 text-body-sm leading-relaxed text-on-accent"
                     style={{ background: 'var(--sl-purple)' }}
                   >
                     {msg.content}
                   </div>
                 ) : (
                   <div
-                    className="max-w-[85%] rounded-2xl rounded-bl-sm px-3 py-2"
+                    className="max-w-[85%] rounded-card rounded-bl-sm px-3 py-2"
                     style={{ background: 'var(--surface-raised)' }}
                   >
                     <AIMarkdown text={msg.content} />
@@ -238,7 +238,7 @@ export default function AIChartAssistant({
               <div className="flex gap-2">
                 <AIAvatar />
                 <div
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-body-sm"
+                  className="flex items-center gap-2 rounded-card px-3 py-2 text-body-sm"
                   style={{ background: 'var(--surface-raised)', color: 'var(--text-muted)' }}
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -258,13 +258,13 @@ export default function AIChartAssistant({
               onKeyDown={handleKeyDown}
               placeholder="Ask a follow-up question…"
               disabled={isAsking || isInterpreting}
-              className="flex-1 rounded-xl border px-3 py-1.5 text-body-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
+              className="flex-1 rounded-card border px-3 py-1.5 text-body-sm focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)] disabled:opacity-50"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             />
             <button
               onClick={handleAsk}
               disabled={!question.trim() || isAsking || isInterpreting}
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-card text-on-accent disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: 'var(--sl-purple)' }}
               aria-label="Send"
             >

@@ -26,14 +26,14 @@ export default function ChatModeShell() {
       <header className="flex h-[var(--topbar-height,52px)] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="GenoLens" width={110} height={34} className="h-7 w-auto" />
-          <span className="flex items-center gap-1.5 text-body-sm font-semibold text-[var(--text-primary)]">
+          <span className="flex items-center gap-2 text-body-sm font-semibold text-[var(--text-primary)]">
             <Sparkles className="h-4 w-4 text-[var(--sl-purple)]" /> AI Assistant
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHelpOpen((v) => !v)}
-            className={`flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-caption font-medium hover:bg-[var(--hover-overlay)] ${
+            className={`flex items-center gap-2 rounded-sm border border-[var(--border)] px-3 py-1.5 text-caption font-medium hover:bg-[var(--hover-overlay)] ${
               helpOpen ? 'text-[var(--sl-purple)]' : 'text-[var(--text-primary)]'
             }`}
           >
@@ -41,7 +41,7 @@ export default function ChatModeShell() {
           </button>
           <button
             onClick={() => setChatMode(false)}
-            className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-caption font-medium text-[var(--text-primary)] hover:bg-[var(--hover-overlay)]"
+            className="flex items-center gap-2 rounded-sm border border-[var(--border)] px-3 py-1.5 text-caption font-medium text-[var(--text-primary)] hover:bg-[var(--hover-overlay)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Full interface
           </button>
@@ -96,20 +96,20 @@ function ChatConversation({
     <>
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
-          <div className="mt-10 text-center text-body-sm text-[var(--text-muted)]">
+          <div className="mt-12 text-center text-body-sm text-[var(--text-muted)]">
             Ask about “{comparisonName}” — e.g. “How many genes are up-regulated?” or
             “Show me a volcano plot”.
           </div>
         )}
         {messages.map((m, i) =>
           m.role === 'user' ? (
-            <div key={i} className="self-end rounded-2xl bg-[var(--sl-purple)] px-4 py-2 text-body-sm text-on-accent">
+            <div key={i} className="self-end rounded-card bg-[var(--sl-purple)] px-4 py-2 text-body-sm text-on-accent">
               {m.content}
             </div>
           ) : (
             <div key={i} className="flex flex-col gap-2">
               {(m.toolCalls ?? []).map((tc, j) => (
-                <div key={j} className="flex w-fit items-center gap-1.5 rounded-full bg-[var(--surface-raised)] px-2.5 py-1 text-micro text-[var(--text-muted)]">
+                <div key={j} className="flex w-fit items-center gap-2 rounded-pill bg-[var(--surface-raised)] px-2.5 py-1 text-micro text-[var(--text-muted)]">
                   <Wrench className="h-3 w-3" /> {tc.tool}
                 </div>
               ))}
@@ -117,12 +117,12 @@ function ChatConversation({
                 <PlotlyFigure key={fig.call_id} figure={fig} comparisonName={comparisonName} />
               ))}
               {m.content && (
-                <div className="whitespace-pre-wrap rounded-2xl bg-[var(--surface-raised)] px-4 py-2 text-body-sm text-[var(--text-primary)]">
+                <div className="whitespace-pre-wrap rounded-card bg-[var(--surface-raised)] px-4 py-2 text-body-sm text-[var(--text-primary)]">
                   {m.content}
                 </div>
               )}
               {m.pending && !m.content && (
-                <div className="w-fit rounded-2xl bg-[var(--surface-raised)] px-4 py-2 text-body-sm text-[var(--text-muted)]">
+                <div className="w-fit rounded-card bg-[var(--surface-raised)] px-4 py-2 text-body-sm text-[var(--text-muted)]">
                   <span className="animate-pulse">
                     {m.status === 'calling_tool'
                       ? 'Running analysis…'
@@ -136,7 +136,7 @@ function ChatConversation({
           ),
         )}
         {error && (
-          <div className="rounded-lg border border-[var(--sl-red)] bg-[var(--surface)] px-3 py-2 text-caption text-[var(--sl-red)]">
+          <div className="rounded-control border border-[var(--sl-red)] bg-[var(--surface)] px-3 py-2 text-caption text-[var(--sl-red)]">
             {error}
           </div>
         )}
@@ -156,12 +156,12 @@ function ChatConversation({
             }}
             rows={1}
             placeholder="Ask a question or request a figure…"
-            className="max-h-40 flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-body-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)]"
+            className="max-h-40 flex-1 resize-none rounded-card border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-body-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--sl-purple)]"
           />
           <button
             type="submit"
             disabled={isStreaming || !input.trim()}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sl-purple)] text-on-accent disabled:opacity-40"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-card bg-[var(--sl-purple)] text-on-accent disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </button>

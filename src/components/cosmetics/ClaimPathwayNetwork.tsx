@@ -129,16 +129,16 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
           <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Réseau Pathway → Claim
           </h3>
-          <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>
             Pathways d'évidence connectés aux claims qu'ils soutiennent. Cliquez sur un claim pour isoler.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {(['ALL', 'UP', 'DOWN'] as const).map((d) => (
             <button
               key={d}
               onClick={() => { setFilterDir(d); setSelectedClaim(null); }}
-              className="rounded px-3 py-1 text-caption font-medium transition-colors"
+              className="rounded-sm px-3 py-1 text-caption font-medium transition-colors"
               style={{
                 background: filterDir === d
                   ? d === 'UP' ? UP_COLOR : d === 'DOWN' ? DOWN_COLOR : '#374151'
@@ -153,7 +153,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
           {selectedClaim && (
             <button
               onClick={() => setSelectedClaim(null)}
-              className="rounded px-3 py-1 text-caption font-medium"
+              className="rounded-sm px-3 py-1 text-caption font-medium"
               style={{ background: 'var(--surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)' }}
             >
               ✕ Réinitialiser
@@ -163,17 +163,17 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-5 text-micro" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-full" style={{ background: UP_COLOR }} />
+      <div className="flex items-center gap-6 text-micro" style={{ color: 'var(--text-secondary)' }}>
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: UP_COLOR }} />
           UP-régulé
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-full" style={{ background: DOWN_COLOR }} />
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: DOWN_COLOR }} />
           DOWN-régulé
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-4 w-4 rounded-full border-2" style={{ borderColor: '#6b7280' }} />
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-4 w-4 rounded-pill border-2" style={{ borderColor: '#6b7280' }} />
           Claim (taille ∝ score)
         </span>
         <span className="ml-auto text-micro opacity-60">{pathways.length} pathways · {activeClaims.length} claims</span>
@@ -181,7 +181,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
 
       {/* SVG area */}
       <div
-        className="relative rounded-lg overflow-hidden select-none"
+        className="relative rounded-control overflow-hidden select-none"
         style={{ background: 'var(--surface-elevated)' }}
         onMouseLeave={() => setTooltip(null)}
       >
@@ -394,7 +394,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
         {/* Tooltip */}
         {tooltip && (
           <div
-            className="pointer-events-none absolute z-20 rounded-lg px-3 py-2 text-caption shadow-xl"
+            className="pointer-events-none absolute z-20 rounded-control px-3 py-2 text-caption shadow-xl"
             style={{
               left: tooltip.x,
               top: tooltip.y,

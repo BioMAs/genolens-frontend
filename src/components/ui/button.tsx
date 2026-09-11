@@ -10,7 +10,7 @@ export type ButtonVariant =
   | 'secondary'
   | 'link';
 
-export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
+export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -18,7 +18,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const base = cn(
-  'inline-flex cursor-pointer select-none items-center justify-center gap-1.5',
+  'inline-flex cursor-pointer select-none items-center justify-center gap-2',
   'rounded-control text-body-sm font-semibold',
   'transition-colors duration-150',
   // Le focus est un etat interactif : anneau indigo, jamais emerald.
@@ -55,11 +55,15 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const SIZES: Record<ButtonSize, string> = {
+  // Trois hauteurs, pas six. 44px est aussi le minimum tactile, d'ou `lg` pour
+  // toute cible mobile. `sm` passe de 32 a 28 : reserve aux barres d'outils
+  // denses, il doit se distinguer nettement du defaut.
   default: 'h-9 px-4 py-2',
-  sm: 'h-8 px-3 text-caption',
-  lg: 'h-11 px-6 text-body',
+  sm: 'h-7 px-2.5 text-caption',
+  lg: 'h-11 px-5 text-body',
   // 36px : sous le minimum tactile de 44px, d'ou le hit-area etendu.
   icon: 'h-9 w-9 p-0',
+  'icon-sm': 'h-7 w-7 p-0',
 };
 
 /**

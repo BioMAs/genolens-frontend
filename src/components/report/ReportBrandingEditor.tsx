@@ -107,7 +107,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft">
+        <div className="flex h-10 w-10 items-center justify-center rounded-pill bg-accent-soft">
           <FileText className="h-5 w-5 text-accent-ink" />
         </div>
         <div>
@@ -119,17 +119,17 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
       {/* Live preview of the report header */}
       <div>
         <label className="mb-1 block text-body-sm font-medium text-primary">Preview</label>
-        <div className="overflow-hidden rounded-xl border shadow-sm" style={{ borderColor: "#e5e7eb" }}>
+        <div className="overflow-hidden rounded-card border shadow-sm" style={{ borderColor: "#e5e7eb" }}>
           <div className="flex items-center justify-between p-4" style={{ background: form.primary_color }}>
             {logoPreviewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoPreviewUrl} alt="logo" className="h-10 max-w-[160px] object-contain" />
+              <img src={logoPreviewUrl} alt="logo" className="h-9 max-w-[160px] object-contain" />
             ) : (
-              <span className="text-body-sm font-semibold text-white/90">
+              <span className="text-body-sm font-semibold text-on-accent/90">
                 {form.institute_name || "Your logo"}
               </span>
             )}
-            <span className="text-caption font-medium uppercase tracking-wide text-white/80">
+            <span className="text-caption font-medium uppercase tracking-wide text-on-accent/80">
               Transcriptomics Report
             </span>
           </div>
@@ -156,7 +156,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={uploadLogo.isPending || demo}
-            className="inline-flex items-center gap-2 rounded-lg border border-strong px-3 py-1.5 text-body-sm font-medium text-primary hover:bg-hover disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control border border-strong px-3 py-1.5 text-body-sm font-medium text-primary hover:bg-hover disabled:opacity-50"
           >
             {uploadLogo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             Upload logo
@@ -171,24 +171,24 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
         <div>
           <label className="mb-1 block text-body-sm font-medium text-primary">Primary colour</label>
           <div className="flex items-center gap-2">
-            <input type="color" value={form.primary_color} onChange={set("primary_color")} className="h-9 w-12 rounded" />
+            <input type="color" value={form.primary_color} onChange={set("primary_color")} className="h-9 w-12 rounded-sm" />
             <input
               type="text"
               value={form.primary_color}
               onChange={set("primary_color")}
-              className="w-28 rounded-lg border border-strong px-2 py-1.5 text-body-sm"
+              className="w-28 rounded-control border border-strong px-2 py-1.5 text-body-sm"
             />
           </div>
         </div>
         <div>
           <label className="mb-1 block text-body-sm font-medium text-primary">Secondary colour</label>
           <div className="flex items-center gap-2">
-            <input type="color" value={form.secondary_color} onChange={set("secondary_color")} className="h-9 w-12 rounded" />
+            <input type="color" value={form.secondary_color} onChange={set("secondary_color")} className="h-9 w-12 rounded-sm" />
             <input
               type="text"
               value={form.secondary_color}
               onChange={set("secondary_color")}
-              className="w-28 rounded-lg border border-strong px-2 py-1.5 text-body-sm"
+              className="w-28 rounded-control border border-strong px-2 py-1.5 text-body-sm"
             />
           </div>
         </div>
@@ -202,7 +202,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
             type="text"
             value={form.institute_name}
             onChange={set("institute_name")}
-            className="w-full rounded-lg border border-strong px-3 py-2 text-body-sm"
+            className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
           />
         </div>
         <div>
@@ -211,7 +211,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
             type="text"
             value={form.institute_address}
             onChange={set("institute_address")}
-            className="w-full rounded-lg border border-strong px-3 py-2 text-body-sm"
+            className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
           />
         </div>
       </div>
@@ -223,7 +223,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           value={form.default_materials_methods}
           onChange={set("default_materials_methods")}
           rows={4}
-          className="w-full rounded-lg border border-strong px-3 py-2 text-body-sm"
+          className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
         />
       </div>
       <div>
@@ -232,7 +232,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           value={form.default_conclusion}
           onChange={set("default_conclusion")}
           rows={3}
-          className="w-full rounded-lg border border-strong px-3 py-2 text-body-sm"
+          className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
         />
       </div>
 
@@ -260,7 +260,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           type="button"
           onClick={handleSave}
           disabled={update.isPending || demo}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
         >
           {update.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save settings

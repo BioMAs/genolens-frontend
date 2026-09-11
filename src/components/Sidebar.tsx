@@ -99,7 +99,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-2">
         <div className="mb-6">
-          <span className="nav-section-label mb-1.5">Workspace</span>
+          <span className="nav-section-label mb-2">Workspace</span>
           <div className="space-y-1" data-tour="sidebar-workspace">
             {primaryNav.map(({ href, label, icon: Icon, match }) => (
               <Link
@@ -156,7 +156,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
 
         {isAdmin && (
           <div>
-            <span className="nav-section-label mb-1.5">Admin</span>
+            <span className="nav-section-label mb-2">Admin</span>
             <Link
               href="/admin"
               className={`nav-item nav-item--danger${isActive('/admin') ? ' active' : ''}`}

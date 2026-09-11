@@ -80,7 +80,7 @@ export default function BookmarkButton({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-        className={`inline-flex items-center justify-center rounded-full p-1 transition-colors hover:bg-hover disabled:opacity-50${className}`}
+        className={`inline-flex items-center justify-center rounded-pill p-1 transition-colors hover:bg-hover disabled:opacity-50${className}`}
         title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
       >
         <Star
@@ -100,7 +100,7 @@ export default function BookmarkButton({
     <button
       onClick={handleToggleBookmark}
       disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-      className={`inline-flex items-center gap-2 rounded-md border transition-colors disabled:opacity-50 ${
+      className={`inline-flex items-center gap-2 rounded-sm border transition-colors disabled:opacity-50 ${
         isBookmarked
           ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
           : 'border-strong bg-surface text-primary hover:bg-hover'

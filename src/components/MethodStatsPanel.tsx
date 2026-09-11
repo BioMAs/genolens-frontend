@@ -171,7 +171,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
   if (methods.length <= 1) {
     return (
-      <div className="rounded-lg border border-line bg-surface-2 p-6 text-body-sm text-secondary">
+      <div className="rounded-card border border-line bg-surface-2 p-6 text-body-sm text-secondary">
         This comparison was produced with a single statistical method, so there is no multi-method
         breakdown to display. The Stouffer combination and per-method p-values appear here only for
         datasets analysed with several methods (DESeq2, edgeR, limma, …).
@@ -192,7 +192,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
             </p>
           </div>
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-sm bg-surface hover:bg-hover text-primary disabled:opacity-50"
             onClick={handleDownload}
             disabled={downloading}
           >
@@ -201,7 +201,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <div className="overflow-x-auto rounded-control border border-line">
           <table className="min-w-full text-body-sm">
             <thead className="bg-surface-2">
               <tr>
@@ -220,7 +220,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                     <td className="px-4 py-2 font-medium text-primary">
                       {m}
                       {isActive && (
-                        <span className="ml-2 rounded bg-teal-100 px-1.5 py-0.5 text-caption text-teal-700">
+                        <span className="ml-2 rounded-sm bg-teal-100 px-1.5 py-0.5 text-caption text-teal-700">
                           active
                         </span>
                       )}
@@ -257,7 +257,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
         {colMap ? (
           <>
-            <div className="overflow-x-auto rounded-lg border border-line">
+            <div className="overflow-x-auto rounded-control border border-line">
               <table className="min-w-full text-caption">
                 <thead className="bg-surface-2">
                   <tr>
@@ -334,14 +334,14 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
               </span>
               <div className="flex gap-2">
                 <button
-                  className="px-3 py-1 border border-strong rounded-md disabled:opacity-40 hover:bg-hover"
+                  className="px-3 py-1 border border-strong rounded-sm disabled:opacity-40 hover:bg-hover"
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={currentPage === 0}
                 >
                   Previous
                 </button>
                 <button
-                  className="px-3 py-1 border border-strong rounded-md disabled:opacity-40 hover:bg-hover"
+                  className="px-3 py-1 border border-strong rounded-sm disabled:opacity-40 hover:bg-hover"
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={currentPage >= totalPages - 1}
                 >

@@ -11,7 +11,7 @@ export default function DrugDiscoveryPage() {
             <div className="page-container">
                 <div className="mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-rose-100 rounded-lg">
+                        <div className="p-2 bg-rose-100 rounded-control">
                             <Target className="h-7 w-7 text-rose-700" />
                         </div>
                         <div>

@@ -132,7 +132,7 @@ export default function StepLaunch({
 
       {/* Summary card */}
       {!analysisId && (
-        <div className="rounded-xl border border-line bg-surface-2 divide-y divide-subtle">
+        <div className="rounded-card border border-line bg-surface-2 divide-y divide-subtle">
           <div className="px-4 py-3">
             <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
             <div className="space-y-1 text-body-sm">
@@ -158,18 +158,18 @@ export default function StepLaunch({
 
       {/* Error */}
       {launchError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-control border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-1" />
           <div>
             <p className="text-body-sm font-semibold text-red-800">Launch failed</p>
-            <p className="text-caption text-red-600 mt-0.5">{launchError}</p>
+            <p className="text-caption text-red-600 mt-1">{launchError}</p>
           </div>
         </div>
       )}
 
       {/* Progress section */}
       {analysisId && (
-        <div className="rounded-xl border border-line bg-surface overflow-hidden">
+        <div className="rounded-card border border-line bg-surface overflow-hidden">
           {/* Status header */}
           <div className={`px-4 py-3 flex items-center gap-3 ${
             isDone ? 'bg-green-50 border-b border-green-100'
@@ -188,14 +188,14 @@ export default function StepLaunch({
                   : 'Analysis queued…'}
               </p>
               {analysis?.error_message && (
-                <p className="text-caption text-red-600 mt-0.5">{analysis.error_message}</p>
+                <p className="text-caption text-red-600 mt-1">{analysis.error_message}</p>
               )}
             </div>
             {isRunning && (
               <button
                 type="button"
                 onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-caption text-red-600 hover:bg-red-50"
+                className="ml-auto flex items-center gap-1 rounded-sm border border-red-300 px-2 py-1 text-caption text-red-600 hover:bg-red-50"
               >
                 <X className="h-3 w-3" /> Cancel
               </button>
@@ -237,7 +237,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-lg border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
+            className="rounded-control border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
           >
             ← Back
           </button>
@@ -251,7 +251,7 @@ export default function StepLaunch({
             title={
               quotaBlocked ? 'No analysis left this month. Upgrade to continue.' : undefined
             }
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
+            className="ml-auto inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
           >
             {createAnalysis.isPending ? (
               <><Loader className="h-4 w-4 animate-spin" /> Launching…</>
@@ -265,7 +265,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={() => analysisId && onComplete(analysisId)}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-green-700"
+            className="ml-auto inline-flex items-center gap-2 rounded-control bg-green-600 px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-green-700"
           >
             View Results
             <ChevronRight className="h-4 w-4" />
@@ -278,7 +278,7 @@ export default function StepLaunch({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline gap-1.5">
+    <div className="flex items-baseline gap-2">
       <span className="text-secondary shrink-0">{label}:</span>
       <span className="font-medium text-primary truncate">{value}</span>
     </div>

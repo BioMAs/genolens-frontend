@@ -32,10 +32,10 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
   const headline = buildHeadline(data);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* HERO VERDICT */}
       <div className="gl-card p-7">
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <div
               className="mb-2 text-micro uppercase tracking-[0.6px]"
@@ -51,13 +51,13 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
             </h2>
           </div>
           <div
-            className="flex flex-none items-center gap-2.5 rounded-xl border px-4 py-2.5"
+            className="flex flex-none items-center gap-3 rounded-card border px-4 py-2.5"
             style={{
               background: 'var(--sl-teal-light)',
               borderColor: 'var(--sl-teal-muted)',
             }}
           >
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--dc-green)' }} />
+            <span className="h-2.5 w-2.5 rounded-pill" style={{ background: 'var(--dc-green)' }} />
             <span className="text-body-sm font-semibold" style={{ color: 'var(--sl-teal)' }}>
               {favorable} favorable {favorable === 1 ? 'claim' : 'claims'} · {toWatch} to watch
             </span>

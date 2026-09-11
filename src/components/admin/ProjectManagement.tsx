@@ -207,7 +207,7 @@ export default function ProjectManagement() {
 
   if (loading) {
     return (
-      <div className="bg-surface shadow rounded-lg p-12 text-center">
+      <div className="bg-surface shadow rounded-card p-12 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-4" />
         <p className="text-secondary">Loading projects...</p>
       </div>
@@ -216,7 +216,7 @@ export default function ProjectManagement() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-control p-4">
         <div className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-red-600" />
           <p className="text-red-800">{error}</p>
@@ -226,7 +226,7 @@ export default function ProjectManagement() {
   }
 
   return (
-    <div className="bg-surface shadow rounded-lg overflow-hidden">
+    <div className="bg-surface shadow rounded-control overflow-hidden">
       <div className="px-6 py-4 border-b border-line">
         <div className="flex items-center gap-3">
           <Database className="h-6 w-6 text-brand-primary" />
@@ -328,7 +328,7 @@ export default function ProjectManagement() {
       {/* Edit Project Modal */}
       {showEditModal && editingProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <h3 className="text-title text-primary">Edit Project</h3>
               <button
@@ -346,7 +346,7 @@ export default function ProjectManagement() {
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="My Project"
                 />
               </div>
@@ -355,7 +355,7 @@ export default function ProjectManagement() {
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Project description..."
                   rows={3}
                 />
@@ -366,7 +366,7 @@ export default function ProjectManagement() {
                 <select
                   value={editForm.owner_id}
                   onChange={(e) => setEditForm({ ...editForm, owner_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary bg-surface"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary bg-surface"
                 >
                   <option value="" disabled>Select project owner</option>
                   {allUsers.map((user) => (
@@ -384,14 +384,14 @@ export default function ProjectManagement() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-strong rounded-md text-primary hover:bg-hover"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {updating ? 'Updating...' : 'Update Project'}
                 </button>
@@ -404,7 +404,7 @@ export default function ProjectManagement() {
       {/* Manage Members Modal */}
       {showMembersModal && selectedProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="bg-surface rounded-control shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
                 <h3 className="text-title text-primary">Manage Project Members</h3>
@@ -420,7 +420,7 @@ export default function ProjectManagement() {
 
             <div className="flex-1 overflow-y-auto p-6">
               {/* Add Member Form */}
-              <div className="mb-6 p-4 bg-surface-2 rounded-lg">
+              <div className="mb-6 p-4 bg-surface-2 rounded-card">
                 <h4 className="text-body-sm font-semibold text-primary mb-3">Add Member</h4>
                 <form onSubmit={handleAddMember} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -429,7 +429,7 @@ export default function ProjectManagement() {
                       <select
                         value={newMember.user_id}
                         onChange={(e) => setNewMember({ ...newMember, user_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                         required
                       >
                         <option value="">Select user...</option>
@@ -447,7 +447,7 @@ export default function ProjectManagement() {
                       <select
                         value={newMember.access_level}
                         onChange={(e) => setNewMember({ ...newMember, access_level: e.target.value })}
-                        className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                       >
                         <option value="VIEWER">Viewer</option>
                         <option value="ANALYST">Analyst</option>
@@ -458,7 +458,7 @@ export default function ProjectManagement() {
                   <button
                     type="submit"
                     disabled={addingMember || !newMember.user_id}
-                    className="w-full px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50 text-body-sm flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50 text-body-sm flex items-center justify-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     {addingMember ? 'Adding...' : 'Add Member'}
@@ -480,7 +480,7 @@ export default function ProjectManagement() {
                     {projectMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between p-3 bg-surface border border-line rounded-md hover:bg-hover"
+                        className="flex items-center justify-between p-3 bg-surface border border-line rounded-sm hover:bg-hover"
                       >
                         <div className="flex-1">
                           <div className="text-body-sm font-medium text-primary">
@@ -489,7 +489,7 @@ export default function ProjectManagement() {
                           <div className="text-caption text-secondary">{member.user_email}</div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="px-2 py-1 text-caption font-medium bg-blue-100 text-blue-800 rounded">
+                          <span className="px-2 py-1 text-caption font-medium bg-blue-100 text-blue-800 rounded-sm">
                             {member.access_level}
                           </span>
                           <button
@@ -510,7 +510,7 @@ export default function ProjectManagement() {
             <div className="px-6 py-4 border-t border-line bg-surface-2">
               <button
                 onClick={() => setShowMembersModal(false)}
-                className="w-full px-4 py-2 bg-gray-200 text-primary rounded-md hover:bg-gray-300"
+                className="w-full px-4 py-2 bg-gray-200 text-primary rounded-sm hover:bg-gray-300"
               >
                 Close
               </button>

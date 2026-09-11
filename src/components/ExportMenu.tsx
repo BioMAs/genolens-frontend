@@ -170,7 +170,7 @@ export default function ExportMenu({
   };
 
   // Button styles
-  const baseStyles = "inline-flex items-center gap-2 font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2";
+  const baseStyles = "inline-flex items-center gap-2 font-medium rounded-control transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2";
   
   const variantStyles = {
     default: "bg-brand-primary text-white hover:bg-brand-primary/90",
@@ -239,7 +239,7 @@ export default function ExportMenu({
       {isOpen && !isExporting && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 w-56 bg-surface border border-line rounded-md shadow-lg z-50"
+          className="absolute right-0 mt-2 w-56 bg-surface border border-line rounded-sm shadow-lg z-50"
         >
           <div className="py-1">
             {formats.map((format) => {
@@ -255,9 +255,9 @@ export default function ExportMenu({
                   className="w-full px-4 py-3 text-left hover:bg-hover transition-colors flex items-start gap-3 disabled:opacity-50"
                 >
                   {isFormatExporting ? (
-                    <Loader2 className="h-5 w-5 text-brand-primary animate-spin mt-0.5" />
+                    <Loader2 className="h-5 w-5 text-brand-primary animate-spin mt-1" />
                   ) : (
-                    <Icon className="h-5 w-5 text-secondary mt-0.5" />
+                    <Icon className="h-5 w-5 text-secondary mt-1" />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="text-body-sm font-medium text-primary">

@@ -267,7 +267,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                 </div>
                 <div className="space-y-2">
                   {Object.entries(COLUMN_LABELS).map(([key, label]) => (
-                    <label key={key} className="flex cursor-pointer items-center gap-2 rounded p-1">
+                    <label key={key} className="flex cursor-pointer items-center gap-2 rounded-sm p-1">
                       <input
                         type="checkbox"
                         checked={visibleColumns[key as keyof typeof visibleColumns]}

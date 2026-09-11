@@ -82,7 +82,7 @@ export function OverflowMenu({ items, label = 'More actions', className }: Overf
         <div
           role="menu"
           className={cn(
-            'absolute right-0 z-50 mt-1.5 min-w-[13rem] overflow-hidden py-1',
+            'absolute right-0 z-50 mt-2 min-w-[13rem] overflow-hidden py-1',
             'rounded-card border border-line bg-raised shadow-elev-2',
           )}
         >

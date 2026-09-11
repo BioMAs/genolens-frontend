@@ -89,7 +89,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
         {/* Back link */}
         <Link
           href={`/projects/${projectId}`}
-          className="mb-6 inline-flex items-center gap-1.5 text-body-sm text-secondary hover:text-primary"
+          className="mb-6 inline-flex items-center gap-2 text-body-sm text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           {projectName}
@@ -107,7 +107,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Data type selection (pre-wizard) */}
         {!selectedDataType && (
-          <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 shadow-sm">
+          <div className="rounded-card border border-line bg-surface p-6 sm:p-8 shadow-sm">
             <StepDataType onSelect={setSelectedDataType} />
           </div>
         )}
@@ -119,7 +119,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
             <WizardStepBar currentStep={currentStep} />
 
             {/* Step content */}
-            <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 shadow-sm">
+            <div className="rounded-card border border-line bg-surface p-6 sm:p-8 shadow-sm">
               {currentStep === 1 && (
                 <StepUploadFiles
                   projectId={projectId}

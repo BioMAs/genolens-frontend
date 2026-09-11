@@ -55,7 +55,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="skeleton rounded-xl"
+            className="skeleton rounded-card"
             style={{ height: '136px', animationDelay: `${i * 80}ms` }}
           />
         ))}
@@ -67,14 +67,14 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
   if (error) {
     return (
       <div
-        className="flex items-start gap-3 rounded-xl p-4 text-body-sm animate-fade-up"
+        className="flex items-start gap-3 rounded-card p-4 text-body-sm animate-fade-up"
         style={{
           background: 'var(--sl-red-light)',
           border: '1px solid var(--sl-red-muted)',
           color: 'var(--sl-red)',
         }}
       >
-        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-1" />
         {error instanceof Error ? error.message : 'Failed to load projects. Please try again.'}
       </div>
     );
@@ -85,11 +85,11 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
     if (emptyState) return <>{emptyState}</>;
     return (
       <div
-        className="flex flex-col items-center justify-center py-20 rounded-xl border-2 border-dashed animate-fade-up"
+        className="flex flex-col items-center justify-center py-20 rounded-card border-2 border-dashed animate-fade-up"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
       >
         <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl mb-4"
+          className="flex h-14 w-14 items-center justify-center rounded-card mb-4"
           style={{ background: 'var(--sl-teal-light)' }}
         >
           <Folder className="h-7 w-7" style={{ color: 'var(--sl-teal-dark)' }} />
@@ -105,7 +105,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
         </p>
         <button
           onClick={onCreateClick}
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent transition-all"
+          className="inline-flex items-center gap-2 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-all"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) =>
             ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')
@@ -136,7 +136,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control"
                 style={{ background: 'var(--sl-teal-light)' }}
               >
                 <Folder className="h-4.5 w-4.5" style={{ color: 'var(--sl-teal-dark)' }} />
@@ -148,14 +148,14 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
                 {project.name}
               </h3>
             </div>
-            <div className="flex items-center flex-shrink-0 mt-0.5">
+            <div className="flex items-center flex-shrink-0 mt-1">
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setProjectToDelete(project);
                 }}
-                className="opacity-0 group-hover:opacity-100 rounded-md p-1 transition-opacity duration-150 hover:bg-red-50"
+                className="opacity-0 group-hover:opacity-100 rounded-sm p-1 transition-opacity duration-150 hover:bg-red-50"
                 title="Supprimer le projet"
               >
                 <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
@@ -182,7 +182,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
               borderTop: '1px solid var(--border-subtle)',
             }}
           >
-            <div className="flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex items-center gap-2 text-caption" style={{ color: 'var(--text-muted)' }}>
               <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
               {new Date(project.created_at).toLocaleDateString('en-US', {
                 month: 'short',

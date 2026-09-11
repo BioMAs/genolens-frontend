@@ -75,11 +75,11 @@ export default function CommentThread({
 
   return (
     <div className={`${level > 0 ? 'ml-8' : ''}`}>
-      <div className="group relative rounded-lg border border-line bg-surface p-4">
+      <div className="group relative rounded-card border border-line bg-surface p-4">
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-body-sm font-medium text-accent-ink">
+            <div className="flex h-8 w-8 items-center justify-center rounded-pill bg-accent-soft text-body-sm font-medium text-accent-ink">
               {comment.user_id.slice(0, 2).toUpperCase()}
             </div>
             <div>
@@ -95,7 +95,7 @@ export default function CommentThread({
 
           <div className="flex items-center gap-2">
             {comment.is_resolved && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-caption font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+              <span className="inline-flex items-center gap-1 rounded-pill bg-green-100 px-2 py-1 text-caption font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
                 <Check className="h-3 w-3" />
                 Resolved
               </span>
@@ -105,13 +105,13 @@ export default function CommentThread({
             <div className="relative">
               <button
                 onClick={() => setShowActions(!showActions)}
-                className="rounded p-1 text-muted opacity-0 hover:bg-hover hover:text-secondary group-hover:opacity-100"
+                className="rounded-sm p-1 text-muted opacity-0 hover:bg-hover hover:text-secondary group-hover:opacity-100"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
 
               {showActions && (
-                <div className="absolute right-0 z-10 mt-1 w-48 rounded-md border border-line bg-surface shadow-lg">
+                <div className="absolute right-0 z-10 mt-1 w-48 rounded-sm border border-line bg-surface shadow-lg">
                   <div className="py-1">
                     {isOwner && (
                       <>
@@ -198,7 +198,7 @@ export default function CommentThread({
 
         {/* Reply editor */}
         {isReplying && (
-          <div className="mt-3 rounded-md bg-surface-2 p-3">
+          <div className="mt-3 rounded-sm bg-surface-2 p-3">
             <CommentEditor
               projectId={projectId}
               commentType={comment.comment_type}

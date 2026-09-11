@@ -89,11 +89,11 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
         <div className="flex items-center gap-4">
           <h3 className="text-title">GSEA Results</h3>
           <div className="flex gap-2 text-body-sm">
-            <span className="px-2 py-1 bg-red-100 text-red-700 rounded inline-flex items-center">
+            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm inline-flex items-center">
               <TrendingUp className="h-3 w-3 mr-1" />
               {positiveCount} Enriched (Pos)
             </span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded inline-flex items-center">
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-sm inline-flex items-center">
               <TrendingDown className="h-3 w-3 mr-1" />
               {negativeCount} Enriched (Neg)
             </span>
@@ -109,7 +109,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-body-sm w-64"
+            className="px-3 py-2 border border-strong rounded-sm text-body-sm w-64"
           />
 
           <select
@@ -118,7 +118,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-body-sm"
+            className="px-3 py-2 border border-strong rounded-sm text-body-sm"
           >
             <option value={10}>10 per page</option>
             <option value={25}>25 per page</option>
@@ -135,7 +135,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               }
               setCurrentPage(1);
             }}
-            className="px-3 py-2 border border-strong rounded-md text-body-sm"
+            className="px-3 py-2 border border-strong rounded-sm text-body-sm"
           >
             <option value="all">All ({results.length})</option>
             <option value="positive">Positive NES ({positiveCount})</option>
@@ -183,7 +183,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-line rounded-lg">
+      <div className="overflow-x-auto border border-line rounded-control">
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-surface-2">
             <tr>
@@ -342,7 +342,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-strong rounded-md text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
+              className="px-3 py-1 border border-strong rounded-sm text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
             >
               Previous
             </button>
@@ -363,7 +363,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 <button
                   key={i}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 border rounded-md text-body-sm ${
+                  className={`px-3 py-1 border rounded-sm text-body-sm ${
                     currentPage === pageNum
                       ? 'bg-brand-primary text-on-accent border-brand-primary'
                       : 'border-strong hover:bg-hover'
@@ -377,7 +377,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-strong rounded-md text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
+              className="px-3 py-1 border border-strong rounded-sm text-body-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover"
             >
               Next
             </button>

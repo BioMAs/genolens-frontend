@@ -72,7 +72,7 @@ export default function CommentsSection({
             {title}
           </h3>
           {countData && (
-            <span className="rounded-full bg-surface-2 px-2 py-1 text-caption font-medium text-secondary">
+            <span className="rounded-pill bg-surface-2 px-2 py-1 text-caption font-medium text-secondary">
               {countData.count}
             </span>
           )}
@@ -82,7 +82,7 @@ export default function CommentsSection({
           {/* Filter toggle */}
           <button
             onClick={() => setIncludeResolved(!includeResolved)}
-            className="flex items-center gap-2 rounded-md border border-strong px-3 py-1.5 text-body-sm hover:bg-hover"
+            className="flex items-center gap-2 rounded-sm border border-strong px-3 py-1.5 text-body-sm hover:bg-hover"
           >
             <Filter className="h-4 w-4" />
             {includeResolved ? 'All' : 'Unresolved'}
@@ -119,7 +119,7 @@ export default function CommentsSection({
 
       {/* New comment editor */}
       {isAddingComment && (
-        <div className="rounded-lg border border-accent-ring bg-accent-soft p-4">
+        <div className="rounded-control border border-accent-ring bg-accent-soft p-4">
           <CommentEditor
             projectId={projectId}
             commentType={commentType}
@@ -134,10 +134,10 @@ export default function CommentsSection({
       {/* Comments list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-line border-t-indigo-600" />
+          <div className="h-8 w-8 animate-spin rounded-pill border-4 border-line border-t-indigo-600" />
         </div>
       ) : !comments || comments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-strong py-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-control border-2 border-dashed border-strong py-12 text-center">
           <MessageSquare className="mb-3 h-12 w-12 text-muted" />
           <p className="text-body-sm text-secondary">{emptyMessage}</p>
         </div>

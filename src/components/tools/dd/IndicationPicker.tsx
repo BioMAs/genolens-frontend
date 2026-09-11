@@ -79,7 +79,7 @@ export default function IndicationPicker({
           <select
             value={value ?? ''}
             onChange={(event) => onSelect(event.target.value)}
-            className="w-full rounded border border-strong p-2"
+            className="w-full rounded-sm border border-strong p-2"
           >
             <option value="">Choose an indication…</option>
             {indications.map((indication) => (
@@ -107,7 +107,7 @@ export default function IndicationPicker({
                   .map((indication) => (
                     <li
                       key={indication.tcga_project}
-                      className="rounded-md bg-amber-50 p-2 text-amber-900"
+                      className="rounded-sm bg-amber-50 p-2 text-amber-900"
                     >
                       <span className="font-medium">{indication.tcga_project}</span> —{' '}
                       {indication.rationale}
@@ -125,7 +125,7 @@ export default function IndicationPicker({
           )}
 
           {selected?.excluded && (
-            <p className="mt-2 rounded-md bg-amber-50 p-2 text-caption text-amber-900">
+            <p className="mt-2 rounded-sm bg-amber-50 p-2 text-caption text-amber-900">
               {selected.rationale}
             </p>
           )}
@@ -138,7 +138,7 @@ export default function IndicationPicker({
               type="button"
               disabled={indication.excluded}
               onClick={() => onSelect(indication.tcga_project)}
-              className={`w-full rounded-lg border p-3 text-left text-body-sm ${
+              className={`w-full rounded-card border p-3 text-left text-body-sm ${
                 value === indication.tcga_project
                   ? 'border-brand-primary bg-accent-soft'
                   : 'border-line bg-surface'
@@ -149,7 +149,7 @@ export default function IndicationPicker({
             </button>
 
             {indication.excluded && (
-              <div className="mt-1 rounded-md bg-amber-50 p-2 text-caption text-amber-900">
+              <div className="mt-1 rounded-sm bg-amber-50 p-2 text-caption text-amber-900">
                 <p>{indication.rationale}</p>
                 <button
                   type="button"
@@ -172,7 +172,7 @@ export default function IndicationPicker({
           aria-labelledby={CONFIRM_DIALOG_TITLE_ID}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         >
-          <div className="max-w-lg rounded-lg bg-surface p-6 shadow-xl">
+          <div className="max-w-lg rounded-card bg-surface p-6 shadow-xl">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />
               <div>
@@ -191,7 +191,7 @@ export default function IndicationPicker({
                 ref={cancelButtonRef}
                 type="button"
                 onClick={closeDialog}
-                className="rounded-md border border-strong px-4 py-2 text-body-sm"
+                className="rounded-sm border border-strong px-4 py-2 text-body-sm"
               >
                 Cancel
               </button>
@@ -201,7 +201,7 @@ export default function IndicationPicker({
                   onForceExcluded(pendingForce.tcga_project);
                   closeDialog();
                 }}
-                className="rounded-md bg-amber-600 px-4 py-2 text-body-sm text-on-accent"
+                className="rounded-sm bg-amber-600 px-4 py-2 text-body-sm text-on-accent"
               >
                 I understand, run anyway
               </button>

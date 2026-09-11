@@ -33,7 +33,7 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
   return (
     <div className="gl-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="flex items-center gap-1.5 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="flex items-center gap-2 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           <Sparkles className="h-4 w-4" style={{ color: '#db2777' }} />
           AI cosmetic interpretation
           <PanelInfo title="AI cosmetic interpretation — what it does">
@@ -60,7 +60,7 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
           <button
             onClick={handleGenerate}
             disabled={disabled || mutation.isPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-medium text-on-accent disabled:opacity-50"
+            className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium text-on-accent disabled:opacity-50"
             style={{ background: 'var(--sl-teal-dark, #0f766e)' }}
           >
             {mutation.isPending ? (
@@ -94,8 +94,8 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
         )
       )}
 
-      <div className="mt-4 flex items-start gap-1.5 border-t pt-3 text-micro" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-subtle, #e5e7eb)' }}>
-        <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+      <div className="mt-4 flex items-start gap-2 border-t pt-3 text-micro" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-subtle, #e5e7eb)' }}>
+        <ShieldCheck className="h-3.5 w-3.5 mt-1 shrink-0" />
         Cosmetic effects only — not medical or therapeutic claims. AI-generated; review before use in communication.
       </div>
     </div>

@@ -33,27 +33,27 @@ interface ApiErrorShape {
 function StatusBadge({ record }: { record: LicenseRecord }) {
   if (record.is_revoked) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium bg-surface-2 text-secondary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-surface-2 text-secondary">
         <Ban className="h-3 w-3" /> Revoked
       </span>
     );
   }
   if (record.is_expired) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium bg-red-100 text-red-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-red-100 text-red-700">
         <AlertTriangle className="h-3 w-3" /> Expired
       </span>
     );
   }
   if (record.days_until_expiry !== null && record.days_until_expiry <= 30) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium bg-amber-100 text-amber-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-amber-100 text-amber-700">
         <Clock className="h-3 w-3" /> {record.days_until_expiry}d left
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium bg-green-100 text-green-700">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-green-100 text-green-700">
       <CheckCircle className="h-3 w-3" /> Active
     </span>
   );
@@ -72,7 +72,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       onClick={copy}
       title="Copy key"
-      className="p-1 rounded hover:bg-hover transition-colors text-muted hover:text-primary"
+      className="p-1 rounded-sm hover:bg-hover transition-colors text-muted hover:text-primary"
     >
       {copied ? <CheckCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
     </button>
@@ -157,7 +157,7 @@ export default function LicenseManagement() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-on-accent text-body-sm font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-on-accent text-body-sm font-medium rounded-control hover:bg-brand-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
           New license
@@ -175,7 +175,7 @@ export default function LicenseManagement() {
           <p>No licenses issued yet.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <div className="overflow-x-auto rounded-control border border-line">
           <table className="min-w-full divide-y divide-line text-body-sm">
             <thead className="bg-surface-2">
               <tr>
@@ -201,7 +201,7 @@ export default function LicenseManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <code className="text-caption text-secondary bg-surface-2 px-2 py-0.5 rounded max-w-[180px] truncate block" title={lic.license_key}>
+                      <code className="text-caption text-secondary bg-surface-2 px-2 py-0.5 rounded-sm max-w-[180px] truncate block" title={lic.license_key}>
                         {lic.license_key.slice(0, 24)}…
                       </code>
                       <CopyButton value={lic.license_key} />
@@ -234,11 +234,11 @@ export default function LicenseManagement() {
       {/* Issue modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-surface rounded-xl shadow-2xl w-full max-w-md">
+          <div className="bg-surface rounded-card shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-line">
               <h3 className="text-title text-primary">Generate a new license</h3>
               <p className="text-body-sm text-secondary mt-1">
-                The generated key must be set in the <code className="bg-surface-2 px-1 rounded">GENOLENS_LICENSE_KEY</code> variable of the client deployment.
+                The generated key must be set in the <code className="bg-surface-2 px-1 rounded-sm">GENOLENS_LICENSE_KEY</code> variable of the client deployment.
               </p>
             </div>
 
@@ -252,7 +252,7 @@ export default function LicenseManagement() {
                   placeholder="e.g. acme-biotech or contact@acme.com"
                   value={form.client_id}
                   onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
-                  className="w-full border border-strong rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-control px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export default function LicenseManagement() {
                 <select
                   value={form.plan || plans[0]?.id || ''}
                   onChange={(e) => setForm((f) => ({ ...f, plan: e.target.value }))}
-                  className="w-full border border-strong rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-control px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((p) => (
                     <option key={p.id} value={p.id}>{p.name_en}</option>
@@ -278,7 +278,7 @@ export default function LicenseManagement() {
                   value={form.expires_at_date}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setForm((f) => ({ ...f, expires_at_date: e.target.value }))}
-                  className="w-full border border-strong rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full border border-strong rounded-control px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
 
@@ -289,12 +289,12 @@ export default function LicenseManagement() {
                   placeholder="Contract #, contact, remarks…"
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  className="w-full border border-strong rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
+                  className="w-full border border-strong rounded-control px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
                 />
               </div>
 
               {formError && (
-                <p className="text-body-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <p className="text-body-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3 py-2">
                   {formError}
                 </p>
               )}
@@ -306,14 +306,14 @@ export default function LicenseManagement() {
                   setShowModal(false);
                   setFormError(null);
                 }}
-                className="px-4 py-2 text-body-sm font-medium text-primary border border-strong rounded-lg hover:bg-hover transition-colors"
+                className="px-4 py-2 text-body-sm font-medium text-primary border border-strong rounded-control hover:bg-hover transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleIssue}
                 disabled={issueMutation.isPending}
-                className="px-4 py-2 text-body-sm font-medium text-on-accent bg-brand-primary rounded-lg hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-body-sm font-medium text-on-accent bg-brand-primary rounded-control hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
               >
                 {issueMutation.isPending ? 'Generating…' : 'Generate key'}
               </button>

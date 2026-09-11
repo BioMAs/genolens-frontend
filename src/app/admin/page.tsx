@@ -61,8 +61,8 @@ export default function AdminPage() {
   if (error || !hasAccess) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-surface shadow-lg rounded-lg p-8">
-          <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
+        <div className="max-w-md w-full bg-surface shadow-lg rounded-card p-8">
+          <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-pill mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
           <h2 className="text-heading text-primary text-center mb-2">
@@ -73,7 +73,7 @@ export default function AdminPage() {
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full bg-brand-primary text-on-accent py-2 px-4 rounded-md hover:bg-brand-primary/90 transition-colors"
+            className="w-full bg-brand-primary text-on-accent py-2 px-4 rounded-sm hover:bg-brand-primary/90 transition-colors"
           >
             Return to Dashboard
           </button>
@@ -88,7 +88,7 @@ export default function AdminPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-brand-primary rounded-lg">
+            <div className="p-2 bg-brand-primary rounded-control">
               <Shield className="h-6 w-6 text-on-accent" />
             </div>
             <h1 className="text-display text-primary">Administration</h1>

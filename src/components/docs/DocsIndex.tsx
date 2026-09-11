@@ -59,7 +59,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
                     className="gl-card group flex items-start gap-3 p-4 transition-colors hover:border-[var(--sl-purple)]"
                   >
                     <BookOpen
-                      className="mt-0.5 h-4 w-4 shrink-0"
+                      className="mt-1 h-4 w-4 shrink-0"
                       style={{ color: 'var(--sl-teal)' }}
                       aria-hidden
                     />
@@ -78,7 +78,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
                       </span>
                     </span>
                     <ArrowRight
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="mt-1 h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                       style={{ color: 'var(--sl-purple)' }}
                       aria-hidden
                     />

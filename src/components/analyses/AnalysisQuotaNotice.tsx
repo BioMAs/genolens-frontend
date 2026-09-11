@@ -37,7 +37,7 @@ export default function AnalysisQuotaNotice() {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-body-sm"
+      className="flex flex-wrap items-center gap-3 rounded-card border px-4 py-3 text-body-sm"
       style={{
         background: warn
           ? 'color-mix(in srgb, var(--dc-amber) 10%, var(--surface-raised))'

@@ -35,7 +35,7 @@ export default function GoBrowser() {
     };
 
     return (
-        <div className="bg-surface shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-card p-6">
             <div className="flex items-center gap-2 mb-4">
                 <Network className="h-6 w-6 text-brand-primary" />
                 <h2 className="text-heading text-primary">Gene Ontology Browser</h2>
@@ -51,7 +51,7 @@ export default function GoBrowser() {
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-strong rounded-md leading-5 bg-surface placeholder-gray-500 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-body-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-strong rounded-sm leading-5 bg-surface placeholder-gray-500 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-body-sm"
                     placeholder="Search GO Terms (e.g. mitochondrion, GO:0005739)"
                     value={query}
                     onChange={(e) => handleSearch(e.target.value)}
@@ -63,14 +63,14 @@ export default function GoBrowser() {
                     <Link 
                         key={term.id} 
                         href={`/tools/ontology/${encodeURIComponent(term.id)}`}
-                        className="block p-3 border border-line rounded hover:bg-hover transition-colors"
+                        className="block p-3 border border-line rounded-sm hover:bg-hover transition-colors"
                     >
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-body-sm font-medium text-brand-primary">{term.id}</h3>
                                 <p className="text-primary">{term.name}</p>
                             </div>
-                            <span className="text-caption bg-surface-2 px-2 py-1 rounded text-secondary">
+                            <span className="text-caption bg-surface-2 px-2 py-1 rounded-sm text-secondary">
                                 {term.database}
                             </span>
                         </div>

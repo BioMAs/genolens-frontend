@@ -216,7 +216,7 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-30 rounded-lg px-3 py-2.5 text-caption shadow-xl"
+          className="pointer-events-none absolute z-30 rounded-control px-3 py-2.5 text-caption shadow-xl"
           style={{
             left: tooltip.x,
             top: tooltip.y,

@@ -25,7 +25,7 @@ export default function QuotaDisplay() {
   const { ai, isLoading, hasProfile } = useQuotas();
 
   if (isLoading) {
-    return <div className="h-6 w-20 animate-pulse rounded-full" style={{ background: 'var(--border)' }} />;
+    return <div className="h-6 w-20 animate-pulse rounded-pill" style={{ background: 'var(--border)' }} />;
   }
 
   if (!hasProfile) return null;
@@ -35,7 +35,7 @@ export default function QuotaDisplay() {
     // brute — hors systeme, et le dernier degrade de l'application
     // authentifiee. Un aplat d'accent suffit.
     return (
-      <div className="flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1 text-caption font-semibold text-on-accent">
+      <div className="flex items-center gap-2 rounded-pill bg-accent px-3 py-1 text-caption font-semibold text-on-accent">
         <Sparkles className="h-3.5 w-3.5" />
         <span>Unlimited</span>
       </div>
@@ -47,7 +47,7 @@ export default function QuotaDisplay() {
   if (credits <= 0) {
     return (
       <div
-        className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-caption font-medium"
+        className="flex items-center gap-2 rounded-pill border px-3 py-1 text-caption font-medium"
         style={{
           background: 'var(--sl-red-light)',
           borderColor: 'var(--sl-red-muted)',
@@ -65,7 +65,7 @@ export default function QuotaDisplay() {
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-caption font-medium transition-colors"
+      className="flex items-center gap-2 rounded-pill border px-3 py-1 text-caption font-medium transition-colors"
       style={
         isLow
           ? {

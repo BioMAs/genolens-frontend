@@ -22,7 +22,7 @@ export default function ComparisonGrid({ projectId, analysisId, comparisons }: C
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {comparisons.map((comp) => (
         <Link
           key={comp.name}
@@ -31,7 +31,7 @@ export default function ComparisonGrid({ projectId, analysisId, comparisons }: C
               ? `/projects/${projectId}/analyses/${analysisId}/comparisons/${encodeURIComponent(comp.name)}`
               : `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`
           }
-          className="group flex items-center justify-between rounded-2xl border px-4 py-3.5 transition-all"
+          className="group flex items-center justify-between rounded-card border px-4 py-3.5 transition-all"
           style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--sl-teal-muted)';
@@ -53,7 +53,7 @@ export default function ComparisonGrid({ projectId, analysisId, comparisons }: C
               </span>
               <span className="text-caption" style={{ color: 'var(--text-muted)' }}>{comp.deg_total} total DEGs</span>
               {comp.has_enrichment && (
-                <span className="rounded px-1.5 py-0.5 text-caption font-medium" style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}>
+                <span className="rounded-sm px-1.5 py-0.5 text-caption font-medium" style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}>
                   Enrichment
                 </span>
               )}

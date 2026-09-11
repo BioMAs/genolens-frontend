@@ -52,7 +52,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <button
         onClick={handleDownload}
         disabled={isDownloading}
-        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2
+        className="inline-flex items-center gap-2 rounded-control bg-green-600 px-4 py-2
  text-body-sm font-medium text-on-accent transition-colors hover:bg-green-700
  disabled:opacity-50"
       >
@@ -67,7 +67,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <div className="inline-flex items-center gap-2">
         <button
           onClick={handleGenerate}
-          className="inline-flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2
+          className="inline-flex items-center gap-2 rounded-control bg-red-100 px-4 py-2
  text-body-sm font-medium text-red-700 transition-colors hover:bg-red-200"
         >
           <RefreshCw className="h-4 w-4" />
@@ -87,7 +87,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
     return (
       <button
         disabled
-        className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg
+        className="inline-flex cursor-not-allowed items-center gap-2 rounded-control
  bg-accent-soft px-4 py-2 text-body-sm font-medium text-accent-ink"
       >
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -100,7 +100,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
     <button
       onClick={handleGenerate}
       disabled={trigger.isPending}
-      className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2
+      className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2
  text-body-sm font-medium text-on-accent transition-colors hover:bg-accent-hover
  disabled:opacity-50"
     >

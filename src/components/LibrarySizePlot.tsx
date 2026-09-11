@@ -48,12 +48,12 @@ export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
     }
   }, [dataset.id, dataset.status]);
 
-  if (loading) return <div className="h-64 flex items-center justify-center text-gray-500">Calculating Library Size...</div>;
+  if (loading) return <div className="h-64 flex items-center justify-center text-secondary">Calculating Library Size...</div>;
   if (error) return <div className="h-64 flex items-center justify-center text-red-500 text-sm p-4 text-center">{error}</div>;
   if (!data) return null;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-full flex flex-col">
+    <div className="bg-surface p-4 rounded-control shadow h-full flex flex-col">
       <h3 className="text-lg font-medium mb-4">Library Size (Total Reads)</h3>
       <div className="flex-grow min-h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">

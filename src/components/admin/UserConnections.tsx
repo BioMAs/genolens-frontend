@@ -29,17 +29,17 @@ export default function UserConnections() {
         {/* KPI skeleton */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-surface overflow-hidden shadow rounded-lg animate-pulse">
+            <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
               <div className="p-5">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
-                <div className="h-8 bg-gray-200 rounded w-1/3" />
+                <div className="h-4 bg-gray-200 rounded-sm w-1/2 mb-3" />
+                <div className="h-9 bg-gray-200 rounded-sm w-1/3" />
               </div>
             </div>
           ))}
         </div>
         {/* Chart skeleton */}
-        <div className="bg-surface shadow rounded-lg p-6 animate-pulse">
-          <div className="h-48 bg-gray-200 rounded" />
+        <div className="bg-surface shadow rounded-card p-6 animate-pulse">
+          <div className="h-48 bg-gray-200 rounded-sm" />
         </div>
       </div>
     );
@@ -47,7 +47,7 @@ export default function UserConnections() {
 
   if (isError || !data) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-control p-4">
         <p className="text-red-800">Failed to load connection statistics.</p>
       </div>
     );
@@ -79,10 +79,10 @@ export default function UserConnections() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="bg-surface overflow-hidden shadow rounded-lg">
+          <div key={kpi.label} className="bg-surface overflow-hidden shadow rounded-control">
             <div className="p-5">
               <div className="flex items-center">
-                <div className={`shrink-0 ${kpi.color} rounded-md p-3`}>
+                <div className={`shrink-0 ${kpi.color} rounded-sm p-3`}>
                   <kpi.icon className="h-6 w-6 text-on-accent" />
                 </div>
                 <div className="ml-5">
@@ -96,7 +96,7 @@ export default function UserConnections() {
       </div>
 
       {/* Chart */}
-      <div className="bg-surface shadow rounded-lg p-6">
+      <div className="bg-surface shadow rounded-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-title font-medium text-primary">Daily connections</h2>
           <div className="flex gap-2">
@@ -104,7 +104,7 @@ export default function UserConnections() {
               <button
                 key={opt.value}
                 onClick={() => setDays(opt.value)}
-                className={`px-3 py-1 rounded-md text-body-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
                   days === opt.value
                     ? 'bg-brand-primary text-on-accent'
                     : 'bg-surface-2 text-secondary hover:bg-gray-200'
@@ -152,7 +152,7 @@ export default function UserConnections() {
       </div>
 
       {/* Recent connections table */}
-      <div className="bg-surface shadow rounded-lg overflow-hidden">
+      <div className="bg-surface shadow rounded-control overflow-hidden">
         <div className="px-6 py-4 border-b border-line">
           <h2 className="text-title font-medium text-primary">Recent connections</h2>
           <p className="text-body-sm text-secondary mt-0.5">Last 50 entries</p>

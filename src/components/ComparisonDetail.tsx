@@ -422,7 +422,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-body-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
-          <div className="bg-yellow-50 p-4 rounded-md mt-4">
+          <div className="bg-yellow-50 p-4 rounded-sm mt-4">
             <p className="text-yellow-700">No Differential Expression (DEG) dataset found for this comparison.</p>
           </div>
         </div>
@@ -560,7 +560,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-heading text-primary">Differentially Expressed Genes</h2>
                     <button
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 text-body-sm border border-strong rounded-sm bg-surface hover:bg-hover text-primary"
                       onClick={async () => {
                         try {
                           const response = await api.get(
@@ -586,7 +586,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                     </button>
                   </div>
                   <p className="text-body-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
-                  <div className="bg-surface border border-line rounded-lg overflow-hidden">
+                  <div className="bg-surface border border-line rounded-control overflow-hidden">
                     <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
                   </div>
                 </div>

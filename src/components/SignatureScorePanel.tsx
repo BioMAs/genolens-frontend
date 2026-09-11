@@ -127,7 +127,7 @@ export default function SignatureScorePanel({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-surface border border-line rounded-lg p-6">
+      <div className="bg-surface border border-line rounded-card p-6">
         <div className="flex items-center gap-2 mb-1">
           <Activity className="h-5 w-5 text-primary" />
           <h2 className="text-heading text-primary">Signature scoring</h2>
@@ -139,10 +139,10 @@ export default function SignatureScorePanel({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Source */}
           <div className="md:col-span-2">
-            <div className="inline-flex rounded-lg border border-line bg-surface-2 p-1 mb-3">
+            <div className="inline-flex rounded-control border border-line bg-surface-2 p-1 mb-3">
               <button
                 onClick={() => setSource('list')}
-                className={`px-3 py-1 text-body-sm font-medium rounded-md ${
+                className={`px-3 py-1 text-body-sm font-medium rounded-sm ${
                   source === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
                 }`}
               >
@@ -150,7 +150,7 @@ export default function SignatureScorePanel({
               </button>
               <button
                 onClick={() => setSource('paste')}
-                className={`px-3 py-1 text-body-sm font-medium rounded-md ${
+                className={`px-3 py-1 text-body-sm font-medium rounded-sm ${
                   source === 'paste' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
                 }`}
               >
@@ -171,7 +171,7 @@ export default function SignatureScorePanel({
               <select
                 value={selectedListId}
                 onChange={(e) => setSelectedListId(e.target.value)}
-                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
               >
                 <option value="">Select a gene list…</option>
                 {(geneLists ?? []).map((gl) => (
@@ -186,7 +186,7 @@ export default function SignatureScorePanel({
                 onChange={(e) => setPasted(e.target.value)}
                 placeholder="Paste gene symbols separated by spaces, commas, or newlines…"
                 rows={4}
-                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm font-mono"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm font-mono"
               />
             )}
             {source === 'paste' && (
@@ -201,7 +201,7 @@ export default function SignatureScorePanel({
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as ScoringMethod)}
-                className="w-full px-3 py-2 border border-strong rounded-md text-body-sm"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
               >
                 <option value="mean_z">Mean z-score (recommended)</option>
                 <option value="mean_rank">Mean rank (AUCell-like)</option>
@@ -210,7 +210,7 @@ export default function SignatureScorePanel({
             <button
               onClick={handleRun}
               disabled={!canRun}
-              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Scoring…' : 'Score signature'}
             </button>
@@ -218,7 +218,7 @@ export default function SignatureScorePanel({
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-body-sm">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">
             {error}
           </div>
         )}
@@ -226,7 +226,7 @@ export default function SignatureScorePanel({
 
       {/* Results */}
       {result && chart && (
-        <div className="bg-surface border border-line rounded-lg p-6">
+        <div className="bg-surface border border-line rounded-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
             <h3 className="text-title text-primary">
               Score by condition{result.signature_name ? ` — ${result.signature_name}` : ''}
@@ -278,7 +278,7 @@ export default function SignatureScorePanel({
                   const p = payload[0].payload as { sample?: string; y: number };
                   if (!p.sample) return null;
                   return (
-                    <div className="bg-surface border border-line rounded shadow px-3 py-2 text-caption">
+                    <div className="bg-surface border border-line rounded-sm shadow px-3 py-2 text-caption">
                       <div className="font-semibold text-primary">{p.sample}</div>
                       <div>score: {p.y.toFixed(3)}</div>
                     </div>

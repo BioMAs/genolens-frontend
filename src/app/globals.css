@@ -467,7 +467,7 @@ body {
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--sl-purple);
-  border-radius: 5px;
+  border-radius: var(--radius-sm-px);
 }
 
 /* ============================================================
@@ -477,7 +477,7 @@ body {
 ::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  {
   background: var(--n-300);
-  border-radius: 99px;
+  border-radius: var(--radius-pill, 9999px);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--n-400); }
 .dark ::-webkit-scrollbar-thumb { background: var(--n-200); }
@@ -551,7 +551,7 @@ body {
   );
   background-size: 400% 100%;
   animation: shimmer 1.6s linear infinite;
-  border-radius: 6px;
+  border-radius: var(--radius-sm-px);
 }
 
 .dark .skeleton {
@@ -779,7 +779,7 @@ body {
 .gl-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-card-px);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1128,13 +1128,13 @@ body {
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.85em;
   background: var(--surface-raised);
-  border-radius: 4px;
+  border-radius: var(--radius-sm-px);
   padding: 0.1em 0.35em;
 }
 .doc-prose pre {
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-control-px);
   padding: 0.9rem 1rem;
   overflow-x: auto;
   margin: 1rem 0;

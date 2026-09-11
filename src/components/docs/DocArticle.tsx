@@ -89,7 +89,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
 
         {(previous || next) && (
           <div
-            className="mt-10 flex flex-wrap items-stretch justify-between gap-3 border-t pt-5"
+            className="mt-12 flex flex-wrap items-stretch justify-between gap-3 border-t pt-5"
             style={{ borderColor: 'var(--border)' }}
           >
             {previous ? (
@@ -138,7 +138,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
           >
             On this page
           </p>
-          <ul className="sticky top-4 space-y-1.5 border-l pl-3" style={{ borderColor: 'var(--border)' }}>
+          <ul className="sticky top-4 space-y-2 border-l pl-3" style={{ borderColor: 'var(--border)' }}>
             {doc.headings.map((heading) => (
               <li key={heading.id} style={{ paddingLeft: heading.depth === 3 ? 10 : 0 }}>
                 <a

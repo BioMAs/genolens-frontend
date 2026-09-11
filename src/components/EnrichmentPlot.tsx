@@ -151,21 +151,21 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
   return (
     <div className="space-y-4">
       {/* Color scale legend */}
-      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+      <div className="bg-surface p-4 rounded-control shadow border border-line">
         <h3 className="text-sm font-semibold mb-2">-log10(p-value)</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-600">Not significant</span>
-          <div className="flex-1 h-6 rounded" style={{
+          <span className="text-xs text-secondary">Not significant</span>
+          <div className="flex-1 h-6 rounded-sm" style={{
             background: 'linear-gradient(to right, #9ca3af, #f87171, #ef4444, #dc2626, #991b1b, #7f1d1d)'
           }}></div>
-          <span className="text-xs text-gray-600">Very significant</span>
+          <span className="text-xs text-secondary">Very significant</span>
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-500">0</span>
-          <span className="text-xs text-gray-500">1.3 (p=0.05)</span>
-          <span className="text-xs text-gray-500">2 (p=0.01)</span>
-          <span className="text-xs text-gray-500">3 (p=0.001)</span>
-          <span className="text-xs text-gray-500">&gt;10</span>
+          <span className="text-xs text-secondary">0</span>
+          <span className="text-xs text-secondary">1.3 (p=0.05)</span>
+          <span className="text-xs text-secondary">2 (p=0.01)</span>
+          <span className="text-xs text-secondary">3 (p=0.001)</span>
+          <span className="text-xs text-secondary">&gt;10</span>
         </div>
       </div>
       
@@ -193,7 +193,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
                 if (active && payload && payload.length) {
                 const d = payload[0].payload as EnrichmentPoint;
                     return (
-                        <div className="bg-white p-2 border border-gray-200 shadow-sm rounded text-sm">
+                        <div className="bg-surface p-2 border border-line shadow-sm rounded-sm text-sm">
                             <p className="font-bold">{d.name}</p>
                             <p>Gene Ratio: {d.x?.toFixed(3) || 'N/A'}</p>
                             <p>adj.p.hyper.enri: {d.pvalue?.toExponential(2) || 'N/A'}</p>

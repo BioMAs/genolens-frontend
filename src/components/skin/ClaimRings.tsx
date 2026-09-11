@@ -19,7 +19,7 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
 
   return (
     <div
-      className="flex-1 rounded-2xl border p-[18px] px-3.5 text-center"
+      className="flex-1 rounded-card border p-[18px] px-3.5 text-center"
       style={{
         background: `color-mix(in oklab, ${color} 7%, var(--surface))`,
         borderColor: `color-mix(in oklab, ${color} 22%, var(--surface))`,
@@ -54,7 +54,7 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
           </span>
         </div>
       </div>
-      <div className="mt-2.5 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="mt-3 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
         {claim.label}
       </div>
       <div
@@ -83,10 +83,10 @@ export default function ClaimRings({ claims, max = 3 }: { claims: CosmeticClaimS
 
   return (
     <div>
-      <div className="mb-3.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-4 text-caption" style={{ color: 'var(--text-secondary)' }}>
         Top skin claims — <b style={{ color: 'var(--text-primary)' }}>activation score, 0–100</b>
       </div>
-      <div className="flex gap-3.5">
+      <div className="flex gap-4">
         {top.map((c) => (
           <Ring key={c.slug} claim={c} />
         ))}

@@ -116,7 +116,7 @@ export default function AllComparisonsView() {
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search comparisons or projects…"
             aria-label="Search comparisons"
-            className="h-9 w-full rounded-lg border pl-9 pr-3 text-body-sm transition-all focus-visible:border-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+            className="h-9 w-full rounded-control border pl-9 pr-3 text-body-sm transition-all focus-visible:border-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
             style={selectStyle}
           />
         </div>
@@ -128,7 +128,7 @@ export default function AllComparisonsView() {
             setPage(1);
           }}
           aria-label="Filter by project"
-          className="h-9 rounded-lg border px-3 text-body-sm"
+          className="h-9 rounded-control border px-3 text-body-sm"
           style={selectStyle}
         >
           <option value="">All projects</option>
@@ -146,7 +146,7 @@ export default function AllComparisonsView() {
             setPage(1);
           }}
           aria-label="Sort by"
-          className="h-9 rounded-lg border px-3 text-body-sm"
+          className="h-9 rounded-control border px-3 text-body-sm"
           style={selectStyle}
         >
           {SORT_OPTIONS.map((option) => (
@@ -164,7 +164,7 @@ export default function AllComparisonsView() {
           }}
           title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
           aria-label={`Sort ${sortOrder === 'desc' ? 'descending' : 'ascending'}`}
-          className="flex h-9 items-center gap-1.5 rounded-lg border px-3 text-caption font-medium"
+          className="flex h-9 items-center gap-1.5 rounded-control border px-3 text-caption font-medium"
           style={selectStyle}
         >
           <ArrowUpDown className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ export default function AllComparisonsView() {
       {/* Error */}
       {error && (
         <div
-          className="animate-fade-up flex items-start gap-3 rounded-xl p-4 text-body-sm"
+          className="animate-fade-up flex items-start gap-3 rounded-card p-4 text-body-sm"
           style={{
             background: 'var(--sl-red-light)',
             border: '1px solid var(--sl-red-muted)',
@@ -193,7 +193,7 @@ export default function AllComparisonsView() {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="skeleton rounded-lg"
+              className="skeleton rounded-control"
               style={{ height: '56px', animationDelay: `${i * 60}ms` }}
             />
           ))}
@@ -217,7 +217,7 @@ export default function AllComparisonsView() {
                   setSearchInput('');
                   setProjectId('');
                 }}
-                className="mt-2 rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent"
+                className="mt-2 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 Clear filters
@@ -225,7 +225,7 @@ export default function AllComparisonsView() {
             ) : (
               <Link
                 href="/projects"
-                className="mt-2 inline-flex rounded-lg px-4 py-2 text-body-sm font-semibold text-on-accent"
+                className="mt-2 inline-flex rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent"
                 style={{ background: 'var(--sl-purple)' }}
               >
                 Go to projects
@@ -239,7 +239,7 @@ export default function AllComparisonsView() {
       {!error && !isLoading && comparisons.length > 0 && (
         <>
           <div
-            className="overflow-x-auto rounded-xl"
+            className="overflow-x-auto rounded-card"
             style={{ border: '1px solid var(--border-subtle)', opacity: isFetching ? 0.6 : 1 }}
           >
             <table className="w-full min-w-[640px] border-collapse text-body-sm">
@@ -405,7 +405,7 @@ function PagerButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-lg border px-3 py-1.5 text-caption font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+      className="rounded-control border px-3 py-1.5 text-caption font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
       style={selectStyle}
     >
       {children}

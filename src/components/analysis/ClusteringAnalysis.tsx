@@ -194,7 +194,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
         <div className="flex flex-wrap items-center gap-4">
             <h2 className="text-title text-primary">Hierarchical Clustering</h2>
             
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-7 w-px bg-gray-300"></div>
 
             {/* Inputs */}
             <div className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                 <select 
                     value={params.top_n_genes} 
                     onChange={e => setParams({...params, top_n_genes: Number(e.target.value)})}
-                    className="text-body-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="100">Top 100</option>
                     <option value="500">Top 500</option>
@@ -217,7 +217,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                 <select 
                     value={params.metric} 
                     onChange={e => setParams({...params, metric: e.target.value})}
-                    className="text-body-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="euclidean">Euclidean</option>
                     <option value="correlation">Correlation</option>
@@ -230,7 +230,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                 <select
                     value={params.method}
                     onChange={e => setParams({...params, method: e.target.value})}
-                    className="text-body-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="ward">Ward</option>
                     <option value="average">Average</option>
@@ -249,12 +249,12 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                   max={50}
                   value={params.n_clusters ?? 8}
                   onChange={e => setParams({ ...params, n_clusters: Number(e.target.value) })}
-                  className="text-body-sm border rounded px-2 py-1 w-16"
+                  className="text-body-sm border rounded-sm px-2 py-1 w-16"
                 />
                 <button
                   onClick={fetchSilhouette}
                   disabled={loadingSilhouette}
-                  className="flex items-center gap-1.5 border border-strong text-primary px-3 py-1.5 rounded text-body-sm hover:bg-hover disabled:opacity-50"
+                  className="flex items-center gap-2 border border-strong text-primary px-3 py-1.5 rounded-sm text-body-sm hover:bg-hover disabled:opacity-50"
                   title="Compute silhouette scores to find the optimal k"
                 >
                   {loadingSilhouette ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -266,7 +266,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <button
                 onClick={() => runClustering()}
                 disabled={loading}
-                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded text-body-sm hover:bg-brand-primary/90 disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded-sm text-body-sm hover:bg-brand-primary/90 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Play className="h-4 w-4"/>}
                 Run
@@ -279,7 +279,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                     type="checkbox"
                     checked={standardize}
                     onChange={e => setStandardize(e.target.checked)}
-                    className="rounded text-brand-primary"
+                    className="rounded-sm text-brand-primary"
                 />
                 Scale Rows (Z-score)
             </label>
@@ -372,7 +372,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               </div>
               <button
                 onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
-                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded text-body-sm font-medium mb-2"
+                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded-sm text-body-sm font-medium mb-2"
               >
                 Use k={silhouetteData.recommended_k}
               </button>
@@ -385,8 +385,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       <div className="flex-1 bg-surface-2 p-4 overflow-hidden relative">
           
           {loading && (
-              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                  <div className="bg-surface p-6 rounded-lg shadow-xl text-center">
+              <div className="absolute inset-0 bg-surface/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="bg-surface p-6 rounded-card shadow-xl text-center">
                       <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-2"/>
                       <p className="text-secondary">Calculating clusters...</p>
                   </div>
@@ -394,14 +394,14 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
           {error && (
-              <div className="absolute inset-x-4 top-4 bg-red-50 p-4 border border-red-200 rounded text-red-700 flex items-center gap-2">
+              <div className="absolute inset-x-4 top-4 bg-red-50 p-4 border border-red-200 rounded-sm text-red-700 flex items-center gap-2">
                   <AlertCircle className="h-5 w-5"/>
                   {error}
               </div>
           )}
 
           {result && (
-              <div className="h-full w-full bg-surface rounded-lg shadow border border-line p-2">
+              <div className="h-full w-full bg-surface rounded-control shadow border border-line p-2">
                    <Plot
                         data={finalPlotData}
                         layout={{

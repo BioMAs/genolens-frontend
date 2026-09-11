@@ -188,12 +188,12 @@ export default function PowerAnalysis() {
   return (
     <div className="space-y-6">
       {/* ── Mode toggle ── */}
-      <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+      <div className="bg-surface rounded-card border border-line shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
           <Calculator className="h-5 w-5 text-accent-ink" />
           <h2 className="text-body font-semibold text-primary">Calculation mode</h2>
         </div>
-        <div className="flex rounded-lg border border-line overflow-hidden">
+        <div className="flex rounded-control border border-line overflow-hidden">
           <button
             className={`flex-1 px-4 py-2 text-body-sm font-medium transition-colors ${
               mode === 'sample-size'
@@ -221,12 +221,12 @@ export default function PowerAnalysis() {
         {/* ══ LEFT: Parameters ══ */}
         <div className="lg:col-span-1 space-y-4">
           {/* Test type */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <h3 className="text-body-sm font-semibold text-primary mb-3">Test type</h3>
             <select
               value={testType}
               onChange={(e) => setTestType(e.target.value as TestType)}
-              className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="two-sample">t-test — two independent samples</option>
               <option value="paired">t-test — paired samples</option>
@@ -237,14 +237,14 @@ export default function PowerAnalysis() {
                 type="checkbox"
                 checked={twoTailed}
                 onChange={(e) => setTwoTailed(e.target.checked)}
-                className="h-4 w-4 accent-accent rounded"
+                className="h-4 w-4 accent-accent rounded-sm"
               />
               <span className="text-body-sm text-secondary">Two-tailed test (recommended)</span>
             </label>
           </div>
 
           {/* Alpha */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <label className="text-body-sm font-semibold text-primary block mb-1">
               Significance threshold α
             </label>
@@ -254,7 +254,7 @@ export default function PowerAnalysis() {
                 <button
                   key={a}
                   onClick={() => setAlpha(a)}
-                  className={`px-3 py-1 rounded-md text-caption font-medium border transition-colors ${
+                  className={`px-3 py-1 rounded-sm text-caption font-medium border transition-colors ${
                     alpha === a
                       ? 'bg-accent text-on-accent border-accent'
                       : 'bg-surface text-secondary border-strong hover:bg-hover'
@@ -271,12 +271,12 @@ export default function PowerAnalysis() {
               min={0.001}
               max={0.5}
               step={0.005}
-              className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
           {/* Effect size */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <label className="text-body-sm font-semibold text-primary block mb-1">
               Effect size (Cohen&apos;s d)
             </label>
@@ -287,7 +287,7 @@ export default function PowerAnalysis() {
                   key={p.value}
                   onClick={() => setEffectSize(p.value)}
                   title={p.desc}
-                  className={`px-2 py-1 rounded-md text-caption font-medium border transition-colors ${
+                  className={`px-2 py-1 rounded-sm text-caption font-medium border transition-colors ${
                     effectSize === p.value
                       ? 'bg-accent text-on-accent border-accent'
                       : 'bg-surface text-secondary border-strong hover:bg-hover'
@@ -304,7 +304,7 @@ export default function PowerAnalysis() {
               min={0.05}
               max={5}
               step={0.05}
-              className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent mb-2"
+              className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent mb-2"
             />
             <input
               type="range"
@@ -319,7 +319,7 @@ export default function PowerAnalysis() {
 
           {/* Power target (mode: sample-size) */}
           {mode === 'sample-size' && (
-            <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+            <div className="bg-surface rounded-card border border-line shadow-sm p-4">
               <label className="text-body-sm font-semibold text-primary block mb-1">
                 Target power (1 – β)
               </label>
@@ -329,7 +329,7 @@ export default function PowerAnalysis() {
                   <button
                     key={p}
                     onClick={() => setTargetPower(p)}
-                    className={`px-3 py-1 rounded-md text-caption font-medium border transition-colors ${
+                    className={`px-3 py-1 rounded-sm text-caption font-medium border transition-colors ${
                       targetPower === p
                         ? 'bg-accent text-on-accent border-accent'
                         : 'bg-surface text-secondary border-strong hover:bg-hover'
@@ -356,7 +356,7 @@ export default function PowerAnalysis() {
 
           {/* n input (mode: power) */}
           {mode === 'power' && (
-            <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+            <div className="bg-surface rounded-card border border-line shadow-sm p-4">
               <label className="text-body-sm font-semibold text-primary block mb-1">
                 {testType === 'two-sample' ? 'n per group' : "Sample size (n)"}
               </label>
@@ -367,7 +367,7 @@ export default function PowerAnalysis() {
                 min={2}
                 max={10000}
                 step={1}
-                className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent mb-2"
+                className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent mb-2"
               />
               <input
                 type="range"
@@ -382,7 +382,7 @@ export default function PowerAnalysis() {
           )}
 
           {/* RNA-seq converter */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <button
               onClick={() => setShowConverter(!showConverter)}
               className="flex items-center gap-2 text-body-sm font-semibold text-accent-ink hover:text-accent-ink w-full text-left"
@@ -404,7 +404,7 @@ export default function PowerAnalysis() {
                     onChange={(e) => setFoldChange(parseFloat(e.target.value) || 2)}
                     min={1.01}
                     step={0.1}
-                    className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                 </div>
                 <div>
@@ -417,11 +417,11 @@ export default function PowerAnalysis() {
                     onChange={(e) => setCv(parseFloat(e.target.value) || 0.3)}
                     min={0.01}
                     step={0.05}
-                    className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                 </div>
                 {computedD !== null && (
-                  <div className="flex items-center justify-between bg-accent-soft rounded-md px-3 py-2">
+                  <div className="flex items-center justify-between bg-accent-soft rounded-sm px-3 py-2">
                     <span className="text-caption text-accent-ink">Estimated Cohen&apos;s d:</span>
                     <div className="flex items-center gap-2">
                       <span className="text-body-sm font-bold text-accent-ink">
@@ -431,7 +431,7 @@ export default function PowerAnalysis() {
                         onClick={() =>
                           setEffectSize(Math.round((computedD ?? 0.5) * 100) / 100)
                         }
-                        className="text-caption bg-accent text-on-accent px-2 py-0.5 rounded hover:bg-accent-hover transition-colors"
+                        className="text-caption bg-accent text-on-accent px-2 py-0.5 rounded-sm hover:bg-accent-hover transition-colors"
                       >
                         Use
                       </button>
@@ -450,11 +450,11 @@ export default function PowerAnalysis() {
             <div
               className={`rounded-card border p-6 ${POWER_STYLES[powerLevel(result.power)].panel}`}
             >
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-6">
                 <TrendingUp className={`h-6 w-6 ${POWER_STYLES[powerLevel(result.power)].text}`} />
                 <h3 className="text-title text-primary">Results</h3>
               </div>
-              <div className="grid grid-cols-2 gap-6 mb-5">
+              <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="text-center">
                   <div className="text-caption uppercase tracking-widest text-secondary mb-1">
                     {testType === 'two-sample' ? 'n per group' : "Sample size"}
@@ -507,7 +507,7 @@ export default function PowerAnalysis() {
           )}
 
           {/* Power curve */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-accent-ink" />
               <h3 className="text-body-sm font-semibold text-primary">Power curve</h3>
@@ -586,25 +586,25 @@ export default function PowerAnalysis() {
           </div>
 
           {/* Interpretation guide */}
-          <div className="bg-surface rounded-lg border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="h-5 w-5 text-muted" />
               <h3 className="text-body-sm font-semibold text-primary">Interpretation guide</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-caption">
-              <div className="bg-red-50 rounded-md p-3 border border-red-100">
+              <div className="bg-red-50 rounded-sm p-3 border border-red-100">
                 <p className="font-semibold text-red-700 mb-1">Low (&lt; 50%)</p>
                 <p className="text-red-600">
                   High risk of missing a real effect. Review the study design.
                 </p>
               </div>
-              <div className="bg-yellow-50 rounded-md p-3 border border-yellow-100">
+              <div className="bg-yellow-50 rounded-sm p-3 border border-yellow-100">
                 <p className="font-semibold text-yellow-700 mb-1">Moderate (50 – 79%)</p>
                 <p className="text-yellow-600">
                   Acceptable but sub-optimal. Increase n if possible.
                 </p>
               </div>
-              <div className="bg-green-50 rounded-md p-3 border border-green-100">
+              <div className="bg-green-50 rounded-sm p-3 border border-green-100">
                 <p className="font-semibold text-green-700 mb-1">Adequate (≥ 80%)</p>
                 <p className="text-green-600">
                   Recommended standard. 90% is desirable for critical studies.

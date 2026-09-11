@@ -90,7 +90,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {error && (
-        <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-700 border border-red-200">
+        <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700 border border-red-200">
           {error}
         </div>
       )}
@@ -105,7 +105,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Treatment A vs Control — Batch 1"
-          className="w-full rounded-md border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
@@ -132,7 +132,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
       </div>
 
       {/* Analysis parameters */}
-      <details className="rounded-md border border-line p-4">
+      <details className="rounded-sm border border-line p-4">
         <summary className="cursor-pointer text-body-sm font-medium text-primary select-none">
           Advanced parameters
         </summary>
@@ -200,7 +200,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
               <select
                 value={species}
                 onChange={e => setSpecies(e.target.value)}
-                className="rounded-md border border-strong px-2 py-1 text-caption focus:outline-none focus:ring-1 focus:ring-accent"
+                className="rounded-sm border border-strong px-2 py-1 text-caption focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="human">Homo sapiens (Human)</option>
                 <option value="mouse">Mus musculus (Mouse)</option>
@@ -238,10 +238,10 @@ export default function AnalysisLauncher({ projectId }: Props) {
                         setEnrichmentDatabases(next.length === availableCategories.length ? null : next);
                       }
                     }}
-                    className={`rounded-full px-3 py-1 text-caption font-medium border transition-colors ${
+                    className={`rounded-pill px-3 py-1 text-caption font-medium border transition-colors ${
                       selected
                         ? 'bg-accent border-accent text-on-accent'
-                        : 'bg-surface border-strong text-secondary hover:border-indigo-400'
+                        : 'bg-surface border-strong text-secondary hover:border-accent'
                     }`}
                   >
                     {cat}
@@ -256,7 +256,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-50"
+        className="inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-50"
       >
         {isPending ? 'Launching…' : 'Launch analysis'}
       </button>
@@ -283,7 +283,7 @@ function FileInput({
       <label className="block text-body-sm font-medium text-primary mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-strong rounded-md cursor-pointer hover:border-indigo-400 transition-colors bg-surface-2 hover:bg-accent-soft">
+      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-strong rounded-sm cursor-pointer hover:border-accent transition-colors bg-surface-2 hover:bg-accent-soft">
         <span className="text-caption text-secondary text-center px-2">
           {fileName ? (
             <span className="text-accent-ink font-medium">{fileName}</span>
@@ -291,7 +291,7 @@ function FileInput({
             <>Click or drag</>
           )}
         </span>
-        <span className="text-caption text-muted mt-0.5">{hint}</span>
+        <span className="text-caption text-muted mt-1">{hint}</span>
         <input
           type="file"
           accept=".csv,.tsv,.txt,.xlsx"
@@ -322,7 +322,7 @@ function ParamSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border border-strong px-2 py-1.5 text-body-sm"
+        className="w-full rounded-sm border border-strong px-2 py-1.5 text-body-sm"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -359,7 +359,7 @@ function NumberParam({
         min={min}
         max={max}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded border border-strong px-2 py-1.5 text-body-sm"
+        className="w-full rounded-sm border border-strong px-2 py-1.5 text-body-sm"
       />
     </div>
   );

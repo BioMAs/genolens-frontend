@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status?: string }) {
   };
   const s = status ?? "active";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${styles[s] ?? "bg-surface-2 text-primary"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-pill text-caption font-medium ${styles[s] ?? "bg-surface-2 text-primary"}`}>
       {s}
     </span>
   );
@@ -343,7 +343,7 @@ export default function UserManagement() {
 
   if (loading) {
     return (
-      <div className="bg-surface shadow rounded-lg p-12 text-center">
+      <div className="bg-surface shadow rounded-card p-12 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-4" />
         <p className="text-secondary">Loading users...</p>
       </div>
@@ -352,7 +352,7 @@ export default function UserManagement() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-control p-4">
         <p className="text-red-800">{error}</p>
       </div>
     );
@@ -360,7 +360,7 @@ export default function UserManagement() {
 
   return (
     <>
-      <div className="bg-surface shadow rounded-lg overflow-hidden">
+      <div className="bg-surface shadow rounded-control overflow-hidden">
         <div className="px-6 py-4 border-b border-line flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
@@ -374,14 +374,14 @@ export default function UserManagement() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowInviteModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-md hover:bg-brand-primary/5 transition-colors gap-2"
+              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-sm hover:bg-brand-primary/5 transition-colors gap-2"
             >
               <Plus className="h-5 w-5" />
               Invite User
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
+              className="inline-flex items-center px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 transition-colors gap-2"
             >
               <Plus className="h-5 w-5" />
               Add User
@@ -422,9 +422,9 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {user.avatar_url ? (
-                        <Image className="h-10 w-10 rounded-full" src={user.avatar_url} alt="" width={40} height={40} />
+                        <Image className="h-10 w-10 rounded-pill" src={user.avatar_url} alt="" width={40} height={40} />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-brand-primary flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-pill bg-brand-primary flex items-center justify-center">
                           <span className="text-on-accent font-medium text-body-sm">
                             {user.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                           </span>
@@ -442,7 +442,7 @@ export default function UserManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' :
                       user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
                       'bg-surface-2 text-primary'
@@ -464,7 +464,7 @@ export default function UserManagement() {
                     <StatusBadge status={user.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${getRoleBadgeColor(user.role)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${getRoleBadgeColor(user.role)}`}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
                     </span>
@@ -562,7 +562,7 @@ export default function UserManagement() {
       {/* Invite User Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
                 <h3 className="text-title text-primary">Invite User</h3>
@@ -580,7 +580,7 @@ export default function UserManagement() {
                   required
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="user@example.com"
                 />
               </div>
@@ -590,7 +590,7 @@ export default function UserManagement() {
                   type="text"
                   value={inviteForm.full_name}
                   onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Jane Doe"
                 />
               </div>
@@ -599,7 +599,7 @@ export default function UserManagement() {
                 <select
                   value={inviteForm.plan}
                   onChange={(e) => setInviteForm({ ...inviteForm, plan: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((p) => (
                     <option key={p} value={p}>{p}</option>
@@ -614,21 +614,21 @@ export default function UserManagement() {
                   type="date"
                   value={inviteForm.subscription_ends_at}
                   onChange={(e) => setInviteForm({ ...inviteForm, subscription_ends_at: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 border border-strong rounded-md text-primary hover:bg-hover"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={inviting}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {inviting ? 'Sending...' : 'Send Invitation'}
                 </button>
@@ -641,7 +641,7 @@ export default function UserManagement() {
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <h3 className="text-title text-primary">Create New User</h3>
               <button
@@ -659,7 +659,7 @@ export default function UserManagement() {
                   required
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="user@example.com"
                 />
               </div>
@@ -671,7 +671,7 @@ export default function UserManagement() {
                   minLength={6}
                   value={createForm.password}
                   onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Minimum 6 characters"
                 />
               </div>
@@ -681,7 +681,7 @@ export default function UserManagement() {
                   type="text"
                   value={createForm.full_name}
                   onChange={(e) => setCreateForm({ ...createForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="John Doe"
                 />
               </div>
@@ -690,7 +690,7 @@ export default function UserManagement() {
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>
@@ -703,14 +703,14 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-strong rounded-md text-primary hover:bg-hover"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {creating ? 'Creating...' : 'Create User'}
                 </button>
@@ -723,7 +723,7 @@ export default function UserManagement() {
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-control shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <h3 className="text-title text-primary">Edit User</h3>
               <button
@@ -740,7 +740,7 @@ export default function UserManagement() {
                   type="text"
                   value={editForm.full_name}
                   onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="John Doe"
                 />
               </div>
@@ -749,7 +749,7 @@ export default function UserManagement() {
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>
@@ -763,7 +763,7 @@ export default function UserManagement() {
                 <select
                   value={editForm.subscription_plan}
                   onChange={(e) => setEditForm({ ...editForm, subscription_plan: e.target.value })}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((plan) => (
                     <option key={plan} value={plan}>
@@ -793,14 +793,14 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-strong rounded-md text-primary hover:bg-hover"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {updating ? 'Updating...' : 'Update User'}
                 </button>
@@ -813,7 +813,7 @@ export default function UserManagement() {
       {/* Token Modal */}
       {showTokenModal && tokenUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-sm w-full">
+          <div className="bg-surface rounded-control shadow-xl max-w-sm w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <h3 className="text-title text-primary">Add AI Tokens</h3>
               <button
@@ -824,7 +824,7 @@ export default function UserManagement() {
               </button>
             </div>
             <form onSubmit={handleAddTokens} className="p-6 space-y-4">
-              <div className="bg-yellow-50 p-4 rounded-lg flex items-start gap-3">
+              <div className="bg-yellow-50 p-4 rounded-control flex items-start gap-3">
                  <Coins className="h-6 w-6 text-yellow-600 mt-1" />
                  <div>
                    <p className="text-body-sm font-medium text-yellow-800">
@@ -844,21 +844,21 @@ export default function UserManagement() {
                   step="1"
                   value={tokenAmount}
                   onChange={(e) => setTokenAmount(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowTokenModal(false)}
-                  className="flex-1 px-4 py-2 border border-strong rounded-md text-primary hover:bg-hover"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingTokens}
-                  className="flex-1 px-4 py-2 bg-yellow-600 text-on-accent rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-yellow-600 text-on-accent rounded-sm hover:bg-yellow-700 disabled:opacity-50"
                 >
                   {addingTokens ? 'Adding...' : 'Add Tokens'}
                 </button>

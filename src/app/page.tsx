@@ -171,7 +171,7 @@ export default function Home() {
         </form>
 
         <p
-          className="mt-3 flex items-center justify-center gap-1.5 text-micro"
+          className="mt-3 flex items-center justify-center gap-2 text-micro"
           style={{ color: 'var(--auth-muted)' }}
         >
           <Lock size={12} aria-hidden="true" />

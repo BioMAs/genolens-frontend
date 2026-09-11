@@ -148,7 +148,7 @@ export default function StringEnrichmentPanel({
             onChange={(e) => setGenesInput(e.target.value)}
             rows={5}
             placeholder="TP53&#10;BRCA1&#10;MYC"
-            className="w-full px-3 py-2 text-body-sm border border-strong rounded-lg bg-surface text-primary font-mono resize-y"
+            className="w-full px-3 py-2 text-body-sm border border-strong rounded-control bg-surface text-primary font-mono resize-y"
           />
           <p className="mt-1 text-caption text-secondary">{parseGenes().length} gene(s) · max 500</p>
         </div>
@@ -157,13 +157,13 @@ export default function StringEnrichmentPanel({
           <select
             value={species}
             onChange={(e) => setSpecies(Number(e.target.value))}
-            className="w-full px-3 py-2 text-body-sm border border-strong rounded-lg bg-surface text-primary"
+            className="w-full px-3 py-2 text-body-sm border border-strong rounded-control bg-surface text-primary"
           >
             {SPECIES_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
-          <p className="mt-3 text-caption text-secondary bg-accent-soft p-2 rounded border border-indigo-100 dark:border-indigo-800">
+          <p className="mt-3 text-caption text-secondary bg-accent-soft p-2 rounded-sm border border-accent-ring">
             <strong>Note:</strong> STRING uses the same biological data as GO/KEGG/Reactome
             but applies its own statistical enrichments. Complementary to local GO analysis.
           </p>
@@ -173,14 +173,14 @@ export default function StringEnrichmentPanel({
       <button
         onClick={run}
         disabled={loading || !parseGenes().length}
-        className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-on-accent text-body-sm font-medium rounded-lg"
+        className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-on-accent text-body-sm font-medium rounded-control"
       >
         {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
         {loading ? 'Analyzing…' : 'Run STRING enrichment'}
       </button>
 
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-body-sm text-red-700 dark:text-red-300">
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-control text-body-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
@@ -194,12 +194,12 @@ export default function StringEnrichmentPanel({
               placeholder="Filter by term…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="flex-1 min-w-48 px-3 py-1.5 text-body-sm border border-strong rounded-lg bg-surface"
+              className="flex-1 min-w-48 px-3 py-1.5 text-body-sm border border-strong rounded-control bg-surface"
             />
             <select
               value={catFilter}
               onChange={(e) => setCatFilter(e.target.value)}
-              className="px-3 py-1.5 text-body-sm border border-strong rounded-lg bg-surface"
+              className="px-3 py-1.5 text-body-sm border border-strong rounded-control bg-surface"
             >
               <option value="">All categories</option>
               {allCats.map((c) => (
@@ -208,13 +208,13 @@ export default function StringEnrichmentPanel({
             </select>
             <button
               onClick={exportCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium bg-surface border border-strong rounded-lg hover:border-indigo-400"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium bg-surface border border-strong rounded-control hover:border-accent"
             >
               <Download className="w-3 h-3" /> CSV
             </button>
           </div>
 
-          <div className="overflow-auto max-h-96 border border-line rounded-lg">
+          <div className="overflow-auto max-h-96 border border-line rounded-control">
             <table className="min-w-full text-caption">
               <thead className="bg-surface-2 sticky top-0">
                 <tr>
@@ -229,7 +229,7 @@ export default function StringEnrichmentPanel({
                 {visible.slice(0, 200).map((e, i) => (
                   <tr key={i} className="border-t border-subtle hover:bg-hover">
                     <td className="px-3 py-1.5">
-                      <span className={`px-1.5 py-0.5 rounded-full text-caption ${ENRICH_CATEGORIES[e.category]?.color || 'bg-surface-2 text-primary'}`}>
+                      <span className={`px-1.5 py-0.5 rounded-pill text-caption ${ENRICH_CATEGORIES[e.category]?.color || 'bg-surface-2 text-primary'}`}>
                         {ENRICH_CATEGORIES[e.category]?.label || e.category}
                       </span>
                     </td>

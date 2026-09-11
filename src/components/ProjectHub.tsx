@@ -208,7 +208,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 action={
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+                    className="inline-flex items-center gap-2 rounded-control px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
                   >
                     <Plus className="h-3.5 w-3.5" /> Start Analysis
                   </Link>
@@ -235,9 +235,9 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 </div>
                 <div className="space-y-2">
                   {runningAnalyses.map((analysis) => (
-                    <div key={analysis.id} className="flex items-center justify-between rounded-lg px-3 py-2 bg-raised">
+                    <div key={analysis.id} className="flex items-center justify-between rounded-control px-3 py-2 bg-raised">
                       <span className="text-body-sm text-secondary">{analysis.name}</span>
-                      <span className="inline-flex items-center gap-1.5 text-caption text-muted">
+                      <span className="inline-flex items-center gap-2 text-caption text-muted">
                         <Dot variant="processing" size={7} /> {analysis.status}
                       </span>
                     </div>
@@ -254,7 +254,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
               </div>
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center border-line text-secondary"
+                className="flex flex-col items-center justify-center gap-2 rounded-control border border-dashed px-4 py-6 text-center border-line text-secondary"
               >
                 <Upload className="h-5 w-5" />
                 <span className="text-body-sm">Drop CSV / TSV / Excel or open setup wizard</span>
@@ -267,7 +267,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+                className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
               </Link>
@@ -285,7 +285,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+                className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Upload className="h-3.5 w-3.5" /> Upload
               </Link>
@@ -299,12 +299,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           ) : (
             <div className="space-y-2">
               {sourceDatasets.map((dataset) => (
-                <div key={dataset.id} className="flex items-center justify-between rounded-lg px-3 py-2 bg-raised">
+                <div key={dataset.id} className="flex items-center justify-between rounded-control px-3 py-2 bg-raised">
                   <div>
                     <p className="text-body-sm font-medium text-primary">{dataset.name}</p>
                     <p className="text-caption text-muted">{dataset.type}</p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 text-caption text-secondary">
+                  <span className="inline-flex items-center gap-2 text-caption text-secondary">
                     <DatasetStatusDot status={dataset.status} /> {dataset.status}
                   </span>
                 </div>
@@ -323,7 +323,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
             {canManageData ? (
               <Link
                 href={`/projects/${projectId}/setup`}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+                className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
               >
                 <Plus className="h-3.5 w-3.5" /> New Analysis
               </Link>
@@ -337,7 +337,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
                 canManageData ? (
                   <Link
                     href={`/projects/${projectId}/setup`}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+                    className="inline-flex items-center gap-2 rounded-control px-4 py-1.5 text-caption font-semibold text-on-accent bg-accent"
                   >
                     <Plus className="h-3.5 w-3.5" /> New Analysis
                   </Link>
@@ -362,12 +362,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isBookmarkModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
               <h2 className="text-title text-primary">My Bookmarks</h2>
               <button
                 onClick={() => setBookmarkModalOpen(false)}
-                className="rounded-full p-1 text-muted hover:bg-hover"
+                className="rounded-pill p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -384,12 +384,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isGeneListModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
               <h2 className="text-title text-primary">My Gene Lists</h2>
               <button
                 onClick={() => setGeneListModalOpen(false)}
-                className="rounded-full p-1 text-muted hover:bg-hover"
+                className="rounded-pill p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -406,12 +406,12 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
 
       {isGeneSetModalOpen && scienceUnlocked ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
               <h2 className="text-title text-primary">Custom gene sets</h2>
               <button
                 onClick={() => setGeneSetModalOpen(false)}
-                className="rounded-full p-1 text-muted hover:bg-hover"
+                className="rounded-pill p-1 text-muted hover:bg-hover"
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -460,7 +460,7 @@ function ComparisonCard({
   return (
     <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
       <div>
-        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="font-display text-body-sm font-semibold text-primary">
             {name}
           </span>
@@ -485,7 +485,7 @@ function ComparisonCard({
 
       <Link
         href={href}
-        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold border border-line text-secondary"
+        className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold border border-line text-secondary"
       >
         Analyze <ArrowRight className="h-3.5 w-3.5" />
       </Link>
@@ -511,7 +511,7 @@ function DatasetListCard({ datasets }: { datasets: Dataset[] }) {
               <span className="truncate" title={dataset.name}>
                 {dataset.name}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-caption">
+              <span className="inline-flex items-center gap-2 text-caption">
                 <DatasetStatusDot status={dataset.status} /> {dataset.status}
               </span>
             </div>
@@ -544,7 +544,7 @@ function InfoTabCard({
       {ctaHref ? (
         <Link
           href={ctaHref}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
+          className="mt-3 inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent bg-accent"
         >
           {ctaLabel} <ArrowRight className="h-3.5 w-3.5" />
         </Link>

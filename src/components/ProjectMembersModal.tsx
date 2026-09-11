@@ -124,7 +124,7 @@ export default function ProjectMembersModal({
                     id="role"
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-sm"
                   >
                     <option value={UserRole.USER}>User (View & Analyze)</option>
                     <option value={UserRole.ADMIN}>Admin (Full Access)</option>
@@ -214,7 +214,7 @@ function MemberRow({
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-md bg-surface-2">
+    <div className="flex items-center justify-between p-3 border rounded-sm bg-surface-2">
       <div className="flex-1">
         <p className="font-medium">
           {member.user_email || `User ${member.user_id.slice(0, 8)}...`}
@@ -226,7 +226,7 @@ function MemberRow({
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as UserRole)}
-              className="px-2 py-1 text-body-sm border rounded"
+              className="px-2 py-1 text-body-sm border rounded-sm"
             >
               <option value={UserRole.USER}>User</option>
               <option value={UserRole.ADMIN}>Admin</option>

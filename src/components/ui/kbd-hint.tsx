@@ -16,7 +16,8 @@ function KbdHint({ children, className = '', style, ...props }: KbdHintProps) {
         fontSize: 10.5,
         color: 'var(--text-muted)',
         border: '1px solid var(--border)',
-        borderRadius: 4,
+        // Un style inline echappe aux codemods, qui ne lisent que className.
+        borderRadius: 'var(--radius-sm-px)',
         padding: '1px 5px',
         background: 'var(--surface)',
         ...style,

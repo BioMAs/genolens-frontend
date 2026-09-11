@@ -25,7 +25,7 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
         ? 'bg-teal-100 text-teal-800'
         : 'bg-gray-100 text-gray-700';
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium ${tone}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${tone}`}>
       {label}
     </span>
   );
@@ -33,11 +33,11 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return isActive ? (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium bg-green-100 text-green-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-green-100 text-green-800">
       Active
     </span>
   ) : (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium bg-red-100 text-red-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-red-100 text-red-800">
       Inactive
     </span>
   );
@@ -84,7 +84,7 @@ export default function BillingSection() {
     && (gridPlan.price_monthly != null || gridPlan.price_annual != null);
 
   return (
-    <div className="mt-8 bg-surface shadow rounded-lg overflow-hidden">
+    <div className="mt-8 bg-surface shadow rounded-control overflow-hidden">
       {/* Header */}
       <div className="bg-brand-primary px-4 py-5 sm:px-6 flex items-center justify-between">
         <div>
@@ -93,7 +93,7 @@ export default function BillingSection() {
             Your current plan and usage details.
           </p>
         </div>
-        <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-on-accent">
+        <div className="h-12 w-12 rounded-pill bg-surface/10 flex items-center justify-center text-on-accent">
           <CreditCard className="h-6 w-6" />
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function BillingSection() {
                 <button
                   onClick={handleManageBilling}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-sm text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <ExternalLink className="h-4 w-4" />
                   {portalLoading ? 'Opening portal…' : 'Manage Billing'}
@@ -161,7 +161,7 @@ export default function BillingSection() {
               ) : (
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-md text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-body-sm font-medium rounded-sm text-on-accent bg-brand-primary hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
                 >
                   <Zap className="h-4 w-4" />
                   Upgrade Plan

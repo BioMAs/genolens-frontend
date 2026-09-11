@@ -35,10 +35,10 @@ export default async function ProfilePage() {
   return (
     <div className="page-container space-y-6">
       {/* Account hero */}
-      <div className="gl-card flex flex-wrap items-center justify-between gap-5 p-6">
+      <div className="gl-card flex flex-wrap items-center justify-between gap-6 p-6">
         <div className="flex items-center gap-4">
           <div
-            className="grid h-16 w-16 place-items-center rounded-full font-display text-heading text-on-accent"
+            className="grid h-16 w-16 place-items-center rounded-pill font-display text-heading text-on-accent"
             style={{ background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))' }}
           >
             {initials}
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="rounded-xl border px-4 py-2 text-body-sm font-semibold transition-colors"
+            className="rounded-card border px-4 py-2 text-body-sm font-semibold transition-colors"
             style={{ borderColor: 'var(--border-strong)', color: 'var(--sl-red-dark)', background: 'var(--surface)' }}
           >
             Sign out

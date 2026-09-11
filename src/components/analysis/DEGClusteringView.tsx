@@ -99,7 +99,7 @@ export default function DEGClusteringView({
   // ---- Loading / Error states ----
   if (loading && !plotData) {
     return (
-      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-lg border border-dashed border-line">
+      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-control border border-dashed border-line">
         <Loader2 className="w-8 h-8 text-accent-ink animate-spin" />
         <span className="ml-2 text-secondary">Generating DEG heatmap…</span>
       </div>
@@ -108,7 +108,7 @@ export default function DEGClusteringView({
 
   if (error && !plotData) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded border border-red-200">
+      <div className="p-4 bg-red-50 text-red-700 rounded-sm border border-red-200">
         <p className="font-semibold">Error</p>
         <p className="text-body-sm mt-1">{error}</p>
       </div>
@@ -226,8 +226,8 @@ export default function DEGClusteringView({
     <div className="flex flex-col gap-3">
       {/* Warning: no sample filter */}
       {!hasSampleFilter && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-caption text-amber-800">
-          <span className="mt-0.5">⚠️</span>
+        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-caption text-amber-800">
+          <span className="mt-1">⚠️</span>
           <span>
             <strong>Metadata file missing</strong> — samples are not filtered for this comparison.
             All matrix samples are displayed. Upload a metadata (sample design) file to restrict the view to the samples of <em>{comparisonName}</em>.
@@ -235,10 +235,10 @@ export default function DEGClusteringView({
         </div>
       )}
       {/* Controls bar */}
-      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-lg border border-line px-4 py-2.5">
+      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-control border border-line px-4 py-2.5">
         <span className="text-body-sm font-medium text-primary">Displayed value:</span>
         <div className="flex gap-4">
-          <label className="flex items-center gap-1.5 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
               name="degDisplayMode"
@@ -249,7 +249,7 @@ export default function DEGClusteringView({
             />
             <span className="text-body-sm text-primary">Normalized expression (z-score)</span>
           </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
               name="degDisplayMode"
@@ -279,7 +279,7 @@ export default function DEGClusteringView({
 
         <button
           onClick={exportMatrixCSV}
-          className="inline-flex items-center gap-1.5 text-caption text-secondary hover:text-primary"
+          className="inline-flex items-center gap-2 text-caption text-secondary hover:text-primary"
           title="Export the clustered matrix (genes × samples, in display order) as CSV"
         >
           <Download className="w-3.5 h-3.5" /> Export matrix (.csv)
@@ -290,7 +290,7 @@ export default function DEGClusteringView({
 
       {/* Plotly heatmap with DEG-status sidebar */}
       <div
-        className="bg-surface rounded-lg border border-line overflow-hidden"
+        className="bg-surface rounded-control border border-line overflow-hidden"
         style={{ height: Math.max(600, Math.min(nDEGs * 1.2 + 200, 900)) }}
       >
         <Plot
@@ -414,12 +414,12 @@ export default function DEGClusteringView({
       </div>
 
       {/* Legend strip */}
-      <div className="flex flex-wrap items-center gap-5 text-caption text-secondary bg-surface-2 rounded px-4 py-2">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-6 text-caption text-secondary bg-surface-2 rounded-sm px-4 py-2">
+        <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#7B2D8B' }} />
           <span>DOWN-regulated</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3A7D44' }} />
           <span>UP-regulated</span>
         </div>
@@ -428,7 +428,7 @@ export default function DEGClusteringView({
             <span className="text-gray-300">|</span>
             <span className="text-secondary">Condition:</span>
             {uniqueConds.map((c, i) => (
-              <div key={c} className="flex items-center gap-1.5">
+              <div key={c} className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: condColors[i] }} />
                 <span>{c}</span>
               </div>

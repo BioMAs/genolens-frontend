@@ -307,10 +307,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             <span
                 key={gene}
                 title={tooltip}
-                className={`inline-flex items-center px-2 py-0.5 rounded text-caption font-medium cursor-default ${chipColor}`}
+                className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default ${chipColor}`}
             >
-                {reg === 'UP' && <span className="mr-0.5 text-red-500">↑</span>}
-                {reg === 'DOWN' && <span className="mr-0.5 text-blue-500">↓</span>}
+                {reg === 'UP' && <span className="mr-1 text-red-500">↑</span>}
+                {reg === 'DOWN' && <span className="mr-1 text-blue-500">↓</span>}
                 {gene}
             </span>
         );
@@ -327,12 +327,12 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     return (
         <div className="space-y-6">
             {/* Controls */}
-            <div className="bg-surface p-4 rounded-lg shadow border border-line flex flex-col sm:flex-row gap-4 justify-between items-end">
+            <div className="bg-surface p-4 rounded-card shadow border border-line flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
                     <div>
                         <label className="block text-body-sm font-medium text-primary mb-1">Comparison</label>
                         <select
-                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
+                            className="block w-full rounded-sm border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={selectedComparison}
                             onChange={(e) => setSelectedComparison(e.target.value)}
                             disabled={loadingComparisons || comparisons.length === 0}
@@ -346,7 +346,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     <div>
                         <label className="block text-body-sm font-medium text-primary mb-1">Max p-adj</label>
                         <select 
-                            className="block w-full rounded-md border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
+                            className="block w-full rounded-sm border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={maxPadj}
                             onChange={(e) => setMaxPadj(parseFloat(e.target.value))}
                         >
@@ -360,7 +360,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     {viewMode === 'table' && (
                         <div>
                             <label className="block text-body-sm font-medium text-primary mb-1">Regulation</label>
-                            <div className="flex rounded-md shadow-sm">
+                            <div className="flex rounded-sm shadow-sm">
                                 {['ALL', 'UP', 'DOWN'].map((reg) => (
                                      <button
                                         key={reg}
@@ -368,8 +368,8 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                         onClick={() => setRegulationFilter(reg)}
                                         className={`
                                             relative inline-flex items-center px-4 py-2 border text-body-sm font-medium 
-                                            ${reg === 'ALL' ? 'rounded-l-md' : ''} 
-                                            ${reg === 'DOWN' ? 'rounded-r-md' : ''}
+                                            ${reg === 'ALL' ? 'rounded-l-sm' : ''} 
+                                            ${reg === 'DOWN' ? 'rounded-r-sm' : ''}
                                             ${regulationFilter === reg 
                                                 ? 'z-10 bg-accent-soft border-accent text-accent-ink' 
                                                 : 'bg-surface border-strong text-primary hover:bg-hover'}
@@ -387,7 +387,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 <div className="flex gap-2">
                      <button
                         onClick={() => setViewMode('table')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-body-sm font-medium ${
+                        className={`inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium ${
                             viewMode === 'table' 
                             ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
@@ -398,7 +398,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                      </button>
                      <button
                         onClick={() => setViewMode('radar')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-body-sm font-medium ${
+                        className={`inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium ${
                             viewMode === 'radar' 
                             ? 'bg-accent-soft border-accent text-accent-ink' 
                             : 'bg-surface border-strong text-primary hover:bg-hover'
@@ -417,7 +417,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 </div>
             )}
             
-            {error && <div className="p-4 bg-red-50 text-red-700 rounded-md">{error}</div>}
+            {error && <div className="p-4 bg-red-50 text-red-700 rounded-sm">{error}</div>}
 
             {/* AI Assistant */}
             {!loading && !error && allResults.length > 0 && (
@@ -448,7 +448,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(categoryFilter === cat ? "" : cat)}
-                            className={`px-3 py-1 text-caption font-medium rounded-full border transition-colors ${
+                            className={`px-3 py-1 text-caption font-medium rounded-pill border transition-colors ${
                                 categoryFilter === cat
                                 ? 'bg-accent border-accent text-on-accent'
                                 : 'bg-surface border-strong text-secondary hover:bg-hover'
@@ -469,7 +469,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && !error && viewMode === 'radar' && radarPlotData && (
-                 <div className="bg-surface rounded-lg shadow p-6 border border-line">
+                 <div className="bg-surface rounded-card shadow p-6 border border-line">
                     <Plot
                         data={radarPlotData.data}
                         layout={radarPlotData.layout}
@@ -483,14 +483,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && !error && viewMode === 'radar' && !radarPlotData && (
-                <div className="text-center py-12 text-secondary bg-surface-2 rounded-lg border-2 border-dashed border-strong">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-2 border-dashed border-strong">
                     Not enough data to generate a Radar Plot (need both UP and DOWN regulated pathways).
                 </div>
             )}
 
 
             {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && (
-                <div className="text-center py-12 text-secondary bg-surface-2 rounded-lg border-2 border-dashed border-strong">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-2 border-dashed border-strong">
                     {comparisons.length === 0
                         ? "No enrichment data available for this dataset."
                         : "No enrichment pathways found for these settings."}
@@ -498,14 +498,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && viewMode === 'table' && filteredResults.length > 0 && (
-                <div className="bg-surface rounded-lg shadow overflow-hidden">
+                <div className="bg-surface rounded-control shadow overflow-hidden">
                     <div className="px-4 py-3 border-b border-line bg-surface-2 flex justify-between items-center">
                         <span className="text-body-sm text-primary font-medium">
                             {filteredResults.length} pathways found
                         </span>
                         <div className="flex items-center gap-2 text-caption text-secondary">
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-red-100 border border-red-200" /> Upregulated</span>
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-200" /> Downregulated</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-100 border border-red-200" /> Upregulated</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-blue-100 border border-blue-200" /> Downregulated</span>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -549,11 +549,11 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                 <td className="px-4 py-3 text-body-sm text-primary">
                                                     <div className="font-medium">{r.pathway_name}</div>
                                                     {r.description && r.description !== r.pathway_name && (
-                                                        <div className="text-caption text-secondary mt-0.5 leading-snug">{r.description}</div>
+                                                        <div className="text-caption text-secondary mt-1 leading-snug">{r.description}</div>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-caption font-medium ${getCategoryBadgeColor(r.category)}`}>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium ${getCategoryBadgeColor(r.category)}`}>
                                                         {r.category}
                                                     </span>
                                                 </td>
@@ -564,7 +564,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                     {r.padj.toExponential(2)}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-body-sm">
-                                                    <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-full ${
+                                                    <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-pill ${
                                                         r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
                                                         r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-surface-2 text-primary'
                                                     }`}>
@@ -576,7 +576,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         <Link
                                                             href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
                                                             target="_blank"
-                                                            className="text-accent-ink hover:text-indigo-900 inline-flex items-center gap-1"
+                                                            className="text-accent-ink hover:text-accent-ink inline-flex items-center gap-1"
                                                             title="View in GO browser"
                                                         >
                                                             GO <ExternalLink className="h-3 w-3" />
@@ -590,7 +590,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         <p className="text-caption font-medium text-secondary mb-2">
                                                             Associated genes ({r.genes.length}) — hover for details
                                                         </p>
-                                                        <div className="flex flex-wrap gap-1.5">
+                                                        <div className="flex flex-wrap gap-2">
                                                             {r.genes.map(gene => renderGeneChip(gene))}
                                                         </div>
                                                     </td>

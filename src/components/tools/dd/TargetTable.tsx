@@ -57,7 +57,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
           <select
             value={limit}
             onChange={(event) => onLimitChange(Number(event.target.value))}
-            className="rounded border border-strong p-1"
+            className="rounded-sm border border-strong p-1"
           >
             {LIMITS.map((n) => (
               <option key={n} value={n}>{n}</option>

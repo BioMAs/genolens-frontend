@@ -67,7 +67,7 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
             key={id}
             onClick={() => available && onSelect(id)}
             className={`
-              relative flex flex-col rounded-xl border-2 p-5 transition-all
+              relative flex flex-col rounded-card border-2 p-5 transition-all
               ${borderColor}
               ${available
                 ? 'cursor-pointer shadow-sm hover:shadow-md'
@@ -76,14 +76,14 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
           >
             {/* Coming soon badge */}
             {!available && (
-              <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-micro font-medium text-secondary">
+              <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2 py-0.5 text-micro font-medium text-secondary">
                 <Lock className="h-2.5 w-2.5" />
                 Coming soon
               </span>
             )}
 
             {/* Icon */}
-            <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg ${bgColor}`}>
+            <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-control ${bgColor}`}>
               <Icon className={`h-6 w-6 ${color}`} />
             </div>
 

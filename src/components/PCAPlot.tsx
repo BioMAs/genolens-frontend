@@ -160,7 +160,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
             <select
               value={selectedColorColumn}
               onChange={(e) => setSelectedColorColumn(e.target.value)}
-              className="rounded-lg border p-1.5 text-sm"
+              className="rounded-control border p-1.5 text-sm"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             >
               {metadataColumns.map((col) => (
@@ -187,12 +187,12 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       </div>
 
       {/* Plain-language read */}
-      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
-        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+      <div className="mb-4 flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-2 h-2 w-2 flex-none rounded-pill" style={{ background: 'var(--dc-green)' }} />
         <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_220px]">
         {/* Scatter */}
         <div className="min-w-0">
           <ResponsiveContainer width="100%" height={440}>
@@ -220,7 +220,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                      <div className="rounded-control border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                         <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
                         {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
                         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>PC1: {data.x.toFixed(2)}</p>
@@ -250,17 +250,17 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         </div>
 
         {/* Variance rail */}
-        <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+        <div className="rounded-card border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
           <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-muted)' }}>Variance explained</div>
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {pcaData.explained_variance.slice(0, 6).map((v: number, i: number) => (
               <div key={i}>
                 <div className="mb-1 flex justify-between text-[11.5px]">
                   <span style={{ color: 'var(--text-secondary)' }}>PC{i + 1}</span>
                   <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{(v * 100).toFixed(1)}%</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
-                  <div className="h-full rounded" style={{ width: `${Math.min(100, v * 100 * 3)}%`, background: i < 2 ? 'var(--sl-teal)' : 'var(--sl-purple)' }} />
+                <div className="h-1.5 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
+                  <div className="h-full rounded-sm" style={{ width: `${Math.min(100, v * 100 * 3)}%`, background: i < 2 ? 'var(--sl-teal)' : 'var(--sl-purple)' }} />
                 </div>
               </div>
             ))}

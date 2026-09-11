@@ -127,7 +127,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
       <div
         className={
           isTopBar
-            ? "flex w-full items-center gap-2 rounded-[11px] border px-3.5 py-2"
+            ? "flex w-full items-center gap-2 rounded-control border px-3.5 py-2"
             : "relative"
         }
         style={
@@ -169,7 +169,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
           className={
             isTopBar
               ? "w-full bg-transparent text-caption text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
-              : "w-full rounded-md border border-strong py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:bg-gray-800 dark:text-white"
+              : "w-full rounded-sm border border-strong py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-primary dark:bg-gray-800 dark:text-white"
           }
         />
         {isTopBar && <KbdHint>⌘K</KbdHint>}
@@ -179,7 +179,7 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
       {isOpen && (
         <div
           ref={resultsRef}
-          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-line bg-surface shadow-lg"
+          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-sm border border-line bg-surface shadow-lg"
         >
           {isLoading ? (
             <div className="p-4 text-center text-secondary">
@@ -228,9 +228,9 @@ export default function GlobalGeneSearch({ variant = "default" }: GlobalGeneSear
                       </div>
 
                       {(result.regulation || result.log_fc != null || result.padj != null) && (
-                        <div className="mt-1.5 flex items-center gap-2">
+                        <div className="mt-2 flex items-center gap-2">
                           {result.regulation && result.regulation !== "NS" && (
-                            <span className={`text-caption px-1.5 py-0.5 rounded font-medium ${
+                            <span className={`text-caption px-1.5 py-0.5 rounded-sm font-medium ${
                               result.regulation === "UP"
                                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                 : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"

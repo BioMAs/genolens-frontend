@@ -109,7 +109,7 @@ export default function DEGPatternsView({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-surface border border-line rounded-lg p-6">
+      <div className="bg-surface border border-line rounded-card p-6">
         <div className="flex items-center gap-2 mb-1">
           <GitBranch className="h-5 w-5 text-primary" />
           <h2 className="text-heading text-primary">DEG patterns</h2>
@@ -126,7 +126,7 @@ export default function DEGPatternsView({
             <input
               type="number" min={2} max={20} value={nClusters}
               onChange={(e) => setNClusters(parseInt(e.target.value) || 6)}
-              className="w-full px-2 py-1.5 text-body-sm border border-strong rounded"
+              className="w-full px-2 py-1.5 text-body-sm border border-strong rounded-sm"
             />
           </div>
           <div>
@@ -134,14 +134,14 @@ export default function DEGPatternsView({
             <input
               type="number" min={1} max={500} value={minClusterSize}
               onChange={(e) => setMinClusterSize(parseInt(e.target.value) || 15)}
-              className="w-full px-2 py-1.5 text-body-sm border border-strong rounded"
+              className="w-full px-2 py-1.5 text-body-sm border border-strong rounded-sm"
             />
           </div>
           <div className="md:col-span-2 flex justify-end">
             <button
               onClick={() => doRun(groupOrder ?? undefined)}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 rounded-md text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 rounded-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Clustering…' : result ? 'Re-run' : 'Compute patterns'}
             </button>
@@ -156,7 +156,7 @@ export default function DEGPatternsView({
             </div>
             <div className="flex flex-wrap gap-2">
               {groupOrder.map((g, i) => (
-                <div key={g} className="inline-flex items-center gap-1 rounded-md border border-line bg-surface-2 px-2 py-1 text-caption">
+                <div key={g} className="inline-flex items-center gap-1 rounded-sm border border-line bg-surface-2 px-2 py-1 text-caption">
                   <button onClick={() => moveGroup(i, -1)} disabled={i === 0} className="text-muted hover:text-primary disabled:opacity-30">
                     <ArrowLeft className="h-3 w-3" />
                   </button>
@@ -168,7 +168,7 @@ export default function DEGPatternsView({
               ))}
               <button
                 onClick={() => doRun(groupOrder)}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-caption font-medium border border-strong text-primary hover:bg-hover"
+                className="inline-flex items-center px-2.5 py-1 rounded-sm text-caption font-medium border border-strong text-primary hover:bg-hover"
               >
                 Apply order
               </button>
@@ -177,18 +177,18 @@ export default function DEGPatternsView({
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-body-sm">{error}</div>
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">{error}</div>
         )}
       </div>
 
       {/* Results */}
       {result && (
-        <div className="bg-surface border border-line rounded-lg p-6">
+        <div className="bg-surface border border-line rounded-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
             <h3 className="text-title text-primary">
               {result.n_clusters} pattern{result.n_clusters !== 1 ? 's' : ''}
             </h3>
-            <button onClick={exportCSV} className="inline-flex items-center gap-1.5 text-body-sm text-secondary hover:text-primary">
+            <button onClick={exportCSV} className="inline-flex items-center gap-2 text-body-sm text-secondary hover:text-primary">
               <Download className="h-4 w-4" /> Export gene → cluster (.csv)
             </button>
           </div>
@@ -215,7 +215,7 @@ export default function DEGPatternsView({
                 const data = facetData(c, result.groups);
                 const color = palette[ci % palette.length];
                 return (
-                  <div key={c.id} className="border border-subtle rounded-lg p-3">
+                  <div key={c.id} className="border border-subtle rounded-control p-3">
                     <div className="text-body-sm font-semibold text-primary mb-1">
                       Cluster {c.id} <span className="text-muted font-normal">· {c.n_genes} genes</span>
                     </div>

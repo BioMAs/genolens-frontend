@@ -166,7 +166,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             <select
               value={selectedColorColumn}
               onChange={(e) => setSelectedColorColumn(e.target.value)}
-              className="rounded-lg border p-1.5 text-sm"
+              className="rounded-control border p-1.5 text-sm"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             >
               {metadataColumns.map((col) => (
@@ -191,8 +191,8 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       </div>
 
       {/* Plain-language read */}
-      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
-        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+      <div className="mb-4 flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-2 h-2 w-2 flex-none rounded-pill" style={{ background: 'var(--dc-green)' }} />
         <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
@@ -221,7 +221,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as UmapDataPoint;
                 return (
-                  <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="rounded-control border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                     <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
                     {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>UMAP1: {data.x.toFixed(2)}</p>

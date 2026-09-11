@@ -154,7 +154,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
     return (
       <div className="gl-card p-5">
         <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-          <div className="h-4 w-4 animate-spin rounded-full border-b-2" style={{ borderColor: 'var(--text-muted)' }} />
+          <div className="h-4 w-4 animate-spin rounded-pill border-b-2" style={{ borderColor: 'var(--text-muted)' }} />
           Loading DEG chart…
         </div>
       </div>
@@ -198,13 +198,13 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
           Top regulated genes
         </h2>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Top</span>
           {([5, 10, 15, 20] as TopN[]).map((n) => (
             <button
               key={n}
               onClick={() => setTopN(n)}
-              className="rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors"
+              className="rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors"
               style={
                 topN === n
                   ? { background: 'var(--sl-teal)', borderColor: 'var(--sl-teal)', color: '#fff' }
@@ -218,11 +218,11 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
       </div>
 
       <div className="mb-3 flex gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-sm" style={{ background: UP_COLOR }} />
           Upregulated ({upGenes.length})
         </span>
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-sm" style={{ background: DOWN_COLOR }} />
           Downregulated ({downGenes.length})
         </span>

@@ -25,7 +25,7 @@ export default function PlotlyFigure({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-caption text-[var(--text-muted)]">
+      <div className="rounded-control border border-[var(--border)] bg-[var(--surface)] p-3 text-caption text-[var(--text-muted)]">
         No data returned for this figure.
       </div>
     );
@@ -35,7 +35,7 @@ export default function PlotlyFigure({
   const filename = `${comparisonName ?? 'genolens'}_${chartType}`;
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2">
+    <div className="rounded-control border border-[var(--border)] bg-[var(--surface)] p-2">
       <Plot
         data={data}
         layout={{

@@ -73,7 +73,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
         <h3 className="text-title font-medium mb-4">Volcano Plot</h3>
         <div className="text-body-sm text-secondary mb-2">
           X: {volcanoX} | Y: -log10({volcanoY})
@@ -102,7 +102,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     ) || numericColumns[0];
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
         <h3 className="text-title font-medium mb-4">Enrichment Overview</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -134,7 +134,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     const samplesToPlot = numericColumns.slice(0, 5);
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
+      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
         <h3 className="text-title font-medium mb-4">Expression Distribution (First 5 Samples)</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.slice(0, 50)}>
@@ -155,7 +155,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
 
   // Default Fallback
   return (
-    <div className="h-[500px] w-full bg-surface p-4 rounded-lg shadow">
+    <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
       <h3 className="text-title font-medium mb-4">Data Overview</h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData.slice(0, 20)}>

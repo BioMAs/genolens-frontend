@@ -106,7 +106,7 @@ export default function DrugDiscovery() {
 
   if (!allowed) {
     return (
-      <div className="rounded-lg border border-line bg-surface p-8 text-center">
+      <div className="rounded-card border border-line bg-surface p-8 text-center">
         <h2 className="text-heading font-medium text-primary">
           Drug Discovery is an add-on module
         </h2>
@@ -124,7 +124,7 @@ export default function DrugDiscovery() {
           type="button"
           onClick={() => requestAccess('drugdiscovery')}
           disabled={accessPending === 'drugdiscovery' || accessRequested.includes('drugdiscovery')}
-          className="mt-4 inline-block rounded-md bg-brand-primary px-4 py-2 text-body-sm text-on-accent disabled:opacity-60"
+          className="mt-4 inline-block rounded-sm bg-brand-primary px-4 py-2 text-body-sm text-on-accent disabled:opacity-60"
         >
           {accessRequested.includes('drugdiscovery')
             ? 'Request sent'
@@ -145,7 +145,7 @@ export default function DrugDiscovery() {
 
   if (status.data && !status.data.configured) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
         Drug Discovery is not configured on this server. Contact an administrator.
       </div>
     );
@@ -153,7 +153,7 @@ export default function DrugDiscovery() {
 
   if (status.data && status.data.reachable === false) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
         Drug Discovery is temporarily unreachable. Try again in a moment.
       </div>
     );
@@ -169,7 +169,7 @@ export default function DrugDiscovery() {
   if (status.data && status.data.reachable && status.data.ready === false) {
     const tables = status.data.tables ?? {};
     return (
-      <div className="rounded-md bg-amber-50 p-4 text-body-sm text-amber-900">
+      <div className="rounded-sm bg-amber-50 p-4 text-body-sm text-amber-900">
         <p className="font-medium">
           Drug Discovery is reachable, but its reference dataset is incomplete.
         </p>
@@ -201,7 +201,7 @@ export default function DrugDiscovery() {
       | undefined;
     const notConfigured = bootstrapFailure?.response?.status === 503;
     return (
-      <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
         <p>
           {notConfigured
             ? 'Drug Discovery is not configured on this server. Contact an administrator.'
@@ -265,7 +265,7 @@ export default function DrugDiscovery() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-line bg-surface p-4">
+      <section className="rounded-card border border-line bg-surface p-4">
         {catalogue.isLoading && <p className="text-body-sm text-secondary">Loading catalog…</p>}
         {catalogue.data && (
           <div className="space-y-4">
@@ -285,11 +285,11 @@ export default function DrugDiscovery() {
       </section>
 
       {rejection && (
-        <p className="rounded-md bg-amber-50 p-3 text-body-sm text-amber-900">{rejection}</p>
+        <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">{rejection}</p>
       )}
 
       {outage && (
-        <div className="rounded-md bg-red-50 p-3 text-body-sm text-red-900">
+        <div className="rounded-sm bg-red-50 p-3 text-body-sm text-red-900">
           <p>{outage}</p>
           <button
             type="button"
@@ -305,7 +305,7 @@ export default function DrugDiscovery() {
       )}
 
       {detail.data?.warnings.map((warning) => (
-        <p key={warning} className="rounded-md bg-amber-100 p-3 text-body-sm font-medium text-amber-900">
+        <p key={warning} className="rounded-sm bg-amber-100 p-3 text-body-sm font-medium text-amber-900">
           {warning}
         </p>
       ))}
@@ -337,7 +337,7 @@ export default function DrugDiscovery() {
              * pas le jeu de paramètres dans l'URL. Le bouton réarme explicitement la borne et
              * relance, seule sortie de cette impasse.
              */
-            <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-900">
+            <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
               <p>
                 The calculation expired: the service forgot this run before the page could read
                 it.
@@ -360,12 +360,12 @@ export default function DrugDiscovery() {
               {tab === 'report' && (
                 <>
                   {reportRejection && (
-                    <p className="rounded-md bg-amber-50 p-3 text-body-sm text-amber-900">
+                    <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">
                       {reportRejection}
                     </p>
                   )}
                   {reportOutage && (
-                    <div className="rounded-md bg-red-50 p-3 text-body-sm text-red-900">
+                    <div className="rounded-sm bg-red-50 p-3 text-body-sm text-red-900">
                       <p>{reportOutage}</p>
                       <button
                         type="button"

@@ -70,8 +70,8 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
       </p>
 
       {/* Create from paste */}
-      <div className="border border-line rounded-lg p-4">
-        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-1.5">
+      <div className="border border-line rounded-control p-4">
+        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-2">
           <Plus className="h-4 w-4" /> Create from pasted genes
         </h3>
         <input
@@ -79,21 +79,21 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Gene set name (e.g. My proliferation signature)"
-          className="w-full px-3 py-2 border border-strong rounded-md text-body-sm mb-2"
+          className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm mb-2"
         />
         <textarea
           value={pasted}
           onChange={(e) => setPasted(e.target.value)}
           placeholder="Paste gene symbols separated by spaces, commas, or newlines…"
           rows={3}
-          className="w-full px-3 py-2 border border-strong rounded-md text-body-sm font-mono"
+          className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm font-mono"
         />
         <div className="flex items-center justify-between mt-2">
           <span className="text-caption text-secondary">{parsedGenes.length} genes</span>
           <button
             onClick={handleCreate}
             disabled={createMut.isPending || !name.trim() || parsedGenes.length === 0}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 rounded-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
           >
             {createMut.isPending ? 'Creating…' : 'Create gene set'}
           </button>
@@ -101,8 +101,8 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
       </div>
 
       {/* Upload GMT */}
-      <div className="border border-line rounded-lg p-4">
-        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-1.5">
+      <div className="border border-line rounded-control p-4">
+        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-2">
           <Upload className="h-4 w-4" /> Import a GMT file
         </h3>
         <input
@@ -113,7 +113,7 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
             const f = e.target.files?.[0];
             if (f) handleUpload(f);
           }}
-          className="block w-full text-body-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-medium file:bg-surface-2 file:text-primary hover:file:bg-gray-200"
+          className="block w-full text-body-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-body-sm file:font-medium file:bg-surface-2 file:text-primary hover:file:bg-gray-200"
         />
         <p className="mt-1 text-caption text-secondary">
           GMT format: one set per line — name &lt;tab&gt; description &lt;tab&gt; gene1 &lt;tab&gt; gene2 …
@@ -122,10 +122,10 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-body-sm">{error}</div>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">{error}</div>
       )}
       {notice && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-body-sm">{notice}</div>
+        <div className="p-3 bg-green-50 border border-green-200 rounded-sm text-green-700 text-body-sm">{notice}</div>
       )}
 
       {/* Existing sets */}
@@ -138,7 +138,7 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
         ) : !sets || sets.length === 0 ? (
           <p className="text-body-sm text-secondary">No custom gene sets yet.</p>
         ) : (
-          <ul className="divide-y divide-subtle border border-line rounded-lg">
+          <ul className="divide-y divide-subtle border border-line rounded-control">
             {sets.map((gs) => (
               <li key={gs.id} className="flex items-center justify-between px-4 py-2.5">
                 <div className="min-w-0">

@@ -26,7 +26,7 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
 
   return (
     <div className="gl-card p-4">
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Skin claim profile
         </h3>

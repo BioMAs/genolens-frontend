@@ -90,7 +90,7 @@ function EventIcon({ eventType }: { eventType: ActivityEventType }) {
   };
   const Icon = meta.icon;
   return (
-    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${meta.color}`}>
+    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-pill ${meta.color}`}>
       <Icon className={`h-4 w-4 ${meta.textColor}`} aria-hidden="true" />
     </span>
   );
@@ -115,7 +115,7 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
         <p className="text-body-sm font-medium text-primary truncate">
           {buildDescription(entry)}
         </p>
-        <p className="mt-0.5 text-caption text-secondary">{formatDate(entry.created_at)}</p>
+        <p className="mt-1 text-caption text-secondary">{formatDate(entry.created_at)}</p>
 
         {hasExtra && (
           <button
@@ -128,7 +128,7 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
         )}
 
         {expanded && hasExtra && (
-          <pre className="mt-2 rounded bg-surface-2 border border-subtle p-2 text-caption text-secondary overflow-x-auto">
+          <pre className="mt-2 rounded-sm bg-surface-2 border border-subtle p-2 text-caption text-secondary overflow-x-auto">
             {JSON.stringify(entry.extra_metadata, null, 2)}
           </pre>
         )}
@@ -174,7 +174,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
   ];
 
   return (
-    <div className="rounded-lg border border-line bg-surface p-6">
+    <div className="rounded-card border border-line bg-surface p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -186,7 +186,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center gap-1.5 rounded-md border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 rounded-sm border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
@@ -194,14 +194,14 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
       </div>
 
       {/* Filter */}
-      <div className="mb-5">
+      <div className="mb-6">
         <select
           value={eventTypeFilter ?? ''}
           onChange={(e) => {
             setEventTypeFilter((e.target.value as ActivityEventType) || undefined);
             setPage(0);
           }}
-          className="block rounded-md border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="block rounded-sm border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         >
           {filterOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -216,16 +216,16 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex gap-4 animate-pulse">
-              <div className="h-9 w-9 flex-shrink-0 rounded-full bg-gray-200" />
-              <div className="flex-1 space-y-1.5 py-1">
-                <div className="h-3.5 w-3/4 rounded bg-gray-200" />
-                <div className="h-3 w-1/2 rounded bg-surface-2" />
+              <div className="h-9 w-9 flex-shrink-0 rounded-pill bg-gray-200" />
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-3.5 w-3/4 rounded-sm bg-gray-200" />
+                <div className="h-3 w-1/2 rounded-sm bg-surface-2" />
               </div>
             </div>
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-md bg-red-50 p-4 text-body-sm text-red-700">
+        <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700">
           Failed to load history. Please try again.
         </div>
       ) : items.length === 0 ? (
@@ -234,7 +234,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           No events recorded yet.
         </div>
       ) : (
-        <ul className="space-y-5">
+        <ul className="space-y-6">
           {items.map((entry) => (
             <TimelineEntry key={entry.id} entry={entry} />
           ))}
@@ -247,7 +247,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           <button
             onClick={() => setPage((p) => p - 1)}
             disabled={!hasPrev}
-            className="rounded-md border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-sm border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -257,7 +257,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasNext}
-            className="rounded-md border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-sm border border-strong px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>

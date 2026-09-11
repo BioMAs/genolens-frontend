@@ -56,7 +56,7 @@ export default function RecentProjectsSection({
         action={
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-caption font-semibold text-on-accent transition-all"
+            className="inline-flex items-center gap-2 rounded-control px-4 py-1.5 text-caption font-semibold text-on-accent transition-all"
             style={{ background: 'var(--sl-purple)' }}
           >
             New Project
@@ -80,7 +80,7 @@ export default function RecentProjectsSection({
           >
             {/* Icon */}
             <div
-              className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl"
+              className="shrink-0 flex h-10 w-10 items-center justify-center rounded-card"
               style={{ background: 'var(--sl-teal-light)' }}
             >
               <Folder className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
@@ -95,9 +95,9 @@ export default function RecentProjectsSection({
                 {project.name}
               </p>
 
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <div className="mt-1 flex flex-wrap items-center gap-2">
                 {statsLoading && !stats ? (
-                  <div className="skeleton rounded" style={{ height: '14px', width: '80px' }} />
+                  <div className="skeleton rounded-sm" style={{ height: '14px', width: '80px' }} />
                 ) : (
                   <>
                     <Chip icon={<Database className="h-3 w-3" />} value={stats?.total_datasets ?? 0}>
@@ -113,7 +113,7 @@ export default function RecentProjectsSection({
                 )}
               </div>
 
-              <div className="mt-2 flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-secondary)' }}>
+              <div className="mt-2 flex items-center gap-2 text-caption" style={{ color: 'var(--text-secondary)' }}>
                 <Dot variant={status.variant} size={7} />
                 {status.label}
               </div>

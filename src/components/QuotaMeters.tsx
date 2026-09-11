@@ -55,7 +55,7 @@ function Cell({
       className="gl-card min-w-0 flex-1 p-4"
     >
       <span
-        className="flex items-center gap-1.5 text-micro uppercase tracking-wide"
+        className="flex items-center gap-2 text-micro uppercase tracking-wide"
         style={{ color: 'var(--text-muted)' }}
       >
         {icon}
@@ -132,7 +132,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
                 height={8}
               />
             </div>
-            <p className="mt-1.5 text-micro" style={{ color: 'var(--text-muted)' }}>
+            <p className="mt-2 text-micro" style={{ color: 'var(--text-muted)' }}>
               Resets {resetLabel}
             </p>
           </>

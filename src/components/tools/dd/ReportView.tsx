@@ -56,14 +56,14 @@ export default function ReportView({ report }: ReportViewProps) {
   return (
     <article className="space-y-8">
       {(report.n_targets_without_evidence ?? 0) > 0 && (
-        <p className="rounded-md bg-amber-50 p-3 text-body-sm text-amber-900">
+        <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">
           {report.n_targets_without_evidence} top-ranked targets were excluded from this report
           for lack of citable evidence. This is therefore not the actual top of the ranking.
         </p>
       )}
 
       {report.disclosures && report.disclosures.length > 0 && (
-        <section className="rounded-md border border-amber-200 bg-amber-50 p-4">
+        <section className="rounded-sm border border-amber-200 bg-amber-50 p-4">
           <h3 className="mb-2 text-body-sm font-semibold text-amber-900">
             What you must know about this report
           </h3>
@@ -85,7 +85,7 @@ export default function ReportView({ report }: ReportViewProps) {
                 {claim.evidence_ids
                   .filter((id) => citableEvidenceIds.has(id))
                   .map((id) => (
-                    <sup key={id} className="ml-0.5">
+                    <sup key={id} className="ml-1">
                       <a href={`#${refId(id)}`} className="text-brand-primary underline">
                         {id}
                       </a>
@@ -124,7 +124,7 @@ export default function ReportView({ report }: ReportViewProps) {
 
       <footer className="border-t border-line pt-4 text-caption text-secondary">
         <p className="mb-1 font-medium">Attributions</p>
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {report.attributions.map((attribution) => (
             <li key={attribution}>{attribution}</li>
           ))}
