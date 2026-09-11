@@ -53,8 +53,8 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
   // page states its own requirement instead of relying on the hidden nav entry.
   if (moduleLoaded && !scienceUnlocked) {
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
             className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
@@ -64,7 +64,7 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
           </button>
           <div className="bg-surface rounded-lg shadow p-8 text-center">
             <Lock className="mx-auto mb-4 h-8 w-8 text-muted" />
-            <h1 className="mb-2 text-title font-semibold text-primary">Scientific tools add-on</h1>
+            <h1 className="mb-2 text-title text-primary">Scientific tools add-on</h1>
             <p className="mx-auto max-w-md text-body-sm text-secondary">
               Contrast scatter is part of the Scientific tools module. Ask an admin to enable
               it for your account, or request access from your profile.
@@ -77,16 +77,16 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="max-w-7xl mx-auto text-center py-12 text-secondary">Loading...</div>
+      <div className="p-8">
+        <div className="page-container text-center py-12 text-secondary">Loading...</div>
       </div>
     );
   }
 
   if (error || !pathDatasetId || comparisons.length < 2) {
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
             className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
@@ -106,9 +106,9 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-surface-2">
+    <div className="">
       <div className="bg-surface border-b border-line">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
             className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
@@ -116,12 +116,12 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
-          <h1 className="text-display font-bold text-primary">Contrast comparison</h1>
+          <h1 className="text-display text-primary">Contrast comparison</h1>
           {project && <p className="mt-2 text-body-sm text-secondary">Project: {project.name}</p>}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-container">
         <ContrastScatter pathDatasetId={pathDatasetId} comparisons={comparisons} />
       </div>
     </div>

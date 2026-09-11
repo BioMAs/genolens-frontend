@@ -55,7 +55,7 @@ function Cell({
       className="gl-card min-w-0 flex-1 p-4"
     >
       <span
-        className="flex items-center gap-1.5 text-micro font-semibold uppercase tracking-wide"
+        className="flex items-center gap-1.5 text-micro uppercase tracking-wide"
         style={{ color: 'var(--text-muted)' }}
       >
         {icon}
@@ -97,12 +97,12 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="Analyses"
       >
         {!known ? (
-          <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : analyses.unlimited ? (
           <>
-            <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
@@ -112,7 +112,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         ) : (
           <>
             <p
-              className="mt-1 font-display text-heading font-semibold tabular-nums"
+              className="mt-1 font-display text-heading tabular-nums"
               style={{ color: VALUE_COLOR[tone] }}
             >
               {analyses.remaining}{' '}
@@ -145,12 +145,12 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="Projects"
       >
         {!known ? (
-          <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : projects.unlimited ? (
           <>
-            <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
@@ -159,7 +159,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
           </>
         ) : (
           <>
-            <p className="mt-1 font-display text-heading font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+            <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {projects.used}{' '}
               <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {projects.max}
@@ -185,12 +185,12 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="AI credits"
       >
         {!known ? (
-          <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : ai.unlimited ? (
           <>
-            <p className="mt-1 font-display text-heading font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
@@ -199,7 +199,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
           </>
         ) : (
           <>
-            <p className="mt-1 font-display text-heading font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+            <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {ai.credits}
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>

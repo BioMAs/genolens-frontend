@@ -48,7 +48,7 @@ export default function StepDataValidation({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-heading font-bold text-primary">Data Validation & QC</h2>
+        <h2 className="text-heading text-primary">Data Validation & QC</h2>
         <p className="mt-1 text-body-sm text-secondary">
           Review the quality metrics for your uploaded files before running the analysis.
         </p>

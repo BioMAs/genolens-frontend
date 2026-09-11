@@ -56,7 +56,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_200px]">
       <article className="min-w-0">
         <p
-          className="text-micro font-semibold uppercase tracking-wide"
+          className="text-micro uppercase tracking-wide"
           style={{ color: 'var(--sl-teal)' }}
         >
           {CATEGORY_LABELS[doc.category]}
@@ -133,7 +133,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
       {doc.headings.length > 0 && (
         <nav aria-label="On this page" className="hidden lg:block">
           <p
-            className="mb-2 text-micro font-semibold uppercase tracking-wide"
+            className="mb-2 text-micro uppercase tracking-wide"
             style={{ color: 'var(--text-muted)' }}
           >
             On this page

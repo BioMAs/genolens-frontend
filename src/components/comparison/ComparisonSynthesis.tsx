@@ -102,14 +102,14 @@ export default function ComparisonSynthesis({
   return (
     <div className="gl-card p-5">
       <div
-        className="text-micro font-semibold uppercase tracking-[0.6px]"
+        className="text-micro uppercase tracking-[0.6px]"
         style={{ color: 'var(--sl-teal)' }}
       >
         Response
       </div>
 
       <h2
-        className="mt-1 font-display text-title font-semibold leading-[1.3]"
+        className="mt-1 font-display text-title leading-[1.3]"
         style={{ color: 'var(--text-primary)' }}
       >
         {degTotal === 0 ? (

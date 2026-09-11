@@ -38,7 +38,7 @@ export default function GoBrowser() {
         <div className="bg-surface shadow rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4">
                 <Network className="h-6 w-6 text-brand-primary" />
-                <h2 className="text-heading font-semibold text-primary">Gene Ontology Browser</h2>
+                <h2 className="text-heading text-primary">Gene Ontology Browser</h2>
             </div>
             
             <p className="text-secondary mb-6">

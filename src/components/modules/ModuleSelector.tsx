@@ -142,7 +142,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
         {readOnly ? (
           active ? (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro font-semibold"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro"
               style={{ background: `color-mix(in oklab, ${color} 14%, var(--surface))`, color }}
             >
               <Check className="h-3 w-3" /> Active
@@ -152,14 +152,14 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
               type="button"
               disabled={busy}
               onClick={() => onRequestAccess(id)}
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-micro font-semibold transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-micro transition-colors disabled:opacity-60"
               style={{ borderColor: `color-mix(in oklab, ${color} 35%, var(--surface))`, color }}
             >
               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
               {busy ? 'Sending…' : 'Request access'}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
               <Lock className="h-3 w-3" /> Locked
             </span>
           )

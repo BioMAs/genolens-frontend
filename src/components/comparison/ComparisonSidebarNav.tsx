@@ -68,7 +68,7 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
       style={{ borderLeft: '1px solid var(--sidebar-border)', marginLeft: '1.125rem' }}
     >
       <div
-        className="px-3 pb-1 pt-1 text-micro font-bold uppercase tracking-[0.1em]"
+        className="px-3 pb-1 pt-1 text-micro uppercase tracking-[0.1em]"
         style={{ color: 'var(--text-muted)' }}
       >
         <span className="block truncate" title={comparisonLabel}>

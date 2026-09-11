@@ -85,14 +85,14 @@ export default function SuspendedPage() {
         </div>
 
         <span
-          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-micro font-bold uppercase"
+          className="mb-4 inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-micro uppercase"
           style={{ background: tone.bg, color: tone.fg, letterSpacing: "0.12em" }}
         >
           {current.badge}
         </span>
 
         <h1
-          className="font-display text-heading font-bold"
+          className="font-display text-heading"
           style={{ color: "var(--auth-text)", letterSpacing: "-0.02em" }}
         >
           {current.title}

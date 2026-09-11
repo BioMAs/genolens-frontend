@@ -452,7 +452,7 @@ export default function PowerAnalysis() {
             >
               <div className="flex items-center gap-3 mb-5">
                 <TrendingUp className={`h-6 w-6 ${POWER_STYLES[powerLevel(result.power)].text}`} />
-                <h3 className="text-title font-bold text-primary">Results</h3>
+                <h3 className="text-title text-primary">Results</h3>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-5">
                 <div className="text-center">

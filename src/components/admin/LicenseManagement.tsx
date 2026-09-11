@@ -150,7 +150,7 @@ export default function LicenseManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-title font-semibold text-primary">On-Premise Licenses</h2>
+          <h2 className="text-title text-primary">On-Premise Licenses</h2>
           <p className="text-body-sm text-secondary mt-1">
             Generate and manage license keys for GenoLens on-premise deployments.
           </p>
@@ -236,7 +236,7 @@ export default function LicenseManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-surface rounded-xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-line">
-              <h3 className="text-title font-semibold text-primary">Generate a new license</h3>
+              <h3 className="text-title text-primary">Generate a new license</h3>
               <p className="text-body-sm text-secondary mt-1">
                 The generated key must be set in the <code className="bg-surface-2 px-1 rounded">GENOLENS_LICENSE_KEY</code> variable of the client deployment.
               </p>

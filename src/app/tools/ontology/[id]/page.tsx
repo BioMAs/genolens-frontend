@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, GitBranch, ArrowUpCircle, ArrowDownCircle, Network } from 'lucide-react';
+import { GitBranch, ArrowUpCircle, ArrowDownCircle, Network } from 'lucide-react';
 import api from '@/utils/api';
 
 interface GoTermDetail {
@@ -54,19 +54,16 @@ export default function GoTermPage() {
     if (!term) return null;
 
     return (
-        <div className="min-h-screen bg-surface-2 py-8">
-             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="py-8">
+             <div className="page-container">
                  
                  <div className="mb-6">
-                    <Link href="/tools" className="flex items-center text-secondary hover:text-primary mb-4">
-                        <ArrowLeft className="h-4 w-4 mr-1"/> Back to Tools
-                    </Link>
                     
                     <div className="bg-surface rounded-lg shadow-sm border border-line p-6 mb-6">
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <h1 className="text-heading font-bold text-primary">{term.id}</h1>
+                                    <h1 className="text-heading text-primary">{term.id}</h1>
                                     <span className={`px-2 py-1 rounded-full text-caption font-medium ${
                                         term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
                                         term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :

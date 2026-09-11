@@ -159,7 +159,7 @@ function StatCard({
         </span>
         <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       </div>
-      <p className="font-display text-heading font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      <p className="font-display text-heading" style={{ color: 'var(--text-primary)' }}>{value}</p>
       {sub && <p className="mt-0.5 text-caption" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
     </div>
   );

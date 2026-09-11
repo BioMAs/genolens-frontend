@@ -62,7 +62,7 @@ export default function UserMenu({ user }: { user: User }) {
         )}
       >
         {/* Cercle plat : le degrade etait le dernier de l'app authentifiee. */}
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-pill bg-surface-2 text-micro font-semibold text-secondary">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-pill bg-surface-2 text-micro text-secondary">
           {initials}
         </span>
         <span className="min-w-0 flex-1">

@@ -279,7 +279,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         <Sparkles className="h-6 w-6" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="mb-2 text-title font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        <h3 className="mb-2 text-title" style={{ color: 'var(--text-primary)' }}>
                             AI Biological Interpretation
                         </h3>
                         <p className="mb-4 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -363,7 +363,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                     >
                         <Sparkles className="h-5 w-5" />
                     </div>
-                    <h3 className="text-title font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    <h3 className="text-title" style={{ color: 'var(--text-primary)' }}>
                         AI Biological Interpretation
                     </h3>
                 </div>

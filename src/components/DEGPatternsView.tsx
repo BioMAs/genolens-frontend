@@ -112,7 +112,7 @@ export default function DEGPatternsView({
       <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center gap-2 mb-1">
           <GitBranch className="h-5 w-5 text-primary" />
-          <h2 className="text-heading font-bold text-primary">DEG patterns</h2>
+          <h2 className="text-heading text-primary">DEG patterns</h2>
         </div>
         <p className="text-body-sm text-secondary mb-4">
           Group the significant DEGs of <strong>{label}</strong> (union across all comparisons) into
@@ -185,7 +185,7 @@ export default function DEGPatternsView({
       {result && (
         <div className="bg-surface border border-line rounded-lg p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h3 className="text-title font-semibold text-primary">
+            <h3 className="text-title text-primary">
               {result.n_clusters} pattern{result.n_clusters !== 1 ? 's' : ''}
             </h3>
             <button onClick={exportCSV} className="inline-flex items-center gap-1.5 text-body-sm text-secondary hover:text-primary">

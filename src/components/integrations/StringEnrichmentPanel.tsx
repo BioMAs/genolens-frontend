@@ -76,7 +76,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 function Stat({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div className="text-center">
-      <p className={`text-heading font-bold ${color}`}>{value}</p>
+      <p className={`text-heading ${color}`}>{value}</p>
       <p className="text-caption text-secondary">{label}</p>
     </div>
   );

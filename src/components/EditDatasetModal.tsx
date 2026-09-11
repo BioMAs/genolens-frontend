@@ -101,7 +101,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="w-full max-w-md rounded-lg bg-surface p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-title font-semibold text-primary">Edit Dataset</h2>
+          <h2 className="text-title text-primary">Edit Dataset</h2>
           <button onClick={onClose} className="text-muted hover:text-secondary">
             <X className="h-6 w-6" />
           </button>

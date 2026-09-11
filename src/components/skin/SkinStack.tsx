@@ -68,7 +68,7 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
                   </div>
                 </div>
                 <div className="flex items-baseline gap-0.5" style={{ color: l.color }}>
-                  <span className="font-display text-display font-bold leading-none">{act.toFixed(1)}</span>
+                  <span className="font-display text-display leading-none">{act.toFixed(1)}</span>
                   <span className="text-caption" style={{ color: 'var(--text-muted)' }}>/100</span>
                 </div>
               </div>

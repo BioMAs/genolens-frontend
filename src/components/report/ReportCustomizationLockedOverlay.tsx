@@ -24,7 +24,7 @@ export default function ReportCustomizationLockedOverlay({ children }: { childre
           >
             <Lock className="h-6 w-6 text-on-accent" />
           </div>
-          <h3 className="text-title font-bold" style={{ color: "var(--text-primary)" }}>
+          <h3 className="text-title" style={{ color: "var(--text-primary)" }}>
             Report customization
           </h3>
           <p className="mx-auto mt-2 max-w-sm text-body-sm" style={{ color: "var(--text-secondary)" }}>

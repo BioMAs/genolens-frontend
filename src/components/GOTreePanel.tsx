@@ -158,7 +158,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
             { label: 'GO level', value: node.level ?? '—' },
           ].map(({ label, value }) => (
             <div key={label} className="bg-surface-2 rounded-lg p-2.5">
-              <div className="text-title font-bold text-accent-ink">{value}</div>
+              <div className="text-title text-accent-ink">{value}</div>
               <div className="text-caption text-muted">{label}</div>
             </div>
           ))}

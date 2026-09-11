@@ -58,9 +58,16 @@ beforeEach(() => {
   comparisons = [];
 });
 
-/** L'en-tete : le bloc qui contient le titre du projet. */
+/**
+ * L'en-tête de page.
+ *
+ * S'accrochait à `closest('div').parentElement` — deux niveaux de structure
+ * anonyme, donc un test que la moindre enveloppe supplémentaire cassait sans
+ * rapport avec ce qu'il vérifie. `PageHeader` rend un vrai `<header>` : on
+ * s'accroche au rôle, pas à la forme de l'arbre.
+ */
 function header() {
-  return screen.getByRole('heading', { name: 'Skin Study' }).closest('div')!.parentElement!;
+  return screen.getByRole('banner');
 }
 
 describe("hiérarchie d'action de l'en-tête", () => {

@@ -24,7 +24,7 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-title font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+        <h2 className="font-display text-title tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
         {subtitle && <p className="mt-0.5 text-caption" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
       </div>
       {right}
@@ -192,7 +192,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
   return (
     <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--app-bg)' }}>
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="page-container space-y-6">
 
         {/* Breadcrumb */}
         <div>
@@ -213,7 +213,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                 <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <div>
-                <h1 className="text-heading font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
+                <h1 className="text-heading" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
                 <p className="text-caption mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   Created {new Date(analysis.created_at).toLocaleString('en-US')}
                 </p>

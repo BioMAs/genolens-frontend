@@ -87,7 +87,7 @@ export default function UserConnections() {
                 </div>
                 <div className="ml-5">
                   <p className="text-body-sm font-medium text-secondary truncate">{kpi.label}</p>
-                  <p className="mt-1 text-display font-semibold text-primary">{kpi.value}</p>
+                  <p className="mt-1 text-display text-primary">{kpi.value}</p>
                 </div>
               </div>
             </div>

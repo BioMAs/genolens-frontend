@@ -112,7 +112,7 @@ export default function StepUploadFiles({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-heading font-bold text-primary">Upload your data files</h2>
+        <h2 className="text-heading text-primary">Upload your data files</h2>
         <p className="mt-1 text-body-sm text-secondary">
           Upload your count matrix and sample sheet, then build the comparisons from the sample
           conditions (or upload a contrast file). Each file is validated automatically.

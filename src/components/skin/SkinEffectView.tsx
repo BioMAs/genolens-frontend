@@ -38,13 +38,13 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <div
-              className="mb-2 text-micro font-semibold uppercase tracking-[0.6px]"
+              className="mb-2 text-micro uppercase tracking-[0.6px]"
               style={{ color: 'var(--sl-teal)' }}
             >
               The verdict
             </div>
             <h2
-              className="font-display text-heading font-semibold leading-[1.25] tracking-[-0.5px]"
+              className="font-display text-heading leading-[1.25] tracking-[-0.5px]"
               style={{ color: 'var(--text-primary)', maxWidth: 640 }}
             >
               {headline}

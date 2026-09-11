@@ -56,7 +56,7 @@ interface StepDataTypeProps {
 export default function StepDataType({ onSelect }: StepDataTypeProps) {
   return (
     <div>
-      <h2 className="text-title font-semibold text-primary">Select Data Type</h2>
+      <h2 className="text-title text-primary">Select Data Type</h2>
       <p className="mt-1 mb-6 text-body-sm text-secondary">
         Choose the type of omics data you want to analyse.
       </p>

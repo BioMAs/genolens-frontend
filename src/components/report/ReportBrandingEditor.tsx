@@ -135,7 +135,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           </div>
           <div className="h-1.5 w-full" style={{ background: form.secondary_color }} />
           <div className="bg-surface px-4 py-3">
-            <div className="text-title font-bold text-primary">{form.institute_name || "Institute name"}</div>
+            <div className="text-title text-primary">{form.institute_name || "Institute name"}</div>
             <div className="text-caption text-secondary">{form.institute_address || "Institute address"}</div>
           </div>
         </div>

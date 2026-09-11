@@ -185,7 +185,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-heading font-bold text-primary">Method statistics</h2>
+            <h2 className="text-heading text-primary">Method statistics</h2>
             <p className="text-body-sm text-secondary">
               Differentially expressed genes per statistical method. The active method (used across
               the rest of the app) is highlighted.
@@ -241,7 +241,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
       {/* Per-gene multi-method table */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-title font-semibold text-primary">Per-gene p-values</h3>
+          <h3 className="text-title text-primary">Per-gene p-values</h3>
           <label className="flex items-center gap-2 text-body-sm text-secondary">
             <input
               type="checkbox"

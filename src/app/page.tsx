@@ -92,7 +92,7 @@ export default function Home() {
       <AuthCard className="mt-4">
         <div className="mb-6">
           <h1
-            className="font-display text-heading font-bold"
+            className="font-display text-heading"
             style={{ color: 'var(--auth-text)', letterSpacing: '-0.02em' }}
           >
             {isSignin ? 'Welcome back' : 'Create your account'}

@@ -172,8 +172,8 @@ export function DEGTableSkeleton() {
 
 export function ProjectDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-surface-2 py-6 animate-pulse">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="py-6 animate-pulse">
+      <div className="page-container">
         <div className="mb-6">
           <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
         </div>

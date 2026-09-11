@@ -59,7 +59,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
             <>
               <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-heading font-semibold"
+                  className="font-display text-heading"
                   style={{ color: palette.up }}
                 >
                   {summary.up.toLocaleString('en-US')}
@@ -68,7 +68,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
               </span>
               <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-heading font-semibold"
+                  className="font-display text-heading"
                   style={{ color: palette.down }}
                 >
                   {summary.down.toLocaleString('en-US')}

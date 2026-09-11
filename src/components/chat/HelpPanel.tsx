@@ -38,7 +38,7 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <section>
-          <h4 className="mb-2 text-micro font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Example commands
           </h4>
           <ul className="flex flex-col gap-1.5">
@@ -54,7 +54,7 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
         </section>
 
         <section className="mt-5">
-          <h4 className="mb-2 text-micro font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Charts the assistant understands
           </h4>
           <ul className="flex flex-col gap-1.5">

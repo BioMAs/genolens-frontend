@@ -102,7 +102,7 @@ export default function PricingPage() {
     <div className="min-h-screen py-16 px-4" style={{ background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       {/* Header */}
       <div className="mx-auto max-w-3xl text-center mb-10">
-        <h1 className="font-display text-display font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
+        <h1 className="font-display text-display mb-3">Simple, transparent pricing</h1>
         <p style={{ color: 'var(--text-secondary)' }} className="text-title">
           Pick a plan and we&apos;ll set it up for you — no credit card required to get in touch.
         </p>
@@ -206,7 +206,7 @@ export default function PricingPage() {
                   {/* Price */}
                   <div className="mt-4">
                     <div className="flex items-end gap-1">
-                      <span className="font-display text-display font-bold" style={{ color: 'var(--text-primary)' }}>{displayPrice}</span>
+                      <span className="font-display text-display" style={{ color: 'var(--text-primary)' }}>{displayPrice}</span>
                       {displayPriceNote && <span className="text-body-sm mb-1" style={{ color: 'var(--text-secondary)' }}>{displayPriceNote}</span>}
                     </div>
                     {displayEquiv && <p className="text-caption mt-0.5" style={{ color: 'var(--text-muted)' }}>{displayEquiv}</p>}

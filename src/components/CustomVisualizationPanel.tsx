@@ -373,7 +373,7 @@ export default function CustomVisualizationPanel({
         <div className="space-y-6">
             {/* Visualization Type Selector */}
             <div className="bg-surface rounded-lg shadow p-6">
-                <h2 className="text-heading font-bold text-primary mb-4">Custom Visualization</h2>
+                <h2 className="text-heading text-primary mb-4">Custom Visualization</h2>
                 
                 <div className="flex gap-3 mb-6">
                     <button

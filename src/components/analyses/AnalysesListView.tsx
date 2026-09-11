@@ -48,7 +48,7 @@ export default function AnalysesListView({ projectId }: Props) {
   return (
     <div className="space-y-6" data-tour="analyses-list">
       <div className="flex items-center justify-between">
-        <h2 className="text-title font-semibold text-primary">
+        <h2 className="text-title text-primary">
           Self-service analyses ({analyses.length})
         </h2>
         <Link

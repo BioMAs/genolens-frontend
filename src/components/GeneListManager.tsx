@@ -138,7 +138,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
       {/* Header */}
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
-          <h2 className="text-title font-semibold text-primary">Gene Lists</h2>
+          <h2 className="text-title text-primary">Gene Lists</h2>
           <p className="mt-1 text-body-sm text-secondary">
             {geneLists?.length || 0} custom lists
           </p>
@@ -311,7 +311,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                           />
                         ) : (
                           <>
-                            <h3 className="text-title font-semibold text-primary">{list.name}</h3>
+                            <h3 className="text-title text-primary">{list.name}</h3>
                             {list.description && (
                               <p className="mt-1 text-body-sm text-secondary">{list.description}</p>
                             )}

@@ -130,7 +130,7 @@ export default function SignatureScorePanel({
       <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center gap-2 mb-1">
           <Activity className="h-5 w-5 text-primary" />
-          <h2 className="text-heading font-bold text-primary">Signature scoring</h2>
+          <h2 className="text-heading text-primary">Signature scoring</h2>
         </div>
         <p className="text-body-sm text-secondary mb-4">
           Score a custom gene signature across every sample, then compare scores between conditions.
@@ -228,7 +228,7 @@ export default function SignatureScorePanel({
       {result && chart && (
         <div className="bg-surface border border-line rounded-lg p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h3 className="text-title font-semibold text-primary">
+            <h3 className="text-title text-primary">
               Score by condition{result.signature_name ? ` — ${result.signature_name}` : ''}
             </h3>
             <div className="text-body-sm text-secondary">

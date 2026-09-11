@@ -84,7 +84,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-surface-2 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* Back link */}
         <Link
@@ -97,7 +97,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Page title */}
         <div className="mb-6">
-          <h1 className="text-heading font-bold text-primary">New Analysis</h1>
+          <h1 className="text-heading text-primary">New Analysis</h1>
           <p className="mt-1 text-body-sm text-secondary">
             {selectedDataType
               ? 'Follow the steps below to configure and launch your transcriptomics analysis.'

@@ -49,7 +49,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-2 flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <Activity className="h-12 w-12 text-brand-primary animate-pulse mx-auto mb-4" />
           <p className="text-secondary">Verifying admin access...</p>
@@ -60,12 +60,12 @@ export default function AdminPage() {
 
   if (error || !hasAccess) {
     return (
-      <div className="min-h-screen bg-surface-2 flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-surface shadow-lg rounded-lg p-8">
           <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-heading font-bold text-primary text-center mb-2">
+          <h2 className="text-heading text-primary text-center mb-2">
             Access Denied
           </h2>
           <p className="text-secondary text-center mb-6">
@@ -83,15 +83,15 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-2 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="py-8">
+      <div className="page-container">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-brand-primary rounded-lg">
               <Shield className="h-6 w-6 text-on-accent" />
             </div>
-            <h1 className="text-display font-bold text-primary">Administration</h1>
+            <h1 className="text-display text-primary">Administration</h1>
           </div>
           <p className="text-secondary">Manage users, view system statistics, and monitor platform activity.</p>
         </div>

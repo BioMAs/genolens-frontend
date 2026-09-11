@@ -21,7 +21,7 @@ export default function ClusteringPage() {
   }, [datasetId]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-2">
+    <div className="flex flex-col">
         {/* Sub-header / Breadcrumb */}
         <div className="bg-surface border-b border-line px-4 py-3 flex items-center gap-3 shadow-sm">
             <Link 

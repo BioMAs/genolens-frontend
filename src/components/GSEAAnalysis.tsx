@@ -195,7 +195,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       <div className="bg-surface border border-line rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-heading font-bold text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
+            <h2 className="text-heading text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
             <p className="text-body-sm text-secondary mt-1">
               Identify significantly enriched gene sets in your ranked gene list
             </p>
@@ -352,26 +352,26 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       {/* Summary Stats */}
       {results && (
         <div className="bg-surface border border-line rounded-lg p-6">
-          <h3 className="text-title font-semibold mb-4">Analysis Summary</h3>
+          <h3 className="text-title mb-4">Analysis Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
-              <div className="text-heading font-bold text-primary">{results.summary.total_genes}</div>
+              <div className="text-heading text-primary">{results.summary.total_genes}</div>
               <div className="text-body-sm text-secondary">Total Genes</div>
             </div>
             <div className="text-center">
-              <div className="text-heading font-bold text-primary">{results.summary.total_gene_sets_tested}</div>
+              <div className="text-heading text-primary">{results.summary.total_gene_sets_tested}</div>
               <div className="text-body-sm text-secondary">Gene Sets Tested</div>
             </div>
             <div className="text-center">
-              <div className="text-heading font-bold text-green-600">{results.summary.significant_gene_sets}</div>
+              <div className="text-heading text-green-600">{results.summary.significant_gene_sets}</div>
               <div className="text-body-sm text-secondary">Significant (FDR ≤ {parameters.fdr_threshold})</div>
             </div>
             <div className="text-center">
-              <div className="text-heading font-bold text-red-600">{results.summary.enriched_in_phenotype_pos}</div>
+              <div className="text-heading text-red-600">{results.summary.enriched_in_phenotype_pos}</div>
               <div className="text-body-sm text-secondary">Positive NES</div>
             </div>
             <div className="text-center">
-              <div className="text-heading font-bold text-blue-600">{results.summary.enriched_in_phenotype_neg}</div>
+              <div className="text-heading text-blue-600">{results.summary.enriched_in_phenotype_neg}</div>
               <div className="text-body-sm text-secondary">Negative NES</div>
             </div>
           </div>
@@ -394,7 +394,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-surface border-b border-line p-4 flex items-center justify-between">
-              <h3 className="text-title font-semibold">Enrichment Plot: {selectedGeneSet}</h3>
+              <h3 className="text-title">Enrichment Plot: {selectedGeneSet}</h3>
               <button
                 onClick={() => {
                   setSelectedGeneSet(null);
@@ -429,7 +429,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
       {!results && !loading && (
         <div className="bg-surface border border-line rounded-lg p-12 text-center">
           <Play className="h-16 w-16 text-muted mx-auto mb-4" />
-          <h3 className="text-title font-semibold text-primary mb-2">Ready to Run GSEA</h3>
+          <h3 className="text-title text-primary mb-2">Ready to Run GSEA</h3>
           <p className="text-secondary mb-4">
             Click &quot;Run GSEA&quot; to start the analysis. You can adjust settings before running.
           </p>

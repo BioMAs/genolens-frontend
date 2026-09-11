@@ -20,7 +20,7 @@ export default function EnrichmentPage() {
   }, [datasetId]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-2">
+    <div className="flex flex-col">
         {/* Sub-header / Breadcrumb */}
         <div className="bg-surface border-b border-line px-4 py-3 flex items-center gap-3 shadow-sm">
             <Link 
@@ -47,10 +47,10 @@ export default function EnrichmentPage() {
             </div>
         </div>
 
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="page-container space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                   <h1 className="text-heading font-bold text-primary tracking-tight">Functional Enrichment Analysis</h1>
+                   <h1 className="text-heading text-primary tracking-tight">Functional Enrichment Analysis</h1>
                    <p className="text-body-sm text-secondary mt-1">
                        Explore enriched pathways and gene sets (GO, KEGG, Reactome) for your differential expression comparisons.
                    </p>

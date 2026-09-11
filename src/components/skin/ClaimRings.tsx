@@ -49,7 +49,7 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-heading font-bold" style={{ color }}>
+          <span className="font-display text-heading" style={{ color }}>
             {Math.round(score)}
           </span>
         </div>
@@ -58,7 +58,7 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
         {claim.label}
       </div>
       <div
-        className="mt-1 text-micro font-semibold"
+        className="mt-1 text-micro"
         style={{ color: favorable ? 'var(--dc-up-dark)' : '#d97706' }}
       >
         {favorable ? '↗ Favorable' : '↘ To watch'}

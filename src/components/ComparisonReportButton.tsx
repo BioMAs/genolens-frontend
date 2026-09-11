@@ -101,7 +101,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-title font-bold" style={{ color: "var(--text-primary)" }}>
+              <h2 className="text-title" style={{ color: "var(--text-primary)" }}>
                 Customize report
               </h2>
               <button onClick={() => setShowModal(false)} aria-label="Close">
@@ -213,7 +213,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
           <button
             onClick={handleGenerate}
             className="inline-flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2
-                       text-body-sm font-medium text-red-700 transition-colors hover:bg-red-200"
+ text-body-sm font-medium text-red-700 transition-colors hover:bg-red-200"
           >
             <RefreshCw className="h-4 w-4" />
             Retry Report

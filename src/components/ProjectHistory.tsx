@@ -178,7 +178,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-title font-semibold text-primary">Project history</h2>
+          <h2 className="text-title text-primary">Project history</h2>
           <p className="mt-1 text-body-sm text-secondary">
             {total > 0 ? `${total} event${total > 1 ? 's' : ''} recorded` : 'No events yet'}
           </p>

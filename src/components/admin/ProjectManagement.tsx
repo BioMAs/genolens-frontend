@@ -230,7 +230,7 @@ export default function ProjectManagement() {
       <div className="px-6 py-4 border-b border-line">
         <div className="flex items-center gap-3">
           <Database className="h-6 w-6 text-brand-primary" />
-          <h2 className="text-heading font-semibold text-primary">Project Management</h2>
+          <h2 className="text-heading text-primary">Project Management</h2>
         </div>
         <p className="mt-1 text-body-sm text-secondary">
           View and manage all projects in the system. Total projects: {projects.length}
@@ -330,7 +330,7 @@ export default function ProjectManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-title font-semibold text-primary">Edit Project</h3>
+              <h3 className="text-title text-primary">Edit Project</h3>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-muted hover:text-secondary"
@@ -407,7 +407,7 @@ export default function ProjectManagement() {
           <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-title font-semibold text-primary">Manage Project Members</h3>
+                <h3 className="text-title text-primary">Manage Project Members</h3>
                 <p className="text-body-sm text-secondary mt-1">{selectedProject.name}</p>
               </div>
               <button

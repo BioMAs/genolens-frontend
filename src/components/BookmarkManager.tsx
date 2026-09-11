@@ -123,7 +123,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
       {/* Header */}
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
-          <h2 className="text-title font-semibold text-primary">Bookmarked Genes</h2>
+          <h2 className="text-title text-primary">Bookmarked Genes</h2>
           <p className="mt-1 text-body-sm text-secondary">{bookmarks.length} genes</p>
         </div>
         <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                   <div className="flex items-center gap-3">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     <div>
-                      <h3 className="font-mono text-title font-semibold text-primary">
+                      <h3 className="font-mono text-title text-primary">
                         {bookmark.gene_symbol}
                       </h3>
                       {bookmark.gene_id && (

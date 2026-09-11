@@ -63,7 +63,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         <div>
           <div className="mb-1.5 flex items-center gap-2">
             <span
-              className="rounded-md px-2 py-0.5 text-micro font-bold tracking-[0.5px]"
+              className="rounded-md px-2 py-0.5 text-micro tracking-[0.5px]"
               style={{ background: 'var(--sl-teal-light)', color: 'var(--sl-teal)' }}
             >
               DONE
@@ -110,7 +110,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
 
         {/* Middle — verdict + claim pills */}
         <div>
-          <div className="mb-1.5 text-micro font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
+          <div className="mb-1.5 text-micro uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
             {hasSkin ? 'Verdict' : 'Results'}
           </div>
           {hasSkin ? (
@@ -122,7 +122,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 {topClaims.map((c) => (
                   <span
                     key={c.slug}
-                    className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-micro font-semibold"
+                    className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-micro"
                     style={{
                       background: `color-mix(in oklab, ${c.color} 8%, var(--surface))`,
                       borderColor: `color-mix(in oklab, ${c.color} 22%, var(--surface))`,
@@ -141,14 +141,14 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 {comp.deg_total.toLocaleString()} differentially expressed genes
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
+                <span className="rounded-full px-2.5 py-1 text-micro" style={{ background: 'var(--sl-teal-light)', color: 'var(--dc-up-dark)' }}>
                   {comp.deg_up} up
                 </span>
-                <span className="rounded-full px-2.5 py-1 text-micro font-semibold" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
+                <span className="rounded-full px-2.5 py-1 text-micro" style={{ background: 'var(--sl-red-light)', color: 'var(--dc-down-dark)' }}>
                   {comp.deg_down} down
                 </span>
                 <span
-                  className="rounded-full px-2.5 py-1 text-micro font-semibold"
+                  className="rounded-full px-2.5 py-1 text-micro"
                   style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
                 >
                   {comp.has_enrichment ? 'Pathway enrichment ready' : 'Enrichment not run'}

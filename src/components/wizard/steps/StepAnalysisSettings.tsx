@@ -118,7 +118,7 @@ export default function StepAnalysisSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-heading font-bold text-primary">Analysis Settings</h2>
+        <h2 className="text-heading text-primary">Analysis Settings</h2>
         <p className="mt-1 text-body-sm text-secondary">
           Configure how your analysis will run. You can always re-run with different settings.
         </p>

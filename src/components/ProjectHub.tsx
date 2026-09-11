@@ -11,8 +11,10 @@ import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
 import CustomGeneSetManager from '@/components/CustomGeneSetManager';
 import { buttonClasses } from '@/components/ui/button';
-import { OverflowMenu, type MenuItem } from '@/components/ui/menu';
+import { type MenuItem } from '@/components/ui/menu';
 import { SegmentedControl, type SegmentItem } from '@/components/ui/tabs';
+import { PageShell } from '@/components/ui/page-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import ProjectMembersModal from '@/components/ProjectMembersModal';
 import ProjectHistory from '@/components/ProjectHistory';
 import { ProjectDetailSkeleton } from '@/components/Skeletons';
@@ -22,7 +24,6 @@ import { Dot } from '@/components/ui/dot';
 import { Chip } from '@/components/ui/chip';
 import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
 import {
-  ArrowLeft,
   Plus,
   Upload,
   Users,
@@ -147,87 +148,54 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   ];
 
   return (
-    <div className="page-container" data-tour="project-overview">
-      <div className="mb-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-body-sm text-secondary"
-        >
-          <ArrowLeft className="h-4 w-4" /> Dashboard
-        </Link>
-      </div>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="page-title">{project.name}</h1>
-          {project.description ? (
-            <p className="mt-1 max-w-3xl text-body-sm text-secondary">
-              {project.description}
-            </p>
-          ) : null}
-        </div>
-
-        {/* Une seule action primaire. L'en-tete alignait sept boutons de meme
-            poids — Multi-Comparison, Contrast scatter, Bookmarks, Gene Lists,
-            Custom gene sets, Members — chacun portant la MEME declaration de
-            style inline recopiee six fois. Aucun n'etait primaire, et l'action
-            reelle de la page (« New Analysis ») etait enterree dans le rail
-            droit d'un onglet. Quatre de ces boutons ouvrent des modales : ce
-            sont des outils, pas de la navigation, ils vont au depassement. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/projects/${projectId}/setup`}
-            className={buttonClasses({ size: 'sm' })}
-          >
-            <Plus className="h-3.5 w-3.5" /> New analysis
-          </Link>
-
-          {comparisons.length >= 2 && (
-            <Link
-              href={`/projects/${projectId}/multi-comparison`}
-              className={buttonClasses({ variant: 'outline', size: 'sm' })}
-            >
-              <Layers className="h-3.5 w-3.5" /> Multi-comparison
-            </Link>
-          )}
-
-          <OverflowMenu items={overflowActions} />
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <StatChip
-          icon={<GitCompare className="h-4 w-4" />}
-          value={comparisons.length}
-          label="Comparisons"
-          tone="neutral"
-        />
-        <StatChip
-          icon={<Database className="h-4 w-4" />}
-          value={stats?.total_datasets ?? 0}
-          label="Datasets"
-          tone="neutral"
-        />
-        <StatChip
-          icon={<FlaskConical className="h-4 w-4" />}
-          value={analyses.length}
-          label="Analyses"
-          tone="neutral"
-        />
-        <StatChip
-          icon={<Upload className="h-4 w-4" />}
-          value={stats?.original_files_count ?? 0}
-          label="Original Files"
-          tone="neutral"
-        />
-      </div>
-
-      <SegmentedControl
-        className="mt-5"
-        label="Project sections"
-        items={PROJECT_TABS}
-        value={activeTab}
-        onValueChange={setActiveTab}
+    <PageShell measure="wide" data-tour="project-overview">
+      <PageHeader
+        // Enrichit le fil d'Ariane avec le vrai nom : la table de routes ne
+        // connait que « Project », elle ne peut pas deviner « Skin Study ».
+        crumbs={[{ label: 'Projects', href: '/projects' }, { label: project.name }]}
+        title={project.name}
+        titleVariant="name"
+        description={project.description || undefined}
+        meta={
+          <>
+            <StatChip icon={<GitCompare className="h-4 w-4" />} value={comparisons.length} label="Comparisons" />
+            <StatChip icon={<Database className="h-4 w-4" />} value={stats?.total_datasets ?? 0} label="Datasets" />
+            <StatChip icon={<FlaskConical className="h-4 w-4" />} value={analyses.length} label="Analyses" />
+            <StatChip icon={<Upload className="h-4 w-4" />} value={stats?.original_files_count ?? 0} label="Original Files" />
+          </>
+        }
+        // Deux actions visibles au plus ; le reste part au depassement, tenu
+        // par la primitive et non par la revue.
+        actions={[
+          {
+            node: (
+              <Link href={`/projects/${projectId}/setup`} className={buttonClasses({ size: 'sm' })}>
+                <Plus className="h-3.5 w-3.5" /> New analysis
+              </Link>
+            ),
+          },
+          ...(comparisons.length >= 2
+            ? [{
+                node: (
+                  <Link
+                    href={`/projects/${projectId}/multi-comparison`}
+                    className={buttonClasses({ variant: 'outline', size: 'sm' })}
+                  >
+                    <Layers className="h-3.5 w-3.5" /> Multi-comparison
+                  </Link>
+                ),
+              }]
+            : []),
+        ]}
+        menuItems={overflowActions}
+        tabs={
+          <SegmentedControl
+            label="Project sections"
+            items={PROJECT_TABS}
+            value={activeTab}
+            onValueChange={setActiveTab}
+          />
+        }
       />
 
       {activeTab === 'comparisons' ? (
@@ -396,7 +364,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title font-semibold text-primary">My Bookmarks</h2>
+              <h2 className="text-title text-primary">My Bookmarks</h2>
               <button
                 onClick={() => setBookmarkModalOpen(false)}
                 className="rounded-full p-1 text-muted hover:bg-hover"
@@ -418,7 +386,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title font-semibold text-primary">My Gene Lists</h2>
+              <h2 className="text-title text-primary">My Gene Lists</h2>
               <button
                 onClick={() => setGeneListModalOpen(false)}
                 className="rounded-full p-1 text-muted hover:bg-hover"
@@ -440,7 +408,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-xl bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title font-semibold text-primary">Custom gene sets</h2>
+              <h2 className="text-title text-primary">Custom gene sets</h2>
               <button
                 onClick={() => setGeneSetModalOpen(false)}
                 className="rounded-full p-1 text-muted hover:bg-hover"
@@ -467,7 +435,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
           onClose={() => setMembersModalOpen(false)}
         />
       ) : null}
-    </div>
+    </PageShell>
   );
 }
 

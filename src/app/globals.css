@@ -625,9 +625,11 @@ body {
 /* Palier intermediaire : c'est entre 1024 et 1280px que la sidebar mange la
    plus grande part utile du contenu. */
 @media (max-width: 1024px) {
-  :root { --sidebar-width: 200px; }
+  :root {
+    --sidebar-width: 200px;
+    --page-gutter: 1.5rem;
+  }
   .app-topbar { padding: 0 1.25rem; }
-  .page-container { padding: 1.5rem 1.25rem 3rem; }
 }
 
 @media (max-width: 767px) {
@@ -674,7 +676,11 @@ body {
 
   .app-content { overflow: visible; }
 
-  .page-container { padding: 1rem 1rem 4rem; }
+  :root {
+    --page-gutter: 1rem;
+    --page-top: 1.25rem;
+    --page-bottom: 5rem;
+  }
 }
 
 /* Au-dela du palier mobile la sidebar est permanente : le bouton et le voile
@@ -805,11 +811,27 @@ body {
 /* ============================================================
    Page Layout
    ============================================================ */
+/* ============================================================
+   Cadre de page
+   ------------------------------------------------------------
+   Quatre enveloppes coexistaient : .page-container (9 fichiers, max-w 1380),
+   `mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8` (13 fichiers, max-w 1280),
+   nue, et `min-h-screen bg-surface-2` (21 sites) — cette derniere etant un
+   BUG de theme sombre, --surface-secondary valant #171e2c quand --app-bg vaut
+   #0c1018 : ces routes avaient un fond visiblement plus clair que le reste,
+   plus un 100vh force a l'interieur d'un conteneur qui defile deja.
+
+   La mesure depend du REGIME, pas de l'humeur du fichier : la chrome respire,
+   la donnee reste dense. Tout etait a 1380 ou 1280 arbitrairement.
+   ============================================================ */
 .page-container {
-  max-width: 1380px;
   margin: 0 auto;
-  padding: 1.75rem 1.5rem 3rem;
+  max-width: var(--measure-default);
+  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
 }
+
+.page-container[data-measure='wide']  { max-width: var(--measure-wide); }
+.page-container[data-measure='prose'] { max-width: var(--measure-prose); }
 
 /* ============================================================
    Scientific Data Styles

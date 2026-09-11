@@ -68,7 +68,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
 
         {/* Verdict badge */}
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-micro font-semibold"
+          className="shrink-0 rounded-full px-2.5 py-1 text-micro"
           style={{ background: verdict.bg, color: verdict.color }}
         >
           {verdict.icon} {verdict.label}
@@ -78,7 +78,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
       {/* ── Score bar ── */}
       <div className="px-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-heading font-bold" style={{ color: verdict.color }}>
+          <span className="text-heading" style={{ color: verdict.color }}>
             {claim.score}
             <span className="text-body-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
           </span>

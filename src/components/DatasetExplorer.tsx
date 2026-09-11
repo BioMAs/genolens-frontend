@@ -75,8 +75,8 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
   if (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to load data. Please try again.';
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="mx-auto max-w-7xl">
+      <div className="p-8">
+        <div className="page-container">
           <div className="rounded-md bg-red-50 p-4">
             <div className="flex">
               <div className="ml-3">
@@ -101,10 +101,10 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
   }
 
   return (
-    <div className="min-h-screen bg-surface-2 flex flex-col">
+    <div className="flex flex-col">
       {/* Header */}
       <header className="bg-surface shadow-sm z-10">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="page-container flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link 
               href={`/projects/${projectId}`}
@@ -113,7 +113,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-heading font-bold text-primary">
+              <h1 className="text-heading text-primary">
                 {dataset?.name || 'Loading...'}
               </h1>
               <p className="text-body-sm text-secondary">Dataset Explorer</p>
@@ -185,7 +185,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
         </div>
         
         {/* View Mode Switcher */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="page-container mt-4">
           <div className="border-b border-line">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
               <button

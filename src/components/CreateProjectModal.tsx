@@ -70,7 +70,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-xl bg-surface shadow-2xl ring-1 ring-gray-200">
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-          <h2 className="text-title font-semibold text-primary">Create New Project</h2>
+          <h2 className="text-title text-primary">Create New Project</h2>
           <button
             onClick={onClose}
             className="rounded-full p-1 text-muted hover:bg-hover hover:text-secondary"

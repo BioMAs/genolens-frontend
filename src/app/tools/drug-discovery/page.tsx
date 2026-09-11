@@ -1,29 +1,21 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense } from 'react';
-import { ArrowLeft, Target } from 'lucide-react';
+import { Target } from 'lucide-react';
 
 import DrugDiscovery from '@/components/tools/DrugDiscovery';
 
 export default function DrugDiscoveryPage() {
     return (
-        <div className="min-h-screen bg-surface-2 py-8">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="py-8">
+            <div className="page-container">
                 <div className="mb-6">
-                    <Link
-                        href="/tools"
-                        className="inline-flex items-center text-secondary hover:text-primary mb-4 text-body-sm"
-                    >
-                        <ArrowLeft className="h-4 w-4 mr-1" />
-                        Back to tools
-                    </Link>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-rose-100 rounded-lg">
                             <Target className="h-7 w-7 text-rose-700" />
                         </div>
                         <div>
-                            <h1 className="text-display font-bold text-primary">Drug Discovery</h1>
+                            <h1 className="text-display text-primary">Drug Discovery</h1>
                             {/* La phrase précédente disait « The module does not read any of your
                                 data ». Elle est devenue fausse le jour où le mode B a été câblé :
                                 l'onglet « Drug targets » d'une comparaison envoie les symboles des

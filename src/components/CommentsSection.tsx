@@ -68,7 +68,7 @@ export default function CommentsSection({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <MessageSquare className="h-5 w-5 text-muted" />
-          <h3 className="text-title font-semibold text-primary">
+          <h3 className="text-title text-primary">
             {title}
           </h3>
           {countData && (

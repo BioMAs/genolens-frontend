@@ -361,7 +361,7 @@ function Th({
   return (
     <th
       scope="col"
-      className={`px-3 py-2.5 text-micro font-semibold uppercase tracking-wide ${
+      className={`px-3 py-2.5 text-micro uppercase tracking-wide ${
         align === 'right' ? 'text-right' : 'text-left'
       } ${className}`}
       style={{ color: 'var(--text-muted)' }}

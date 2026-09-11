@@ -56,7 +56,7 @@ export default function StepResults({
       {/* Success header */}
       <div className="rounded-xl bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 p-6 text-center">
         <CheckCircle className="mx-auto h-10 w-10 text-green-500 mb-3" />
-        <h2 className="text-heading font-bold text-green-900">Analysis Complete!</h2>
+        <h2 className="text-heading text-green-900">Analysis Complete!</h2>
         <p className="mt-1 text-body-sm text-green-700">
           Your multi-method analysis has finished. Explore your results below.
         </p>

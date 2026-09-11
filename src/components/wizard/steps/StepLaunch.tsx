@@ -121,7 +121,7 @@ export default function StepLaunch({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-heading font-bold text-primary">Launch Analysis</h2>
+        <h2 className="text-heading text-primary">Launch Analysis</h2>
         <p className="mt-1 text-body-sm text-secondary">
           Review your configuration and launch the multi-method differential expression analysis.
         </p>

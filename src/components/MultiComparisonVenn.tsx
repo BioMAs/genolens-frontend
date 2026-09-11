@@ -304,11 +304,11 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
             {/* Verdict / shared core */}
             <div>
-              <div className="mb-2 text-micro font-semibold uppercase tracking-[0.6px]" style={{ color: 'var(--sl-teal)' }}>
+              <div className="mb-2 text-micro uppercase tracking-[0.6px]" style={{ color: 'var(--sl-teal)' }}>
                 The verdict
               </div>
               <h3
-                className="font-display text-heading font-semibold leading-[1.3] tracking-[-0.4px]"
+                className="font-display text-heading leading-[1.3] tracking-[-0.4px]"
                 style={{ color: 'var(--text-primary)' }}
               >
                 A shared {sharedByAll.length}-gene core runs through all {setCount} comparisons

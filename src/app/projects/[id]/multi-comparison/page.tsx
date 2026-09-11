@@ -52,8 +52,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <div className="text-center py-12">
             <div className="text-secondary">Loading...</div>
           </div>
@@ -64,8 +64,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
   if (error || !pathDatasetId || comparisons.length < 2) {
     return (
-      <div className="min-h-screen bg-surface-2 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
             className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
@@ -88,10 +88,10 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-surface-2">
+    <div className="">
       {/* Header */}
       <div className="bg-surface border-b border-line">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
             className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
@@ -101,7 +101,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
           </button>
 
           <div>
-            <h1 className="text-display font-bold text-primary">
+            <h1 className="text-display text-primary">
               Multi-Comparison Analysis
             </h1>
             {project && (
@@ -114,7 +114,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-container">
         <MultiComparisonVenn
           projectId={projectId}
           pathDatasetId={pathDatasetId}

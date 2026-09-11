@@ -87,7 +87,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
       {/* Controls */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h3 className="text-title font-semibold">GSEA Results</h3>
+          <h3 className="text-title">GSEA Results</h3>
           <div className="flex gap-2 text-body-sm">
             <span className="px-2 py-1 bg-red-100 text-red-700 rounded inline-flex items-center">
               <TrendingUp className="h-3 w-3 mr-1" />

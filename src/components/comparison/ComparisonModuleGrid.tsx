@@ -89,7 +89,7 @@ export default function ComparisonModuleGrid({
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2
-              className="font-display text-title font-semibold tracking-[-0.3px]"
+              className="font-display text-title tracking-[-0.3px]"
               style={{ color: 'var(--text-primary)' }}
             >
               {title}
@@ -158,7 +158,7 @@ export default function ComparisonModuleGrid({
               <div className="flex items-start justify-between gap-2">
                 <ModuleIcon module={module} />
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-micro font-semibold"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-micro"
                   style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}
                 >
                   <Lock className="h-3 w-3" /> {module.hint}
@@ -170,7 +170,7 @@ export default function ComparisonModuleGrid({
                   type="button"
                   disabled={sending || alreadyRequested}
                   onClick={() => request(module.addOnId!)}
-                  className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-micro font-semibold transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-micro transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
                     borderColor: 'var(--sl-purple-muted)',
                     color: alreadyRequested ? 'var(--text-muted)' : 'var(--sl-purple)',

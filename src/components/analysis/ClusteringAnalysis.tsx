@@ -192,7 +192,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       {/* Header / Controls */}
       <div className="bg-surface p-4 border-b border-line">
         <div className="flex flex-wrap items-center gap-4">
-            <h2 className="text-title font-semibold text-primary">Hierarchical Clustering</h2>
+            <h2 className="text-title text-primary">Hierarchical Clustering</h2>
             
             <div className="h-6 w-px bg-gray-300"></div>
 

@@ -365,7 +365,7 @@ export default function UserManagement() {
           <div>
             <div className="flex items-center gap-3">
               <Users className="h-6 w-6 text-brand-primary" />
-              <h2 className="text-heading font-semibold text-primary">User Management</h2>
+              <h2 className="text-heading text-primary">User Management</h2>
             </div>
             <p className="mt-1 text-body-sm text-secondary">
               Manage user roles and permissions. Total users: {users.length}
@@ -565,7 +565,7 @@ export default function UserManagement() {
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-title font-semibold text-primary">Invite User</h3>
+                <h3 className="text-title text-primary">Invite User</h3>
                 <p className="text-caption text-secondary mt-0.5">Creates a pending account and sends an invitation email.</p>
               </div>
               <button onClick={() => setShowInviteModal(false)} className="text-muted hover:text-secondary">
@@ -643,7 +643,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-title font-semibold text-primary">Create New User</h3>
+              <h3 className="text-title text-primary">Create New User</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-muted hover:text-secondary"
@@ -725,7 +725,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-title font-semibold text-primary">Edit User</h3>
+              <h3 className="text-title text-primary">Edit User</h3>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-muted hover:text-secondary"
@@ -815,7 +815,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg shadow-xl max-w-sm w-full">
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <h3 className="text-title font-semibold text-primary">Add AI Tokens</h3>
+              <h3 className="text-title text-primary">Add AI Tokens</h3>
               <button
                 onClick={() => setShowTokenModal(false)}
                 className="text-muted hover:text-secondary"

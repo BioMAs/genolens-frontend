@@ -43,7 +43,7 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
             <Trash2 className="h-5 w-5 text-red-500" />
-            <h2 className="text-title font-semibold text-primary">Supprimer le projet</h2>
+            <h2 className="text-title text-primary">Supprimer le projet</h2>
           </div>
           <button
             onClick={handleClose}

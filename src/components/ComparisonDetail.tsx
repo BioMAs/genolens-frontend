@@ -417,8 +417,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (!degDataset) {
     return (
-      <div className="min-h-screen bg-surface-2 py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="py-8">
+        <div className="page-container">
           <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-body-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
@@ -558,7 +558,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 {/* DEG Table */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-heading font-bold text-primary">Differentially Expressed Genes</h2>
+                    <h2 className="text-heading text-primary">Differentially Expressed Genes</h2>
                     <button
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-md bg-surface hover:bg-hover text-primary"
                       onClick={async () => {
