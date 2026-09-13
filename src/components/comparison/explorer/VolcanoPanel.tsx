@@ -22,7 +22,6 @@ import { useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { Layout } from 'plotly.js';
 import { Dataset } from '@/types';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   useComparisonActions,
   useSelection,
@@ -35,6 +34,8 @@ import { normalizeGeneKey } from '@/utils/geneKeys';
 import { getPalette } from '@/utils/chartPalettes';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
@@ -54,10 +55,6 @@ const Plot = dynamic(() => import('react-plotly.js'), {
  * `--border`, `--text-muted` and `--text-secondary` from `globals.css`; `DEGBarChart` repeats
  * its direction colours for the same reason.
  */
-const PLOT_THEME = {
-  light: { grid: '#edeff2', axis: '#8b93a0', text: '#5b6472' },
-  dark: { grid: '#1f2840', axis: '#5a6a82', text: '#8898ae' },
-} as const;
 
 /** Trace order is the contract for Plotly's `curveNumber`, so it is fixed here. */
 const TRACE_ORDER = ['ns', 'down', 'up'] as const;
@@ -94,10 +91,11 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
   const selection = useSelection();
   const { colorblind } = useViewPreferences();
   const { setColorblind, selectGenes, toggleGene, clearSelection } = useComparisonActions();
-  const { theme } = useTheme();
 
   const palette = getPalette(colorblind ? 'colorblind' : 'standard');
-  const plotTheme = PLOT_THEME[theme === 'dark' ? 'dark' : 'light'];
+  // PLOT_THEME etait defini independamment dans TROIS fichiers, avec les
+  // memes valeurs. useChartTheme le remplace.
+  const chartTheme = useChartTheme();
 
   const { data, isLoading, error, isFetching } = useVolcanoPoints(dataset.id, comparisonName);
   const points = data?.points;
@@ -229,31 +227,31 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
   );
 
   const layout = useMemo<Partial<Layout>>(
-    () => ({
+    () => buildPlotlyLayout(chartTheme, {
       autosize: true,
       margin: { l: 60, r: 20, t: 10, b: 50 },
       // Transparent, so the card behind shows through and the plot follows the theme instead of
       // painting a white block in dark mode.
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { color: plotTheme.text, size: 11 },
+      font: { color: chartTheme.inkSubtle, size: 11 },
       hovermode: 'closest',
       dragmode: 'pan',
       showlegend: false,
       xaxis: {
         title: { text: 'log2 fold change' },
         zeroline: true,
-        zerolinecolor: plotTheme.grid,
-        gridcolor: plotTheme.grid,
-        linecolor: plotTheme.grid,
-        tickcolor: plotTheme.axis,
+        zerolinecolor: chartTheme.grid,
+        gridcolor: chartTheme.grid,
+        linecolor: chartTheme.grid,
+        tickcolor: chartTheme.axis,
       },
       yaxis: {
         title: { text: '−log10 padj' },
         zeroline: false,
-        gridcolor: plotTheme.grid,
-        linecolor: plotTheme.grid,
-        tickcolor: plotTheme.axis,
+        gridcolor: chartTheme.grid,
+        linecolor: chartTheme.grid,
+        tickcolor: chartTheme.axis,
       },
       shapes: [
         ...[thresholds.logfc, -thresholds.logfc].map((x) => ({
@@ -263,7 +261,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
           yref: 'paper' as const,
           y0: 0,
           y1: 1,
-          line: { color: plotTheme.axis, width: 1, dash: 'dot' as const },
+          line: { color: chartTheme.axis, width: 1, dash: 'dot' as const },
         })),
         {
           type: 'line' as const,
@@ -272,11 +270,11 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
           x1: 1,
           y0: -Math.log10(thresholds.padj),
           y1: -Math.log10(thresholds.padj),
-          line: { color: plotTheme.axis, width: 1, dash: 'dot' as const },
+          line: { color: chartTheme.axis, width: 1, dash: 'dot' as const },
         },
       ],
     }),
-    [plotTheme, thresholds]
+    [chartTheme, thresholds]
   );
 
   const aiContext = useMemo(() => {

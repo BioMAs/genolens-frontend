@@ -119,6 +119,7 @@ import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionConte
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { UNKNOWN_GENE } from '@/utils/volcano';
 import type { Dataset } from '@/types';
+import { getPalette } from '@/utils/chartPalettes';
 
 const DATASET = { id: 'ds-1', project_id: 'proj-1' } as Dataset;
 const COMPARISON = 'Treated_vs_Control';
@@ -224,9 +225,20 @@ describe('trace layout', () => {
     renderPanel();
     await screen.findByTestId('plot-stub');
 
+    // Assertion contre la PALETTE, pas contre des littéraux.
+    //
+    // Le test épinglait `#22c55e` et `#ef4444`. Ces valeurs ont changé quand la
+    // palette est devenue dépendante du thème — `up` sur fond clair donnait
+    // 2,28:1, sous le plancher de 3:1, et vaut désormais #16a34a. Le test
+    // échouait donc sur une correction d'accessibilité, alors que ce qu'il
+    // protège vraiment est la CONVENTION : le sur-exprimé est vert, le
+    // sous-exprimé est rouge. Un inversement reste attrapé ; un changement de
+    // nuance ne l'est plus.
+    const palette = getPalette('standard', 'light');
     const [, down, up] = lastProps().data;
-    expect(up.marker?.color).toBe('#22c55e');
-    expect(down.marker?.color).toBe('#ef4444');
+    expect(up.marker?.color).toBe(palette.up);
+    expect(down.marker?.color).toBe(palette.down);
+    expect(palette.up).not.toBe(palette.down);
   });
 
   it('draws a threshold line for each bound plus its mirror', async () => {

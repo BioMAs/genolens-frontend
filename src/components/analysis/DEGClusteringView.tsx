@@ -8,6 +8,8 @@ import { useHeatmapData, type HeatmapGeneRow } from '@/components/heatmap/useHea
 import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import { getPalette } from '@/utils/chartPalettes';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 import { Layout, PlotData } from 'plotly.js';
 
 // Build a Plotly discrete (stepped) colorscale so each category maps to a flat color.
@@ -80,6 +82,7 @@ export default function DEGClusteringView({
   sampleConditionMap,
   genesOverride,
 }: DEGClusteringViewProps) {
+  const chartTheme = useChartTheme();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
   const [colorblindMode, setColorblindMode] = useState(false);
 
@@ -395,8 +398,11 @@ export default function DEGClusteringView({
               xanchor: 'center',
             },
             margin: { l: 55, r: 90, b: 120, t: 140 },
-            paper_bgcolor: 'white',
-            plot_bgcolor: 'white',
+            // `paper_bgcolor: 'white'` et `plot_bgcolor: 'white'` etaient poses
+            // ici en dur : la carte de chaleur rendait donc un rectangle blanc
+            // au milieu d'une application en theme sombre. C'etait le defaut de
+            // mode sombre le plus visible de toute la couche graphique.
+            ...buildPlotlyLayout(chartTheme),
           } as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}

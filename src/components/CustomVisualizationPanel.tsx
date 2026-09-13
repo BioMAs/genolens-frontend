@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import type { Data, Layout } from 'plotly.js';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -72,6 +74,7 @@ export default function CustomVisualizationPanel({
     comparisonName,
     allGenes = []
 }: CustomVisualizationPanelProps) {
+    const chartTheme = useChartTheme();
     const [vizType, setVizType] = useState<VisualizationType>('pca');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -211,6 +214,7 @@ export default function CustomVisualizationPanel({
             } as Data));
 
             const layout: Partial<Layout> = {
+                ...buildPlotlyLayout(chartTheme),
                 title: { text: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
                 yaxis: { title: { text: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` } },
@@ -242,6 +246,7 @@ export default function CustomVisualizationPanel({
             } as Data));
 
             const layout: Partial<Layout> = {
+                ...buildPlotlyLayout(chartTheme),
                 title: { text: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 scene: {
                     xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
@@ -283,6 +288,7 @@ export default function CustomVisualizationPanel({
             } as Data));
 
             const layout: Partial<Layout> = {
+                ...buildPlotlyLayout(chartTheme),
                 title: { text: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 xaxis: { title: { text: 'UMAP1' } },
                 yaxis: { title: { text: 'UMAP2' } },
@@ -314,6 +320,7 @@ export default function CustomVisualizationPanel({
             } as Data));
 
             const layout: Partial<Layout> = {
+                ...buildPlotlyLayout(chartTheme),
                 title: { text: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 scene: {
                     xaxis: { title: { text: 'UMAP1' } },
@@ -352,6 +359,7 @@ export default function CustomVisualizationPanel({
         }).flat();
 
         const layout: Partial<Layout> = {
+                ...buildPlotlyLayout(chartTheme),
             title: { text: `Expression Distribution - ${boxplotData.n_genes} gene(s)` },
             yaxis: { title: { text: 'Expression Level' } },
             xaxis: { title: { text: '' } },

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { getPalette, type Palette, type PaletteMode } from '@/utils/chartPalettes';
 
 /**
  * Le theme des graphiques, sous DEUX formes.
@@ -190,9 +191,37 @@ export function useChartTheme(): ChartTheme {
   const { theme } = useTheme();
   const [resolved, setResolved] = useState<ChartTheme>(() => FALLBACK[theme]);
 
+  // La regle « pas de setState dans un effet » est juste en general : elle evite
+  // un rendu en cascade. C'est ici l'exception qu'elle prevoit, et il n'y a pas
+  // de contournement : ThemeContext pose la classe `.dark` DANS un effet, donc
+  // la valeur resolue ne peut pas etre connue pendant le rendu. Lire le DOM
+  // pendant le rendu donnerait l'ancien theme pour une image, ce qui est
+  // exactement le scintillement qu'on cherche a eviter.
+  //
+  // Le cout est borne : readChartTheme est memoise par theme, donc ce second
+  // rendu n'a lieu qu'au basculement clair/sombre, pas a chaque rendu.
   useLayoutEffect(() => {
+    // La directive s'ancre a la ligne SUIVANTE, et la regle pointe l'appel a
+    // setState, pas l'effet qui le contient.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResolved(readChartTheme());
   }, [theme]);
 
   return resolved;
+}
+
+/**
+ * La palette de donnees, resolue pour le theme courant.
+ *
+ * Le hook vit ICI et non dans chartPalettes : ce module-la est importe par neuf
+ * fichiers, et lui faire dependre du contexte React le rendrait inutilisable
+ * hors composant — en plus d'alourdir chaque test qui le touche.
+ *
+ * A preferer a `getPalette` dans un composant : oublier le second argument
+ * laisserait silencieusement les couleurs du theme clair sur fond sombre, ce
+ * qui est precisement le defaut corrige ici.
+ */
+export function useChartPalette(mode: PaletteMode = 'standard'): Palette {
+  const { theme } = useTheme();
+  return getPalette(mode, theme);
 }

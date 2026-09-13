@@ -6,6 +6,8 @@ import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Layout, PlotData } from 'plotly.js';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 /* Direction colours: the literal values of --dc-up / --dc-down, which are
    defined once and not overridden in dark mode. Plotly needs concrete colours,
@@ -33,6 +35,7 @@ interface DEGGene {
 type QueryRow = Record<string, unknown>;
 
 export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProps) {
+  const chartTheme = useChartTheme();
   const { theme } = useTheme();
   const dark = theme === 'dark';
   const [topN, setTopN] = useState<TopN>(10);
@@ -240,7 +243,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
             customdata: hoverTexts,
           } as Partial<PlotData>,
         ]}
-        layout={{
+        layout={buildPlotlyLayout(chartTheme, {
           height: chartHeight,
           margin: { l: 120, r: 60, t: 20, b: 50 },
           xaxis: {
@@ -268,7 +271,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
               line: { color: dark ? '#5a6a82' : '#9ca3af', width: 1, dash: 'dot' },
             },
           ],
-        } as Partial<Layout>}
+        }) as Partial<Layout>}
         config={{
           displayModeBar: true,
           displaylogo: false,

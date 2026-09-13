@@ -13,6 +13,8 @@ import {
   ReferenceLine, ResponsiveContainer
 } from 'recharts';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -74,6 +76,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function ClusteringAnalysis({ projectId, datasetId, datasetName }: ClusteringAnalysisProps) {
+  const chartTheme = useChartTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ClusteringResult | null>(null);
@@ -402,7 +405,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               <div className="h-full w-full bg-surface rounded-control shadow border border-line p-2">
                    <Plot
                         data={finalPlotData}
+                        // Aucun fond n'etait declare : Plotly retombait donc
+                        // sur son blanc par defaut, au milieu d'une interface
+                        // sombre.
                         layout={{
+                          ...buildPlotlyLayout(chartTheme),
                             autosize: true,
                             margin: { t: 50, r: 50, b: 100, l: 150 }, // More space for labels
                             title: { text: `Heatmap (${result.row_labels.length} genes x ${result.col_labels.length} samples)` },

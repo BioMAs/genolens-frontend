@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { ExternalLink, TableIcon, Activity, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -32,6 +34,7 @@ interface ApiErrorShape {
 }
 
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
+  const chartTheme = useChartTheme();
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
     const [loadingComparisons, setLoadingComparisons] = useState(true);
@@ -264,12 +267,11 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 title: { text: categoryFilter ? `Enrichment: ${categoryFilter}` : 'Top Enriched Pathways' },
                 margin: { t: 50, b: 50, l: 50, r: 50 },
                 height: 500,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)'
+                ...buildPlotlyLayout(chartTheme),
             }
         };
 
-    }, [allResults, viewMode, categoryFilter]);
+    }, [allResults, viewMode, categoryFilter, chartTheme]);
 
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
