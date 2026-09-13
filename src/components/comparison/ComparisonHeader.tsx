@@ -20,12 +20,12 @@
  * ici l'enterrerait au lieu de la corriger.
  */
 
-import Link from 'next/link';
-import { ArrowLeft, Calendar, Database, RefreshCw, Sparkles } from 'lucide-react';
+import { Calendar, Database, RefreshCw, Sparkles } from 'lucide-react';
 import type { Dataset, Project } from '@/types';
 import { formatDate } from '@/utils/formatters';
 import { Button } from '@/components/ui/button';
 import ComparisonReportButton from '@/components/ComparisonReportButton';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Props {
   projectId: string;
@@ -55,56 +55,79 @@ export default function ComparisonHeader({
   onOpenChat,
 }: Props) {
   return (
-    <>
-      <Link
-        href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
-        className="mb-4 inline-flex items-center gap-2 text-body-sm"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        <ArrowLeft className="h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
-      </Link>
-
-      <div className="gl-card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="page-title">{decodedName}</h1>
-            <div
-              className="mt-1 flex flex-wrap items-center gap-4 text-body-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Database className="h-4 w-4" /> Project: {project.name}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Calendar className="h-4 w-4" /> Created {formatDate(degDataset.created_at)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
+    /**
+     * L'en-tete etait une `gl-card p-5` posee sur le fond de page, precedee d'un
+     * lien « Back to… ». Deux consequences :
+     *
+     *   - un ecran qui commence par une carte n'a pas de titre de page, il a une
+     *     premiere carte. La hierarchie demarrait donc un cran trop bas ;
+     *   - le retour etait un lien isole, alors que le fil d'Ariane de la barre
+     *     superieure dit deja ou l'on est. `PageHeader` l'alimente, ce qui
+     *     supprime le lien ET remplit la barre, qui affichait « Comparison ».
+     *
+     * `titleVariant="name"` existe pour ce cas precis : un nom comme
+     * `Treated_D14_vs_Control_D14_female` rendu a 30px/700 ne se lit pas comme
+     * un titre, il se lit comme une erreur.
+     */
+    <PageHeader
+      title={decodedName}
+      titleVariant="name"
+      crumbs={[
+        { label: 'Projects', href: '/projects' },
+        {
+          label: project.name,
+          href: analysisId
+            ? `/projects/${projectId}/analyses/${analysisId}`
+            : `/projects/${projectId}`,
+        },
+        { label: decodedName },
+      ]}
+      meta={
+        <>
+          <span className="inline-flex items-center gap-2 text-body-sm text-secondary">
+            <Database className="h-4 w-4" /> Project: {project.name}
+          </span>
+          <span className="inline-flex items-center gap-2 text-body-sm text-secondary">
+            <Calendar className="h-4 w-4" /> Created {formatDate(degDataset.created_at)}
+          </span>
+          {statsLoading ? (
+            <span className="inline-flex items-center gap-2 text-body-sm text-muted">
+              <RefreshCw className="h-4 w-4 animate-spin" /> Calculating DEG statistics…
+            </span>
+          ) : null}
+        </>
+      }
+      actions={[
+        {
+          node: (
             <Button size="sm" onClick={onOpenChat} title="Open the AI Assistant for this comparison">
               <Sparkles className="h-3.5 w-3.5" />
               AI Assistant
             </Button>
-            {reportUnlocked && (
-              <ComparisonReportButton
-                datasetId={degDataset.id}
-                comparisonName={actualComparisonName}
-              />
-            )}
-            <Button variant="outline" size="sm" onClick={onReprocess} disabled={reprocessing}>
-              <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />
-              {reprocessing ? 'Reprocessing…' : 'Reprocess'}
-            </Button>
-          </div>
-        </div>
-
-        {statsLoading ? (
-          <div className="mt-4 inline-flex items-center gap-2 text-body-sm text-muted">
-            <RefreshCw className="h-4 w-4 animate-spin" /> Calculating DEG statistics…
-          </div>
-        ) : null}
-      </div>
-    </>
+          ),
+        },
+        ...(reportUnlocked
+          ? [
+              {
+                node: (
+                  <ComparisonReportButton
+                    datasetId={degDataset.id}
+                    comparisonName={actualComparisonName}
+                  />
+                ),
+              },
+            ]
+          : []),
+      ]}
+      // Le retraitement est rare, long, et refait un calcul deja fait : il n'a
+      // pas sa place a cote de l'action d'arrivee.
+      menuItems={[
+        {
+          label: reprocessing ? 'Reprocessing…' : 'Reprocess DEG',
+          icon: <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />,
+          onSelect: reprocessing ? undefined : onReprocess,
+        },
+      ]}
+    />
   );
 }

@@ -859,11 +859,27 @@ body {
 /* ============================================================
    Card Patterns
    ============================================================ */
+/* ── L1 : bloc de contenu ────────────────────────────────────────────────────
+   SANS BORDURE. La regle : un filet 1px n'est permis que si la surface est
+   cliquable, defilable ou editable, ou si elle porte un contenu d'un autre
+   niveau semantique. GROUPER N'EST JAMAIS UNE RAISON DE BORDER.
+
+   Ce qui remplace le filet est mesure, pas suppose :
+     clair  — #ffffff sur #f4f5f8 : 1,09:1, dE 0,030, plus l'ombre douce ;
+     sombre — #131720 sur #0c1018 : 1,06:1, dE 0,032, plus le filet INTERNE
+              de --elev-1, a dE 0,043 de la surface.
+
+   L'ombre porte deux roles que la bordure ne pouvait pas tenir. D'abord elle
+   distingue une carte posee sur une AUTRE carte : en theme clair --surface et
+   --surface-raised valent tous deux du blanc, donc deux surfaces imbriquees
+   sont indiscernables sans relief. Ensuite elle disparait proprement en sombre,
+   ou --elev-1 devient un filet interne : chaque theme emploie le signal qui
+   fonctionne chez lui, au lieu d'un filet unique qui echoue dans l'un des deux. */
 .gl-card {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius-card-px);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--elev-1);
+  transition: box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .gl-card-interactive {
@@ -871,10 +887,15 @@ body {
 }
 
 /* Le survol n'est ni marque ni succes : relief neutre. L'indigo reste
-   reserve a ce qu'on clique reellement. */
+   reserve a ce qu'on clique reellement.
+
+   Le fond ET l'ombre bougent ensemble parce qu'aucun des deux ne suffit dans
+   les deux themes : en clair --surface-raised est identique a --surface, donc
+   seule l'ombre se voit ; en sombre il est plus clair, et c'est lui qui porte
+   le signal. */
 .gl-card-interactive:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--elev-1);
+  background: var(--surface-raised);
+  box-shadow: var(--elev-2);
 }
 
 /* ============================================================
