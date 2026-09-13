@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import GlobalGeneSearch from './GlobalGeneSearch';
+import CommandPaletteTrigger from './command/CommandPaletteTrigger';
 import HelpTourButton from './onboarding/HelpTourButton';
 import MobileNavToggle from './MobileNavToggle';
 import Breadcrumb from './Breadcrumb';
@@ -61,7 +61,7 @@ export default function TopBar() {
           fonction occasionnelle. Ramenee a 240px, elle laisse la place au
           contexte, qui sert a chaque instant. */}
       <div className="hidden w-60 shrink-0 justify-center lg:flex">
-        <GlobalGeneSearch variant="topbar" />
+        <CommandPaletteTrigger />
       </div>
 
       <div className="flex shrink-0 items-center justify-end gap-1">

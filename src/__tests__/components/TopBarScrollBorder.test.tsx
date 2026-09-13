@@ -13,7 +13,10 @@
  */
 import { render, screen, act } from '@testing-library/react';
 
-jest.mock('@/components/GlobalGeneSearch', () => ({
+// La recherche de la barre est devenue une pastille qui ouvre la palette de
+// commandes. Elle est simulee pour la meme raison que l'ancienne zone de
+// saisie : ces tests portent sur le fil d'Ariane et le filet de defilement.
+jest.mock('@/components/command/CommandPaletteTrigger', () => ({
   __esModule: true,
   default: () => null,
 }));

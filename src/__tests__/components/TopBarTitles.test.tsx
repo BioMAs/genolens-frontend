@@ -15,9 +15,12 @@
 import { render, screen, within } from '@testing-library/react';
 import TopBar from '@/components/TopBar';
 
-jest.mock('@/components/GlobalGeneSearch', () => ({
+// La recherche de la barre est devenue une pastille qui ouvre la palette de
+// commandes. Elle est simulee pour la meme raison que l'ancienne zone de
+// saisie : ces tests portent sur le fil d'Ariane et le filet de defilement.
+jest.mock('@/components/command/CommandPaletteTrigger', () => ({
   __esModule: true,
-  default: () => <div data-testid="gene-search" />,
+  default: () => null,
 }));
 
 jest.mock('@/components/onboarding/HelpTourButton', () => ({
