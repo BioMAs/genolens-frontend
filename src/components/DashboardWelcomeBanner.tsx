@@ -52,9 +52,14 @@ export default function DashboardWelcomeBanner({
   const hasProduced = !statsLoading && (comparisons > 0 || degs > 0);
 
   return (
-    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    /* Le tableau de bord est l'exception assumee : cette salutation n'est pas
+       un en-tete de page, donc elle ne passe pas par `PageHeader`. Elle prend
+       en revanche le meme CRAN de titre — `text-display` — sinon le seul ecran
+       a ne pas l'utiliser serait aussi le premier qu'on voit, et la hierarchie
+       du produit y demarrerait un cran plus bas qu'ailleurs. */
+    <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-heading text-primary">
+        <h1 className="text-display text-primary">
           {firstName ? `Welcome back, ${firstName}` : 'Welcome back'}
         </h1>
 

@@ -4,6 +4,7 @@ import { Mail, Calendar, Shield, Clock, Blocks } from 'lucide-react'
 import BillingSection from './BillingSection'
 import UsageSection from './UsageSection'
 import MyModules from './MyModules'
+import { PageHeader } from '@/components/ui/page-header'
 
 function fmt(date?: string | null) {
   if (!date) return 'N/A'
@@ -34,30 +35,41 @@ export default async function ProfilePage() {
 
   return (
     <div className="page-container space-y-6">
-      {/* Account hero */}
-      <div className="gl-card flex flex-wrap items-center justify-between gap-6 p-6">
-        <div className="flex items-center gap-4">
-          <div
-            className="grid h-16 w-16 place-items-center rounded-pill font-display text-heading text-on-accent"
-            style={{ background: 'linear-gradient(135deg, var(--sl-purple), var(--sl-teal-dark))' }}
-          >
-            {initials}
-          </div>
-          <div>
-            <h1 className="page-title">{name}</h1>
-            <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{user.email}</p>
-          </div>
-        </div>
-        <form action="/auth/signout" method="post">
-          <button
-            type="submit"
-            className="rounded-card border px-4 py-2 text-body-sm font-semibold transition-colors"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--sl-red-dark)', background: 'var(--surface)' }}
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
+      {/* Le titre de l'ecran etait enferme dans une carte, precede d'une
+          pastille en DEGRADE violet→teal. C'est le meme artefact que celui
+          retire du pied de la barre laterale : le dernier degrade de
+          l'application connectee. Un cercle plat sur l'accent le remplace, et
+          le titre remonte au niveau d'un titre de page.
+
+          `titleVariant="name"` : c'est un nom saisi, pas un intitule du
+          produit. */}
+      <PageHeader
+        title={name}
+        titleVariant="name"
+        crumbs={[{ label: 'Profile' }]}
+        meta={
+          <span className="inline-flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent-soft font-display text-body-sm text-accent-ink">
+              {initials}
+            </span>
+            <span className="text-body-sm text-secondary">{user.email}</span>
+          </span>
+        }
+        actions={[
+          {
+            node: (
+              <form action="/auth/signout" method="post">
+                <button
+                  type="submit"
+                  className="h-9 rounded-control border border-strong bg-surface px-4 text-body-sm font-semibold text-danger-ink transition-colors hover:bg-hover"
+                >
+                  Sign out
+                </button>
+              </form>
+            ),
+          },
+        ]}
+      />
 
       {/* Account details */}
       <section>

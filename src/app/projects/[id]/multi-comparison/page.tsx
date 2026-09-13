@@ -8,6 +8,7 @@ import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
 import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -88,39 +89,26 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="">
-      {/* Header */}
-      <div className="bg-surface border-b border-line">
-        <div className="page-container">
-          <button
-            onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Project
-          </button>
-
-          <div>
-            <h1 className="text-display text-primary">
-              Multi-Comparison Analysis
-            </h1>
-            {project && (
-              <p className="mt-2 text-body-sm text-secondary">
-                Project: {project.name}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="page-container">
+    /* L'en-tete etait une BANDE pleine largeur — `bg-surface border-b
+       border-line` — suivie d'un `page-container` separe pour le contenu.
+       Troisieme enveloppe de page du produit, et une bande bordee est
+       exactement ce que la regle L1 interdit : on ne borde pas pour grouper.
+       Un seul conteneur, et l'en-tete pose dessus. */
+    <div className="page-container">
+        <PageHeader
+          title="Multi-Comparison Analysis"
+          description={project ? `Project: ${project.name}` : undefined}
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            ...(project ? [{ label: project.name, href: `/projects/${projectId}` }] : []),
+            { label: 'Multi-comparison' },
+          ]}
+        />
         <MultiComparisonVenn
           projectId={projectId}
           pathDatasetId={pathDatasetId}
           comparisons={comparisons}
         />
-      </div>
     </div>
   );
 }

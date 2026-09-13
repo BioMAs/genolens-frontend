@@ -1,42 +1,39 @@
 'use client';
 
 import { Suspense } from 'react';
-import { Target } from 'lucide-react';
 
 import DrugDiscovery from '@/components/tools/DrugDiscovery';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function DrugDiscoveryPage() {
-    return (
-        <div className="py-8">
-            <div className="page-container">
-                <div className="mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-rose-100 rounded-control">
-                            <Target className="h-7 w-7 text-rose-700" />
-                        </div>
-                        <div>
-                            <h1 className="text-display text-primary">Drug Discovery</h1>
-                            {/* La phrase précédente disait « The module does not read any of your
-                                data ». Elle est devenue fausse le jour où le mode B a été câblé :
-                                l'onglet « Drug targets » d'une comparaison envoie les symboles des
-                                gènes différentiels au service. Une mention de confidentialité
-                                périmée coûte plus que l'absence de mention. */}
-                            <p className="mt-1 text-secondary">
-                                Ranking of therapeutic targets across 33 TCGA indications, from
-                                curated public sources. This page ranks public data only — to
-                                confront your own differential-expression comparison with a
-                                ranking, open the <strong>Drug targets</strong> tab on that
-                                comparison.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="page-container">
+      {/* La tuile d'icone portait `bg-rose-100 text-rose-700` — de la palette
+          Tailwind brute, hors du systeme de couleur. Elle part avec les deux
+          autres : un titre de page n'a pas besoin d'etre illustre.
 
-                {/* useSearchParams impose une frontière Suspense en App Router. */}
-                <Suspense fallback={<p className="text-body-sm text-secondary">Loading…</p>}>
-                    <DrugDiscovery />
-                </Suspense>
-            </div>
-        </div>
-    );
+          La phrase de description a deja ete corrigee une fois : elle disait
+          « The module does not read any of your data », devenu faux le jour ou
+          le mode B a ete cable. Une mention de confidentialite perimee coute
+          plus que l'absence de mention. */}
+      <PageHeader
+        eyebrow="Tools"
+        title="Drug Discovery"
+        description={
+          <>
+            Ranking of therapeutic targets across 33 TCGA indications, from curated public
+            sources. This page ranks public data only — to confront your own
+            differential-expression comparison with a ranking, open the{' '}
+            <strong>Drug targets</strong> tab on that comparison.
+          </>
+        }
+        crumbs={[{ label: 'Tools', href: '/tools' }, { label: 'Drug Discovery' }]}
+      />
+
+      {/* useSearchParams impose une frontière Suspense en App Router. */}
+      <Suspense fallback={<p className="text-body-sm text-secondary">Loading…</p>}>
+        <DrugDiscovery />
+      </Suspense>
+    </div>
+  );
 }

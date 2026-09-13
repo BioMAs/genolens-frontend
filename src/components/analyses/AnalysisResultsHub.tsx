@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database,
+  Loader2, AlertCircle, RotateCcw, Database,
   GitCompare, GitBranch, Network, Activity, Settings2, ChevronRight, ArrowUpRight,
 } from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
@@ -19,6 +19,7 @@ import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 import { useScientificModule } from '@/hooks/useAddOnModules';
 import { scrollToId } from '@/utils/scrollToId';
+import { PageHeader } from '@/components/ui/page-header';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -194,31 +195,46 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--app-bg)' }}>
       <div className="page-container space-y-6">
 
-        {/* Breadcrumb */}
-        <div>
-          <Link
-            href={`/projects/${projectId}`}
-            className="inline-flex items-center gap-2 text-body-sm"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            <ArrowLeft className="h-4 w-4" /> {projectName}
-          </Link>
-        </div>
+        {/* Le titre de l'ecran vivait DANS une carte, precede d'un lien de
+            retour et d'une tuile d'icone. Un ecran qui commence par une carte
+            n'a pas de titre de page, il a une premiere carte. Le fil d'Ariane
+            remplace le lien, PageHeader porte le titre, et les six tuiles de
+            statistiques restent ce qu'elles sont : un bloc de donnees, pas une
+            partie de l'en-tete.
 
-        {/* ── Analysis information card ── */}
-        <div className="rounded-card shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-card" style={{ background: 'var(--sl-teal-light)' }}>
-                <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
-              </div>
-              <div>
-                <h1 className="text-heading" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
-                <p className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Created {new Date(analysis.created_at).toLocaleString('en-US')}
-                </p>
-              </div>
-            </div>
+            `titleVariant="name"` : le nom d'une analyse est saisi par
+            l'utilisateur. */}
+        <PageHeader
+          title={analysis.name}
+          titleVariant="name"
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            { label: projectName, href: `/projects/${projectId}` },
+            { label: analysis.name },
+          ]}
+          meta={
+            <span className="text-caption text-muted">
+              Created {new Date(analysis.created_at).toLocaleString('en-US')}
+            </span>
+          }
+          actions={[
+            {
+              node: (
+                <Link
+                  href={`/projects/${projectId}/setup?rerun=${analysisId}`}
+                  className="flex h-9 items-center gap-2 rounded-control border border-line bg-surface px-3 text-caption font-medium text-secondary transition-colors hover:bg-hover"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Re-run
+                </Link>
+              ),
+            },
+          ]}
+        />
+
+        {/* ── Analysis facts ── */}
+        <div className="gl-card overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+            <StatusBadge status={analysis.status} />
             <div className="flex items-center gap-2">
               {(() => {
                 const meta = matrixDataset?.dataset_metadata as
@@ -238,14 +254,6 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                   </a>
                 );
               })()}
-              <StatusBadge status={analysis.status} />
-              <Link
-                href={`/projects/${projectId}/setup?rerun=${analysisId}`}
-                className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium shadow-sm"
-                style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-secondary)' }}
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Re-run
-              </Link>
             </div>
           </div>
           {/* Stat tiles — 1px dividers via gap-px over a border-coloured background */}

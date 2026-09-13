@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import WizardStepBar from './WizardStepBar';
 import StepDataType, { DataType } from './steps/StepDataType';
 import StepUploadFiles from './steps/StepUploadFiles';
@@ -18,6 +16,7 @@ import StepLaunch from './steps/StepLaunch';
 import StepResults from './steps/StepResults';
 import { AnalysisParams } from '@/types';
 import { useProjectSummary } from '@/hooks/useProjectData';
+import { PageHeader } from '@/components/ui/page-header';
 
 // ─── Wizard State ──────────────────────────────────────────────────────────────
 interface WizardState {
@@ -84,26 +83,24 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
-        {/* Back link */}
-        <Link
-          href={`/projects/${projectId}`}
-          className="mb-6 inline-flex items-center gap-2 text-body-sm text-secondary hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {projectName}
-        </Link>
-
-        {/* Page title */}
-        <div className="mb-6">
-          <h1 className="text-heading text-primary">New Analysis</h1>
-          <p className="mt-1 text-body-sm text-secondary">
-            {selectedDataType
+    /* `py-8 px-4 sm:px-6 lg:px-8` + `mx-auto max-w-4xl` : deux enveloppes
+       imbriquees qui refaisaient a la main ce que `.page-container` porte, avec
+       leurs propres gouttieres et leur propre largeur. */
+    <div className="page-container" data-measure="prose">
+      <div>
+        <PageHeader
+          title="New Analysis"
+          description={
+            selectedDataType
               ? 'Follow the steps below to configure and launch your transcriptomics analysis.'
-              : 'Select a data type to get started.'}
-          </p>
-        </div>
+              : 'Select a data type to get started.'
+          }
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            { label: projectName, href: `/projects/${projectId}` },
+            { label: 'New analysis' },
+          ]}
+        />
 
         {/* Data type selection (pre-wizard) */}
         {!selectedDataType && (

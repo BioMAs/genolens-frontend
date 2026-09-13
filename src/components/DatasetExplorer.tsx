@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
+import { Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
 import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
 import DatasetVisualizer from './DatasetVisualizer';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface DatasetExplorerProps {
   projectId: string;
@@ -102,24 +103,24 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
 
   return (
     <div className="flex flex-col">
-      {/* Header */}
-      <header className="bg-surface shadow-sm z-10">
-        <div className="page-container flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link 
-              href={`/projects/${projectId}`}
-              className="text-secondary hover:text-primary"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-heading text-primary">
-                {dataset?.name || 'Loading...'}
-              </h1>
-              <p className="text-body-sm text-secondary">Dataset Explorer</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+      {/* L'en-tete etait une bande `bg-surface shadow-sm` collee en haut de
+          l'ecran, avec sa fleche de retour et sa barre d'outils dedans. La
+          fleche disparait — le fil d'Ariane dit d'ou l'on vient — et le nom du
+          jeu de donnees devient un titre de page plutot qu'un titre de bande.
+
+          `titleVariant="name"` : un nom de jeu de donnees est saisi. */}
+      <div className="page-container">
+        <PageHeader
+          eyebrow="Dataset explorer"
+          title={dataset?.name || 'Loading…'}
+          titleVariant="name"
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            { label: 'Project', href: `/projects/${projectId}` },
+            { label: dataset?.name ?? 'Dataset' },
+          ]}
+        />
+        <div className="mb-6 flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative rounded-sm shadow-sm">
               <input
@@ -181,11 +182,10 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               <Download className="h-4 w-4 mr-2" />
               Export
             </button>
-          </div>
         </div>
-        
+
         {/* View Mode Switcher */}
-        <div className="page-container mt-4">
+        <div className="mb-6">
           <div className="border-b border-line">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
               <button
@@ -231,7 +231,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             </nav>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden flex flex-col">

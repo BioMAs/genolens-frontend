@@ -924,14 +924,6 @@ body {
 /* ============================================================
    Typography Utilities
    ============================================================ */
-.page-title {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-}
 
 
 

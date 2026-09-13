@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { GitBranch, ArrowUpCircle, ArrowDownCircle, Network } from 'lucide-react';
 import api from '@/utils/api';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface GoTermDetail {
     id: string;
@@ -54,35 +55,40 @@ export default function GoTermPage() {
     if (!term) return null;
 
     return (
-        <div className="py-8">
-             <div className="page-container">
-                 
+        <div className="page-container">
                  <div className="mb-6">
-                    
-                    <div className="bg-surface rounded-card shadow-sm p-6 mb-6">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <h1 className="text-heading text-primary">{term.id}</h1>
-                                    <span className={`px-2 py-1 rounded-pill text-caption font-medium ${
-                                        term.namespace === 'biological_process' ? 'bg-green-100 text-green-800' :
-                                        term.namespace === 'molecular_function' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-accent-soft text-accent-ink'
-                                    }`}>
-                                        {term.namespace}
-                                    </span>
-                                </div>
-                                <h2 className="text-heading text-brand-primary mt-1">{term.name}</h2>
-                                <p className="text-secondary mt-4 leading-relaxed bg-surface-2 p-4 rounded-sm">
-                                    {term.definition}
-                                </p>
-                            </div>
-                            <div className="text-right text-muted">
-                                <Network className="h-10 w-10 ml-auto mb-1 opacity-20"/>
-                                <span className="text-body-sm">Level {term.level}</span>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Le titre de l'ecran etait enferme dans une carte, et
+                        l'identifiant GO y passait AVANT le nom du terme — donc
+                        le `<h1>` disait « GO:0006915 » et un `<h2>` disait
+                        « apoptotic process ». C'est le nom qui identifie le
+                        terme pour un lecteur ; l'identifiant est une reference.
+
+                        Les pastilles d'espace de noms employaient `bg-green-100
+                        text-green-800` et `bg-blue-100 text-blue-800` — de la
+                        palette Tailwind brute, et du VERT, qui dans ce produit
+                        signifie « sur-exprime ». Elles passent sur le fond
+                        d'accent, neutre. */}
+                    <PageHeader
+                        eyebrow={term.id}
+                        title={term.name}
+                        titleVariant="name"
+                        description={term.definition}
+                        crumbs={[
+                            { label: 'Tools', href: '/tools' },
+                            { label: 'Gene Ontology', href: '/tools/ontology' },
+                            { label: term.id },
+                        ]}
+                        meta={
+                            <>
+                                <span className="rounded-pill bg-accent-soft px-2 py-1 text-caption font-medium text-accent-ink">
+                                    {term.namespace}
+                                </span>
+                                <span className="inline-flex items-center gap-2 text-body-sm text-muted">
+                                    <Network className="h-4 w-4" /> Level {term.level}
+                                </span>
+                            </>
+                        }
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Parents */}
@@ -140,7 +146,6 @@ export default function GoTermPage() {
                         </div>
                     </div>
                  </div>
-             </div>
         </div>
     );
 }

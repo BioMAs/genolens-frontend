@@ -214,12 +214,13 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="page-title">Multi-comparison</h2>
-        <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-          Compare 2–5 comparisons — click a region to inspect its genes and run functional enrichment.
-        </p>
-      </div>
+      {/* Le titre a disparu : la page porte desormais un `PageHeader` qui dit
+          « Multi-Comparison Analysis ». Le garder ici affichait le meme titre
+          deux fois, a deux niveaux differents — et par un `<h2>` deguise en
+          titre de page. La phrase d'explication reste, elle. */}
+      <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+        Compare 2–5 comparisons — click a region to inspect its genes and run functional enrichment.
+      </p>
 
       {/* Comparison selection */}
       <div className="gl-card p-6">

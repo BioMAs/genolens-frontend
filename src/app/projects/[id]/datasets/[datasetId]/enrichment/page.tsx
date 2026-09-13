@@ -2,10 +2,9 @@
 
 import { useParams } from 'next/navigation';
 import EnrichmentAnalysis from '@/components/analysis/EnrichmentAnalysis';
-import { ArrowLeft, Grid } from 'lucide-react';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import api from '@/utils/api';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function EnrichmentPage() {
   const params = useParams();
@@ -20,45 +19,26 @@ export default function EnrichmentPage() {
   }, [datasetId]);
 
   return (
-    <div className="flex flex-col">
-        {/* Sub-header / Breadcrumb */}
-        <div className="bg-surface border-b border-line px-4 py-3 flex items-center gap-3 shadow-sm">
-            <Link 
-                href={`/projects/${projectId}/datasets/${datasetId}`}
-                className="text-secondary hover:text-primary transition-colors"
-                title="Back to Dataset"
-            >
-                <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="h-5 w-px bg-gray-300 mx-1"></div>
-            <div className="flex items-center gap-2 text-body-sm">
-                 <Link href={`/projects/${projectId}`} className="text-secondary hover:underline">
-                    Project
-                 </Link>
-                 <span className="text-muted">/</span>
-                 <Link href={`/projects/${projectId}/datasets/${datasetId}`} className="text-secondary hover:underline font-medium">
-                    {datasetName || datasetId}
-                 </Link>
-                 <span className="text-muted">/</span>
-                 <span className="text-accent-ink font-semibold flex items-center gap-1">
-                    <Grid className="h-3 w-3" />
-                    Enrichment Analysis
-                 </span>
-            </div>
-        </div>
-
-        <div className="page-container space-y-6">
-            <div className="flex items-start justify-between">
-                <div>
-                   <h1 className="text-heading text-primary tracking-tight">Functional Enrichment Analysis</h1>
-                   <p className="text-body-sm text-secondary mt-1">
-                       Explore enriched pathways and gene sets (GO, KEGG, Reactome) for your differential expression comparisons.
-                   </p>
-                </div>
-            </div>
-
-            <EnrichmentAnalysis datasetId={datasetId} />
-        </div>
+    /* Un fil d'Ariane ecrit A LA MAIN vivait dans une bande bordee, avec sa
+       fleche de retour, son separateur en `bg-gray-300` — du gris Tailwind
+       brut — et trois liens recopies. La barre superieure porte deja ce fil ;
+       `PageHeader` l'alimente, donc la bande entiere disparait. */
+    <div className="page-container">
+      <PageHeader
+        eyebrow="Enrichment"
+        title="Functional Enrichment Analysis"
+        description="Explore enriched pathways and gene sets (GO, KEGG, Reactome) for your differential expression comparisons."
+        crumbs={[
+          { label: 'Projects', href: '/projects' },
+          { label: 'Project', href: `/projects/${projectId}` },
+          {
+            label: datasetName || datasetId,
+            href: `/projects/${projectId}/datasets/${datasetId}`,
+          },
+          { label: 'Enrichment' },
+        ]}
+      />
+      <EnrichmentAnalysis datasetId={datasetId} />
     </div>
   );
 }

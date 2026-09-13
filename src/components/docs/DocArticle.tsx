@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { CATEGORY_LABELS } from '@/lib/docs-categories';
 import type { Doc, DocMeta, Heading } from '@/lib/docs';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface DocArticleProps {
   doc: Doc;
@@ -55,20 +56,18 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_200px]">
       <article className="min-w-0">
-        <p
-          className="text-micro uppercase tracking-wide"
-          style={{ color: 'var(--sl-teal)' }}
-        >
-          {CATEGORY_LABELS[doc.category]}
-        </p>
-        <h1 className="page-title mt-1">{doc.title}</h1>
-        {doc.description && (
-          <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-            {doc.description}
-          </p>
-        )}
+        {/* Le sur-titre de categorie etait un `<p>` en teal de MARQUE, pose a
+            la main au-dessus d'un `.page-title`. C'est exactement ce que
+            `eyebrow` designe, et la classe `.eyebrow` le rend dans l'encre
+            discrete plutot que dans une couleur de marque. */}
+        <PageHeader
+          eyebrow={CATEGORY_LABELS[doc.category]}
+          title={doc.title}
+          titleVariant="name"
+          description={doc.description}
+        />
 
-        <div className="doc-prose mt-6">
+        <div className="doc-prose">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
