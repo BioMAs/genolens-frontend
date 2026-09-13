@@ -359,7 +359,13 @@ export default function DEGClusteringView({
               yaxis: 'y',
             } as unknown as Partial<PlotData>,
           ]}
-          layout={{
+          // La fabrique prend la mise en page en ARGUMENT. Etalee en
+          // dernier — ce qu'elle etait — elle remplacait `xaxis`, `yaxis`
+          // et `margin` en bloc : la barre laterale des statuts DEG
+          // perdait son domaine et chevauchait la carte, les genes
+          // partaient du bas faute de `autorange: 'reversed'`, et le
+          // titre etait rogne par une marge haute de 16 au lieu de 140.
+          layout={buildPlotlyLayout(chartTheme, {
             autosize: true,
             // sidebar occupies ~4% of width, main heatmap the rest
             xaxis: {
@@ -398,13 +404,11 @@ export default function DEGClusteringView({
               x: 0.5,
               xanchor: 'center',
             },
-            margin: { l: 55, r: 90, b: 120, t: 140 },
             // `paper_bgcolor: 'white'` et `plot_bgcolor: 'white'` etaient poses
-            // ici en dur : la carte de chaleur rendait donc un rectangle blanc
-            // au milieu d'une application en theme sombre. C'etait le defaut de
-            // mode sombre le plus visible de toute la couche graphique.
-            ...buildPlotlyLayout(chartTheme),
-          } as Partial<Layout>}
+            // ici en dur : la carte de chaleur rendait un rectangle blanc au
+            // milieu d'une application en theme sombre. La fabrique les fixe.
+            margin: { l: 55, r: 90, b: 120, t: 140 },
+          }) as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}
           config={{

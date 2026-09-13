@@ -256,7 +256,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
         return {
             data: traces,
-            layout: {
+            // La fabrique prend la mise en page en ARGUMENT plutot qu'en
+            // etalement : etalee, elle remplacait `margin` en bloc.
+            layout: buildPlotlyLayout(chartTheme, {
                 polar: {
                     radialaxis: {
                         visible: true,
@@ -267,8 +269,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 title: { text: categoryFilter ? `Enrichment: ${categoryFilter}` : 'Top Enriched Pathways' },
                 margin: { t: 50, b: 50, l: 50, r: 50 },
                 height: 500,
-                ...buildPlotlyLayout(chartTheme),
-            }
+            })
         };
 
     }, [allResults, viewMode, categoryFilter, chartTheme]);

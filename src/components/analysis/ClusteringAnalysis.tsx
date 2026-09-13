@@ -412,19 +412,21 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                         // Aucun fond n'etait declare : Plotly retombait donc
                         // sur son blanc par defaut, au milieu d'une interface
                         // sombre.
-                        layout={{
-                          ...buildPlotlyLayout(chartTheme),
+                        // En argument, pas en etalement : `xaxis` et `yaxis`
+                        // remplacaient sinon l'objet entier, donc la couleur de
+                        // grille et la police des graduations disparaissaient.
+                        layout={buildPlotlyLayout(chartTheme, {
                             autosize: true,
                             margin: { t: 50, r: 50, b: 100, l: 150 }, // More space for labels
                             title: { text: `Heatmap (${result.row_labels.length} genes x ${result.col_labels.length} samples)` },
-                            xaxis: { 
+                            xaxis: {
                                 automargin: true,
                                 tickangle: -45
                             },
                             yaxis: {
                                 automargin: true,
                             }
-                        }}
+                        })}
                         style={{ width: '100%', height: '100%' }}
                         useResizeHandler={true}
                         config={{ 

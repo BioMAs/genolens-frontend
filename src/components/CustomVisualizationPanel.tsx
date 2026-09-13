@@ -5,6 +5,15 @@ import type { Data, Layout } from 'plotly.js';
 import { useChartTheme } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
+/*
+ * Les cinq mises en page passent par la fabrique EN ARGUMENT, pas en
+ * etalement. Etalee en premier — ce qu'elles faisaient — la fabrique se
+ * faisait remplacer `xaxis` et `yaxis` en bloc par des objets qui ne portent
+ * qu'un titre : la couleur de grille, la police des graduations et
+ * `automargin` disparaissaient. C'est precisement la classe de defaut que la
+ * fusion d'un niveau existe pour supprimer.
+ */
+
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface CustomVisualizationPanelProps {
@@ -213,14 +222,13 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
-                ...buildPlotlyLayout(chartTheme),
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
                 yaxis: { title: { text: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` } },
                 hovermode: 'closest',
                 height: 500
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -245,8 +253,7 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
-                ...buildPlotlyLayout(chartTheme),
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 scene: {
                     xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
@@ -254,7 +261,7 @@ export default function CustomVisualizationPanel({
                     zaxis: { title: { text: `PC3 (${(pcaData.explained_variance[2] * 100).toFixed(1)}%)` } }
                 },
                 height: 600
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -287,14 +294,13 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
-                ...buildPlotlyLayout(chartTheme),
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 xaxis: { title: { text: 'UMAP1' } },
                 yaxis: { title: { text: 'UMAP2' } },
                 hovermode: 'closest',
                 height: 500
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -319,8 +325,7 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
-                ...buildPlotlyLayout(chartTheme),
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 scene: {
                     xaxis: { title: { text: 'UMAP1' } },
@@ -328,7 +333,7 @@ export default function CustomVisualizationPanel({
                     zaxis: { title: { text: 'UMAP3' } }
                 },
                 height: 600
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -358,14 +363,13 @@ export default function CustomVisualizationPanel({
             } as Data));
         }).flat();
 
-        const layout: Partial<Layout> = {
-                ...buildPlotlyLayout(chartTheme),
+        const layout = buildPlotlyLayout(chartTheme, {
             title: { text: `Expression Distribution - ${boxplotData.n_genes} gene(s)` },
             yaxis: { title: { text: 'Expression Level' } },
             xaxis: { title: { text: '' } },
             height: 500,
             showlegend: true
-        };
+        }) as Partial<Layout>;
 
         return (
             <Plot
