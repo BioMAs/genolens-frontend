@@ -18,12 +18,10 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
   const label = gridPlan?.name_en ?? normalizePlan(plan);
   // Tone by position in the grid, so adding a tier needs no code change here.
   const order = gridPlan?.order ?? 1;
-  const tone =
-    order >= 3
-      ? 'bg-purple-100 text-purple-800'
-      : order === 2
-        ? 'bg-teal-100 text-teal-800'
-        : 'bg-surface-2 text-secondary';
+  // Le niveau de plan est une HIERARCHIE : seul le plus haut merite d'etre
+  // signale, et il l'est par l'accent. Deux couleurs de marque pour deux
+  // paliers ne disaient pas lequel etait le plus eleve.
+  const tone = order >= 3 ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-secondary';
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${tone}`}>
       {label}

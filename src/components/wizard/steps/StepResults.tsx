@@ -130,7 +130,7 @@ export default function StepResults({
             <>
               <Link
                 href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
+                className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
               >
                 Explore Enrichment →
               </Link>

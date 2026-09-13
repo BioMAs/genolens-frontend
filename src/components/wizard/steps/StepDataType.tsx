@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Dna, FlaskConical, Droplets, ArrowRight, Lock } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 export type DataType = 'transcriptomics' | 'proteomics' | 'lipidomics';
 
@@ -11,9 +12,6 @@ interface DataTypeCard {
   description: string;
   icon: React.ElementType;
   available: boolean;
-  color: string;
-  bgColor: string;
-  borderColor: string;
 }
 
 const DATA_TYPES: DataTypeCard[] = [
@@ -23,9 +21,6 @@ const DATA_TYPES: DataTypeCard[] = [
     description: 'Differential gene expression, clustering & pathway enrichment from RNA-seq count matrices.',
     icon: Dna,
     available: true,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-200 hover:border-indigo-400',
   },
   {
     id: 'proteomics',
@@ -33,9 +28,6 @@ const DATA_TYPES: DataTypeCard[] = [
     description: 'Protein abundance analysis, PTM profiling and quantitative proteomics workflows.',
     icon: FlaskConical,
     available: false,
-    color: 'text-success-ink',
-    bgColor: 'bg-success-soft',
-    borderColor: 'border-success/30',
   },
   {
     id: 'lipidomics',
@@ -43,9 +35,6 @@ const DATA_TYPES: DataTypeCard[] = [
     description: 'Lipid species identification, quantification and differential lipid analysis.',
     icon: Droplets,
     available: false,
-    color: 'text-warning-ink',
-    bgColor: 'bg-warning-soft',
-    borderColor: 'border-warning/30',
   },
 ];
 
@@ -62,17 +51,20 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
       </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {DATA_TYPES.map(({ id, label, description, icon: Icon, available, color, bgColor, borderColor }) => (
+        {DATA_TYPES.map(({ id, label, description, icon: Icon, available }) => (
           <div
             key={id}
             onClick={() => available && onSelect(id)}
-            className={`
-              relative flex flex-col rounded-card border-2 p-5 transition-all
-              ${borderColor}
-              ${available
-                ? 'cursor-pointer shadow-sm hover:shadow-md'
-                : 'cursor-not-allowed opacity-60'}
-            `}
+            /* Ce qui distingue ces cartes n'est pas la modalite mais la
+               DISPONIBILITE : une seule est cliquable. Trois jeux de couleurs
+               par modalite ne le disaient pas — et la migration des statuts en
+               avait fait un succes et un avertissement. */
+            className={cn(
+              'relative flex flex-col rounded-card p-5 transition-colors',
+              available
+                ? 'gl-card gl-card-interactive'
+                : 'cursor-not-allowed bg-surface-2 opacity-60',
+            )}
           >
             {/* Coming soon badge */}
             {!available && (
@@ -83,8 +75,13 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
             )}
 
             {/* Icon */}
-            <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-control ${bgColor}`}>
-              <Icon className={`h-6 w-6 ${color}`} />
+            <div
+              className={cn(
+                'mb-4 inline-flex h-11 w-11 items-center justify-center rounded-control',
+                available ? 'bg-accent-soft' : 'bg-surface',
+              )}
+            >
+              <Icon className={cn('h-6 w-6', available ? 'text-accent-ink' : 'text-muted')} />
             </div>
 
             {/* Label */}
@@ -95,7 +92,7 @@ export default function StepDataType({ onSelect }: StepDataTypeProps) {
 
             {/* CTA */}
             {available && (
-              <div className={`mt-4 inline-flex items-center gap-1 text-caption font-medium ${color}`}>
+              <div className="mt-4 inline-flex items-center gap-1 text-caption font-medium text-accent-ink">
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </div>
             )}

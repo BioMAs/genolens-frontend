@@ -245,11 +245,11 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                 <div className="text-xs text-secondary">Spearman ρ</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{result.counts.concordant}</div>
+                <div className="text-2xl font-bold text-primary">{result.counts.concordant}</div>
                 <div className="text-xs text-secondary">Concordant</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-danger-ink">{result.counts.discordant}</div>
+                <div className="text-2xl font-bold text-primary">{result.counts.discordant}</div>
                 <div className="text-xs text-secondary">Discordant</div>
               </div>
             </div>

@@ -19,6 +19,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { Download, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '@/utils/api';
 import { useDegStats, type DegStatsRow } from '@/hooks/useDegStats';
+import { useChartScales } from '@/utils/chartTheme';
 
 interface MethodStatsPanelProps {
   datasetId: string;
@@ -63,6 +64,7 @@ function findMethodColumn(keys: string[], base: 'pvalue' | 'padj', method: strin
 }
 
 export default function MethodStatsPanel({ datasetId, comparisonName }: MethodStatsPanelProps) {
+  const scales = useChartScales();
   const { data, isLoading, isError, error } = useDegStats(datasetId, comparisonName);
 
   const [page, setPage] = useState(0);
@@ -216,17 +218,21 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                 const c = general[m];
                 const isActive = m === activeMethod;
                 return (
-                  <tr key={m} className={isActive ? 'bg-teal-50' : ''}>
+                  <tr key={m} className={isActive ? 'bg-accent-soft' : ''}>
                     <td className="font-medium">
                       {m}
                       {isActive && (
-                        <span className="ml-2 rounded-sm bg-teal-100 px-1.5 py-0.5 text-caption text-teal-700">
+                        <span className="ml-2 rounded-sm bg-accent-soft px-1.5 py-0.5 text-caption text-accent-ink">
                           active
                         </span>
                       )}
                     </td>
-                    <td className="text-right text-success-ink">{c ? c.up.toLocaleString() : '—'}</td>
-                    <td className="text-right text-rose-600">{c ? c.down.toLocaleString() : '—'}</td>
+                    <td className="text-right" style={{ color: scales.directionColors.up }}>
+                      {c ? c.up.toLocaleString() : '—'}
+                    </td>
+                    <td className="text-right" style={{ color: scales.directionColors.down }}>
+                      {c ? c.down.toLocaleString() : '—'}
+                    </td>
                     <td className="text-right font-medium">
                       {c ? c.total.toLocaleString() : '—'}
                     </td>
@@ -313,7 +319,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                             </td>
                             <td
                               className={`px-3 py-1.5 text-right ${
-                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-teal-700' : 'text-secondary'
+                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-primary' : 'text-secondary'
                               }`}
                             >
                               {p.padjKey ? formatP(row[p.padjKey]) : '—'}

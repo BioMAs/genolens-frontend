@@ -169,3 +169,39 @@ describe('jetons semantiques', () => {
     expect([...missing]).toEqual([]);
   });
 });
+
+describe('palette Tailwind brute', () => {
+  /**
+   * Aucune couleur de la palette Tailwind dans une liste de classes.
+   *
+   * Ce n'etait pas une question de coherence : ces couleurs NE SUIVENT PAS LE
+   * THEME. `bg-red-50` vaut #fef2f2 partout, donc chaque panneau d'erreur
+   * etait un aplat rose pale au milieu d'une interface sombre. Il y en avait
+   * 809 ; la garde existe parce qu'il n'en reste aucune, et qu'une seule
+   * suffirait a rouvrir la breche.
+   *
+   * La portee `.auth-scope` est exclue : elle a sa propre palette, documentee
+   * dans globals.css, sans recouvrement avec l'interieur.
+   */
+  const PALETTE = [
+    'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
+    'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink',
+    'rose', 'slate', 'gray', 'zinc', 'neutral', 'stone',
+  ];
+  const RAW = new RegExp(
+    String.raw`\b(?:bg|text|border|ring|divide|fill|stroke|from|to|via|placeholder|accent|outline|shadow|caret)-(?:${PALETTE.join('|')})-\d{2,3}\b`,
+  );
+  const CLASS_STRING = /(['"`])((?:(?!\1)[^\\\n]|\\.)*)\1/g;
+  const AUTH_SCOPE = /\/auth\/|^src\/app\/page\.tsx$/;
+
+  it('aucune teinte Tailwind brute dans une liste de classes', () => {
+    const offenders: string[] = [];
+    for (const file of SOURCES.filter((f) => f.endsWith('.tsx') && !AUTH_SCOPE.test(f))) {
+      for (const [, , body] of read(file).matchAll(CLASS_STRING)) {
+        const hit = RAW.exec(body);
+        if (hit) offenders.push(`${hit[0]}  (${file})`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
