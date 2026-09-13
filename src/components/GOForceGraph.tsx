@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
+import { useChartPalette, CHART_VARS } from '@/utils/chartTheme';
+import type { Palette } from '@/utils/chartPalettes';
+import { fdrToColor, namespaceColor, type NamespaceKey } from '@/utils/goGraphColors';
 
 interface Props {
   data: GOHierarchyResponse;
@@ -25,23 +28,7 @@ interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
   target: string | GraphNode;
 }
 
-type NamespaceKey = 'biological_process' | 'molecular_function' | 'cellular_component';
 
-const NS_COLORS: Record<NamespaceKey, string> = {
-  biological_process: '#4f46e5',
-  molecular_function: '#d97706',
-  cellular_component: '#059669',
-};
-
-function fdrToColor(fdr: number | null | undefined, ns: string): string {
-  const base = NS_COLORS[(ns as NamespaceKey)] ?? '#64748b';
-  if (!fdr) return '#cbd5e1';
-  if (fdr <= 1e-6) return base;
-  if (fdr <= 1e-4) return d3.interpolateRgb(base, '#94a3b8')(0.2);
-  if (fdr <= 0.01) return d3.interpolateRgb(base, '#94a3b8')(0.45);
-  if (fdr <= 0.05) return d3.interpolateRgb(base, '#94a3b8')(0.65);
-  return '#cbd5e1';
-}
 
 function nodeRadius(gene_count: number | null | undefined): number {
   if (!gene_count) return 5;
@@ -53,6 +40,7 @@ function flattenToGraph(
   visited: Set<string>,
   nodes: GraphNode[],
   links: GraphLink[],
+  palette: Palette,
   parentId?: string
 ) {
   for (const node of trees) {
@@ -66,14 +54,14 @@ function flattenToGraph(
         fdr: node.fdr,
         gene_count: node.gene_count,
         r: nodeRadius(node.gene_count),
-        color: fdrToColor(node.fdr, node.namespace),
+        color: fdrToColor(node.fdr, node.namespace, palette),
       });
     }
     if (parentId) {
       links.push({ source: parentId, target: node.go_id });
     }
     if (node.children.length > 0) {
-      flattenToGraph(node.children, visited, nodes, links, node.go_id);
+      flattenToGraph(node.children, visited, nodes, links, palette, node.go_id);
     }
   }
 }
@@ -86,6 +74,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [enabledNs, setEnabledNs] = useState<Set<NamespaceKey>>(new Set(ALL_NS));
   const [tooltip, setTooltip] = useState<{ x: number; y: number; node: GraphNode } | null>(null);
+  const palette = useChartPalette();
 
   const toggleNs = (ns: NamespaceKey) => {
     setEnabledNs(prev => {
@@ -106,7 +95,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
 
     for (const ns of ALL_NS) {
       if (enabledNs.has(ns)) {
-        flattenToGraph(data[ns], visited, allNodes, allLinks);
+        flattenToGraph(data[ns], visited, allNodes, allLinks, palette);
       }
     }
 
@@ -121,7 +110,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
     const links = allLinks.filter(l => nodeIds.has(l.source as string) && nodeIds.has(l.target as string));
 
     return { nodes, links, truncatedBanner };
-  }, [data, enabledNs]);
+  }, [data, enabledNs, palette]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -151,7 +140,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
     // Links
     const linkEl = g.append('g').selectAll<SVGLineElement, GraphLink>('line')
       .data(links).enter().append('line')
-      .attr('stroke', '#e2e8f0')
+      .style('stroke', CHART_VARS.grid)
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', 1);
 
@@ -169,7 +158,9 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
     nodeEl.append('circle')
       .attr('r', d => d.r)
       .attr('fill', d => d.color)
-      .attr('stroke', d => d.is_enriched ? '#fff' : 'none')
+      // L'anneau detache le noeud de ses voisins ; en blanc fixe, il le
+      // faisait briller au milieu d'un panneau sombre. Il vaut la surface.
+      .style('stroke', d => (d.is_enriched ? CHART_VARS.surface : 'none'))
       .attr('stroke-width', 1.5);
 
     nodeEl.append('text')
@@ -177,7 +168,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.r + 11)
       .attr('font-size', 9)
-      .attr('fill', '#374151')
+      .style('fill', CHART_VARS.inkSubtle)
       .attr('pointer-events', 'none');
 
     // Events
@@ -228,9 +219,9 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
               checked={enabledNs.has(ns)}
               onChange={() => toggleNs(ns)}
               className="rounded-sm"
-              style={{ accentColor: NS_COLORS[ns] }}
+              style={{ accentColor: namespaceColor(ns, palette) }}
             />
-            <span style={{ color: NS_COLORS[ns] }} className="font-medium">{NS_LABELS[ns]}</span>
+            <span style={{ color: namespaceColor(ns, palette) }} className="font-medium">{NS_LABELS[ns]}</span>
           </label>
         ))}
         <span className="ml-auto text-muted">Scroll to zoom · Drag nodes to reposition</span>
