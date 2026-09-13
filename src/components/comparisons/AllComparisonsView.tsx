@@ -242,7 +242,7 @@ export default function AllComparisonsView() {
             className="overflow-x-auto rounded-card"
             style={{ border: '1px solid var(--border-subtle)', opacity: isFetching ? 0.6 : 1 }}
           >
-            <table className="w-full min-w-[640px] border-collapse text-body-sm">
+            <table className="data-table min-w-[640px]">
               <thead>
                 <tr style={{ background: 'var(--surface-raised)' }}>
                   <Th>Comparison</Th>

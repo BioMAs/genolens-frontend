@@ -202,13 +202,13 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
         </div>
 
         <div className="overflow-x-auto rounded-control border border-line">
-          <table className="min-w-full text-body-sm">
+          <table className="data-table">
             <thead className="bg-surface-2">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-secondary">Method</th>
-                <th className="px-4 py-2 text-right font-medium text-secondary">Up</th>
-                <th className="px-4 py-2 text-right font-medium text-secondary">Down</th>
-                <th className="px-4 py-2 text-right font-medium text-secondary">Total</th>
+                <th>Method</th>
+                <th className="text-right">Up</th>
+                <th className="text-right">Down</th>
+                <th className="text-right">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-subtle">
@@ -217,7 +217,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                 const isActive = m === activeMethod;
                 return (
                   <tr key={m} className={isActive ? 'bg-teal-50' : ''}>
-                    <td className="px-4 py-2 font-medium text-primary">
+                    <td className="font-medium">
                       {m}
                       {isActive && (
                         <span className="ml-2 rounded-sm bg-teal-100 px-1.5 py-0.5 text-caption text-teal-700">
@@ -225,9 +225,9 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right text-emerald-600">{c ? c.up.toLocaleString() : '—'}</td>
-                    <td className="px-4 py-2 text-right text-rose-600">{c ? c.down.toLocaleString() : '—'}</td>
-                    <td className="px-4 py-2 text-right font-medium text-primary">
+                    <td className="text-right text-emerald-600">{c ? c.up.toLocaleString() : '—'}</td>
+                    <td className="text-right text-rose-600">{c ? c.down.toLocaleString() : '—'}</td>
+                    <td className="text-right font-medium">
                       {c ? c.total.toLocaleString() : '—'}
                     </td>
                   </tr>
@@ -258,11 +258,11 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
         {colMap ? (
           <>
             <div className="overflow-x-auto rounded-control border border-line">
-              <table className="min-w-full text-caption">
+              <table className="data-table">
                 <thead className="bg-surface-2">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-secondary sticky left-0 bg-surface-2">Gene</th>
-                    <th className="px-3 py-2 text-right font-medium text-secondary">log2FC</th>
+                    <th className="sticky left-0 bg-surface-2">Gene</th>
+                    <th className="text-right">log2FC</th>
                     {colMap.perMethod.map((p) => (
                       <th
                         key={p.method}
@@ -284,12 +284,12 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                     ))}
                   </tr>
                   <tr>
-                    <th className="px-3 py-1 sticky left-0 bg-surface-2" />
-                    <th className="px-3 py-1" />
+                    <th className="sticky left-0 bg-surface-2" />
+                    <th  />
                     {colMap.perMethod.map((p) => (
                       <Fragment key={p.method}>
-                        <th className="px-3 py-1 text-right font-normal text-muted">p</th>
-                        <th className="px-3 py-1 text-right font-normal text-muted">padj</th>
+                        <th className="text-right font-normal">p</th>
+                        <th className="text-right font-normal">padj</th>
                       </Fragment>
                     ))}
                   </tr>
@@ -300,15 +300,15 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                     const geneName = colMap.geneNameKey ? row[colMap.geneNameKey] : undefined;
                     return (
                       <tr key={`${geneId}-${idx}`} className="hover:bg-hover">
-                        <td className="px-3 py-1.5 font-medium text-primary sticky left-0 bg-surface">
+                        <td className="font-medium sticky left-0 bg-surface">
                           {geneName ? String(geneName) : geneId}
                         </td>
-                        <td className="px-3 py-1.5 text-right text-primary">
+                        <td className="text-right">
                           {colMap.logfcKey ? formatFc(row[colMap.logfcKey]) : '—'}
                         </td>
                         {colMap.perMethod.map((p) => (
                           <Fragment key={p.method}>
-                            <td className="px-3 py-1.5 text-right text-secondary">
+                            <td className="text-right text-secondary">
                               {p.pvalueKey ? formatP(row[p.pvalueKey]) : '—'}
                             </td>
                             <td

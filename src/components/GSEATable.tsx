@@ -184,14 +184,14 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
 
       {/* Table */}
       <div className="overflow-x-auto border border-line rounded-control">
-        <table className="min-w-full divide-y divide-line">
+        <table className="data-table">
           <thead className="bg-surface-2">
             <tr>
-              <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-12">
+              <th className="w-12">
                 #
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('gene_set_name')}
               >
                 <div className="flex items-center">
@@ -202,7 +202,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('gene_set_size')}
               >
                 <div className="flex items-center">
@@ -213,7 +213,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('enrichment_score')}
               >
                 <div className="flex items-center">
@@ -224,7 +224,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('normalized_enrichment_score')}
               >
                 <div className="flex items-center">
@@ -235,7 +235,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('p_value')}
               >
                 <div className="flex items-center">
@@ -246,7 +246,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-hover"
+                className="cursor-pointer hover:bg-hover"
                 onClick={() => handleSort('fdr_q_value')}
               >
                 <div className="flex items-center">
@@ -256,10 +256,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                   )}
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
+              <th>
                 Leading Edge
               </th>
-              <th className="px-4 py-3 text-right text-caption font-medium text-secondary uppercase tracking-wider">
+              <th className="text-right">
                 Actions
               </th>
             </tr>
@@ -271,10 +271,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
 
               return (
                 <tr key={idx} className={`hover:bg-hover${isSignificant ? 'bg-green-50/30' : ''}`}>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {globalIdx}
                   </td>
-                  <td className="px-4 py-3 text-body-sm font-medium text-primary max-w-md">
+                  <td className="text-body-sm font-medium max-w-md">
                     <div className="flex items-center gap-2">
                       {row.normalized_enrichment_score > 0 ? (
                         <TrendingUp className="h-4 w-4 text-red-600 flex-shrink-0" />
@@ -286,34 +286,34 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm text-primary">
+                  <td className="whitespace-nowrap text-body-sm">
                     {row.gene_set_size}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono">
+                  <td className="whitespace-nowrap text-body-sm font-mono">
                     <span className={row.enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
                       {row.enrichment_score.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono font-semibold">
+                  <td className="whitespace-nowrap text-body-sm font-mono font-semibold">
                     <span className={row.normalized_enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
                       {row.normalized_enrichment_score.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono text-primary">
+                  <td className="whitespace-nowrap text-body-sm font-mono">
                     {row.p_value.toExponential(2)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono">
+                  <td className="whitespace-nowrap text-body-sm font-mono">
                     <span className={isSignificant ? 'text-green-700 font-semibold' : 'text-primary'}>
                       {row.fdr_q_value.toFixed(3)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-body-sm text-secondary max-w-xs">
+                  <td className="text-body-sm text-secondary max-w-xs">
                     <div className="truncate" title={row.leading_edge_genes.join(', ')}>
                       {row.leading_edge_genes.slice(0, 3).join(', ')}
                       {row.leading_edge_genes.length > 3 && ` +${row.leading_edge_genes.length - 3} more`}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-body-sm">
+                  <td className="whitespace-nowrap text-right text-body-sm">
                     {onViewEnrichmentPlot && (
                       <button
                         onClick={() => onViewEnrichmentPlot(row.gene_set_name)}

@@ -176,7 +176,7 @@ export default function LicenseManagement() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-control border border-line">
-          <table className="min-w-full divide-y divide-line text-body-sm">
+          <table className="data-table">
             <thead className="bg-surface-2">
               <tr>
                 {['Client', 'Plan', 'Expiration', 'Status', 'Key', 'Notes', 'Actions'].map((h) => (
@@ -189,17 +189,17 @@ export default function LicenseManagement() {
             <tbody className="bg-surface divide-y divide-subtle">
               {licenses.map((lic) => (
                 <tr key={lic.id} className={lic.is_revoked ? 'opacity-50' : ''}>
-                  <td className="px-4 py-3 font-medium text-primary max-w-[160px] truncate" title={lic.client_id}>
+                  <td className="font-medium max-w-[160px] truncate" title={lic.client_id}>
                     {lic.client_id}
                   </td>
-                  <td className="px-4 py-3 text-secondary capitalize">{lic.plan}</td>
-                  <td className="px-4 py-3 text-secondary whitespace-nowrap">
+                  <td className="text-secondary capitalize">{lic.plan}</td>
+                  <td className="text-secondary whitespace-nowrap">
                     {new Date(lic.expires_at * 1000).toLocaleDateString('en-US')}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <StatusBadge record={lic} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="flex items-center gap-1">
                       <code className="text-caption text-secondary bg-surface-2 px-2 py-0.5 rounded-sm max-w-[180px] truncate block" title={lic.license_key}>
                         {lic.license_key.slice(0, 24)}…
@@ -207,10 +207,10 @@ export default function LicenseManagement() {
                       <CopyButton value={lic.license_key} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-secondary max-w-[160px] truncate" title={lic.notes ?? ''}>
+                  <td className="text-secondary max-w-[160px] truncate" title={lic.notes ?? ''}>
                     {lic.notes || '—'}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {!lic.is_revoked && !lic.is_expired && (
                       <button
                         onClick={() => {

@@ -120,4 +120,16 @@ describe('utilitaires morts', () => {
     const offenders = SOURCES.filter((f) => read(f).includes(ghost));
     expect(offenders).toEqual([]);
   });
+
+  /**
+   * Le pendant du fantome : une classe qui EXISTE et qui peint la mauvaise
+   * chose. `--color-muted` resout sur `--text-muted`, une ENCRE a 4,83:1 sur
+   * blanc. `bg-muted` rendait donc un bandeau gris moyen la ou une surface
+   * discrete etait voulue — meme contresens shadcn que `text-muted-foreground`,
+   * mais visible celui-la, et pourtant reste huit fois dans le code.
+   */
+  it('aucun jeton d’encre employe comme fond', () => {
+    const offenders = SOURCES.filter((f) => /\bbg-muted\b/.test(read(f)));
+    expect(offenders).toEqual([]);
+  });
 });

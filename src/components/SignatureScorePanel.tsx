@@ -310,20 +310,20 @@ export default function SignatureScorePanel({
 
           {/* Group summary */}
           <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-body-sm">
+            <table className="data-table">
               <thead>
                 <tr className="text-left text-secondary">
-                  <th className="px-3 py-2 font-medium">Condition</th>
-                  <th className="px-3 py-2 font-medium">n</th>
-                  <th className="px-3 py-2 font-medium">Median score</th>
+                  <th>Condition</th>
+                  <th>n</th>
+                  <th>Median score</th>
                 </tr>
               </thead>
               <tbody>
                 {chart.groups.map((g) => (
                   <tr key={g} className="border-t border-subtle">
-                    <td className="px-3 py-1.5 font-medium text-primary">{g}</td>
-                    <td className="px-3 py-1.5">{result.groups[g].length}</td>
-                    <td className="px-3 py-1.5">{median(result.groups[g]).toFixed(3)}</td>
+                    <td className="font-medium">{g}</td>
+                    <td>{result.groups[g].length}</td>
+                    <td>{median(result.groups[g]).toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>

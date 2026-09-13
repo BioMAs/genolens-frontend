@@ -523,17 +523,17 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         </div>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-line">
+                        <table className="data-table">
                             <thead className="bg-surface-2">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-8" />
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">ID</th>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider w-2/5">Term name &amp; description</th>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Database</th>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Genes</th>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Adj. p-value</th>
-                                    <th className="px-4 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">Regulation</th>
-                                    <th className="px-4 py-3 text-right text-caption font-medium text-secondary uppercase tracking-wider">Links</th>
+                                    <th className="w-8" />
+                                    <th>ID</th>
+                                    <th className="w-2/5">Term name &amp; description</th>
+                                    <th>Database</th>
+                                    <th>Genes</th>
+                                    <th>Adj. p-value</th>
+                                    <th>Regulation</th>
+                                    <th className="text-right">Links</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-surface divide-y divide-line">
@@ -542,7 +542,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                     return (
                                         <Fragment key={r.id}>
                                             <tr key={r.id} className="hover:bg-hover">
-                                                <td className="px-2 py-3 text-center">
+                                                <td className="text-center">
                                                     {r.genes && r.genes.length > 0 && (
                                                         <button
                                                             type="button"
@@ -557,27 +557,27 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         </button>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-caption font-mono text-accent-ink">
+                                                <td className="whitespace-nowrap text-caption font-mono text-accent-ink">
                                                     {r.pathway_id}
                                                 </td>
-                                                <td className="px-4 py-3 text-body-sm text-primary">
+                                                <td className="text-body-sm">
                                                     <div className="font-medium">{r.pathway_name}</div>
                                                     {r.description && r.description !== r.pathway_name && (
                                                         <div className="text-caption text-secondary mt-1 leading-snug">{r.description}</div>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                <td className="whitespace-nowrap">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium ${getCategoryBadgeColor(r.category)}`}>
                                                         {r.category}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm text-secondary">
+                                                <td className="whitespace-nowrap text-body-sm text-secondary">
                                                     {r.gene_count}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm font-mono text-primary">
+                                                <td className="whitespace-nowrap text-body-sm font-mono">
                                                     {r.padj.toExponential(2)}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-body-sm">
+                                                <td className="whitespace-nowrap text-body-sm">
                                                     <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-pill ${
                                                         r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
                                                         r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-surface-2 text-primary'
@@ -585,7 +585,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-right text-body-sm font-medium">
+                                                <td className="whitespace-nowrap text-right text-body-sm font-medium">
                                                     {(r.category.startsWith('GO:') || r.pathway_id.startsWith('GO:')) && (
                                                         <Link
                                                             href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}

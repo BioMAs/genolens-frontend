@@ -54,7 +54,7 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
         </p>
       </div>
       <div className="overflow-x-auto max-h-[500px]">
-        <table className="min-w-full divide-y divide-line">
+        <table className="data-table">
           <thead className="bg-surface-2 sticky top-0 z-10">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
@@ -71,13 +71,13 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
           <tbody className="bg-surface divide-y divide-line">
             {data.map((row, idx) => (
               <tr key={idx} className="hover:bg-hover">
-                <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium text-primary">
+                <td className="whitespace-nowrap text-body-sm font-medium">
                   {row.sample}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                <td className="whitespace-nowrap text-body-sm text-secondary">
                   {row.reads.toLocaleString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-body-sm text-primary font-medium">
+                <td className="whitespace-nowrap text-body-sm font-medium">
                   {row.genes_detected?.toLocaleString() || '-'}
                 </td>
               </tr>

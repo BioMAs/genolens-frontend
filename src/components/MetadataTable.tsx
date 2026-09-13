@@ -66,7 +66,7 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
         </p>
       </div>
       <div className="overflow-x-auto max-h-[500px]">
-        <table className="min-w-full divide-y divide-line">
+        <table className="data-table">
           <thead className="bg-surface-2 sticky top-0 z-10">
             <tr>
               {columns.map((col) => (

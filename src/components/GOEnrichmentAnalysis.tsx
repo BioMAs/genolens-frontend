@@ -460,7 +460,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
         <>
           {/* Stats bar — dynamic: shows all categories present in results */}
           {terms.length > 0 && (
-            <div className="flex items-center gap-6 px-4 py-2 bg-muted/40 rounded-control text-caption text-muted flex-wrap">
+            <div className="flex items-center gap-6 px-4 py-2 bg-surface-2 rounded-control text-caption text-muted flex-wrap">
               {[...new Set(terms.map(t => t.namespace).filter(Boolean))].map(cat => {
                 const count = terms.filter(t => t.namespace === cat).length;
                 const dbDef = DB_CATEGORIES.find(db => db.value === cat);
@@ -533,7 +533,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
       {/* ── Empty state (loaded but no results) ─────────────────────────── */}
       {!isRunning && !error && !isInitialLoad && !hasResults && (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted bg-muted/20 rounded-card border border-dashed">
+        <div className="flex flex-col items-center justify-center py-16 text-center text-muted bg-surface-2 rounded-card border border-dashed">
           <p className="text-body-sm font-medium mb-1">No enriched terms found</p>
           <p className="text-caption">Enrichment analysis has not been computed yet for this comparison.</p>
         </div>

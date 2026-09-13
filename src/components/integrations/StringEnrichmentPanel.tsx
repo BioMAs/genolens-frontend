@@ -215,30 +215,30 @@ export default function StringEnrichmentPanel({
           </div>
 
           <div className="overflow-auto max-h-96 border border-line rounded-control">
-            <table className="min-w-full text-caption">
+            <table className="data-table">
               <thead className="bg-surface-2 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left">Category</th>
-                  <th className="px-3 py-2 text-left">Description</th>
-                  <th className="px-3 py-2 text-right">Genes</th>
-                  <th className="px-3 py-2 text-right">P-value</th>
-                  <th className="px-3 py-2 text-right">FDR</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th className="text-right">Genes</th>
+                  <th className="text-right">P-value</th>
+                  <th className="text-right">FDR</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.slice(0, 200).map((e, i) => (
                   <tr key={i} className="border-t border-subtle hover:bg-hover">
-                    <td className="px-3 py-1.5">
+                    <td>
                       <span className={`px-1.5 py-0.5 rounded-pill text-caption ${ENRICH_CATEGORIES[e.category]?.color || 'bg-surface-2 text-primary'}`}>
                         {ENRICH_CATEGORIES[e.category]?.label || e.category}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5 max-w-xs">
+                    <td className="max-w-xs">
                       <span title={e.description}>{e.description.length > 80 ? e.description.slice(0, 79) + '…' : e.description}</span>
                       <span className="ml-1 text-muted">· {e.term}</span>
                     </td>
-                    <td className="px-3 py-1.5 text-right">{e.number_of_genes}</td>
-                    <td className="px-3 py-1.5 text-right font-mono">{fmtPval(e.p_value)}</td>
+                    <td className="text-right">{e.number_of_genes}</td>
+                    <td className="text-right font-mono">{fmtPval(e.p_value)}</td>
                     <td className={`px-3 py-1.5 text-right font-mono font-semibold ${e.fdr < 0.05 ? 'text-green-600 dark:text-green-400' : 'text-secondary'}`}>
                       {fmtPval(e.fdr)}
                     </td>

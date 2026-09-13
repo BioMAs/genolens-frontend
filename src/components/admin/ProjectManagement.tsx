@@ -238,7 +238,7 @@ export default function ProjectManagement() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-line">
+        <table className="data-table">
           <thead className="bg-surface-2">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
@@ -268,16 +268,16 @@ export default function ProjectManagement() {
             ) : (
               projects.map((project) => (
                 <tr key={project.id} className="hover:bg-hover">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <div className="text-body-sm font-medium text-primary">{project.name}</div>
                     <div className="text-caption text-secondary">{project.id}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     <div className="text-body-sm text-secondary max-w-md truncate">
                       {project.description || '-'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <div className="text-body-sm text-primary">
                       {project.owner_email || project.owner_full_name || '-'}
                     </div>
@@ -285,10 +285,10 @@ export default function ProjectManagement() {
                       ID: {project.owner_id.substring(0, 8)}...
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {new Date(project.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium">
+                  <td className="whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleEdit(project)}

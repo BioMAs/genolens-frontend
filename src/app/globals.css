@@ -965,6 +965,17 @@ body {
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td      { background: var(--hover-overlay); }
 
+/* ── Une seule densite, et c'est deliberé ────────────────────────────────────
+   Le plan prevoyait un attribut `data-density` a trois regimes. Les vingt
+   tableaux migres ont ete MESURES : dix-huit tombent sur la densite par defaut,
+   et les deux autres n'en demandent pas d'autre. Les trois hauteurs de ligne
+   qui coexistaient — ~30, ~36 et ~50px — n'etaient pas trois decisions mais
+   trois gabarits recopies.
+
+   Deux variantes sans ayant droit seraient du CSS mort, exactement ce que les
+   vagues precedentes ont passe leur temps a supprimer. Le 9/14px reste, seul :
+   c'est le seul endroit ou l'application avait deja raison. */
+
 /* Status indicators */
 .status-dot          { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.success  { background: var(--sl-teal-dark); }

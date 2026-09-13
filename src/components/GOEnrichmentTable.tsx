@@ -269,31 +269,31 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       {/* Table */}
       <div className="border rounded-control overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
+          <table className="data-table">
+            <thead className="bg-surface-2">
               <tr>
-                <th className="text-left p-3 font-medium">GO Term</th>
-                <th className="text-left p-3 font-medium">Namespace</th>
+                <th>GO Term</th>
+                <th>Namespace</th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('fdr')}
                 >
                   FDR {sortBy === 'fdr' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('pvalue')}
                 >
                   P-value {sortBy === 'pvalue' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('ratio')}
                 >
                   Enrichment {sortBy === 'ratio' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="text-right p-3 font-medium">Genes</th>
-                <th className="text-center p-3 font-medium">Actions</th>
+                <th className="text-right">Genes</th>
+                <th className="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -301,8 +301,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                 const isExpanded = expandedRows.has(term.go_id);
                 return (
                   <Fragment key={term.go_id}>
-                    <tr key={term.go_id} className="border-t hover:bg-muted/50 transition-colors">
-                      <td className="p-3">
+                    <tr key={term.go_id} className="border-t hover:bg-hover transition-colors">
+                      <td>
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
                           <div className="text-body-sm text-muted">{term.go_id}</div>
@@ -328,26 +328,26 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                           )}
                         </div>
                       </td>
-                      <td className="p-3">
+                      <td>
                         <Badge className={`${getNamespaceBadgeColor(term.namespace)}text-on-accent`}>
                           {getNamespaceLabel(term.namespace)}
                         </Badge>
                       </td>
-                      <td className="p-3 text-right font-mono text-body-sm">
+                      <td className="text-right font-mono text-body-sm">
                         {term.fdr.toExponential(2)}
                       </td>
-                      <td className="p-3 text-right font-mono text-body-sm">
+                      <td className="text-right font-mono text-body-sm">
                         {term.pvalue.toExponential(2)}
                       </td>
-                      <td className="p-3 text-right font-semibold">
+                      <td className="text-right font-semibold">
                         {term.enrichment_ratio.toFixed(2)}x
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="text-right">
                         <span className="text-body-sm">
                           {term.study_count} / {term.background_count}
                         </span>
                       </td>
-                      <td className="p-3">
+                      <td>
                         <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="ghost"
@@ -374,7 +374,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr className="border-t bg-muted/30">
+                      <tr className="border-t bg-surface-2">
                         <td colSpan={7} className="p-4">
                           <div className="space-y-2">
                             <div className="font-medium text-body-sm">

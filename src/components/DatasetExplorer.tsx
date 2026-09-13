@@ -242,7 +242,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                 <div className="p-12 text-center text-secondary">Loading data...</div>
               ) : data ? (
                 <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-line">
+                <table className="data-table">
                   <thead className="bg-surface-2">
                     <tr>
                       {data.columns.map((col) => (

@@ -158,16 +158,16 @@ export default function UserConnections() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-line">
+          <table className="data-table">
             <thead className="bg-surface-2">
               <tr>
-                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
+                <th>
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
+                <th>
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
+                <th>
                   Date &amp; time
                 </th>
               </tr>
@@ -182,19 +182,19 @@ export default function UserConnections() {
               ) : (
                 data.recent_events.map((event, idx) => (
                   <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-hover">
-                    <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium text-primary">
+                    <td className="whitespace-nowrap text-body-sm font-medium">
                       {event.full_name ?? (
                         <span className="text-muted italic">Unknown</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                    <td className="whitespace-nowrap text-body-sm text-secondary">
                       {event.email ?? (
                         <span className="text-muted font-mono text-caption">
                           {event.user_id.slice(0, 8)}…
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                    <td className="whitespace-nowrap text-body-sm text-secondary">
                       {new Date(event.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: '2-digit',

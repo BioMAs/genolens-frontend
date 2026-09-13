@@ -338,26 +338,26 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                 Discordant &amp; contrast-specific genes ({notableGenes.length})
               </h3>
               <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                <table className="min-w-full text-sm">
+                <table className="data-table">
                   <thead className="sticky top-0 bg-surface-2">
                     <tr className="text-left text-secondary">
-                      <th className="px-3 py-2 font-medium">Gene</th>
-                      <th className="px-3 py-2 font-medium">log2FC A</th>
-                      <th className="px-3 py-2 font-medium">log2FC B</th>
-                      <th className="px-3 py-2 font-medium">padj A</th>
-                      <th className="px-3 py-2 font-medium">padj B</th>
-                      <th className="px-3 py-2 font-medium">Class</th>
+                      <th>Gene</th>
+                      <th>log2FC A</th>
+                      <th>log2FC B</th>
+                      <th>padj A</th>
+                      <th>padj B</th>
+                      <th>Class</th>
                     </tr>
                   </thead>
                   <tbody>
                     {notableGenes.slice(0, 500).map((p) => (
                       <tr key={p.gene_id} className="border-t border-subtle">
-                        <td className="px-3 py-1.5 font-medium text-primary">{p.gene}</td>
-                        <td className="px-3 py-1.5">{fmt(p.logfc_a, 2)}</td>
-                        <td className="px-3 py-1.5">{fmt(p.logfc_b, 2)}</td>
-                        <td className="px-3 py-1.5">{fmt(p.padj_a)}</td>
-                        <td className="px-3 py-1.5">{fmt(p.padj_b)}</td>
-                        <td className="px-3 py-1.5" style={{ color: quadrantColor(p.quadrant, palette) }}>
+                        <td className="font-medium">{p.gene}</td>
+                        <td>{fmt(p.logfc_a, 2)}</td>
+                        <td>{fmt(p.logfc_b, 2)}</td>
+                        <td>{fmt(p.padj_a)}</td>
+                        <td>{fmt(p.padj_b)}</td>
+                        <td  style={{ color: quadrantColor(p.quadrant, palette) }}>
                           {QUADRANT_META[p.quadrant].label}
                         </td>
                       </tr>

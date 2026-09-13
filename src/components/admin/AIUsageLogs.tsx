@@ -83,7 +83,7 @@ export default function AIUsageLogs() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-line">
+        <table className="data-table">
           <thead className="bg-surface-2">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
@@ -119,11 +119,11 @@ export default function AIUsageLogs() {
             ) : (
               filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-hover">
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-primary">
+                  <td className="whitespace-nowrap text-body-sm">
                     <div className="font-medium">{log.user_email || 'Unknown User'}</div>
                     <div className="text-caption text-secondary">{log.user_id.substring(0, 8)}...</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       log.action_type === 'interpretation' 
                         ? 'bg-accent-soft text-accent-ink' 
@@ -132,7 +132,7 @@ export default function AIUsageLogs() {
                       {log.action_type === 'interpretation' ? 'Interpretation' : 'Q&A Chat'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     <div className="flex items-center gap-2">
                       <Bot className="h-4 w-4 text-muted" />
                       <span>{log.model_used}</span>
@@ -143,14 +143,14 @@ export default function AIUsageLogs() {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm">
+                  <td className="whitespace-nowrap text-body-sm">
                     {log.was_free ? (
                       <span className="text-green-600 font-medium">Free Quota</span>
                     ) : (
                       <span className="text-amber-600 font-bold">Paid Token</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {format(new Date(log.created_at), 'MMM d, HH:mm:ss')}
                   </td>
                 </tr>

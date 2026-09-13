@@ -390,7 +390,7 @@ export default function UserManagement() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-line">
+          <table className="data-table">
             <thead className="bg-surface-2">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
@@ -419,7 +419,7 @@ export default function UserManagement() {
             <tbody className="bg-surface divide-y divide-line">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-hover">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <div className="flex items-center">
                       {user.avatar_url ? (
                         <Image className="h-10 w-10 rounded-pill" src={user.avatar_url} alt="" width={40} height={40} />
@@ -441,7 +441,7 @@ export default function UserManagement() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' :
                       user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
@@ -452,7 +452,7 @@ export default function UserManagement() {
                       {user.subscription_plan || 'STARTER'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     <div className="flex flex-col gap-1">
                       <div>Used: {user.ai_interpretations_used} ({user.ai_tokens_used} paid)</div>
                       <div className="text-caption">
@@ -460,21 +460,21 @@ export default function UserManagement() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <StatusBadge status={user.status} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${getRoleBadgeColor(user.role)}`}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {user.last_sign_in_at
                       ? new Date(user.last_sign_in_at).toLocaleDateString()
                       : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-body-sm font-medium">
+                  <td className="whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-2">
                       {user.status === "pending" ? (
                         <button

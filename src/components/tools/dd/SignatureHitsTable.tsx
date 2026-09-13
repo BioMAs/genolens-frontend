@@ -124,20 +124,20 @@ export default function SignatureHitsTable({
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-body-sm">
+        <table className="data-table">
           <thead className="bg-surface-2 text-left text-caption uppercase text-secondary">
             <tr>
-              <th className="p-2">Direction</th>
-              <th className="p-2">
+              <th>Direction</th>
+              <th>
                 <button type="button" onClick={() => setSortBy('rank')}>Rank</button>
               </th>
-              <th className="p-2">Gene</th>
-              <th className="p-2">
+              <th>Gene</th>
+              <th>
                 <button type="button" onClick={() => setSortBy('percentile')}>Percentile</button>
               </th>
-              <th className="p-2">Composite</th>
-              <th className="p-2">Coverage</th>
-              <th className="p-2">Axes</th>
+              <th>Composite</th>
+              <th>Coverage</th>
+              <th>Axes</th>
               {axes.map((axis) => (
                 <th key={axis} className="p-2">
                   {axis}
@@ -155,7 +155,7 @@ export default function SignatureHitsTable({
               const direction = directionBySymbol[target.symbol];
               return (
                 <tr key={target.gene_id}>
-                  <td className="p-2">
+                  <td>
                     {direction ? (
                       <span
                         className={
@@ -170,15 +170,15 @@ export default function SignatureHitsTable({
                       <span className="text-gray-300">—</span>
                     )}
                   </td>
-                  <td className="p-2 text-secondary">{target.rank}</td>
-                  <td className="p-2 font-medium text-primary">
+                  <td className="text-secondary">{target.rank}</td>
+                  <td className="font-medium">
                     {target.symbol}
                     <span className="ml-2 text-caption text-muted">{target.gene_id}</span>
                   </td>
-                  <td className="p-2">{(target.percentile * 100).toFixed(1)}%</td>
-                  <td className="p-2">{fmt(target.composite)}</td>
-                  <td className="p-2">{fmt(target.coverage, 2)}</td>
-                  <td className="p-2">{target.n_axes_scored}</td>
+                  <td>{(target.percentile * 100).toFixed(1)}%</td>
+                  <td>{fmt(target.composite)}</td>
+                  <td>{fmt(target.coverage, 2)}</td>
+                  <td>{target.n_axes_scored}</td>
                   {axes.map((axis) => {
                     const value = target.subscores[axis];
                     return (
