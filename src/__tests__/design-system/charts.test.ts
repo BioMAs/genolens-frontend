@@ -79,3 +79,26 @@ describe('fonds opaques', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('convention de direction', () => {
+  /**
+   * La meme inversion a ete trouvee TROIS fois — ClaimPathwayMap,
+   * ClaimPathwayNetwork, le radar d'EnrichmentAnalysis — sous la meme forme :
+   *
+   *     const UP_COLOR = '#ef4444';   // rouge
+   *     const DOWN_COLOR = '#3b82f6'; // bleu
+   *
+   * Du rouge pour la sur-expression, sous un libelle « UP-regulated », alors
+   * que partout ailleurs dans le produit le rouge signifie « sous-exprime ».
+   * Un quatrieme fichier pourrait la reintroduire demain ; cette garde vise la
+   * forme, pas la teinte, parce que c'est la forme qui se repete.
+   *
+   * La convention vit dans `chartScales.directionColors`, une seule fois.
+   */
+  it('aucun composant ne redeclare ses propres couleurs de direction', () => {
+    const offenders = SOURCES.filter(
+      (f) => !f.startsWith('src/utils/') && /\b(UP|DOWN)_COLOU?R\b/.test(read(f)),
+    );
+    expect(offenders).toEqual([]);
+  });
+});

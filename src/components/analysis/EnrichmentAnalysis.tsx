@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ExternalLink, TableIcon, Activity, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
-import { useChartTheme } from '@/utils/chartTheme';
+import { useChartTheme, useChartScales, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 // Dynamically import Plotly (SSR not supported)
@@ -35,6 +35,17 @@ interface ApiErrorShape {
 
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
   const chartTheme = useChartTheme();
+  /**
+   * Le radar donnait `#ef4444` — le ROUGE — a la trace « UP Regulated » et du
+   * bleu a « DOWN Regulated ». Troisieme occurrence de la meme inversion, apres
+   * les deux cartes de claims : partout ailleurs dans le produit le rouge
+   * signifie « sous-exprime ».
+   *
+   * La trace globale valait `#10b981`, l'emeraude de MARQUE, employee comme
+   * couleur de serie nominale. Elle prend un cran categoriel.
+   */
+  const scales = useChartScales();
+  const palette = useChartPalette();
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
     const [loadingComparisons, setLoadingComparisons] = useState(true);
@@ -213,7 +224,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: 'toself',
                 name: 'UP Regulated',
-                line: { color: '#ef4444' }, // Red-500
+                line: { color: scales.directionColors.up },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
             });
         }
@@ -226,7 +237,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: 'toself',
                 name: 'DOWN Regulated',
-                line: { color: '#3b82f6' }, // Blue-500
+                line: { color: scales.directionColors.down },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
             });
         }
@@ -241,7 +252,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: hasDirectional ? 'none' : 'toself', // Only fill if it's the main actor
                 name: 'Global (All Genes)',
-                line: { color: '#10b981', dash: hasDirectional ? 'dot' : 'solid' }, // Emerald-500
+                line: { color: palette.categorical[0], dash: hasDirectional ? 'dot' : 'solid' },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
                 visible: hasDirectional ? 'legendonly' : true // Hide by default if we have split
              });
@@ -272,7 +283,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             })
         };
 
-    }, [allResults, viewMode, categoryFilter, chartTheme]);
+    }, [allResults, viewMode, categoryFilter, chartTheme, scales, palette]);
 
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
