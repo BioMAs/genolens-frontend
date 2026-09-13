@@ -1,5 +1,7 @@
 'use client';
 
+import { useChartPalette } from '@/utils/chartTheme';
+
 /**
  * ProportionalVenn — bespoke SVG Venn for 2–3 gene sets, matching the redesign's
  * multi-comparison hero. Circles are tinted per set; every region shows its
@@ -23,14 +25,20 @@ interface Circle {
   labelPos: { x: number; y: number; anchor: 'start' | 'middle' | 'end' };
 }
 
-const PALETTE = ['var(--dc-indigo)', 'var(--dc-pink)', 'var(--dc-green)', 'var(--dc-amber)'];
 
 function intersect(a: string[], b: Set<string>): string[] {
   return a.filter((g) => b.has(g));
 }
 
+/**
+ * La palette venait de la famille `--dc-*`, une liste unique pour les deux
+ * themes et jamais verifiee en dichromatie. `useChartPalette` rend celle qui a
+ * ete construite pour ca — separee sous les trois dichromaties simulees, et
+ * definie theme par theme.
+ */
+
 /** Distinct-intersection regions + circle geometry for 2 or 3 sets. */
-function build(setGenes: Record<string, string[]>) {
+function build(setGenes: Record<string, string[]>, PALETTE: string[]) {
   const labels = Object.keys(setGenes);
   const sets = labels.map((l) => new Set(setGenes[l]));
 
@@ -88,7 +96,8 @@ interface Props {
 }
 
 export default function ProportionalVenn({ setGenes, selectedName, onSelect }: Props) {
-  const { circles, regions } = build(setGenes);
+  const palette = useChartPalette();
+  const { circles, regions } = build(setGenes, palette.categorical);
 
   return (
     <svg viewBox="0 0 500 420" className="w-full max-w-[500px]" role="img" aria-label="Venn diagram">
@@ -139,7 +148,11 @@ export default function ProportionalVenn({ setGenes, selectedName, onSelect }: P
               className="font-display"
               fontSize={r.big ? 20 : 15}
               fontWeight={700}
-              fill={r.big ? '#fff' : 'var(--text-primary)'}
+              // La pastille « tous » est remplie en `--text-primary` : presque
+              // noire en clair, presque BLANCHE en sombre. Un chiffre blanc
+              // dessus disparaissait donc purement et simplement en theme
+              // sombre. L'encre inverse est la surface, pas un blanc fixe.
+              fill={r.big ? 'var(--surface)' : 'var(--text-primary)'}
             >
               {r.genes.length}
             </text>

@@ -2,29 +2,45 @@
 
 import { CosmeticSkinZone } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
+import { useChartPalette, useChartScales, CHART_VARS } from '@/utils/chartTheme';
 
-const ZONE_COLORS: Record<string, string> = {
-  stratum_corneum: '#0ea5e9',
-  epidermis: '#16a34a',
-  dermis: '#db2777',
-  inflammation: '#f43f5e',
-  antioxidant: '#f59e0b',
-  energy: '#ef4444',
-  cellular: '#8b5cf6',
-};
+/**
+ * Les sept compartiments prennent les sept premiers crans de la palette
+ * categorielle, dans l'ordre : les trois couches anatomiques d'abord — donc
+ * les crans les plus separes entre eux, y compris sous dichromatie — puis les
+ * quatre processus transverses.
+ *
+ * Ils etaient ecrits en dur, et deux d'entre eux reprenaient des couleurs de
+ * DIRECTION : `energy: '#ef4444'` (le rouge « sous-exprime ») et
+ * `epidermis: '#16a34a'` (le vert « sur-exprime »). Une palette categorielle
+ * encode du nominal uniquement ; un compartiment colore en rouge se lisait
+ * « reprime » alors que la carte mesure un ENGAGEMENT, pas une direction —
+ * distinction que le panneau d'aide prend justement soin d'expliquer.
+ */
+const ZONE_ORDER = [
+  'stratum_corneum', 'epidermis', 'dermis',
+  'inflammation', 'antioxidant', 'energy', 'cellular',
+];
 
 function opacityFor(activity: number) {
   return 0.12 + (Math.max(0, Math.min(100, activity)) / 100) * 0.78;
 }
 
-function DirArrow({ dir }: { dir: string }) {
-  if (dir === 'up') return <span style={{ color: '#16a34a' }}>▲</span>;
-  if (dir === 'down') return <span style={{ color: '#dc2626' }}>▼</span>;
-  return <span style={{ color: '#9ca3af' }}>■</span>;
-}
-
 /** Annotated skin cross-section: layers + cross-cutting cellular processes. */
 export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) {
+  const palette = useChartPalette();
+  const scales = useChartScales();
+  const zoneColor = (slug: string) => {
+    const i = ZONE_ORDER.indexOf(slug);
+    return i === -1 ? palette.ns : palette.categorical[i % palette.categorical.length];
+  };
+
+  /** Troisieme copie de la convention de direction dans le produit. */
+  const DirArrow = ({ dir }: { dir: string }) => {
+    if (dir === 'up') return <span style={{ color: scales.directionColors.up }}>▲</span>;
+    if (dir === 'down') return <span style={{ color: scales.directionColors.down }}>▼</span>;
+    return <span style={{ color: palette.ns }}>■</span>;
+  };
   const byId: Record<string, CosmeticSkinZone> = Object.fromEntries(
     zones.map((z) => [z.slug, z]),
   );
@@ -74,7 +90,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
             {layers.map((l) => {
               const z = byId[l.slug];
               const act = z?.activity ?? 0;
-              const color = ZONE_COLORS[l.slug];
+              const color = zoneColor(l.slug);
               return (
                 <g key={l.slug}>
                   <rect
@@ -88,10 +104,10 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
                     stroke={color}
                     strokeOpacity={0.5}
                   />
-                  <text x={20} y={l.y + 18} fontSize={11} fontWeight={600} fill="#1f2937">
+                  <text x={20} y={l.y + 18} fontSize={11} fontWeight={600} fill={CHART_VARS.ink}>
                     {l.label}
                   </text>
-                  <text x={20} y={l.y + 33} fontSize={10} fill="#4b5563">
+                  <text x={20} y={l.y + 33} fontSize={10} fill={CHART_VARS.inkMuted}>
                     {act}/100 · {z?.n_pathways ?? 0} pathways
                   </text>
                   {/* connector + value badge */}
@@ -110,7 +126,7 @@ export default function SkinSchematic({ zones }: { zones: CosmeticSkinZone[] }) 
         <div className="lg:col-span-2 flex flex-col gap-2 justify-center">
           {crossCutting.map((slug) => {
             const z = byId[slug];
-            const color = ZONE_COLORS[slug];
+            const color = zoneColor(slug);
             return (
               <div key={slug} className="rounded-control border border-subtle p-2.5">
                 <div className="flex items-center justify-between text-caption font-medium" style={{ color: 'var(--text-primary)' }}>

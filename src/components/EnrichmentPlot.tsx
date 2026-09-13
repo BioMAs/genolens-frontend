@@ -7,6 +7,7 @@ import { Dataset } from '@/types';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useChartPalette } from '@/utils/chartTheme';
+import { significanceRamp } from '@/utils/chartScales';
 
 interface EnrichmentPlotProps {
   dataset: Dataset;
@@ -28,7 +29,6 @@ interface EnrichmentPoint {
 
 export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPlotProps) {
   const { theme } = useTheme();
-  const dark = theme === 'dark';
   const palette = useChartPalette();
   // Utilise React Query pour gérer le cache
   const { data: queryData, isLoading } = useDatasetQuery(dataset.id, 1000);
@@ -141,26 +141,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
   if (isLoading) return <div>Loading enrichment data...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
-  /**
-   * Rampe de significativite : plus c'est significatif, plus c'est CONTRASTE.
-   *
-   * La rampe etait unique pour les deux themes, et mesuree elle s'inversait
-   * exactement. Contraste sur le fond, du non-significatif au p<1e-10 :
-   *
-   *     clair  : 2,54 -> 10,02   (correct)
-   *     sombre : 7,06 ->  1,79   (inverse)
-   *
-   * En theme sombre, la voie la PLUS significative etait donc la MOINS
-   * visible — sous le plancher de 3:1 — pendant que le bruit criait a 7:1.
-   * C'est un defaut de lisibilite de la donnee, pas un detail esthetique.
-   *
-   * La rampe sombre part du gris de recul et s'eclaircit : 2,38 -> 3,10 ->
-   * 4,14 -> 5,13 -> 6,65 -> 9,08. Monotone croissante, et tous les paliers
-   * significatifs au-dessus de 3:1.
-   */
-  const RAMP = dark
-    ? ['#4a5568', '#a34a4a', '#c85454', '#e06060', '#ef7b7b', '#fba0a0']
-    : ['#9ca3af', '#f87171', '#ef4444', '#dc2626', '#991b1b', '#7f1d1d'];
+  const RAMP = significanceRamp(theme);
 
   const getColor = (negLogP: number | undefined) => {
       if (!negLogP || negLogP <= 0) return palette.ns;

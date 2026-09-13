@@ -126,6 +126,22 @@
   /* Fond d'avertissement, pendant clair de --dc-amber */
   --warning-soft: rgba(245, 158, 11, 0.12);
 
+  /* ── Encres semantiques ───────────────────────────────────────────────────
+     Meme raison d'etre que --accent-ink : la couleur de MARQUE et la couleur
+     d'ENCRE ne peuvent pas etre la meme valeur, parce que le texte demande
+     4,5:1 la ou un aplat se contente de 3:1.
+
+     Mesure : --dc-amber (#f59e0b) donne 2,15:1 sur blanc, et il servait
+     d'encre via `text-warning` dans six composants — badge, stat-chip,
+     PowerAnalysis, QuotaDisplay, AnalysisQuotaNotice, ClaimRings. C'est un
+     echec du plancher TEXTE, pas du plancher graphique. De meme
+     --dc-up-dark (#16a34a) plafonne a 3,30:1.
+
+     Les deux encres ci-dessous tiennent 5,02:1 en clair et 7,9-8,4:1 en
+     sombre. --dc-amber reste la couleur des aplats et des bordures. */
+  --success-ink: #15803d;
+  --warning-ink: #b45309;
+
   /* ── Couleurs de DONNEES ────────────────────────────────────────────────
      Distinctes des couleurs de chrome, et dependantes du theme — ce que
      chartPalettes.ts ne savait pas faire, ses valeurs etant des litteraux
@@ -211,6 +227,9 @@
   --elev-2: 0 12px 32px -12px rgb(0 0 0 / .6);
 
   --warning-soft: rgba(245, 158, 11, 0.16);
+  /* Sur fond sombre l'encre peut reprendre la teinte vive : 7,87 et 8,35:1. */
+  --success-ink: #22c55e;
+  --warning-ink: #f59e0b;
 
   /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
      #22c55e y donne 7,87:1, #ef4444 4,77:1. */
@@ -338,8 +357,13 @@
   --color-danger:             var(--sl-red);
   --color-danger-hover:       var(--sl-red-dark);
   --color-danger-soft:        var(--sl-red-light);
-  --color-warning:            var(--dc-amber);
+  /* `text-warning` et `border-warning` pointent sur l'ENCRE : l'utilitaire
+     porte du texte dans cinq de ses six usages, et --dc-amber y echouait a
+     2,15:1. Les aplats passent par --color-warning-soft, inchange. */
+  --color-warning:            var(--warning-ink);
   --color-warning-soft:       var(--warning-soft);
+  --color-success-ink:        var(--success-ink);
+  --color-warning-ink:        var(--warning-ink);
 
   /* Surfaces IA uniquement — le violet est banni de la chrome */
   --color-ai:                 var(--sl-violet);

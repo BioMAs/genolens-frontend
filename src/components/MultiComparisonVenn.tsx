@@ -1,5 +1,7 @@
 'use client';
 
+import { useChartPalette } from '@/utils/chartTheme';
+
 import { FC, useMemo, useState } from 'react';
 import {
   UpSetJS as UpSetJSImpl,
@@ -29,7 +31,7 @@ interface DiagramProps {
 }
 const UpSetJS = UpSetJSImpl as unknown as FC<DiagramProps>;
 
-const CONDITION_PALETTE = ['var(--dc-indigo)', 'var(--dc-pink)', 'var(--dc-green)', 'var(--dc-amber)', 'var(--sl-violet)'];
+
 
 // One comparison, tagged with the DEG dataset that holds it.
 export interface ComparisonRef {
@@ -67,6 +69,13 @@ interface Selection {
 }
 
 export default function MultiComparisonVenn({ pathDatasetId, comparisons: availableComparisons }: MultiComparisonVennProps) {
+  /**
+   * La palette des conditions listait `--sl-violet` en cinquieme position : le
+   * violet est reserve aux surfaces IA, une condition d'echantillon n'en est
+   * pas une. Les quatre autres venaient de la famille `--dc-*`, unique pour
+   * les deux themes et jamais verifiee en dichromatie.
+   */
+  const CONDITION_PALETTE = useChartPalette().categorical;
   const [selectedComparisons, setSelectedComparisons] = useState<string[]>([]);
   const [vennData, setVennData] = useState<VennResponse | null>(null);
   const [loading, setLoading] = useState(false);

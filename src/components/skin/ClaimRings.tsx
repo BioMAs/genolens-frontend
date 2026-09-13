@@ -59,7 +59,11 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
       </div>
       <div
         className="mt-1 text-micro"
-        style={{ color: favorable ? 'var(--dc-up-dark)' : '#d97706' }}
+        // Encres semantiques : les deux valeurs precedentes plafonnaient a
+        // 3,30 et 3,19:1 sur blanc, sous le plancher TEXTE de 4,5:1. Et ce
+        // n'est pas une direction de regulation mais un VERDICT — d'ou
+        // succes/avertissement plutot que --chart-up/--chart-down.
+        style={{ color: favorable ? 'var(--success-ink)' : 'var(--warning-ink)' }}
       >
         {favorable ? '↗ Favorable' : '↘ To watch'}
       </div>

@@ -14,7 +14,17 @@ interface Props {
   secondaryColor?: string | null;
 }
 
-/* ---- Mini A4 page mock-ups (viewBox 70 x 99) ------------------------------- */
+/* ---- Mini A4 page mock-ups (viewBox 70 x 99) -------------------------------
+ *
+ * Les litteraux de ce bloc sont DELIBERES et ne doivent pas etre convertis en
+ * jetons de theme : ces vignettes representent une feuille A4 imprimee. Le
+ * papier est blanc et ses lignes de texte sont grises quel que soit le theme de
+ * l'interface ; un apercu « papier sombre » decrirait un PDF qui n'existe pas.
+ *
+ * `DEFAULT_PRIMARY` et `DEFAULT_SECONDARY` sont les couleurs de marque du
+ * rapport, remplacables par l'utilisateur — elles appartiennent au document,
+ * pas a l'application.
+ */
 
 function Page({ children }: { children: React.ReactNode }) {
   return (

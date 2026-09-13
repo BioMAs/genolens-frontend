@@ -121,6 +121,40 @@ const DIRECTION: Record<PaletteMode, Record<ThemeMode, [string, string]>> = {
   colorblind: { light: ['#0072B2', '#D55E00'], dark: ['#5fb4e8', '#f09460'] },
 };
 
+/**
+ * Rampe de SIGNIFICATIVITE — six paliers discrets, du non-significatif au
+ * p < 1e-10. Plus c'est significatif, plus c'est contraste sur le fond.
+ *
+ * Elle etait unique pour les deux themes, et mesuree elle s'inversait
+ * exactement. Contraste sur le fond, du non-significatif au plus significatif :
+ *
+ *     clair  : 2,54 -> 10,02   (correct)
+ *     sombre : 7,06 ->  1,79   (inverse)
+ *
+ * En theme sombre la voie la PLUS significative etait donc la MOINS visible —
+ * sous le plancher de 3:1 — pendant que le bruit criait a 7:1. Ce n'est pas un
+ * detail esthetique : c'est le graphique qui ment sur son classement.
+ *
+ * Discrete et non continue a dessein : les seuils (1,3 / 2 / 3 / 5 / 10 en
+ * -log10) sont des conventions de lecture, pas un continuum.
+ */
+const SIGNIFICANCE: Record<ThemeMode, string[]> = {
+  // Contrastes sur blanc : 2,54 · 3,15 · 4,39 · 5,99 · 8,00 · 9,96.
+  // Le premier palier significatif valait 2,77:1 — sous le plancher de 3:1.
+  // La correction de l'inversion sombre n'avait pas fait verifier le CLAIR,
+  // dont les trois crans du bas etaient tasses (2,54 · 2,77 · 3,76). La rampe
+  // est reconstruite par fondu depuis `#dc2626` vers le blanc puis vers un
+  // rouge tres sombre : les cibles de contraste sont atteintes SANS perdre la
+  // coherence de teinte qu'une recherche libre detruisait.
+  light: ['#9ca3af', '#e76a6a', '#df3939', '#c12121', '#9e1b1b', '#841616'],
+  // Contrastes sur `--surface` sombre : 2,38 · 3,10 · 4,14 · 5,13 · 6,65 · 9,08.
+  dark: ['#4a5568', '#a34a4a', '#c85454', '#e06060', '#ef7b7b', '#fba0a0'],
+};
+
+export function significanceRamp(theme: ThemeMode = 'light'): string[] {
+  return SIGNIFICANCE[theme];
+}
+
 export function sequentialScale(theme: ThemeMode = 'light'): ColorStops {
   return SEQUENTIAL[theme];
 }

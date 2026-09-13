@@ -1,4 +1,5 @@
 import {
+  significanceRamp,
   sequentialScale,
   divergingScale,
   logFCScale,
@@ -154,5 +155,35 @@ describe('discreteScale', () => {
     // Une piste de conditions est vide quand aucune metadonnee n'est chargee.
     const stops = discreteScale([]);
     expect(positions(stops)).toEqual([0, 1]);
+  });
+});
+
+describe('rampe de significativite', () => {
+  /**
+   * Le defaut mesure : une rampe unique pour les deux themes, qui s'inversait
+   * exactement en sombre — la voie la PLUS significative y etait la MOINS
+   * visible (1,79:1) pendant que le bruit criait a 7:1.
+   */
+  const SURFACE = { light: '#ffffff', dark: '#131720' } as const;
+
+  it.each(['light', 'dark'] as const)('gagne du contraste avec la significativite (%s)', (theme) => {
+    const ramp = significanceRamp(theme).map((c) => contrast(c, SURFACE[theme]));
+    for (let i = 1; i < ramp.length; i += 1) {
+      expect(ramp[i]).toBeGreaterThan(ramp[i - 1]);
+    }
+  });
+
+  it.each(['light', 'dark'] as const)('tient 3:1 sur tous les paliers significatifs (%s)', (theme) => {
+    // Le premier palier est le NON significatif : il doit reculer, comme
+    // `--chart-ns`. Tous les autres portent un resultat et doivent se voir.
+    const [, ...significant] = significanceRamp(theme);
+    for (const color of significant) {
+      expect(contrast(color, SURFACE[theme])).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('compte six paliers dans les deux themes', () => {
+    expect(significanceRamp('light')).toHaveLength(6);
+    expect(significanceRamp('dark')).toHaveLength(6);
   });
 });
