@@ -7,22 +7,10 @@ import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData, type HeatmapGeneRow } from '@/components/heatmap/useHeatmapData';
 import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
-import { useChartPrefs } from '@/contexts/chartPrefs';
-import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
+import { useChartTheme, useChartPalette, useChartScales } from '@/utils/chartTheme';
+import { discreteScale } from '@/utils/chartScales';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 import { Layout, PlotData } from 'plotly.js';
-
-// Build a Plotly discrete (stepped) colorscale so each category maps to a flat color.
-// Category i is encoded as z = (i + 0.5) / n, which lands in the middle of its band.
-function discreteColorscale(colors: string[]): [number, string][] {
-  const n = colors.length;
-  const scale: [number, string][] = [];
-  for (let i = 0; i < n; i++) {
-    scale.push([i / n, colors[i]]);
-    scale.push([(i + 1) / n, colors[i]]);
-  }
-  return scale;
-}
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -37,33 +25,6 @@ interface DEGClusteringViewProps {
 }
 
 type DisplayMode = 'expression' | 'log2fc';
-
-// Viridis-like colorscale (blue → grey → yellow) matching the reference figure
-const VIRIDIS_COLORSCALE: [number, string][] = [
-  [0.0, '#000080'],
-  [0.15, '#0c3b6b'],
-  [0.3, '#2e6fa3'],
-  [0.45, '#6e91a8'],
-  [0.6, '#a8a878'],
-  [0.75, '#d4c836'],
-  [1.0, '#ffff00'],
-];
-
-// Colorblind-safe sequential scale (dark blue → light yellow)
-const COLORBLIND_SEQ_COLORSCALE: [number, string][] = [
-  [0.0, '#0072B2'],
-  [0.33, '#56B4E9'],
-  [0.66, '#F0E442'],
-  [1.0, '#E69F00'],
-];
-
-// DEG status sidebar: purple for DOWN (-1), green for UP (+1)
-const DEG_STATUS_COLORSCALE: [number, string][] = [
-  [0.0, '#7B2D8B'],  // purple  — DOWN
-  [0.49, '#7B2D8B'],
-  [0.51, '#3A7D44'],  // green  — UP
-  [1.0, '#3A7D44'],
-];
 
 // Default params: show ALL DEGs (top_n_genes: 0 = no limit)
 const DEG_CLUSTERING_PARAMS: ClusteringParams = {
@@ -85,7 +46,7 @@ export default function DEGClusteringView({
   const chartTheme = useChartTheme();
   const palette = useChartPalette();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
-  const { colorblind: colorblindMode } = useChartPrefs();
+  const scales = useChartScales();
 
   // If sampleIds is undefined or empty, ALL matrix samples will be shown
   // (happens when no metadata dataset is uploaded for the study).
@@ -137,7 +98,10 @@ export default function DEGClusteringView({
 
   if (displayMode === 'expression') {
     mainZ = plotData.z;
-    colorscale = colorblindMode ? COLORBLIND_SEQ_COLORSCALE : VIRIDIS_COLORSCALE;
+    // Rampe sequentielle : le z-score est centre, mais la convention des
+    // cartes de chaleur RNA-seq est une rampe continue, et la figure de
+    // reference de cet ecran en est une.
+    colorscale = scales.sequential;
     // z-scored by backend: clamp between -2 and 2 for visual clarity
     zmin = -2;
     zmax = 2;
@@ -145,9 +109,9 @@ export default function DEGClusteringView({
   } else {
     // Replicate the gene's log2FC across all samples to fill the z matrix
     mainZ = plotData.logFCs.map(lfc => plotData.x.map(() => lfc));
-    colorscale = colorblindMode
-      ? ([[0, '#0072B2'], [0.5, '#f7f7f7'], [1, '#D55E00']] as [number, string][])
-      : 'RdBu';
+    // Divergente, median sur la surface du panneau : 'RdBu' portait un blanc
+    // cuit au milieu, donc un trou blanc au centre de la carte en sombre.
+    colorscale = scales.diverging;
     zmin = -3;
     zmax = 3;
     colorbarTitle = 'Log2FC';
@@ -306,7 +270,7 @@ export default function DEGClusteringView({
                   z: condTrackZ,
                   x: plotData.x,
                   y: ['Condition'],
-                  colorscale: discreteColorscale(condColors),
+                  colorscale: discreteScale(condColors),
                   zmin: 0,
                   zmax: 1,
                   showscale: false,
@@ -323,7 +287,7 @@ export default function DEGClusteringView({
               z: degStatus.map(v => [v]),
               x: ['DEG'],
               y: plotData.y,
-              colorscale: DEG_STATUS_COLORSCALE,
+              colorscale: scales.direction,
               zmin: -1,
               zmax: 1,
               showscale: false,
@@ -427,16 +391,16 @@ export default function DEGClusteringView({
       {/* Legend strip */}
       <div className="flex flex-wrap items-center gap-6 text-caption text-secondary bg-surface-2 rounded-sm px-4 py-2">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#7B2D8B' }} />
+          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: scales.directionColors.down }} />
           <span>DOWN-regulated</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3A7D44' }} />
+          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: scales.directionColors.up }} />
           <span>UP-regulated</span>
         </div>
         {hasConditions && (
           <>
-            <span className="text-gray-300">|</span>
+            <span className="text-muted" aria-hidden>|</span>
             <span className="text-secondary">Condition:</span>
             {uniqueConds.map((c, i) => (
               <div key={c} className="flex items-center gap-2">
@@ -446,7 +410,7 @@ export default function DEGClusteringView({
             ))}
           </>
         )}
-        <span className="text-gray-300">|</span>
+        <span className="text-muted" aria-hidden>|</span>
         <span className="text-secondary">
           Comparison: <strong className="text-primary">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
         </span>

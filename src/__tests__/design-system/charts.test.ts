@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Gardes statiques sur la couche graphique.
@@ -9,9 +9,16 @@ import { globSync } from 'node:fs';
  * Chaque assertion correspond a un defaut qui a REELLEMENT existe ici.
  */
 
-const SOURCES = globSync('src/**/*.{ts,tsx}').filter(
-  (f) => !f.includes('__tests__') && !f.includes('/auth/'),
-);
+/** `readdirSync` recursif plutot que `globSync` : ce dernier existe a
+ *  l'execution mais n'est pas declare dans les types de node:fs. */
+const SOURCES: string[] = readdirSync('src', { recursive: true, encoding: 'utf8' })
+  .map((f) => join('src', f))
+  .filter(
+    (f) =>
+      (f.endsWith('.ts') || f.endsWith('.tsx')) &&
+      !f.includes('__tests__') &&
+      !f.includes('/auth/'),
+  );
 
 /**
  * Les commentaires sont retires avant toute recherche. Sans cela, DOCUMENTER un

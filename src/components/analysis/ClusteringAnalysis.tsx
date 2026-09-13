@@ -5,9 +5,8 @@ import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { Settings, Play, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-react';
 import { PlotData } from 'plotly.js';
-import { getColorscale } from '@/components/heatmap/heatmapConfig';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
-import { useChartPrefs } from '@/contexts/chartPrefs';
+import { useChartScales } from '@/utils/chartTheme';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -91,9 +90,10 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
     metric: 'euclidean'
   });
 
-  // La preference est globale et persistee : elle s'accorde avec la PCA
-  // d'a cote et survit a un rechargement.
-  const { colorblind: colorblindMode } = useChartPrefs();
+  // Les echelles suivent le theme ET la preference de palette, toutes deux
+  // globales : la carte de chaleur s'accorde avec la PCA d'a cote, et son
+  // point median ne perce plus un trou blanc en theme sombre.
+  const scales = useChartScales();
 
   // Silhouette / K-means
   const [silhouetteData, setSilhouetteData] = useState<SilhouetteResult | null>(null);
@@ -186,14 +186,14 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           z: finalZ,
           x: orderedColLabels,
           y: orderedRowLabels,
-          colorscale: getColorscale(colorblindMode), 
+          colorscale: scales.diverging,
           reversescale: true,
           zmin: standardize ? -2 : undefined,
           zmax: standardize ? 2 : undefined,
           colorbar: { title: standardize ? 'Z-Score' : 'Expression' }
       } as Partial<PlotData>];
 
-  }, [result, standardize, colorblindMode]);
+  }, [result, standardize, scales]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
