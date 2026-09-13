@@ -21,7 +21,6 @@ interface StatCard {
   name: string;
   value: number;
   icon: typeof Users;
-  color: string;
   isMoney?: boolean;
 }
 
@@ -75,37 +74,38 @@ export default function SystemStats() {
     );
   }
 
+    /**
+   * Les tuiles d'icone portaient une couleur par compteur — cinq teintes pour
+   * cinq nombres, qui n'encodent rien : aucun de ces compteurs n'est meilleur
+   * ou pire qu'un autre. La migration des statuts l'a rendu visible en peignant
+   * « Total Datasets » en AVERTISSEMENT et « Active Users » en SUCCES.
+   */
   const statCards: StatCard[] = [
     {
       name: 'Total Users',
       value: stats.total_users,
       icon: Users,
-      color: 'bg-blue-500',
     },
     {
       name: 'Active Users',
       value: stats.active_users,
       icon: TrendingUp,
-      color: 'bg-success',
     },
     {
       name: 'Total Projects',
       value: stats.total_projects,
       icon: Database,
-      color: 'bg-purple-500',
     },
     {
       name: 'Total Datasets',
       value: stats.total_datasets,
       icon: Activity,
-      color: 'bg-warning',
     },
     {
       name: 'Est. Revenue',
       value: stats.estimated_revenue,
       isMoney: true,
       icon: TrendingUp,
-      color: 'bg-success',
     },
   ];
 
@@ -117,8 +117,8 @@ export default function SystemStats() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`${stat.color} rounded-sm p-3`}>
-                    <stat.icon className="h-6 w-6 text-on-accent" aria-hidden="true" />
+                  <div className="rounded-sm bg-surface-2 p-3">
+                    <stat.icon className="h-6 w-6 text-secondary" aria-hidden="true" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">

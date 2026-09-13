@@ -331,7 +331,7 @@ export default function UserManagement() {
       case 'admin':
         return 'bg-danger-soft text-danger-ink';
       case 'analyst':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-info-soft text-info-ink';
       case 'user':
         return 'bg-success-soft text-success-ink';
       case 'viewer':
@@ -444,7 +444,7 @@ export default function UserManagement() {
                   <td className="whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' :
-                      user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
+                      user.subscription_plan === 'TEAM' ? 'bg-info-soft text-info-ink' :
                       'bg-surface-2 text-primary'
                     }`}>
                       {user.subscription_plan === 'ON_PREMISE' && <Crown className="h-3 w-3 mr-1" />}

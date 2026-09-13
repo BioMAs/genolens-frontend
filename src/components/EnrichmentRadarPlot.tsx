@@ -364,7 +364,7 @@ export default function EnrichmentRadarPlot({
                </div>
             )}
             {data.negLogPValue_DOWN > 0 && (
-               <div className="flex items-center gap-2 text-blue-600">
+               <div className="flex items-center gap-2 text-info-ink">
                    <span className="font-bold w-12">DOWN:</span>
                    <span>p={Math.pow(10, -data.negLogPValue_DOWN).toExponential(1)}</span>
                    <span className="text-secondary">(GR: {data.geneRatio_DOWN.toFixed(1)}%)</span>
@@ -416,7 +416,7 @@ export default function EnrichmentRadarPlot({
   return (
     <div className="space-y-4">
       {/* Selection Mode Controls */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-control border border-accent-ring">
+      <div className="flex items-center justify-between bg-surface-2 p-4 rounded-control">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-primary">Term Selection:</span>
           <div className="flex gap-2">
@@ -477,7 +477,7 @@ export default function EnrichmentRadarPlot({
 
       {/* AI Prompt Input */}
       {showAiPrompt && selectionMode === 'ai' && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-accent-ring rounded-control p-4">
+        <div className="bg-surface-2 rounded-control p-4">
           <div className="flex items-start gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-accent-ink mt-1 flex-shrink-0" />
             <div className="flex-1">

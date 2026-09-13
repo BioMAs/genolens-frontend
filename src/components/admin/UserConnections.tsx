@@ -60,19 +60,16 @@ export default function UserConnections() {
       label: 'Active today',
       value: data.active_today,
       icon: Activity,
-      color: 'bg-success',
     },
     {
       label: 'Active last 7 days',
       value: data.active_7_days,
       icon: Calendar,
-      color: 'bg-blue-500',
     },
     {
       label: 'Active last 30 days',
       value: data.active_30_days,
       icon: Users,
-      color: 'bg-indigo-500',
     },
   ];
 
@@ -84,8 +81,8 @@ export default function UserConnections() {
           <div key={kpi.label} className="bg-surface overflow-hidden shadow rounded-control">
             <div className="p-5">
               <div className="flex items-center">
-                <div className={`shrink-0 ${kpi.color} rounded-sm p-3`}>
-                  <kpi.icon className="h-6 w-6 text-on-accent" />
+                <div className="shrink-0 rounded-sm bg-surface-2 p-3">
+                  <kpi.icon className="h-6 w-6 text-secondary" />
                 </div>
                 <div className="ml-5">
                   <p className="text-body-sm font-medium text-secondary truncate">{kpi.label}</p>
@@ -108,7 +105,7 @@ export default function UserConnections() {
                 onClick={() => setDays(opt.value)}
                 className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
                   days === opt.value
-                    ? 'bg-brand-primary text-on-accent'
+                    ? 'bg-accent text-on-accent'
                     : 'bg-surface-2 text-secondary hover:bg-hover'
                 }`}
               >

@@ -345,8 +345,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default ${chipColor}`}
                 style={chipStyle}
             >
-                {reg === 'UP' && <span className="mr-1 text-danger-ink">↑</span>}
-                {reg === 'DOWN' && <span className="mr-1 text-blue-500">↓</span>}
+                {/* Les fleches heritent desormais la couleur de la puce, qui
+                    vient de `directionColors` : elles disaient rouge pour UP. */}
+                {reg === 'UP' && <span className="mr-1">↑</span>}
+                {reg === 'DOWN' && <span className="mr-1">↓</span>}
                 {gene}
             </span>
         );
@@ -540,8 +542,18 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                             {filteredResults.length} pathways found
                         </span>
                         <div className="flex items-center gap-2 text-caption text-secondary">
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-danger-soft border border-danger/30" /> Upregulated</span>
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-blue-100 border border-blue-200" /> Downregulated</span>
+                            <span className="flex items-center gap-1">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm"
+                                    style={{ background: scales.directionColors.up }}
+                                /> Upregulated
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm"
+                                    style={{ background: scales.directionColors.down }}
+                                /> Downregulated
+                            </span>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -605,10 +617,23 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                     {r.padj.toExponential(2)}
                                                 </td>
                                                 <td className="whitespace-nowrap text-body-sm">
-                                                    <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-pill ${
-                                                        r.regulation === 'UP' ? 'bg-danger-soft text-danger-ink' :
-                                                        r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-surface-2 text-primary'
-                                                    }`}>
+                                                    <span
+                                                        className="px-2 inline-flex text-caption leading-5 font-semibold rounded-pill bg-surface-2 text-primary"
+                                                        style={
+                                                            r.regulation === 'UP' || r.regulation === 'DOWN'
+                                                                ? {
+                                                                      color: r.regulation === 'UP'
+                                                                          ? scales.directionColors.up
+                                                                          : scales.directionColors.down,
+                                                                      background: `color-mix(in srgb, ${
+                                                                          r.regulation === 'UP'
+                                                                              ? scales.directionColors.up
+                                                                              : scales.directionColors.down
+                                                                      } 12%, transparent)`,
+                                                                  }
+                                                                : undefined
+                                                        }
+                                                    >
                                                         {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}
                                                     </span>
                                                 </td>

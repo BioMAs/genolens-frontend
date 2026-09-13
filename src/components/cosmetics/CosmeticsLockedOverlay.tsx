@@ -33,11 +33,11 @@ export default function CosmeticsLockedOverlay({ children }: { children: ReactNo
             AI-written cosmetic interpretation.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-caption" style={{ color: 'var(--text-secondary)' }}>
-            <span className="flex items-center gap-1 rounded-pill bg-pink-50 px-2.5 py-1 text-pink-700">
+            <span className="flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-secondary">
               <Sparkles className="h-3.5 w-3.5" /> Claim radar
             </span>
             <span className="rounded-pill bg-accent-soft px-2.5 py-1 text-accent-ink">Skin schematic</span>
-            <span className="rounded-pill bg-teal-50 px-2.5 py-1 text-teal-700">AI narrative</span>
+            <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-secondary">AI narrative</span>
           </div>
           <div
             className="mt-6 rounded-control px-4 py-2.5 text-body-sm font-medium text-on-accent"

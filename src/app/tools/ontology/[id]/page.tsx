@@ -121,7 +121,7 @@ export default function GoTermPage() {
                          {/* Children */}
                         <div className="bg-surface rounded-card shadow-sm p-6">
                             <h3 className="flex items-center text-title font-medium text-primary mb-4 border-b pb-2">
-                                <ArrowDownCircle className="h-5 w-5 mr-2 text-teal-500"/>
+                                <ArrowDownCircle className="h-5 w-5 mr-2 text-accent-ink"/>
                                 Child Terms
                             </h3>
                             {term.children.length === 0 ? (
@@ -136,7 +136,7 @@ export default function GoTermPage() {
                                         >
                                             <div className="flex items-center text-body-sm">
                                                 <GitBranch className="h-4 w-4 text-muted mr-2"/>
-                                                <span className="font-mono text-teal-600 group-hover:underline mr-2">{c.id}</span>
+                                                <span className="font-mono text-accent-ink group-hover:underline mr-2">{c.id}</span>
                                                 <span className="text-primary truncate">{c.name}</span>
                                             </div>
                                         </Link>

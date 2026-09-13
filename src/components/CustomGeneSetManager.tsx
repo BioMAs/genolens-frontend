@@ -118,7 +118,7 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
         <p className="mt-1 text-caption text-secondary">
           GMT format: one set per line — name &lt;tab&gt; description &lt;tab&gt; gene1 &lt;tab&gt; gene2 …
         </p>
-        {uploadMut.isPending && <p className="mt-1 text-caption text-blue-600">Uploading…</p>}
+        {uploadMut.isPending && <p className="mt-1 text-caption text-info-ink">Uploading…</p>}
       </div>
 
       {error && (

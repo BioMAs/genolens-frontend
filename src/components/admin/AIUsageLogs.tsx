@@ -127,7 +127,7 @@ export default function AIUsageLogs() {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
                       log.action_type === 'interpretation' 
                         ? 'bg-accent-soft text-accent-ink' 
-                        : 'bg-blue-100 text-blue-800'
+                        : 'bg-info-soft text-info-ink'
                     }`}>
                       {log.action_type === 'interpretation' ? 'Interpretation' : 'Q&A Chat'}
                     </span>

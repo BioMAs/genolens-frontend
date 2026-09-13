@@ -128,7 +128,7 @@ export function DEGTableSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-control">
+        <div className="bg-info-soft p-4 rounded-control">
           <div className="h-4 skeleton w-20 mb-2"></div>
           <div className="h-8 skeleton w-16"></div>
         </div>

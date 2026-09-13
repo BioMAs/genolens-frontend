@@ -215,7 +215,7 @@ export default function GSEAEnrichmentPlot({
           <span>Positive Enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-blue-600"></div>
+          <div className="w-4 h-1 bg-info"></div>
           <span>Negative Enrichment</span>
         </div>
         <div className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export default function GSEAEnrichmentPlot({
       </div>
 
       {/* Info */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-control text-body-sm">
+      <div className="mt-4 p-3 bg-info-soft border border-info/30 rounded-control text-body-sm">
         <p className="font-semibold mb-2">How to interpret this plot:</p>
         <ul className="list-disc list-inside space-y-1 text-primary">
           <li>The line shows the running enrichment score across all ranked genes</li>

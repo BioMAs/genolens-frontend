@@ -35,8 +35,8 @@ export default function ReportCustomizationLockedOverlay({ children }: { childre
             <span className="flex items-center gap-1 rounded-pill bg-accent-soft px-2.5 py-1 text-accent-ink">
               <FileText className="h-3.5 w-3.5" /> Custom logo
             </span>
-            <span className="rounded-pill bg-sky-50 px-2.5 py-1 text-sky-700">Brand colours</span>
-            <span className="rounded-pill bg-teal-50 px-2.5 py-1 text-teal-700">M&amp;M / conclusion</span>
+            <span className="rounded-pill bg-info-soft px-2.5 py-1 text-info-ink">Brand colours</span>
+            <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-secondary">M&amp;M / conclusion</span>
           </div>
           <div
             className="mt-6 rounded-control px-4 py-2.5 text-body-sm font-medium text-on-accent"

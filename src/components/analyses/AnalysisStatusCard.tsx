@@ -15,7 +15,7 @@ interface Props {
 
 const STATUS_STYLES: Record<SelfServiceAnalysisStatus, string> = {
   [SelfServiceAnalysisStatus.PENDING]:   'bg-warning-soft text-warning-ink',
-  [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800',
+  [SelfServiceAnalysisStatus.RUNNING]:   'bg-info-soft text-info-ink',
   [SelfServiceAnalysisStatus.DONE]:      'bg-success-soft text-success-ink',
   [SelfServiceAnalysisStatus.FAILED]:    'bg-danger-soft text-danger-ink',
   [SelfServiceAnalysisStatus.CANCELLED]: 'bg-surface-2 text-secondary',

@@ -10,7 +10,7 @@ import BookmarkButton from './BookmarkButton';
 import { useSelection } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
-import { useChartPalette } from '@/utils/chartTheme';
+import { useChartPalette, useChartScales } from '@/utils/chartTheme';
 
 interface GOTerm {
   go_id: string;
@@ -50,8 +50,24 @@ interface GOEnrichmentTableProps {
   degGeneMap?: Record<string, DegGeneInfo>;
 }
 
+/**
+ * La teinte d'une direction, en pastille douce.
+ *
+ * Le produit montrait la SUR-expression en rouge et la sous-expression en bleu
+ * — l'inverse de sa propre convention — a cinq endroits differents. La couleur
+ * vient desormais de `directionColors`, une seule fois.
+ */
+function directionTone(color: string) {
+  return {
+    color,
+    background: `color-mix(in srgb, ${color} 12%, transparent)`,
+    borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+  };
+}
+
 export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
   const palette = useChartPalette();
+  const scales = useChartScales();
   // Passive cross-filter: a selection made in Explorer becomes legible here without anyone
   // navigating anywhere. Reads the context directly rather than being drilled a prop, since
   // this table sits several levels down.
@@ -186,14 +202,16 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     const info = degGeneMap?.[key];
     const isUp = info?.regulation === 'UP';
     const isDown = info?.regulation === 'DOWN';
-    const chipClass = isUp
-      ? 'bg-danger-soft text-danger-ink border-danger/30'
+    const chipClass = isUp || isDown ? 'border' : 'bg-surface-2 text-secondary border-line';
+    const chipTone = isUp
+      ? directionTone(scales.directionColors.up)
       : isDown
-        ? 'bg-blue-100 text-blue-800 border-blue-200'
-        : 'bg-surface-2 text-secondary border-line';
+        ? directionTone(scales.directionColors.down)
+        : undefined;
     return (
       <span
         key={gene}
+        style={chipTone}
         className={`relative inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium border cursor-help ${chipClass}`}
         onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHoveredGene(null)}
@@ -222,7 +240,16 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
             {info.gene_name && info.gene_name !== hoveredGene.gene && (
               <div className="text-secondary mb-1">{info.gene_name}</div>
             )}
-            <div className={`font-bold mb-2 ${isUp ? 'text-danger-ink' : isDown ? 'text-blue-600' : 'text-secondary'}`}>
+            <div
+              className="font-bold mb-2"
+              style={{
+                color: isUp
+                  ? scales.directionColors.up
+                  : isDown
+                    ? scales.directionColors.down
+                    : undefined,
+              }}
+            >
               {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-secondary">

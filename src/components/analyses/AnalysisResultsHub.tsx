@@ -496,7 +496,7 @@ function ModuleCard({
 function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
   const styles: Record<SelfServiceAnalysisStatus, string> = {
     [SelfServiceAnalysisStatus.PENDING]:   'bg-warning-soft text-warning-ink',
-    [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    [SelfServiceAnalysisStatus.RUNNING]:   'bg-info-soft text-info-ink',
     [SelfServiceAnalysisStatus.DONE]:      'bg-success-soft text-success-ink',
     [SelfServiceAnalysisStatus.FAILED]:    'bg-danger-soft text-danger-ink',
     [SelfServiceAnalysisStatus.CANCELLED]: 'bg-surface-2 text-secondary',

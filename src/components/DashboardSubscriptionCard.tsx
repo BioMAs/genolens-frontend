@@ -40,7 +40,9 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
 
   if (gridPlan && !isEntryTier) {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-caption font-semibold bg-linear-to-r from-purple-500 to-indigo-500 text-on-accent">
+      <span // Dernier degre de l'application connectee apres celui du pied de barre
+        // laterale et celui du profil : violet→indigo sur une pastille de plan.
+        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-caption font-semibold bg-accent text-on-accent">
         <Sparkles className="w-3 h-3" />
         {label}
       </span>

@@ -342,8 +342,8 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Running indicator (GSEA runs as a background job, can take minutes) */}
         {loading && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-control text-blue-800 text-body-sm flex items-center gap-3">
-            <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-pill animate-spin" />
+          <div className="mt-4 p-4 bg-info-soft border border-info/30 rounded-control text-info-ink text-body-sm flex items-center gap-3">
+            <span className="inline-block h-4 w-4 border-2 border-info border-t-transparent rounded-pill animate-spin" />
             Running GSEA over the full gene-set database — this runs in the background and can take a few minutes. You can keep this tab open.
           </div>
         )}
@@ -371,7 +371,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               <div className="text-body-sm text-secondary">Positive NES</div>
             </div>
             <div className="text-center">
-              <div className="text-heading text-blue-600">{results.summary.enriched_in_phenotype_neg}</div>
+              <div className="text-heading text-info-ink">{results.summary.enriched_in_phenotype_neg}</div>
               <div className="text-body-sm text-secondary">Negative NES</div>
             </div>
           </div>

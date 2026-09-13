@@ -410,7 +410,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       {viewMode === 'graph' ? (
         <div style={{ height: 480 }}>
           {loading && <TreeSkeleton />}
-          {error && <div className="p-4 text-body-sm text-red-500 text-center">{error}</div>}
+          {error && <div className="p-4 text-body-sm text-danger-ink text-center">{error}</div>}
           {!loading && !error && hierarchy && (
             <GOForceGraph
               data={hierarchy}
@@ -427,7 +427,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <div className="flex-1 overflow-y-auto border-r border-subtle py-2">
             {loading && <TreeSkeleton />}
             {error && (
-              <div className="p-4 text-body-sm text-red-500 text-center">{error}</div>
+              <div className="p-4 text-body-sm text-danger-ink text-center">{error}</div>
             )}
             {!loading && !error && currentNodes.length === 0 && loaded && (
               <div className="p-6 text-body-sm text-center text-muted">

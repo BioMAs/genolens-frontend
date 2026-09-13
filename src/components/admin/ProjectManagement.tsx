@@ -299,7 +299,7 @@ export default function ProjectManagement() {
                       </button>
                       <button
                         onClick={() => handleManageMembers(project)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-info-ink hover:text-info-ink-hover"
                         title="Manage Members"
                       >
                         <Users className="h-5 w-5" />
@@ -489,7 +489,7 @@ export default function ProjectManagement() {
                           <div className="text-caption text-secondary">{member.user_email}</div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="px-2 py-1 text-caption font-medium bg-blue-100 text-blue-800 rounded-sm">
+                          <span className="px-2 py-1 text-caption font-medium bg-info-soft text-info-ink rounded-sm">
                             {member.access_level}
                           </span>
                           <button

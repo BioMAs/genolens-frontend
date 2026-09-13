@@ -98,6 +98,7 @@ import {
 } from 'recharts';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 import {CHART_VARS } from '@/utils/chartTheme';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface DotPlotTooltipProps {
   active?: boolean;
@@ -177,19 +178,33 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-// Known database categories with labels and colors for the selector
-const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
-  { value: 'GO:BP', label: 'GO: Biological Process', color: 'text-blue-600' },
-  { value: 'GO:MF', label: 'GO: Molecular Function', color: 'text-success-ink' },
-  { value: 'GO:CC', label: 'GO: Cellular Component', color: 'text-purple-600' },
-  { value: 'KEGG', label: 'KEGG Pathways', color: 'text-warning-ink' },
-  { value: 'REACTOME', label: 'Reactome Pathways', color: 'text-cyan-700' },
-  { value: 'HALLMARK', label: 'MSigDB Hallmark', color: 'text-rose-600' },
-  { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology', color: 'text-teal-600' },
-  { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic', color: 'text-indigo-600' },
+/**
+ * Les bases de donnees sont des CATEGORIES. Elles etaient peintes par huit
+ * couleurs Tailwind brutes, et la migration des statuts a laisse la liste
+ * mi-brute mi-statut : « GO: Molecular Function » en SUCCES, « KEGG » en
+ * AVERTISSEMENT.
+ *
+ * L'ordre est l'index dans la palette mesuree — les huit crans sont separes
+ * sous les trois dichromaties simulees, ce que huit teintes choisies a l'oeil
+ * ne garantissaient pas.
+ */
+const DB_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'GO:BP', label: 'GO: Biological Process' },
+  { value: 'GO:MF', label: 'GO: Molecular Function' },
+  { value: 'GO:CC', label: 'GO: Cellular Component' },
+  { value: 'KEGG', label: 'KEGG Pathways' },
+  { value: 'REACTOME', label: 'Reactome Pathways' },
+  { value: 'HALLMARK', label: 'MSigDB Hallmark' },
+  { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology' },
+  { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic' },
 ];
 
 export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichmentDataset }: GOEnrichmentAnalysisProps) {
+  const palette = useChartPalette();
+  const dbDot = (value: string) => {
+    const slot = DB_CATEGORIES.findIndex((d) => d.value === value);
+    return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   const { focusTerm } = useComparisonActions();
   // Pathways live on the ENRICHMENT dataset (annoDB); DEG genes on the DEG dataset.
   const enrichmentDatasetId = enrichmentDataset?.id ?? dataset.id;
@@ -355,7 +370,14 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                       .filter(db => terms.some(t => t.namespace === db.value))
                       .map(db => (
                         <SelectItem key={db.value} value={db.value}>
-                          <span className={db.color}>{db.label}</span>
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                              style={{ background: dbDot(db.value) }}
+                              aria-hidden
+                            />
+                            {db.label}
+                          </span>
                         </SelectItem>
                       ))
                     }

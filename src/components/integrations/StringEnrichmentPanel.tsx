@@ -206,7 +206,7 @@ export default function StringEnrichmentPanel({
       {enrichments.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
-            <Stat label="Enriched terms" value={enrichments.length} color="text-indigo-700 dark:text-indigo-300" />
+            <Stat label="Enriched terms" value={enrichments.length} color="text-accent-ink" />
             <input
               type="text"
               placeholder="Filter by term…"

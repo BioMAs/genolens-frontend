@@ -81,7 +81,7 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
       )}
 
       {errMsg && (
-        <p className="text-body-sm text-red-600">{String(errMsg)}</p>
+        <p className="text-body-sm text-danger-ink">{String(errMsg)}</p>
       )}
 
       {text ? (

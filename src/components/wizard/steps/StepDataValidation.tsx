@@ -130,7 +130,7 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
 
   const statusColors: Record<string, string> = {
     READY:      'bg-success',
-    PROCESSING: 'bg-blue-400 animate-pulse',
+    PROCESSING: 'bg-info animate-pulse',
     PENDING:    'bg-warning animate-pulse',
     FAILED:     'bg-danger',
   };

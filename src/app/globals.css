@@ -158,6 +158,19 @@
   --success-fill-hover: #0d7a54;
   --warning-fill-hover: #92400e;
 
+  /* ── INFO : le quatrieme statut, qui manquait ──────────────────────────────
+     Le bleu etait la couleur d'« en cours » et d'« information » dans une
+     vingtaine d'endroits — barres de progression, badges RUNNING, encarts
+     explicatifs — sans aucun jeton pour le porter. La famille de statut
+     comptait danger, warning et success ; il lui manquait son quatrieme
+     membre, et vingt fichiers l'inventaient chacun de leur cote.
+
+     Il est distinct de l'accent INTERACTIF, et il devait l'etre : dE 0,174 en
+     clair, 0,135 en sombre. Un encart d'information n'est pas un controle. */
+  --info-ink:        #075985;
+  --info-ink-hover:  #0c4a6e;
+  --info-soft:       rgba(2, 132, 199, 0.10);
+
   /* ── Couleurs de DONNEES ────────────────────────────────────────────────
      Distinctes des couleurs de chrome, et dependantes du theme — ce que
      chartPalettes.ts ne savait pas faire, ses valeurs etant des litteraux
@@ -251,6 +264,9 @@
   --danger-ink-hover:  #fca5a5;
   --warning-ink-hover: #fbbf24;
   --success-ink-hover: #4ade80;
+  --info-ink:          #38bdf8;
+  --info-ink-hover:    #7dd3fc;
+  --info-soft:         rgba(56, 189, 248, 0.14);
 
   /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
      #22c55e y donne 7,87:1, #ef4444 4,77:1. */
@@ -391,6 +407,11 @@
   --color-danger-ink-hover:   var(--danger-ink-hover);
   --color-success-hover:      var(--success-fill-hover);
   --color-warning-hover:      var(--warning-fill-hover);
+  /* Info : 7,56:1 en clair, 8,37:1 en sombre. */
+  --color-info:               var(--info-ink);
+  --color-info-ink:           var(--info-ink);
+  --color-info-ink-hover:     var(--info-ink-hover);
+  --color-info-soft:          var(--info-soft);
 
   /* Surfaces IA uniquement — le violet est banni de la chrome */
   --color-ai:                 var(--sl-violet);

@@ -161,7 +161,7 @@ export default function SignatureHitsTable({
                         className={
                           direction === 'UP'
                             ? 'text-caption font-medium text-danger-ink'
-                            : 'text-caption font-medium text-blue-600'
+                            : 'text-caption font-medium text-accent-ink'
                         }
                       >
                         {direction}

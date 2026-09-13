@@ -326,7 +326,7 @@ export default function StepAnalysisSettings({
               <span className="ml-2 text-caption font-normal text-muted">(applied when you explore enrichment after analysis)</span>
             </summary>
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-2 rounded-sm bg-blue-50 border border-blue-100 px-3 py-2 text-caption text-blue-700">
+              <div className="flex items-center gap-2 rounded-sm bg-info-soft border border-info/30 px-3 py-2 text-caption text-info-ink">
                 <span className="font-semibold shrink-0">Species:</span>
                 <SpeciesSelect value={species} onChange={onChangeSpecies} />
               </div>
@@ -489,7 +489,7 @@ function SpeciesSelect({ value, onChange }: { value: string; onChange: (v: strin
     <select
       value={value || 'human'}
       onChange={e => onChange(e.target.value)}
-      className="rounded-sm border border-blue-200 bg-surface px-2 py-0.5 text-caption text-blue-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+      className="rounded-sm border border-info/30 bg-surface px-2 py-0.5 text-caption text-info-ink focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
     >
       {SPECIES_OPTIONS.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>

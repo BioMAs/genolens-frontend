@@ -358,11 +358,11 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.PROCESSING || status === DatasetStatus.PENDING) {
     return (
-      <div className="flex items-center gap-3 rounded-control border border-blue-200 bg-blue-50 px-4 py-3">
-        <Clock className="h-5 w-5 text-blue-400 animate-spin shrink-0" />
+      <div className="flex items-center gap-3 rounded-control border border-info/30 bg-info-soft px-4 py-3">
+        <Clock className="h-5 w-5 text-info-ink animate-spin shrink-0" />
         <div>
-          <p className="text-body-sm font-semibold text-blue-800">{config.label}</p>
-          <p className="text-caption text-blue-600">Processing… this may take a moment.</p>
+          <p className="text-body-sm font-semibold text-info-ink">{config.label}</p>
+          <p className="text-caption text-info-ink">Processing… this may take a moment.</p>
         </div>
       </div>
     );

@@ -55,7 +55,7 @@ export default function StepResults({
   return (
     <div className="space-y-6">
       {/* Success header */}
-      <div className="rounded-card bg-linear-to-r from-green-50 to-emerald-50 border border-success/30 p-6 text-center">
+      <div className="rounded-card bg-success-soft p-6 text-center">
         <CheckCircle className="mx-auto h-10 w-10 text-success-ink mb-3" />
         <h2 className="text-heading text-success-ink">Analysis Complete!</h2>
         <p className="mt-1 text-body-sm text-success-ink">
@@ -122,7 +122,7 @@ export default function StepResults({
 
         {/* Enrichment */}
         <ResultCard
-          icon={<FlaskConical className="h-6 w-6 text-teal-500" />}
+          icon={<FlaskConical className="h-6 w-6 text-accent-ink" />}
           title="Pathway Enrichment"
           description="GO, KEGG & Reactome analysis"
         >
@@ -130,7 +130,7 @@ export default function StepResults({
             <>
               <Link
                 href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-control bg-teal-600 px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
+                className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-teal-700"
               >
                 Explore Enrichment →
               </Link>

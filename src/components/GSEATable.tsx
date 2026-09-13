@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronUp, ChevronDown, Eye, TrendingUp, TrendingDown } from 'lucide-react';
 import ExportMenu from './ExportMenu';
 import { cn } from '@/lib/cn';
+import { useChartScales } from '@/utils/chartTheme';
 
 interface GSEAResult {
   gene_set_name: string;
@@ -23,6 +24,7 @@ interface GSEATableProps {
 }
 
 export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GSEATableProps) {
+  const scales = useChartScales();
   const [sortField, setSortField] = useState<keyof GSEAResult>('fdr_q_value');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterEnrichment, setFilterEnrichment] = useState<'all' | 'positive' | 'negative'>('all');
@@ -90,11 +92,26 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
         <div className="flex items-center gap-4">
           <h3 className="text-title">GSEA Results</h3>
           <div className="flex gap-2 text-body-sm">
-            <span className="px-2 py-1 bg-danger-soft text-danger-ink rounded-sm inline-flex items-center">
+            {/* CINQUIEME occurrence de l'inversion : un score d'enrichissement
+                POSITIF etait rendu en rouge et un negatif en bleu. Partout
+                ailleurs le rouge signifie « sous-exprime ». */}
+            <span
+              className="inline-flex items-center rounded-sm px-2 py-1"
+              style={{
+                color: scales.directionColors.up,
+                background: `color-mix(in srgb, ${scales.directionColors.up} 12%, transparent)`,
+              }}
+            >
               <TrendingUp className="h-3 w-3 mr-1" />
               {positiveCount} Enriched (Pos)
             </span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-sm inline-flex items-center">
+            <span
+              className="inline-flex items-center rounded-sm px-2 py-1"
+              style={{
+                color: scales.directionColors.down,
+                background: `color-mix(in srgb, ${scales.directionColors.down} 12%, transparent)`,
+              }}
+            >
               <TrendingDown className="h-3 w-3 mr-1" />
               {negativeCount} Enriched (Neg)
             </span>
@@ -283,9 +300,15 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                   <td className="text-body-sm font-medium max-w-md">
                     <div className="flex items-center gap-2">
                       {row.normalized_enrichment_score > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-danger-ink flex-shrink-0" />
+                        <TrendingUp
+                          className="h-4 w-4 flex-shrink-0"
+                          style={{ color: scales.directionColors.up }}
+                        />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <TrendingDown
+                          className="h-4 w-4 flex-shrink-0"
+                          style={{ color: scales.directionColors.down }}
+                        />
                       )}
                       <span className="truncate" title={row.gene_set_name}>
                         {row.gene_set_name}
@@ -296,12 +319,24 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                     {row.gene_set_size}
                   </td>
                   <td className="whitespace-nowrap text-body-sm font-mono">
-                    <span className={row.enrichment_score > 0 ? 'text-danger-ink' : 'text-blue-600'}>
+                    <span
+                      style={{
+                        color: row.enrichment_score > 0
+                          ? scales.directionColors.up
+                          : scales.directionColors.down,
+                      }}
+                    >
                       {row.enrichment_score.toFixed(3)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap text-body-sm font-mono font-semibold">
-                    <span className={row.normalized_enrichment_score > 0 ? 'text-danger-ink' : 'text-blue-600'}>
+                    <span
+                      style={{
+                        color: row.normalized_enrichment_score > 0
+                          ? scales.directionColors.up
+                          : scales.directionColors.down,
+                      }}
+                    >
                       {row.normalized_enrichment_score.toFixed(3)}
                     </span>
                   </td>
