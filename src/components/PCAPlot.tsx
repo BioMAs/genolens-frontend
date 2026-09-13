@@ -16,6 +16,7 @@ import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { useChartPalette } from '@/utils/chartTheme';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
@@ -140,22 +141,29 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       return map;
   }, [uniqueCategories, palette]);
 
-  if (isLoading) return <div className="flex h-64 items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>Calculating PCA…</div>;
-  if (error) return <div className="flex h-64 items-center justify-center p-4 text-center text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</div>;
-  if (!pcaData) return null;
+  // Les trois sorties anticipees rendaient chacune un bloc different — et deux
+  // d'entre elles HORS de la carte, donc le cadre disparaissait puis revenait.
+  // L'etat se calcule, la carte reste.
+  const state: ChartState = isLoading ? 'loading' : error ? 'error' : !pcaData ? 'empty' : 'ready';
 
-  const pc1 = (pcaData.explained_variance[0] * 100).toFixed(1);
-  const pc2 = (pcaData.explained_variance[1] * 100).toFixed(1);
+  const pc1 = ((pcaData?.explained_variance[0] ?? 0) * 100).toFixed(1);
+  const pc2 = ((pcaData?.explained_variance[1] ?? 0) * 100).toFixed(1);
   const xLabel = `PC1 (${pc1}%)`;
   const yLabel = `PC2 (${pc2}%)`;
-  const nSamples = pcaData.data?.length ?? 0;
+  const nSamples = pcaData?.data?.length ?? 0;
   const read = `PC1 captures ${pc1}% and PC2 ${pc2}% of the variance across ${nSamples} samples${selectedColorColumn ? `, coloured by ${selectedColorColumn}` : ''}.`;
 
   return (
-    <div className="gl-card p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Sample PCA</h3>
-        <div className="flex flex-wrap items-center gap-2">
+    <ChartCard
+      title="Sample PCA"
+      state={state}
+      // La lecture en clair et la barre laterale des variances vivent au-dessus
+      // du nuage : `minHeight` reserve leur place sans rogner la leur.
+      minHeight={560}
+      error={error ?? undefined}
+      empty="No PCA could be computed for this dataset."
+      actions={
+        <>
           {metadataColumns.length > 0 && (
             <select
               value={selectedColorColumn}
@@ -183,8 +191,11 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
             }}
             label="PCA Plot"
           />
-        </div>
-      </div>
+        </>
+      }
+    >
+      {pcaData ? (
+        <>
 
       {/* Plain-language read */}
       <div className="mb-4 flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
@@ -267,7 +278,9 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
           </div>
         </div>
       </div>
-    </div>
+        </>
+      ) : null}
+    </ChartCard>
   );
 }
 

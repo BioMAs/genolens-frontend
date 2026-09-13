@@ -15,7 +15,12 @@ interface Props {
   actions?: ReactNode;
   state?: ChartState;
   /**
-   * Hauteur de la zone de trace, en pixels — RESERVEE dans les quatre etats.
+   * Place RESERVEE a la zone de trace, en pixels, dans les quatre etats.
+   *
+   * Appliquee en `min-height` et non en `height` : une carte porte parfois du
+   * mobilier au-dessus du trace — la lecture en clair de la PCA, une legende,
+   * un bandeau de seuils — et une hauteur fixe le rognerait. Reserver un
+   * MINIMUM supprime le saut sans risquer de couper.
    *
    * C'est la raison d'etre du composant. Les traitements qu'il remplace
    * rendaient `h-48`, `h-64`, `260px` ou `min-h-[400px]` selon l'etat et le
@@ -27,7 +32,7 @@ interface Props {
    * `'auto'` pour les rares graphiques qui calculent leur propre hauteur a
    * partir du nombre de lignes — ils acceptent le saut en connaissance de cause.
    */
-  height: number | 'auto';
+  minHeight: number | 'auto';
   /** Message d'erreur. Affiche seulement quand `state === 'error'`. */
   error?: ReactNode;
   /** Message d'etat vide. Affiche seulement quand `state === 'empty'`. */
@@ -54,13 +59,13 @@ export default function ChartCard({
   subtitle,
   actions,
   state = 'ready',
-  height,
+  minHeight,
   error,
   empty,
   className,
   children,
 }: Props) {
-  const bodyStyle = height === 'auto' ? undefined : { height };
+  const bodyStyle = minHeight === 'auto' ? undefined : { minHeight };
 
   return (
     <figure
@@ -76,7 +81,7 @@ export default function ChartCard({
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </figcaption>
 
-      <div style={bodyStyle} className={height === 'auto' ? undefined : 'relative'}>
+      <div style={bodyStyle} className={minHeight === 'auto' ? undefined : 'relative'}>
         {state === 'ready' ? children : null}
 
         {state === 'loading' ? (
