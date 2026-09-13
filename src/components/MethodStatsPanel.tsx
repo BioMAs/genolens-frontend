@@ -163,7 +163,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
   if (isError) {
     return (
-      <div className="text-center py-12 text-red-600">
+      <div className="text-center py-12 text-danger-ink">
         Failed to load method statistics{error instanceof Error ? `: ${error.message}` : ''}.
       </div>
     );
@@ -225,7 +225,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                         </span>
                       )}
                     </td>
-                    <td className="text-right text-emerald-600">{c ? c.up.toLocaleString() : '—'}</td>
+                    <td className="text-right text-success-ink">{c ? c.up.toLocaleString() : '—'}</td>
                     <td className="text-right text-rose-600">{c ? c.down.toLocaleString() : '—'}</td>
                     <td className="text-right font-medium">
                       {c ? c.total.toLocaleString() : '—'}

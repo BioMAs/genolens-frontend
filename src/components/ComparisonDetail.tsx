@@ -422,8 +422,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-body-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
-          <div className="bg-yellow-50 p-4 rounded-sm mt-4">
-            <p className="text-yellow-700">No Differential Expression (DEG) dataset found for this comparison.</p>
+          <div className="bg-warning-soft p-4 rounded-sm mt-4">
+            <p className="text-warning-ink">No Differential Expression (DEG) dataset found for this comparison.</p>
           </div>
         </div>
       </div>

@@ -322,7 +322,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <div className="flex items-center gap-3">
               {silhouetteData && (
                 <span className="text-caption text-secondary">
-                  Recommended: <strong className="text-amber-600">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
+                  Recommended: <strong className="text-warning-ink">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
                 </span>
               )}
               <button onClick={() => setShowSilhouette(false)} className="text-muted hover:text-secondary">
@@ -332,7 +332,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           </div>
 
           {silhouetteError && (
-            <p className="text-body-sm text-red-600 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
+            <p className="text-body-sm text-danger-ink flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
           )}
 
           {loadingSilhouette && (
@@ -377,7 +377,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               </div>
               <button
                 onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
-                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-on-accent px-4 py-2 rounded-sm text-body-sm font-medium mb-2"
+                className="shrink-0 bg-warning hover:bg-warning-hover text-on-accent px-4 py-2 rounded-sm text-body-sm font-medium mb-2"
               >
                 Use k={silhouetteData.recommended_k}
               </button>
@@ -399,7 +399,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
           {error && (
-              <div className="absolute inset-x-4 top-4 bg-red-50 p-4 border border-red-200 rounded-sm text-red-700 flex items-center gap-2">
+              <div className="absolute inset-x-4 top-4 bg-danger-soft p-4 border border-danger/30 rounded-sm text-danger-ink flex items-center gap-2">
                   <AlertCircle className="h-5 w-5"/>
                   {error}
               </div>

@@ -62,24 +62,24 @@ export default function StepDataValidation({
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-control border border-amber-200 bg-amber-50 p-4 space-y-2">
+        <div className="rounded-control border border-warning/30 bg-warning-soft p-4 space-y-2">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <p className="text-body-sm font-semibold text-amber-800">Warnings detected</p>
+            <AlertTriangle className="h-4 w-4 text-warning-ink" />
+            <p className="text-body-sm font-semibold text-warning-ink">Warnings detected</p>
           </div>
           {warnings.map((w, i) => (
-            <p key={i} className="text-caption text-amber-700 pl-6">{w}</p>
+            <p key={i} className="text-caption text-warning-ink pl-6">{w}</p>
           ))}
-          <p className="text-caption text-amber-600 pl-6 pt-1">
+          <p className="text-caption text-warning-ink pl-6 pt-1">
             You can continue, but review these before interpreting results.
           </p>
         </div>
       )}
 
       {warnings.length === 0 && isMatrixReady && (
-        <div className="flex items-center gap-2 rounded-control border border-green-200 bg-green-50 px-4 py-3">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          <p className="text-body-sm text-green-800 font-medium">All checks passed — your data looks good!</p>
+        <div className="flex items-center gap-2 rounded-control border border-success/30 bg-success-soft px-4 py-3">
+          <CheckCircle className="h-4 w-4 text-success-ink" />
+          <p className="text-body-sm text-success-ink font-medium">All checks passed — your data looks good!</p>
         </div>
       )}
 

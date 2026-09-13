@@ -352,8 +352,8 @@ export default function UserManagement() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-control p-4">
-        <p className="text-red-800">{error}</p>
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
+        <p className="text-danger-ink">{error}</p>
       </div>
     );
   }
@@ -487,7 +487,7 @@ export default function UserManagement() {
                               alert("Failed to resend invitation. Please try again.");
                             }
                           }}
-                          className="text-caption text-yellow-600 hover:text-yellow-800 underline"
+                          className="text-caption text-warning-ink hover:text-warning-ink-hover underline"
                         >
                           Resend invite
                         </button>
@@ -511,7 +511,7 @@ export default function UserManagement() {
                       <button
                         onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
                         disabled={assigningDemo === user.id}
-                        className="text-emerald-600 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-success-ink hover:text-success-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Assign Demo Data"
                       >
                         {assigningDemo === user.id ? (
@@ -526,7 +526,7 @@ export default function UserManagement() {
                           setTokenAmount(10);
                           setShowTokenModal(true);
                         }}
-                        className="text-yellow-600 hover:text-yellow-800"
+                        className="text-warning-ink hover:text-warning-ink-hover"
                         title="Add AI Tokens"
                       >
                         <Coins className="h-5 w-5" />
@@ -541,7 +541,7 @@ export default function UserManagement() {
                       <button
                         onClick={() => handleDelete(user.id, user.full_name || '')}
                         disabled={deleting === user.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-danger-ink hover:text-danger-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete User"
                       >
                         {deleting === user.id ? (
@@ -824,13 +824,13 @@ export default function UserManagement() {
               </button>
             </div>
             <form onSubmit={handleAddTokens} className="p-6 space-y-4">
-              <div className="bg-yellow-50 p-4 rounded-control flex items-start gap-3">
-                 <Coins className="h-6 w-6 text-yellow-600 mt-1" />
+              <div className="bg-warning-soft p-4 rounded-control flex items-start gap-3">
+                 <Coins className="h-6 w-6 text-warning-ink mt-1" />
                  <div>
-                   <p className="text-body-sm font-medium text-yellow-800">
+                   <p className="text-body-sm font-medium text-warning-ink">
                      Adding tokens to {tokenUser.full_name || tokenUser.email}
                    </p>
-                   <p className="text-caption text-yellow-700 mt-1">
+                   <p className="text-caption text-warning-ink mt-1">
                      Current purchased balance: {tokenUser.ai_tokens_purchased || 0}
                    </p>
                  </div>
@@ -858,7 +858,7 @@ export default function UserManagement() {
                 <button
                   type="submit"
                   disabled={addingTokens}
-                  className="flex-1 px-4 py-2 bg-yellow-600 text-on-accent rounded-sm hover:bg-yellow-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-warning text-on-accent rounded-sm hover:bg-warning-hover disabled:opacity-50"
                 >
                   {addingTokens ? 'Adding...' : 'Add Tokens'}
                 </button>

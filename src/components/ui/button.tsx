@@ -40,7 +40,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
   // Marque emerald — reserve aux surfaces qui parlent du produit lui-meme
   // (onboarding, marque), pas aux actions courantes.
-  brand: 'bg-brand text-on-accent hover:bg-success',
+  brand: 'bg-brand text-on-accent hover:bg-success-hover',
 
   destructive: 'bg-danger text-on-accent hover:bg-danger-hover',
 

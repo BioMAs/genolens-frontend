@@ -90,7 +90,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {error && (
-        <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700 border border-red-200">
+        <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink border border-danger/30">
           {error}
         </div>
       )}
@@ -98,7 +98,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
       {/* Analysis name */}
       <div>
         <label className="block text-body-sm font-medium text-primary mb-1">
-          Analysis name <span className="text-red-500">*</span>
+          Analysis name <span className="text-danger-ink">*</span>
         </label>
         <input
           type="text"
@@ -281,7 +281,7 @@ function FileInput({
   return (
     <div>
       <label className="block text-body-sm font-medium text-primary mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-danger-ink">*</span>}
       </label>
       <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-strong rounded-sm cursor-pointer hover:border-accent transition-colors bg-surface-2 hover:bg-accent-soft">
         <span className="text-caption text-secondary text-center px-2">

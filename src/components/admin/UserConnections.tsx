@@ -49,8 +49,8 @@ export default function UserConnections() {
 
   if (isError || !data) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-control p-4">
-        <p className="text-red-800">Failed to load connection statistics.</p>
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
+        <p className="text-danger-ink">Failed to load connection statistics.</p>
       </div>
     );
   }

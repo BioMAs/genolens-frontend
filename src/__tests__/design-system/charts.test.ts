@@ -133,3 +133,39 @@ describe('utilitaires morts', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('jetons semantiques', () => {
+  /**
+   * Toute classe de couleur employee doit correspondre a une variable de theme
+   * declaree. C'est la generalisation de la garde des « fantomes » : plutot que
+   * d'enumerer les noms venus de shadcn, on verifie la regle qui les rendait
+   * morts — en Tailwind v4, un utilitaire de couleur n'existe QUE si sa
+   * variable existe, et rien ne le signale quand elle manque.
+   *
+   * Verifier dans un navigateur ne suffit pas : le serveur de developpement
+   * genere par route, donc une classe absente de l'ecran regarde parait
+   * manquante alors qu'elle est correcte. C'est un test de source, pas de
+   * rendu.
+   */
+  const CSS = readFileSync('src/app/globals.css', 'utf8');
+  const DECLARED = new Set(
+    [...CSS.matchAll(/--color-([a-z0-9-]+)\s*:/g)].map((m) => m[1]),
+  );
+
+  /** Les familles du produit. Le reste vient de la palette Tailwind. */
+  const FAMILIES = ['danger', 'warning', 'success', 'accent', 'ai', 'brand'];
+  const USED = new RegExp(
+    String.raw`\b(?:bg|text|border|ring|fill|stroke|divide)-((?:${FAMILIES.join('|')})(?:-[a-z]+)*)`,
+    'g',
+  );
+
+  it('chaque variante semantique employee est declaree dans le theme', () => {
+    const missing = new Set<string>();
+    for (const file of SOURCES.filter((f) => f.endsWith('.tsx'))) {
+      for (const [, name] of read(file).matchAll(USED)) {
+        if (!DECLARED.has(name)) missing.add(`${name}  (${file})`);
+      }
+    }
+    expect([...missing]).toEqual([]);
+  });
+});

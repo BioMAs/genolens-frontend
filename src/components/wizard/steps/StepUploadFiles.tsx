@@ -332,14 +332,14 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.READY) {
     return (
-      <div className="flex items-center gap-3 rounded-control border border-green-200 bg-green-50 px-4 py-3">
-        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+      <div className="flex items-center gap-3 rounded-control border border-success/30 bg-success-soft px-4 py-3">
+        <CheckCircle className="h-5 w-5 text-success-ink shrink-0" />
         <div className="min-w-0">
-          <p className="text-body-sm font-semibold text-green-800">{config.label}</p>
-          <p className="text-caption text-green-600 truncate">{dataset?.name}</p>
+          <p className="text-body-sm font-semibold text-success-ink">{config.label}</p>
+          <p className="text-caption text-success-ink truncate">{dataset?.name}</p>
           <button
             type="button"
-            className="mt-1 text-micro text-green-600 underline"
+            className="mt-1 text-micro text-success-ink underline"
             onClick={() => inputRef.current?.click()}
           >
             Replace file
@@ -370,18 +370,18 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.FAILED) {
     return (
-      <div className="flex flex-col gap-2 rounded-control border border-red-200 bg-red-50 px-4 py-3">
+      <div className="flex flex-col gap-2 rounded-control border border-danger/30 bg-danger-soft px-4 py-3">
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+          <AlertCircle className="h-5 w-5 text-danger-ink shrink-0" />
           <div>
-            <p className="text-body-sm font-semibold text-red-800">{config.label} — processing failed</p>
-            <p className="text-caption text-red-600">{dataset?.error_message ?? 'Unknown error'}</p>
+            <p className="text-body-sm font-semibold text-danger-ink">{config.label} — processing failed</p>
+            <p className="text-caption text-danger-ink">{dataset?.error_message ?? 'Unknown error'}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="self-start rounded-sm bg-red-100 px-3 py-1 text-caption font-medium text-red-700 hover:bg-red-200"
+          className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger-hover"
         >
           Try a different file
         </button>
@@ -435,7 +435,7 @@ function UploadCardWithProjectId({
           </>
         )}
         {uploading && <p className="text-caption text-accent-ink">Uploading…</p>}
-        {error && <p className="text-caption text-red-600 mt-1">{error}</p>}
+        {error && <p className="text-caption text-danger-ink mt-1">{error}</p>}
       </div>
       <input
         ref={inputRef}

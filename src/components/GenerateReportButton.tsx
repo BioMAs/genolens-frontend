@@ -52,8 +52,8 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <button
         onClick={handleDownload}
         disabled={isDownloading}
-        className="inline-flex items-center gap-2 rounded-control bg-green-600 px-4 py-2
- text-body-sm font-medium text-on-accent transition-colors hover:bg-green-700
+        className="inline-flex items-center gap-2 rounded-control bg-success px-4 py-2
+ text-body-sm font-medium text-on-accent transition-colors hover:bg-success-hover
  disabled:opacity-50"
       >
         {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -67,14 +67,14 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <div className="inline-flex items-center gap-2">
         <button
           onClick={handleGenerate}
-          className="inline-flex items-center gap-2 rounded-control bg-red-100 px-4 py-2
- text-body-sm font-medium text-red-700 transition-colors hover:bg-red-200"
+          className="inline-flex items-center gap-2 rounded-control bg-danger-soft px-4 py-2
+ text-body-sm font-medium text-danger-ink transition-colors hover:bg-danger-hover"
         >
           <RefreshCw className="h-4 w-4" />
           Retry Report
         </button>
         {job?.error_message && (
-          <span className="flex items-center gap-1 text-caption text-red-500">
+          <span className="flex items-center gap-1 text-caption text-danger-ink">
             <AlertCircle className="h-3 w-3" />
             {job.error_message}
           </span>

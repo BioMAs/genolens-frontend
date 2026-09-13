@@ -51,7 +51,7 @@ export default function GoTermPage() {
     }, [termId]);
 
     if (loading) return <div className="p-8 text-center text-secondary">Loading ontology data...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
+    if (error) return <div className="p-8 text-center text-danger-ink">{error}</div>;
     if (!term) return null;
 
     return (

@@ -106,11 +106,11 @@ export default function CommentsSection({
       {/* Stats */}
       {(unresolvedCount > 0 || resolvedCount > 0) && (
         <div className="flex items-center gap-4 text-body-sm">
-          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+          <div className="flex items-center gap-1 text-warning-ink">
             <Circle className="h-4 w-4" />
             <span>{unresolvedCount} unresolved</span>
           </div>
-          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-1 text-success-ink">
             <CheckCircle className="h-4 w-4" />
             <span>{resolvedCount} resolved</span>
           </div>

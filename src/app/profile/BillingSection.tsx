@@ -33,11 +33,11 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return isActive ? (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-green-100 text-green-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-success-soft text-success-ink">
       Active
     </span>
   ) : (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-red-100 text-red-800">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium bg-danger-soft text-danger-ink">
       Inactive
     </span>
   );
@@ -101,7 +101,7 @@ export default function BillingSection() {
       {/* Body */}
       <div className="border-t border-line px-4 py-5 sm:p-0">
         {fetchError && (
-          <div className="flex items-center gap-2 px-6 py-4 text-body-sm text-red-700 bg-red-50">
+          <div className="flex items-center gap-2 px-6 py-4 text-body-sm text-danger-ink bg-danger-soft">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {fetchError}
           </div>
@@ -168,7 +168,7 @@ export default function BillingSection() {
                 </Link>
               )}
               {error && (
-                <p className="mt-2 text-body-sm text-red-600">{error}</p>
+                <p className="mt-2 text-body-sm text-danger-ink">{error}</p>
               )}
             </div>
           </dl>

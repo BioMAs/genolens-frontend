@@ -134,7 +134,7 @@ export default function DrugDiscovery() {
         </button>
         {accessNotice && (
           <p
-            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
+            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-success-ink' : 'text-danger-ink'}`}
           >
             {accessNotice.text}
           </p>
@@ -145,7 +145,7 @@ export default function DrugDiscovery() {
 
   if (status.data && !status.data.configured) {
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         Drug Discovery is not configured on this server. Contact an administrator.
       </div>
     );
@@ -153,7 +153,7 @@ export default function DrugDiscovery() {
 
   if (status.data && status.data.reachable === false) {
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         Drug Discovery is temporarily unreachable. Try again in a moment.
       </div>
     );
@@ -169,7 +169,7 @@ export default function DrugDiscovery() {
   if (status.data && status.data.reachable && status.data.ready === false) {
     const tables = status.data.tables ?? {};
     return (
-      <div className="rounded-sm bg-amber-50 p-4 text-body-sm text-amber-900">
+      <div className="rounded-sm bg-warning-soft p-4 text-body-sm text-warning-ink">
         <p className="font-medium">
           Drug Discovery is reachable, but its reference dataset is incomplete.
         </p>
@@ -201,7 +201,7 @@ export default function DrugDiscovery() {
       | undefined;
     const notConfigured = bootstrapFailure?.response?.status === 503;
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         <p>
           {notConfigured
             ? 'Drug Discovery is not configured on this server. Contact an administrator.'
@@ -285,11 +285,11 @@ export default function DrugDiscovery() {
       </section>
 
       {rejection && (
-        <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">{rejection}</p>
+        <p className="rounded-sm bg-warning-soft p-3 text-body-sm text-warning-ink">{rejection}</p>
       )}
 
       {outage && (
-        <div className="rounded-sm bg-red-50 p-3 text-body-sm text-red-900">
+        <div className="rounded-sm bg-danger-soft p-3 text-body-sm text-danger-ink">
           <p>{outage}</p>
           <button
             type="button"
@@ -305,7 +305,7 @@ export default function DrugDiscovery() {
       )}
 
       {detail.data?.warnings.map((warning) => (
-        <p key={warning} className="rounded-sm bg-amber-100 p-3 text-body-sm font-medium text-amber-900">
+        <p key={warning} className="rounded-sm bg-warning-soft p-3 text-body-sm font-medium text-warning-ink">
           {warning}
         </p>
       ))}
@@ -337,7 +337,7 @@ export default function DrugDiscovery() {
              * pas le jeu de paramètres dans l'URL. Le bouton réarme explicitement la borne et
              * relance, seule sortie de cette impasse.
              */
-            <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+            <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
               <p>
                 The calculation expired: the service forgot this run before the page could read
                 it.
@@ -360,12 +360,12 @@ export default function DrugDiscovery() {
               {tab === 'report' && (
                 <>
                   {reportRejection && (
-                    <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">
+                    <p className="rounded-sm bg-warning-soft p-3 text-body-sm text-warning-ink">
                       {reportRejection}
                     </p>
                   )}
                   {reportOutage && (
-                    <div className="rounded-sm bg-red-50 p-3 text-body-sm text-red-900">
+                    <div className="rounded-sm bg-danger-soft p-3 text-body-sm text-danger-ink">
                       <p>{reportOutage}</p>
                       <button
                         type="button"

@@ -76,7 +76,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
           </button>
 
           <div className="bg-surface rounded-card shadow p-8 text-center">
-            <div className="text-red-600 mb-4">
+            <div className="text-danger-ink mb-4">
               {error || 'No multi-comparison DEG dataset found'}
             </div>
             <p className="text-body-sm text-secondary">

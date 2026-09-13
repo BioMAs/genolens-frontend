@@ -179,7 +179,7 @@ export default function DEGPatternsView({
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">{error}</div>
+          <div className="mt-4 p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-body-sm">{error}</div>
         )}
       </div>
 
@@ -201,7 +201,7 @@ export default function DEGPatternsView({
               ? ` (of ${result.n_deg_requested} DEGs)`
               : ''} · clusters below {result.min_cluster_size} genes are hidden.
             {result.downsampled && (
-              <span className="text-amber-600">
+              <span className="text-warning-ink">
                 {' '}Capped to the {result.n_deg_used} most variable DEGs for performance.
               </span>
             )}

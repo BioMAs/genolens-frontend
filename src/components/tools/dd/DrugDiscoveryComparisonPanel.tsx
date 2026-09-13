@@ -203,7 +203,7 @@ export default function DrugDiscoveryComparisonPanel({
         </button>
         {accessNotice && (
           <p
-            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-green-700' : 'text-red-700'}`}
+            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-success-ink' : 'text-danger-ink'}`}
           >
             {accessNotice.text}
           </p>
@@ -214,7 +214,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && !status.data.configured) {
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         Drug Discovery is not configured on this server. Contact an administrator.
       </div>
     );
@@ -222,7 +222,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && status.data.reachable === false) {
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         Drug Discovery is temporarily unreachable. Try again in a moment.
       </div>
     );
@@ -230,7 +230,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (status.data && status.data.reachable && status.data.ready === false) {
     return (
-      <div className="rounded-sm bg-amber-50 p-4 text-body-sm text-amber-900">
+      <div className="rounded-sm bg-warning-soft p-4 text-body-sm text-warning-ink">
         Drug Discovery is reachable, but its reference dataset is incomplete. Contact an
         administrator.
       </div>
@@ -301,14 +301,14 @@ export default function DrugDiscoveryComparisonPanel({
           <span className="text-caption text-secondary">Choose an indication first.</span>
         )}
         {indication && !replicatesComplete && (
-          <span className="text-caption text-amber-800">
+          <span className="text-caption text-warning-ink">
             Enter the replicate count for every arm — it is never guessed.
           </span>
         )}
       </div>
 
       {rejection && (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 p-4 text-body-sm text-amber-900">
+        <div className="rounded-sm border border-warning/30 bg-warning-soft p-4 text-body-sm text-warning-ink">
           <p className="font-medium">
             {SIGNATURE_RULES[rejection.rule_id]?.title ?? 'Signature refused'}{' '}
             <span className="font-mono text-caption">({rejection.rule_id})</span>
@@ -334,19 +334,19 @@ export default function DrugDiscoveryComparisonPanel({
             </label>
           )}
           {rejection.message && (
-            <p className="mt-2 text-caption text-amber-800/80">{rejection.message}</p>
+            <p className="mt-2 text-caption text-warning-ink/80">{rejection.message}</p>
           )}
         </div>
       )}
 
       {runQuery.isError && !rejection && (
-        <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-900">
+        <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
           <p>The run failed. Try again in a moment.</p>
           {runQuery.exhausted && (
             <button
               type="button"
               onClick={runQuery.reset}
-              className="mt-2 rounded-sm border border-red-300 px-3 py-1"
+              className="mt-2 rounded-sm border border-danger/30 px-3 py-1"
             >
               Restart the calculation
             </button>
@@ -357,7 +357,7 @@ export default function DrugDiscoveryComparisonPanel({
       {result && runQuery.data && (
         <div className="space-y-4">
           {runQuery.data.signature.warnings.length > 0 && (
-            <ul className="list-disc space-y-1 rounded-sm bg-amber-50 p-3 pl-8 text-caption text-amber-900">
+            <ul className="list-disc space-y-1 rounded-sm bg-warning-soft p-3 pl-8 text-caption text-warning-ink">
               {runQuery.data.signature.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
@@ -396,7 +396,7 @@ export default function DrugDiscoveryComparisonPanel({
             <>
               {report.isLoading && <p className="text-body-sm text-secondary">Building the report…</p>}
               {report.isError && (
-                <p className="rounded-sm bg-amber-50 p-4 text-body-sm text-amber-900">
+                <p className="rounded-sm bg-warning-soft p-4 text-body-sm text-warning-ink">
                   No report can be produced for this signature. This usually means none of your
                   genes is in the ranked universe for this indication.
                 </p>

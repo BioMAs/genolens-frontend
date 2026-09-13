@@ -83,10 +83,10 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
       {/* Error */}
       {analysis.status === SelfServiceAnalysisStatus.FAILED && analysis.error_message && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-caption text-red-600 font-medium">
+          <summary className="cursor-pointer text-caption text-danger-ink font-medium">
             View error
           </summary>
-          <pre className="mt-1 rounded-sm bg-red-50 p-2 text-caption text-red-700 overflow-auto max-h-40">
+          <pre className="mt-1 rounded-sm bg-danger-soft p-2 text-caption text-danger-ink overflow-auto max-h-40">
             {analysis.error_message}
           </pre>
         </details>
@@ -128,7 +128,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
         <button
           onClick={handleDelete}
           disabled={deleteAnalysis.isPending}
-          className="text-caption text-muted hover:text-red-600 disabled:opacity-50"
+          className="text-caption text-muted hover:text-danger-ink-hover disabled:opacity-50"
         >
           {isActive ? 'Cancel' : 'Delete'}
         </button>

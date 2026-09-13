@@ -145,9 +145,9 @@ export default function AIUsageLogs() {
                   </td>
                   <td className="whitespace-nowrap text-body-sm">
                     {log.was_free ? (
-                      <span className="text-green-600 font-medium">Free Quota</span>
+                      <span className="text-success-ink font-medium">Free Quota</span>
                     ) : (
-                      <span className="text-amber-600 font-bold">Paid Token</span>
+                      <span className="text-warning-ink font-bold">Paid Token</span>
                     )}
                   </td>
                   <td className="whitespace-nowrap text-body-sm text-secondary">

@@ -132,11 +132,11 @@ export function DEGTableSkeleton() {
           <div className="h-4 bg-gray-200 rounded-sm w-20 mb-2"></div>
           <div className="h-8 bg-gray-200 rounded-sm w-16"></div>
         </div>
-        <div className="bg-green-50 p-4 rounded-control">
+        <div className="bg-success-soft p-4 rounded-control">
           <div className="h-4 bg-gray-200 rounded-sm w-20 mb-2"></div>
           <div className="h-8 bg-gray-200 rounded-sm w-16"></div>
         </div>
-        <div className="bg-red-50 p-4 rounded-control">
+        <div className="bg-danger-soft p-4 rounded-control">
           <div className="h-4 bg-gray-200 rounded-sm w-20 mb-2"></div>
           <div className="h-8 bg-gray-200 rounded-sm w-16"></div>
         </div>

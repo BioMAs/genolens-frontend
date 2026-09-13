@@ -56,18 +56,18 @@ export default function ReportView({ report }: ReportViewProps) {
   return (
     <article className="space-y-8">
       {(report.n_targets_without_evidence ?? 0) > 0 && (
-        <p className="rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">
+        <p className="rounded-sm bg-warning-soft p-3 text-body-sm text-warning-ink">
           {report.n_targets_without_evidence} top-ranked targets were excluded from this report
           for lack of citable evidence. This is therefore not the actual top of the ranking.
         </p>
       )}
 
       {report.disclosures && report.disclosures.length > 0 && (
-        <section className="rounded-sm border border-amber-200 bg-amber-50 p-4">
-          <h3 className="mb-2 text-body-sm font-semibold text-amber-900">
+        <section className="rounded-sm border border-warning/30 bg-warning-soft p-4">
+          <h3 className="mb-2 text-body-sm font-semibold text-warning-ink">
             What you must know about this report
           </h3>
-          <ul className="list-disc space-y-1 pl-5 text-body-sm text-amber-900">
+          <ul className="list-disc space-y-1 pl-5 text-body-sm text-warning-ink">
             {report.disclosures.map((disclosure) => (
               <li key={disclosure}>{disclosure}</li>
             ))}

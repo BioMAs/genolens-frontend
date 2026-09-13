@@ -73,7 +73,7 @@ export default function DEGClusteringView({
 
   if (error && !plotData) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-sm border border-red-200">
+      <div className="p-4 bg-danger-soft text-danger-ink rounded-sm border border-danger/30">
         <p className="font-semibold">Error</p>
         <p className="text-body-sm mt-1">{error}</p>
       </div>
@@ -194,7 +194,7 @@ export default function DEGClusteringView({
     <div className="flex flex-col gap-3">
       {/* Warning: no sample filter */}
       {!hasSampleFilter && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-caption text-amber-800">
+        <div className="flex items-start gap-2 bg-warning-soft border border-warning/30 rounded-sm px-3 py-2 text-caption text-warning-ink">
           <span className="mt-1">⚠️</span>
           <span>
             <strong>Metadata file missing</strong> — samples are not filtered for this comparison.
@@ -233,7 +233,7 @@ export default function DEGClusteringView({
         <div className="flex-1" />
 
         {isPreview && (
-          <span className="text-caption text-amber-600 flex items-center gap-1">
+          <span className="text-caption text-warning-ink flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
             Preview (loading full data…)
           </span>

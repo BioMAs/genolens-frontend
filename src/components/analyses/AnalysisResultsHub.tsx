@@ -179,7 +179,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <div className="text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
+          <AlertCircle className="mx-auto h-8 w-8 text-danger-ink mb-2" />
           <p style={{ color: 'var(--text-secondary)' }}>{message}</p>
           <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-body-sm text-accent-ink hover:underline">
             ← Back to project

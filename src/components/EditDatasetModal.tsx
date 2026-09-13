@@ -173,15 +173,15 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
             </div>
           )}
 
-          {error && <div className="text-body-sm text-red-600">{error}</div>}
+          {error && <div className="text-body-sm text-danger-ink">{error}</div>}
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="rounded-sm bg-red-50 p-4 border border-red-200">
+            <div className="rounded-sm bg-danger-soft p-4 border border-danger/30">
               <div className="flex">
                 <div className="flex-1">
-                  <h3 className="text-body-sm font-medium text-red-800">Delete Dataset</h3>
-                  <div className="mt-2 text-body-sm text-red-700">
+                  <h3 className="text-body-sm font-medium text-danger-ink">Delete Dataset</h3>
+                  <div className="mt-2 text-body-sm text-danger-ink">
                     <p>
                       Are you sure you want to delete this dataset? This action cannot be undone.
                       All associated files and data will be permanently deleted.
@@ -192,7 +192,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
                       disabled={deleting}
-                      className="rounded-sm border border-red-300 bg-surface px-3 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                      className="rounded-sm border border-danger/30 bg-surface px-3 py-2 text-body-sm font-medium text-danger-ink shadow-sm hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -200,7 +200,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                       type="button"
                       onClick={handleDelete}
                       disabled={deleting}
-                      className="inline-flex items-center gap-2 rounded-sm border border-transparent bg-red-600 px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-sm border border-transparent bg-danger px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                       {deleting ? 'Deleting...' : 'Delete Dataset'}
@@ -217,7 +217,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading || deleting || showDeleteConfirm}
-              className="inline-flex items-center gap-2 rounded-sm border border-red-300 bg-surface px-4 py-2 text-body-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-sm border border-danger/30 bg-surface px-4 py-2 text-body-sm font-medium text-danger-ink shadow-sm hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
               Delete

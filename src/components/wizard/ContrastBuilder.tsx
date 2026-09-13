@@ -188,7 +188,7 @@ export default function ContrastBuilder({
 
   if (isError) {
     return (
-      <div className="flex items-center gap-2 rounded-control border border-red-200 bg-red-50 px-4 py-4 text-body-sm text-red-700">
+      <div className="flex items-center gap-2 rounded-control border border-danger/30 bg-danger-soft px-4 py-4 text-body-sm text-danger-ink">
         <AlertCircle className="h-4 w-4 shrink-0" />
         Could not read the sample sheet. Try re-uploading it, or upload a contrast file instead.
       </div>
@@ -197,7 +197,7 @@ export default function ContrastBuilder({
 
   if (conditionValues.length < 2) {
     return (
-      <div className="flex items-start gap-2 rounded-control border border-amber-200 bg-amber-50 px-4 py-4 text-body-sm text-amber-800">
+      <div className="flex items-start gap-2 rounded-control border border-warning/30 bg-warning-soft px-4 py-4 text-body-sm text-warning-ink">
         <AlertCircle className="h-4 w-4 shrink-0 mt-1" />
         <div>
           <p>
@@ -206,7 +206,7 @@ export default function ContrastBuilder({
           </p>
           {columns.length > 1 && (
             <div className="mt-3 max-w-xs">
-              <label className="block text-caption font-medium text-amber-800 mb-1">Grouping column</label>
+              <label className="block text-caption font-medium text-warning-ink mb-1">Grouping column</label>
               <Select value={conditionColumn} onValueChange={setConditionColumn}>
                 <SelectTrigger><SelectValue placeholder="Choose a column" /></SelectTrigger>
                 <SelectContent>
@@ -288,7 +288,7 @@ export default function ContrastBuilder({
               type="button"
               onClick={() => removeRow(row.id)}
               disabled={comparisons.length === 1}
-              className="justify-self-end rounded-sm p-2 text-muted hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="justify-self-end rounded-sm p-2 text-muted hover:bg-danger-soft hover:text-danger-ink-hover disabled:opacity-30 disabled:cursor-not-allowed"
               aria-label="Remove comparison"
             >
               <Trash2 className="h-4 w-4" />
@@ -308,7 +308,7 @@ export default function ContrastBuilder({
 
       {/* Errors + confirm */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        <p className="text-caption text-red-600">{uploadError ?? ''}</p>
+        <p className="text-caption text-danger-ink">{uploadError ?? ''}</p>
         <div className="flex items-center gap-3">
           {validationError && (
             <span className="text-micro text-muted">{validationError}</span>

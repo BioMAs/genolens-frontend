@@ -117,7 +117,7 @@ export default function SignatureHitsTable({
       </dl>
 
       {result.confidence === 'low' && (
-        <p className="mb-4 rounded-sm bg-amber-50 p-3 text-body-sm text-amber-900">
+        <p className="mb-4 rounded-sm bg-warning-soft p-3 text-body-sm text-warning-ink">
           This signature is underpowered (two replicates in at least one condition). Every
           conclusion below is weakened and should be read as exploratory.
         </p>

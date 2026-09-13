@@ -174,7 +174,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                 {/* Gene header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    <Star className="h-5 w-5 fill-warning-ink text-warning-ink" />
                     <div>
                       <h3 className="font-mono text-title text-primary">
                         {bookmark.gene_symbol}
@@ -196,7 +196,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                       </button>
                       <button
                         onClick={() => handleDelete(bookmark.id, bookmark.gene_symbol)}
-                        className="rounded-pill p-1 text-muted hover:bg-red-100 hover:text-red-600"
+                        className="rounded-pill p-1 text-muted hover:bg-danger-soft hover:text-danger-ink-hover"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />

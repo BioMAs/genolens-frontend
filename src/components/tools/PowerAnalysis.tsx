@@ -595,21 +595,21 @@ export default function PowerAnalysis() {
               <h3 className="text-body-sm font-semibold text-primary">Interpretation guide</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-caption">
-              <div className="bg-red-50 rounded-sm p-3 border border-red-100">
-                <p className="font-semibold text-red-700 mb-1">Low (&lt; 50%)</p>
-                <p className="text-red-600">
+              <div className="bg-danger-soft rounded-sm p-3 border border-danger/30">
+                <p className="font-semibold text-danger-ink mb-1">Low (&lt; 50%)</p>
+                <p className="text-danger-ink">
                   High risk of missing a real effect. Review the study design.
                 </p>
               </div>
-              <div className="bg-yellow-50 rounded-sm p-3 border border-yellow-100">
-                <p className="font-semibold text-yellow-700 mb-1">Moderate (50 – 79%)</p>
-                <p className="text-yellow-600">
+              <div className="bg-warning-soft rounded-sm p-3 border border-warning/30">
+                <p className="font-semibold text-warning-ink mb-1">Moderate (50 – 79%)</p>
+                <p className="text-warning-ink">
                   Acceptable but sub-optimal. Increase n if possible.
                 </p>
               </div>
-              <div className="bg-green-50 rounded-sm p-3 border border-green-100">
-                <p className="font-semibold text-green-700 mb-1">Adequate (≥ 80%)</p>
-                <p className="text-green-600">
+              <div className="bg-success-soft rounded-sm p-3 border border-success/30">
+                <p className="font-semibold text-success-ink mb-1">Adequate (≥ 80%)</p>
+                <p className="text-success-ink">
                   Recommended standard. 90% is desirable for critical studies.
                 </p>
               </div>

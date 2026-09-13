@@ -95,7 +95,7 @@ export default function CommentThread({
 
           <div className="flex items-center gap-2">
             {comment.is_resolved && (
-              <span className="inline-flex items-center gap-1 rounded-pill bg-green-100 px-2 py-1 text-caption font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+              <span className="inline-flex items-center gap-1 rounded-pill bg-success-soft px-2 py-1 text-caption font-medium text-success-ink">
                 <Check className="h-3 w-3" />
                 Resolved
               </span>
@@ -130,7 +130,7 @@ export default function CommentThread({
                             handleDelete();
                             setShowActions(false);
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-body-sm text-red-600 hover:bg-hover dark:text-red-400"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-body-sm text-danger-ink hover:bg-hover"
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete

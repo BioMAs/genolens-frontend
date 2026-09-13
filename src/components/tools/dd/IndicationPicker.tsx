@@ -107,7 +107,7 @@ export default function IndicationPicker({
                   .map((indication) => (
                     <li
                       key={indication.tcga_project}
-                      className="rounded-sm bg-amber-50 p-2 text-amber-900"
+                      className="rounded-sm bg-warning-soft p-2 text-warning-ink"
                     >
                       <span className="font-medium">{indication.tcga_project}</span> —{' '}
                       {indication.rationale}
@@ -125,7 +125,7 @@ export default function IndicationPicker({
           )}
 
           {selected?.excluded && (
-            <p className="mt-2 rounded-sm bg-amber-50 p-2 text-caption text-amber-900">
+            <p className="mt-2 rounded-sm bg-warning-soft p-2 text-caption text-warning-ink">
               {selected.rationale}
             </p>
           )}
@@ -149,7 +149,7 @@ export default function IndicationPicker({
             </button>
 
             {indication.excluded && (
-              <div className="mt-1 rounded-sm bg-amber-50 p-2 text-caption text-amber-900">
+              <div className="mt-1 rounded-sm bg-warning-soft p-2 text-caption text-warning-ink">
                 <p>{indication.rationale}</p>
                 <button
                   type="button"
@@ -174,7 +174,7 @@ export default function IndicationPicker({
         >
           <div className="max-w-lg rounded-card bg-surface p-6 shadow-xl">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />
+              <AlertTriangle className="h-6 w-6 shrink-0 text-warning-ink" />
               <div>
                 <h2 id={CONFIRM_DIALOG_TITLE_ID} className="text-title font-medium text-primary">
                   {pendingForce.tcga_project} — ranking without disease axis
@@ -201,7 +201,7 @@ export default function IndicationPicker({
                   onForceExcluded(pendingForce.tcga_project);
                   closeDialog();
                 }}
-                className="rounded-sm bg-amber-600 px-4 py-2 text-body-sm text-on-accent"
+                className="rounded-sm bg-warning px-4 py-2 text-body-sm text-on-accent"
               >
                 I understand, run anyway
               </button>

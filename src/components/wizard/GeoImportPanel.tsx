@@ -102,13 +102,13 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
       </div>
 
       {search.isError && (
-        <div className="flex items-center gap-2 rounded-control border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-control border border-danger/30 bg-danger-soft p-3 text-body-sm text-danger-ink">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           Error searching NCBI GEO. Please try again.
         </div>
       )}
       {importError && (
-        <div className="flex items-center gap-2 rounded-control border border-red-200 bg-red-50 p-3 text-body-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-control border border-danger/30 bg-danger-soft p-3 text-body-sm text-danger-ink">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {importError}
         </div>
@@ -121,7 +121,7 @@ export default function GeoImportPanel({ projectId, onImported }: GeoImportPanel
             first {result.datasets.length}
           </p>
           {result.datasets.length === 0 && (
-            <p className="text-body-sm text-amber-600">
+            <p className="text-body-sm text-warning-ink">
               No importable series matched. Try broader terms — only human/mouse RNA-seq series
               processed by NCBI are shown.
             </p>

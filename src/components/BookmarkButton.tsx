@@ -86,9 +86,9 @@ export default function BookmarkButton({
         <Star
           className={`${sizeClasses[size]} transition-colors ${
             isBookmarked
-              ? 'fill-yellow-400 text-yellow-400'
+              ? 'fill-warning-ink text-warning-ink'
               : isHovered
-              ? 'text-yellow-400'
+              ? 'text-warning-ink'
               : 'text-muted'
           }`}
         />
@@ -102,13 +102,13 @@ export default function BookmarkButton({
       disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
       className={`inline-flex items-center gap-2 rounded-sm border transition-colors disabled:opacity-50 ${
         isBookmarked
-          ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+          ? 'border-warning bg-warning-soft text-warning-ink hover:bg-warning-soft'
           : 'border-strong bg-surface text-primary hover:bg-hover'
       } ${buttonSizeClasses[size]} ${className}`}
     >
       <Star
         className={`${sizeClasses[size]} ${
-          isBookmarked ? 'fill-yellow-400 text-yellow-400' : 'text-muted'
+          isBookmarked ? 'fill-warning-ink text-warning-ink' : 'text-muted'
         }`}
       />
       {isBookmarked ? 'Bookmarked' : 'Bookmark'}

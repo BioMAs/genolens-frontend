@@ -89,7 +89,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
         <div className="flex items-center gap-4">
           <h3 className="text-title">GSEA Results</h3>
           <div className="flex gap-2 text-body-sm">
-            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm inline-flex items-center">
+            <span className="px-2 py-1 bg-danger-soft text-danger-ink rounded-sm inline-flex items-center">
               <TrendingUp className="h-3 w-3 mr-1" />
               {positiveCount} Enriched (Pos)
             </span>
@@ -270,14 +270,14 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               const isSignificant = row.fdr_q_value <= 0.25;
 
               return (
-                <tr key={idx} className={`hover:bg-hover${isSignificant ? 'bg-green-50/30' : ''}`}>
+                <tr key={idx} className={`hover:bg-hover${isSignificant ? 'bg-success-soft/30' : ''}`}>
                   <td className="whitespace-nowrap text-body-sm text-secondary">
                     {globalIdx}
                   </td>
                   <td className="text-body-sm font-medium max-w-md">
                     <div className="flex items-center gap-2">
                       {row.normalized_enrichment_score > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <TrendingUp className="h-4 w-4 text-danger-ink flex-shrink-0" />
                       ) : (
                         <TrendingDown className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       )}

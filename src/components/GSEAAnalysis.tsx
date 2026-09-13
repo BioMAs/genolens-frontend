@@ -200,7 +200,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               Identify significantly enriched gene sets in your ranked gene list
             </p>
             {isCached && (
-              <span className="inline-flex items-center gap-1 mt-1 text-caption font-medium text-green-700 bg-green-50 border border-green-200 rounded-sm px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 mt-1 text-caption font-medium text-success-ink bg-success-soft border border-success/30 rounded-sm px-2 py-0.5">
                 ✓ Loaded from cache
               </span>
             )}
@@ -335,7 +335,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Error Display */}
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-control text-red-700">
+          <div className="mt-4 p-4 bg-danger-soft border border-danger/30 rounded-control text-danger-ink">
             <strong>Error:</strong> {error}
           </div>
         )}
@@ -363,11 +363,11 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
               <div className="text-body-sm text-secondary">Gene Sets Tested</div>
             </div>
             <div className="text-center">
-              <div className="text-heading text-green-600">{results.summary.significant_gene_sets}</div>
+              <div className="text-heading text-success-ink">{results.summary.significant_gene_sets}</div>
               <div className="text-body-sm text-secondary">Significant (FDR ≤ {parameters.fdr_threshold})</div>
             </div>
             <div className="text-center">
-              <div className="text-heading text-red-600">{results.summary.enriched_in_phenotype_pos}</div>
+              <div className="text-heading text-danger-ink">{results.summary.enriched_in_phenotype_pos}</div>
               <div className="text-body-sm text-secondary">Positive NES</div>
             </div>
             <div className="text-center">

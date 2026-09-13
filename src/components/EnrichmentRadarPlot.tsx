@@ -357,7 +357,7 @@ export default function EnrichmentRadarPlot({
                </div>
             )}
             {data.negLogPValue_UP > 0 && (
-               <div className="flex items-center gap-2 text-red-600">
+               <div className="flex items-center gap-2 text-danger-ink">
                    <span className="font-bold w-12">UP:</span>
                    <span>p={Math.pow(10, -data.negLogPValue_UP).toExponential(1)}</span>
                    <span className="text-secondary">(GR: {data.geneRatio_UP.toFixed(1)}%)</span>
@@ -391,8 +391,8 @@ export default function EnrichmentRadarPlot({
   if (error) {
     const isPlanError = error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription');
     return (
-      <div className={`border rounded-control p-4 ${isPlanError ? 'bg-accent-soft border-accent-ring' : 'bg-red-50 border-red-200'}`}>
-        <p className={`text-sm ${isPlanError ? 'text-accent-ink' : 'text-red-700'}`}>{error}</p>
+      <div className={`border rounded-control p-4 ${isPlanError ? 'bg-accent-soft border-accent-ring' : 'bg-danger-soft border-danger/30'}`}>
+        <p className={`text-sm ${isPlanError ? 'text-accent-ink' : 'text-danger-ink'}`}>{error}</p>
         {isPlanError && (
           <Link
             href="/pricing"
@@ -407,8 +407,8 @@ export default function EnrichmentRadarPlot({
 
   if (data.length === 0) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-control p-4">
-        <p className="text-sm text-yellow-700">No enrichment terms selected</p>
+      <div className="bg-warning-soft border border-warning/30 rounded-control p-4">
+        <p className="text-sm text-warning-ink">No enrichment terms selected</p>
       </div>
     );
   }

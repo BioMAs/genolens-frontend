@@ -96,7 +96,7 @@ export default function ContrastScatterPage({ params }: { params: Promise<{ id: 
             Back to Project
           </button>
           <div className="bg-surface rounded-card shadow p-8 text-center">
-            <div className="text-red-600 mb-4">{error || 'Not enough comparisons'}</div>
+            <div className="text-danger-ink mb-4">{error || 'Not enough comparisons'}</div>
             <p className="text-body-sm text-secondary">
               This feature compares two DEG contrasts, so the project needs at least two.
             </p>

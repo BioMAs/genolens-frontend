@@ -211,7 +211,7 @@ export default function GSEAEnrichmentPlot({
       {/* Legend */}
       <div className="mt-4 flex items-center justify-center gap-6 text-body-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-red-600"></div>
+          <div className="w-4 h-1 bg-danger"></div>
           <span>Positive Enrichment</span>
         </div>
         <div className="flex items-center gap-2">

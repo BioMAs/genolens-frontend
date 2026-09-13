@@ -71,7 +71,7 @@ export default function SignatureDisclosures({ result }: SignatureDisclosuresPro
   return (
     <div className="space-y-3">
       {result.disclosures.length > 0 && (
-        <ul className="list-disc space-y-1 rounded-sm border border-amber-200 bg-amber-50 p-4 pl-8 text-body-sm text-amber-900">
+        <ul className="list-disc space-y-1 rounded-sm border border-warning/30 bg-warning-soft p-4 pl-8 text-body-sm text-warning-ink">
           {result.disclosures.map((disclosure) => (
             <li key={disclosure}>{disclosure}</li>
           ))}

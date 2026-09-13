@@ -42,7 +42,7 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
         {/* Header */}
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-red-500" />
+            <Trash2 className="h-5 w-5 text-danger-ink" />
             <h2 className="text-title text-primary">Supprimer le projet</h2>
           </div>
           <button
@@ -55,9 +55,9 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          <div className="flex items-start gap-3 rounded-control p-3 bg-red-50 border border-red-100">
-            <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-1" />
-            <p className="text-body-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-control p-3 bg-danger-soft border border-danger/30">
+            <AlertTriangle className="h-4 w-4 text-danger-ink flex-shrink-0 mt-1" />
+            <p className="text-body-sm text-danger-ink">
               Cette action est <strong>irréversible</strong>. Tous les datasets, comparaisons et membres associés seront définitivement supprimés.
             </p>
           </div>
@@ -71,14 +71,14 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
               placeholder={project.name}
-              className="w-full rounded-control border border-line px-3 py-2 text-body-sm text-primary placeholder:text-muted focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100"
+              className="w-full rounded-control border border-line px-3 py-2 text-body-sm text-primary placeholder:text-muted focus:border-danger focus:outline-none focus:ring-2 focus:ring-danger/30"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && isConfirmed && handleDelete()}
             />
           </div>
 
           {error && (
-            <p className="text-body-sm text-red-600">{error}</p>
+            <p className="text-body-sm text-danger-ink">{error}</p>
           )}
         </div>
 

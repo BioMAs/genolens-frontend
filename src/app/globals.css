@@ -144,6 +144,20 @@
   /* --sl-red (#ef4444) donne 3,76:1 sur blanc : sous le plancher TEXTE. */
   --danger-ink:  #b91c1c;
 
+  /* Cran de SURVOL de chaque encre. Il existe parce que la migration des
+     couleurs Tailwind brutes ecrasait deux nuances en une : `text-red-700` et
+     `hover:text-red-900` tombaient tous deux sur l'encre, donc le survol ne
+     faisait plus rien. Mesure : chaque cran de survol GAGNE du contraste —
+     8,31 / 7,09 / 7,13:1 contre 6,47 / 5,02 / 5,02. */
+  --danger-ink-hover:  #991b1b;
+  --warning-ink-hover: #92400e;
+  --success-ink-hover: #166534;
+
+  /* Survol des APLATS pleins, qui portent une encre blanche : ils s'assombrissent
+     dans les DEUX themes, sinon le blanc dessus tombe a 1,7:1 en sombre. */
+  --success-fill-hover: #0d7a54;
+  --warning-fill-hover: #92400e;
+
   /* ── Couleurs de DONNEES ────────────────────────────────────────────────
      Distinctes des couleurs de chrome, et dependantes du theme — ce que
      chartPalettes.ts ne savait pas faire, ses valeurs etant des litteraux
@@ -233,6 +247,10 @@
   --success-ink: #22c55e;
   --warning-ink: #f59e0b;
   --danger-ink:  #f87171;
+  /* En sombre le cran fort est plus CLAIR : 9,45 / 10,74 / 10,29:1. */
+  --danger-ink-hover:  #fca5a5;
+  --warning-ink-hover: #fbbf24;
+  --success-ink-hover: #4ade80;
 
   /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
      #22c55e y donne 7,87:1, #ef4444 4,77:1. */
@@ -368,6 +386,11 @@
   --color-success-ink:        var(--success-ink);
   --color-warning-ink:        var(--warning-ink);
   --color-danger-ink:         var(--danger-ink);
+  --color-success-ink-hover:  var(--success-ink-hover);
+  --color-warning-ink-hover:  var(--warning-ink-hover);
+  --color-danger-ink-hover:   var(--danger-ink-hover);
+  --color-success-hover:      var(--success-fill-hover);
+  --color-warning-hover:      var(--warning-fill-hover);
 
   /* Surfaces IA uniquement — le violet est banni de la chrome */
   --color-ai:                 var(--sl-violet);

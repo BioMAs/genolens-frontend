@@ -42,7 +42,7 @@ export default function MetadataTable({ dataset }: MetadataTableProps) {
   }, [dataset.id, dataset.status]);
 
   if (loading) return <div className="p-4 text-secondary">Loading metadata...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (error) return <div className="p-4 text-danger-ink">{error}</div>;
   if (!data.length) return <div className="p-4 text-secondary">No metadata available.</div>;
 
   const formatCellValue = (value: unknown): string => {

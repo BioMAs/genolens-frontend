@@ -122,10 +122,10 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">{error}</div>
+        <div className="p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-body-sm">{error}</div>
       )}
       {notice && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-sm text-green-700 text-body-sm">{notice}</div>
+        <div className="p-3 bg-success-soft border border-success/30 rounded-sm text-success-ink text-body-sm">{notice}</div>
       )}
 
       {/* Existing sets */}
@@ -148,7 +148,7 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
                 <button
                   onClick={() => deleteMut.mutate(gs.id)}
                   disabled={deleteMut.isPending}
-                  className="ml-3 p-1.5 text-muted hover:text-red-600 disabled:opacity-50"
+                  className="ml-3 p-1.5 text-muted hover:text-danger-ink-hover disabled:opacity-50"
                   title="Delete gene set"
                 >
                   <Trash2 className="h-4 w-4" />

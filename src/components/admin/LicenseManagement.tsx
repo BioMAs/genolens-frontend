@@ -40,20 +40,20 @@ function StatusBadge({ record }: { record: LicenseRecord }) {
   }
   if (record.is_expired) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-red-100 text-red-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-danger-soft text-danger-ink">
         <AlertTriangle className="h-3 w-3" /> Expired
       </span>
     );
   }
   if (record.days_until_expiry !== null && record.days_until_expiry <= 30) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-amber-100 text-amber-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-warning-soft text-warning-ink">
         <Clock className="h-3 w-3" /> {record.days_until_expiry}d left
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-green-100 text-green-700">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium bg-success-soft text-success-ink">
       <CheckCircle className="h-3 w-3" /> Active
     </span>
   );
@@ -74,7 +74,7 @@ function CopyButton({ value }: { value: string }) {
       title="Copy key"
       className="p-1 rounded-sm hover:bg-hover transition-colors text-muted hover:text-primary"
     >
-      {copied ? <CheckCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+      {copied ? <CheckCheck className="h-4 w-4 text-success-ink" /> : <Copy className="h-4 w-4" />}
     </button>
   );
 }
@@ -168,7 +168,7 @@ export default function LicenseManagement() {
       {isLoading ? (
         <div className="text-center py-12 text-muted">Loading…</div>
       ) : error ? (
-        <div className="text-center py-12 text-red-500">Failed to load licenses.</div>
+        <div className="text-center py-12 text-danger-ink">Failed to load licenses.</div>
       ) : licenses.length === 0 ? (
         <div className="text-center py-16 text-muted">
           <Key className="h-10 w-10 mx-auto mb-3 opacity-40" />
@@ -218,7 +218,7 @@ export default function LicenseManagement() {
                             revokeMutation.mutate(lic.id);
                           }
                         }}
-                        className="text-caption text-red-500 hover:text-red-700 hover:underline"
+                        className="text-caption text-danger-ink hover:text-danger-ink-hover hover:underline"
                       >
                         Revoke
                       </button>
@@ -245,7 +245,7 @@ export default function LicenseManagement() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-body-sm font-medium text-primary mb-1">
-                  Client ID <span className="text-red-500">*</span>
+                  Client ID <span className="text-danger-ink">*</span>
                 </label>
                 <input
                   type="text"
@@ -271,7 +271,7 @@ export default function LicenseManagement() {
 
               <div>
                 <label className="block text-body-sm font-medium text-primary mb-1">
-                  Expiration date <span className="text-red-500">*</span>
+                  Expiration date <span className="text-danger-ink">*</span>
                 </label>
                 <input
                   type="date"
@@ -294,7 +294,7 @@ export default function LicenseManagement() {
               </div>
 
               {formError && (
-                <p className="text-body-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3 py-2">
+                <p className="text-body-sm text-danger-ink bg-danger-soft border border-danger/30 rounded-control px-3 py-2">
                   {formError}
                 </p>
               )}

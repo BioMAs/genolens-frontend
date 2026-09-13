@@ -220,7 +220,7 @@ export default function SignatureScorePanel({
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-body-sm">
+          <div className="mt-4 p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-body-sm">
             {error}
           </div>
         )}

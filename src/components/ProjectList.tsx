@@ -155,10 +155,10 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
                   e.stopPropagation();
                   setProjectToDelete(project);
                 }}
-                className="opacity-0 group-hover:opacity-100 rounded-sm p-1 transition-opacity duration-150 hover:bg-red-50"
+                className="opacity-0 group-hover:opacity-100 rounded-sm p-1 transition-opacity duration-150 hover:bg-danger-soft"
                 title="Supprimer le projet"
               >
-                <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                <Trash2 className="h-3.5 w-3.5 text-danger-ink hover:text-danger-ink-hover" />
               </button>
               <ChevronRight
                 className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"

@@ -317,7 +317,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
             </span>
           )}
           {!isRunning && hasResults && (
-            <span className="text-caption text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-pill px-2 py-0.5">
+            <span className="text-caption text-success-ink bg-success-soft border border-success/30 rounded-pill px-2 py-0.5">
               {terms.length} enriched terms
             </span>
           )}

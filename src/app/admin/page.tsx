@@ -64,8 +64,8 @@ export default function AdminPage() {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-surface shadow-lg rounded-card p-8">
-          <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-pill mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="flex items-center justify-center w-16 h-16 bg-danger-soft rounded-pill mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-danger-ink" />
           </div>
           <h2 className="text-heading text-primary text-center mb-2">
             Access Denied

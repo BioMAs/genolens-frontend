@@ -78,17 +78,17 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
     return (
       <div className="p-8">
         <div className="page-container">
-          <div className="rounded-sm bg-red-50 p-4">
+          <div className="rounded-sm bg-danger-soft p-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-body-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-body-sm text-red-700">
+                <h3 className="text-body-sm font-medium text-danger-ink">Error</h3>
+                <div className="mt-2 text-body-sm text-danger-ink">
                   <p>{errorMessage}</p>
                 </div>
                 <div className="mt-4">
                   <Link
                     href={`/projects/${projectId}`}
-                    className="text-body-sm font-medium text-red-800 hover:text-red-900"
+                    className="text-body-sm font-medium text-danger-ink hover:text-danger-ink-hover"
                   >
                     &larr; Back to Project
                   </Link>

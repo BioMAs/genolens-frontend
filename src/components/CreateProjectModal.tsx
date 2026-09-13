@@ -81,7 +81,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className={`mb-4 rounded-sm p-3 text-body-sm ${isLimitError ? 'bg-amber-50 border border-amber-200' : 'bg-red-50'}`}>
+            <div className={`mb-4 rounded-sm p-3 text-body-sm ${isLimitError ? 'bg-warning-soft border border-warning/30' : 'bg-danger-soft'}`}>
               <p className={isLimitError ? 'text-amber-800 font-medium' : 'text-red-700'}>{error}</p>
               {isLimitError && (
                 <Link

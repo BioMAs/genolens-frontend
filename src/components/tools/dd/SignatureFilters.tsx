@@ -134,7 +134,7 @@ export default function SignatureFilters({
       {/* Le plafond n'est pas décoratif : au-delà de ~20 % de l'univers classé, le percentile
           moyen dégénère vers 0,5 et le test cesse de discriminer. */}
       {filters.maxGenesPerCondition > 1500 && (
-        <p className="text-caption text-amber-800">
+        <p className="text-caption text-warning-ink">
           Above ~1500 genes per arm the mean-percentile statistic loses discriminating power: the
           signature starts to cover a large share of the ~15,000 ranked genes.
         </p>
@@ -166,7 +166,7 @@ export default function SignatureFilters({
                   <span className="text-secondary">
                     {condition.n_genes} gene{condition.n_genes === 1 ? '' : 's'}
                     {condition.truncated && (
-                      <span className="ml-1 text-amber-800">
+                      <span className="ml-1 text-warning-ink">
                         (capped from {condition.n_available} — the most significant were kept)
                       </span>
                     )}
@@ -189,7 +189,7 @@ export default function SignatureFilters({
                     }
                     className={`w-20 rounded-sm border p-1 ${
                       replicates[condition.name] === '' || replicates[condition.name] === undefined
-                        ? 'border-amber-400 bg-amber-50'
+                        ? 'border-warning bg-warning-soft'
                         : 'border-strong'
                     }`}
                   />
@@ -202,7 +202,7 @@ export default function SignatureFilters({
           </ul>
         )}
         {!isLoading && preview && preview.warnings.length > 0 && (
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-caption text-amber-800">
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-caption text-warning-ink">
             {preview.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}

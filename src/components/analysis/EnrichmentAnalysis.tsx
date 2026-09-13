@@ -323,7 +323,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 title={tooltip}
                 className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default ${chipColor}`}
             >
-                {reg === 'UP' && <span className="mr-1 text-red-500">↑</span>}
+                {reg === 'UP' && <span className="mr-1 text-danger-ink">↑</span>}
                 {reg === 'DOWN' && <span className="mr-1 text-blue-500">↓</span>}
                 {gene}
             </span>
@@ -431,7 +431,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 </div>
             )}
             
-            {error && <div className="p-4 bg-red-50 text-red-700 rounded-sm">{error}</div>}
+            {error && <div className="p-4 bg-danger-soft text-danger-ink rounded-sm">{error}</div>}
 
             {/* AI Assistant */}
             {!loading && !error && allResults.length > 0 && (
@@ -518,7 +518,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                             {filteredResults.length} pathways found
                         </span>
                         <div className="flex items-center gap-2 text-caption text-secondary">
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-100 border border-red-200" /> Upregulated</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-danger-soft border border-danger/30" /> Upregulated</span>
                             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-blue-100 border border-blue-200" /> Downregulated</span>
                         </div>
                     </div>
@@ -579,7 +579,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                 </td>
                                                 <td className="whitespace-nowrap text-body-sm">
                                                     <span className={`px-2 inline-flex text-caption leading-5 font-semibold rounded-pill ${
-                                                        r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
+                                                        r.regulation === 'UP' ? 'bg-danger-soft text-danger-ink' :
                                                         r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-surface-2 text-primary'
                                                     }`}>
                                                         {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}

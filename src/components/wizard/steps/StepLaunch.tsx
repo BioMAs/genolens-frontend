@@ -158,11 +158,11 @@ export default function StepLaunch({
 
       {/* Error */}
       {launchError && (
-        <div className="flex items-start gap-3 rounded-control border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-1" />
+        <div className="flex items-start gap-3 rounded-control border border-danger/30 bg-danger-soft p-4">
+          <AlertCircle className="h-5 w-5 text-danger-ink shrink-0 mt-1" />
           <div>
-            <p className="text-body-sm font-semibold text-red-800">Launch failed</p>
-            <p className="text-caption text-red-600 mt-1">{launchError}</p>
+            <p className="text-body-sm font-semibold text-danger-ink">Launch failed</p>
+            <p className="text-caption text-danger-ink mt-1">{launchError}</p>
           </div>
         </div>
       )}
@@ -172,15 +172,15 @@ export default function StepLaunch({
         <div className="rounded-card bg-surface overflow-hidden">
           {/* Status header */}
           <div className={`px-4 py-3 flex items-center gap-3 ${
-            isDone ? 'bg-green-50 border-b border-green-100'
-            : isFailed ? 'bg-red-50 border-b border-red-100'
+            isDone ? 'bg-success-soft border-b border-success/30'
+            : isFailed ? 'bg-danger-soft border-b border-danger/30'
             : 'bg-blue-50 border-b border-blue-100'
           }`}>
-            {isDone   && <CheckCircle className="h-5 w-5 text-green-500" />}
-            {isFailed && <AlertCircle className="h-5 w-5 text-red-500" />}
+            {isDone   && <CheckCircle className="h-5 w-5 text-success-ink" />}
+            {isFailed && <AlertCircle className="h-5 w-5 text-danger-ink" />}
             {isRunning && <Loader className="h-5 w-5 text-blue-400 animate-spin" />}
             <div>
-              <p className={`text-body-sm font-semibold ${isDone ? 'text-green-800' : isFailed ? 'text-red-800' : 'text-blue-800'}`}>
+              <p className={`text-body-sm font-semibold ${isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-blue-800'}`}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
                 : currentStep
@@ -188,14 +188,14 @@ export default function StepLaunch({
                   : 'Analysis queued…'}
               </p>
               {analysis?.error_message && (
-                <p className="text-caption text-red-600 mt-1">{analysis.error_message}</p>
+                <p className="text-caption text-danger-ink mt-1">{analysis.error_message}</p>
               )}
             </div>
             {isRunning && (
               <button
                 type="button"
                 onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-sm border border-red-300 px-2 py-1 text-caption text-red-600 hover:bg-red-50"
+                className="ml-auto flex items-center gap-1 rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
               >
                 <X className="h-3 w-3" /> Cancel
               </button>
@@ -265,7 +265,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={() => analysisId && onComplete(analysisId)}
-            className="ml-auto inline-flex items-center gap-2 rounded-control bg-green-600 px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-green-700"
+            className="ml-auto inline-flex items-center gap-2 rounded-control bg-success px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-success-hover"
           >
             View Results
             <ChevronRight className="h-4 w-4" />

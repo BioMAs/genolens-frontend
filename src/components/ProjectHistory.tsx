@@ -225,7 +225,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700">
+        <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
           Failed to load history. Please try again.
         </div>
       ) : items.length === 0 ? (

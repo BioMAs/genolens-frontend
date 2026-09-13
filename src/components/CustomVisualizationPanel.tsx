@@ -432,7 +432,7 @@ export default function CustomVisualizationPanel({
                 {/* Gene Selection */}
                 <div className="mb-6">
                     <label className="block text-body-sm font-medium text-primary mb-2">
-                        Gene Selection {vizType === 'boxplot' && <span className="text-red-500">*</span>}
+                        Gene Selection {vizType === 'boxplot' && <span className="text-danger-ink">*</span>}
                         <span className="text-secondary font-normal ml-2">
                             ({vizType === 'boxplot' ? 'Required' : 'Optional - leave empty to use all genes'})
                         </span>
@@ -543,7 +543,7 @@ export default function CustomVisualizationPanel({
                 </button>
 
                 {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-control text-red-700">
+                    <div className="mt-4 p-4 bg-danger-soft border border-danger/30 rounded-control text-danger-ink">
                         {error}
                     </div>
                 )}

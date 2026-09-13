@@ -345,7 +345,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                           </button>
                           <button
                             onClick={() => saveEdit(list.id)}
-                            className="rounded-pill p-1 text-green-600 hover:bg-green-100"
+                            className="rounded-pill p-1 text-success-ink hover:bg-success-soft"
                           >
                             <Save className="h-4 w-4" />
                           </button>
@@ -361,7 +361,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                           </button>
                           <button
                             onClick={() => handleDelete(list.id, list.name)}
-                            className="rounded-pill p-1 text-muted hover:bg-red-100 hover:text-red-600"
+                            className="rounded-pill p-1 text-muted hover:bg-danger-soft hover:text-danger-ink-hover"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />

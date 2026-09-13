@@ -216,10 +216,10 @@ export default function ProjectManagement() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-control p-4">
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600" />
-          <p className="text-red-800">{error}</p>
+          <AlertCircle className="h-5 w-5 text-danger-ink" />
+          <p className="text-danger-ink">{error}</p>
         </div>
       </div>
     );
@@ -307,7 +307,7 @@ export default function ProjectManagement() {
                       <button
                         onClick={() => handleDelete(project.id, project.name)}
                         disabled={deleting === project.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-danger-ink hover:text-danger-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete Project"
                       >
                         {deleting === project.id ? (
@@ -375,7 +375,7 @@ export default function ProjectManagement() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-caption text-red-500">
+                <p className="mt-1 text-caption text-danger-ink">
                   ⚠ Warning: Changing ownership will remove the current owner&apos;s access unless they are a member.
                 </p>
               </div>
@@ -494,7 +494,7 @@ export default function ProjectManagement() {
                           </span>
                           <button
                             onClick={() => handleRemoveMember(member.user_id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-danger-ink hover:text-danger-ink-hover"
                             title="Remove member"
                           >
                             <Trash2 className="h-4 w-4" />

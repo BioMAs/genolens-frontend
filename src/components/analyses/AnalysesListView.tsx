@@ -37,7 +37,7 @@ export default function AnalysesListView({ projectId }: Props) {
   }
   if (isError) {
     return (
-      <div className="rounded-sm bg-red-50 p-4 text-body-sm text-red-700">
+      <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink">
         Failed to load analyses.
       </div>
     );

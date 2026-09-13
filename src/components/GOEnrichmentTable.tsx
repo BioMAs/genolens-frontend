@@ -202,7 +202,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
             {info.gene_name && info.gene_name !== hoveredGene.gene && (
               <div className="text-secondary mb-1">{info.gene_name}</div>
             )}
-            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-secondary'}`}>
+            <div className={`font-bold mb-2 ${isUp ? 'text-danger-ink' : isDown ? 'text-blue-600' : 'text-secondary'}`}>
               {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-secondary">

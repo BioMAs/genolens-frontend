@@ -42,7 +42,7 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
   }, [dataset.id, dataset.status]);
 
   if (loading) return <div className="p-4 text-secondary">Loading statistics...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (error) return <div className="p-4 text-danger-ink">{error}</div>;
   if (!data.length) return <div className="p-4 text-secondary">No data available.</div>;
 
   return (

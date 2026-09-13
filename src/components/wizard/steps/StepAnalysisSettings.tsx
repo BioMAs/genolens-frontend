@@ -127,7 +127,7 @@ export default function StepAnalysisSettings({
       {/* Analysis name */}
       <div>
         <label htmlFor="analysis-name" className="block text-body-sm font-medium text-primary mb-1">
-          Analysis Name <span className="text-red-500">*</span>
+          Analysis Name <span className="text-danger-ink">*</span>
         </label>
         <input
           id="analysis-name"

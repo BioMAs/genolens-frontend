@@ -221,10 +221,10 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
           </div>
         </div>
         {sameSelection && (
-          <p className="mt-2 text-xs text-amber-600">Choose two different contrasts.</p>
+          <p className="mt-2 text-xs text-warning-ink">Choose two different contrasts.</p>
         )}
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm">
+          <div className="mt-4 p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-sm">
             {error}
           </div>
         )}
@@ -249,7 +249,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                 <div className="text-xs text-secondary">Concordant</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{result.counts.discordant}</div>
+                <div className="text-2xl font-bold text-danger-ink">{result.counts.discordant}</div>
                 <div className="text-xs text-secondary">Discordant</div>
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
               </button>
             </div>
             {seriesByQuadrant.downsampled && (
-              <p className="text-xs text-amber-600 mb-2">
+              <p className="text-xs text-warning-ink mb-2">
                 Plot downsampled to ~{MAX_RENDER.toLocaleString()} points for performance (all
                 discordant/specific genes shown; CSV export contains every gene).
               </p>

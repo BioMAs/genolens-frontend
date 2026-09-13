@@ -265,7 +265,7 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           {update.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save settings
         </button>
-        {saved && <span className="text-body-sm text-green-600">Saved.</span>}
+        {saved && <span className="text-body-sm text-success-ink">Saved.</span>}
       </div>
     </div>
   );

@@ -228,7 +228,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
       </div>
 
       {graphData.truncatedBanner && (
-        <div className="px-3 py-1 bg-amber-50 border-b border-amber-100 text-caption text-amber-700">
+        <div className="px-3 py-1 bg-warning-soft border-b border-warning/30 text-caption text-warning-ink">
           More than 150 terms — showing enriched terms only
         </div>
       )}

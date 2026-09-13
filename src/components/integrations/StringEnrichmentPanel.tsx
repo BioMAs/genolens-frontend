@@ -180,7 +180,7 @@ export default function StringEnrichmentPanel({
       </button>
 
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-control text-body-sm text-red-700 dark:text-red-300">
+        <div className="p-3 bg-danger-soft/20 border border-danger/30 rounded-control text-body-sm text-danger-ink">
           {error}
         </div>
       )}
@@ -239,7 +239,7 @@ export default function StringEnrichmentPanel({
                     </td>
                     <td className="text-right">{e.number_of_genes}</td>
                     <td className="text-right font-mono">{fmtPval(e.p_value)}</td>
-                    <td className={`px-3 py-1.5 text-right font-mono font-semibold ${e.fdr < 0.05 ? 'text-green-600 dark:text-green-400' : 'text-secondary'}`}>
+                    <td className={`px-3 py-1.5 text-right font-mono font-semibold ${e.fdr < 0.05 ? 'text-success-ink' : 'text-secondary'}`}>
                       {fmtPval(e.fdr)}
                     </td>
                   </tr>
