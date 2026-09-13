@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
 import api from '@/utils/api';
+import { useChartPalette } from '@/utils/chartTheme';
 
 const GOForceGraph = dynamic(() => import('./GOForceGraph'), { ssr: false });
 
@@ -33,10 +34,19 @@ const NS_FULL: Record<NamespaceKey, string> = {
   cellular_component: 'Cellular Component',
 };
 
-const NS_BADGE_CLASS: Record<NamespaceKey, string> = {
-  biological_process: 'bg-blue-100 text-blue-700',
-  molecular_function: 'bg-amber-100 text-amber-700',
-  cellular_component: 'bg-emerald-100 text-emerald-700',
+/**
+ * Les trois espaces de noms prennent les trois premiers crans de la palette
+ * mesuree — les plus separes entre eux, y compris sous dichromatie — comme
+ * dans le graphe de force GO, pour que le meme terme porte la meme couleur
+ * d'un ecran a l'autre.
+ *
+ * L'aplat colore disparait : le blanc echoue sur quatre des huit crans clairs,
+ * et cette palette a ete construite pour des MARQUES, pas pour porter du texte.
+ */
+const NS_SLOT: Record<NamespaceKey, number> = {
+  biological_process: 0,
+  molecular_function: 1,
+  cellular_component: 2,
 };
 
 // ─── FDR colour helper ────────────────────────────────────────────────────────
@@ -126,6 +136,11 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
 function DetailPanel({ node }: { node: GOTreeNode | null }) {
+  const palette = useChartPalette();
+  const namespaceDot = (key: NamespaceKey) => {
+    const slot = NS_SLOT[key];
+    return slot === undefined ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   if (!node) {
     return (
       <div className="flex items-center justify-center h-full text-body-sm text-muted p-6 text-center">
@@ -144,7 +159,12 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
       <div>
         <div className="text-caption font-semibold text-accent-ink mb-1">{node.go_id}</div>
         <div className="text-body font-bold text-primary leading-snug mb-2">{node.go_name}</div>
-        <Badge className={`text-caption ${NS_BADGE_CLASS[ns] ?? 'bg-surface-2 text-secondary'}`}>
+        <Badge variant="neutral" className="gap-2 text-caption">
+          <span
+            className="inline-block h-2 w-2 shrink-0 rounded-pill"
+            style={{ background: namespaceDot(ns) }}
+            aria-hidden
+          />
           {NS_FULL[ns] ?? node.namespace}
         </Badge>
       </div>

@@ -15,6 +15,7 @@
 import { useState, useCallback } from 'react';
 import { Download, FlaskConical, RefreshCw } from 'lucide-react';
 import api from '@/utils/api';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface StringEnrichment {
   category: string;
@@ -45,14 +46,24 @@ const SPECIES_OPTIONS = [
   { label: 'Saccharomyces cerevisiae', value: 4932 },
 ];
 
-const ENRICH_CATEGORIES: Record<string, { label: string; color: string }> = {
-  'Process': { label: 'Biological Process', color: 'bg-success-soft text-success-ink' },
-  'Function': { label: 'Molecular Function', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-  'Component': { label: 'Cellular Component', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  'KEGG': { label: 'KEGG', color: 'bg-warning-soft text-warning-ink' },
-  'Reactome': { label: 'Reactome', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400' },
-  'WikiPathways': { label: 'WikiPathways', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+/**
+ * La base de donnees d'origine est une CATEGORIE. Elle etait peinte par six
+ * couples de classes Tailwind brutes, et la migration des couleurs de statut a
+ * laisse la table mi-statut mi-brute : « Biological Process » en SUCCES,
+ * « KEGG » en AVERTISSEMENT. Ni l'un ni l'autre n'est un statut.
+ *
+ * L'ordre de declaration est l'index dans la palette mesuree : il porte donc la
+ * separation, et ne doit pas etre reordonne a la legere.
+ */
+const ENRICH_CATEGORIES: Record<string, string> = {
+  Process: 'Biological Process',
+  Function: 'Molecular Function',
+  Component: 'Cellular Component',
+  KEGG: 'KEGG',
+  Reactome: 'Reactome',
+  WikiPathways: 'WikiPathways',
 };
+const CATEGORY_ORDER = Object.keys(ENRICH_CATEGORIES);
 
 function fmtPval(v: number): string {
   if (v < 0.0001) return v.toExponential(2);
@@ -87,6 +98,13 @@ export default function StringEnrichmentPanel({
 }: {
   initialGenes?: string;
 }) {
+  const palette = useChartPalette();
+  /** La couleur ne porte plus le libelle : une pastille suffit, et elle tient
+   *  le plancher non-textuel de 3:1 sur les huit crans. */
+  const categoryDot = (cat: string) => {
+    const slot = CATEGORY_ORDER.indexOf(cat);
+    return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   const [genesInput, setGenesInput] = useState(initialGenes);
   const [species, setSpecies] = useState(9606);
   const [enrichments, setEnrichments] = useState<StringEnrichment[]>([]);
@@ -203,7 +221,7 @@ export default function StringEnrichmentPanel({
             >
               <option value="">All categories</option>
               {allCats.map((c) => (
-                <option key={c} value={c}>{ENRICH_CATEGORIES[c]?.label || c}</option>
+                <option key={c} value={c}>{ENRICH_CATEGORIES[c] || c}</option>
               ))}
             </select>
             <button
@@ -229,8 +247,13 @@ export default function StringEnrichmentPanel({
                 {visible.slice(0, 200).map((e, i) => (
                   <tr key={i} className="border-t border-subtle hover:bg-hover">
                     <td>
-                      <span className={`px-1.5 py-0.5 rounded-pill text-caption ${ENRICH_CATEGORIES[e.category]?.color || 'bg-surface-2 text-primary'}`}>
-                        {ENRICH_CATEGORIES[e.category]?.label || e.category}
+                      <span className="inline-flex items-center gap-2 rounded-pill bg-surface-2 px-1.5 py-0.5 text-caption text-secondary">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                          style={{ background: categoryDot(e.category) }}
+                          aria-hidden
+                        />
+                        {ENRICH_CATEGORIES[e.category] || e.category}
                       </span>
                     </td>
                     <td className="max-w-xs">
