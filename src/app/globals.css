@@ -141,6 +141,8 @@
      sombre. --dc-amber reste la couleur des aplats et des bordures. */
   --success-ink: #15803d;
   --warning-ink: #b45309;
+  /* --sl-red (#ef4444) donne 3,76:1 sur blanc : sous le plancher TEXTE. */
+  --danger-ink:  #b91c1c;
 
   /* ── Couleurs de DONNEES ────────────────────────────────────────────────
      Distinctes des couleurs de chrome, et dependantes du theme — ce que
@@ -230,6 +232,7 @@
   /* Sur fond sombre l'encre peut reprendre la teinte vive : 7,87 et 8,35:1. */
   --success-ink: #22c55e;
   --warning-ink: #f59e0b;
+  --danger-ink:  #f87171;
 
   /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
      #22c55e y donne 7,87:1, #ef4444 4,77:1. */
@@ -364,6 +367,7 @@
   --color-warning-soft:       var(--warning-soft);
   --color-success-ink:        var(--success-ink);
   --color-warning-ink:        var(--warning-ink);
+  --color-danger-ink:         var(--danger-ink);
 
   /* Surfaces IA uniquement — le violet est banni de la chrome */
   --color-ai:                 var(--sl-violet);
