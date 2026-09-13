@@ -1,9 +1,16 @@
 'use client';
 
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getPalette, type Palette, type PaletteMode } from '@/utils/chartPalettes';
 import { usePaletteMode } from '@/contexts/chartPrefs';
+import {
+  directionColors,
+  directionScale,
+  divergingScale,
+  logFCScale,
+  sequentialScale,
+} from '@/utils/chartScales';
 
 /**
  * Le theme des graphiques, sous DEUX formes.
@@ -229,6 +236,28 @@ export function useChartTheme(): ChartTheme {
  * laisserait silencieusement les couleurs du theme clair sur fond sombre, ce
  * qui est precisement le defaut corrige ici.
  */
+/**
+ * Les echelles continues, resolues pour le theme et la preference courants.
+ *
+ * Meme raison d'etre que `useChartPalette` : appeler `divergingScale()` sans
+ * arguments dans un composant sert l'echelle CLAIRE sur panneau sombre, et le
+ * median y perce un trou blanc. Le hook rend l'oubli impossible.
+ */
+export function useChartScales() {
+  const { theme } = useTheme();
+  const mode = usePaletteMode();
+  return useMemo(
+    () => ({
+      sequential: sequentialScale(theme),
+      diverging: divergingScale(mode, theme),
+      logFC: logFCScale(mode, theme),
+      direction: directionScale(mode, theme),
+      directionColors: directionColors(mode, theme),
+    }),
+    [mode, theme],
+  );
+}
+
 export function useChartPalette(mode?: PaletteMode): Palette {
   const { theme } = useTheme();
   // Sans argument, la preference de l'utilisateur s'applique. C'est ce qui fait
