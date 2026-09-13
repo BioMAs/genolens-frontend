@@ -123,7 +123,7 @@ function DotPlotTooltip({ active, payload }: DotPlotTooltipProps) {
 
 function GODotPlot({ terms }: { terms: GOTerm[] }) {
   if (!terms.length) return (
-    <div className="flex items-center justify-center h-48 text-body-sm text-muted-foreground">
+    <div className="flex items-center justify-center h-48 text-body-sm text-muted">
       No enriched terms to display.
     </div>
   );
@@ -141,7 +141,7 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 text-caption text-muted-foreground">
+      <div className="flex items-center justify-between mb-3 text-caption text-muted">
         <span>Top 20 enriched terms · Dot size = gene count · Color = -log₁₀(FDR)</span>
         <div className="flex items-center gap-1">
           <span className="inline-block w-10 h-2.5 rounded-sm" // Degrade de legende : les deux bornes venaient de la palette Tailwind
@@ -460,7 +460,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
         <>
           {/* Stats bar — dynamic: shows all categories present in results */}
           {terms.length > 0 && (
-            <div className="flex items-center gap-6 px-4 py-2 bg-muted/40 rounded-control text-caption text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-6 px-4 py-2 bg-muted/40 rounded-control text-caption text-muted flex-wrap">
               {[...new Set(terms.map(t => t.namespace).filter(Boolean))].map(cat => {
                 const count = terms.filter(t => t.namespace === cat).length;
                 const dbDef = DB_CATEGORIES.find(db => db.value === cat);
@@ -533,7 +533,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
       {/* ── Empty state (loaded but no results) ─────────────────────────── */}
       {!isRunning && !error && !isInitialLoad && !hasResults && (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/20 rounded-card border border-dashed">
+        <div className="flex flex-col items-center justify-center py-16 text-center text-muted bg-muted/20 rounded-card border border-dashed">
           <p className="text-body-sm font-medium mb-1">No enriched terms found</p>
           <p className="text-caption">Enrichment analysis has not been computed yet for this comparison.</p>
         </div>

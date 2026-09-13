@@ -102,3 +102,22 @@ describe('convention de direction', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('utilitaires morts', () => {
+  /**
+   * En Tailwind v4, un utilitaire de couleur n'est emis que si sa variable de
+   * theme existe. `text-muted-foreground` — un reflexe venu de shadcn — etait
+   * ecrit dans quatre fichiers alors que `--color-muted-foreground` n'a jamais
+   * ete defini ici : verifie contre le CSS compile, la chaine y apparaissait
+   * ZERO fois. Le texte heritait donc simplement sa couleur, sans erreur, sans
+   * avertissement, et en passant tous les tests.
+   *
+   * C'est la forme la plus couteuse d'un defaut de style : silencieuse.
+   */
+  const GHOSTS = ['muted-foreground', 'popover-foreground', 'card-foreground'];
+
+  it.each(GHOSTS)('aucune classe %s (variable de theme inexistante)', (ghost) => {
+    const offenders = SOURCES.filter((f) => read(f).includes(ghost));
+    expect(offenders).toEqual([]);
+  });
+});

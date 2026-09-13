@@ -1,4 +1,5 @@
 import type { Palette } from '@/utils/chartPalettes';
+import { mixColors as mix } from '@/utils/chartScales';
 
 /**
  * Les decisions de couleur du graphe d'enrichissement GO.
@@ -33,15 +34,6 @@ const NS_SLOT: Record<NamespaceKey, number> = {
 export function namespaceColor(ns: string, palette: Palette): string {
   const slot = NS_SLOT[ns as NamespaceKey];
   return slot === undefined ? palette.ns : palette.categorical[slot];
-}
-
-/** Fondu lineaire en sRGB — `d3.interpolateRgb` sans la dependance a d3. */
-function mix(from: string, to: string, t: number): string {
-  const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  const [a, b] = [channels(from), channels(to)];
-  return `#${a
-    .map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0'))
-    .join('')}`;
 }
 
 /**

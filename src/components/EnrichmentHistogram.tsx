@@ -12,7 +12,10 @@ import {
   Cell,
 } from 'recharts';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
-import {CHART_VARS } from '@/utils/chartTheme';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
+import type { Palette } from '@/utils/chartPalettes';
+import { mixColors } from '@/utils/chartScales';
+import ChartCard from '@/components/charts/ChartCard';
 
 interface GOTerm {
   go_id: string;
@@ -35,13 +38,18 @@ interface EnrichmentHistogramProps {
 const FDR_THRESHOLD = 0.05;
 const LOG10_THRESHOLD = -Math.log10(FDR_THRESHOLD); // ≈ 1.301
 
-function fdrColor(enrichmentRatio: number, maxRatio: number): string {
-  // Indigo scale: low enrichment → light, high → dark
+/**
+ * Rampe d'enrichissement : du gris de recul vers la couleur de serie.
+ *
+ * Elle interpolait indigo-200 → indigo-700, codes en dur canal par canal —
+ * l'accent INTERACTIF du produit employe comme couleur de donnee, et une rampe
+ * claire servie telle quelle sur panneau sombre. Partir de `palette.ns`, bas en
+ * contraste dans les deux themes, fait reculer le faible enrichissement au lieu
+ * de l'eclaircir arbitrairement.
+ */
+function ratioColor(enrichmentRatio: number, maxRatio: number, palette: Palette): string {
   const t = maxRatio > 0 ? Math.min(enrichmentRatio / maxRatio, 1) : 0;
-  const r = Math.round(199 - t * (199 - 67));
-  const g = Math.round(210 - t * (210 - 56));
-  const b = Math.round(254 - t * (254 - 202));
-  return `rgb(${r},${g},${b})`;
+  return mixColors(palette.ns, palette.categorical[0], t);
 }
 
 interface ChartEntry {
@@ -76,14 +84,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export default function EnrichmentHistogram({ terms, maxTerms = 20 }: EnrichmentHistogramProps) {
-  if (!terms.length) {
-    return (
-      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
-        No enriched terms to display.
-      </div>
-    );
-  }
-
+  const palette = useChartPalette();
   // Top N by FDR ascending, then reverse so most significant is at top
   const top = [...terms]
     .sort((a, b) => a.fdr - b.fdr)
@@ -105,18 +106,24 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
   const xMax = Math.ceil(maxValue) + 0.5;
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <span className="text-xs font-semibold text-primary">Top {top.length} Enriched Terms</span>
-          <span className="text-xs text-muted-foreground ml-2">Color = enrichment ratio · Length = -log₁₀(FDR)</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-block w-10 h-3 rounded-sm" style={{ background: 'linear-gradient(to right, rgb(199,210,254), rgb(67,56,202))' }} />
+    <ChartCard
+      title={`Top ${top.length} enriched terms`}
+      subtitle="Colour = enrichment ratio · Length = −log₁₀(FDR)"
+      state={terms.length ? 'ready' : 'empty'}
+      minHeight={220}
+      empty="No enriched terms to display."
+      actions={
+        <span className="flex items-center gap-2 text-caption text-muted">
+          <span
+            className="inline-block h-3 w-10 rounded-sm"
+            // La rampe de legende reprenait indigo-200 → indigo-700, soit
+            // l'accent INTERACTIF employe comme couleur de donnee.
+            style={{ background: `linear-gradient(to right, ${palette.ns}, ${palette.categorical[0]})` }}
+          />
           <span>Low → High enrichment</span>
-        </div>
-      </div>
-
+        </span>
+      }
+    >
       <ResponsiveContainer width="100%" height={Math.max(220, top.length * 28)}>
         <BarChart
           data={data}
@@ -147,12 +154,12 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={fdrColor(entry.enrichment_ratio, maxRatio)}
+                fill={ratioColor(entry.enrichment_ratio, maxRatio, palette)}
               />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

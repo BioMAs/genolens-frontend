@@ -128,7 +128,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
 function DetailPanel({ node }: { node: GOTreeNode | null }) {
   if (!node) {
     return (
-      <div className="flex items-center justify-center h-full text-body-sm text-muted-foreground p-6 text-center">
+      <div className="flex items-center justify-center h-full text-body-sm text-muted p-6 text-center">
         Click a node in the tree to see details.
       </div>
     );
@@ -398,7 +398,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             />
           )}
           {!loading && !error && !hierarchy && loaded && (
-            <div className="p-6 text-body-sm text-center text-muted-foreground">No hierarchy data available.</div>
+            <div className="p-6 text-body-sm text-center text-muted">No hierarchy data available.</div>
           )}
         </div>
       ) : (
@@ -410,7 +410,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
               <div className="p-4 text-body-sm text-red-500 text-center">{error}</div>
             )}
             {!loading && !error && currentNodes.length === 0 && loaded && (
-              <div className="p-6 text-body-sm text-center text-muted-foreground">
+              <div className="p-6 text-body-sm text-center text-muted">
                 No enriched terms for {NS_FULL[activeNs]}.
               </div>
             )}

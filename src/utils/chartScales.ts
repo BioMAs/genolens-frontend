@@ -155,6 +155,21 @@ export function significanceRamp(theme: ThemeMode = 'light'): string[] {
   return SIGNIFICANCE[theme];
 }
 
+/**
+ * Fondu lineaire en sRGB entre deux couleurs — `d3.interpolateRgb` sans la
+ * dependance a d3, qui n'a pas sa place dans un module pur.
+ *
+ * Sert a construire une rampe a partir de la palette plutot que de coder des
+ * bornes en dur : c'est ce qui permet a une rampe de suivre le theme.
+ */
+export function mixColors(from: string, to: string, t: number): string {
+  const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [a, b] = [channels(from), channels(to)];
+  return `#${a
+    .map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 export function sequentialScale(theme: ThemeMode = 'light'): ColorStops {
   return SEQUENTIAL[theme];
 }

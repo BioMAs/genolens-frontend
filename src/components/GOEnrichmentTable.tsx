@@ -216,7 +216,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       {/* Search and Export */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <Input
             placeholder="Search GO terms or IDs..."
             value={searchQuery}
@@ -305,7 +305,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                       <td className="p-3">
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
-                          <div className="text-body-sm text-muted-foreground">{term.go_id}</div>
+                          <div className="text-body-sm text-muted">{term.go_id}</div>
                           {(() => {
                             const overlap = overlapOf(term);
                             if (overlap === null) return null;
@@ -408,14 +408,14 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       </div>
 
       {filteredTerms.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-muted">
           No GO terms found matching your search.
         </div>
       )}
 
       {filteredTerms.length > 0 && (
         <div className="flex items-center justify-between gap-4 text-body-sm">
-          <span className="text-muted-foreground">
+          <span className="text-muted">
             Showing {Math.min((page - 1) * pageSize + 1, filteredTerms.length)}–{Math.min(page * pageSize, filteredTerms.length)} of {filteredTerms.length} terms
           </span>
 
