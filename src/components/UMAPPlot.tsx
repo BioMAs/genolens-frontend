@@ -14,7 +14,7 @@ import {
 import { useUMAPData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
@@ -52,8 +52,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
   const [metadata, setMetadata] = useState<MetadataRow[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
-  const [colorblindMode, setColorblindMode] = useState(false);
-  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
   const [joinColumn, setJoinColumn] = useState<string>('');
 
   const error = umapError 
@@ -175,7 +174,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
               ))}
             </select>
           )}
-          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <ColorblindToggle />
           <AIChartAssistant
             datasetId={dataset.id}
             chartType="umap"

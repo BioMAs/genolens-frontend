@@ -7,8 +7,8 @@ import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData, type HeatmapGeneRow } from '@/components/heatmap/useHeatmapData';
 import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
-import { getPalette } from '@/utils/chartPalettes';
-import { useChartTheme } from '@/utils/chartTheme';
+import { useChartPrefs } from '@/contexts/chartPrefs';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 import { Layout, PlotData } from 'plotly.js';
 
@@ -83,8 +83,9 @@ export default function DEGClusteringView({
   genesOverride,
 }: DEGClusteringViewProps) {
   const chartTheme = useChartTheme();
+  const palette = useChartPalette();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
-  const [colorblindMode, setColorblindMode] = useState(false);
+  const { colorblind: colorblindMode } = useChartPrefs();
 
   // If sampleIds is undefined or empty, ALL matrix samples will be shown
   // (happens when no metadata dataset is uploaded for the study).
@@ -176,7 +177,7 @@ export default function DEGClusteringView({
 
   // ---- Condition annotation track (above the heatmap columns) ----
   // Uses the sample→condition map already resolved by ComparisonDetail.
-  const condPalette = getPalette(colorblindMode ? 'colorblind' : 'standard').categorical;
+  const condPalette = palette.categorical;
   const sampleConditions = plotData.x.map((s) => sampleConditionMap?.[s]);
   const hasConditions = sampleConditions.some((c) => c != null);
   const uniqueConds = Array.from(new Set(sampleConditions.filter((c): c is string => c != null)));
@@ -288,7 +289,7 @@ export default function DEGClusteringView({
           <Download className="w-3.5 h-3.5" /> Export matrix (.csv)
         </button>
 
-        <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+        <ColorblindToggle />
       </div>
 
       {/* Plotly heatmap with DEG-status sidebar */}

@@ -15,13 +15,13 @@
 import { useMemo, useState } from 'react';
 import { Bookmark, Check, ListPlus, Loader2, Sparkles } from 'lucide-react';
 import { Dataset } from '@/types';
-import { useComparisonActions, useSelection, useThresholds, useViewPreferences } from '@/contexts/ComparisonSelectionContext';
+import { useComparisonActions, useSelection, useThresholds } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useCreateBookmarksBatch, useCreateGeneList } from '@/hooks/useBookmarks';
 import { useIntersectionEnrichment } from '@/hooks/useIntersectionEnrichment';
 import { isSignificant, type VolcanoPoint } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import { GeneToken } from '@/components/ui/gene-token';
 import ExportMenu from '@/components/ExportMenu';
 
@@ -41,9 +41,8 @@ interface SelectedGene {
 export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
   const selection = useSelection();
   const thresholds = useThresholds();
-  const { colorblind } = useViewPreferences();
   const { setFocusedGene, clearSelection, selectGeneList } = useComparisonActions();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const { data } = useVolcanoPoints(dataset.id, comparisonName);
 

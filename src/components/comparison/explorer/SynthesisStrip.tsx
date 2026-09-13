@@ -13,9 +13,8 @@
  * the cached path (`datasets.py:2039`) versus genes tested on the cold path (`:2159`).
  */
 
-import { useViewPreferences } from '@/contexts/ComparisonSelectionContext';
 import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ThresholdControl from './ThresholdControl';
 
 interface Props {
@@ -26,8 +25,7 @@ interface Props {
 }
 
 export default function SynthesisStrip({ datasetId, comparisonName, conditions }: Props) {
-  const { colorblind } = useViewPreferences();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const { summary, isLoading, isError } = useSignificanceSummary(datasetId, comparisonName);
 

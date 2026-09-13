@@ -17,9 +17,8 @@
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { Layout, PlotData } from 'plotly.js';
-import { getPalette } from '@/utils/chartPalettes';
 import type { GeneExpression } from '@/hooks/useGeneExpressionByCondition';
-import { useChartTheme } from '@/utils/chartTheme';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -33,7 +32,6 @@ interface Props {
   height?: number;
   /** The modebar is noise inside a 300px column. */
   showModeBar?: boolean;
-  colorblind?: boolean;
 }
 
 export default function GeneExpressionBoxplot({
@@ -41,12 +39,11 @@ export default function GeneExpressionBoxplot({
   loading = false,
   height = 220,
   showModeBar = false,
-  colorblind = false,
 }: Props) {
   // PLOT_THEME etait defini independamment dans TROIS fichiers, avec les
   // memes valeurs. useChartTheme le remplace.
   const chartTheme = useChartTheme();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const traces = useMemo<Partial<PlotData>[]>(() => {
     if (!data) return [];

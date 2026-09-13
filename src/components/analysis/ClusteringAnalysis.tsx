@@ -7,6 +7,7 @@ import { Settings, Play, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-
 import { PlotData } from 'plotly.js';
 import { getColorscale } from '@/components/heatmap/heatmapConfig';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import { useChartPrefs } from '@/contexts/chartPrefs';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -90,7 +91,9 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
     metric: 'euclidean'
   });
 
-  const [colorblindMode, setColorblindMode] = useState(false);
+  // La preference est globale et persistee : elle s'accorde avec la PCA
+  // d'a cote et survit a un rechargement.
+  const { colorblind: colorblindMode } = useChartPrefs();
 
   // Silhouette / K-means
   const [silhouetteData, setSilhouetteData] = useState<SilhouetteResult | null>(null);
@@ -289,7 +292,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                 Scale Rows (Z-score)
             </label>
 
-            <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+            <ColorblindToggle />
 
             <AIChartAssistant
               datasetId={datasetId}

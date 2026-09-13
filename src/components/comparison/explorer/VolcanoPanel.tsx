@@ -26,15 +26,13 @@ import {
   useComparisonActions,
   useSelection,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { isSignificant, UNKNOWN_GENE, type VolcanoPoint } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { getPalette } from '@/utils/chartPalettes';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
-import { useChartTheme } from '@/utils/chartTheme';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
@@ -89,10 +87,9 @@ interface Props {
 export default function VolcanoPanel({ dataset, comparisonName }: Props) {
   const thresholds = useThresholds();
   const selection = useSelection();
-  const { colorblind } = useViewPreferences();
-  const { setColorblind, selectGenes, toggleGene, clearSelection } = useComparisonActions();
+  const { selectGenes, toggleGene, clearSelection } = useComparisonActions();
 
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
   // PLOT_THEME etait defini independamment dans TROIS fichiers, avec les
   // memes valeurs. useChartTheme le remplace.
   const chartTheme = useChartTheme();
@@ -328,7 +325,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
             <span>Click a point to inspect a gene · shift-click to add · lasso for a set</span>
           )}
         </div>
-        <ColorblindToggle value={colorblind} onChange={setColorblind} />
+        <ColorblindToggle />
       </div>
 
       <AIChartAssistant

@@ -3,6 +3,7 @@
 import { useLayoutEffect, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getPalette, type Palette, type PaletteMode } from '@/utils/chartPalettes';
+import { usePaletteMode } from '@/contexts/chartPrefs';
 
 /**
  * Le theme des graphiques, sous DEUX formes.
@@ -228,7 +229,11 @@ export function useChartTheme(): ChartTheme {
  * laisserait silencieusement les couleurs du theme clair sur fond sombre, ce
  * qui est precisement le defaut corrige ici.
  */
-export function useChartPalette(mode: PaletteMode = 'standard'): Palette {
+export function useChartPalette(mode?: PaletteMode): Palette {
   const { theme } = useTheme();
-  return getPalette(mode, theme);
+  // Sans argument, la preference de l'utilisateur s'applique. C'est ce qui fait
+  // que les quatre bascules concurrentes deviennent une seule : un appelant qui
+  // ne dit rien obtient le bon mode.
+  const preferred = usePaletteMode();
+  return getPalette(mode ?? preferred, theme);
 }

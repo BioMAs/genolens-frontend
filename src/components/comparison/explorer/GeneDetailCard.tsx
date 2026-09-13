@@ -28,7 +28,6 @@ import {
   useComparisonActions,
   useSelection,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useGeneExpressionByCondition } from '@/hooks/useGeneExpressionByCondition';
@@ -36,7 +35,7 @@ import { useGeneToPathways } from '@/hooks/useGeneToPathways';
 import { useStringPartners } from '@/hooks/useStringPartners';
 import { isSignificant, type VolcanoPoint } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import { PValToken } from '@/components/ui/pval-token';
 import { GeneToken } from '@/components/ui/gene-token';
 import BookmarkButton from '@/components/BookmarkButton';
@@ -69,9 +68,8 @@ export default function GeneDetailCard({
 }: Props) {
   const selection = useSelection();
   const thresholds = useThresholds();
-  const { colorblind } = useViewPreferences();
   const { setFocusedGene, selectGenes, clearSelection } = useComparisonActions();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const { data: cloud } = useVolcanoPoints(dataset.id, comparisonName);
 
@@ -175,7 +173,6 @@ export default function GeneDetailCard({
             data={expression.data}
             loading={expression.isLoading}
             height={190}
-            colorblind={colorblind}
           />
         </div>
       ) : null}

@@ -10,7 +10,6 @@ import {
   useComparisonActions,
   useSelection,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import {
@@ -19,7 +18,7 @@ import {
   type DegRegulationFilter,
   type DegSortField,
 } from '@/hooks/useDegGenes';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface DEGTableProps {
   dataset: Dataset;
@@ -51,9 +50,8 @@ const COLUMN_LABELS = {
 export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const thresholds = useThresholds();
   const selection = useSelection();
-  const { colorblind } = useViewPreferences();
   const { selectGenes, toggleGene } = useComparisonActions();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   // Normalised, because the table's gene_id and the volcano's gene key need not be spelled
   // the same way — that is exactly what geneKeys exists to reconcile.

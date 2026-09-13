@@ -7,6 +7,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import React from 'react';
 import api from '@/utils/api';
 
@@ -73,17 +74,22 @@ function renderCard(props: Partial<React.ComponentProps<typeof GeneDetailCard>> 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ComparisonSelectionProvider>
-        <Seed gene={props.gene ?? 'TP53'} />
-        <GeneDetailCard
-          gene="TP53"
-          dataset={DEG}
-          comparisonName={COMPARISON}
-          matrixDataset={MATRIX}
-          enrichmentDataset={ENRICH}
-          {...props}
-        />
-      </ComparisonSelectionProvider>
+      {/* La palette des graphiques depend du theme depuis la consolidation
+          daltonisme : les couleurs claires ne sont plus servies sur fond
+          sombre. Le fournisseur de theme fait donc partie de l'arbre reel. */}
+      <ThemeProvider>
+        <ComparisonSelectionProvider>
+          <Seed gene={props.gene ?? 'TP53'} />
+          <GeneDetailCard
+            gene="TP53"
+            dataset={DEG}
+            comparisonName={COMPARISON}
+            matrixDataset={MATRIX}
+            enrichmentDataset={ENRICH}
+            {...props}
+          />
+        </ComparisonSelectionProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

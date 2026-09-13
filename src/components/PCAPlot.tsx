@@ -14,7 +14,7 @@ import {
 import { usePCAData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
@@ -46,8 +46,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
-  const [colorblindMode, setColorblindMode] = useState(false);
-  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const error = pcaError ? 'Failed to calculate PCA. Ensure the dataset is a valid expression matrix.' : null;
 
@@ -169,7 +168,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
               ))}
             </select>
           )}
-          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <ColorblindToggle />
           <AIChartAssistant
             datasetId={dataset.id}
             chartType="pca"

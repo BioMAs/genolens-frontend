@@ -48,11 +48,6 @@ import { clampThresholds, type VolcanoThresholds } from '@/utils/volcano';
 /** How long to wait after the last edit before touching the URL. */
 const URL_WRITE_DEBOUNCE_MS = 250;
 
-interface ViewPreferences {
-  /** Colour-blind-safe palette, lifted out of the volcano so every chart agrees. */
-  colorblind: boolean;
-}
-
 /** Where a selection came from. Panels use it to avoid echoing their own change back. */
 export type SelectionSource =
   | 'volcano'
@@ -107,14 +102,12 @@ const EMPTY_SELECTION: ComparisonSelection = {
 
 interface State {
   thresholds: VolcanoThresholds;
-  prefs: ViewPreferences;
   selection: ComparisonSelection;
   focusedTerm: FocusedTerm | null;
 }
 
 type Action =
   | { type: 'setThresholds'; value: Partial<VolcanoThresholds> }
-  | { type: 'setColorblind'; value: boolean }
   | { type: 'selectGenes'; genes: string[]; source: SelectionSource; label?: string }
   | { type: 'selectGeneList'; listId: string; name: string; genes: string[] }
   | { type: 'toggleGene'; gene: string; source: SelectionSource }
@@ -125,7 +118,6 @@ type Action =
 export interface ComparisonActions {
   /** Tighten one or both thresholds. Values are clamped to what ingestion honoured. */
   setThresholds(value: Partial<VolcanoThresholds>): void;
-  setColorblind(value: boolean): void;
   /** Replace the selection. The first gene becomes the focused one. */
   selectGenes(genes: string[], source: SelectionSource, label?: string): void;
   /** Select a saved gene list, which is the one multi-gene selection a URL can carry. */
@@ -165,10 +157,6 @@ function reducer(state: State, action: Action): State {
         return state;
       }
       return { ...state, thresholds: next };
-    }
-    case 'setColorblind': {
-      if (state.prefs.colorblind === action.value) return state;
-      return { ...state, prefs: { ...state.prefs, colorblind: action.value } };
     }
     case 'selectGenes': {
       const genes = dedupeGenes(action.genes);
@@ -257,7 +245,6 @@ function reducer(state: State, action: Action): State {
 }
 
 const ThresholdsContext = createContext<VolcanoThresholds | null>(null);
-const ViewPreferencesContext = createContext<ViewPreferences | null>(null);
 const SelectionContext = createContext<ComparisonSelection | null>(null);
 const PendingGeneListContext = createContext<string | null>(null);
 const FocusedTermContext = createContext<FocusedTerm | null | undefined>(undefined);
@@ -272,7 +259,6 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
     const gene = readFocusedGene(searchParams);
     return {
       thresholds: readThresholds(searchParams),
-      prefs: { colorblind: false },
       focusedTerm: null,
       selection: gene
         ? { genes: [gene], focusedGene: gene, source: 'url' as SelectionSource }
@@ -289,7 +275,6 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
   const actions = useMemo<ComparisonActions>(
     () => ({
       setThresholds: (value) => dispatch({ type: 'setThresholds', value }),
-      setColorblind: (value) => dispatch({ type: 'setColorblind', value }),
       selectGenes: (genes, source, label) =>
         dispatch({ type: 'selectGenes', genes, source, label }),
       selectGeneList: (listId, name, genes) =>
@@ -310,13 +295,11 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
         value={state.selection.genes.length === 0 ? pendingGeneListId : null}
       >
       <FocusedTermContext.Provider value={state.focusedTerm}>
-        <ViewPreferencesContext.Provider value={state.prefs}>
-          <SelectionContext.Provider value={state.selection}>
-            <ThresholdsContext.Provider value={state.thresholds}>
-              {children}
-            </ThresholdsContext.Provider>
-          </SelectionContext.Provider>
-        </ViewPreferencesContext.Provider>
+        <SelectionContext.Provider value={state.selection}>
+          <ThresholdsContext.Provider value={state.thresholds}>
+            {children}
+          </ThresholdsContext.Provider>
+        </SelectionContext.Provider>
       </FocusedTermContext.Provider>
       </PendingGeneListContext.Provider>
     </ActionsContext.Provider>
@@ -393,11 +376,6 @@ export function useFocusedTerm(): FocusedTerm | null {
     throw new Error('useFocusedTerm must be used inside <ComparisonSelectionProvider>');
   }
   return value;
-}
-
-/** Chart preferences shared across the screen. Does not re-render on a threshold change. */
-export function useViewPreferences(): ViewPreferences {
-  return useRequiredContext(ViewPreferencesContext, 'useViewPreferences');
 }
 
 /**

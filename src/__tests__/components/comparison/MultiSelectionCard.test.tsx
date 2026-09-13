@@ -8,6 +8,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import React from 'react';
 import api from '@/utils/api';
 
@@ -66,10 +67,15 @@ function renderCard(genes = SELECTED, label = 'Lasso · 5 genes') {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ComparisonSelectionProvider>
-        <Seed genes={genes} label={label} />
-        <MultiSelectionCard dataset={DATASET} comparisonName={COMPARISON} />
-      </ComparisonSelectionProvider>
+      {/* La palette des graphiques depend du theme depuis la consolidation
+          daltonisme : les couleurs claires ne sont plus servies sur fond
+          sombre. Le fournisseur de theme fait donc partie de l'arbre reel. */}
+      <ThemeProvider>
+        <ComparisonSelectionProvider>
+          <Seed genes={genes} label={label} />
+          <MultiSelectionCard dataset={DATASET} comparisonName={COMPARISON} />
+        </ComparisonSelectionProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
