@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CosmeticEvidencePathway } from '@/hooks/useCosmetics';
+import { useChartScales, CHART_VARS } from '@/utils/chartTheme';
 
 interface Props {
   pathways: CosmeticEvidencePathway[];
@@ -9,13 +10,6 @@ interface Props {
   claimColor: string;
   claimScore: number;
   verdictColor?: string;
-}
-
-const UP_COLOR = '#ef4444';
-const DOWN_COLOR = '#3b82f6';
-
-function dirColor(dir: string) {
-  return dir === 'UP' ? UP_COLOR : DOWN_COLOR;
 }
 
 // Layout — wide landscape
@@ -35,6 +29,19 @@ const LABEL_OFFSET = 24;
 interface TooltipState { x: number; y: number; lines: string[] }
 
 export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, claimScore, verdictColor }: Props) {
+  /**
+   * `UP_COLOR` valait `#ef4444` et `DOWN_COLOR` `#3b82f6` : du ROUGE pour la
+   * sur-expression, sous un libelle « ↑ UP-regulated ». C'est l'inverse de la
+   * convention tenue partout ailleurs dans le produit — nuage de volcan, table
+   * des DEG, carte de chaleur — ou le rouge signifie « sous-exprime ».
+   * Quelqu'un qui arrive du volcan lisait donc exactement le contraire de ce
+   * que la carte annonce. Meme inversion que celle deja corrigee dans
+   * DEGBarChart ; ces deux fichiers la portaient encore.
+   */
+  const scales = useChartScales();
+  const dirColor = (dir: string) =>
+    dir === 'UP' ? scales.directionColors.up : scales.directionColors.down;
+
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   if (pathways.length === 0) return null;
@@ -91,17 +98,17 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
           className="mb-1 flex text-caption font-semibold"
           style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%` }}
         >
-          <span style={{ width: `${(COL_W / VW) * 100}%`, color: UP_COLOR }}>↑ UP-regulated</span>
-          <span style={{ color: DOWN_COLOR }}>↓ DOWN-regulated</span>
+          <span style={{ width: `${(COL_W / VW) * 100}%`, color: scales.directionColors.up }}>↑ UP-regulated</span>
+          <span style={{ color: scales.directionColors.down }}>↓ DOWN-regulated</span>
         </div>
       )}
       {!hasBoth && upPathways.length > 0 && (
-        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: UP_COLOR }}>
+        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: scales.directionColors.up }}>
           ↑ UP-regulated
         </div>
       )}
       {!hasBoth && downPathways.length > 0 && (
-        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: DOWN_COLOR }}>
+        <div className="mb-1 text-caption font-semibold" style={{ paddingLeft: `${(PATHWAY_START_X / VW) * 100}%`, color: scales.directionColors.down }}>
           ↓ DOWN-regulated
         </div>
       )}
@@ -187,7 +194,9 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
               {/* Outer glow ring */}
               <circle cx={x} cy={y} r={NODE_R + 4} fill={col} fillOpacity={0.1} />
               {/* Main node */}
-              <circle cx={x} cy={y} r={NODE_R} fill={col} fillOpacity={opacity} stroke="#fff" strokeWidth={2} />
+              {/* L'anneau detache le noeud de ses voisins : il vaut la surface,
+                  pas un blanc fixe qui brille sur un panneau sombre. */}
+              <circle cx={x} cy={y} r={NODE_R} fill={col} fillOpacity={opacity} stroke={CHART_VARS.surface} strokeWidth={2} />
               {/* Arrow inside */}
               <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize={13} fill="#fff" fontWeight="700" style={{ pointerEvents: 'none' }}>
                 {pw.direction === 'UP' ? '↑' : '↓'}
@@ -206,10 +215,10 @@ export default function ClaimPathwayMap({ pathways, claimLabel, claimColor, clai
 
         {/* Legend */}
         <g>
-          <circle cx={VW - 170} cy={VH - 14} r={5} fill={UP_COLOR} />
-          <text x={VW - 161} y={VH - 10} fontSize={10} fill="#6b7280">UP-regulated</text>
-          <circle cx={VW - 80} cy={VH - 14} r={5} fill={DOWN_COLOR} />
-          <text x={VW - 71} y={VH - 10} fontSize={10} fill="#6b7280">DOWN-regulated</text>
+          <circle cx={VW - 170} cy={VH - 14} r={5} fill={scales.directionColors.up} />
+          <text x={VW - 161} y={VH - 10} fontSize={10} fill={CHART_VARS.inkMuted}>UP-regulated</text>
+          <circle cx={VW - 80} cy={VH - 14} r={5} fill={scales.directionColors.down} />
+          <text x={VW - 71} y={VH - 10} fontSize={10} fill={CHART_VARS.inkMuted}>DOWN-regulated</text>
         </g>
       </svg>
 

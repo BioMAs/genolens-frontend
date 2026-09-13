@@ -1,5 +1,7 @@
 'use client';
 
+import { useChartScales, CHART_VARS } from '@/utils/chartTheme';
+
 import { useState, useMemo } from 'react';
 import { CosmeticClaimScore, CosmeticEvidencePathway } from '@/hooks/useCosmetics';
 
@@ -7,8 +9,6 @@ interface Props {
   claims: CosmeticClaimScore[];
 }
 
-const UP_COLOR = '#ef4444';
-const DOWN_COLOR = '#3b82f6';
 const W = 860;
 const H = 520;
 const CLAIM_X = 620;
@@ -20,9 +20,6 @@ const EVIDENCE_OPACITY: Record<string, number> = { HIGH: 1, MODERATE: 0.7, LOW: 
 
 function claimRadius(score: number) {
   return CLAIM_R_MIN + (score / 100) * (CLAIM_R_MAX - CLAIM_R_MIN);
-}
-function dirColor(dir: string) {
-  return dir === 'UP' ? UP_COLOR : DOWN_COLOR;
 }
 
 interface PathwayEntry {
@@ -42,6 +39,16 @@ interface TooltipState {
 }
 
 export default function ClaimPathwayNetwork({ claims }: Props) {
+  /**
+   * `UP_COLOR` valait `#ef4444` et `DOWN_COLOR` `#3b82f6` : du ROUGE pour la
+   * sur-expression. C'est l'inverse de la convention tenue partout ailleurs
+   * dans le produit — volcan, table des DEG, carte de chaleur — ou le rouge
+   * signifie « sous-exprime ». Meme inversion que celle deja corrigee dans
+   * DEGBarChart ; les deux fichiers cosmetics la portaient encore.
+   */
+  const scales = useChartScales();
+  const dirColor = (dir: string) =>
+    dir === 'UP' ? scales.directionColors.up : scales.directionColors.down;
   const [filterDir, setFilterDir] = useState<'ALL' | 'UP' | 'DOWN'>('ALL');
   const [selectedClaim, setSelectedClaim] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
@@ -141,8 +148,10 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
               className="rounded-sm px-3 py-1 text-caption font-medium transition-colors"
               style={{
                 background: filterDir === d
-                  ? d === 'UP' ? UP_COLOR : d === 'DOWN' ? DOWN_COLOR : '#374151'
+                  ? d === 'UP' ? scales.directionColors.up : d === 'DOWN' ? scales.directionColors.down : 'var(--text-primary)'
                   : 'var(--surface-elevated)',
+                // Encre POSEE sur un aplat colore : le blanc y est juste dans
+                // les deux themes, contrairement a une encre sur la page.
                 color: filterDir === d ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border-default)',
               }}
@@ -165,15 +174,15 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       {/* Legend */}
       <div className="flex items-center gap-6 text-micro" style={{ color: 'var(--text-secondary)' }}>
         <span className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: UP_COLOR }} />
+          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: scales.directionColors.up }} />
           UP-régulé
         </span>
         <span className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: DOWN_COLOR }} />
+          <span className="inline-block h-3 w-3 rounded-pill" style={{ background: scales.directionColors.down }} />
           DOWN-régulé
         </span>
         <span className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-pill border-2" style={{ borderColor: '#6b7280' }} />
+          <span className="inline-block h-4 w-4 rounded-pill border-2" style={{ borderColor: 'var(--border-strong)' }} />
           Claim (taille ∝ score)
         </span>
         <span className="ml-auto text-micro opacity-60">{pathways.length} pathways · {activeClaims.length} claims</span>
@@ -280,7 +289,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
                       r={PATHWAY_R}
                       fill={dirColor(pw.direction)}
                       fillOpacity={opacity}
-                      stroke="#fff"
+                      stroke={CHART_VARS.surface}
                       strokeWidth={1.2}
                     />
                     {/* Short label truncated */}
