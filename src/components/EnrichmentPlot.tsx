@@ -8,6 +8,7 @@ import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useChartPalette } from '@/utils/chartTheme';
 import { significanceRamp } from '@/utils/chartScales';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 
 interface EnrichmentPlotProps {
   dataset: Dataset;
@@ -138,8 +139,10 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
     }
   }, [queryData, comparisonName]);
 
-  if (isLoading) return <div>Loading enrichment data...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  // Un `<div>` nu pour le chargement et un `text-red-500` pour l'erreur — du
+  // rouge Tailwind brut, a 3,76:1 sur blanc. Ni l'un ni l'autre ne reservait de
+  // place : le bloc de 800px arrivait d'un coup.
+  const state: ChartState = isLoading ? 'loading' : error ? 'error' : 'ready';
 
   const RAMP = significanceRamp(theme);
 
@@ -154,10 +157,16 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
   };
   
   return (
-    <div className="space-y-4">
+    <ChartCard
+      title="Pathway enrichment"
+      subtitle="Gene ratio versus expected · colour = −log₁₀(p-value)"
+      state={state}
+      minHeight={800}
+      error={error ?? undefined}
+    >
       {/* Color scale legend */}
-      <div className="bg-surface p-4 rounded-control shadow border border-line">
-        <h3 className="text-sm font-semibold mb-2">-log10(p-value)</h3>
+      <div className="mb-4">
+        <h4 className="mb-2 text-caption font-semibold text-secondary">−log10(p-value)</h4>
         <div className="flex items-center gap-2">
           <span className="text-xs text-secondary">Not significant</span>
           <div className="flex-1 h-6 rounded-sm" style={{
@@ -175,7 +184,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
       </div>
       
       {/* Chart */}
-      <div className="h-[800px] w-full">
+      <div className="h-[760px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 250 }}>
             <CartesianGrid {...CHART_GRID} />
@@ -217,6 +226,6 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
           </ScatterChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </ChartCard>
   );
 }

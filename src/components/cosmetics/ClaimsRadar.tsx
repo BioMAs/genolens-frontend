@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
+import ChartCard from '@/components/charts/ChartCard';
 import { CHART_AXIS, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 
@@ -28,12 +29,11 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
   }));
 
   return (
-    <div className="gl-card p-4">
-      <div className="mb-1 flex items-center gap-2">
-        <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+    <ChartCard
+      title={
+        <span className="flex items-center gap-2">
           Skin claim profile
-        </h3>
-        <PanelInfo title="Skin claim profile — how the score is computed">
+          <PanelInfo title="Skin claim profile — how the score is computed">
           <p>
             Each axis is a cosmetic <b>claim</b> with an <b>activation score from 0
             to 100</b>, summarizing how strongly and how consistently the modulated
@@ -53,10 +53,11 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
             <li>A near-zero axis means little or conflicting evidence — not necessarily a negative effect.</li>
           </ul>
         </PanelInfo>
-      </div>
-      <p className="text-caption mb-3" style={{ color: 'var(--text-secondary)' }}>
-        Activation score per claim (0–100), based on modulated pathways.
-      </p>
+        </span>
+      }
+      subtitle="Activation score per claim (0–100), based on modulated pathways."
+      minHeight={340}
+    >
       <div style={{ width: '100%', height: 340 }}>
         <ResponsiveContainer>
           <RadarChart data={data} outerRadius="72%">
@@ -77,6 +78,6 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
           </RadarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </ChartCard>
   );
 }

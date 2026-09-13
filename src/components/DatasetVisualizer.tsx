@@ -16,6 +16,7 @@ import {
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 import { useChartPalette } from '@/utils/chartTheme';
+import ChartCard from '@/components/charts/ChartCard';
 
 interface DatasetVisualizerProps {
   dataset: Dataset;
@@ -76,11 +77,11 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
-        <h3 className="text-title font-medium mb-4">Volcano Plot</h3>
-        <div className="text-body-sm text-secondary mb-2">
-          X: {volcanoX} | Y: -log10({volcanoY})
-        </div>
+      <ChartCard
+        title="Volcano plot"
+        subtitle={`X: ${volcanoX} · Y: −log10(${volcanoY})`}
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
             <CartesianGrid {...CHART_GRID} />
@@ -90,7 +91,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             <Scatter name="Genes" data={volcanoData} fill={palette.categorical[0]} />
           </ScatterChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
     );
   }
 
@@ -105,8 +106,10 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     ) || numericColumns[0];
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
-        <h3 className="text-title font-medium mb-4">Enrichment Overview</h3>
+      <ChartCard
+        title="Enrichment overview"
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
@@ -127,7 +130,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
           </BarChart>
         </ResponsiveContainer>
         <p className="text-body-sm text-secondary mt-2 text-center">Top 20 items by {scoreCol}</p>
-      </div>
+      </ChartCard>
     );
   }
 
@@ -137,8 +140,11 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     const samplesToPlot = numericColumns.slice(0, 5);
 
     return (
-      <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
-        <h3 className="text-title font-medium mb-4">Expression Distribution (First 5 Samples)</h3>
+      <ChartCard
+        title="Expression distribution"
+        subtitle="First 5 samples"
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.slice(0, 50)}>
             <CartesianGrid {...CHART_GRID} />
@@ -147,19 +153,21 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
             {samplesToPlot.map((sample, idx) => (
-              <Bar key={sample} dataKey={sample} fill={`hsl(${idx * 60}, 70%, 50%)`} />
+              <Bar key={sample} dataKey={sample} fill={palette.categorical[idx % palette.categorical.length]} />
             ))}
           </BarChart>
         </ResponsiveContainer>
         <p className="text-body-sm text-secondary mt-2 text-center">First 50 genes</p>
-      </div>
+      </ChartCard>
     );
   }
 
   // Default Fallback
   return (
-    <div className="h-[500px] w-full bg-surface p-4 rounded-card shadow">
-      <h3 className="text-title font-medium mb-4">Data Overview</h3>
+    <ChartCard
+      title="Data overview"
+      minHeight={440}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData.slice(0, 20)}>
           <CartesianGrid {...CHART_GRID} />
@@ -168,10 +176,10 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
           <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
           <Legend />
           {numericColumns.slice(0, 3).map((col, idx) => (
-            <Bar key={col} dataKey={col} fill={`hsl(${idx * 100}, 70%, 50%)`} />
+            <Bar key={col} dataKey={col} fill={palette.categorical[idx % palette.categorical.length]} />
           ))}
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }
