@@ -70,7 +70,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-surface border border-line rounded-control shadow-lg p-3 text-xs max-w-64">
+    <div className="bg-raised rounded-control shadow-elev-2 p-3 text-xs max-w-64">
       <div className="font-semibold text-primary mb-1 leading-snug">{d.name}</div>
       <div className="text-accent-ink mb-2">{d.go_id}</div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">

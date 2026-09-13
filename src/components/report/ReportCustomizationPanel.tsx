@@ -30,7 +30,7 @@ export default function ReportCustomizationPanel() {
   if (!unlocked) {
     return (
       <ReportCustomizationLockedOverlay>
-        <div className="rounded-card border border-line bg-surface p-6 shadow">
+        <div className="rounded-card bg-surface p-6 shadow">
           <ReportBrandingEditor demo />
         </div>
       </ReportCustomizationLockedOverlay>
@@ -38,7 +38,7 @@ export default function ReportCustomizationPanel() {
   }
 
   return (
-    <div className="rounded-card border border-line bg-surface p-6 shadow">
+    <div className="rounded-card bg-surface p-6 shadow">
       <ReportBrandingEditor />
     </div>
   );

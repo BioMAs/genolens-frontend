@@ -108,7 +108,7 @@ export default function CommentEditor({
 
       {/* Preview */}
       {isPreview && content && (
-        <div className="mt-3 rounded-sm border border-line bg-surface-2 p-3">
+        <div className="mt-3 rounded-sm bg-surface-2 p-3">
           <p className="text-caption font-medium text-secondary mb-2">
             Preview:
           </p>

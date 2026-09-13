@@ -238,7 +238,7 @@ export default function GOForceGraph({ data, onNodeClick }: Props) {
 
         {tooltip && (
           <div
-            className="absolute z-10 bg-surface border border-line rounded-control shadow-lg p-2 text-caption pointer-events-none max-w-48"
+            className="absolute z-10 bg-raised rounded-control shadow-elev-2 p-2 text-caption pointer-events-none max-w-48"
             style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
           >
             <div className="font-semibold text-primary mb-1 leading-snug">{tooltip.node.go_name}</div>

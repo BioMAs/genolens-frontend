@@ -85,12 +85,12 @@ export default function StepDataValidation({
 
       {/* QC Dashboard */}
       {isMatrixReady ? (
-        <div className="rounded-card border border-line bg-surface p-4 shadow-sm">
+        <div className="rounded-card bg-surface p-4 shadow-sm">
           <h3 className="mb-4 text-body-sm font-semibold text-primary">Library Size & Quality Metrics</h3>
           <QCDashboard datasets={datasets} />
         </div>
       ) : (
-        <div className="rounded-card border border-line bg-surface-2 p-8 text-center text-body-sm text-muted">
+        <div className="rounded-card bg-surface-2 p-8 text-center text-body-sm text-muted">
           Processing matrix… QC charts will appear here once ready.
         </div>
       )}
@@ -121,7 +121,7 @@ export default function StepDataValidation({
 function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset | undefined }) {
   if (!dataset) {
     return (
-      <div className="flex items-center gap-3 rounded-control border border-line bg-surface-2 px-4 py-3">
+      <div className="flex items-center gap-3 rounded-control bg-surface-2 px-4 py-3">
         <div className="h-2 w-2 rounded-pill bg-gray-300" />
         <p className="text-body-sm text-muted">{label} — not uploaded</p>
       </div>
@@ -143,7 +143,7 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-control border border-line bg-surface px-4 py-3">
+    <div className="flex items-center gap-3 rounded-control bg-surface px-4 py-3">
       <div className={`h-2 w-2 rounded-pill shrink-0 ${statusColors[dataset.status] ?? 'bg-gray-300'}`} />
       <div className="min-w-0">
         <p className="text-body-sm font-medium text-primary">{label}</p>

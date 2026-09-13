@@ -76,7 +76,7 @@ export default function ProjectSwitcher({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-card border border-line bg-raised py-1 shadow-elev-2"
+          className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-card bg-raised py-1 shadow-elev-2"
         >
           {projects.length === 0 ? (
             <p className="px-3 py-2 text-caption text-muted">Loading projects…</p>

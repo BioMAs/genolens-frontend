@@ -64,7 +64,7 @@ export default function DEGClusteringView({
   // ---- Loading / Error states ----
   if (loading && !plotData) {
     return (
-      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-control border border-dashed border-line">
+      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-control border-dashed">
         <Loader2 className="w-8 h-8 text-accent-ink animate-spin" />
         <span className="ml-2 text-secondary">Generating DEG heatmap…</span>
       </div>
@@ -203,7 +203,7 @@ export default function DEGClusteringView({
         </div>
       )}
       {/* Controls bar */}
-      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-control border border-line px-4 py-2.5">
+      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-control px-4 py-2.5">
         <span className="text-body-sm font-medium text-primary">Displayed value:</span>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -258,7 +258,7 @@ export default function DEGClusteringView({
 
       {/* Plotly heatmap with DEG-status sidebar */}
       <div
-        className="bg-surface rounded-control border border-line overflow-hidden"
+        className="bg-surface rounded-control overflow-hidden"
         style={{ height: Math.max(600, Math.min(nDEGs * 1.2 + 200, 900)) }}
       >
         <Plot

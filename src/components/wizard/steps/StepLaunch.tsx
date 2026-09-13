@@ -132,7 +132,7 @@ export default function StepLaunch({
 
       {/* Summary card */}
       {!analysisId && (
-        <div className="rounded-card border border-line bg-surface-2 divide-y divide-subtle">
+        <div className="rounded-card bg-surface-2 divide-y divide-subtle">
           <div className="px-4 py-3">
             <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
             <div className="space-y-1 text-body-sm">
@@ -169,7 +169,7 @@ export default function StepLaunch({
 
       {/* Progress section */}
       {analysisId && (
-        <div className="rounded-card border border-line bg-surface overflow-hidden">
+        <div className="rounded-card bg-surface overflow-hidden">
           {/* Status header */}
           <div className={`px-4 py-3 flex items-center gap-3 ${
             isDone ? 'bg-green-50 border-b border-green-100'

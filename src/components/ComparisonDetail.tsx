@@ -591,7 +591,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 </button>
               </div>
               <p className="text-body-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
-              <div className="bg-surface border border-line rounded-control overflow-hidden">
+              <div className="bg-surface rounded-control overflow-hidden">
                 <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
               </div>
             </div>

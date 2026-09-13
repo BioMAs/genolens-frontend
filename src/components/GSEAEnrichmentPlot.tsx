@@ -195,14 +195,14 @@ export default function GSEAEnrichmentPlot({
         ref={canvasRef}
         width={800}
         height={500}
-        className="border border-strong rounded-control bg-surface cursor-crosshair"
+        className="rounded-control bg-surface cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredGene(null)}
       />
 
       {/* Tooltip */}
       {hoveredGene && (
-        <div className="absolute top-4 right-4 bg-surface border border-strong rounded-card shadow-lg p-3 text-body-sm">
+        <div className="absolute top-4 right-4 bg-raised rounded-card shadow-elev-2 p-3 text-body-sm">
           <div className="font-semibold">{hoveredGene.gene}</div>
           <div className="text-secondary">Metric: {hoveredGene.metric.toFixed(3)}</div>
         </div>

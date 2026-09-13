@@ -191,7 +191,7 @@ export default function PowerAnalysis() {
   return (
     <div className="space-y-6">
       {/* ── Mode toggle ── */}
-      <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+      <div className="bg-surface rounded-card shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
           <Calculator className="h-5 w-5 text-accent-ink" />
           <h2 className="text-body font-semibold text-primary">Calculation mode</h2>
@@ -224,7 +224,7 @@ export default function PowerAnalysis() {
         {/* ══ LEFT: Parameters ══ */}
         <div className="lg:col-span-1 space-y-4">
           {/* Test type */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <h3 className="text-body-sm font-semibold text-primary mb-3">Test type</h3>
             <select
               value={testType}
@@ -247,7 +247,7 @@ export default function PowerAnalysis() {
           </div>
 
           {/* Alpha */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <label className="text-body-sm font-semibold text-primary block mb-1">
               Significance threshold α
             </label>
@@ -279,7 +279,7 @@ export default function PowerAnalysis() {
           </div>
 
           {/* Effect size */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <label className="text-body-sm font-semibold text-primary block mb-1">
               Effect size (Cohen&apos;s d)
             </label>
@@ -322,7 +322,7 @@ export default function PowerAnalysis() {
 
           {/* Power target (mode: sample-size) */}
           {mode === 'sample-size' && (
-            <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+            <div className="bg-surface rounded-card shadow-sm p-4">
               <label className="text-body-sm font-semibold text-primary block mb-1">
                 Target power (1 – β)
               </label>
@@ -359,7 +359,7 @@ export default function PowerAnalysis() {
 
           {/* n input (mode: power) */}
           {mode === 'power' && (
-            <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+            <div className="bg-surface rounded-card shadow-sm p-4">
               <label className="text-body-sm font-semibold text-primary block mb-1">
                 {testType === 'two-sample' ? 'n per group' : "Sample size (n)"}
               </label>
@@ -385,7 +385,7 @@ export default function PowerAnalysis() {
           )}
 
           {/* RNA-seq converter */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <button
               onClick={() => setShowConverter(!showConverter)}
               className="flex items-center gap-2 text-body-sm font-semibold text-accent-ink hover:text-accent-ink w-full text-left"
@@ -510,7 +510,7 @@ export default function PowerAnalysis() {
           )}
 
           {/* Power curve */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-accent-ink" />
               <h3 className="text-body-sm font-semibold text-primary">Power curve</h3>
@@ -589,7 +589,7 @@ export default function PowerAnalysis() {
           </div>
 
           {/* Interpretation guide */}
-          <div className="bg-surface rounded-card border border-line shadow-sm p-4">
+          <div className="bg-surface rounded-card shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="h-5 w-5 text-muted" />
               <h3 className="text-body-sm font-semibold text-primary">Interpretation guide</h3>

@@ -75,7 +75,7 @@ export default function CommentThread({
 
   return (
     <div className={`${level > 0 ? 'ml-8' : ''}`}>
-      <div className="group relative rounded-card border border-line bg-surface p-4">
+      <div className="group relative rounded-card bg-surface p-4">
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function CommentThread({
               </button>
 
               {showActions && (
-                <div className="absolute right-0 z-10 mt-1 w-48 rounded-sm border border-line bg-surface shadow-lg">
+                <div className="absolute right-0 z-10 mt-1 w-48 rounded-sm bg-raised shadow-elev-2">
                   <div className="py-1">
                     {isOwner && (
                       <>

@@ -237,7 +237,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
       <main className="flex-1 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {viewMode === 'table' ? (
-            <div className="bg-surface shadow rounded-control overflow-hidden border border-line">
+            <div className="bg-surface shadow rounded-control overflow-hidden">
               {loading && !data ? (
                 <div className="p-12 text-center text-secondary">Loading data...</div>
               ) : data ? (

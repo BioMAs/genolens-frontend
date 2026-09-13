@@ -64,7 +64,7 @@ export default function SignatureHitsTable({
 
   if (result.pvalue === null || result.mean_percentile === null) {
     return (
-      <div className="rounded-sm border border-line bg-surface-2 p-6 text-body-sm text-primary">
+      <div className="rounded-sm bg-surface-2 p-6 text-body-sm text-primary">
         <p className="font-medium text-primary">
           None of your genes is in the ranked universe for this indication.
         </p>
@@ -79,7 +79,7 @@ export default function SignatureHitsTable({
 
   return (
     <div>
-      <dl className="mb-4 grid grid-cols-2 gap-4 rounded-sm border border-line bg-surface-2 p-4 sm:grid-cols-4 lg:grid-cols-6">
+      <dl className="mb-4 grid grid-cols-2 gap-4 rounded-sm bg-surface-2 p-4 sm:grid-cols-4 lg:grid-cols-6">
         <Stat
           label="p-value"
           value={atFloor ? `≤ ${fmt(result.pvalue)}` : fmt(result.pvalue)}

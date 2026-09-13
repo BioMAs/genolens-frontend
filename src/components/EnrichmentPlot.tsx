@@ -208,7 +208,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
                 if (active && payload && payload.length) {
                 const d = payload[0].payload as EnrichmentPoint;
                     return (
-                        <div className="bg-surface p-2 border border-line shadow-sm rounded-sm text-sm">
+                        <div className="bg-surface p-2 shadow-sm rounded-sm text-sm">
                             <p className="font-bold">{d.name}</p>
                             <p>Gene Ratio: {d.x?.toFixed(3) || 'N/A'}</p>
                             <p>adj.p.hyper.enri: {d.pvalue?.toExponential(2) || 'N/A'}</p>

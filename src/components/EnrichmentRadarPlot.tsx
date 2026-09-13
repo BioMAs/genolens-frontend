@@ -379,7 +379,7 @@ export default function EnrichmentRadarPlot({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 bg-surface-2 rounded-control border-2 border-dashed border-strong">
+      <div className="flex items-center justify-center h-96 bg-surface-2 rounded-control border-dashed">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-accent-ink mx-auto mb-3" />
           <p className="text-sm text-secondary">Loading radar plot...</p>
@@ -522,7 +522,7 @@ export default function EnrichmentRadarPlot({
 
       {/* Custom Term Selector */}
       {showTermSelector && selectionMode === 'custom' && (
-        <div className="bg-surface border border-line rounded-control p-4">
+        <div className="bg-surface rounded-control p-4">
           <div className="mb-3">
             <input
               type="text"
@@ -578,7 +578,7 @@ export default function EnrichmentRadarPlot({
       )}
 
       {/* Radar Plot */}
-      <div className="bg-surface rounded-control border border-line p-6">
+      <div className="bg-surface rounded-control p-6">
         <ResponsiveContainer width="100%" height={500}>
           <RadarChart data={data}>
             <PolarGrid stroke={CHART_VARS.grid} />

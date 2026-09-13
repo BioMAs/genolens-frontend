@@ -195,7 +195,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-surface border border-line rounded-card shadow-xl p-3 text-caption max-w-xs"
+            className="fixed z-[9999] pointer-events-none bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
             <div className="font-semibold text-primary">{hoveredGene.gene}</div>

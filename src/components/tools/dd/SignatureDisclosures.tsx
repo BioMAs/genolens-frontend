@@ -39,7 +39,7 @@ function GeneList({
   if (genes.length === 0) return null;
 
   return (
-    <div className="rounded-sm border border-line bg-surface p-3">
+    <div className="rounded-sm bg-surface p-3">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}

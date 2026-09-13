@@ -13,7 +13,7 @@ export function CardSkeleton() {
 
 export function ComparisonCardSkeleton() {
   return (
-    <div className="block p-6 bg-surface shadow rounded-card border border-line animate-pulse">
+    <div className="block p-6 bg-surface shadow rounded-card animate-pulse">
       <div className="flex items-center justify-between mb-2">
         <div className="h-6 bg-gray-200 rounded-sm w-2/3"></div>
         <div className="h-5 w-5 bg-gray-200 rounded-sm"></div>

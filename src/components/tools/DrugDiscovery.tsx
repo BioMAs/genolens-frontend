@@ -106,7 +106,7 @@ export default function DrugDiscovery() {
 
   if (!allowed) {
     return (
-      <div className="rounded-card border border-line bg-surface p-8 text-center">
+      <div className="rounded-card bg-surface p-8 text-center">
         <h2 className="text-heading font-medium text-primary">
           Drug Discovery is an add-on module
         </h2>
@@ -265,7 +265,7 @@ export default function DrugDiscovery() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-card border border-line bg-surface p-4">
+      <section className="rounded-card bg-surface p-4">
         {catalogue.isLoading && <p className="text-body-sm text-secondary">Loading catalog…</p>}
         {catalogue.data && (
           <div className="space-y-4">

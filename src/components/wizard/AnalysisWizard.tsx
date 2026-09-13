@@ -107,7 +107,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
 
         {/* Data type selection (pre-wizard) */}
         {!selectedDataType && (
-          <div className="rounded-card border border-line bg-surface p-6 sm:p-8 shadow-sm">
+          <div className="rounded-card bg-surface p-6 sm:p-8 shadow-sm">
             <StepDataType onSelect={setSelectedDataType} />
           </div>
         )}
@@ -119,7 +119,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
             <WizardStepBar currentStep={currentStep} />
 
             {/* Step content */}
-            <div className="rounded-card border border-line bg-surface p-6 sm:p-8 shadow-sm">
+            <div className="rounded-card bg-surface p-6 sm:p-8 shadow-sm">
               {currentStep === 1 && (
                 <StepUploadFiles
                   projectId={projectId}

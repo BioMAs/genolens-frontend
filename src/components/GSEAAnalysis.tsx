@@ -192,7 +192,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
   return (
     <div className="space-y-6">
       {/* Header & Controls */}
-      <div className="bg-surface border border-line rounded-card p-6">
+      <div className="bg-surface rounded-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-heading text-primary">Gene Set Enrichment Analysis (GSEA)</h2>
@@ -228,7 +228,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className="mt-4 p-4 bg-surface-2 border border-line rounded-card">
+          <div className="mt-4 p-4 bg-surface-2 rounded-card">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-body-sm font-medium text-primary mb-1">
@@ -351,7 +351,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Summary Stats */}
       {results && (
-        <div className="bg-surface border border-line rounded-card p-6">
+        <div className="bg-surface rounded-card p-6">
           <h3 className="text-title mb-4">Analysis Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
@@ -380,7 +380,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Results Table */}
       {results && (
-        <div className="bg-surface border border-line rounded-card p-6">
+        <div className="bg-surface rounded-card p-6">
           <GSEATable
             results={results.results}
             onViewEnrichmentPlot={viewEnrichmentPlot}
@@ -427,7 +427,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Initial State */}
       {!results && !loading && (
-        <div className="bg-surface border border-line rounded-card p-12 text-center">
+        <div className="bg-surface rounded-card p-12 text-center">
           <Play className="h-16 w-16 text-muted mx-auto mb-4" />
           <h3 className="text-title text-primary mb-2">Ready to Run GSEA</h3>
           <p className="text-secondary mb-4">

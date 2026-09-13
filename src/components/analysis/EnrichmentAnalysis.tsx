@@ -341,7 +341,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     return (
         <div className="space-y-6">
             {/* Controls */}
-            <div className="bg-surface p-4 rounded-card shadow border border-line flex flex-col sm:flex-row gap-4 justify-between items-end">
+            <div className="bg-surface p-4 rounded-card shadow flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
                     <div>
                         <label className="block text-body-sm font-medium text-primary mb-1">Comparison</label>
@@ -483,7 +483,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && !error && viewMode === 'radar' && radarPlotData && (
-                 <div className="bg-surface rounded-card shadow p-6 border border-line">
+                 <div className="bg-surface rounded-card shadow p-6">
                     <Plot
                         data={radarPlotData.data}
                         layout={radarPlotData.layout}
@@ -497,14 +497,14 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && !error && viewMode === 'radar' && !radarPlotData && (
-                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-2 border-dashed border-strong">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-dashed">
                     Not enough data to generate a Radar Plot (need both UP and DOWN regulated pathways).
                 </div>
             )}
 
 
             {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && (
-                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-2 border-dashed border-strong">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-dashed">
                     {comparisons.length === 0
                         ? "No enrichment data available for this dataset."
                         : "No enrichment pathways found for these settings."}

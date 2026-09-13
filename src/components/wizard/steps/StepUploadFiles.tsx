@@ -120,7 +120,7 @@ export default function StepUploadFiles({
       </div>
 
       {/* Data source toggle: manual upload vs GEO import */}
-      <div className="inline-flex rounded-control border border-line bg-surface-2 p-1">
+      <div className="inline-flex rounded-control bg-surface-2 p-1">
         <button
           type="button"
           onClick={() => setSourceMode('upload')}

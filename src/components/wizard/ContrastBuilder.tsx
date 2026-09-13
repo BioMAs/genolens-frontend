@@ -170,7 +170,7 @@ export default function ContrastBuilder({
   // ── States before the builder is usable ─────────────────────────────────────
   if (!enabled) {
     return (
-      <div className="rounded-control border border-line bg-surface-2 px-4 py-6 text-center text-body-sm text-secondary">
+      <div className="rounded-control bg-surface-2 px-4 py-6 text-center text-body-sm text-secondary">
         Upload and process the <span className="font-medium">Sample Metadata</span> file first —
         its conditions will populate the comparison builder.
       </div>
@@ -179,7 +179,7 @@ export default function ContrastBuilder({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-control border border-line bg-surface px-4 py-6 text-body-sm text-secondary">
+      <div className="flex items-center gap-2 rounded-control bg-surface px-4 py-6 text-body-sm text-secondary">
         <Clock className="h-4 w-4 animate-spin text-accent-ink" />
         Reading conditions from the sample sheet…
       </div>
@@ -222,7 +222,7 @@ export default function ContrastBuilder({
 
   // ── Builder ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4 rounded-card border border-line bg-surface p-4">
+    <div className="space-y-4 rounded-card bg-surface p-4">
       <div className="flex items-center gap-2">
         <Wand2 className="h-4 w-4 text-accent-ink" />
         <h3 className="text-body-sm font-semibold text-primary">Build comparisons from conditions</h3>
@@ -256,7 +256,7 @@ export default function ContrastBuilder({
         {comparisons.map((row) => (
           <div
             key={row.id}
-            className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_1.2fr_auto] items-center gap-2 rounded-sm border border-subtle bg-surface-2/60 p-2 sm:border-0 sm:bg-transparent sm:p-0"
+            className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_1.2fr_auto] items-center gap-2 rounded-sm bg-surface-2/60 p-2 sm:bg-transparent sm:p-0"
           >
             <Select value={row.condition1} onValueChange={(v) => patchRow(row.id, { condition1: v })}>
               <SelectTrigger><SelectValue placeholder="Test…" /></SelectTrigger>

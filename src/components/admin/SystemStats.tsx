@@ -141,7 +141,7 @@ export default function SystemStats() {
         <h3 className="text-title font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {Object.entries(stats.users_by_plan).map(([plan, count]) => (
-            <div key={plan} className="bg-surface-2 overflow-hidden rounded-card p-4 border border-line">
+            <div key={plan} className="bg-surface-2 overflow-hidden rounded-card p-4">
                <dt className="text-body-sm font-medium text-secondary truncate">{plan}</dt>
                <dd className="mt-1 text-heading text-primary">{count}</dd>
             </div>

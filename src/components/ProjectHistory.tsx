@@ -174,7 +174,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
   ];
 
   return (
-    <div className="rounded-card border border-line bg-surface p-6">
+    <div className="rounded-card bg-surface p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

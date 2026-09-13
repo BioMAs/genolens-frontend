@@ -42,7 +42,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
   };
 
   return (
-    <div className="rounded-card border border-line bg-surface p-4 shadow-sm">
+    <div className="rounded-card bg-surface p-4 shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>

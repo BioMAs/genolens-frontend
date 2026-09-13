@@ -75,7 +75,7 @@ export default function UserMenu({ user }: { user: User }) {
       {open && (
         <div
           role="menu"
-          className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-card border border-line bg-raised py-1 shadow-elev-2"
+          className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-card bg-raised py-1 shadow-elev-2"
         >
           <Link role="menuitem" href="/profile" onClick={() => setOpen(false)} className={itemClass}>
             <UserIcon className="h-4 w-4 shrink-0" aria-hidden />

@@ -129,7 +129,7 @@ export default function SignatureScorePanel({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-surface border border-line rounded-card p-6">
+      <div className="bg-surface rounded-card p-6">
         <div className="flex items-center gap-2 mb-1">
           <Activity className="h-5 w-5 text-primary" />
           <h2 className="text-heading text-primary">Signature scoring</h2>
@@ -141,7 +141,7 @@ export default function SignatureScorePanel({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Source */}
           <div className="md:col-span-2">
-            <div className="inline-flex rounded-control border border-line bg-surface-2 p-1 mb-3">
+            <div className="inline-flex rounded-control bg-surface-2 p-1 mb-3">
               <button
                 onClick={() => setSource('list')}
                 className={`px-3 py-1 text-body-sm font-medium rounded-sm ${
@@ -228,7 +228,7 @@ export default function SignatureScorePanel({
 
       {/* Results */}
       {result && chart && (
-        <div className="bg-surface border border-line rounded-card p-6">
+        <div className="bg-surface rounded-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
             <h3 className="text-title text-primary">
               Score by condition{result.signature_name ? ` — ${result.signature_name}` : ''}
@@ -280,7 +280,7 @@ export default function SignatureScorePanel({
                   const p = payload[0].payload as { sample?: string; y: number };
                   if (!p.sample) return null;
                   return (
-                    <div className="bg-surface border border-line rounded-sm shadow px-3 py-2 text-caption">
+                    <div className="bg-surface rounded-sm shadow px-3 py-2 text-caption">
                       <div className="font-semibold text-primary">{p.sample}</div>
                       <div>score: {p.y.toFixed(3)}</div>
                     </div>

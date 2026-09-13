@@ -111,7 +111,7 @@ export default function DEGPatternsView({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-surface border border-line rounded-card p-6">
+      <div className="bg-surface rounded-card p-6">
         <div className="flex items-center gap-2 mb-1">
           <GitBranch className="h-5 w-5 text-primary" />
           <h2 className="text-heading text-primary">DEG patterns</h2>
@@ -158,7 +158,7 @@ export default function DEGPatternsView({
             </div>
             <div className="flex flex-wrap gap-2">
               {groupOrder.map((g, i) => (
-                <div key={g} className="inline-flex items-center gap-1 rounded-sm border border-line bg-surface-2 px-2 py-1 text-caption">
+                <div key={g} className="inline-flex items-center gap-1 rounded-sm bg-surface-2 px-2 py-1 text-caption">
                   <button onClick={() => moveGroup(i, -1)} disabled={i === 0} className="text-muted hover:text-primary disabled:opacity-30">
                     <ArrowLeft className="h-3 w-3" />
                   </button>
@@ -185,7 +185,7 @@ export default function DEGPatternsView({
 
       {/* Results */}
       {result && (
-        <div className="bg-surface border border-line rounded-card p-6">
+        <div className="bg-surface rounded-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
             <h3 className="text-title text-primary">
               {result.n_clusters} pattern{result.n_clusters !== 1 ? 's' : ''}

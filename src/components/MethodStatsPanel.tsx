@@ -171,7 +171,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
   if (methods.length <= 1) {
     return (
-      <div className="rounded-card border border-line bg-surface-2 p-6 text-body-sm text-secondary">
+      <div className="rounded-card bg-surface-2 p-6 text-body-sm text-secondary">
         This comparison was produced with a single statistical method, so there is no multi-method
         breakdown to display. The Stouffer combination and per-method p-values appear here only for
         datasets analysed with several methods (DESeq2, edgeR, limma, …).

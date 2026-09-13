@@ -406,7 +406,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
           {result && (
-              <div className="h-full w-full bg-surface rounded-control shadow border border-line p-2">
+              <div className="h-full w-full bg-surface rounded-control shadow p-2">
                    <Plot
                         data={finalPlotData}
                         // Aucun fond n'etait declare : Plotly retombait donc

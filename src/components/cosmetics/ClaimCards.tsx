@@ -104,7 +104,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
           {claim.top_genes.slice(0, 6).map((g) => (
             <span
               key={g}
-              className="rounded-sm border border-subtle bg-surface-2 px-1.5 py-0.5 font-mono text-micro text-secondary"
+              className="rounded-sm bg-surface-2 px-1.5 py-0.5 font-mono text-micro text-secondary"
             >
               {g}
             </span>

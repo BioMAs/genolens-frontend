@@ -181,7 +181,7 @@ export default function DrugDiscoveryComparisonPanel({
 
   if (!allowed) {
     return (
-      <div className="rounded-card border border-line bg-surface p-8 text-center">
+      <div className="rounded-card bg-surface p-8 text-center">
         <h3 className="text-title font-medium text-primary">
           Drug targets is an add-on module
         </h3>

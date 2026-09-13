@@ -294,7 +294,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
               return (
                 <div
                   key={list.id}
-                  className="rounded-card border border-line bg-surface p-4 shadow-sm"
+                  className="rounded-card bg-surface p-4 shadow-sm"
                   style={list.color ? { borderLeftColor: list.color, borderLeftWidth: '4px' } : {}}
                 >
                   {/* List header */}

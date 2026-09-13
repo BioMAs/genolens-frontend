@@ -154,7 +154,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-surface border border-line rounded-control p-6">
+      <div className="bg-surface rounded-control p-6">
         <div className="flex items-center gap-2 mb-1">
           <GitCompareArrows className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-bold text-primary">Contrast comparison (log2FC vs log2FC)</h2>
@@ -234,7 +234,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
       {result && seriesByQuadrant && (
         <>
           {/* Correlation + counts */}
-          <div className="bg-surface border border-line rounded-control p-6">
+          <div className="bg-surface rounded-control p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{fmt(result.correlation.pearson_r)}</div>
@@ -263,7 +263,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
           </div>
 
           {/* Scatter */}
-          <div className="bg-surface border border-line rounded-control p-6">
+          <div className="bg-surface rounded-control p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-primary">log2FC scatter</h3>
               <button
@@ -305,7 +305,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                     if (!active || !payload || !payload.length) return null;
                     const p = payload[0].payload as ScatterPoint;
                     return (
-                      <div className="bg-surface border border-line rounded-sm shadow px-3 py-2 text-xs">
+                      <div className="bg-surface rounded-sm shadow px-3 py-2 text-xs">
                         <div className="font-semibold text-primary">{p.gene}</div>
                         <div>{result.comparison_a.label}: log2FC {fmt(p.logfc_a, 2)}, padj {fmt(p.padj_a)}</div>
                         <div>{result.comparison_b.label}: log2FC {fmt(p.logfc_b, 2)}, padj {fmt(p.padj_b)}</div>
@@ -333,7 +333,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
 
           {/* Notable genes table */}
           {notableGenes.length > 0 && (
-            <div className="bg-surface border border-line rounded-control p-6">
+            <div className="bg-surface rounded-control p-6">
               <h3 className="text-lg font-semibold text-primary mb-3">
                 Discordant &amp; contrast-specific genes ({notableGenes.length})
               </h3>

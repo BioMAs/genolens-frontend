@@ -108,7 +108,7 @@ function DotPlotTooltip({ active, payload }: DotPlotTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-surface border border-line rounded-card shadow-lg p-3 text-caption max-w-60">
+    <div className="bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-60">
       <div className="font-semibold text-primary mb-1 leading-snug">{d.go_name}</div>
       <div className="text-accent-ink mb-2">{d.go_id}</div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">
@@ -451,7 +451,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
       {isInitialLoad && isRunning && (
         <div className="space-y-3 animate-pulse">
           <div className="h-9 bg-surface-2 rounded-control" />
-          <div className="h-64 bg-surface-2 rounded-card border border-subtle" />
+          <div className="h-64 bg-surface-2 rounded-card" />
         </div>
       )}
 

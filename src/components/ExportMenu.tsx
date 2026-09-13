@@ -239,7 +239,7 @@ export default function ExportMenu({
       {isOpen && !isExporting && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 w-56 bg-surface border border-line rounded-sm shadow-lg z-50"
+          className="absolute right-0 mt-2 w-56 bg-raised rounded-sm shadow-elev-2 z-50"
         >
           <div className="py-1">
             {formats.map((format) => {
