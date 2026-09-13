@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import ChartExportButton from '@/components/charts/ChartExportButton';
 
 export type ChartState = 'ready' | 'loading' | 'empty' | 'error';
 
@@ -37,6 +38,15 @@ interface Props {
   error?: ReactNode;
   /** Message d'etat vide. Affiche seulement quand `state === 'empty'`. */
   empty?: ReactNode;
+  /**
+   * Nom de fichier de l'export, sans extension. Quand il est fourni, la carte
+   * ajoute elle-meme le bouton PNG / SVG a droite des actions.
+   *
+   * A RESERVER aux graphiques rendus en SVG. Un trace Plotly expose deja un
+   * export natif par sa barre d'outils, et lui seul connait son rendu WebGL :
+   * un `<svg>` serialise n'en contiendrait pas les marques.
+   */
+  exportName?: string;
   className?: string;
   children?: ReactNode;
 }
@@ -62,6 +72,7 @@ export default function ChartCard({
   minHeight,
   error,
   empty,
+  exportName,
   className,
   children,
 }: Props) {
@@ -78,10 +89,25 @@ export default function ChartCard({
           <h3 className="text-title text-primary">{title}</h3>
           {subtitle ? <p className="mt-1 text-caption text-secondary">{subtitle}</p> : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions || exportName ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {actions}
+            {/* L'export n'a de sens que sur un graphique rendu : en chargement,
+                en erreur ou a vide, il produirait une image du squelette. */}
+            {exportName && state === 'ready' ? <ChartExportButton filename={exportName} /> : null}
+          </div>
+        ) : null}
       </figcaption>
 
-      <div style={bodyStyle} className={minHeight === 'auto' ? undefined : 'relative'}>
+      {/* `data-chart-body` marque la ZONE DE TRACE.
+          Le bouton d'export en a besoin : un `querySelector('svg')` lance sur la
+          figure entiere attraperait d'abord l'icone du bouton lui-meme, qui la
+          precede dans l'ordre du document. */}
+      <div
+        data-chart-body
+        style={bodyStyle}
+        className={minHeight === 'auto' ? undefined : 'relative'}
+      >
         {state === 'ready' ? children : null}
 
         {state === 'loading' ? (

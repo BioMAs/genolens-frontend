@@ -62,6 +62,7 @@ export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
       subtitle="Total mapped reads per sample."
       state={state}
       minHeight={400}
+      exportName={`library_size_${dataset.name}`}
       error={error ?? undefined}
       empty="No library-size data for this dataset."
       className="h-full"

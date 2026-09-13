@@ -162,6 +162,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
       subtitle="Gene ratio versus expected · colour = −log₁₀(p-value)"
       state={state}
       minHeight={800}
+      exportName={`enrichment_${comparisonName ?? "all"}`}
       error={error ?? undefined}
     >
       {/* Color scale legend */}

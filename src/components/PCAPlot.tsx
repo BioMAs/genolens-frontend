@@ -160,6 +160,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       // La lecture en clair et la barre laterale des variances vivent au-dessus
       // du nuage : `minHeight` reserve leur place sans rogner la leur.
       minHeight={560}
+      exportName={`pca_${dataset.name}`}
       error={error ?? undefined}
       empty="No PCA could be computed for this dataset."
       actions={

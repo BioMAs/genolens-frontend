@@ -169,6 +169,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       title="Sample UMAP"
       state={state}
       minHeight={540}
+      exportName={`umap_${dataset.name}`}
       error={error ?? undefined}
       empty="No UMAP could be computed for this dataset."
       actions={

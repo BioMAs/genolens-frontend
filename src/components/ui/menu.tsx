@@ -31,9 +31,18 @@ interface OverflowMenuProps {
   items: MenuItem[];
   label?: string;
   className?: string;
+  /**
+   * Icone du declencheur. Par defaut les trois points du depassement.
+   *
+   * Un menu dont TOUTES les entrees relevent d'une meme action — exporter, par
+   * exemple — se signale mieux par l'icone de cette action : sinon l'utilisateur
+   * doit ouvrir pour savoir. La logique de fermeture, d'Echap et de focus reste
+   * partagee, ce qui est la seule raison de ne pas ecrire un second composant.
+   */
+  icon?: React.ReactNode;
 }
 
-export function OverflowMenu({ items, label = 'More actions', className }: OverflowMenuProps) {
+export function OverflowMenu({ items, label = 'More actions', className, icon }: OverflowMenuProps) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
 
@@ -75,7 +84,7 @@ export function OverflowMenu({ items, label = 'More actions', className }: Overf
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
         )}
       >
-        <MoreHorizontal className="h-4 w-4" />
+        {icon ?? <MoreHorizontal className="h-4 w-4" />}
       </button>
 
       {open && (

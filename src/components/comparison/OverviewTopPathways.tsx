@@ -196,6 +196,7 @@ export default function OverviewTopPathways({
       subtitle={`Ranked by adjusted p-value · adj. p ≤ ${PADJ_MAX}`}
       state={state}
       minHeight={260}
+      exportName={`top_pathways_${comparisonName}`}
       empty={
         <span className="flex flex-col items-center gap-2">
           <span className="max-w-xs">{emptyMessage}</span>
