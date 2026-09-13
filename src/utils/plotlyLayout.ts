@@ -1,3 +1,4 @@
+import type { Config } from 'plotly.js';
 import type { ChartTheme } from '@/utils/chartTheme';
 import { getPalette } from '@/utils/chartPalettes';
 
@@ -94,15 +95,19 @@ const isPlainObject = (v: unknown): v is Record<string, unknown> =>
  */
 const CATEGORICAL = getPalette('standard', 'light').categorical;
 
-export function buildPlotlyConfig(opts: { filename: string; interactive?: boolean }) {
+export function buildPlotlyConfig(opts: {
+  filename: string;
+  interactive?: boolean;
+}): Partial<Config> {
   return {
+    displayModeBar: true,
     displaylogo: false,
     responsive: true,
     // `select2d` et `lasso2d` ne servent qu'aux traces ou une selection a un
     // sens — le nuage de volcan. Ailleurs ils encombrent la barre d'outils.
     modeBarButtonsToRemove: opts.interactive ? [] : ['select2d', 'lasso2d'],
     toImageButtonOptions: {
-      format: 'png' as const,
+      format: 'png',
       filename: opts.filename,
       height: 600,
       width: 900,
