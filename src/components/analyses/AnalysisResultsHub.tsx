@@ -455,10 +455,8 @@ function ModuleCard({
       onClick={activate}
       disabled={disabled}
       aria-label={`Go to ${title}`}
-      className="group text-left rounded-card p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      className="group gl-card gl-card-interactive text-left p-4 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
         opacity: disabled ? 0.55 : 1,
         // @ts-expect-error CSS custom prop for focus ring colour
         '--tw-ring-color': 'var(--sl-teal)',

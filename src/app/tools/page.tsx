@@ -48,13 +48,12 @@ export default function ToolsIndexPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {tools.map((tool, i) => (
+            <div data-enter className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {tools.map((tool) => (
                     <Link
                         key={tool.name}
                         href={tool.href}
-                        className="group gl-card gl-card-interactive flex flex-col p-5 animate-fade-up"
-                        style={{ animationDelay: `${i * 40}ms` }}
+                        className="group gl-card gl-card-interactive flex flex-col p-5"
                     >
                         <div className="mb-3 flex items-start justify-between gap-3">
                             <div

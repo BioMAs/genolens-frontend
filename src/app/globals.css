@@ -598,6 +598,29 @@ body {
 }
 
 .animate-fade-up    { animation: fadeUp     0.22s ease-out both; }
+
+/* ── Choregraphie d'entree : UN groupe echelonne par ecran ──────────────────
+   Cinq composants declaraient chacun leur propre cadence en style en ligne —
+   40, 60 et 80ms selon le fichier — donc un ecran qui en affichait trois avait
+   trois rythmes concurrents. Pire, `ProjectList` echelonnait TOUS les projets :
+   le trentieme arrivait a 1,2s, et l'utilisateur attendait une animation au
+   lieu de lire sa liste.
+
+   Le decalage est donc BORNE a cinq crans. Au-dela, tout arrive ensemble a
+   200ms : un echelonnement sert a guider l'oeil sur les premiers elements, pas
+   a numeroter la page.
+
+   Pose sur le CONTENEUR : c'est ce qui rend la regle verifiable — un `data-enter`
+   par ecran se compte, cinquante `animationDelay` en ligne ne se comptent pas. */
+[data-enter] > * {
+  animation: fadeUp var(--duration-base) var(--ease-out) both;
+}
+[data-enter] > *:nth-child(1)    { animation-delay: 0ms; }
+[data-enter] > *:nth-child(2)    { animation-delay: 40ms; }
+[data-enter] > *:nth-child(3)    { animation-delay: 80ms; }
+[data-enter] > *:nth-child(4)    { animation-delay: 120ms; }
+[data-enter] > *:nth-child(5)    { animation-delay: 160ms; }
+[data-enter] > *:nth-child(n+6)  { animation-delay: 200ms; }
 .animate-fade-in    { animation: fadeIn     0.18s ease-out both; }
 .animate-slide-in   { animation: slideInLeft 0.2s ease-out both; }
 .animate-scale-in   { animation: scaleIn    0.15s ease-out both; }

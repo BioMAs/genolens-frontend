@@ -175,7 +175,7 @@ export default function AllComparisonsView() {
       {/* Error */}
       {error && (
         <div
-          className="animate-fade-up flex items-start gap-3 rounded-card p-4 text-body-sm"
+          className="flex items-start gap-3 rounded-card p-4 text-body-sm"
           style={{
             background: 'var(--sl-red-light)',
             border: '1px solid var(--sl-red-muted)',
@@ -191,11 +191,7 @@ export default function AllComparisonsView() {
       {!error && isLoading && (
         <div className="space-y-2">
           {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="skeleton rounded-control"
-              style={{ height: '56px', animationDelay: `${i * 60}ms` }}
-            />
+            <div key={i} className="skeleton rounded-control" style={{ height: '56px' }} />
           ))}
         </div>
       )}

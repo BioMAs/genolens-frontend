@@ -49,8 +49,6 @@ export default function RecentProjectsSection({
   if (projects.length === 0) {
     return (
       <EmptyStateHelix
-        className="animate-fade-up"
-        style={{ animationDelay: '60ms' }}
         title="No projects yet"
         description="Create your first project to start decoding your transcriptomics data."
         action={
@@ -67,8 +65,8 @@ export default function RecentProjectsSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: '60ms' }}>
-      {recent.map((project, i) => {
+    <div data-enter className="flex flex-col gap-3">
+      {recent.map((project) => {
         const stats = statsMap[project.id];
         const status = resolveProjectStatus(stats);
         return (
@@ -76,7 +74,6 @@ export default function RecentProjectsSection({
             key={project.id}
             href={`/projects/${project.id}`}
             className="group gl-card gl-card-interactive flex items-center gap-4 p-4"
-            style={{ animationDelay: `${60 + i * 40}ms` }}
           >
             {/* Icon */}
             <div

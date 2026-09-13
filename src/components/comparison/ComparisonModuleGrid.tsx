@@ -111,7 +111,7 @@ export default function ComparisonModuleGrid({
                 type="button"
                 onClick={() => onOpen(view, panel)}
                 aria-label={`Open ${module.title}`}
-                className={`${CARD_BASE} group hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                className={`${CARD_BASE} gl-card-interactive group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                 style={{
                   ...cardStyle(false),
                   // @ts-expect-error CSS custom prop for the focus ring colour

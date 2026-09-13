@@ -52,12 +52,10 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {/* Pas d'echelonnement sur un squelette : il annonce une attente,
+            l'echelonner la met en scene. */}
         {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="skeleton rounded-card"
-            style={{ height: '136px', animationDelay: `${i * 80}ms` }}
-          />
+          <div key={i} className="skeleton rounded-card" style={{ height: '136px' }} />
         ))}
       </div>
     );
@@ -123,14 +121,16 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
 
   /* ── Project grid ─────────────────────────────────────────── */
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {projects.map((project, i) => (
+    // `data-enter` echelonne les CINQ premieres cartes puis arrete : la
+    // cadence en ligne echelonnait les trente, donc la derniere arrivait a
+    // 1,2s et on attendait l'animation au lieu de lire la liste.
+    <div data-enter className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {projects.map((project) => (
         <Link
           key={project.id}
           href={`/projects/${project.id}`}
           onMouseEnter={() => prefetchProject(project.id)}
-          className="group gl-card gl-card-interactive flex flex-col p-5 animate-fade-up"
-          style={{ animationDelay: `${i * 40}ms` }}
+          className="group gl-card gl-card-interactive flex flex-col p-5"
         >
           {/* Header row */}
           <div className="flex items-start justify-between gap-3 mb-3">
