@@ -7,6 +7,7 @@ import { useProjectDatasets } from '@/hooks/useProjectData';
 import { useProjectSummary } from '@/hooks/useProjectData';
 import { CheckCircle, BarChart2, Grid, FlaskConical, ArrowLeft, RotateCcw } from 'lucide-react';
 import { ClusteringConfig, EnrichmentConfig } from './StepAnalysisSettings';
+import { cn } from '@/lib/cn';
 
 interface StepResultsProps {
   projectId: string;
@@ -73,7 +74,6 @@ export default function StepResults({
           title="Differential Expression"
           description={`${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''} generated`}
           badge={comparisons.length > 0 ? `${comparisons.reduce((a, c) => a + c.deg_total, 0).toLocaleString()} DEGs total` : undefined}
-          color="indigo"
         >
           {comparisons.length > 0 ? (
             <div className="mt-3 space-y-2">
@@ -108,7 +108,6 @@ export default function StepResults({
           icon={<Grid className="h-6 w-6 text-accent-ink" />}
           title="Clustering"
           description="Interactive heatmap of expression patterns"
-          color="violet"
         >
           <Link
             href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering?${clusteringParams}`}
@@ -126,7 +125,6 @@ export default function StepResults({
           icon={<FlaskConical className="h-6 w-6 text-teal-500" />}
           title="Pathway Enrichment"
           description="GO, KEGG & Reactome analysis"
-          color="teal"
         >
           {firstResultDs ? (
             <>
@@ -168,24 +166,28 @@ export default function StepResults({
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 function ResultCard({
-  icon, title, description, badge, color = 'gray', children,
+  icon, title, description, badge, children,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   badge?: string;
-  color?: string;
   children?: React.ReactNode;
 }) {
-  const borderColors: Record<string, string> = {
-    indigo: 'border-indigo-200',
-    violet: 'border-violet-200',
-    teal:   'border-teal-200',
-    gray:   'border-line',
-  };
-
+  /**
+   * SIXIEME concatenation sans espace du produit :
+   * `${borderColors[...]}bg-surface` fusionnait la couleur de bordure avec le
+   * fond. Les DEUX etaient perdus — la carte n'avait ni fond de surface, ni
+   * couleur de filet, et `border` seul retombait sur `currentColor`.
+   *
+   * Les trois teintes etaient par ailleurs de la palette Tailwind brute, et
+   * `indigo` y servait de couleur decorative alors que la regle le reserve a
+   * l'accent interactif. Une carte de resultat n'est pas cliquable : ces
+   * filets n'ont aucune raison d'etre colores, et la regle L1 dit deja que
+   * grouper n'est pas une raison de border.
+   */
   return (
-    <div className={`rounded-card border ${borderColors[color] ?? borderColors.gray}bg-surface p-4 shadow-sm flex flex-col`}>
+    <div className={cn('gl-card p-4 flex flex-col')}>
       <div className="flex items-start gap-3">
         <div className="rounded-control bg-surface-2 p-2">{icon}</div>
         <div className="min-w-0">

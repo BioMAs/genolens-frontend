@@ -46,10 +46,10 @@ const SPECIES_OPTIONS = [
 ];
 
 const ENRICH_CATEGORIES: Record<string, { label: string; color: string }> = {
-  'Process': { label: 'Biological Process', color: 'bg-success-soft text-success-ink/30' },
+  'Process': { label: 'Biological Process', color: 'bg-success-soft text-success-ink' },
   'Function': { label: 'Molecular Function', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
   'Component': { label: 'Cellular Component', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  'KEGG': { label: 'KEGG', color: 'bg-warning-soft text-warning-ink/30' },
+  'KEGG': { label: 'KEGG', color: 'bg-warning-soft text-warning-ink' },
   'Reactome': { label: 'Reactome', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400' },
   'WikiPathways': { label: 'WikiPathways', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
 };
@@ -180,7 +180,7 @@ export default function StringEnrichmentPanel({
       </button>
 
       {error && (
-        <div className="p-3 bg-danger-soft/20 border border-danger/30 rounded-control text-body-sm text-danger-ink">
+        <div className="p-3 bg-danger-soft border border-danger/30 rounded-control text-body-sm text-danger-ink">
           {error}
         </div>
       )}

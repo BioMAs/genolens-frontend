@@ -21,32 +21,46 @@ import {
 } from 'lucide-react';
 import { useProjectHistory } from '@/hooks/useProjectHistory';
 import { ActivityEventType, ActivityLogEntry } from '@/types/history';
+import { cn } from '@/lib/cn';
 
 // ============================================================================
 // Event type metadata (icon + label + color)
 // ============================================================================
 
+/**
+ * Le journal d'activite associait une couleur a chacun des douze types
+ * d'evenement — bleu pour un televersement, violet pour une comparaison,
+ * cyan pour une liste de genes. Douze teintes arbitraires que personne ne
+ * memorise n'encodent rien : l'icone, elle, est deja distincte pour chaque
+ * type, et c'est elle qui identifie l'evenement.
+ *
+ * La migration des couleurs de statut a rendu le probleme visible en peignant
+ * « analyse d'enrichissement » aux couleurs d'un AVERTISSEMENT — un
+ * evenement de journal n'est ni un avertissement ni un succes. Les seules
+ * couleurs conservees sont celles qui portent vraiment un statut : la
+ * suppression est destructive, elle reste en danger.
+ */
 interface EventMeta {
   icon: React.ElementType;
   label: string;
-  color: string;       // Tailwind bg color class for the icon circle
-  textColor: string;   // Tailwind text color class
+  /** Reserve aux evenements qui portent VRAIMENT un statut. */
+  tone?: 'danger';
 }
 
 const EVENT_META: Record<ActivityEventType, EventMeta> = {
-  dataset_uploaded: { icon: Upload, label: 'Dataset uploaded', color: 'bg-blue-100', textColor: 'text-blue-600' },
-  dataset_deleted: { icon: Trash2, label: 'Dataset deleted', color: 'bg-danger-soft', textColor: 'text-danger-ink' },
-  comparison_created: { icon: GitCompare, label: 'Comparison created', color: 'bg-purple-100', textColor: 'text-purple-600' },
-  enrichment_run: { icon: BarChart2, label: 'Enrichment analysis', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
-  clustering_run: { icon: Network, label: 'Clustering analysis', color: 'bg-teal-100', textColor: 'text-teal-600' },
-  gsea_run: { icon: TrendingUp, label: 'GSEA run', color: 'bg-indigo-100', textColor: 'text-indigo-600' },
-  go_enrichment_run: { icon: Leaf, label: 'GO enrichment run', color: 'bg-success-soft', textColor: 'text-success-ink' },
-  bookmark_created: { icon: Bookmark, label: 'Gene bookmarked', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
-  bookmark_batch_created: { icon: BookmarkPlus, label: 'Batch bookmarks created', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
-  bookmark_deleted: { icon: Trash2, label: 'Bookmark removed', color: 'bg-surface-2', textColor: 'text-muted' },
-  gene_list_created: { icon: List, label: 'Gene list created', color: 'bg-cyan-100', textColor: 'text-cyan-600' },
-  comment_added: { icon: MessageSquare, label: 'Comment added', color: 'bg-pink-100', textColor: 'text-pink-600' },
-  project_shared: { icon: Share2, label: 'Project shared', color: 'bg-violet-100', textColor: 'text-violet-600' },
+  dataset_uploaded: { icon: Upload, label: 'Dataset uploaded' },
+  dataset_deleted: { icon: Trash2, label: 'Dataset deleted', tone: 'danger' },
+  comparison_created: { icon: GitCompare, label: 'Comparison created' },
+  enrichment_run: { icon: BarChart2, label: 'Enrichment analysis' },
+  clustering_run: { icon: Network, label: 'Clustering analysis' },
+  gsea_run: { icon: TrendingUp, label: 'GSEA run' },
+  go_enrichment_run: { icon: Leaf, label: 'GO enrichment run' },
+  bookmark_created: { icon: Bookmark, label: 'Gene bookmarked' },
+  bookmark_batch_created: { icon: BookmarkPlus, label: 'Batch bookmarks created' },
+  bookmark_deleted: { icon: Trash2, label: 'Bookmark removed' },
+  gene_list_created: { icon: List, label: 'Gene list created' },
+  comment_added: { icon: MessageSquare, label: 'Comment added' },
+  project_shared: { icon: Share2, label: 'Project shared' },
 };
 
 // ============================================================================
@@ -90,8 +104,16 @@ function EventIcon({ eventType }: { eventType: ActivityEventType }) {
   };
   const Icon = meta.icon;
   return (
-    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-pill ${meta.color}`}>
-      <Icon className={`h-4 w-4 ${meta.textColor}`} aria-hidden="true" />
+    <span
+      className={cn(
+        'inline-flex h-9 w-9 items-center justify-center rounded-pill',
+        meta.tone === 'danger' ? 'bg-danger-soft' : 'bg-surface-2',
+      )}
+    >
+      <Icon
+        className={cn('h-4 w-4', meta.tone === 'danger' ? 'text-danger-ink' : 'text-secondary')}
+        aria-hidden="true"
+      />
     </span>
   );
 }

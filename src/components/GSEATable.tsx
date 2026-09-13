@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronUp, ChevronDown, Eye, TrendingUp, TrendingDown } from 'lucide-react';
 import ExportMenu from './ExportMenu';
+import { cn } from '@/lib/cn';
 
 interface GSEAResult {
   gene_set_name: string;
@@ -269,8 +270,13 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
               const globalIdx = startIndex + idx + 1;
               const isSignificant = row.fdr_q_value <= 0.25;
 
+              // CINQUIEME concatenation sans espace du produit :
+              // `hover:bg-hover${...}` fusionnait avec `bg-success-soft`, donc
+              // la ligne significative n'etait PAS mise en avant et le survol
+              // ne fonctionnait pas non plus. Le `/30` orphelin venait, lui,
+              // d'un frere `dark:` retire par le codemod.
               return (
-                <tr key={idx} className={`hover:bg-hover${isSignificant ? 'bg-success-soft/30' : ''}`}>
+                <tr key={idx} className={cn('hover:bg-hover', isSignificant && 'bg-success-soft')}>
                   <td className="whitespace-nowrap text-body-sm text-secondary">
                     {globalIdx}
                   </td>

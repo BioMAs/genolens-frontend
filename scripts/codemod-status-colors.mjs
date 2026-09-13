@@ -63,9 +63,17 @@ const UTILITY = new RegExp(
   String.raw`\b(bg|text|border|ring|divide|fill|stroke)-(${Object.keys(FAMILIES).join('|')})-(\d{2,3})\b`,
   'g',
 );
-/** `dark:` sur une teinte convertie n'a plus de sens : le jeton porte les deux themes. */
+/**
+ * `dark:` sur une teinte convertie n'a plus de sens : le jeton porte les deux
+ * themes.
+ *
+ * Le modificateur d'OPACITE fait partie de la classe. Une premiere version
+ * l'oubliait : `dark:bg-green-900/30` perdait son nom mais gardait son `/30`,
+ * qui se collait au jeton precedent — `text-success-ink/30`, une encre a 30 %
+ * d'opacite, donc pratiquement invisible. Six occurrences avant correction.
+ */
 const DARK_SIBLING = new RegExp(
-  String.raw`\s*\bdark:(?:hover:|focus:|group-hover:)?(?:bg|text|border|ring|divide|fill|stroke)-(?:${Object.keys(FAMILIES).join('|')})-\d{2,3}\b`,
+  String.raw`\s*\bdark:(?:hover:|focus:|group-hover:)?(?:bg|text|border|ring|divide|fill|stroke)-(?:${Object.keys(FAMILIES).join('|')})-\d{2,3}(?:\/\d{1,3})?\b`,
   'g',
 );
 

@@ -287,31 +287,52 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
-    // Color-code database badges
-    const getCategoryBadgeColor = (cat: string) => {
-        if (cat.startsWith('GO:BP')) return 'bg-blue-100 text-blue-800';
-        if (cat.startsWith('GO:MF')) return 'bg-success-soft text-success-ink';
-        if (cat.startsWith('GO:CC')) return 'bg-purple-100 text-purple-800';
-        if (cat.toUpperCase().includes('KEGG')) return 'bg-warning-soft text-warning-ink';
-        if (cat.toUpperCase().includes('REACTOME')) return 'bg-teal-100 text-teal-800';
-        if (cat.toUpperCase().includes('HALLMARK')) return 'bg-warning-soft text-warning-ink';
-        if (cat.toUpperCase().includes('C5_ONTOLOGY')) return 'bg-teal-100 text-teal-800';
-        if (cat.toUpperCase().includes('C7_IMMUNOLOGIC')) return 'bg-indigo-100 text-indigo-800';
-        if (cat.toUpperCase().includes('C2_CURATED')) return 'bg-rose-100 text-rose-800';
-        if (cat.toUpperCase().includes('C6_ONCOGENIC')) return 'bg-warning-soft text-warning-ink';
-        if (cat.toUpperCase().includes('WIKI')) return 'bg-pink-100 text-pink-800';
-        return 'bg-surface-2 text-primary';
+    /**
+     * La base de donnees d'origine est une CATEGORIE, pas un statut.
+     *
+     * Elle etait peinte par onze couples de classes Tailwind brutes, et la
+     * migration des couleurs de statut a rendu le probleme visible : KEGG et
+     * HALLMARK se sont retrouves aux couleurs d'un AVERTISSEMENT, GO:MF a
+     * celles d'un SUCCES. Une base de donnees n'est ni l'un ni l'autre.
+     *
+     * La couleur passe donc dans une pastille tiree de la palette mesuree — non
+     * textuelle, donc tenue au plancher de 3:1 que tous ses crans passent — et
+     * le libelle reste sur une surface neutre, ou il est toujours lisible.
+     */
+    const CATEGORY_ORDER = [
+        'GO:BP', 'GO:MF', 'GO:CC', 'KEGG', 'REACTOME',
+        'HALLMARK', 'C5_ONTOLOGY', 'C7_IMMUNOLOGIC', 'C2_CURATED', 'C6_ONCOGENIC', 'WIKI',
+    ];
+    const categoryDot = (cat: string) => {
+        const key = cat.toUpperCase();
+        const slot = CATEGORY_ORDER.findIndex(
+            (c) => key.startsWith(c) || key.includes(c),
+        );
+        return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
     };
 
     // Gene chip: UP/DOWN color + hover tooltip
     const renderGeneChip = (gene: string) => {
         const info = degGeneMap[gene.toUpperCase()];
         const reg = info?.regulation;
-        const chipColor = reg === 'UP'
-            ? 'bg-danger-soft text-danger-ink border border-danger/30'
-            : reg === 'DOWN'
-            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-            : 'bg-surface-2 text-secondary border border-line';
+        // QUATRIEME occurrence de l'inversion de direction : la puce montrait
+        // les genes SUR-exprimes en rouge et les sous-exprimes en bleu, alors
+        // que le volcan, la table des DEG et la carte de chaleur disent tous
+        // l'inverse. La migration des couleurs de statut l'a rendue flagrante
+        // en la nommant « danger ».
+        const chipStyle =
+            reg === 'UP' || reg === 'DOWN'
+                ? {
+                      color: reg === 'UP' ? scales.directionColors.up : scales.directionColors.down,
+                      background: `color-mix(in srgb, ${
+                          reg === 'UP' ? scales.directionColors.up : scales.directionColors.down
+                      } 12%, transparent)`,
+                  }
+                : undefined;
+        const chipColor =
+            reg === 'UP' || reg === 'DOWN'
+                ? 'border border-transparent'
+                : 'bg-surface-2 text-secondary border border-line';
 
         const tooltip = info
             ? `${info.gene_name ?? gene} · ${reg} · logFC: ${info.log_fc != null ? info.log_fc.toFixed(3) : 'N/A'} · padj: ${info.padj != null ? info.padj.toExponential(2) : 'N/A'}`
@@ -322,6 +343,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 key={gene}
                 title={tooltip}
                 className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default ${chipColor}`}
+                style={chipStyle}
             >
                 {reg === 'UP' && <span className="mr-1 text-danger-ink">↑</span>}
                 {reg === 'DOWN' && <span className="mr-1 text-blue-500">↓</span>}
@@ -567,7 +589,12 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                     )}
                                                 </td>
                                                 <td className="whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium ${getCategoryBadgeColor(r.category)}`}>
+                                                    <span className="inline-flex items-center gap-2 rounded-sm bg-surface-2 px-2 py-0.5 text-caption font-medium text-secondary">
+                                                        <span
+                                                            className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                                                            style={{ background: categoryDot(r.category) }}
+                                                            aria-hidden
+                                                        />
                                                         {r.category}
                                                     </span>
                                                 </td>

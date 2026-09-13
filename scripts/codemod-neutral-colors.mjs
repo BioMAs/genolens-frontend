@@ -41,7 +41,9 @@ const MAP = {
 };
 
 const UTILITY = /\b(bg|text|border|divide|ring|fill|placeholder)-gray-(\d{2,3})\b/g;
-const DARK_SIBLING = /\s*\bdark:(?:hover:|focus:|group-hover:|file:)?(?:bg|text|border|divide|ring|fill|placeholder)-gray-\d{2,3}\b/g;
+/** Le modificateur d'opacite fait partie de la classe : sans lui, un `/30`
+ *  orphelin se colle au jeton precedent. */
+const DARK_SIBLING = /\s*\bdark:(?:hover:|focus:|group-hover:|file:)?(?:bg|text|border|divide|ring|fill|placeholder)-gray-\d{2,3}(?:\/\d{1,3})?\b/g;
 
 /**
  * Masque les COMMENTAIRES avant toute recherche.
