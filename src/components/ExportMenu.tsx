@@ -174,8 +174,8 @@ export default function ExportMenu({
   
   const variantStyles = {
     default: "bg-brand-primary text-white hover:bg-brand-primary/90",
-    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700",
-    ghost: "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+    outline: "border border-strong bg-white text-secondary hover:bg-surface-2",
+    ghost: "text-secondary hover:bg-surface-2",
   };
   
   const sizeStyles = {

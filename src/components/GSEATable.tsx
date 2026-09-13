@@ -290,12 +290,12 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                     {row.gene_set_size}
                   </td>
                   <td className="whitespace-nowrap text-body-sm font-mono">
-                    <span className={row.enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
+                    <span className={row.enrichment_score > 0 ? 'text-danger-ink' : 'text-blue-600'}>
                       {row.enrichment_score.toFixed(3)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap text-body-sm font-mono font-semibold">
-                    <span className={row.normalized_enrichment_score > 0 ? 'text-red-600' : 'text-blue-600'}>
+                    <span className={row.normalized_enrichment_score > 0 ? 'text-danger-ink' : 'text-blue-600'}>
                       {row.normalized_enrichment_score.toFixed(3)}
                     </span>
                   </td>
@@ -303,7 +303,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                     {row.p_value.toExponential(2)}
                   </td>
                   <td className="whitespace-nowrap text-body-sm font-mono">
-                    <span className={isSignificant ? 'text-green-700 font-semibold' : 'text-primary'}>
+                    <span className={isSignificant ? 'text-success-ink font-semibold' : 'text-primary'}>
                       {row.fdr_q_value.toFixed(3)}
                     </span>
                   </td>

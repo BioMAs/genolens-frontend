@@ -219,7 +219,7 @@ export default function GSEAEnrichmentPlot({
           <span>Negative Enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-gray-600" style={{ borderTop: '2px dashed' }}></div>
+          <div className="w-4 h-1 bg-raised" style={{ borderTop: '2px dashed' }}></div>
           <span>Zero Line</span>
         </div>
         <div className="flex items-center gap-2">

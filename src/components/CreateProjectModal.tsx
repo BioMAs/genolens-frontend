@@ -68,7 +68,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-card bg-surface shadow-2xl ring-1 ring-gray-200">
+      <div className="w-full max-w-md rounded-card bg-surface shadow-2xl ring-1 ring-line">
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <h2 className="text-title text-primary">Create New Project</h2>
           <button
@@ -82,7 +82,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
             <div className={`mb-4 rounded-sm p-3 text-body-sm ${isLimitError ? 'bg-warning-soft border border-warning/30' : 'bg-danger-soft'}`}>
-              <p className={isLimitError ? 'text-amber-800 font-medium' : 'text-red-700'}>{error}</p>
+              <p className={isLimitError ? 'text-warning-ink font-medium' : 'text-danger-ink'}>{error}</p>
               {isLimitError && (
                 <Link
                   href="/pricing"

@@ -280,7 +280,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
         {/* Gene lists */}
         {!geneLists || geneLists.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <List className="mb-4 h-12 w-12 text-gray-300" />
+            <List className="mb-4 h-12 w-12 text-muted" />
             <p className="text-title font-medium text-primary">No gene lists yet</p>
             <p className="mt-1 text-body-sm text-secondary">
               Create custom lists to organize genes by theme or function

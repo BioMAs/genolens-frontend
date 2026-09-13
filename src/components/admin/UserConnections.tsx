@@ -33,15 +33,15 @@ export default function UserConnections() {
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
               <div className="p-5">
-                <div className="h-4 bg-gray-200 rounded-sm w-1/2 mb-3" />
-                <div className="h-9 bg-gray-200 rounded-sm w-1/3" />
+                <div className="h-4 bg-hover rounded-sm w-1/2 mb-3" />
+                <div className="h-9 bg-hover rounded-sm w-1/3" />
               </div>
             </div>
           ))}
         </div>
         {/* Chart skeleton */}
         <div className="bg-surface shadow rounded-card p-6 animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-sm" />
+          <div className="h-48 bg-hover rounded-sm" />
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function UserConnections() {
       label: 'Active today',
       value: data.active_today,
       icon: Activity,
-      color: 'bg-green-500',
+      color: 'bg-success',
     },
     {
       label: 'Active last 7 days',
@@ -109,7 +109,7 @@ export default function UserConnections() {
                 className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
                   days === opt.value
                     ? 'bg-brand-primary text-on-accent'
-                    : 'bg-surface-2 text-secondary hover:bg-gray-200'
+                    : 'bg-surface-2 text-secondary hover:bg-hover'
                 }`}
               >
                 {opt.label}

@@ -58,8 +58,8 @@ export default function SystemStats() {
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
             <div className="p-5">
-              <div className="h-8 bg-gray-200 rounded-sm w-1/2 mb-4"></div>
-              <div className="h-10 bg-gray-200 rounded-sm w-3/4"></div>
+              <div className="h-8 bg-hover rounded-sm w-1/2 mb-4"></div>
+              <div className="h-10 bg-hover rounded-sm w-3/4"></div>
             </div>
           </div>
         ))}
@@ -86,7 +86,7 @@ export default function SystemStats() {
       name: 'Active Users',
       value: stats.active_users,
       icon: TrendingUp,
-      color: 'bg-green-500',
+      color: 'bg-success',
     },
     {
       name: 'Total Projects',
@@ -98,14 +98,14 @@ export default function SystemStats() {
       name: 'Total Datasets',
       value: stats.total_datasets,
       icon: Activity,
-      color: 'bg-orange-500',
+      color: 'bg-warning',
     },
     {
       name: 'Est. Revenue',
       value: stats.estimated_revenue,
       isMoney: true,
       icon: TrendingUp,
-      color: 'bg-emerald-600',
+      color: 'bg-success',
     },
   ];
 

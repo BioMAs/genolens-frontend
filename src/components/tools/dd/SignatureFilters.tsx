@@ -157,7 +157,7 @@ export default function SignatureFilters({
                   <span
                     className={
                       condition.direction === 'UP'
-                        ? 'text-caption font-medium text-red-600'
+                        ? 'text-caption font-medium text-danger-ink'
                         : 'text-caption font-medium text-blue-600'
                     }
                   >

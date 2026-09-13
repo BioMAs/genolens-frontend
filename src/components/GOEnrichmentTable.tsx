@@ -10,6 +10,7 @@ import BookmarkButton from './BookmarkButton';
 import { useSelection } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface GOTerm {
   go_id: string;
@@ -50,6 +51,7 @@ interface GOEnrichmentTableProps {
 }
 
 export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
+  const palette = useChartPalette();
   // Passive cross-filter: a selection made in Explorer becomes legible here without anyone
   // navigating anywhere. Reads the context directly rather than being drilled a prop, since
   // this table sits several levels down.
@@ -139,17 +141,35 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     setExpandedRows(newExpanded);
   };
 
-  const getNamespaceBadgeColor = (ns: string) => {
-    if (ns === 'GO:BP' || ns === 'biological_process') return 'bg-blue-500 hover:bg-blue-600';
-    if (ns === 'GO:MF' || ns === 'molecular_function') return 'bg-green-500 hover:bg-green-600';
-    if (ns === 'GO:CC' || ns === 'cellular_component') return 'bg-purple-500 hover:bg-purple-600';
-    if (ns === 'KEGG') return 'bg-orange-500 hover:bg-orange-600';
-    if (ns === 'REACTOME') return 'bg-cyan-600 hover:bg-cyan-700';
-    if (ns === 'HALLMARK') return 'bg-rose-500 hover:bg-rose-600';
-    if (ns === 'C5_ONTOLOGY') return 'bg-teal-500 hover:bg-teal-600';
-    if (ns === 'C7_IMMUNOLOGIC') return 'bg-indigo-500 hover:bg-indigo-600';
-    if (ns === 'TF') return 'bg-yellow-500 hover:bg-yellow-600';
-    return 'bg-gray-500 hover:bg-gray-600';
+  /**
+   * Les neuf espaces de noms etaient peints par neuf classes Tailwind brutes —
+   * une palette categorielle parallele, ni verifiee en contraste ni en
+   * dichromatie, et identique dans les deux themes.
+   *
+   * Ils prennent desormais la palette mesuree, mais en PASTILLE et non en
+   * aplat : le blanc echoue sur quatre des huit crans clairs (3,03 a 3,51:1,
+   * sous le plancher texte de 4,5). Cette palette a ete optimisee pour des
+   * MARQUES, pas pour porter du texte. La couleur reste donc un repere
+   * d'un coup d'oeil — une pastille non textuelle, ou 3:1 suffit et tous les
+   * crans passent — et le libelle vit sur une surface neutre.
+   */
+  const NAMESPACE_SLOT: Record<string, number> = {
+    'GO:BP': 0, biological_process: 0,
+    'GO:MF': 1, molecular_function: 1,
+    'GO:CC': 2, cellular_component: 2,
+    KEGG: 3,
+    REACTOME: 4,
+    HALLMARK: 5,
+    C5_ONTOLOGY: 6,
+    C7_IMMUNOLOGIC: 7,
+    TF: 8,
+  };
+
+  const namespaceDot = (ns: string) => {
+    const slot = NAMESPACE_SLOT[ns];
+    return slot === undefined
+      ? palette.ns
+      : palette.categorical[slot % palette.categorical.length];
   };
 
   const getNamespaceLabel = (ns: string) => {
@@ -167,10 +187,10 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     const isUp = info?.regulation === 'UP';
     const isDown = info?.regulation === 'DOWN';
     const chipClass = isUp
-      ? 'bg-red-100 text-red-800 border-red-200'
+      ? 'bg-danger-soft text-danger-ink border-danger/30'
       : isDown
         ? 'bg-blue-100 text-blue-800 border-blue-200'
-        : 'bg-gray-100 text-gray-700 border-gray-200';
+        : 'bg-surface-2 text-secondary border-line';
     return (
       <span
         key={gene}
@@ -329,7 +349,17 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                         </div>
                       </td>
                       <td>
-                        <Badge className={`${getNamespaceBadgeColor(term.namespace)}text-on-accent`}>
+                        {/* `${fn(...)}text-on-accent` : sans espace avant
+                            l'interpolation, `text-on-accent` fusionnait avec la
+                            derniere classe rendue. L'encre du libelle ET le
+                            survol etaient donc perdus — troisieme occurrence de
+                            ce motif dans le produit. */}
+                        <Badge variant="neutral">
+                          <span
+                            className="mr-1.5 inline-block h-2 w-2 rounded-pill align-middle"
+                            style={{ background: namespaceDot(term.namespace) }}
+                            aria-hidden
+                          />
                           {getNamespaceLabel(term.namespace)}
                         </Badge>
                       </td>

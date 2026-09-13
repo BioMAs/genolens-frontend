@@ -20,7 +20,7 @@ export default function EnrichmentPage() {
 
   return (
     /* Un fil d'Ariane ecrit A LA MAIN vivait dans une bande bordee, avec sa
-       fleche de retour, son separateur en `bg-gray-300` — du gris Tailwind
+       fleche de retour, son separateur en `bg-hover` — du gris Tailwind
        brut — et trois liens recopies. La barre superieure porte deja ce fil ;
        `PageHeader` l'alimente, donc la bande entiere disparait. */
     <div className="page-container">

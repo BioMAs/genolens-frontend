@@ -35,15 +35,15 @@ interface EventMeta {
 
 const EVENT_META: Record<ActivityEventType, EventMeta> = {
   dataset_uploaded: { icon: Upload, label: 'Dataset uploaded', color: 'bg-blue-100', textColor: 'text-blue-600' },
-  dataset_deleted: { icon: Trash2, label: 'Dataset deleted', color: 'bg-red-100', textColor: 'text-red-600' },
+  dataset_deleted: { icon: Trash2, label: 'Dataset deleted', color: 'bg-danger-soft', textColor: 'text-danger-ink' },
   comparison_created: { icon: GitCompare, label: 'Comparison created', color: 'bg-purple-100', textColor: 'text-purple-600' },
-  enrichment_run: { icon: BarChart2, label: 'Enrichment analysis', color: 'bg-orange-100', textColor: 'text-orange-600' },
+  enrichment_run: { icon: BarChart2, label: 'Enrichment analysis', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
   clustering_run: { icon: Network, label: 'Clustering analysis', color: 'bg-teal-100', textColor: 'text-teal-600' },
   gsea_run: { icon: TrendingUp, label: 'GSEA run', color: 'bg-indigo-100', textColor: 'text-indigo-600' },
-  go_enrichment_run: { icon: Leaf, label: 'GO enrichment run', color: 'bg-green-100', textColor: 'text-green-600' },
-  bookmark_created: { icon: Bookmark, label: 'Gene bookmarked', color: 'bg-yellow-100', textColor: 'text-yellow-600' },
-  bookmark_batch_created: { icon: BookmarkPlus, label: 'Batch bookmarks created', color: 'bg-yellow-100', textColor: 'text-yellow-700' },
-  bookmark_deleted: { icon: Trash2, label: 'Bookmark removed', color: 'bg-gray-100', textColor: 'text-gray-500' },
+  go_enrichment_run: { icon: Leaf, label: 'GO enrichment run', color: 'bg-success-soft', textColor: 'text-success-ink' },
+  bookmark_created: { icon: Bookmark, label: 'Gene bookmarked', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
+  bookmark_batch_created: { icon: BookmarkPlus, label: 'Batch bookmarks created', color: 'bg-warning-soft', textColor: 'text-warning-ink' },
+  bookmark_deleted: { icon: Trash2, label: 'Bookmark removed', color: 'bg-surface-2', textColor: 'text-muted' },
   gene_list_created: { icon: List, label: 'Gene list created', color: 'bg-cyan-100', textColor: 'text-cyan-600' },
   comment_added: { icon: MessageSquare, label: 'Comment added', color: 'bg-pink-100', textColor: 'text-pink-600' },
   project_shared: { icon: Share2, label: 'Project shared', color: 'bg-violet-100', textColor: 'text-violet-600' },
@@ -85,8 +85,8 @@ function buildDescription(entry: ActivityLogEntry): string {
 function EventIcon({ eventType }: { eventType: ActivityEventType }) {
   const meta = EVENT_META[eventType] ?? {
     icon: Clock,
-    color: 'bg-gray-100',
-    textColor: 'text-gray-500',
+    color: 'bg-surface-2',
+    textColor: 'text-muted',
   };
   const Icon = meta.icon;
   return (
@@ -103,7 +103,7 @@ function TimelineEntry({ entry }: { entry: ActivityLogEntry }) {
   return (
     <li className="relative flex gap-x-4">
       {/* Vertical connector line */}
-      <div className="absolute left-[18px] top-[36px] bottom-0 w-px bg-gray-200" aria-hidden="true" />
+      <div className="absolute left-[18px] top-[36px] bottom-0 w-px bg-hover" aria-hidden="true" />
 
       {/* Icon */}
       <div className="relative mt-1 flex-shrink-0">
@@ -216,9 +216,9 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex gap-4 animate-pulse">
-              <div className="h-9 w-9 flex-shrink-0 rounded-pill bg-gray-200" />
+              <div className="h-9 w-9 flex-shrink-0 rounded-pill bg-hover" />
               <div className="flex-1 space-y-2 py-1">
-                <div className="h-3.5 w-3/4 rounded-sm bg-gray-200" />
+                <div className="h-3.5 w-3/4 rounded-sm bg-hover" />
                 <div className="h-3 w-1/2 rounded-sm bg-surface-2" />
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
         </div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center text-body-sm text-secondary">
-          <Clock className="mx-auto mb-3 h-8 w-8 text-gray-300" />
+          <Clock className="mx-auto mb-3 h-8 w-8 text-muted" />
           No events recorded yet.
         </div>
       ) : (

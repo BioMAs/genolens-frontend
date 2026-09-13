@@ -134,7 +134,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-primary rounded-sm transition-colors font-medium"
+                className="flex-1 px-4 py-2 bg-hover hover:bg-hover text-primary rounded-sm transition-colors font-medium"
               >
                 Go Home
               </button>

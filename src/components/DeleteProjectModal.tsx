@@ -38,7 +38,7 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-card bg-surface shadow-2xl ring-1 ring-gray-200">
+      <div className="w-full max-w-md rounded-card bg-surface shadow-2xl ring-1 ring-line">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
           <div className="flex items-center gap-2">

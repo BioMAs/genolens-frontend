@@ -152,7 +152,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                       >
                         Select All
                       </button>
-                      <span className="mx-2 text-gray-300">|</span>
+                      <span className="mx-2 text-muted">|</span>
                       <button 
                         className="text-caption text-brand-primary hover:text-brand-primary/80"
                         onClick={() => setSelectedColumns([])}

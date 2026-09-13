@@ -109,7 +109,7 @@ export default function TargetTable({ data, weights, limit, onLimitChange }: Tar
                   return (
                     <td key={axis} className="p-2">
                       {value === null || value === undefined ? (
-                        <span className="text-gray-300" title="Axis not measured for this gene">
+                        <span className="text-muted" title="Axis not measured for this gene">
                           —
                         </span>
                       ) : (

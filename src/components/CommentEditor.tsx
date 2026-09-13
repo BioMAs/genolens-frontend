@@ -54,7 +54,7 @@ export default function CommentEditor({
           onChange={(e) => setContent(e.target.value)}
           placeholder={placeholder}
           disabled={isSubmitting}
-          className="w-full min-h-[100px] rounded-sm border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100"
+          className="w-full min-h-[100px] rounded-sm border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
           rows={4}
         />
         

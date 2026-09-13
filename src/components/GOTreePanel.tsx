@@ -100,7 +100,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
           </span>
         )}
         {!node.is_enriched && (
-          <span className="text-caption text-gray-300 ml-1 flex-shrink-0">not sig.</span>
+          <span className="text-caption text-muted ml-1 flex-shrink-0">not sig.</span>
         )}
       </div>
 
@@ -203,8 +203,8 @@ function TreeSkeleton() {
     <div className="p-4 space-y-2 animate-pulse">
       {[1, 2, 3, 4, 5].map(i => (
         <div key={i} className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-pill bg-gray-200" style={{ marginLeft: `${(i % 3) * 16}px` }} />
-          <div className="h-3 bg-gray-200 rounded-sm flex-1" style={{ width: `${60 + (i * 13) % 30}%` }} />
+          <div className="w-3 h-3 rounded-pill bg-hover" style={{ marginLeft: `${(i % 3) * 16}px` }} />
+          <div className="h-3 bg-hover rounded-sm flex-1" style={{ width: `${60 + (i * 13) % 30}%` }} />
         </div>
       ))}
     </div>
@@ -329,7 +329,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
                   <span className="w-2 h-2 rounded-pill bg-accent inline-block" />significant
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-pill bg-gray-200 inline-block" />context only
+                  <span className="w-2 h-2 rounded-pill bg-hover inline-block" />context only
                 </span>
               </div>
               <Button variant="ghost" size="sm" className="text-caption h-7" onClick={expandAll} disabled={!hierarchy}>

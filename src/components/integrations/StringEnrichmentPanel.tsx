@@ -46,10 +46,10 @@ const SPECIES_OPTIONS = [
 ];
 
 const ENRICH_CATEGORIES: Record<string, { label: string; color: string }> = {
-  'Process': { label: 'Biological Process', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+  'Process': { label: 'Biological Process', color: 'bg-success-soft text-success-ink/30' },
   'Function': { label: 'Molecular Function', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
   'Component': { label: 'Cellular Component', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  'KEGG': { label: 'KEGG', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  'KEGG': { label: 'KEGG', color: 'bg-warning-soft text-warning-ink/30' },
   'Reactome': { label: 'Reactome', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400' },
   'WikiPathways': { label: 'WikiPathways', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
 };

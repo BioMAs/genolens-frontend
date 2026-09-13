@@ -108,7 +108,7 @@ export default function GoTermPage() {
                                             className="block group"
                                         >
                                             <div className="flex items-center text-body-sm">
-                                                <GitBranch className="h-4 w-4 text-gray-300 mr-2 rotate-180"/>
+                                                <GitBranch className="h-4 w-4 text-muted mr-2 rotate-180"/>
                                                 <span className="font-mono text-accent-ink group-hover:underline mr-2">{p.id}</span>
                                                 <span className="text-primary truncate">{p.name}</span>
                                             </div>
@@ -135,7 +135,7 @@ export default function GoTermPage() {
                                             className="block group"
                                         >
                                             <div className="flex items-center text-body-sm">
-                                                <GitBranch className="h-4 w-4 text-gray-300 mr-2"/>
+                                                <GitBranch className="h-4 w-4 text-muted mr-2"/>
                                                 <span className="font-mono text-teal-600 group-hover:underline mr-2">{c.id}</span>
                                                 <span className="text-primary truncate">{c.name}</span>
                                             </div>

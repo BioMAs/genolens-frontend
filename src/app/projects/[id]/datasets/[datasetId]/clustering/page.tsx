@@ -21,7 +21,7 @@ export default function ClusteringPage() {
 
   return (
     /* Meme bande de fil d'Ariane ecrite a la main que sur l'ecran
-       d'enrichissement, separateurs en `bg-gray-300` compris — et un `<h1>`
+       d'enrichissement, separateurs en `bg-hover` compris — et un `<h1>`
        rendu a `text-body-sm`, soit 13px : le titre de l'ecran y etait PLUS
        PETIT que son propre corps de texte. */
     <div className="page-container">

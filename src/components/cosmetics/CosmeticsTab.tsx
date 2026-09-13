@@ -46,7 +46,7 @@ export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
   if (!datasetId) {
     return (
       <div className="text-center py-16">
-        <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+        <Database className="mx-auto h-12 w-12 text-muted mb-4" />
         <h3 className="text-title font-medium text-primary mb-2">No DEG data</h3>
         <p className="text-body-sm text-secondary max-w-sm mx-auto">
           The Cosmetics module requires a DEG dataset with enrichment results for this comparison.
@@ -66,7 +66,7 @@ export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
   if (error || !data) {
     return (
       <div className="text-center py-16">
-        <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+        <Database className="mx-auto h-12 w-12 text-muted mb-4" />
         <h3 className="text-title font-medium text-primary mb-2">No cosmetic results</h3>
         <p className="text-body-sm text-secondary max-w-sm mx-auto">
           Could not compute claim scores for this comparison. Make sure enrichment has been run.
@@ -80,7 +80,7 @@ export default function CosmeticsTab({ datasetId, comparisonName }: Props) {
     return (
       <div className="space-y-4">
         <div className="text-center py-10">
-          <Info className="mx-auto h-10 w-10 text-gray-300 mb-3" />
+          <Info className="mx-auto h-10 w-10 text-muted mb-3" />
           <h3 className="text-body font-medium text-primary mb-1">No claim significantly supported</h3>
           <p className="text-body-sm text-secondary max-w-md mx-auto">
             {data.coverage.n_matched}/{data.coverage.n_significant} enriched pathways matched the

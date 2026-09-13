@@ -402,7 +402,7 @@ export default function CustomVisualizationPanel({
                         className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'pca'
                                 ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-gray-200'
+                                : 'bg-surface-2 text-primary hover:bg-hover'
                         }`}
                     >
                         PCA
@@ -412,7 +412,7 @@ export default function CustomVisualizationPanel({
                         className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'umap'
                                 ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-gray-200'
+                                : 'bg-surface-2 text-primary hover:bg-hover'
                         }`}
                     >
                         UMAP
@@ -422,7 +422,7 @@ export default function CustomVisualizationPanel({
                         className={`px-4 py-2 rounded-control font-medium transition-colors ${
                             vizType === 'boxplot'
                                 ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-gray-200'
+                                : 'bg-surface-2 text-primary hover:bg-hover'
                         }`}
                     >
                         Box Plot

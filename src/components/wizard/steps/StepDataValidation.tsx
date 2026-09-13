@@ -122,17 +122,17 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
   if (!dataset) {
     return (
       <div className="flex items-center gap-3 rounded-control bg-surface-2 px-4 py-3">
-        <div className="h-2 w-2 rounded-pill bg-gray-300" />
+        <div className="h-2 w-2 rounded-pill bg-hover" />
         <p className="text-body-sm text-muted">{label} — not uploaded</p>
       </div>
     );
   }
 
   const statusColors: Record<string, string> = {
-    READY:      'bg-green-400',
+    READY:      'bg-success',
     PROCESSING: 'bg-blue-400 animate-pulse',
-    PENDING:    'bg-yellow-400 animate-pulse',
-    FAILED:     'bg-red-400',
+    PENDING:    'bg-warning animate-pulse',
+    FAILED:     'bg-danger',
   };
 
   const statusLabels: Record<string, string> = {
@@ -144,7 +144,7 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
 
   return (
     <div className="flex items-center gap-3 rounded-control bg-surface px-4 py-3">
-      <div className={`h-2 w-2 rounded-pill shrink-0 ${statusColors[dataset.status] ?? 'bg-gray-300'}`} />
+      <div className={`h-2 w-2 rounded-pill shrink-0 ${statusColors[dataset.status] ?? 'bg-hover'}`} />
       <div className="min-w-0">
         <p className="text-body-sm font-medium text-primary">{label}</p>
         <p className="text-caption text-muted truncate">{dataset.name} · {statusLabels[dataset.status] ?? dataset.status}</p>

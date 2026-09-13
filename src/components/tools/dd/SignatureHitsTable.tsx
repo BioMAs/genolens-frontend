@@ -160,14 +160,14 @@ export default function SignatureHitsTable({
                       <span
                         className={
                           direction === 'UP'
-                            ? 'text-caption font-medium text-red-600'
+                            ? 'text-caption font-medium text-danger-ink'
                             : 'text-caption font-medium text-blue-600'
                         }
                       >
                         {direction}
                       </span>
                     ) : (
-                      <span className="text-gray-300">—</span>
+                      <span className="text-muted">—</span>
                     )}
                   </td>
                   <td className="text-secondary">{target.rank}</td>
@@ -185,7 +185,7 @@ export default function SignatureHitsTable({
                       <td key={axis} className="p-2">
                         {value === null || value === undefined ? (
                           <span
-                            className="text-gray-300"
+                            className="text-muted"
                             title="Axis not measured for this gene"
                           >
                             —

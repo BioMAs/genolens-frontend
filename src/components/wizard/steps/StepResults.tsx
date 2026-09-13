@@ -181,7 +181,7 @@ function ResultCard({
     indigo: 'border-indigo-200',
     violet: 'border-violet-200',
     teal:   'border-teal-200',
-    gray:   'border-gray-200',
+    gray:   'border-line',
   };
 
   return (

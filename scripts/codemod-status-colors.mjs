@@ -69,6 +69,26 @@ const DARK_SIBLING = new RegExp(
   'g',
 );
 
+/**
+ * Masque les COMMENTAIRES avant toute recherche.
+ *
+ * Sans cela, un commentaire qui documente le defaut corrige — « une erreur en
+ * `text-red-500` » — se fait reecrire et finit par dire l'exacte contraire de
+ * ce qui s'est passe. C'est arrive, et c'est la deuxieme fois dans ce projet :
+ * un codemod qui touche a la documentation detruit la seule trace du
+ * raisonnement.
+ */
+function maskComments(source) {
+  const stash = [];
+  const masked = source.replace(/\/\*[\s\S]*?\*\/|(^|[^:])\/\/[^\n]*/g, (m, pre = '') => {
+    const body = pre ? m.slice(pre.length) : m;
+    stash.push(body);
+    return `${pre}\u0000${stash.length - 1}\u0000`;
+  });
+  const restore = (s) => s.replace(/\u0000(\d+)\u0000/g, (_m, i) => stash[Number(i)]);
+  return { masked, restore };
+}
+
 const args = process.argv.slice(2);
 const write = args.includes('--write');
 const verbose = args.includes('--verbose');
@@ -94,11 +114,25 @@ for (const file of files) {
     continue;
   }
   const before = readFileSync(file, 'utf8');
+  const { masked, restore } = maskComments(before);
 
-  // Seules les chaines de CLASSE sont touchees : une teinte citee dans un
-  // commentaire ou dans une couleur de graphique n'est pas une classe.
-  let after = before.replace(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g, (whole, dq, tpl) => {
-    const cls = dq ?? tpl;
+  /**
+   * Toute chaine litterale qui ressemble a une liste de classes.
+   *
+   * Ne couvrir que `className="…"` laissait passer les ternaires, les appels
+   * `cn()` et les tables de correspondance — precisement les endroits ou une
+   * couleur se DECIDE. Le garde-fou est l'exigence d'un second utilitaire
+   * connu dans la meme chaine : une teinte citee dans un commentaire ou dans
+   * une couleur de graphique n'est pas une classe.
+   */
+  const LOOKS_LIKE_CLASSES = /\b(?:flex|grid|inline|rounded|px-|py-|p-|mt-|mb-|gap-|text-|bg-|border|w-|h-|hover:|font-|items-|justify-|shadow|absolute|relative|block)\b/;
+
+  let after = masked.replace(/(['"`])((?:(?!\1)[^\\\n]|\\.)*)\1/g, (whole, quote, body) => {
+    UTILITY.lastIndex = 0;
+    if (!UTILITY.test(body)) return whole;
+    UTILITY.lastIndex = 0;
+    if (!LOOKS_LIKE_CLASSES.test(body)) return whole;
+    const cls = body;
 
     // Les freres `dark:` partent AVANT la conversion, pas apres : `\b` matche
     // aussi apres les deux-points, donc `dark:bg-green-900` serait sinon
@@ -115,11 +149,12 @@ for (const file of files) {
       counts[`${m} → ${mapped}`] = (counts[`${m} → ${mapped}`] ?? 0) + 1;
       return mapped;
     });
-    return next === cls ? whole : whole.replace(cls, next);
+    return next === cls ? whole : quote + next + quote;
   });
 
-  if (after === before) continue;
-  if (write) writeFileSync(file, after);
+  const result = restore(after);
+  if (result === before) continue;
+  if (write) writeFileSync(file, result);
   if (verbose) console.log(`  ${file}`);
 }
 

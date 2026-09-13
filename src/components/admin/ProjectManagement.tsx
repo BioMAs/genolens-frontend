@@ -510,7 +510,7 @@ export default function ProjectManagement() {
             <div className="px-6 py-4 border-t border-line bg-surface-2">
               <button
                 onClick={() => setShowMembersModal(false)}
-                className="w-full px-4 py-2 bg-gray-200 text-primary rounded-sm hover:bg-gray-300"
+                className="w-full px-4 py-2 bg-hover text-primary rounded-sm hover:bg-hover"
               >
                 Close
               </button>

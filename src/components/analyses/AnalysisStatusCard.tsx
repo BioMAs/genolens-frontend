@@ -14,11 +14,11 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<SelfServiceAnalysisStatus, string> = {
-  [SelfServiceAnalysisStatus.PENDING]:   'bg-yellow-100 text-yellow-800',
+  [SelfServiceAnalysisStatus.PENDING]:   'bg-warning-soft text-warning-ink',
   [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800',
-  [SelfServiceAnalysisStatus.DONE]:      'bg-green-100 text-green-800',
-  [SelfServiceAnalysisStatus.FAILED]:    'bg-red-100 text-red-800',
-  [SelfServiceAnalysisStatus.CANCELLED]: 'bg-gray-100 text-gray-600',
+  [SelfServiceAnalysisStatus.DONE]:      'bg-success-soft text-success-ink',
+  [SelfServiceAnalysisStatus.FAILED]:    'bg-danger-soft text-danger-ink',
+  [SelfServiceAnalysisStatus.CANCELLED]: 'bg-surface-2 text-secondary',
 };
 
 const STATUS_LABELS: Record<SelfServiceAnalysisStatus, string> = {

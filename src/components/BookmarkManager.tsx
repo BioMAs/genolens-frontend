@@ -109,7 +109,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
   if (!bookmarks || bookmarks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
-        <Star className="mb-4 h-12 w-12 text-gray-300" />
+        <Star className="mb-4 h-12 w-12 text-muted" />
         <p className="text-title font-medium text-primary">No bookmarks yet</p>
         <p className="mt-1 text-body-sm text-secondary">
           Click the star icon next to genes to bookmark them
@@ -250,7 +250,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                         />
                         <button
                           onClick={addTag}
-                          className="rounded-sm bg-surface-2 px-3 py-1 text-body-sm text-primary hover:bg-gray-200"
+                          className="rounded-sm bg-surface-2 px-3 py-1 text-body-sm text-primary hover:bg-hover"
                         >
                           Add
                         </button>

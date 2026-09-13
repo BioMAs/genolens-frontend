@@ -33,9 +33,9 @@ const DATA_TYPES: DataTypeCard[] = [
     description: 'Protein abundance analysis, PTM profiling and quantitative proteomics workflows.',
     icon: FlaskConical,
     available: false,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
-    borderColor: 'border-emerald-200',
+    color: 'text-success-ink',
+    bgColor: 'bg-success-soft',
+    borderColor: 'border-success/30',
   },
   {
     id: 'lipidomics',
@@ -43,9 +43,9 @@ const DATA_TYPES: DataTypeCard[] = [
     description: 'Lipid species identification, quantification and differential lipid analysis.',
     icon: Droplets,
     available: false,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
+    color: 'text-warning-ink',
+    bgColor: 'bg-warning-soft',
+    borderColor: 'border-warning/30',
   },
 ];
 

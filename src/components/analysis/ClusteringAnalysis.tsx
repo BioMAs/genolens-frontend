@@ -202,7 +202,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
         <div className="flex flex-wrap items-center gap-4">
             <h2 className="text-title text-primary">Hierarchical Clustering</h2>
             
-            <div className="h-7 w-px bg-gray-300"></div>
+            <div className="h-7 w-px bg-hover"></div>
 
             {/* Inputs */}
             <div className="flex items-center gap-2">

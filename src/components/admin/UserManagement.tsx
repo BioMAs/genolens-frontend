@@ -59,10 +59,10 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 function StatusBadge({ status }: { status?: string }) {
   const styles: Record<string, string> = {
-    active:    "bg-green-100 text-green-700",
-    pending:   "bg-yellow-100 text-yellow-700",
-    suspended: "bg-orange-100 text-orange-700",
-    cancelled: "bg-red-100 text-red-700",
+    active:    "bg-success-soft text-success-ink",
+    pending:   "bg-warning-soft text-warning-ink",
+    suspended: "bg-warning-soft text-warning-ink",
+    cancelled: "bg-danger-soft text-danger-ink",
   };
   const s = status ?? "active";
   return (
@@ -329,15 +329,15 @@ export default function UserManagement() {
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-soft text-danger-ink';
       case 'analyst':
         return 'bg-blue-100 text-blue-800';
       case 'user':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-soft text-success-ink';
       case 'viewer':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-2 text-primary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-2 text-primary';
     }
   };
 

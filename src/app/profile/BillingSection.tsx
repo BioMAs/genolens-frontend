@@ -23,7 +23,7 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
       ? 'bg-purple-100 text-purple-800'
       : order === 2
         ? 'bg-teal-100 text-teal-800'
-        : 'bg-gray-100 text-gray-700';
+        : 'bg-surface-2 text-secondary';
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${tone}`}>
       {label}

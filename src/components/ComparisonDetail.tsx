@@ -624,7 +624,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             />
           ) : (
             <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
               <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
               <p className="text-body-sm text-secondary max-w-sm mx-auto">
                 Clustering requires an expression matrix (count matrix).
@@ -678,7 +678,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             <div className="space-y-4">
               {/* Bascule ORA / GSEA rankee.
 
-                  L'etat ACTIF etait `bg-white text-gray-900` : sur
+                  L'etat ACTIF etait `bg-white text-primary` : sur
                   --surface #131720, un bouton blanc a texte quasi noir —
                   l'onglet selectionne etait le seul illisible en theme
                   sombre. Troisieme segmente fait main du code, desormais
@@ -719,7 +719,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             </div>
           ) : (
             <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
               <h3 className="text-title font-medium text-primary mb-2">No DEG data</h3>
               <p className="text-body-sm text-secondary max-w-sm mx-auto">
                 Enrichment requires a DEG dataset associated with this comparison.
@@ -754,7 +754,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             />
           ) : (
             <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
               <h3 className="text-title font-medium text-primary mb-2">No DEG results</h3>
               <p className="text-body-sm text-secondary max-w-sm mx-auto">
                 Drug target scoring is built from the differentially expressed genes of this
@@ -780,7 +780,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             />
           ) : (
             <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
               <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
               <p className="text-body-sm text-secondary max-w-sm mx-auto">
                 Signature scoring requires an expression matrix (count matrix) for this project.

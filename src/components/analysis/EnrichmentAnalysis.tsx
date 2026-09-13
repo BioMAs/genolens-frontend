@@ -290,17 +290,17 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     // Color-code database badges
     const getCategoryBadgeColor = (cat: string) => {
         if (cat.startsWith('GO:BP')) return 'bg-blue-100 text-blue-800';
-        if (cat.startsWith('GO:MF')) return 'bg-green-100 text-green-800';
+        if (cat.startsWith('GO:MF')) return 'bg-success-soft text-success-ink';
         if (cat.startsWith('GO:CC')) return 'bg-purple-100 text-purple-800';
-        if (cat.toUpperCase().includes('KEGG')) return 'bg-orange-100 text-orange-800';
+        if (cat.toUpperCase().includes('KEGG')) return 'bg-warning-soft text-warning-ink';
         if (cat.toUpperCase().includes('REACTOME')) return 'bg-teal-100 text-teal-800';
-        if (cat.toUpperCase().includes('HALLMARK')) return 'bg-yellow-100 text-yellow-800';
+        if (cat.toUpperCase().includes('HALLMARK')) return 'bg-warning-soft text-warning-ink';
         if (cat.toUpperCase().includes('C5_ONTOLOGY')) return 'bg-teal-100 text-teal-800';
         if (cat.toUpperCase().includes('C7_IMMUNOLOGIC')) return 'bg-indigo-100 text-indigo-800';
         if (cat.toUpperCase().includes('C2_CURATED')) return 'bg-rose-100 text-rose-800';
-        if (cat.toUpperCase().includes('C6_ONCOGENIC')) return 'bg-amber-100 text-amber-800';
+        if (cat.toUpperCase().includes('C6_ONCOGENIC')) return 'bg-warning-soft text-warning-ink';
         if (cat.toUpperCase().includes('WIKI')) return 'bg-pink-100 text-pink-800';
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-2 text-primary';
     };
 
     // Gene chip: UP/DOWN color + hover tooltip
@@ -308,10 +308,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
         const info = degGeneMap[gene.toUpperCase()];
         const reg = info?.regulation;
         const chipColor = reg === 'UP'
-            ? 'bg-red-100 text-red-800 border border-red-200'
+            ? 'bg-danger-soft text-danger-ink border border-danger/30'
             : reg === 'DOWN'
             ? 'bg-blue-100 text-blue-800 border border-blue-200'
-            : 'bg-gray-100 text-gray-700 border border-gray-200';
+            : 'bg-surface-2 text-secondary border border-line';
 
         const tooltip = info
             ? `${info.gene_name ?? gene} · ${reg} · logFC: ${info.log_fc != null ? info.log_fc.toFixed(3) : 'N/A'} · padj: ${info.padj != null ? info.padj.toExponential(2) : 'N/A'}`

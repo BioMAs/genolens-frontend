@@ -180,9 +180,9 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 // Known database categories with labels and colors for the selector
 const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
   { value: 'GO:BP', label: 'GO: Biological Process', color: 'text-blue-600' },
-  { value: 'GO:MF', label: 'GO: Molecular Function', color: 'text-green-600' },
+  { value: 'GO:MF', label: 'GO: Molecular Function', color: 'text-success-ink' },
   { value: 'GO:CC', label: 'GO: Cellular Component', color: 'text-purple-600' },
-  { value: 'KEGG', label: 'KEGG Pathways', color: 'text-orange-600' },
+  { value: 'KEGG', label: 'KEGG Pathways', color: 'text-warning-ink' },
   { value: 'REACTOME', label: 'Reactome Pathways', color: 'text-cyan-700' },
   { value: 'HALLMARK', label: 'MSigDB Hallmark', color: 'text-rose-600' },
   { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology', color: 'text-teal-600' },

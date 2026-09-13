@@ -51,7 +51,7 @@ export default function GoBrowser() {
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-strong rounded-sm leading-5 bg-surface placeholder-gray-500 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-body-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-strong rounded-sm leading-5 bg-surface placeholder-muted focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-body-sm"
                     placeholder="Search GO Terms (e.g. mitochondrion, GO:0005739)"
                     value={query}
                     onChange={(e) => handleSearch(e.target.value)}

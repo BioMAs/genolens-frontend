@@ -113,7 +113,7 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
             const f = e.target.files?.[0];
             if (f) handleUpload(f);
           }}
-          className="block w-full text-body-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-body-sm file:font-medium file:bg-surface-2 file:text-primary hover:file:bg-gray-200"
+          className="block w-full text-body-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-body-sm file:font-medium file:bg-surface-2 file:text-primary hover:file:bg-hover"
         />
         <p className="mt-1 text-caption text-secondary">
           GMT format: one set per line — name &lt;tab&gt; description &lt;tab&gt; gene1 &lt;tab&gt; gene2 …
