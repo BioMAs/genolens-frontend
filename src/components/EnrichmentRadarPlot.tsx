@@ -8,6 +8,7 @@ import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
 import { canUseAI } from '@/utils/plan';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
@@ -49,6 +50,7 @@ export default function EnrichmentRadarPlot({
   comparisonName, 
   maxTerms = 10
 }: EnrichmentRadarPlotProps) {
+  const palette = useChartPalette();
   const [data, setData] = useState<RadarDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -579,58 +581,58 @@ export default function EnrichmentRadarPlot({
       <div className="bg-surface rounded-control border border-line p-6">
         <ResponsiveContainer width="100%" height={500}>
           <RadarChart data={data}>
-            <PolarGrid stroke="#d1d5db" />
+            <PolarGrid stroke={CHART_VARS.grid} />
             <PolarAngleAxis
               dataKey="shortTerm"
               {...CHART_AXIS}
-              tickLine={{ stroke: '#9ca3af' }}
+              tickLine={{ stroke: CHART_VARS.inkMuted }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[-1, 5]}
               {...CHART_AXIS}
-              label={{ value: '-log10(p-value)', position: 'insideTop', fill: '#374151', fontSize: 12 }}
+              label={{ value: '-log10(p-value)', position: 'insideTop', fill: CHART_VARS.inkSubtle, fontSize: 12 }}
             />
             
             <Radar
               name="ALL"
               dataKey="negLogPValue_ALL"
-              stroke="#8b5cf6"
-              fill="#8b5cf6"
+              stroke={palette.categorical[0]}
+              fill={palette.categorical[0]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_ALL) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#7c3aed" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[0]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             
             <Radar
               name="UP"
               dataKey="negLogPValue_UP"
-              stroke="#ef4444"
-              fill="#ef4444"
+              stroke={palette.categorical[1]}
+              fill={palette.categorical[1]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_UP) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#ef4444" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[1]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             
             <Radar
               name="DOWN"
               dataKey="negLogPValue_DOWN"
-              stroke="#3b82f6"
-              fill="#3b82f6"
+              stroke={palette.categorical[2]}
+              fill={palette.categorical[2]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_DOWN) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#3b82f6" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[2]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             

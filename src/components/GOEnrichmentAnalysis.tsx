@@ -97,6 +97,7 @@ import {
   Tooltip as RechartTooltip, ResponsiveContainer, Cell, ZAxis,
 } from 'recharts';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import {CHART_VARS } from '@/utils/chartTheme';
 
 interface DotPlotTooltipProps {
   active?: boolean;
@@ -143,7 +144,9 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
       <div className="flex items-center justify-between mb-3 text-caption text-muted-foreground">
         <span>Top 20 enriched terms · Dot size = gene count · Color = -log₁₀(FDR)</span>
         <div className="flex items-center gap-1">
-          <span className="inline-block w-10 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, #c7d2fe, #4338ca)' }} />
+          <span className="inline-block w-10 h-2.5 rounded-sm" // Degrade de legende : les deux bornes venaient de la palette Tailwind
+            // brute et restaient figees sur le theme clair.
+            style={{ background: `linear-gradient(to right, ${CHART_VARS.accentSoft}, ${CHART_VARS.accent})` }} />
           <span>High FDR → Low FDR</span>
         </div>
       </div>
@@ -153,7 +156,7 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
           <XAxis
             type="number" dataKey="x" name="Gene Ratio"
             {...CHART_AXIS} tickLine={false} axisLine={false}
-            label={{ value: 'Gene Ratio', position: 'insideBottom', offset: -12, fontSize: 10, fill: '#94a3b8' }}
+            label={{ value: 'Gene Ratio', position: 'insideBottom', offset: -12, fontSize: 10, fill: CHART_VARS.inkMuted }}
           />
           <YAxis
             type="category" dataKey="y" width={210}

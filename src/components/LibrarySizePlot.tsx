@@ -14,6 +14,7 @@ import {
 import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface LibrarySizePlotProps {
   dataset: Dataset;
@@ -25,6 +26,7 @@ interface LibrarySizeResult {
 }
 
 export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
+  const palette = useChartPalette();
   const [data, setData] = useState<LibrarySizeResult[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export default function LibrarySizePlot({ dataset }: LibrarySizePlotProps) {
                 'Library Size',
               ]} />
             <Legend />
-            <Bar dataKey="reads" fill="#00BFA5" name="Reads" />
+            <Bar dataKey="reads" fill={palette.categorical[0]} name="Reads" />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -13,6 +13,7 @@ import {
 import { Users, Activity, Calendar } from 'lucide-react';
 import { useLoginStats } from '@/hooks/useLoginStats';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS } from '@/utils/chartTheme';
 
 const PERIOD_OPTIONS = [
   { label: '7 days', value: 7 },
@@ -140,7 +141,7 @@ export default function UserConnections() {
             <Line
               type="monotone"
               dataKey="count"
-              stroke="var(--brand-primary, #6366f1)"
+              stroke={CHART_VARS.accent}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}

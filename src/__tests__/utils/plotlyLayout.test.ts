@@ -14,7 +14,7 @@ const THEME: ChartTheme = {
   ink: '#INK', inkMuted: '#MUTED', inkSubtle: '#SUBTLE',
   grid: '#GRID', axis: '#AXIS',
   surface: '#SURF', surfaceRaised: '#RAISED', hover: '#HOVER',
-  accent: '#ACCENT',
+  accent: '#ACCENT', accentSoft: '#ACCENTSOFT',
   up: '#UP', down: '#DOWN', ns: '#NS', zero: '#ZERO',
   fontFamily: 'TestFont',
 };

@@ -12,6 +12,7 @@ import {
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
 import { CHART_AXIS, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 
 interface ClaimsRadarProps {
   claims: CosmeticClaimScore[];
@@ -19,6 +20,7 @@ interface ClaimsRadarProps {
 
 /** Spider chart of cosmetic claim activation scores (0-100). */
 export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
+  const palette = useChartPalette();
   const data = claims.map((c) => ({
     claim: c.label.replace(/ & /g, ' &\n'),
     score: c.score,
@@ -58,7 +60,7 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
       <div style={{ width: '100%', height: 340 }}>
         <ResponsiveContainer>
           <RadarChart data={data} outerRadius="72%">
-            <PolarGrid stroke="var(--border-subtle, #e5e7eb)" />
+            <PolarGrid stroke={CHART_VARS.grid} />
             <PolarAngleAxis
               dataKey="claim"
               {...CHART_AXIS}
@@ -67,8 +69,8 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
             <Radar
               name="Score"
               dataKey="score"
-              stroke="#db2777"
-              fill="#db2777"
+              stroke={palette.categorical[4]}
+              fill={palette.categorical[4]}
               fillOpacity={0.35}
             />
             <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value) => [`${value as number}/100`, 'Score']} />

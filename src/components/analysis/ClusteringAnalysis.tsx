@@ -13,7 +13,7 @@ import {
   ReferenceLine, ResponsiveContainer
 } from 'recharts';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
-import { useChartTheme } from '@/utils/chartTheme';
+import {CHART_VARS, useChartPalette, useChartTheme } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 // Dynamically import Plotly (SSR not supported)
@@ -76,6 +76,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function ClusteringAnalysis({ projectId, datasetId, datasetName }: ClusteringAnalysisProps) {
+  const palette = useChartPalette();
   const chartTheme = useChartTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -346,11 +347,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                     <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} {...CHART_AXIS} />
                     <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} {...CHART_AXIS} />
                     <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']} labelFormatter={k => `k = ${k}`} />
-                    <ReferenceLine y={0.5} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: '#94a3b8' }} />
+                    <ReferenceLine y={0.5} stroke={CHART_VARS.axis} strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: CHART_VARS.inkMuted }} />
                     <Line
                       type="monotone"
                       dataKey="silhouette_score"
-                      stroke="#2A2E5B"
+                      stroke={palette.categorical[0]}
                       strokeWidth={2}
                       dot={(props: SilhouetteDotProps) => {
                         const isRec = props.payload?.k === silhouetteData.recommended_k;
@@ -360,8 +361,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                             cx={props.cx}
                             cy={props.cy}
                             r={isRec ? 7 : 4}
-                            fill={isRec ? '#d97706' : '#2A2E5B'}
-                            stroke={isRec ? '#fff' : 'none'}
+                            fill={isRec ? palette.categorical[3] : palette.categorical[0]}
+                            stroke={isRec ? CHART_VARS.surface : 'none'}
                             strokeWidth={2}
                           />
                         );

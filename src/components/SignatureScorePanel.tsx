@@ -15,6 +15,7 @@ import { useGeneLists } from '@/hooks/useBookmarks';
 import { useSignatureScore, type ScoringMethod, type SampleScore } from '@/hooks/useSignatureScore';
 import { getPalette } from '@/utils/chartPalettes';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS } from '@/utils/chartTheme';
 
 interface SignatureScorePanelProps {
   projectId: string;
@@ -300,7 +301,7 @@ export default function SignatureScorePanel({
               <Scatter
                 name="Median"
                 data={chart.medians}
-                fill="#111827"
+                fill={CHART_VARS.ink}
                 shape="cross"
                 isAnimationActive={false}
               />

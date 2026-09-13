@@ -14,6 +14,7 @@ import {
 import { Calculator, TrendingUp, AlertCircle, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import {CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 
 // ============================================================================
 // Statistical utility functions (normal approximation – sufficient for planning)
@@ -141,6 +142,7 @@ const POWER_STYLES: Record<PowerLevel, { text: string; panel: string; label: str
 };
 
 export default function PowerAnalysis() {
+  const palette = useChartPalette();
   const [mode, setMode] = useState<Mode>('sample-size');
   const [testType, setTestType] = useState<TestType>('two-sample');
   const [twoTailed, setTwoTailed] = useState(true);
@@ -551,24 +553,24 @@ export default function PowerAnalysis() {
                   } />
                 <ReferenceLine
                   y={0.8}
-                  stroke="#16a34a"
+                  stroke={CHART_VARS.axis}
                   strokeDasharray="5 3"
-                  label={{ value: '80%', fill: '#16a34a', fontSize: 10, position: 'right' }}
+                  label={{ value: '80%', fill: CHART_VARS.up, fontSize: 10, position: 'right' }}
                 />
                 <ReferenceLine
                   y={0.9}
-                  stroke="#0284c7"
+                  stroke={CHART_VARS.axis}
                   strokeDasharray="5 3"
-                  label={{ value: '90%', fill: '#0284c7', fontSize: 10, position: 'right' }}
+                  label={{ value: '90%', fill: palette.categorical[1], fontSize: 10, position: 'right' }}
                 />
                 {result && result.n <= 200 && (
                   <ReferenceLine
                     x={result.n}
-                    stroke="#9333ea"
+                    stroke={CHART_VARS.axis}
                     strokeDasharray="4 2"
                     label={{
                       value: `n=${result.n}`,
-                      fill: '#9333ea',
+                      fill: palette.categorical[2],
                       fontSize: 10,
                       position: 'top',
                     }}
@@ -577,7 +579,7 @@ export default function PowerAnalysis() {
                 <Line
                   type="monotone"
                   dataKey="power"
-                  stroke="#9333ea"
+                  stroke={palette.categorical[2]}
                   strokeWidth={2.5}
                   dot={false}
                   activeDot={{ r: 4 }}

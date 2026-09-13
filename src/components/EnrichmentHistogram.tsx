@@ -12,6 +12,7 @@ import {
   Cell,
 } from 'recharts';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
+import {CHART_VARS } from '@/utils/chartTheme';
 
 interface GOTerm {
   go_id: string;
@@ -122,12 +123,12 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
           layout="vertical"
           margin={{ top: 4, right: 48, left: 8, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={CHART_VARS.grid} />
           <XAxis
             type="number"
             domain={[0, xMax]}
             {...CHART_AXIS}
-            label={{ value: '-log₁₀(FDR)', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#94a3b8' }}
+            label={{ value: '-log₁₀(FDR)', position: 'insideBottom', offset: -2, fontSize: 10, fill: CHART_VARS.inkMuted }}
           />
           <YAxis
             type="category"
@@ -135,12 +136,12 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
             width={200}
             {...CHART_AXIS}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: CHART_VARS.hover }} />
           <ReferenceLine
             x={LOG10_THRESHOLD}
-            stroke="#6366f1"
+            stroke={CHART_VARS.axis}
             strokeDasharray="4 2"
-            label={{ value: 'FDR 0.05', position: 'top', fontSize: 9, fill: '#6366f1' }}
+            label={{ value: 'FDR 0.05', position: 'top', fontSize: 9, fill: CHART_VARS.accent }}
           />
           <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
             {data.map((entry, index) => (

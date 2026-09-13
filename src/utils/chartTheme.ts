@@ -36,6 +36,8 @@ export interface ChartTheme {
   surfaceRaised: string;
   hover: string;
   accent: string;
+  /** Fond d'accent, pour les rampes de legende. */
+  accentSoft: string;
   /** Direction de regulation. Reserve a la donnee, jamais a la chrome. */
   up: string;
   down: string;
@@ -61,6 +63,7 @@ export const CHART_VARS: Readonly<ChartTheme> = Object.freeze({
   surfaceRaised: 'var(--surface-raised)',
   hover: 'var(--hover-overlay)',
   accent: 'var(--sl-purple)',
+  accentSoft: 'var(--sl-purple-light)',
   up: 'var(--chart-up)',
   down: 'var(--chart-down)',
   ns: 'var(--chart-ns)',
@@ -88,6 +91,7 @@ const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
     grid: '#edeff2', axis: '#edeff2',
     surface: '#ffffff', surfaceRaised: '#ffffff', hover: '#f4f5f8',
     accent: '#4f46e5',
+    accentSoft: '#eef0ff',
     up: '#16a34a', down: '#dc2626', ns: '#c7ccd4', zero: '#f7f7f7',
     fontFamily: 'Geist, system-ui, sans-serif',
   },
@@ -96,6 +100,7 @@ const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
     grid: '#171e30', axis: '#1f2840',
     surface: '#131720', surfaceRaised: '#1c2438', hover: '#1c2438',
     accent: '#4f46e5',
+    accentSoft: 'rgba(79, 70, 229, 0.16)',
     up: '#22c55e', down: '#ef4444', ns: '#4a5568', zero: '#1c2438',
     fontFamily: 'Geist, system-ui, sans-serif',
   },
@@ -111,6 +116,7 @@ const VAR_NAMES: Record<keyof ChartTheme, string> = {
   surfaceRaised: '--surface-raised',
   hover: '--hover-overlay',
   accent: '--sl-purple',
+  accentSoft: '--sl-purple-light',
   up: '--chart-up',
   down: '--chart-down',
   ns: '--chart-ns',
@@ -165,6 +171,7 @@ export function readChartTheme(root?: HTMLElement | null): ChartTheme {
     surfaceRaised: read('surfaceRaised'),
     hover: read('hover'),
     accent: read('accent'),
+    accentSoft: read('accentSoft'),
     up: read('up'),
     down: read('down'),
     ns: read('ns'),

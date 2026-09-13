@@ -137,7 +137,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       uniqueCategories.forEach((cat, i) => {
           map[cat as string] = palette.categorical[i % palette.categorical.length];
       });
-      map['Unknown'] = '#d1d5db';
+      map['Unknown'] = palette.ns;
       return map;
   }, [uniqueCategories, palette]);
 

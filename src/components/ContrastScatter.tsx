@@ -17,18 +17,34 @@ import { Download, GitCompareArrows } from 'lucide-react';
 import type { ComparisonRef } from '@/components/MultiComparisonVenn';
 import { useContrastScatter, type Quadrant, type ScatterPoint } from '@/hooks/useContrastScatter';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS } from '@/utils/chartTheme';
+import { useChartPalette } from '@/utils/chartTheme';
+import type { Palette } from '@/utils/chartPalettes';
 
 interface ContrastScatterProps {
   pathDatasetId: string;
   comparisons: ComparisonRef[];
 }
 
-const QUADRANT_META: Record<Quadrant, { label: string; color: string }> = {
-  concordant: { label: 'Concordant', color: '#2563eb' },
-  discordant: { label: 'Discordant', color: '#dc2626' },
-  specific_a: { label: 'Specific to A', color: '#059669' },
-  specific_b: { label: 'Specific to B', color: '#d97706' },
-  ns: { label: 'Not significant', color: '#cbd5e1' },
+/**
+ * `slot` indexe la palette categorielle ; -1 designe le non-significatif,
+ * qui doit RECULER et ne participe donc pas a la serie.
+ *
+ * Les couleurs etaient declarees ici en dur, donc figees sur le theme clair :
+ * `ns` valait #cbd5e1, soit un gris tres clair qui, sur fond sombre, rendait
+ * le non-significatif plus visible que le reste.
+ */
+const quadrantColor = (q: Quadrant, palette: Palette) =>
+  QUADRANT_META[q].slot < 0 ? palette.ns : palette.categorical[QUADRANT_META[q].slot];
+
+const QUADRANT_META: Record<Quadrant, { label: string; slot: number }> = {
+  // Les couleurs viennent de la palette au rendu : declarees ici en dur,
+  // elles restaient celles du theme clair sur fond sombre.
+  concordant: { label: 'Concordant', slot: 0 },
+  discordant: { label: 'Discordant', slot: 1 },
+  specific_a: { label: 'Specific to A', slot: 2 },
+  specific_b: { label: 'Specific to B', slot: 3 },
+  ns: { label: 'Not significant', slot: -1 },
 };
 
 // Cap the number of rendered points for SVG performance. Interesting points
@@ -42,6 +58,7 @@ function fmt(n: number | null | undefined, digits = 3): string {
 }
 
 export default function ContrastScatter({ pathDatasetId, comparisons }: ContrastScatterProps) {
+  const palette = useChartPalette();
   const [keyA, setKeyA] = useState<string>(comparisons[0]?.key ?? '');
   const [keyB, setKeyB] = useState<string>(comparisons[1]?.key ?? '');
   const [padjThreshold, setPadjThreshold] = useState(0.05);
@@ -276,11 +293,11 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                   label={{ value: `log2FC — ${result.comparison_b.label}`, angle: -90, position: 'left', offset: -5, fontSize: 12 }}
                 />
                 <ZAxis range={[16, 16]} />
-                <ReferenceLine x={0} stroke="#94a3b8" />
-                <ReferenceLine y={0} stroke="#94a3b8" />
+                <ReferenceLine x={0} stroke={CHART_VARS.axis} />
+                <ReferenceLine y={0} stroke={CHART_VARS.axis} />
                 <ReferenceLine
                   segment={axisDomain ? [{ x: axisDomain[0], y: axisDomain[0] }, { x: axisDomain[1], y: axisDomain[1] }] : undefined}
-                  stroke="#cbd5e1" strokeDasharray="4 4"
+                  stroke={CHART_VARS.axis} strokeDasharray="4 4"
                 />
                 <Tooltip
                   cursor={{ strokeDasharray: '3 3' }}
@@ -292,7 +309,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                         <div className="font-semibold text-primary">{p.gene}</div>
                         <div>{result.comparison_a.label}: log2FC {fmt(p.logfc_a, 2)}, padj {fmt(p.padj_a)}</div>
                         <div>{result.comparison_b.label}: log2FC {fmt(p.logfc_b, 2)}, padj {fmt(p.padj_b)}</div>
-                        <div className="mt-1" style={{ color: QUADRANT_META[p.quadrant].color }}>
+                        <div className="mt-1" style={{ color: quadrantColor(p.quadrant, palette) }}>
                           {QUADRANT_META[p.quadrant].label}
                         </div>
                       </div>
@@ -305,7 +322,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                     key={q}
                     name={`${QUADRANT_META[q].label} (${result.counts[q]})`}
                     data={seriesByQuadrant.rendered[q]}
-                    fill={QUADRANT_META[q].color}
+                    fill={quadrantColor(q, palette)}
                     fillOpacity={q === 'ns' || q === 'concordant' ? 0.5 : 0.9}
                     isAnimationActive={false}
                   />
@@ -340,7 +357,7 @@ export default function ContrastScatter({ pathDatasetId, comparisons }: Contrast
                         <td className="px-3 py-1.5">{fmt(p.logfc_b, 2)}</td>
                         <td className="px-3 py-1.5">{fmt(p.padj_a)}</td>
                         <td className="px-3 py-1.5">{fmt(p.padj_b)}</td>
-                        <td className="px-3 py-1.5" style={{ color: QUADRANT_META[p.quadrant].color }}>
+                        <td className="px-3 py-1.5" style={{ color: quadrantColor(p.quadrant, palette) }}>
                           {QUADRANT_META[p.quadrant].label}
                         </td>
                       </tr>

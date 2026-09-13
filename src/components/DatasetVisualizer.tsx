@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface DatasetVisualizerProps {
   dataset: Dataset;
@@ -22,6 +23,7 @@ interface DatasetVisualizerProps {
 }
 
 export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerProps) {
+  const palette = useChartPalette();
   const chartData = useMemo(() => {
     if (!data || !data.data) return [];
     return data.data;
@@ -85,7 +87,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             <XAxis type="number" dataKey="x" name="Log2 Fold Change" />
             <YAxis type="number" dataKey="y" name="-log10(P-value)" />
             <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
-            <Scatter name="Genes" data={volcanoData} fill="#8884d8" />
+            <Scatter name="Genes" data={volcanoData} fill={palette.categorical[0]} />
           </ScatterChart>
         </ResponsiveContainer>
       </div>
@@ -121,7 +123,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
             />
             <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
-            <Bar dataKey={scoreCol} fill="#8884d8" name={scoreCol} />
+            <Bar dataKey={scoreCol} fill={palette.categorical[0]} name={scoreCol} />
           </BarChart>
         </ResponsiveContainer>
         <p className="text-body-sm text-secondary mt-2 text-center">Top 20 items by {scoreCol}</p>

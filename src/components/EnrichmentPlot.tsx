@@ -5,6 +5,8 @@ import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Responsive
 import { useDatasetQuery } from '@/hooks/useDatasets';
 import { Dataset } from '@/types';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface EnrichmentPlotProps {
   dataset: Dataset;
@@ -25,6 +27,9 @@ interface EnrichmentPoint {
 }
 
 export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPlotProps) {
+  const { theme } = useTheme();
+  const dark = theme === 'dark';
+  const palette = useChartPalette();
   // Utilise React Query pour gérer le cache
   const { data: queryData, isLoading } = useDatasetQuery(dataset.id, 1000);
 
@@ -136,17 +141,35 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
   if (isLoading) return <div>Loading enrichment data...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
-  // Color scale based on -log10(p-value): gray to red gradient
+  /**
+   * Rampe de significativite : plus c'est significatif, plus c'est CONTRASTE.
+   *
+   * La rampe etait unique pour les deux themes, et mesuree elle s'inversait
+   * exactement. Contraste sur le fond, du non-significatif au p<1e-10 :
+   *
+   *     clair  : 2,54 -> 10,02   (correct)
+   *     sombre : 7,06 ->  1,79   (inverse)
+   *
+   * En theme sombre, la voie la PLUS significative etait donc la MOINS
+   * visible — sous le plancher de 3:1 — pendant que le bruit criait a 7:1.
+   * C'est un defaut de lisibilite de la donnee, pas un detail esthetique.
+   *
+   * La rampe sombre part du gris de recul et s'eclaircit : 2,38 -> 3,10 ->
+   * 4,14 -> 5,13 -> 6,65 -> 9,08. Monotone croissante, et tous les paliers
+   * significatifs au-dessus de 3:1.
+   */
+  const RAMP = dark
+    ? ['#4a5568', '#a34a4a', '#c85454', '#e06060', '#ef7b7b', '#fba0a0']
+    : ['#9ca3af', '#f87171', '#ef4444', '#dc2626', '#991b1b', '#7f1d1d'];
+
   const getColor = (negLogP: number | undefined) => {
-      if (!negLogP || negLogP <= 0) return '#e5e7eb'; // Light gray for invalid
-      
-      // Gradient from gray (not significant) to red (very significant)
-      if (negLogP > 10) return '#7f1d1d'; // Very dark red - extremely significant (p < 10^-10)
-      if (negLogP > 5) return '#991b1b'; // Dark red (p < 10^-5)
-      if (negLogP > 3) return '#dc2626'; // Red (p < 0.001)
-      if (negLogP > 2) return '#ef4444'; // Light red (p < 0.01)
-      if (negLogP > 1.3) return '#f87171'; // Lighter red (p < 0.05)
-      return '#9ca3af'; // Gray - not significant
+      if (!negLogP || negLogP <= 0) return palette.ns;
+      if (negLogP > 10) return RAMP[5];
+      if (negLogP > 5) return RAMP[4];
+      if (negLogP > 3) return RAMP[3];
+      if (negLogP > 2) return RAMP[2];
+      if (negLogP > 1.3) return RAMP[1];
+      return RAMP[0];
   };
   
   return (
@@ -157,7 +180,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
         <div className="flex items-center gap-2">
           <span className="text-xs text-secondary">Not significant</span>
           <div className="flex-1 h-6 rounded-sm" style={{
-            background: 'linear-gradient(to right, #9ca3af, #f87171, #ef4444, #dc2626, #991b1b, #7f1d1d)'
+            background: `linear-gradient(to right, ${RAMP.join(', ')})`
           }}></div>
           <span className="text-xs text-secondary">Very significant</span>
         </div>
