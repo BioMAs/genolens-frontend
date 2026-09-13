@@ -1,4 +1,5 @@
 import type { ChartTheme } from '@/utils/chartTheme';
+import { getPalette } from '@/utils/chartPalettes';
 
 /**
  * Fabrique de mise en page Plotly.
@@ -82,15 +83,16 @@ const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
- * Palette categorielle, en attendant la refonte complete (vague C0 du plan).
+ * Palette categorielle de repli, tiree de la source unique plutot que recopiee
+ * a la main — c'est une recopie qui avait laisse ici une liste perimee.
  *
- * L'ancienne etait trois couleurs de marque suivies des SEPT couleurs de demo
- * de Recharts. Celles-ci sont au moins tirees des tokens de donnees existants.
+ * Elle ne s'applique qu'aux traces qui ne fixent PAS leur propre couleur. Un
+ * appelant qui affiche plusieurs series passe `colorway: palette.categorical`
+ * (via `useChartPalette`, qui suit le theme et la preference de daltonisme) :
+ * la fabrique ne recoit que le theme CSS, elle ne peut pas connaitre la
+ * preference de l'utilisateur.
  */
-const CATEGORICAL = [
-  '#4f46e5', '#0f9d6b', '#d97706', '#db2777',
-  '#0284c7', '#7c3aed', '#65a30d', '#c2410c',
-];
+const CATEGORICAL = getPalette('standard', 'light').categorical;
 
 export function buildPlotlyConfig(opts: { filename: string; interactive?: boolean }) {
   return {

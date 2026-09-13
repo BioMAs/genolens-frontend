@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import type { Data, Layout } from 'plotly.js';
-import { useChartTheme } from '@/utils/chartTheme';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 /*
@@ -84,6 +84,11 @@ export default function CustomVisualizationPanel({
     allGenes = []
 }: CustomVisualizationPanelProps) {
     const chartTheme = useChartTheme();
+    // Deux copies du meme tableau de six couleurs vivaient plus bas, dont
+    // `#ef4444` — la couleur « sous-exprime » employee comme couleur de serie
+    // NOMINALE. Une palette categorielle encode du nominal uniquement : reprendre
+    // une couleur de direction y fait lire « down » a un groupe d'echantillons.
+    const palette = useChartPalette();
     const [vizType, setVizType] = useState<VisualizationType>('pca');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -206,7 +211,7 @@ export default function CustomVisualizationPanel({
         if (!pcaData) return null;
 
         const groups = Array.from(new Set(pcaData.data.map(d => d.group || 'Unknown')));
-        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const colors = palette.categorical;
 
         if (nComponents === 2) {
             const traces: Data[] = groups.map((group, idx) => ({
@@ -278,7 +283,7 @@ export default function CustomVisualizationPanel({
         if (!umapData) return null;
 
         const groups = Array.from(new Set(umapData.data.map(d => d.group || 'Unknown')));
-        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const colors = palette.categorical;
 
         if (nComponents === 2) {
             const traces: Data[] = groups.map((group, idx) => ({
@@ -364,6 +369,10 @@ export default function CustomVisualizationPanel({
         }).flat();
 
         const layout = buildPlotlyLayout(chartTheme, {
+            // Les traces de boite ne fixent pas leur couleur : elles tombent sur
+            // `colorway`. Le passer ici est ce qui les fait suivre le theme et la
+            // preference de daltonisme, que la fabrique ne connait pas.
+            colorway: palette.categorical,
             title: { text: `Expression Distribution - ${boxplotData.n_genes} gene(s)` },
             yaxis: { title: { text: 'Expression Level' } },
             xaxis: { title: { text: '' } },
