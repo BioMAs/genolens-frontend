@@ -14,10 +14,26 @@ export interface Palette {
   };
 }
 
-/** Wong (2011). Voir le commentaire du mode daltonisme pour le compromis. */
-const WONG = [
-  '#E69F00', '#56B4E9', '#009E73', '#F0E442',
-  '#0072B2', '#D55E00', '#CC79A7', '#000000',
+/**
+ * Palette categorielle du mode DALTONISME, construite par optimisation OKLCH.
+ *
+ * Une par theme : elles n'ont pas la meme surface a affronter, et une palette
+ * unique condamne l'une des deux — c'est exactement ce qui faisait echouer
+ * trois des huit couleurs de Wong sur blanc.
+ *
+ * L'ordre porte de l'information : les premiers emplacements sont les plus
+ * separes, or la plupart des graphiques du produit n'emploient que trois a
+ * cinq series. Mesure sur les sous-ensembles reels — clair : 0,283 a trois
+ * series, 0,159 a quatre, 0,150 a cinq.
+ */
+const CB_LIGHT = [
+  '#106118', '#f7419f', '#058dfa', '#783d25',
+  '#696ba5', '#127a6b', '#aa6ecd', '#b27402',
+];
+
+const CB_DARK = [
+  '#058dfa', '#d24011', '#f897c9', '#874e99',
+  '#8ec08d', '#706d06', '#eb9f2c', '#b7affd',
 ];
 
 /**
@@ -99,39 +115,55 @@ const PALETTES: Record<PaletteMode, Record<ThemeMode, Palette>> = {
   },
 
   /**
-   * Mode daltonisme — Wong (2011), INCHANGE.
+   * Mode daltonisme — palette optimisee en OKLCH, en remplacement de Wong 2011.
    *
-   * J'ai commence par en reecrire les huit couleurs pour corriger leur
-   * contraste, puis j'ai mesure le resultat. Verdict, sous simulation
-   * deuteranope / protanope / tritanope :
+   * ── La methode, pour que les chiffres soient refaisables ───────────────────
+   * Separation d'une paire = distance OKLab, evaluee sous QUATRE visions
+   * (normale, deuteranope, protanope, tritanope), et on retient la PIRE.
+   * Separation d'une palette = le minimum sur ses 28 paires. Le test
+   * `colorblindPalette.test.ts` recalcule tout cela a chaque execution.
    *
-   *   Wong          : separation minimale 0,1415
-   *   ma reecriture : separation minimale 0,0110  — treize fois pire
+   * ── Ce que Wong donnait, et la correction d'un chiffre faux ────────────────
+   *                    normal  deuter  protan  tritan   echecs du plancher 3:1
+   *   Wong 2011        0,1558  0,0646  0,0897  0,0478   3/8 en clair, 1/8 en sombre
+   *   nouvelle claire  0,1190  0,1188  0,1118  0,1153   0/8
+   *   nouvelle sombre  0,1213  0,1148  0,1151  0,1179   0/8
    *
-   * J'avais troque la DISTINGUABILITE contre du contraste. C'est un mauvais
-   * echange : distinguer les series EST la raison d'etre de ce mode, et un
-   * utilisateur daltonien prefere une couleur pale qu'il sait separer d'une
-   * autre a une couleur franche qu'il confond avec sa voisine.
+   * Le commentaire precedent annoncait « Wong : separation minimale 0,1415 ».
+   * Ce chiffre n'est reproductible sous AUCUNE des definitions essayees —
+   * min sur les quatre visions (0,0478), sur la vision normale seule (0,1558),
+   * sur les trois dichromaties (0,0478), moyenne des paires (0,2945), avec ou
+   * sans le noir. Il etait faux, et il a servi a justifier de garder Wong.
    *
-   * La tension est reelle et ne se resout pas par une mise a l'echelle de
-   * luminosite : Wong tire precisement sa separation de l'amplitude de
-   * luminosite qui casse son contraste (mesure, l'ajustement naif tombe a
-   * 0,0051). La resoudre demande une optimisation en OKLCH sous les trois
-   * simulations — un vrai travail de conception, pas un codemod, et il n'est
-   * pas fait ici.
+   * La lecture ligne a ligne est plus instructive que le total : Wong est
+   * excellent en vision NORMALE (0,1558) et s'effondre sous dichromatie
+   * (0,0478, soit trois fois moins). Les nouvelles palettes sont PLATES sur
+   * les quatre visions — c'est la signature d'une palette qui ne s'appuie pas
+   * sur les canaux qu'un dichromate perd.
    *
-   * DEFAUT CONNU, assume : sur fond blanc #F0E442 donne 1,32:1, #E69F00
-   * 2,25:1, #56B4E9 2,31:1 ; sur fond sombre #000000 donne 1,17:1. Ces
-   * couleurs restent peu visibles. `ns` et `zero` sont en revanche corriges
-   * ci-dessous — ils n'encodent aucune categorie, donc les rendre
-   * dependants du theme ne coute aucune separation.
+   * ── Le compromis paye, explicitement ───────────────────────────────────────
+   * Une premiere optimisation atteignait 0,1415 / 0,1386 sans contrainte de
+   * voisinage. Contraindre la distance au gris `ns` coute 21 % de separation
+   * intra-palette et rend le double en distance a ce gris. Ce n'etait pas
+   * facultatif : `ns` COEXISTE reellement avec les categories — la PCA
+   * l'emploie pour « Unknown » a cote des couleurs de groupe.
+   *
+   * Les couleurs de DIRECTION ne sont pas contraintes : la regle ecrite plus
+   * haut interdit qu'un graphique encode a la fois du nominal et une
+   * direction. Les contraindre aussi coutait 36 % de separation pour proteger
+   * d'une violation de regle, et non d'un cas reel.
+   *
+   * Contraintes de la recherche : contraste dans [3,05 ; 8,5] en clair et
+   * [3,05 ; 9,5] en sombre — le PLAFOND compte autant que le plancher, trois
+   * couleurs a 12:1 sur blanc etant trois noirs pour une vision normale —
+   * chroma OKLCH >= 0,09, et 25 degres d'ecart de teinte minimum.
    */
   colorblind: {
     light: {
       up: '#D55E00',
       down: '#0072B2',
       ns: '#c7ccd4',
-      categorical: WONG,
+      categorical: CB_LIGHT,
       diverging: {
         negative: '#0072B2',
         zero: '#f7f7f7',
@@ -147,7 +179,7 @@ const PALETTES: Record<PaletteMode, Record<ThemeMode, Palette>> = {
       up: '#D55E00',
       down: '#56B4E9',
       ns: '#4a5568',
-      categorical: WONG,
+      categorical: CB_DARK,
       diverging: {
         negative: '#56B4E9',
         // Le point median suit la surface : sur fond sombre, #f7f7f7 percait
