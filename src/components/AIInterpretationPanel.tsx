@@ -15,6 +15,7 @@ import api from '@/utils/api';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import { canUseAI } from '@/utils/plan';
+import { cn } from '@/lib/cn';
 
 interface AIInterpretationPanelProps {
     datasetId: string;
@@ -511,7 +512,10 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                     </div>
                                 )}
                                 {chatMessages.map((msg, idx) => (
-                                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div key={idx} className={cn(
+                                                     'flex',
+                                                     msg.role === 'user' ? 'justify-end' : 'justify-start',
+                                                   )}>
                                         {msg.role === 'user' ? (
                                             <div className="max-w-[80%] rounded-card px-4 py-2 text-on-accent" style={{ background: 'var(--sl-purple)' }}>
                                                 <div className="whitespace-pre-wrap text-body-sm">{msg.content}</div>

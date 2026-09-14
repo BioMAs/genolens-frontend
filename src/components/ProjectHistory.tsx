@@ -210,7 +210,7 @@ export default function ProjectHistory({ projectId }: ProjectHistoryProps) {
           disabled={isFetching}
           className="inline-flex items-center gap-2 rounded-sm border border-strong bg-surface px-3 py-1.5 text-body-sm text-primary hover:bg-hover disabled:opacity-50 transition-colors"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className={cn('h-3.5 w-3.5', isFetching ? 'animate-spin' : '')} />
           Refresh
         </button>
       </div>

@@ -8,6 +8,7 @@ import { ChatModeProvider } from "@/contexts/ChatModeContext";
 import AppFrame from "@/components/AppFrame";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
+import { cn } from '@/lib/cn';
 
 // Une seule famille : Geist porte le corps ET le titrage. Poppins, une
 // geometrique arrondie, lisait « startup » plutot que « premium sobre » ; la
@@ -86,7 +87,7 @@ export default async function RootLayout({
     // l'attribut `class` comme un écart.
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${bodyFont.variable} ${geistMono.variable} antialiased`}
+        className={cn(bodyFont.variable, geistMono.variable, 'antialiased')}
       >
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <ErrorBoundary>

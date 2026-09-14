@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface EmptyStateHelixProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -21,7 +22,7 @@ function EmptyStateHelix({
 }: EmptyStateHelixProps) {
   return (
     <div
-      className={`flex flex-col items-center gap-2 rounded-card p-8 text-center ${className}`}
+      className={cn('flex flex-col items-center gap-2 rounded-card p-8 text-center', className)}
       style={{
         border: '1.5px dashed var(--border)',
         background: 'transparent',

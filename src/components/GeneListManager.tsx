@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useBookmarks';
 import { GeneList } from '@/types/bookmark';
 import ExportMenu from '@/components/ExportMenu';
+import { cn } from '@/lib/cn';
 
 interface GeneListManagerProps {
   projectId: string;
@@ -238,9 +239,10 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                       <button
                         key={color}
                         onClick={() => setNewColor(color)}
-                        className={`h-6 w-6 rounded-sm border-2 ${
-                          newColor === color ? 'border-strong' : 'border-transparent'
-                        }`}
+                        className={cn(
+                          'h-6 w-6 rounded-sm border-2',
+                          newColor === color ? 'border-strong' : 'border-transparent',
+                        )}
                         style={{ backgroundColor: color }}
                       />
                     ))}

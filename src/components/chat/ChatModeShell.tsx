@@ -7,6 +7,7 @@ import { useChatMode } from '@/contexts/ChatModeContext';
 import { useChatAgent } from '@/hooks/useChatAgent';
 import PlotlyFigure from '@/components/chat/PlotlyFigure';
 import HelpPanel from '@/components/chat/HelpPanel';
+import { cn } from '@/lib/cn';
 
 /**
  * Full-screen assistant. Rendered by AppFrame when chat mode is on. Entry is always
@@ -33,9 +34,10 @@ export default function ChatModeShell() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHelpOpen((v) => !v)}
-            className={`flex items-center gap-2 rounded-sm border border-[var(--border)] px-3 py-1.5 text-caption font-medium hover:bg-[var(--hover-overlay)] ${
-              helpOpen ? 'text-[var(--sl-purple)]' : 'text-[var(--text-primary)]'
-            }`}
+            className={cn(
+              'flex items-center gap-2 rounded-sm border border-[var(--border)] px-3 py-1.5 text-caption font-medium hover:bg-[var(--hover-overlay)]',
+              helpOpen ? 'text-[var(--sl-purple)]' : 'text-[var(--text-primary)]',
+            )}
           >
             <HelpCircle className="h-3.5 w-3.5" /> Help
           </button>

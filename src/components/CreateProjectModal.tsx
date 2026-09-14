@@ -7,6 +7,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import api from '@/utils/api';
 import { X, ArrowUpCircle } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -81,7 +82,10 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className={`mb-4 rounded-sm p-3 text-body-sm ${isLimitError ? 'bg-warning-soft border border-warning/30' : 'bg-danger-soft'}`}>
+            <div className={cn(
+                   'mb-4 rounded-sm p-3 text-body-sm',
+                   isLimitError ? 'bg-warning-soft border border-warning/30' : 'bg-danger-soft',
+                 )}>
               <p className={isLimitError ? 'text-warning-ink font-medium' : 'text-danger-ink'}>{error}</p>
               {isLimitError && (
                 <Link

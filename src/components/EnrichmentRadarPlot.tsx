@@ -9,6 +9,7 @@ import { UserProfile } from '@/types';
 import { canUseAI } from '@/utils/plan';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
@@ -391,8 +392,11 @@ export default function EnrichmentRadarPlot({
   if (error) {
     const isPlanError = error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription');
     return (
-      <div className={`border rounded-control p-4 ${isPlanError ? 'bg-accent-soft border-accent-ring' : 'bg-danger-soft border-danger/30'}`}>
-        <p className={`text-sm ${isPlanError ? 'text-accent-ink' : 'text-danger-ink'}`}>{error}</p>
+      <div className={cn(
+             'border rounded-control p-4',
+             isPlanError ? 'bg-accent-soft border-accent-ring' : 'bg-danger-soft border-danger/30',
+           )}>
+        <p className={cn('text-sm', isPlanError ? 'text-accent-ink' : 'text-danger-ink')}>{error}</p>
         {isPlanError && (
           <Link
             href="/pricing"
@@ -422,11 +426,10 @@ export default function EnrichmentRadarPlot({
           <div className="flex gap-2">
             <button
               onClick={() => setSelectionMode('top')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${
-                selectionMode === 'top'
-                  ? 'bg-accent text-on-accent'
-                  : 'bg-surface text-primary hover:bg-accent-soft'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors',
+                selectionMode === 'top' ? 'bg-accent text-on-accent' : 'bg-surface text-primary hover:bg-accent-soft',
+              )}
             >
               Top {maxTerms}
             </button>
@@ -440,13 +443,10 @@ export default function EnrichmentRadarPlot({
                   setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
                 }
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1 ${
-                selectionMode === 'ai'
-                  ? 'bg-accent text-on-accent'
-                  : userCanUseAI
-                  ? 'bg-surface text-primary hover:bg-accent-soft'
-                  : 'bg-surface-2 text-muted cursor-not-allowed'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1',
+                selectionMode === 'ai' ? 'bg-accent text-on-accent' : userCanUseAI ? 'bg-surface text-primary hover:bg-accent-soft' : 'bg-surface-2 text-muted cursor-not-allowed',
+              )}
               disabled={!userCanUseAI}
             >
               {!userCanUseAI && <Lock className="w-3 h-3" />}
@@ -459,14 +459,16 @@ export default function EnrichmentRadarPlot({
                 setShowTermSelector(!showTermSelector);
                 setShowAiPrompt(false);
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1 ${
-                selectionMode === 'custom'
-                  ? 'bg-accent text-on-accent'
-                  : 'bg-surface text-primary hover:bg-accent-soft'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1',
+                selectionMode === 'custom' ? 'bg-accent text-on-accent' : 'bg-surface text-primary hover:bg-accent-soft',
+              )}
             >
               Custom
-              <ChevronDown className={`w-3 h-3 transition-transform ${showTermSelector ? 'rotate-180' : ''}`} />
+              <ChevronDown className={cn(
+                             'w-3 h-3 transition-transform',
+                             showTermSelector ? 'rotate-180' : '',
+                           )} />
             </button>
           </div>
         </div>

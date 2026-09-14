@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
 import api from '@/utils/api';
 import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 const GOForceGraph = dynamic(() => import('./GOForceGraph'), { ssr: false });
 
@@ -79,10 +80,11 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
   return (
     <div>
       <div
-        className={`flex items-center gap-1 px-2 py-1 rounded-sm cursor-pointer text-body-sm transition-colors
-          ${isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover'}
-          ${!node.is_enriched ? 'opacity-50' : ''}
-        `}
+        className={cn(
+          'flex items-center gap-1 px-2 py-1 rounded-sm cursor-pointer text-body-sm transition-colors',
+          isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover',
+          !node.is_enriched ? 'opacity-50' : '',
+        )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         onClick={() => onSelect(node)}
       >
@@ -100,7 +102,10 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
           style={{ backgroundColor: fdrDotColor(node.fdr) }}
         />
 
-        <span className={`flex-1 truncate ${node.is_enriched ? 'font-medium text-primary' : 'text-muted'}`}>
+        <span className={cn(
+                'flex-1 truncate',
+                node.is_enriched ? 'font-medium text-primary' : 'text-muted',
+              )}>
           {node.go_name}
         </span>
 
@@ -363,8 +368,10 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <div className="flex border border-line rounded-sm overflow-hidden">
             <button
               onClick={() => setViewMode('tree')}
-              className={`flex items-center gap-1 px-2 py-1 text-caption transition-colors
-                ${viewMode === 'tree' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 text-caption transition-colors',
+                viewMode === 'tree' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+              )}
               title="Tree view"
             >
               <List className="h-3.5 w-3.5" />
@@ -372,8 +379,10 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             </button>
             <button
               onClick={() => setViewMode('graph')}
-              className={`flex items-center gap-1 px-2 py-1 text-caption transition-colors
-                ${viewMode === 'graph' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover'}`}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 text-caption transition-colors',
+                viewMode === 'graph' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+              )}
               title="Force-directed graph"
             >
               <Network className="h-3.5 w-3.5" />
@@ -389,16 +398,17 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           <button
             key={ns}
             onClick={() => { setActiveNs(ns); setSelectedNode(null); }}
-            className={`px-4 py-2 text-caption font-semibold transition-colors border-b-2
-              ${activeNs === ns
-                ? 'text-accent-ink border-accent bg-surface'
-                : 'text-muted border-transparent hover:text-secondary'
-              }`}
+            className={cn(
+              'px-4 py-2 text-caption font-semibold transition-colors border-b-2',
+              activeNs === ns ? 'text-accent-ink border-accent bg-surface' : 'text-muted border-transparent hover:text-secondary',
+            )}
           >
             {NS_FULL[ns]}
             {hierarchy && (
-              <span className={`ml-2 px-1.5 py-0.5 rounded-pill text-micro
-                ${activeNs === ns ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-muted'}`}>
+              <span className={cn(
+                      'ml-2 px-1.5 py-0.5 rounded-pill text-micro',
+                      activeNs === ns ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-muted',
+                    )}>
                 {hierarchy[ns].length}
               </span>
             )}

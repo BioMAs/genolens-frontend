@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAnnoDbCategories } from '@/hooks/useAnalyses';
 import { AnalysisParams } from '@/types';
 import api from '@/utils/api';
+import { cn } from '@/lib/cn';
 
 interface Props {
   projectId: string;
@@ -238,11 +239,10 @@ export default function AnalysisLauncher({ projectId }: Props) {
                         setEnrichmentDatabases(next.length === availableCategories.length ? null : next);
                       }
                     }}
-                    className={`rounded-pill px-3 py-1 text-caption font-medium border transition-colors ${
-                      selected
-                        ? 'bg-accent border-accent text-on-accent'
-                        : 'bg-surface border-strong text-secondary hover:border-accent'
-                    }`}
+                    className={cn(
+                      'rounded-pill px-3 py-1 text-caption font-medium border transition-colors',
+                      selected ? 'bg-accent border-accent text-on-accent' : 'bg-surface border-strong text-secondary hover:border-accent',
+                    )}
                   >
                     {cat}
                   </button>

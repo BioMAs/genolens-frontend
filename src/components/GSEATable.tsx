@@ -404,11 +404,10 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 <button
                   key={i}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 border rounded-sm text-body-sm ${
-                    currentPage === pageNum
-                      ? 'bg-brand-primary text-on-accent border-brand-primary'
-                      : 'border-strong hover:bg-hover'
-                  }`}
+                  className={cn(
+                    'px-3 py-1 border rounded-sm text-body-sm',
+                    currentPage === pageNum ? 'bg-brand-primary text-on-accent border-brand-primary' : 'border-strong hover:bg-hover',
+                  )}
                 >
                   {pageNum}
                 </button>

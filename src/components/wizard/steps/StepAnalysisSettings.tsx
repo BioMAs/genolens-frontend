@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AnalysisParams } from '@/types';
 import { ChevronRight, Info, Settings, Zap } from 'lucide-react';
 import { useAnnoDbCategories } from '@/hooks/useAnalyses';
+import { cn } from '@/lib/cn';
 
 const MODE_KEY = 'genolens:analysis-mode';
 
@@ -144,11 +145,10 @@ export default function StepAnalysisSettings({
         <button
           type="button"
           onClick={() => setMode('standard')}
-          className={`flex items-center gap-2 rounded-sm px-4 py-1.5 text-body-sm font-medium transition-colors ${
-            mode === 'standard'
-              ? 'bg-surface text-primary shadow-sm'
-              : 'text-secondary hover:text-primary'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-4 py-1.5 text-body-sm font-medium transition-colors',
+            mode === 'standard' ? 'bg-surface text-primary shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <Zap className="h-3.5 w-3.5" />
           Standard
@@ -156,11 +156,10 @@ export default function StepAnalysisSettings({
         <button
           type="button"
           onClick={() => setMode('advanced')}
-          className={`flex items-center gap-2 rounded-sm px-4 py-1.5 text-body-sm font-medium transition-colors ${
-            mode === 'advanced'
-              ? 'bg-surface text-primary shadow-sm'
-              : 'text-secondary hover:text-primary'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-4 py-1.5 text-body-sm font-medium transition-colors',
+            mode === 'advanced' ? 'bg-surface text-primary shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <Settings className="h-3.5 w-3.5" />
           Advanced
@@ -361,11 +360,10 @@ export default function StepAnalysisSettings({
                         key={cat}
                         type="button"
                         onClick={() => toggleDb(cat)}
-                        className={`rounded-pill px-3 py-1 text-caption font-medium border transition-colors ${
-                          isDbSelected(cat)
-                            ? 'bg-accent border-accent text-on-accent'
-                            : 'bg-surface border-strong text-secondary hover:border-accent'
-                        }`}
+                        className={cn(
+                          'rounded-pill px-3 py-1 text-caption font-medium border transition-colors',
+                          isDbSelected(cat) ? 'bg-accent border-accent text-on-accent' : 'bg-surface border-strong text-secondary hover:border-accent',
+                        )}
                       >
                         {cat}
                       </button>

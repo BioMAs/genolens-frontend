@@ -21,6 +21,7 @@ import ComparisonSidebarNav from './comparison/ComparisonSidebarNav';
 import ProjectSwitcher from './sidebar/ProjectSwitcher';
 import UserMenu from './sidebar/UserMenu';
 import { useScientificModule } from '@/hooks/useAddOnModules';
+import { cn } from '@/lib/cn';
 
 interface SidebarProps {
   user: User;
@@ -105,7 +106,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`nav-item${isActive(href, match) ? ' active' : ''}`}
+                className={cn('nav-item', isActive(href, match) ? ' active' : '')}
               >
                 <Icon className="nav-icon" />
                 {label}
@@ -138,7 +139,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
                     ) : (
                       <Link
                         href={href}
-                        className={`nav-item${isProjectActive(href) ? ' active' : ''}`}
+                        className={cn('nav-item', isProjectActive(href) ? ' active' : '')}
                       >
                         <Icon className="nav-icon" />
                         {label}
@@ -159,7 +160,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
             <span className="nav-section-label mb-2">Admin</span>
             <Link
               href="/admin"
-              className={`nav-item nav-item--danger${isActive('/admin') ? ' active' : ''}`}
+              className={cn('nav-item nav-item--danger', isActive('/admin') ? ' active' : '')}
             >
               <Shield className="nav-icon" />
               Administration

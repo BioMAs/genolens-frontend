@@ -11,6 +11,7 @@ import {
 import { useProjects } from '@/hooks/useProjects';
 import { Badge } from '@/components/ui/badge';
 import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
+import { cn } from '@/lib/cn';
 
 const PAGE_SIZE = 25;
 
@@ -357,9 +358,11 @@ function Th({
   return (
     <th
       scope="col"
-      className={`px-3 py-2.5 text-micro uppercase tracking-wide ${
-        align === 'right' ? 'text-right' : 'text-left'
-      } ${className}`}
+      className={cn(
+        'px-3 py-2.5 text-micro uppercase tracking-wide',
+        align === 'right' ? 'text-right' : 'text-left',
+        className,
+      )}
       style={{ color: 'var(--text-muted)' }}
     >
       {children}
@@ -378,9 +381,11 @@ function Td({
 }) {
   return (
     <td
-      className={`max-w-[240px] px-3 py-2.5 ${
-        align === 'right' ? 'text-right' : 'text-left'
-      } ${className}`}
+      className={cn(
+        'max-w-[240px] px-3 py-2.5',
+        align === 'right' ? 'text-right' : 'text-left',
+        className,
+      )}
     >
       {children}
     </td>

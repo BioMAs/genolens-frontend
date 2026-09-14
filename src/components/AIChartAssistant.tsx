@@ -8,6 +8,7 @@ import { useChartAI, ChartType } from '@/hooks/useChartAI';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import { canUseAI } from '@/utils/plan';
+import { cn } from '@/lib/cn';
 
 interface AIChartAssistantProps {
   datasetId: string;
@@ -22,7 +23,7 @@ interface AIChartAssistantProps {
 function AIAvatar({ className = 'h-6 w-6' }: { className?: string }) {
   return (
     <div
-      className={`flex flex-shrink-0 items-center justify-center rounded-pill ${className}`}
+      className={cn('flex flex-shrink-0 items-center justify-center rounded-pill', className)}
       style={{ background: 'var(--sl-purple-light)', color: 'var(--sl-purple)' }}
     >
       <Sparkles className="h-3.5 w-3.5" />
@@ -175,7 +176,10 @@ export default function AIChartAssistant({
           </div>
 
           {/* Messages */}
-          <div className={`${panelClassName ?? 'max-h-72'} flex flex-col gap-3 overflow-y-auto p-4`}>
+          <div className={cn(
+                 panelClassName ?? 'max-h-72',
+                 'flex flex-col gap-3 overflow-y-auto p-4',
+               )}>
             {!interpretation && !isInterpreting && (
               <div className="flex flex-col items-center gap-2 py-4 text-center">
                 <p className="text-caption" style={{ color: 'var(--text-muted)' }}>Get an AI reading of this chart.</p>
@@ -213,7 +217,7 @@ export default function AIChartAssistant({
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}
+                className={cn('flex gap-2', msg.role === 'user' ? 'justify-end' : '')}
               >
                 {msg.role === 'assistant' && <AIAvatar />}
                 {msg.role === 'user' ? (

@@ -5,6 +5,7 @@ import { useProjectDatasets } from '@/hooks/useProjectData';
 import { Dataset, DatasetStatus } from '@/types';
 import QCDashboard from '@/components/QCDashboard';
 import { AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StepDataValidationProps {
   projectId: string;
@@ -144,7 +145,10 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
 
   return (
     <div className="flex items-center gap-3 rounded-control bg-surface px-4 py-3">
-      <div className={`h-2 w-2 rounded-pill shrink-0 ${statusColors[dataset.status] ?? 'bg-hover'}`} />
+      <div className={cn(
+             'h-2 w-2 rounded-pill shrink-0',
+             statusColors[dataset.status] ?? 'bg-hover',
+           )} />
       <div className="min-w-0">
         <p className="text-body-sm font-medium text-primary">{label}</p>
         <p className="text-caption text-muted truncate">{dataset.name} · {statusLabels[dataset.status] ?? dataset.status}</p>

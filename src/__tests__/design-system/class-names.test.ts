@@ -28,29 +28,28 @@ const read = (f: string) =>
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
 
 /**
- * La garde ne signale que ce qu'elle peut PROUVER.
+ * Une liste de classes ne se construit plus par gabarit : `cn()` joint ses
+ * arguments lui-meme, donc la faute devient impossible a ecrire.
  *
- * `` `nav-item${actif ? ' active' : ''}` `` est correct : l'espace vit dans la
- * branche. Un regex ne sait pas lire toutes les branches d'une expression
- * quelconque, donc la garde se limite a la forme ou les deux conditions sont
- * visibles sur la ligne — une classe collee a `${`, ET une branche litterale
- * qui commence par une lettre au lieu d'une espace. C'est exactement la forme
- * des cinq occurrences trouvees.
+ * Une premiere version de cette garde ne signalait que la forme PROUVABLE — une
+ * classe collee a `${` avec une branche litterale visible — parce qu'un regex
+ * ne sait pas lire toutes les branches d'une expression quelconque, et que
+ * `` `nav-item${a ? ' active' : ''}` `` est correct. Cette prudence etait juste
+ * tant que 120 gabarits restaient a convertir. Ils le sont : la regle forte
+ * peut remplacer l'approximation.
  *
- * Elargir au-dela signalerait des fichiers sains, et une garde fausse finit en
- * liste d'exceptions. La regle plus forte — toute liste de classes passe par
- * `cn()` — vaudrait mieux, mais elle demande de convertir 123 sites : c'est un
- * chantier, pas un garde-fou.
+ * La conversion a d'ailleurs trouve NEUF collages de plus que les six repares
+ * a la main — dont la surbrillance de l'element selectionne d'un `Select`, qui
+ * n'existait tout simplement pas.
  */
-const GLUED_OPEN = /className=\{`[^`\n]*[A-Za-z0-9\-/]\$\{[^`\n]*?\?\s*'[A-Za-z]/;
-const GLUED_CLOSE = /className=\{`[^`\n]*\}[A-Za-z][A-Za-z0-9-]/;
+const TEMPLATE_CLASS = /className=\{`[^`]*\$\{/;
+
+/** `.auth-scope` garde ses propres conventions, palette comprise. */
+const AUTH_SCOPE = /\/auth\/|^src\/app\/page\.tsx$/;
 
 describe('interpolation dans une liste de classes', () => {
-  it('aucune classe collee a une interpolation', () => {
-    const offenders = SOURCES.filter((f) => {
-      const src = read(f);
-      return GLUED_OPEN.test(src) || GLUED_CLOSE.test(src);
-    });
+  it('aucune liste de classes construite par gabarit', () => {
+    const offenders = SOURCES.filter((f) => !AUTH_SCOPE.test(f) && TEMPLATE_CLASS.test(read(f)));
     expect(offenders).toEqual([]);
   });
 });

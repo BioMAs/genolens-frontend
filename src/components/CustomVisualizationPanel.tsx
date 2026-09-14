@@ -4,6 +4,7 @@ import api from '@/utils/api';
 import type { Data, Layout } from 'plotly.js';
 import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { cn } from '@/lib/cn';
 
 /*
  * Les cinq mises en page passent par la fabrique EN ARGUMENT, pas en
@@ -399,31 +400,28 @@ export default function CustomVisualizationPanel({
                 <div className="flex gap-3 mb-6">
                     <button
                         onClick={() => setVizType('pca')}
-                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
-                            vizType === 'pca'
-                                ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-hover'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'pca' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         PCA
                     </button>
                     <button
                         onClick={() => setVizType('umap')}
-                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
-                            vizType === 'umap'
-                                ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-hover'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'umap' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         UMAP
                     </button>
                     <button
                         onClick={() => setVizType('boxplot')}
-                        className={`px-4 py-2 rounded-control font-medium transition-colors ${
-                            vizType === 'boxplot'
-                                ? 'bg-brand-primary text-on-accent'
-                                : 'bg-surface-2 text-primary hover:bg-hover'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'boxplot' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         Box Plot
                     </button>

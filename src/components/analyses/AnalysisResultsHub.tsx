@@ -20,6 +20,7 @@ import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 import { useScientificModule } from '@/hooks/useAddOnModules';
 import { scrollToId } from '@/utils/scrollToId';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -435,7 +436,7 @@ function StatTile({ label, value, mono }: { label: string; value: string; mono?:
   return (
     <div className="px-4 py-3" style={{ background: 'var(--surface)' }}>
       <div className="text-micro font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
-      <div className={`mt-1 text-body font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
+      <div className={cn('mt-1 text-body font-semibold', mono ? 'font-mono' : '')} style={{ color: 'var(--text-primary)' }}>{value}</div>
     </div>
   );
 }
@@ -509,7 +510,10 @@ function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
     [SelfServiceAnalysisStatus.CANCELLED]: 'Cancelled',
   };
   return (
-    <span className={`inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium ${styles[status]}`}>
+    <span className={cn(
+            'inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium',
+            styles[status],
+          )}>
       {labels[status]}
     </span>
   );

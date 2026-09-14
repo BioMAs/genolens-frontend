@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/cn';
 
 interface ChipProps {
   children?: React.ReactNode;
@@ -11,7 +12,10 @@ interface ChipProps {
 export function Chip({ children, icon, value, className = '', style }: ChipProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-caption font-medium bg-surface-2 text-primary${className}`}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-caption font-medium bg-surface-2 text-primary',
+        className,
+      )}
       style={style}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}

@@ -11,6 +11,7 @@ import { useSelection } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
 import { useChartPalette, useChartScales } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface GOTerm {
   go_id: string;
@@ -212,7 +213,10 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       <span
         key={gene}
         style={chipTone}
-        className={`relative inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium border cursor-help ${chipClass}`}
+        className={cn(
+          'relative inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium border cursor-help',
+          chipClass,
+        )}
         onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHoveredGene(null)}
       >

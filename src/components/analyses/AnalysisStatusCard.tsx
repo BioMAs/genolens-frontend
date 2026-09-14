@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Database } from 'lucide-react';
 import { SelfServiceAnalysis, SelfServiceAnalysisStatus } from '@/types';
 import { useDeleteAnalysis } from '@/hooks/useAnalyses';
+import { cn } from '@/lib/cn';
 
 interface Props {
   analysis: SelfServiceAnalysis;
@@ -64,7 +65,10 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
           )}
         </div>
         <span
-          className={`inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium ${STATUS_STYLES[analysis.status]}`}
+          className={cn(
+            'inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium',
+            STATUS_STYLES[analysis.status],
+          )}
         >
           {isActive && (
             <span className="mr-2 h-2 w-2 rounded-pill bg-current animate-pulse" />

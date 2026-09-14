@@ -20,6 +20,7 @@ import { Download, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '@/utils/api';
 import { useDegStats, type DegStatsRow } from '@/hooks/useDegStats';
 import { useChartScales } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface MethodStatsPanelProps {
   datasetId: string;
@@ -318,9 +319,10 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                               {p.pvalueKey ? formatP(row[p.pvalueKey]) : '—'}
                             </td>
                             <td
-                              className={`px-3 py-1.5 text-right ${
-                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-primary' : 'text-secondary'
-                              }`}
+                              className={cn(
+                                'px-3 py-1.5 text-right',
+                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-primary' : 'text-secondary',
+                              )}
                             >
                               {p.padjKey ? formatP(row[p.padjKey]) : '—'}
                             </td>

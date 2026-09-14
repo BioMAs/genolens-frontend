@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Bot, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/cn';
 
 interface AIUsageLog {
   id: string;
@@ -63,7 +64,7 @@ export default function AIUsageLogs() {
           className="p-2 text-muted hover:text-secondary rounded-pill hover:bg-hover"
           title="Refresh logs"
         >
-          <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={cn('h-5 w-5', loading ? 'animate-spin' : '')} />
         </button>
       </div>
 
@@ -124,11 +125,10 @@ export default function AIUsageLogs() {
                     <div className="text-caption text-secondary">{log.user_id.substring(0, 8)}...</div>
                   </td>
                   <td className="whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
-                      log.action_type === 'interpretation' 
-                        ? 'bg-accent-soft text-accent-ink' 
-                        : 'bg-info-soft text-info-ink'
-                    }`}>
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            log.action_type === 'interpretation' ? 'bg-accent-soft text-accent-ink' : 'bg-info-soft text-info-ink',
+                          )}>
                       {log.action_type === 'interpretation' ? 'Interpretation' : 'Q&A Chat'}
                     </span>
                   </td>

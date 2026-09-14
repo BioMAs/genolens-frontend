@@ -10,6 +10,7 @@ import { annualDiscountPct, plansOrdered, type Plan } from '@/types/pricing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { cn } from '@/lib/cn';
 
 // ---------------------------------------------------------------------------
 // Plans, prices and card copy all come from GET /pricing — the single source
@@ -120,9 +121,10 @@ export default function PricingPage() {
           style={{ background: billing === 'annual' ? 'var(--sl-teal)' : 'var(--border-strong)' }}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-pill bg-surface shadow transition-transform${
-              billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
-            }`}
+            className={cn(
+              'inline-block h-4 w-4 transform rounded-pill bg-surface shadow transition-transform',
+              billing === 'annual' ? 'translate-x-6' : 'translate-x-1',
+            )}
           />
         </button>
         <span className={billing === 'annual' ? 'font-semibold' : ''} style={{ color: billing === 'annual' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
@@ -195,7 +197,10 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <Card className={`flex flex-col h-full ${plan.most_popular ? 'ring-2 ring-brand-teal shadow-lg' : ''}`}>
+              <Card className={cn(
+                      'flex flex-col h-full',
+                      plan.most_popular ? 'ring-2 ring-brand-teal shadow-lg' : '',
+                    )}>
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <CardTitle className="text-heading">{plan.name_en}</CardTitle>

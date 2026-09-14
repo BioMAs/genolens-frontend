@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/cn';
 
 type DotVariant = 'ready' | 'failed' | 'pending' | 'warning' | 'processing' | 'default';
 
@@ -20,7 +21,7 @@ const variantColors: Record<DotVariant, string> = {
 export function Dot({ variant = 'pending', size = 8, className = '' }: DotProps) {
   return (
     <span
-      className={`inline-block rounded-pill flex-shrink-0 ${className}`}
+      className={cn('inline-block rounded-pill flex-shrink-0', className)}
       style={{
         width: size,
         height: size,

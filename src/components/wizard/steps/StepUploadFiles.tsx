@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ContrastBuilder from '../ContrastBuilder';
 import GeoImportPanel from '../GeoImportPanel';
+import { cn } from '@/lib/cn';
 
 // ─── Sub-step config ────────────────────────────────────────────────────────
 interface SubStepConfig {
@@ -124,9 +125,10 @@ export default function StepUploadFiles({
         <button
           type="button"
           onClick={() => setSourceMode('upload')}
-          className={`flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors ${
-            sourceMode === 'upload' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors',
+            sourceMode === 'upload' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <UploadCloud className="h-4 w-4" />
           Upload files
@@ -134,9 +136,10 @@ export default function StepUploadFiles({
         <button
           type="button"
           onClick={() => setSourceMode('geo')}
-          className={`flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors ${
-            sourceMode === 'geo' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors',
+            sourceMode === 'geo' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <Database className="h-4 w-4" />
           Import from GEO
@@ -399,25 +402,23 @@ function UploadCardWithProjectId({
   // Not uploaded yet
   return (
     <div
-      className={`rounded-card border-2 transition-colors ${
-        isActive
-          ? dragging
-            ? 'border-accent bg-accent-soft'
-            : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft'
-          : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none'
-      } p-5`}
+      className={cn(
+        'rounded-card border-2 transition-colors',
+        isActive ? dragging ? 'border-accent bg-accent-soft' : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft' : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none',
+        'p-5',
+      )}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
     >
       <div className="flex flex-col items-center text-center gap-2">
-        <div className={`rounded-pill p-2 ${isActive ? 'bg-accent-soft' : 'bg-surface-2'}`}>
+        <div className={cn('rounded-pill p-2', isActive ? 'bg-accent-soft' : 'bg-surface-2')}>
           {uploading
             ? <Clock className="h-5 w-5 text-accent-ink animate-spin" />
-            : <Upload className={`h-5 w-5 ${isActive ? 'text-accent-ink' : 'text-muted'}`} />}
+            : <Upload className={cn('h-5 w-5', isActive ? 'text-accent-ink' : 'text-muted')} />}
         </div>
         <div>
-          <p className={`text-body-sm font-semibold ${isActive ? 'text-primary' : 'text-muted'}`}>
+          <p className={cn('text-body-sm font-semibold', isActive ? 'text-primary' : 'text-muted')}>
             {config.label}
           </p>
           <p className="text-caption text-muted mt-1">{config.description}</p>

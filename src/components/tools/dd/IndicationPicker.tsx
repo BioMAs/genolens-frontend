@@ -12,6 +12,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { DdIndication } from '@/types/drugDiscovery';
+import { cn } from '@/lib/cn';
 
 interface IndicationPickerProps {
   indications: DdIndication[];
@@ -138,11 +139,11 @@ export default function IndicationPicker({
               type="button"
               disabled={indication.excluded}
               onClick={() => onSelect(indication.tcga_project)}
-              className={`w-full rounded-card border p-3 text-left text-body-sm ${
-                value === indication.tcga_project
-                  ? 'border-brand-primary bg-accent-soft'
-                  : 'border-line bg-surface'
-              } ${indication.excluded ? 'cursor-not-allowed opacity-60' : 'hover:shadow-sm'}`}
+              className={cn(
+                'w-full rounded-card border p-3 text-left text-body-sm',
+                value === indication.tcga_project ? 'border-brand-primary bg-accent-soft' : 'border-line bg-surface',
+                indication.excluded ? 'cursor-not-allowed opacity-60' : 'hover:shadow-sm',
+              )}
             >
               <span className="block font-medium text-primary">{indication.disease_name}</span>
               <span className="block text-caption text-secondary">{indication.tcga_project}</span>

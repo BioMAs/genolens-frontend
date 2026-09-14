@@ -15,6 +15,7 @@ import { Calculator, TrendingUp, AlertCircle, Info, CheckCircle2, AlertTriangle,
 import type { LucideIcon } from 'lucide-react';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 import {CHART_VARS, useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 // ============================================================================
 // Statistical utility functions (normal approximation – sufficient for planning)
@@ -198,21 +199,19 @@ export default function PowerAnalysis() {
         </div>
         <div className="flex rounded-control border border-line overflow-hidden">
           <button
-            className={`flex-1 px-4 py-2 text-body-sm font-medium transition-colors ${
-              mode === 'sample-size'
-                ? 'bg-accent text-on-accent'
-                : 'bg-surface text-secondary hover:bg-hover'
-            }`}
+            className={cn(
+              'flex-1 px-4 py-2 text-body-sm font-medium transition-colors',
+              mode === 'sample-size' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+            )}
             onClick={() => setMode('sample-size')}
           >
             Calculate sample size
           </button>
           <button
-            className={`flex-1 px-4 py-2 text-body-sm font-medium transition-colors ${
-              mode === 'power'
-                ? 'bg-accent text-on-accent'
-                : 'bg-surface text-secondary hover:bg-hover'
-            }`}
+            className={cn(
+              'flex-1 px-4 py-2 text-body-sm font-medium transition-colors',
+              mode === 'power' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+            )}
             onClick={() => setMode('power')}
           >
             Calculate power
@@ -257,11 +256,10 @@ export default function PowerAnalysis() {
                 <button
                   key={a}
                   onClick={() => setAlpha(a)}
-                  className={`px-3 py-1 rounded-sm text-caption font-medium border transition-colors ${
-                    alpha === a
-                      ? 'bg-accent text-on-accent border-accent'
-                      : 'bg-surface text-secondary border-strong hover:bg-hover'
-                  }`}
+                  className={cn(
+                    'px-3 py-1 rounded-sm text-caption font-medium border transition-colors',
+                    alpha === a ? 'bg-accent text-on-accent border-accent' : 'bg-surface text-secondary border-strong hover:bg-hover',
+                  )}
                 >
                   {a}
                 </button>
@@ -290,11 +288,10 @@ export default function PowerAnalysis() {
                   key={p.value}
                   onClick={() => setEffectSize(p.value)}
                   title={p.desc}
-                  className={`px-2 py-1 rounded-sm text-caption font-medium border transition-colors ${
-                    effectSize === p.value
-                      ? 'bg-accent text-on-accent border-accent'
-                      : 'bg-surface text-secondary border-strong hover:bg-hover'
-                  }`}
+                  className={cn(
+                    'px-2 py-1 rounded-sm text-caption font-medium border transition-colors',
+                    effectSize === p.value ? 'bg-accent text-on-accent border-accent' : 'bg-surface text-secondary border-strong hover:bg-hover',
+                  )}
                 >
                   {p.label}
                 </button>
@@ -332,11 +329,10 @@ export default function PowerAnalysis() {
                   <button
                     key={p}
                     onClick={() => setTargetPower(p)}
-                    className={`px-3 py-1 rounded-sm text-caption font-medium border transition-colors ${
-                      targetPower === p
-                        ? 'bg-accent text-on-accent border-accent'
-                        : 'bg-surface text-secondary border-strong hover:bg-hover'
-                    }`}
+                    className={cn(
+                      'px-3 py-1 rounded-sm text-caption font-medium border transition-colors',
+                      targetPower === p ? 'bg-accent text-on-accent border-accent' : 'bg-surface text-secondary border-strong hover:bg-hover',
+                    )}
                   >
                     {p * 100}%
                   </button>
@@ -451,10 +447,13 @@ export default function PowerAnalysis() {
           {/* Result card */}
           {result && (
             <div
-              className={`rounded-card border p-6 ${POWER_STYLES[powerLevel(result.power)].panel}`}
+              className={cn(
+                'rounded-card border p-6',
+                POWER_STYLES[powerLevel(result.power)].panel,
+              )}
             >
               <div className="flex items-center gap-3 mb-6">
-                <TrendingUp className={`h-6 w-6 ${POWER_STYLES[powerLevel(result.power)].text}`} />
+                <TrendingUp className={cn('h-6 w-6', POWER_STYLES[powerLevel(result.power)].text)} />
                 <h3 className="text-title text-primary">Results</h3>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-6">
@@ -473,7 +472,10 @@ export default function PowerAnalysis() {
                   <div className="text-caption uppercase tracking-widest text-secondary mb-1">
                     Power
                   </div>
-                  <div className={`text-hero font-extrabold ${POWER_STYLES[powerLevel(result.power)].text}`}>
+                  <div className={cn(
+                         'text-hero font-extrabold',
+                         POWER_STYLES[powerLevel(result.power)].text,
+                       )}>
                     {(result.power * 100).toFixed(1)}%
                   </div>
                   {(() => {
@@ -482,7 +484,10 @@ export default function PowerAnalysis() {
                     // sur le reste de l'iconographie (lucide).
                     const { text, label, Icon } = POWER_STYLES[powerLevel(result.power)];
                     return (
-                      <div className={`mt-1 inline-flex items-center gap-1 text-caption font-medium ${text}`}>
+                      <div className={cn(
+                             'mt-1 inline-flex items-center gap-1 text-caption font-medium',
+                             text,
+                           )}>
                         <Icon className="h-3.5 w-3.5" aria-hidden />
                         {label}
                       </div>

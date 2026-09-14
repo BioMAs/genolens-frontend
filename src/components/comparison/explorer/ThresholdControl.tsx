@@ -20,6 +20,7 @@
 import { useId } from 'react';
 import { useThresholdControl } from '@/contexts/ComparisonSelectionContext';
 import { INGESTION_LOGFC_MIN, INGESTION_PADJ_MAX } from '@/utils/volcano';
+import { cn } from '@/lib/cn';
 
 /** Tightening steps, loosest (the ingestion ceiling) first. */
 const PADJ_OPTIONS = [INGESTION_PADJ_MAX, 0.01, 0.005, 0.001, 0.0001];
@@ -46,7 +47,7 @@ export default function ThresholdControl({ className = '' }: { className?: strin
   const logfcId = useId();
 
   return (
-    <div className={`flex flex-wrap items-center gap-x-5 gap-y-2 ${className}`}>
+    <div className={cn('flex flex-wrap items-center gap-x-5 gap-y-2', className)}>
       <div className="flex items-center gap-2">
         <label htmlFor={padjId} className="text-caption" style={{ color: 'var(--text-secondary)' }}>
           padj &lt;

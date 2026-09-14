@@ -7,6 +7,7 @@ import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, Flas
 import ModuleSelector, { ModuleId } from '@/components/modules/ModuleSelector';
 import { usePricing } from '@/hooks/usePricing';
 import { plansOrdered } from '@/types/pricing';
+import { cn } from '@/lib/cn';
 
 interface User {
   id: string;
@@ -66,7 +67,10 @@ function StatusBadge({ status }: { status?: string }) {
   };
   const s = status ?? "active";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-pill text-caption font-medium ${styles[s] ?? "bg-surface-2 text-primary"}`}>
+    <span className={cn(
+            'inline-flex items-center px-2 py-0.5 rounded-pill text-caption font-medium',
+            styles[s] ?? "bg-surface-2 text-primary",
+          )}>
       {s}
     </span>
   );
@@ -442,11 +446,10 @@ export default function UserManagement() {
                     </div>
                   </td>
                   <td className="whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${
-                      user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' :
-                      user.subscription_plan === 'TEAM' ? 'bg-info-soft text-info-ink' :
-                      'bg-surface-2 text-primary'
-                    }`}>
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' : user.subscription_plan === 'TEAM' ? 'bg-info-soft text-info-ink' : 'bg-surface-2 text-primary',
+                          )}>
                       {user.subscription_plan === 'ON_PREMISE' && <Crown className="h-3 w-3 mr-1" />}
                       {user.subscription_plan === 'TEAM' && <Zap className="h-3 w-3 mr-1" />}
                       {user.subscription_plan || 'STARTER'}
@@ -464,7 +467,10 @@ export default function UserManagement() {
                     <StatusBadge status={user.status} />
                   </td>
                   <td className="whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${getRoleBadgeColor(user.role)}`}>
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            getRoleBadgeColor(user.role),
+                          )}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
                     </span>

@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
 import ClaimPathwayMap from './ClaimPathwayMap';
+import { cn } from '@/lib/cn';
 
 // ── Verdict system ─────────────────────────────────────────────────────────────
 // Merges direction + score + confidence into a single readable signal.
@@ -120,7 +121,10 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
             className="flex items-center gap-1 text-caption font-medium"
             style={{ color: 'var(--sl-teal-dark, #0f766e)' }}
           >
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+            <ChevronDown className={cn(
+                           'h-3.5 w-3.5 transition-transform',
+                           open ? 'rotate-180' : '',
+                         )} />
             {open ? 'Hide' : 'Show'} pathway network
           </button>
 

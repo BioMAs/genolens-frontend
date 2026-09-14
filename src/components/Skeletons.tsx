@@ -1,3 +1,5 @@
+import { cn } from '@/lib/cn';
+
 export function CardSkeleton() {
   return (
     <div className="bg-surface shadow rounded-card p-6">
@@ -62,7 +64,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function PlotSkeleton({ height = 'h-96' }: { height?: string }) {
   return (
-    <div className={`bg-surface shadow rounded-card p-6${height}`}>
+    <div className={cn('bg-surface shadow rounded-card p-6', height)}>
       <div className="h-6 skeleton w-1/4 mb-6"></div>
       <div className="flex items-center justify-center h-full">
         <div className="text-center">

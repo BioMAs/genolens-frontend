@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 /**
  * AIMarkdown — minimal, dependency-free renderer for AI-generated text.
@@ -128,7 +129,7 @@ export default function AIMarkdown({ text, className = '' }: AIMarkdownProps) {
 
   return (
     <div
-      className={`space-y-3 text-body-sm leading-relaxed ${className}`}
+      className={cn('space-y-3 text-body-sm leading-relaxed', className)}
       style={{ color: 'var(--text-primary)' }}
     >
       {blocks}

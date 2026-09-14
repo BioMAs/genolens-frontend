@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { GEODataset } from '@/types';
 import { useGeoSearch, useImportFromGeo } from '@/hooks/useGeo';
+import { cn } from '@/lib/cn';
 
 // Map a GEO organism string to a GenoLens-supported key, or null if unsupported.
 function toOrganismKey(organism: string): 'human' | 'mouse' | null {
@@ -179,7 +180,7 @@ function GeoResultCard({
 
       {ds.summary && (
         <>
-          <p className={`mt-2 text-caption text-secondary${expanded ? '' : 'line-clamp-2'}`}>
+          <p className={cn('mt-2 text-caption text-secondary', expanded ? '' : 'line-clamp-2')}>
             {ds.summary}
           </p>
           {ds.summary.length > 200 && (

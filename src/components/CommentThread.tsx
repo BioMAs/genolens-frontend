@@ -14,6 +14,7 @@ import {
   useToggleCommentResolved,
 } from '@/hooks/useComments';
 import type { ProjectComment } from '@/types/comment';
+import { cn } from '@/lib/cn';
 
 interface CommentThreadProps {
   comment: ProjectComment;
@@ -74,7 +75,7 @@ export default function CommentThread({
   };
 
   return (
-    <div className={`${level > 0 ? 'ml-8' : ''}`}>
+    <div className={cn(level > 0 ? 'ml-8' : '')}>
       <div className="group relative rounded-card bg-surface p-4">
         {/* Header */}
         <div className="mb-2 flex items-start justify-between">

@@ -14,6 +14,7 @@ import { Users, Activity, Calendar } from 'lucide-react';
 import { useLoginStats } from '@/hooks/useLoginStats';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 const PERIOD_OPTIONS = [
   { label: '7 days', value: 7 },
@@ -103,11 +104,10 @@ export default function UserConnections() {
               <button
                 key={opt.value}
                 onClick={() => setDays(opt.value)}
-                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
-                  days === opt.value
-                    ? 'bg-accent text-on-accent'
-                    : 'bg-surface-2 text-secondary hover:bg-hover'
-                }`}
+                className={cn(
+                  'px-3 py-1 rounded-sm text-body-sm font-medium transition-colors',
+                  days === opt.value ? 'bg-accent text-on-accent' : 'bg-surface-2 text-secondary hover:bg-hover',
+                )}
               >
                 {opt.label}
               </button>

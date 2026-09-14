@@ -6,6 +6,7 @@ import { Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableI
 import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
 import DatasetVisualizer from './DatasetVisualizer';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 interface DatasetExplorerProps {
   projectId: string;
@@ -190,22 +191,20 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
               <button
                 onClick={() => setViewMode('table')}
-                className={`${
-                  viewMode === 'table'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center`}
+                className={cn(
+                  viewMode === 'table' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-secondary hover:text-primary hover:border-strong',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center',
+                )}
               >
                 <TableIcon className="h-4 w-4 mr-2" />
                 Table View
               </button>
               <button
                 onClick={() => setViewMode('chart')}
-                className={`${
-                  viewMode === 'chart'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-secondary hover:text-primary hover:border-strong'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center`}
+                className={cn(
+                  viewMode === 'chart' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-secondary hover:text-primary hover:border-strong',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center',
+                )}
               >
                 <BarChart2 className="h-4 w-4 mr-2" />
                 Visualization

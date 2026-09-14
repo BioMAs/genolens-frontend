@@ -16,6 +16,7 @@ import { useState, useCallback } from 'react';
 import { Download, FlaskConical, RefreshCw } from 'lucide-react';
 import api from '@/utils/api';
 import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface StringEnrichment {
   category: string;
@@ -87,7 +88,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 function Stat({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div className="text-center">
-      <p className={`text-heading ${color}`}>{value}</p>
+      <p className={cn('text-heading', color)}>{value}</p>
       <p className="text-caption text-secondary">{label}</p>
     </div>
   );
@@ -262,7 +263,10 @@ export default function StringEnrichmentPanel({
                     </td>
                     <td className="text-right">{e.number_of_genes}</td>
                     <td className="text-right font-mono">{fmtPval(e.p_value)}</td>
-                    <td className={`px-3 py-1.5 text-right font-mono font-semibold ${e.fdr < 0.05 ? 'text-success-ink' : 'text-secondary'}`}>
+                    <td className={cn(
+                          'px-3 py-1.5 text-right font-mono font-semibold',
+                          e.fdr < 0.05 ? 'text-success-ink' : 'text-secondary',
+                        )}>
                       {fmtPval(e.fdr)}
                     </td>
                   </tr>

@@ -14,6 +14,7 @@ import { AnalysisParams as AP } from '@/types';
 import {
   Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StepLaunchProps {
   projectId: string;
@@ -171,16 +172,18 @@ export default function StepLaunch({
       {analysisId && (
         <div className="rounded-card bg-surface overflow-hidden">
           {/* Status header */}
-          <div className={`px-4 py-3 flex items-center gap-3 ${
-            isDone ? 'bg-success-soft border-b border-success/30'
-            : isFailed ? 'bg-danger-soft border-b border-danger/30'
-            : 'bg-info-soft border-b border-info/30'
-          }`}>
+          <div className={cn(
+                 'px-4 py-3 flex items-center gap-3',
+                 isDone ? 'bg-success-soft border-b border-success/30' : isFailed ? 'bg-danger-soft border-b border-danger/30' : 'bg-info-soft border-b border-info/30',
+               )}>
             {isDone   && <CheckCircle className="h-5 w-5 text-success-ink" />}
             {isFailed && <AlertCircle className="h-5 w-5 text-danger-ink" />}
             {isRunning && <Loader className="h-5 w-5 text-info-ink animate-spin" />}
             <div>
-              <p className={`text-body-sm font-semibold ${isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-info-ink'}`}>
+              <p className={cn(
+                   'text-body-sm font-semibold',
+                   isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-info-ink',
+                 )}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
                 : currentStep
@@ -212,7 +215,9 @@ export default function StepLaunch({
                     <span className="text-muted shrink-0 tabular-nums">
                       {new Date(entry.timestamp).toLocaleTimeString('en-GB')}
                     </span>
-                    <span className={`${i === progressLog.length - 1 && isRunning ? 'text-info-ink font-medium' : 'text-secondary'}`}>
+                    <span className={cn(
+                            i === progressLog.length - 1 && isRunning ? 'text-info-ink font-medium' : 'text-secondary',
+                          )}>
                       {entry.step.replace(/_/g, ' ')}
                       {entry.message ? ` — ${entry.message}` : ''}
                     </span>

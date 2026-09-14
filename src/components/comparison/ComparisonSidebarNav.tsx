@@ -9,6 +9,7 @@ import { useUserProfile } from '@/hooks/useCosmetics';
 import { DatasetType, DatasetStatus } from '@/types';
 import { buildComparisonModules, groupModulesByView } from './comparisonModules';
 import { buildViewHref, resolveView, type ComparisonView } from './comparisonRoutes';
+import { cn } from '@/lib/cn';
 
 interface Props {
   /** Path of the comparison page, without any query string. */
@@ -84,7 +85,7 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
         const heading = (
           <Link
             href={buildViewHref(basePath, group.view)}
-            className={`${itemClass}${activeView === group.view ? ' active' : ''}`}
+            className={cn(itemClass, activeView === group.view ? ' active' : '')}
           >
             {group.label}
           </Link>
@@ -96,7 +97,7 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
               <Link
                 key={module.id}
                 href={buildViewHref(basePath, group.view, module.panel)}
-                className={`${itemClass} !pl-6 !text-micro`}
+                className={cn(itemClass, '!pl-6 !text-micro')}
               >
                 {module.title}
               </Link>
@@ -113,7 +114,7 @@ export default function ComparisonSidebarNav({ basePath, projectId }: Props) {
                   ? `${module.title} — add-on module, request access from "All modules"`
                   : `${module.title} — ${module.hint}`
               }
-              className={`${itemClass} !pl-6 !text-micro cursor-default`}
+              className={cn(itemClass, '!pl-6 !text-micro cursor-default')}
               style={{ color: 'var(--text-muted)', opacity: 0.7 }}
             >
               {locked && <Lock className="h-3 w-3 flex-shrink-0" />}

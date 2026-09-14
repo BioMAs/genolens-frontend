@@ -16,6 +16,7 @@ import { useSignatureScore, type ScoringMethod, type SampleScore } from '@/hooks
 import { getPalette } from '@/utils/chartPalettes';
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface SignatureScorePanelProps {
   projectId: string;
@@ -144,17 +145,19 @@ export default function SignatureScorePanel({
             <div className="inline-flex rounded-control bg-surface-2 p-1 mb-3">
               <button
                 onClick={() => setSource('list')}
-                className={`px-3 py-1 text-body-sm font-medium rounded-sm ${
-                  source === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
-                }`}
+                className={cn(
+                  'px-3 py-1 text-body-sm font-medium rounded-sm',
+                  source === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-secondary',
+                )}
               >
                 Saved gene list
               </button>
               <button
                 onClick={() => setSource('paste')}
-                className={`px-3 py-1 text-body-sm font-medium rounded-sm ${
-                  source === 'paste' ? 'bg-surface shadow-sm text-primary' : 'text-secondary'
-                }`}
+                className={cn(
+                  'px-3 py-1 text-body-sm font-medium rounded-sm',
+                  source === 'paste' ? 'bg-surface shadow-sm text-primary' : 'text-secondary',
+                )}
               >
                 Paste genes
               </button>

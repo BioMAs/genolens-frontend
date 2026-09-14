@@ -7,6 +7,7 @@
 import { Star } from 'lucide-react';
 import { useState } from 'react';
 import { useCreateBookmark, useDeleteBookmark, useIsBookmarked, useBookmarks } from '@/hooks/useBookmarks';
+import { cn } from '@/lib/cn';
 
 interface BookmarkButtonProps {
   projectId: string;
@@ -80,17 +81,18 @@ export default function BookmarkButton({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-        className={`inline-flex items-center justify-center rounded-pill p-1 transition-colors hover:bg-hover disabled:opacity-50${className}`}
+        className={cn(
+          'inline-flex items-center justify-center rounded-pill p-1 transition-colors hover:bg-hover disabled:opacity-50',
+          className,
+        )}
         title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
       >
         <Star
-          className={`${sizeClasses[size]} transition-colors ${
-            isBookmarked
-              ? 'fill-warning-ink text-warning-ink'
-              : isHovered
-              ? 'text-warning-ink'
-              : 'text-muted'
-          }`}
+          className={cn(
+            sizeClasses[size],
+            'transition-colors',
+            isBookmarked ? 'fill-warning-ink text-warning-ink' : isHovered ? 'text-warning-ink' : 'text-muted',
+          )}
         />
       </button>
     );
@@ -100,16 +102,18 @@ export default function BookmarkButton({
     <button
       onClick={handleToggleBookmark}
       disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-      className={`inline-flex items-center gap-2 rounded-sm border transition-colors disabled:opacity-50 ${
-        isBookmarked
-          ? 'border-warning bg-warning-soft text-warning-ink hover:bg-warning-soft'
-          : 'border-strong bg-surface text-primary hover:bg-hover'
-      } ${buttonSizeClasses[size]} ${className}`}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-sm border transition-colors disabled:opacity-50',
+        isBookmarked ? 'border-warning bg-warning-soft text-warning-ink hover:bg-warning-soft' : 'border-strong bg-surface text-primary hover:bg-hover',
+        buttonSizeClasses[size],
+        className,
+      )}
     >
       <Star
-        className={`${sizeClasses[size]} ${
-          isBookmarked ? 'fill-warning-ink text-warning-ink' : 'text-muted'
-        }`}
+        className={cn(
+          sizeClasses[size],
+          isBookmarked ? 'fill-warning-ink text-warning-ink' : 'text-muted',
+        )}
       />
       {isBookmarked ? 'Bookmarked' : 'Bookmark'}
     </button>

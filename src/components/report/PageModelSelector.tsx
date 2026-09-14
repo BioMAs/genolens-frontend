@@ -1,6 +1,7 @@
 "use client";
 
 import type { FirstPageType, LastPageType } from "@/types/report";
+import { cn } from '@/lib/cn';
 
 const DEFAULT_PRIMARY = "#003C65";
 const DEFAULT_SECONDARY = "#42E2BA";
@@ -134,9 +135,10 @@ export default function PageModelSelector({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 rounded-control border p-3 text-left transition-colors disabled:opacity-50 ${
-        active ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-strong hover:bg-hover"
-      }`}
+      className={cn(
+        'flex-1 rounded-control border p-3 text-left transition-colors disabled:opacity-50',
+        active ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-strong hover:bg-hover",
+      )}
     >
       <div className="mb-2 flex justify-center rounded-sm bg-surface-2 py-2">{thumb}</div>
       <div className="text-body-sm font-medium text-primary">{label}</div>

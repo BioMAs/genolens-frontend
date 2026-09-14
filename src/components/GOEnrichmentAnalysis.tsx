@@ -99,6 +99,7 @@ import {
 import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 import {CHART_VARS } from '@/utils/chartTheme';
 import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface DotPlotTooltipProps {
   active?: boolean;
@@ -342,7 +343,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 text-caption gap-2 ${showSettings ? 'text-accent-ink bg-accent-soft' : 'text-secondary'}`}
+            className={cn(
+              'h-7 text-caption gap-2',
+              showSettings ? 'text-accent-ink bg-accent-soft' : 'text-secondary',
+            )}
             onClick={() => setShowSettings(s => !s)}
           >
             <Settings2 className="w-3.5 h-3.5" />
@@ -490,7 +494,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                   <button
                     key={cat}
                     onClick={() => updateParams({ ...params, namespace: params.namespace === cat ? null : cat })}
-                    className={`transition-colors ${params.namespace === cat ? 'font-semibold text-foreground' : 'hover:text-foreground'}`}
+                    className={cn(
+                      'transition-colors',
+                      params.namespace === cat ? 'font-semibold text-foreground' : 'hover:text-foreground',
+                    )}
                   >
                     {count} {dbDef ? dbDef.label.replace(/^(GO: |MSigDB )/, '') : cat}
                   </button>
@@ -506,11 +513,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2.5 text-caption font-semibold border-b-2 transition-colors
-                    ${activeTab === tab.id
-                      ? 'text-accent-ink border-accent bg-surface'
-                      : 'text-muted border-transparent hover:text-secondary'
-                    }`}
+                  className={cn(
+                    'px-5 py-2.5 text-caption font-semibold border-b-2 transition-colors',
+                    activeTab === tab.id ? 'text-accent-ink border-accent bg-surface' : 'text-muted border-transparent hover:text-secondary',
+                  )}
                 >
                   {tab.label}
                 </button>

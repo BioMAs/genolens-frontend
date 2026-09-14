@@ -26,6 +26,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { DdRunParams } from '@/types/drugDiscovery';
 import { isPrivilegedRole } from '@/utils/plan';
 import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
+import { cn } from '@/lib/cn';
 
 const DEFAULT_PROFILE = 'default_oncology';
 
@@ -134,7 +135,10 @@ export default function DrugDiscovery() {
         </button>
         {accessNotice && (
           <p
-            className={`mt-2 text-body-sm ${accessNotice.kind === 'success' ? 'text-success-ink' : 'text-danger-ink'}`}
+            className={cn(
+              'mt-2 text-body-sm',
+              accessNotice.kind === 'success' ? 'text-success-ink' : 'text-danger-ink',
+            )}
           >
             {accessNotice.text}
           </p>
@@ -316,14 +320,20 @@ export default function DrugDiscovery() {
             <button
               type="button"
               onClick={() => setTab('targets')}
-              className={`px-4 py-2 text-body-sm ${tab === 'targets' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary'}`}
+              className={cn(
+                'px-4 py-2 text-body-sm',
+                tab === 'targets' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary',
+              )}
             >
               Targets
             </button>
             <button
               type="button"
               onClick={() => setTab('report')}
-              className={`px-4 py-2 text-body-sm ${tab === 'report' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary'}`}
+              className={cn(
+                'px-4 py-2 text-body-sm',
+                tab === 'report' ? 'border-b-2 border-brand-primary font-medium' : 'text-secondary',
+              )}
             >
               Report
             </button>

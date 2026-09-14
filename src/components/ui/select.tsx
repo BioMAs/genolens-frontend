@@ -145,9 +145,11 @@ export function SelectItem({ value, children, className = '' }: SelectItemProps)
 
   return (
     <div
-      className={`relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-body-sm outline-none hover:bg-hover${
-        isSelected ? 'bg-surface-2 font-medium' : ''
-      } ${className}`}
+      className={cn(
+        'relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-body-sm outline-none hover:bg-hover',
+        isSelected ? 'bg-surface-2 font-medium' : '',
+        className,
+      )}
       onClick={() => context.onValueChange(value)}
     >
       {children}

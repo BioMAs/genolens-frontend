@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CheckCircle, XCircle, AlertCircle, Users, Dna } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 export interface QCReport {
   total_input_samples: number;
@@ -180,7 +181,7 @@ function ThresholdRow({
     <div className="flex items-center justify-between gap-2 rounded-control px-3 py-2" style={{ background: 'var(--surface-secondary)' }}>
       <span className="text-caption" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       <span
-        className={`text-caption font-semibold ${mono ? 'font-mono' : ''}`}
+        className={cn('text-caption font-semibold', mono ? 'font-mono' : '')}
         style={{
           color:
             highlight === 'green'

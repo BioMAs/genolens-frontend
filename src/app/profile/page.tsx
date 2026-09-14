@@ -5,6 +5,7 @@ import BillingSection from './BillingSection'
 import UsageSection from './UsageSection'
 import MyModules from './MyModules'
 import { PageHeader } from '@/components/ui/page-header'
+import { cn } from '@/lib/cn';
 
 function fmt(date?: string | null) {
   if (!date) return 'N/A'
@@ -80,7 +81,7 @@ export default async function ProfilePage() {
               <span className="flex items-center gap-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <Icon className="h-4 w-4" /> {label}
               </span>
-              <span className={`text-body-sm ${mono ? 'font-mono text-caption' : 'font-medium'}`} style={{ color: 'var(--text-primary)' }}>{value}</span>
+              <span className={cn('text-body-sm', mono ? 'font-mono text-caption' : 'font-medium')} style={{ color: 'var(--text-primary)' }}>{value}</span>
             </div>
           ))}
         </div>

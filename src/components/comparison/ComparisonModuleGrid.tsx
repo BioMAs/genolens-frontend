@@ -8,6 +8,7 @@ import {
 } from './comparisonModules';
 import type { ComparisonPanel, ComparisonView } from './comparisonRoutes';
 import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
+import { cn } from '@/lib/cn';
 
 interface Props {
   modules: ComparisonModule[];
@@ -111,7 +112,10 @@ export default function ComparisonModuleGrid({
                 type="button"
                 onClick={() => onOpen(view, panel)}
                 aria-label={`Open ${module.title}`}
-                className={`${CARD_BASE} gl-card-interactive group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                className={cn(
+                  CARD_BASE,
+                  'gl-card-interactive group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                )}
                 style={{
                   ...cardStyle(false),
                   // @ts-expect-error CSS custom prop for the focus ring colour

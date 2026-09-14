@@ -7,6 +7,7 @@ import { useBilling, SubscriptionInfo } from '@/hooks/useBilling';
 import { normalizePlan } from '@/utils/plan';
 import { usePricing } from '@/hooks/usePricing';
 import { findPlan, plansOrdered, type PricingGrid } from '@/types/pricing';
+import { cn } from '@/lib/cn';
 
 // Quotas and plan names come from GET /pricing. This file used to carry its own
 // copy of the limits, which meant any backend change silently desynced this
@@ -23,7 +24,10 @@ function PlanBadge({ plan, grid }: { plan: string; grid?: PricingGrid }) {
   // paliers ne disaient pas lequel etait le plus eleve.
   const tone = order >= 3 ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-secondary';
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium ${tone}`}>
+    <span className={cn(
+            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+            tone,
+          )}>
       {label}
     </span>
   );

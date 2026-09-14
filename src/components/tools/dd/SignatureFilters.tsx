@@ -18,6 +18,7 @@
  * l'utilisateur de deviner.
  */
 import { DdSignatureFilters, DdSignaturePreview } from '@/types/drugDiscovery';
+import { cn } from '@/lib/cn';
 
 interface SignatureFiltersProps {
   filters: DdSignatureFilters;
@@ -187,11 +188,10 @@ export default function SignatureFilters({
                           event.target.value === '' ? '' : Number(event.target.value),
                       })
                     }
-                    className={`w-20 rounded-sm border p-1 ${
-                      replicates[condition.name] === '' || replicates[condition.name] === undefined
-                        ? 'border-warning bg-warning-soft'
-                        : 'border-strong'
-                    }`}
+                    className={cn(
+                      'w-20 rounded-sm border p-1',
+                      replicates[condition.name] === '' || replicates[condition.name] === undefined ? 'border-warning bg-warning-soft' : 'border-strong',
+                    )}
                   />
                   <span className="text-secondary">
                     {SOURCE_LABEL[condition.replicates_source] ?? condition.replicates_source}

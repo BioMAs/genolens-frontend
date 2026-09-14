@@ -10,6 +10,7 @@ import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
 import { useChartTheme, useChartScales, useChartPalette } from '@/utils/chartTheme';
 import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { cn } from '@/lib/cn';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -342,7 +343,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             <span
                 key={gene}
                 title={tooltip}
-                className={`inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default ${chipColor}`}
+                className={cn(
+                  'inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default',
+                  chipColor,
+                )}
                 style={chipStyle}
             >
                 {/* Les fleches heritent desormais la couleur de la puce, qui
@@ -404,15 +408,13 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                         key={reg}
                                         type="button"
                                         onClick={() => setRegulationFilter(reg)}
-                                        className={`
-                                            relative inline-flex items-center px-4 py-2 border text-body-sm font-medium 
-                                            ${reg === 'ALL' ? 'rounded-l-sm' : ''} 
-                                            ${reg === 'DOWN' ? 'rounded-r-sm' : ''}
-                                            ${regulationFilter === reg 
-                                                ? 'z-10 bg-accent-soft border-accent text-accent-ink' 
-                                                : 'bg-surface border-strong text-primary hover:bg-hover'}
- focus:z-10 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
-`}
+                                        className={cn(
+                                          'relative inline-flex items-center px-4 py-2 border text-body-sm font-medium',
+                                          reg === 'ALL' ? 'rounded-l-sm' : '',
+                                          reg === 'DOWN' ? 'rounded-r-sm' : '',
+                                          regulationFilter === reg ? 'z-10 bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                                          'focus:z-10 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent',
+                                        )}
                                     >
                                         {reg}
                                     </button>
@@ -425,22 +427,20 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 <div className="flex gap-2">
                      <button
                         onClick={() => setViewMode('table')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium ${
-                            viewMode === 'table' 
-                            ? 'bg-accent-soft border-accent text-accent-ink' 
-                            : 'bg-surface border-strong text-primary hover:bg-hover'
-                        }`}
+                        className={cn(
+                          'inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium',
+                          viewMode === 'table' ? 'bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                        )}
                      >
                         <TableIcon className="h-4 w-4 mr-2" />
                         Table
                      </button>
                      <button
                         onClick={() => setViewMode('radar')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium ${
-                            viewMode === 'radar' 
-                            ? 'bg-accent-soft border-accent text-accent-ink' 
-                            : 'bg-surface border-strong text-primary hover:bg-hover'
-                        }`}
+                        className={cn(
+                          'inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium',
+                          viewMode === 'radar' ? 'bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                        )}
                      >
                         <Activity className="h-4 w-4 mr-2" />
                         Radar Plot
@@ -486,11 +486,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(categoryFilter === cat ? "" : cat)}
-                            className={`px-3 py-1 text-caption font-medium rounded-pill border transition-colors ${
-                                categoryFilter === cat
-                                ? 'bg-accent border-accent text-on-accent'
-                                : 'bg-surface border-strong text-secondary hover:bg-hover'
-                            }`}
+                            className={cn(
+                              'px-3 py-1 text-caption font-medium rounded-pill border transition-colors',
+                              categoryFilter === cat ? 'bg-accent border-accent text-on-accent' : 'bg-surface border-strong text-secondary hover:bg-hover',
+                            )}
                         >
                             {cat}
                         </button>

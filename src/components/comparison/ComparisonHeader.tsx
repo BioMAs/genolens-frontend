@@ -26,6 +26,7 @@ import { formatDate } from '@/utils/formatters';
 import { Button } from '@/components/ui/button';
 import ComparisonReportButton from '@/components/ComparisonReportButton';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 interface Props {
   projectId: string;
@@ -124,7 +125,7 @@ export default function ComparisonHeader({
       menuItems={[
         {
           label: reprocessing ? 'Reprocessing…' : 'Reprocess DEG',
-          icon: <RefreshCw className={`h-3.5 w-3.5 ${reprocessing ? 'animate-spin' : ''}`} />,
+          icon: <RefreshCw className={cn('h-3.5 w-3.5', reprocessing ? 'animate-spin' : '')} />,
           onSelect: reprocessing ? undefined : onReprocess,
         },
       ]}
