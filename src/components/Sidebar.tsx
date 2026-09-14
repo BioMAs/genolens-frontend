@@ -21,6 +21,8 @@ import ComparisonSidebarNav from './comparison/ComparisonSidebarNav';
 import ProjectSwitcher from './sidebar/ProjectSwitcher';
 import UserMenu from './sidebar/UserMenu';
 import { useScientificModule } from '@/hooks/useAddOnModules';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { canUseMultiComparison } from '@/utils/plan';
 import { cn } from '@/lib/cn';
 
 interface SidebarProps {
@@ -50,6 +52,8 @@ const projectNav = [
     suffix: '/multi-comparison',
     label: 'Multi-comparison',
     icon: GitCompareArrows,
+    /** Plan entitlement `multi_comparison` — Pro and above. */
+    requiresTeamPlan: true,
   },
   {
     key: 'contrast-scatter',
@@ -64,6 +68,8 @@ const projectNav = [
 export default function Sidebar({ user, userRole }: SidebarProps) {
   const pathname = usePathname();
   const { unlocked: scienceUnlocked } = useScientificModule();
+  const { data: planProfile } = useUserProfile();
+  const multiComparisonUnlocked = canUseMultiComparison(planProfile);
   const isAdmin = userRole?.toLowerCase() === 'admin';
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch?.[1] ?? null;
@@ -122,15 +128,23 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
                 a remonter a /projects pour changer de projet. */}
             <ProjectSwitcher projectId={projectId} projectLabel={projectLabel} />
             <div className="mt-1 space-y-1" data-tour="sidebar-project">
-              {projectNav.map(({ key, suffix, label, icon: Icon, requiresScience }) => {
+              {projectNav.map(({ key, suffix, label, icon: Icon, requiresScience, requiresTeamPlan }) => {
                 const href = `/projects/${projectId}${suffix}`;
-                const locked = requiresScience === true && !scienceUnlocked;
+                // Two independent reasons an entry can be locked: an add-on the
+                // admin has not enabled, or a plan entitlement. They are not the
+                // same thing and the tooltip has to say which.
+                const lockedByAddOn = requiresScience === true && !scienceUnlocked;
+                const lockedByPlan = requiresTeamPlan === true && !multiComparisonUnlocked;
+                const locked = lockedByAddOn || lockedByPlan;
+                const lockReason = lockedByPlan
+                  ? 'Multi-comparison requires a Pro plan'
+                  : 'Scientific tools add-on — ask an admin to enable it';
                 return (
                   <div key={key}>
                     {locked ? (
                       <span
                         className="nav-item cursor-not-allowed opacity-50"
-                        title="Scientific tools add-on — ask an admin to enable it"
+                        title={lockReason}
                       >
                         <Icon className="nav-icon" />
                         {label}

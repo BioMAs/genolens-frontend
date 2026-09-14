@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, Download, AlertCircle, RefreshCw } from "lucide-react";
+import { FileText, Loader2, Download, AlertCircle, RefreshCw, Lock } from "lucide-react";
 import { useReportStatus, useTriggerReport } from "@/hooks/useReportGeneration";
 import api from "@/utils/api";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { canExportAdvanced } from "@/utils/plan";
 
 interface Props {
   analysisId: string;
@@ -12,6 +14,9 @@ interface Props {
 export default function GenerateReportButton({ analysisId }: Props) {
   const [hasTriggered, setHasTriggered] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const { data: profile } = useUserProfile();
+  const canExport = canExportAdvanced(profile);
 
   const trigger = useTriggerReport(analysisId);
   // Always enabled so we show DONE/RUNNING state even after page reload
@@ -58,6 +63,25 @@ export default function GenerateReportButton({ analysisId }: Props) {
       >
         {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         {isDownloading ? "Downloading…" : "Download Report"}
+      </button>
+    );
+  }
+
+  // After isDone on purpose: an already-generated report stays downloadable.
+  // Mirrors the backend, which gates the two report *triggers* and leaves
+  // /report/status and /report/download open, so a plan change never hides a
+  // report that was already produced.
+  if (!canExport) {
+    return (
+      <button
+        type="button"
+        disabled
+        title="PDF reports require a Pro or Enterprise plan"
+        className="inline-flex cursor-not-allowed items-center gap-2 rounded-control
+ bg-accent px-4 py-2 text-body-sm font-medium text-on-accent opacity-50"
+      >
+        <Lock className="h-4 w-4" />
+        Generate Report
       </button>
     );
   }

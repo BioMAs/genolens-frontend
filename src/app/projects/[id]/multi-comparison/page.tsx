@@ -3,12 +3,14 @@
 import { use } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
 import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
 import { PageHeader } from '@/components/ui/page-header';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { canUseMultiComparison } from '@/utils/plan';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -20,6 +22,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   const [pathDatasetId, setPathDatasetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +54,36 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
     fetchData();
   }, [projectId]);
+
+  // Plan gate, mirroring `require_team_plan` on POST /datasets/{id}/venn-analysis.
+  // Stated on the page rather than left to the nav entry, for the same reason
+  // contrast-scatter states its add-on requirement: the route can be typed
+  // straight into the address bar. Waits for the profile so a STARTER screen
+  // never flashes at a TEAM user on first paint.
+  if (!profileLoading && !canUseMultiComparison(profile)) {
+    return (
+      <div className="p-8">
+        <div className="page-container">
+          <button
+            onClick={() => router.push(`/projects/${projectId}`)}
+            className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Project
+          </button>
+          <div className="bg-surface rounded-card shadow p-8 text-center">
+            <Lock className="mx-auto mb-4 h-8 w-8 text-muted" />
+            <h1 className="mb-2 text-title text-primary">Multi-comparison</h1>
+            <p className="mx-auto max-w-md text-body-sm text-secondary">
+              Comparing several contrasts against each other is part of the Pro plan.
+              Upgrade your subscription to unlock Venn analysis and intersection
+              enrichment.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
