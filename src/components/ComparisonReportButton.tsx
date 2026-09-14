@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, X } from "lucide-react";
+import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, X, Lock } from "lucide-react";
+import { canExportAdvanced } from "@/utils/plan";
 import {
   useComparisonReportStatus,
   useTriggerComparisonReport,
@@ -29,6 +30,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
 
   const { data: profile } = useUserProfile();
   const hasModule = profile?.has_report_customization === true;
+  const canExport = canExportAdvanced(profile);
 
   // Defaults pre-fill the editor (only fetched when the module is unlocked).
   const { data: settings } = useReportSettings(hasModule);
@@ -179,6 +181,39 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
   );
 
   function renderButton() {
+    // PDF generation is TEAM/ON_PREMISE (grid: advanced_export). A report already
+    // produced stays downloadable — the backend gates the triggers only, so a
+    // plan change must not hide work that was already done. Only Regenerate and
+    // the initial Generate disappear.
+    if (!canExport) {
+      if (isDone) {
+        return (
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="inline-flex items-center gap-2 rounded-control bg-success px-4 py-2
+ text-body-sm font-medium text-on-accent transition-colors hover:bg-success-hover
+ disabled:opacity-50"
+          >
+            {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {isDownloading ? "Downloading…" : "Download Report"}
+          </button>
+        );
+      }
+      return (
+        <button
+          type="button"
+          disabled
+          title="PDF reports require a Pro or Enterprise plan"
+          className="inline-flex cursor-not-allowed items-center gap-2 rounded-control
+ bg-accent px-4 py-2 text-body-sm font-medium text-on-accent opacity-50"
+        >
+          <Lock className="h-4 w-4" />
+          Generate Report
+        </button>
+      );
+    }
+
     if (isDone) {
       return (
         <div className="inline-flex items-center gap-2">

@@ -59,3 +59,35 @@ export function canUseAI(profile: PlanBearer): boolean {
 export function hasUnlimitedAI(profile: PlanBearer): boolean {
   return canUseAI(profile);
 }
+
+/**
+ * Mirrors `User.can_export_advanced`: PDF report generation is TEAM/ON_PREMISE
+ * only, admin roles always. Backs the grid's `advanced_export` entitlement.
+ *
+ * Scope is PDF. CSV/TSV export is included in every plan, and no Excel export
+ * exists in the product — so this must not be used to hide a CSV download.
+ *
+ * Kept as its own function rather than an alias of `canUseAI`: the two answer
+ * different questions and the grid is free to move one without the other.
+ */
+export function canExportAdvanced(profile: PlanBearer): boolean {
+  if (!profile) return false;
+  if (isPrivilegedRole(profile.role)) return true;
+  const plan = normalizePlan(profile.subscription_plan);
+  return plan === 'TEAM' || plan === 'ON_PREMISE';
+}
+
+/**
+ * Mirrors `User.can_use_multi_comparison`: comparing contrasts against each
+ * other (Venn, intersection enrichment) is TEAM/ON_PREMISE only.
+ *
+ * NOT the `/comparisons` listing, which is a primary navigation destination open
+ * to every plan, and NOT the contrast scatter, which belongs to the `scientific`
+ * add-on rather than to a plan.
+ */
+export function canUseMultiComparison(profile: PlanBearer): boolean {
+  if (!profile) return false;
+  if (isPrivilegedRole(profile.role)) return true;
+  const plan = normalizePlan(profile.subscription_plan);
+  return plan === 'TEAM' || plan === 'ON_PREMISE';
+}
