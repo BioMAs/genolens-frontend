@@ -92,12 +92,19 @@ export default function UserMenu({ user }: { user: User }) {
           </button>
 
           {/* La deconnexion reste un POST vers /auth/signout : un GET
-              deconnecterait l'utilisateur sur simple prefetch du navigateur. */}
+              deconnecterait l'utilisateur sur simple prefetch du navigateur.
+
+              Pas de `onClick={() => setOpen(false)}` ici, contrairement aux
+              autres entrees : React purge les evenements discrets de facon
+              synchrone, donc le menu — et le <form> avec lui — quitterait le
+              DOM avant que le navigateur ne declenche l'activation du bouton.
+              Un submitter detache n'a plus de form owner : la soumission est
+              abandonnee en silence et le clic ne fait rien. La navigation qui
+              suit le POST ferme le menu de toute facon. */}
           <form ref={signOutForm} action="/auth/signout" method="post" className="contents">
             <button
               type="submit"
               role="menuitem"
-              onClick={() => setOpen(false)}
               className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
             >
               <LogOut className="h-4 w-4 shrink-0" aria-hidden />
