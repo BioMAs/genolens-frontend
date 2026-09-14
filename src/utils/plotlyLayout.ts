@@ -57,7 +57,69 @@ export function buildPlotlyLayout(theme: ChartTheme, overrides: PlotlyLayout = {
     margin: { l: 48, r: 16, t: 16, b: 40 },
   };
 
-  return mergeOneLevel(base, overrides);
+  return applySubplotChrome(mergeOneLevel(base, overrides), theme);
+}
+
+/**
+ * Les fonds des SOUS-GRAPHIQUES, que `paper_bgcolor` ne couvre pas.
+ *
+ * Plotly dessine le polaire, la scene 3D, le ternaire et la carte dans leur
+ * propre conteneur, avec leur propre fond — blanc par defaut. Un radar rendait
+ * donc un DISQUE BLANC de 200px au milieu d'un panneau sombre, et rien ne le
+ * signalait : les tests n'assertent que `paper_bgcolor` et `plot_bgcolor`, et
+ * la garde statique ne cherche qu'un `'white'` ECRIT — or personne ne l'ecrit,
+ * c'est le defaut de la bibliotheque.
+ *
+ * La chrome est reappliquee APRES la fusion, et en profondeur : un appelant qui
+ * passe `polar: { radialaxis: { range } }` remplace tout l'objet `polar` en
+ * fusion d'un niveau, donc il emporterait le fond avec lui. C'est exactement ce
+ * que fait le radar d'enrichissement.
+ */
+function applySubplotChrome(layout: PlotlyLayout, theme: ChartTheme): PlotlyLayout {
+  const out = { ...layout };
+  const transparent = 'rgba(0,0,0,0)';
+  const axis = {
+    gridcolor: theme.grid,
+    linecolor: theme.axis,
+    tickfont: { color: theme.inkMuted, size: 11 },
+  };
+
+  if (isPlainObject(out.polar)) {
+    const polar = out.polar as PlotlyLayout;
+    out.polar = {
+      ...polar,
+      bgcolor: transparent,
+      radialaxis: { ...axis, ...(isPlainObject(polar.radialaxis) ? polar.radialaxis : {}) },
+      angularaxis: { ...axis, ...(isPlainObject(polar.angularaxis) ? polar.angularaxis : {}) },
+    };
+  }
+
+  if (isPlainObject(out.scene)) {
+    const scene = out.scene as PlotlyLayout;
+    // En 3D le fond est porte par CHAQUE axe, pas par la scene.
+    const sceneAxis = {
+      backgroundcolor: transparent,
+      showbackground: false,
+      gridcolor: theme.grid,
+      zerolinecolor: theme.axis,
+      color: theme.inkMuted,
+    };
+    out.scene = {
+      ...scene,
+      xaxis: { ...sceneAxis, ...(isPlainObject(scene.xaxis) ? scene.xaxis : {}) },
+      yaxis: { ...sceneAxis, ...(isPlainObject(scene.yaxis) ? scene.yaxis : {}) },
+      zaxis: { ...sceneAxis, ...(isPlainObject(scene.zaxis) ? scene.zaxis : {}) },
+    };
+  }
+
+  if (isPlainObject(out.ternary)) {
+    out.ternary = { ...(out.ternary as PlotlyLayout), bgcolor: transparent };
+  }
+  if (isPlainObject(out.geo)) {
+    out.geo = { ...(out.geo as PlotlyLayout), bgcolor: transparent };
+  }
+
+  return out;
 }
 
 /**
@@ -123,6 +185,12 @@ export function buildPlotlyConfig(opts: {
 const SEMANTIC_KEYS = [
   'barmode', 'boxmode', 'violinmode', 'annotations', 'shapes', 'showlegend',
   'title', 'images', 'updatemenus', 'sliders',
+  // Les SOUS-GRAPHIQUES definissent la forme du graphique — l'etendue d'un axe
+  // radial, les titres d'une scene 3D — donc ils appartiennent a l'appelant.
+  // Les jeter rendait un radar produit par l'agent avec des axes par defaut.
+  // Leur CHROME est reimposee ensuite par `applySubplotChrome`, qui tourne
+  // dans `buildPlotlyLayout` : structure de l'appelant, couleurs du theme.
+  'polar', 'scene', 'ternary', 'geo',
 ];
 
 /** Cles de PRESENTATION : l'appelant peut les proposer, sans enjeu de lisibilite. */

@@ -107,3 +107,60 @@ describe('mergePlotlyLayout — mise en page arbitraire', () => {
     expect(mergePlotlyLayout(THEME).paper_bgcolor).toBe('rgba(0,0,0,0)');
   });
 });
+
+describe('fonds des SOUS-GRAPHIQUES', () => {
+  /**
+   * `paper_bgcolor` ne couvre pas tout. Plotly dessine le polaire, la scene 3D,
+   * le ternaire et la carte dans leur propre conteneur, avec leur propre fond —
+   * BLANC par defaut.
+   *
+   * Le radar d'enrichissement rendait donc un disque blanc de 200px au milieu
+   * d'un panneau sombre, et rien ne le signalait : les tests n'assertaient que
+   * `paper_bgcolor` / `plot_bgcolor`, et la garde statique ne cherche qu'un
+   * `'white'` ECRIT — or personne ne l'ecrit, c'est le defaut de la
+   * bibliotheque. Il a fallu regarder les pixels pour le voir.
+   */
+  it('rend le fond polaire transparent', () => {
+    const l = buildPlotlyLayout(THEME, { polar: { radialaxis: { range: [0, 5] } } });
+    expect((l.polar as Record<string, unknown>).bgcolor).toBe('rgba(0,0,0,0)');
+  });
+
+  it('conserve ce que l’appelant met dans le polaire', () => {
+    // Le radar passe `polar: { radialaxis: { range } }` : une fusion d'un seul
+    // niveau remplacerait tout l'objet `polar` et emporterait le fond avec lui.
+    const l = buildPlotlyLayout(THEME, { polar: { radialaxis: { range: [0, 5] } } });
+    const radial = (l.polar as Record<string, unknown>).radialaxis as Record<string, unknown>;
+    expect(radial.range).toEqual([0, 5]);
+    expect(radial.gridcolor).toBe('#GRID');
+  });
+
+  it('eteint les parois de la scene 3D', () => {
+    // En 3D le fond est porte par CHAQUE axe, pas par la scene.
+    const l = buildPlotlyLayout(THEME, { scene: { xaxis: { title: { text: 'PC1' } } } });
+    const scene = l.scene as Record<string, Record<string, unknown>>;
+    for (const axis of ['xaxis', 'yaxis', 'zaxis']) {
+      expect(scene[axis].showbackground).toBe(false);
+      expect(scene[axis].backgroundcolor).toBe('rgba(0,0,0,0)');
+    }
+    expect(scene.xaxis.title).toEqual({ text: 'PC1' });
+  });
+
+  it('couvre aussi le ternaire et la carte', () => {
+    const l = buildPlotlyLayout(THEME, { ternary: {}, geo: {} });
+    expect((l.ternary as Record<string, unknown>).bgcolor).toBe('rgba(0,0,0,0)');
+    expect((l.geo as Record<string, unknown>).bgcolor).toBe('rgba(0,0,0,0)');
+  });
+
+  it("n'invente pas de sous-graphique absent", () => {
+    // Ajouter `polar` a une mise en page qui n'en a pas creerait un
+    // sous-graphique vide et decalerait tout le reste.
+    const l = buildPlotlyLayout(THEME);
+    expect(l.polar).toBeUndefined();
+    expect(l.scene).toBeUndefined();
+  });
+
+  it('applique la chrome aussi sur le chemin de l’agent', () => {
+    const l = mergePlotlyLayout(THEME, { polar: { radialaxis: { range: [0, 3] } } });
+    expect((l.polar as Record<string, unknown>)?.bgcolor).toBe('rgba(0,0,0,0)');
+  });
+});

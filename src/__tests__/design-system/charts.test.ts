@@ -72,9 +72,18 @@ describe('fonds opaques', () => {
    * application sombre. La fabrique pose `rgba(0,0,0,0)` : le graphique herite
    * du fond de sa carte.
    */
+  /**
+   * Le banc de verification est exempte NOMMEMENT : son huitieme panneau passe
+   * volontairement `paper_bgcolor: 'white'` pour prouver que la fusion l'ecarte.
+   * C'est une fixture, pas une page du produit — elle repond 404 en production.
+   */
+  const BENCH = /^src\/app\/plotly-check\//;
+
   it("aucun paper_bgcolor / plot_bgcolor 'white'", () => {
-    const offenders = SOURCES.filter((f) =>
-      /(paper|plot)_bgcolor\s*:\s*['"](white|#fff(fff)?)['"]/i.test(read(f)),
+    const offenders = SOURCES.filter(
+      (f) =>
+        !BENCH.test(f) &&
+        /(paper|plot)_bgcolor\s*:\s*['"](white|#fff(fff)?)['"]/i.test(read(f)),
     );
     expect(offenders).toEqual([]);
   });
