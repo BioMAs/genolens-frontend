@@ -1,6 +1,9 @@
 import {
   buildStandaloneSvg,
+  collectFontDemand,
   inlineComputedStyles,
+  parseUnicodeRange,
+  parseWeightRange,
   safeFilename,
 } from '@/utils/chartExport';
 
@@ -129,5 +132,91 @@ describe('inlineComputedStyles', () => {
     const clone = inlineComputedStyles(svg);
     expect(clone.querySelectorAll('rect')).toHaveLength(1);
     expect(clone.querySelector('g')!.getAttribute('class')).toBe('layer');
+  });
+});
+
+describe('selection des polices a embarquer', () => {
+  /**
+   * Sans selection, il faudrait embarquer tout ce que la page declare. Mesure
+   * sur cette application : 26 `@font-face` et 374 Ko, soit un demi-megaoctet
+   * de base64 dans le SVG d'un graphique. Avec la selection, UNE face et 38 Ko.
+   *
+   * Les analyseurs ci-dessous sont ce qui rend la selection possible, et ce
+   * sont les seules parties subtiles : la syntaxe d'une `unicode-range` a trois
+   * formes, et un poids peut etre une plage.
+   */
+  describe('unicode-range', () => {
+    it('lit un point de code isole', () => {
+      expect(parseUnicodeRange('U+41')).toEqual([[0x41, 0x41]]);
+    });
+
+    it('lit un intervalle', () => {
+      expect(parseUnicodeRange('U+400-4FF')).toEqual([[0x400, 0x4ff]]);
+    });
+
+    it('developpe la forme a joker', () => {
+      // `U+4??` couvre U+400 a U+4FF — c'est la forme que next/font emet le
+      // plus souvent, et celle qu'un analyseur naif rate.
+      expect(parseUnicodeRange('U+4??')).toEqual([[0x400, 0x4ff]]);
+    });
+
+    it('lit une liste', () => {
+      expect(parseUnicodeRange('U+460-52F, U+20B4, U+2DE0-2DFF')).toEqual([
+        [0x460, 0x52f], [0x20b4, 0x20b4], [0x2de0, 0x2dff],
+      ]);
+    });
+
+    it('ignore ce qu’elle ne comprend pas plutot que de jeter la face', () => {
+      // Une plage illisible doit valoir « je ne sais pas », et la face est
+      // alors retenue par defaut — perdre une police vaut mieux que planter.
+      expect(parseUnicodeRange('n’importe quoi')).toEqual([]);
+      expect(parseUnicodeRange('')).toEqual([]);
+    });
+  });
+
+  describe('font-weight', () => {
+    it('lit un poids simple', () => {
+      expect(parseWeightRange('500')).toEqual([500, 500]);
+    });
+
+    it('lit la plage d’une fonte variable', () => {
+      expect(parseWeightRange('100 900')).toEqual([100, 900]);
+    });
+
+    it('retombe sur le poids normal quand la valeur est absente', () => {
+      expect(parseWeightRange('')).toEqual([400, 400]);
+      expect(parseWeightRange('normal')).toEqual([400, 400]);
+    });
+  });
+
+  describe('collectFontDemand', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    function svgWith(markup: string): SVGSVGElement {
+      const host = document.createElement('div');
+      host.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`;
+      document.body.appendChild(host);
+      return host.querySelector('svg')!;
+    }
+
+    it('releve les caracteres reellement presents', () => {
+      const demand = collectFontDemand(svgWith('<text>TP53</text>'));
+      expect(demand.codePoints.has('T'.codePointAt(0)!)).toBe(true);
+      expect(demand.codePoints.has('Z'.codePointAt(0)!)).toBe(false);
+    });
+
+    it('releve les familles en minuscules et sans guillemets', () => {
+      const demand = collectFontDemand(svgWith('<text style="font-family: \'Geist Mono\'">42</text>'));
+      expect([...demand.families]).toContain('geist mono');
+    });
+
+    it('ne releve que les noeuds PORTEURS de texte', () => {
+      // Un `<rect>` n'a pas de police : le compter elargirait la selection
+      // sans raison.
+      const demand = collectFontDemand(svgWith('<rect width="4" height="4"/>'));
+      expect(demand.codePoints.size).toBe(0);
+    });
   });
 });

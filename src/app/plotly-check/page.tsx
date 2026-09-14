@@ -24,6 +24,9 @@ import dynamic from 'next/dynamic';
 import type { Data, Layout } from 'plotly.js';
 import { useChartTheme, useChartPalette, useChartScales } from '@/utils/chartTheme';
 import { buildPlotlyLayout, mergePlotlyLayout } from '@/utils/plotlyLayout';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import ChartCard from '@/components/charts/ChartCard';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -239,6 +242,27 @@ export default function PlotlyCheckPage() {
             title: { text: 'Counts per condition' },
           }) as Partial<Layout>}
         />
+      </div>
+
+      {/* Un graphique RECHARTS, pour verifier l'export SVG de bout en bout :
+          c'est lui qui doit resoudre les jetons et embarquer la police. */}
+      <div className="mt-6">
+        <ChartCard
+          title="9 · Recharts — verification de l’export"
+          subtitle="Le bouton d’export produit un SVG autonome."
+          minHeight={260}
+          exportName="banc_export"
+        >
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={GENES.map((g, i) => ({ gene: g, value: 12 - i * 1.7 }))}>
+              <CartesianGrid {...CHART_GRID} />
+              <XAxis dataKey="gene" {...CHART_AXIS} />
+              <YAxis {...CHART_AXIS} />
+              <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
+              <Bar dataKey="value" fill={palette.categorical[0]} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
     </div>
   );
