@@ -57,6 +57,12 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // `subscription_expired` is deliberately NOT redirected. It means the access
+    // period ended and the account is read-only: the user keeps browsing the
+    // projects and results they paid for, and only writes are refused. Sending
+    // them to /suspended would hide exactly the data they are still entitled to.
+    // The persistent banner explains the state; the caller shows the refusal.
+
     // Propagate the error — callers handle their own feedback (alert, toast, etc.)
     return Promise.reject(error);
   }

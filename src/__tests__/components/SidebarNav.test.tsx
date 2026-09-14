@@ -25,6 +25,15 @@ jest.mock('@/hooks/useAddOnModules', () => ({
   useScientificModule: () => ({ unlocked: true }),
 }));
 
+// Multi-comparison is gated on the plan entitlement `multi_comparison`, so the
+// sidebar now reads the profile. Mocked rather than wrapped in a
+// QueryClientProvider: this file asserts nav structure and active state, and a
+// real query client would make every case depend on fetch timing. TEAM keeps all
+// entries visible, which is what the structural assertions below expect.
+jest.mock('@/hooks/useUserProfile', () => ({
+  useUserProfile: () => ({ data: { subscription_plan: 'TEAM', role: 'USER' } }),
+}));
+
 jest.mock('@/contexts/ThemeContext', () => ({
   useTheme: () => ({ theme: 'light', toggleTheme: jest.fn() }),
 }));

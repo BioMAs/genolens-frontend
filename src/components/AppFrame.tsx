@@ -6,6 +6,7 @@ import { TourProvider } from '@/contexts/TourContext';
 import AppShell from '@/components/AppShell';
 import ChatModeShell from '@/components/chat/ChatModeShell';
 import LicenseExpiredBanner from '@/components/LicenseExpiredBanner';
+import SubscriptionExpiredBanner from '@/components/SubscriptionExpiredBanner';
 import { BreadcrumbProvider } from '@/contexts/BreadcrumbContext';
 import CommandPalette from '@/components/command/CommandPalette';
 
@@ -38,6 +39,7 @@ export default function AppFrame({
         ) : (
           <AppShell user={user} userRole={userRole}>
             <LicenseExpiredBanner />
+            <SubscriptionExpiredBanner />
             {children}
           </AppShell>
         )}

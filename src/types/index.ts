@@ -103,6 +103,21 @@ export interface UserProfile {
   can_use_ai?: boolean;
   can_use_multi_comparison?: boolean;
   can_export_advanced?: boolean;
+  /**
+   * Account lifecycle, served by /users/me. `status` drives the hard block
+   * (suspended / cancelled, handled by the axios interceptor -> /suspended);
+   * `subscription_expired` drives read-only mode.
+   */
+  status?: 'pending' | 'active' | 'suspended' | 'cancelled';
+  subscription_ends_at?: string | null;
+  /**
+   * Computed server-side, deliberately. The end date is an ISO string written by
+   * two callers with different formats, and the comparison rule lives in
+   * backend/app/api/deps/account_state.py — the same code that refuses the
+   * request. Re-deriving it here would be a second implementation free to drift
+   * from the one that actually decides.
+   */
+  subscription_expired?: boolean;
   /** Cosmetics add-on module, unlocked per-user by an admin (from /users/me). */
   has_cosmetics_module?: boolean;
   /** Report customization add-on module, unlocked per-user by an admin (from /users/me). */
