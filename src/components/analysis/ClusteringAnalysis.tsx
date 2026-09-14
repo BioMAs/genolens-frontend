@@ -5,13 +5,16 @@ import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { Settings, Play, Loader2, AlertCircle, Search, ChevronUp } from 'lucide-react';
 import { PlotData } from 'plotly.js';
-import { getColorscale } from '@/components/heatmap/heatmapConfig';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import { useChartScales } from '@/utils/chartTheme';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer
 } from 'recharts';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import {CHART_VARS, useChartPalette, useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -73,6 +76,8 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function ClusteringAnalysis({ projectId, datasetId, datasetName }: ClusteringAnalysisProps) {
+  const palette = useChartPalette();
+  const chartTheme = useChartTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ClusteringResult | null>(null);
@@ -85,7 +90,10 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
     metric: 'euclidean'
   });
 
-  const [colorblindMode, setColorblindMode] = useState(false);
+  // Les echelles suivent le theme ET la preference de palette, toutes deux
+  // globales : la carte de chaleur s'accorde avec la PCA d'a cote, et son
+  // point median ne perce plus un trou blanc en theme sombre.
+  const scales = useChartScales();
 
   // Silhouette / K-means
   const [silhouetteData, setSilhouetteData] = useState<SilhouetteResult | null>(null);
@@ -178,31 +186,31 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           z: finalZ,
           x: orderedColLabels,
           y: orderedRowLabels,
-          colorscale: getColorscale(colorblindMode), 
+          colorscale: scales.diverging,
           reversescale: true,
           zmin: standardize ? -2 : undefined,
           zmax: standardize ? 2 : undefined,
           colorbar: { title: standardize ? 'Z-Score' : 'Expression' }
       } as Partial<PlotData>];
 
-  }, [result, standardize, colorblindMode]);
+  }, [result, standardize, scales]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
       {/* Header / Controls */}
-      <div className="bg-white p-4 border-b border-gray-200">
+      <div className="bg-surface p-4 border-b border-line">
         <div className="flex flex-wrap items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">Hierarchical Clustering</h2>
+            <h2 className="text-title text-primary">Hierarchical Clustering</h2>
             
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-7 w-px bg-hover"></div>
 
             {/* Inputs */}
             <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Genes:</label>
+                <label className="text-body-sm text-secondary">Genes:</label>
                 <select 
                     value={params.top_n_genes} 
                     onChange={e => setParams({...params, top_n_genes: Number(e.target.value)})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="100">Top 100</option>
                     <option value="500">Top 500</option>
@@ -213,11 +221,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
             <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Metric:</label>
+                <label className="text-body-sm text-secondary">Metric:</label>
                 <select 
                     value={params.metric} 
                     onChange={e => setParams({...params, metric: e.target.value})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="euclidean">Euclidean</option>
                     <option value="correlation">Correlation</option>
@@ -226,11 +234,11 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             </div>
 
              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Method:</label>
+                <label className="text-body-sm text-secondary">Method:</label>
                 <select
                     value={params.method}
                     onChange={e => setParams({...params, method: e.target.value})}
-                    className="text-sm border rounded px-2 py-1"
+                    className="text-body-sm border rounded-sm px-2 py-1"
                 >
                     <option value="ward">Ward</option>
                     <option value="average">Average</option>
@@ -242,19 +250,19 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
             {params.method === 'kmeans' && (
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">k:</label>
+                <label className="text-body-sm text-secondary">k:</label>
                 <input
                   type="number"
                   min={2}
                   max={50}
                   value={params.n_clusters ?? 8}
                   onChange={e => setParams({ ...params, n_clusters: Number(e.target.value) })}
-                  className="text-sm border rounded px-2 py-1 w-16"
+                  className="text-body-sm border rounded-sm px-2 py-1 w-16"
                 />
                 <button
                   onClick={fetchSilhouette}
                   disabled={loadingSilhouette}
-                  className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+                  className="flex items-center gap-2 border border-strong text-primary px-3 py-1.5 rounded-sm text-body-sm hover:bg-hover disabled:opacity-50"
                   title="Compute silhouette scores to find the optimal k"
                 >
                   {loadingSilhouette ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -266,7 +274,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             <button
                 onClick={() => runClustering()}
                 disabled={loading}
-                className="flex items-center gap-2 bg-brand-primary text-white px-3 py-1.5 rounded text-sm hover:bg-brand-primary/90 disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-primary text-on-accent px-3 py-1.5 rounded-sm text-body-sm hover:bg-brand-primary/90 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Play className="h-4 w-4"/>}
                 Run
@@ -274,17 +282,17 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
             
             <div className="flex-grow"></div>
              
-             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+             <label className="flex items-center gap-2 text-body-sm text-secondary cursor-pointer">
                 <input
                     type="checkbox"
                     checked={standardize}
                     onChange={e => setStandardize(e.target.checked)}
-                    className="rounded text-brand-primary"
+                    className="rounded-sm text-brand-primary"
                 />
                 Scale Rows (Z-score)
             </label>
 
-            <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+            <ColorblindToggle />
 
             <AIChartAssistant
               datasetId={datasetId}
@@ -308,27 +316,27 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
 
       {/* Silhouette Panel */}
       {showSilhouette && (
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="bg-surface border-b border-line px-4 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Silhouette Score by k</span>
+            <span className="text-body-sm font-medium text-primary">Silhouette Score by k</span>
             <div className="flex items-center gap-3">
               {silhouetteData && (
-                <span className="text-xs text-gray-500">
-                  Recommended: <strong className="text-amber-600">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
+                <span className="text-caption text-secondary">
+                  Recommended: <strong className="text-warning-ink">k={silhouetteData.recommended_k}</strong> (score={silhouetteData.recommended_score.toFixed(3)})
                 </span>
               )}
-              <button onClick={() => setShowSilhouette(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowSilhouette(false)} className="text-muted hover:text-secondary">
                 <ChevronUp className="h-4 w-4" />
               </button>
             </div>
           </div>
 
           {silhouetteError && (
-            <p className="text-sm text-red-600 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
+            <p className="text-body-sm text-danger-ink flex items-center gap-1"><AlertCircle className="h-4 w-4" />{silhouetteError}</p>
           )}
 
           {loadingSilhouette && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+            <div className="flex items-center gap-2 text-body-sm text-secondary py-4">
               <Loader2 className="h-4 w-4 animate-spin" /> Computing silhouette scores…
             </div>
           )}
@@ -338,18 +346,15 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               <div className="flex-1" style={{ height: 180 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={silhouetteData.profile} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} tick={{ fontSize: 12 }} />
-                    <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} tick={{ fontSize: 12 }} />
-                    <Tooltip
-                      formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']}
-                      labelFormatter={k => `k = ${k}`}
-                    />
-                    <ReferenceLine y={0.5} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: '#94a3b8' }} />
+                    <CartesianGrid {...CHART_GRID} />
+                    <XAxis dataKey="k" label={{ value: 'k', position: 'insideBottomRight', offset: -4 }} {...CHART_AXIS} />
+                    <YAxis domain={[0, 1]} tickFormatter={v => v.toFixed(2)} {...CHART_AXIS} />
+                    <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(val: number | undefined) => [val != null ? val.toFixed(4) : '—', 'Silhouette']} labelFormatter={k => `k = ${k}`} />
+                    <ReferenceLine y={0.5} stroke={CHART_VARS.axis} strokeDasharray="4 4" label={{ value: 'Good threshold', position: 'right', fontSize: 11, fill: CHART_VARS.inkMuted }} />
                     <Line
                       type="monotone"
                       dataKey="silhouette_score"
-                      stroke="#2A2E5B"
+                      stroke={palette.categorical[0]}
                       strokeWidth={2}
                       dot={(props: SilhouetteDotProps) => {
                         const isRec = props.payload?.k === silhouetteData.recommended_k;
@@ -359,8 +364,8 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                             cx={props.cx}
                             cy={props.cy}
                             r={isRec ? 7 : 4}
-                            fill={isRec ? '#d97706' : '#2A2E5B'}
-                            stroke={isRec ? '#fff' : 'none'}
+                            fill={isRec ? palette.categorical[3] : palette.categorical[0]}
+                            stroke={isRec ? CHART_VARS.surface : 'none'}
                             strokeWidth={2}
                           />
                         );
@@ -372,7 +377,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
               </div>
               <button
                 onClick={() => applyRecommendedK(silhouetteData.recommended_k)}
-                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm font-medium mb-2"
+                className="shrink-0 bg-warning hover:bg-warning-hover text-on-accent px-4 py-2 rounded-sm text-body-sm font-medium mb-2"
               >
                 Use k={silhouetteData.recommended_k}
               </button>
@@ -382,40 +387,46 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
       )}
 
       {/* Main Content */}
-      <div className="flex-1 bg-gray-50 p-4 overflow-hidden relative">
+      <div className="flex-1 bg-surface-2 p-4 overflow-hidden relative">
           
           {loading && (
-              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                  <div className="bg-white p-6 rounded-lg shadow-xl text-center">
+              <div className="absolute inset-0 bg-surface/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="bg-surface p-6 rounded-card shadow-xl text-center">
                       <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-2"/>
-                      <p className="text-gray-600">Calculating clusters...</p>
+                      <p className="text-secondary">Calculating clusters...</p>
                   </div>
               </div>
           )}
 
           {error && (
-              <div className="absolute inset-x-4 top-4 bg-red-50 p-4 border border-red-200 rounded text-red-700 flex items-center gap-2">
+              <div className="absolute inset-x-4 top-4 bg-danger-soft p-4 border border-danger/30 rounded-sm text-danger-ink flex items-center gap-2">
                   <AlertCircle className="h-5 w-5"/>
                   {error}
               </div>
           )}
 
           {result && (
-              <div className="h-full w-full bg-white rounded-lg shadow border border-gray-200 p-2">
+              <div className="h-full w-full bg-surface rounded-control shadow p-2">
                    <Plot
                         data={finalPlotData}
-                        layout={{
+                        // Aucun fond n'etait declare : Plotly retombait donc
+                        // sur son blanc par defaut, au milieu d'une interface
+                        // sombre.
+                        // En argument, pas en etalement : `xaxis` et `yaxis`
+                        // remplacaient sinon l'objet entier, donc la couleur de
+                        // grille et la police des graduations disparaissaient.
+                        layout={buildPlotlyLayout(chartTheme, {
                             autosize: true,
                             margin: { t: 50, r: 50, b: 100, l: 150 }, // More space for labels
                             title: { text: `Heatmap (${result.row_labels.length} genes x ${result.col_labels.length} samples)` },
-                            xaxis: { 
+                            xaxis: {
                                 automargin: true,
                                 tickangle: -45
                             },
                             yaxis: {
                                 automargin: true,
                             }
-                        }}
+                        })}
                         style={{ width: '100%', height: '100%' }}
                         useResizeHandler={true}
                         config={{ 
@@ -431,7 +442,7 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
           )}
 
            {!result && !loading && !error && (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-muted">
                   <div className="text-center">
                       <Settings className="h-12 w-12 mx-auto mb-2 opacity-50"/>
                       <p>Configure parameters and click Run to generate heatmap</p>

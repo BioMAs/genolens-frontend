@@ -17,7 +17,6 @@ import {
   useSelection,
   useThresholdControl,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { DEFAULT_THRESHOLDS } from '@/utils/volcano';
 
@@ -62,11 +61,6 @@ describe('initial state', () => {
     setUrl('padj=0.5&lfc=0');
     const { result } = renderHook(() => useThresholds(), { wrapper });
     expect(result.current).toEqual(DEFAULT_THRESHOLDS);
-  });
-
-  it('starts with the standard palette', () => {
-    const { result } = renderHook(() => useViewPreferences(), { wrapper });
-    expect(result.current.colorblind).toBe(false);
   });
 });
 
@@ -114,29 +108,6 @@ describe('setThresholds', () => {
     // and a real move does produce a new object
     act(() => result.current.actions.setThresholds({ padj: 0.01 }));
     expect(result.current.thresholds).not.toBe(before);
-  });
-});
-
-describe('setColorblind', () => {
-  it('toggles the palette', () => {
-    const { result } = renderHook(
-      () => ({ prefs: useViewPreferences(), actions: useComparisonActions() }),
-      { wrapper }
-    );
-
-    act(() => result.current.actions.setColorblind(true));
-    expect(result.current.prefs.colorblind).toBe(true);
-  });
-
-  it('preserves identity when set to the value it already had', () => {
-    const { result } = renderHook(
-      () => ({ prefs: useViewPreferences(), actions: useComparisonActions() }),
-      { wrapper }
-    );
-    const before = result.current.prefs;
-
-    act(() => result.current.actions.setColorblind(false));
-    expect(result.current.prefs).toBe(before);
   });
 });
 

@@ -21,12 +21,12 @@ const LABELS: Record<string, string> = {
 
 export default function ProfileSelector({ profiles, value, onChange }: ProfileSelectorProps) {
   return (
-    <label className="block text-sm">
-      <span className="mb-1 block font-medium text-gray-700">Weighting profile</span>
+    <label className="block text-body-sm">
+      <span className="mb-1 block font-medium text-primary">Weighting profile</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-gray-300 p-2"
+        className="w-full rounded-sm border border-strong p-2"
       >
         {profiles.map((profile) => (
           <option key={profile} value={profile}>

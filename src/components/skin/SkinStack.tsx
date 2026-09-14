@@ -32,11 +32,11 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
 
   return (
     <div>
-      <div className="mb-3.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-4 text-caption" style={{ color: 'var(--text-secondary)' }}>
         Transcriptional activity by skin compartment —{' '}
         <b style={{ color: 'var(--text-primary)' }}>deeper fill = more active</b>
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {layers.map((l) => {
           const z = byId[l.slug];
           const act = Math.max(0, Math.min(100, z?.activity ?? 0));
@@ -44,7 +44,7 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
           return (
             <div
               key={l.slug}
-              className="relative overflow-hidden rounded-[14px] border"
+              className="relative overflow-hidden rounded-card border"
               style={{
                 height: l.height,
                 borderColor: `color-mix(in oklab, ${l.color} 32%, var(--surface))`,
@@ -56,20 +56,20 @@ export default function SkinStack({ zones }: { zones: CosmeticSkinZone[] }) {
               />
               <div className="relative flex h-full items-center justify-between px-[18px]">
                 <div>
-                  <div className="text-[14.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <div className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {l.name}{' '}
                     <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
                       — {l.sub}
                     </span>
                   </div>
-                  <div className="mt-[3px] text-[11.5px]" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="mt-[3px] text-micro" style={{ color: 'var(--text-secondary)' }}>
                     {z?.n_pathways ?? 0} pathways engaged
                     {l.slug === mostActiveSlug && (act > 0) ? ' · most active layer' : ''}
                   </div>
                 </div>
-                <div className="flex items-baseline gap-0.5" style={{ color: l.color }}>
-                  <span className="font-display text-[26px] font-bold leading-none">{act.toFixed(1)}</span>
-                  <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>/100</span>
+                <div className="flex items-baseline gap-1" style={{ color: l.color }}>
+                  <span className="font-display text-display leading-none">{act.toFixed(1)}</span>
+                  <span className="text-caption" style={{ color: 'var(--text-muted)' }}>/100</span>
                 </div>
               </div>
             </div>

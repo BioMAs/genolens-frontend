@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import type { Data, Layout } from 'plotly.js';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { cn } from '@/lib/cn';
+
+/*
+ * Les cinq mises en page passent par la fabrique EN ARGUMENT, pas en
+ * etalement. Etalee en premier — ce qu'elles faisaient — la fabrique se
+ * faisait remplacer `xaxis` et `yaxis` en bloc par des objets qui ne portent
+ * qu'un titre : la couleur de grille, la police des graduations et
+ * `automargin` disparaissaient. C'est precisement la classe de defaut que la
+ * fusion d'un niveau existe pour supprimer.
+ */
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -72,6 +84,12 @@ export default function CustomVisualizationPanel({
     comparisonName,
     allGenes = []
 }: CustomVisualizationPanelProps) {
+    const chartTheme = useChartTheme();
+    // Deux copies du meme tableau de six couleurs vivaient plus bas, dont
+    // `#ef4444` — la couleur « sous-exprime » employee comme couleur de serie
+    // NOMINALE. Une palette categorielle encode du nominal uniquement : reprendre
+    // une couleur de direction y fait lire « down » a un groupe d'echantillons.
+    const palette = useChartPalette();
     const [vizType, setVizType] = useState<VisualizationType>('pca');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -194,7 +212,7 @@ export default function CustomVisualizationPanel({
         if (!pcaData) return null;
 
         const groups = Array.from(new Set(pcaData.data.map(d => d.group || 'Unknown')));
-        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const colors = palette.categorical;
 
         if (nComponents === 2) {
             const traces: Data[] = groups.map((group, idx) => ({
@@ -210,13 +228,13 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `PCA - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
                 yaxis: { title: { text: `PC2 (${(pcaData.explained_variance[1] * 100).toFixed(1)}%)` } },
                 hovermode: 'closest',
                 height: 500
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -241,7 +259,7 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `PCA 3D - ${pcaData.n_genes_used} genes (${(pcaData.total_variance * 100).toFixed(1)}% variance explained)` },
                 scene: {
                     xaxis: { title: { text: `PC1 (${(pcaData.explained_variance[0] * 100).toFixed(1)}%)` } },
@@ -249,7 +267,7 @@ export default function CustomVisualizationPanel({
                     zaxis: { title: { text: `PC3 (${(pcaData.explained_variance[2] * 100).toFixed(1)}%)` } }
                 },
                 height: 600
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -266,7 +284,7 @@ export default function CustomVisualizationPanel({
         if (!umapData) return null;
 
         const groups = Array.from(new Set(umapData.data.map(d => d.group || 'Unknown')));
-        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const colors = palette.categorical;
 
         if (nComponents === 2) {
             const traces: Data[] = groups.map((group, idx) => ({
@@ -282,13 +300,13 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `UMAP - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 xaxis: { title: { text: 'UMAP1' } },
                 yaxis: { title: { text: 'UMAP2' } },
                 hovermode: 'closest',
                 height: 500
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -313,7 +331,7 @@ export default function CustomVisualizationPanel({
                 }
             } as Data));
 
-            const layout: Partial<Layout> = {
+            const layout = buildPlotlyLayout(chartTheme, {
                 title: { text: `UMAP 3D - ${umapData.n_genes_used} genes (neighbors=${nNeighbors}, min_dist=${minDist})` },
                 scene: {
                     xaxis: { title: { text: 'UMAP1' } },
@@ -321,7 +339,7 @@ export default function CustomVisualizationPanel({
                     zaxis: { title: { text: 'UMAP3' } }
                 },
                 height: 600
-            };
+            }) as Partial<Layout>;
 
             return (
                 <Plot
@@ -351,13 +369,17 @@ export default function CustomVisualizationPanel({
             } as Data));
         }).flat();
 
-        const layout: Partial<Layout> = {
+        const layout = buildPlotlyLayout(chartTheme, {
+            // Les traces de boite ne fixent pas leur couleur : elles tombent sur
+            // `colorway`. Le passer ici est ce qui les fait suivre le theme et la
+            // preference de daltonisme, que la fabrique ne connait pas.
+            colorway: palette.categorical,
             title: { text: `Expression Distribution - ${boxplotData.n_genes} gene(s)` },
             yaxis: { title: { text: 'Expression Level' } },
             xaxis: { title: { text: '' } },
             height: 500,
             showlegend: true
-        };
+        }) as Partial<Layout>;
 
         return (
             <Plot
@@ -372,37 +394,34 @@ export default function CustomVisualizationPanel({
     return (
         <div className="space-y-6">
             {/* Visualization Type Selector */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Custom Visualization</h2>
+            <div className="bg-surface rounded-card shadow p-6">
+                <h2 className="text-heading text-primary mb-4">Custom Visualization</h2>
                 
                 <div className="flex gap-3 mb-6">
                     <button
                         onClick={() => setVizType('pca')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            vizType === 'pca'
-                                ? 'bg-brand-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'pca' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         PCA
                     </button>
                     <button
                         onClick={() => setVizType('umap')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            vizType === 'umap'
-                                ? 'bg-brand-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'umap' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         UMAP
                     </button>
                     <button
                         onClick={() => setVizType('boxplot')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            vizType === 'boxplot'
-                                ? 'bg-brand-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={cn(
+                          'px-4 py-2 rounded-control font-medium transition-colors',
+                          vizType === 'boxplot' ? 'bg-brand-primary text-on-accent' : 'bg-surface-2 text-primary hover:bg-hover',
+                        )}
                     >
                         Box Plot
                     </button>
@@ -410,9 +429,9 @@ export default function CustomVisualizationPanel({
 
                 {/* Gene Selection */}
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Gene Selection {vizType === 'boxplot' && <span className="text-red-500">*</span>}
-                        <span className="text-gray-500 font-normal ml-2">
+                    <label className="block text-body-sm font-medium text-primary mb-2">
+                        Gene Selection {vizType === 'boxplot' && <span className="text-danger-ink">*</span>}
+                        <span className="text-secondary font-normal ml-2">
                             ({vizType === 'boxplot' ? 'Required' : 'Optional - leave empty to use all genes'})
                         </span>
                     </label>
@@ -423,16 +442,16 @@ export default function CustomVisualizationPanel({
                             value={geneInput}
                             onChange={(e) => setGeneInput(e.target.value)}
                             placeholder="Type to search genes..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                            className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         />
                         
                         {geneSearchResults.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div className="absolute z-10 w-full mt-1 bg-surface border border-strong rounded-control shadow-lg max-h-60 overflow-y-auto">
                                 {geneSearchResults.map(gene => (
                                     <button
                                         key={gene}
                                         onClick={() => addGene(gene)}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
+                                        className="w-full text-left px-4 py-2 hover:bg-hover transition-colors"
                                     >
                                         {gene}
                                     </button>
@@ -446,7 +465,7 @@ export default function CustomVisualizationPanel({
                             {selectedGenes.map(gene => (
                                 <span
                                     key={gene}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-pill text-body-sm"
                                 >
                                     {gene}
                                     <button
@@ -465,13 +484,13 @@ export default function CustomVisualizationPanel({
                 {(vizType === 'pca' || vizType === 'umap') && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-body-sm font-medium text-primary mb-2">
                                 Dimensions
                             </label>
                             <select
                                 value={nComponents}
                                 onChange={(e) => setNComponents(Number(e.target.value) as 2 | 3)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                             >
                                 <option value={2}>2D</option>
                                 <option value={3}>3D</option>
@@ -481,7 +500,7 @@ export default function CustomVisualizationPanel({
                         {vizType === 'umap' && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-body-sm font-medium text-primary mb-2">
                                         Neighbors
                                     </label>
                                     <input
@@ -490,11 +509,11 @@ export default function CustomVisualizationPanel({
                                         onChange={(e) => setNNeighbors(Number(e.target.value))}
                                         min={2}
                                         max={200}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-body-sm font-medium text-primary mb-2">
                                         Min Distance
                                     </label>
                                     <input
@@ -504,7 +523,7 @@ export default function CustomVisualizationPanel({
                                         min={0}
                                         max={0.99}
                                         step={0.05}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-strong rounded-control focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     />
                                 </div>
                             </>
@@ -516,13 +535,13 @@ export default function CustomVisualizationPanel({
                 <button
                     onClick={handleGenerate}
                     disabled={loading || (vizType === 'boxplot' && selectedGenes.length === 0)}
-                    className="w-full bg-brand-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-brand-primary text-on-accent py-3 px-6 rounded-control font-medium hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     {loading ? 'Generating...' : `Generate ${vizType.toUpperCase()}`}
                 </button>
 
                 {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    <div className="mt-4 p-4 bg-danger-soft border border-danger/30 rounded-control text-danger-ink">
                         {error}
                     </div>
                 )}
@@ -530,13 +549,13 @@ export default function CustomVisualizationPanel({
 
             {/* Visualization Display */}
             {!loading && (
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-surface rounded-card shadow p-6">
                     {vizType === 'pca' && pcaData && renderPCAPlot()}
                     {vizType === 'umap' && umapData && renderUMAPPlot()}
                     {vizType === 'boxplot' && boxplotData && renderBoxplot()}
                     
                     {!pcaData && !umapData && !boxplotData && (
-                        <div className="text-center py-12 text-gray-500">
+                        <div className="text-center py-12 text-secondary">
                             Configure parameters and click Generate to create your visualization
                         </div>
                     )}

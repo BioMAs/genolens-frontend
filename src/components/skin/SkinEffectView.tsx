@@ -32,33 +32,33 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
   const headline = buildHeadline(data);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* HERO VERDICT */}
       <div className="gl-card p-7">
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <div
-              className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.6px]"
+              className="mb-2 text-micro uppercase tracking-[0.6px]"
               style={{ color: 'var(--sl-teal)' }}
             >
               The verdict
             </div>
             <h2
-              className="font-display text-[24px] font-semibold leading-[1.25] tracking-[-0.5px]"
+              className="font-display text-heading leading-[1.25] tracking-[-0.5px]"
               style={{ color: 'var(--text-primary)', maxWidth: 640 }}
             >
               {headline}
             </h2>
           </div>
           <div
-            className="flex flex-none items-center gap-2.5 rounded-xl border px-4 py-2.5"
+            className="flex flex-none items-center gap-3 rounded-card border px-4 py-2.5"
             style={{
               background: 'var(--sl-teal-light)',
               borderColor: 'var(--sl-teal-muted)',
             }}
           >
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--dc-green)' }} />
-            <span className="text-[13px] font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <span className="h-2.5 w-2.5 rounded-pill" style={{ background: 'var(--dc-green)' }} />
+            <span className="text-body-sm font-semibold" style={{ color: 'var(--sl-teal)' }}>
               {favorable} favorable {favorable === 1 ? 'claim' : 'claims'} · {toWatch} to watch
             </span>
           </div>
@@ -83,7 +83,7 @@ export default function SkinEffectView({ data, datasetId, comparisonName, demo }
       {/* DETAILED CLAIM BREAKDOWN */}
       <ClaimCards claims={data.claims} />
 
-      <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-micro" style={{ color: 'var(--text-secondary)' }}>
         {data.coverage.n_matched}/{data.coverage.n_significant} significant pathways matched the claim
         referential ({Math.round(data.coverage.match_rate * 100)}% coverage).
       </p>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { buildSearchIndex } from '@/lib/docs';
 import DocsIndex from '@/components/docs/DocsIndex';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
   title: 'Documentation — GenoLens',
@@ -26,13 +27,12 @@ export default async function DocsPage() {
   const docs = buildSearchIndex();
 
   return (
-    <div className="page-container space-y-6">
-      <div>
-        <h1 className="page-title">Documentation</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Guides for analysing, exploring and sharing your transcriptomics results.
-        </p>
-      </div>
+    <div className="page-container">
+      <PageHeader
+        title="Documentation"
+        description="Guides for analysing, exploring and sharing your transcriptomics results."
+        crumbs={[{ label: 'Documentation' }]}
+      />
       <DocsIndex docs={docs} />
     </div>
   );

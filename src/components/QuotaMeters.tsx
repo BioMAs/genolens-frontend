@@ -55,7 +55,7 @@ function Cell({
       className="gl-card min-w-0 flex-1 p-4"
     >
       <span
-        className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide"
+        className="flex items-center gap-2 text-micro uppercase tracking-wide"
         style={{ color: 'var(--text-muted)' }}
       >
         {icon}
@@ -97,30 +97,30 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="Analyses"
       >
         {!known ? (
-          <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : analyses.unlimited ? (
           <>
-            <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Unlimited analyses
             </p>
           </>
         ) : (
           <>
             <p
-              className="mt-1 font-display text-2xl font-semibold tabular-nums"
+              className="mt-1 font-display text-heading tabular-nums"
               style={{ color: VALUE_COLOR[tone] }}
             >
               {analyses.remaining}{' '}
-              <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {analyses.max}
               </span>
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               {analyses.remaining === 0
                 ? 'No analysis left this month'
                 : 'analyses left this month'}
@@ -132,7 +132,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
                 height={8}
               />
             </div>
-            <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            <p className="mt-2 text-micro" style={{ color: 'var(--text-muted)' }}>
               Resets {resetLabel}
             </p>
           </>
@@ -145,27 +145,27 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="Projects"
       >
         {!known ? (
-          <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : projects.unlimited ? (
           <>
-            <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               {projects.used} owned, no cap
             </p>
           </>
         ) : (
           <>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+            <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {projects.used}{' '}
-              <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {projects.max}
               </span>
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               projects owned
             </p>
             <div className="mt-2">
@@ -185,24 +185,24 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         label="AI credits"
       >
         {!known ? (
-          <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
             {PLACEHOLDER}
           </p>
         ) : ai.unlimited ? (
           <>
-            <p className="mt-1 font-display text-2xl font-semibold" style={{ color: 'var(--sl-teal)' }}>
+            <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
               ∞
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Unlimited on this plan
             </p>
           </>
         ) : (
           <>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+            <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {ai.credits}
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               interpretations available
             </p>
           </>
@@ -212,7 +212,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
       {known && tone !== 'ok' && (
         <Link
           href="/pricing"
-          className="gl-card flex items-center justify-center p-4 text-xs font-semibold transition-colors hover:border-[var(--sl-purple)]"
+          className="gl-card flex items-center justify-center p-4 text-caption font-semibold transition-colors hover:border-[var(--sl-purple)]"
           style={{ color: 'var(--sl-purple)' }}
         >
           Upgrade

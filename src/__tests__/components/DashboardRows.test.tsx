@@ -1,12 +1,16 @@
 /**
  * Le dashboard, rangé par question plutôt que par composant disponible.
  *
- * Quatre rangées : que fais-je maintenant (bandeau), où en étais-je
- * (JumpBackIn), qu'est-ce qu'il me reste (quotas), qu'est-ce que j'ai produit
- * (projets, KPI, plan). Deux métriques apparaissaient deux fois sur le même
- * écran — `total_comparisons` dans le bandeau ET dans la barre de KPI,
- * `activity_last_7_days` de même — et la création de projet était proposée
- * jusqu'à trois fois.
+ * Deux bandes, plus quatre. L'écran empilait cinq rangées pleine largeur
+ * avant d'atteindre un projet : bandeau, reprise, trois jauges de quota,
+ * trois pastilles de KPI, puis la grille — et les trois rangées de métriques
+ * portaient trois formes de carte différentes, collées les unes aux autres.
+ *
+ *   1. En-tête + reprise — où en étais-je, que fais-je maintenant
+ *   2. Grille — mes projets d'un côté, mon plan et mes quotas de l'autre
+ *
+ * La barre de KPI est absorbée par le sous-titre de l'en-tête ; les jauges de
+ * quota rejoignent la carte d'abonnement, qui parle du même sujet.
  */
 import { render, screen } from '@testing-library/react';
 
@@ -106,7 +110,7 @@ beforeEach(() => {
 
 // ── ordre des rangées ──────────────────────────────────────────────────────
 
-it('orders the four rows by question', () => {
+it('orders the rows by question', () => {
   const { container } = render(<Dashboard />);
 
   const order = Array.from(
@@ -117,11 +121,14 @@ it('orders the four rows by question', () => {
     el.getAttribute('data-tour') ?? el.getAttribute('data-testid')
   );
 
+  // Les métriques sont désormais dans le sous-titre de l'en-tête, donc
+  // imbriquées dans `dashboard-welcome` ; les quotas ont rejoint la colonne
+  // du plan, donc après les projets récents dans l'ordre du document.
   expect(order).toEqual([
     'dashboard-welcome',
+    'dashboard-kpis',
     'jump-back-in',
     'quota-analyses',
-    'dashboard-kpis',
   ]);
 });
 
@@ -139,14 +146,17 @@ it('keeps every tour anchor the registry points at', () => {
 
 // ── plus aucune métrique en double ────────────────────────────────────────
 
-it('states the comparison count once, in the KPI bar', () => {
+it('states the comparison count once, in the header subtitle', () => {
   render(<Dashboard />);
   expect(screen.getAllByText('37')).toHaveLength(1);
 });
 
-it('states the 7-day activity once', () => {
+it('no longer shows the 7-day activity at all', () => {
+  // Une métrique de vanité : elle ne déclenche aucune action et occupait un
+  // tiers d'une rangée pleine largeur.
   render(<Dashboard />);
-  expect(screen.getAllByText('9')).toHaveLength(1);
+  expect(screen.queryByText(/activity/i)).not.toBeInTheDocument();
+  expect(screen.queryByText('9')).not.toBeInTheDocument();
 });
 
 it('no longer narrates last session metrics in the banner', () => {
@@ -172,7 +182,7 @@ it('points a brand-new account at the documentation instead', () => {
   expect(screen.queryByRole('link', { name: /resume/i })).not.toBeInTheDocument();
 });
 
-it('leaves project creation to the recent-projects header, never the banner', () => {
+it('leaves project creation to the recent-projects header, never the page header', () => {
   render(<Dashboard />);
   expect(screen.getAllByRole('button', { name: /new project/i })).toHaveLength(1);
 });

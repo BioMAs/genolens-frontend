@@ -32,7 +32,7 @@ export default function ComparisonModuleDisclosure({ group, onOpen }: Props) {
   return (
     <details className="mt-3 gl-card px-4 py-3">
       <summary
-        className="cursor-pointer list-none text-[12.5px] font-semibold"
+        className="cursor-pointer list-none text-caption font-semibold"
         style={{ color: 'var(--text-secondary)' }}
       >
         {group.label} modules

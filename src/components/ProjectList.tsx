@@ -13,14 +13,14 @@ function ProjectCardStats({ project }: { project: Project }) {
   return (
     <div className="flex items-center gap-3">
       <span
-        className="inline-flex items-center gap-1 text-xs"
+        className="inline-flex items-center gap-1 text-caption"
         style={{ color: 'var(--text-muted)' }}
       >
         <Database className="h-3 w-3" />
         {stats?.total_datasets ?? '—'}
       </span>
       <span
-        className="inline-flex items-center gap-1 text-xs"
+        className="inline-flex items-center gap-1 text-caption"
         style={{ color: 'var(--text-muted)' }}
       >
         <GitCompare className="h-3 w-3" />
@@ -52,12 +52,10 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {/* Pas d'echelonnement sur un squelette : il annonce une attente,
+            l'echelonner la met en scene. */}
         {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="skeleton rounded-xl"
-            style={{ height: '136px', animationDelay: `${i * 80}ms` }}
-          />
+          <div key={i} className="skeleton rounded-card" style={{ height: '136px' }} />
         ))}
       </div>
     );
@@ -67,14 +65,14 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
   if (error) {
     return (
       <div
-        className="flex items-start gap-3 rounded-xl p-4 text-sm animate-fade-up"
+        className="flex items-start gap-3 rounded-card p-4 text-body-sm animate-fade-up"
         style={{
           background: 'var(--sl-red-light)',
           border: '1px solid var(--sl-red-muted)',
           color: 'var(--sl-red)',
         }}
       >
-        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-1" />
         {error instanceof Error ? error.message : 'Failed to load projects. Please try again.'}
       </div>
     );
@@ -85,27 +83,27 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
     if (emptyState) return <>{emptyState}</>;
     return (
       <div
-        className="flex flex-col items-center justify-center py-20 rounded-xl border-2 border-dashed animate-fade-up"
+        className="flex flex-col items-center justify-center py-20 rounded-card border-2 border-dashed animate-fade-up"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
       >
         <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl mb-4"
+          className="flex h-14 w-14 items-center justify-center rounded-card mb-4"
           style={{ background: 'var(--sl-teal-light)' }}
         >
           <Folder className="h-7 w-7" style={{ color: 'var(--sl-teal-dark)' }} />
         </div>
         <h3
-          className="font-display text-base font-semibold mb-1"
+          className="font-display text-body font-semibold mb-1"
           style={{ color: 'var(--text-primary)' }}
         >
           No projects yet
         </h3>
-        <p className="text-sm mb-6 text-center max-w-[260px]" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-sm mb-6 text-center max-w-[260px]" style={{ color: 'var(--text-secondary)' }}>
           Create your first project to start analyzing transcriptomics data.
         </p>
         <button
           onClick={onCreateClick}
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all"
+          className="inline-flex items-center gap-2 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-all"
           style={{ background: 'var(--sl-purple)' }}
           onMouseEnter={(e) =>
             ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')
@@ -123,42 +121,44 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
 
   /* ── Project grid ─────────────────────────────────────────── */
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {projects.map((project, i) => (
+    // `data-enter` echelonne les CINQ premieres cartes puis arrete : la
+    // cadence en ligne echelonnait les trente, donc la derniere arrivait a
+    // 1,2s et on attendait l'animation au lieu de lire la liste.
+    <div data-enter className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {projects.map((project) => (
         <Link
           key={project.id}
           href={`/projects/${project.id}`}
           onMouseEnter={() => prefetchProject(project.id)}
-          className="group gl-card gl-card-interactive flex flex-col p-5 animate-fade-up"
-          style={{ animationDelay: `${i * 40}ms` }}
+          className="group gl-card gl-card-interactive flex flex-col p-5"
         >
           {/* Header row */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control"
                 style={{ background: 'var(--sl-teal-light)' }}
               >
                 <Folder className="h-4.5 w-4.5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <h3
-                className="font-display text-sm font-semibold leading-snug truncate"
+                className="font-display text-body-sm font-semibold leading-snug truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {project.name}
               </h3>
             </div>
-            <div className="flex items-center flex-shrink-0 mt-0.5">
+            <div className="flex items-center flex-shrink-0 mt-1">
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setProjectToDelete(project);
                 }}
-                className="opacity-0 group-hover:opacity-100 rounded-md p-1 transition-opacity duration-150 hover:bg-red-50"
+                className="opacity-0 group-hover:opacity-100 rounded-sm p-1 transition-opacity duration-150 hover:bg-danger-soft"
                 title="Supprimer le projet"
               >
-                <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                <Trash2 className="h-3.5 w-3.5 text-danger-ink hover:text-danger-ink-hover" />
               </button>
               <ChevronRight
                 className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -169,7 +169,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
 
           {/* Description */}
           <p
-            className="text-xs leading-relaxed line-clamp-2 flex-1"
+            className="text-caption leading-relaxed line-clamp-2 flex-1"
             style={{ color: 'var(--text-secondary)' }}
           >
             {project.description || 'No description provided.'}
@@ -182,7 +182,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
               borderTop: '1px solid var(--border-subtle)',
             }}
           >
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex items-center gap-2 text-caption" style={{ color: 'var(--text-muted)' }}>
               <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
               {new Date(project.created_at).toLocaleDateString('en-US', {
                 month: 'short',

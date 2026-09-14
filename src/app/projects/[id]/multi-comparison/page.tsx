@@ -8,6 +8,7 @@ import api from '@/utils/api';
 import { Project, Dataset } from '@/types';
 import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparisonVenn';
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -52,10 +53,10 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <div className="text-center py-12">
-            <div className="text-gray-600">Loading...</div>
+            <div className="text-secondary">Loading...</div>
           </div>
         </div>
       </div>
@@ -64,21 +65,21 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
 
   if (error || !pathDatasetId || comparisons.length < 2) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="page-container">
           <button
             onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-6 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+            className="mb-6 inline-flex items-center text-body-sm text-secondary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Project
           </button>
 
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-red-600 mb-4">
+          <div className="bg-surface rounded-card shadow p-8 text-center">
+            <div className="text-danger-ink mb-4">
               {error || 'No multi-comparison DEG dataset found'}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-body-sm text-secondary">
               This feature requires a DEG dataset with multiple comparisons.
             </p>
           </div>
@@ -88,39 +89,26 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <button
-            onClick={() => router.push(`/projects/${projectId}`)}
-            className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Project
-          </button>
-
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Multi-Comparison Analysis
-            </h1>
-            {project && (
-              <p className="mt-2 text-sm text-gray-600">
-                Project: {project.name}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    /* L'en-tete etait une BANDE pleine largeur — `bg-surface border-b
+       border-line` — suivie d'un `page-container` separe pour le contenu.
+       Troisieme enveloppe de page du produit, et une bande bordee est
+       exactement ce que la regle L1 interdit : on ne borde pas pour grouper.
+       Un seul conteneur, et l'en-tete pose dessus. */
+    <div className="page-container">
+        <PageHeader
+          title="Multi-Comparison Analysis"
+          description={project ? `Project: ${project.name}` : undefined}
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            ...(project ? [{ label: project.name, href: `/projects/${projectId}` }] : []),
+            { label: 'Multi-comparison' },
+          ]}
+        />
         <MultiComparisonVenn
           projectId={projectId}
           pathDatasetId={pathDatasetId}
           comparisons={comparisons}
         />
-      </div>
     </div>
   );
 }

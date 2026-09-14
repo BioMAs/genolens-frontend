@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import type { Data, Layout } from 'plotly.js';
 import type { ChatFigureData } from '@/hooks/useChatAgent';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyConfig, mergePlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -20,12 +22,13 @@ export default function PlotlyFigure({
   comparisonName?: string;
 }) {
   const spec = figure.spec;
+  const chartTheme = useChartTheme();
   const data = (spec?.data ?? []) as Data[];
   const layout = (spec?.layout ?? {}) as Partial<Layout>;
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-xs text-[var(--text-muted)]">
+      <div className="rounded-control border border-[var(--border)] bg-[var(--surface)] p-3 text-caption text-[var(--text-muted)]">
         No data returned for this figure.
       </div>
     );
@@ -35,28 +38,17 @@ export default function PlotlyFigure({
   const filename = `${comparisonName ?? 'genolens'}_${chartType}`;
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2">
+    <div className="rounded-control border border-[var(--border)] bg-[var(--surface)] p-2">
       <Plot
         data={data}
-        layout={{
-          autosize: true,
-          height: 360,
-          font: { size: 12 },
-          ...layout,
-        }}
-        config={{
-          displayModeBar: true,
-          displaylogo: false,
-          responsive: true,
-          modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-          toImageButtonOptions: {
-            format: 'png',
-            filename,
-            height: 600,
-            width: 900,
-            scale: 2,
-          },
-        }}
+        // La mise en page venait de l'assistant et etait etalee EN DERNIER :
+        // `{...defauts, ...layout}` la laissait donc tout ecraser. Sans
+        // consequence tant qu'il n'y avait pas de defauts de theme ; fatal des
+        // que la fabrique arrive. mergePlotlyLayout distingue trois classes de
+        // cles et reapplique la chrome en dernier, de sorte qu'une cle emise
+        // par une version future de l'agent ne puisse pas la casser.
+        layout={mergePlotlyLayout(chartTheme, { height: 360, ...(layout ?? {}) })}
+        config={buildPlotlyConfig({ filename })}
         style={{ width: '100%' }}
         useResizeHandler
       />

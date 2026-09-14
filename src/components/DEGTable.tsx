@@ -10,7 +10,6 @@ import {
   useComparisonActions,
   useSelection,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import {
@@ -19,7 +18,7 @@ import {
   type DegRegulationFilter,
   type DegSortField,
 } from '@/hooks/useDegGenes';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 
 interface DEGTableProps {
   dataset: Dataset;
@@ -51,9 +50,8 @@ const COLUMN_LABELS = {
 export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   const thresholds = useThresholds();
   const selection = useSelection();
-  const { colorblind } = useViewPreferences();
   const { selectGenes, toggleGene } = useComparisonActions();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   // Normalised, because the table's gene_id and the volcano's gene key need not be spelled
   // the same way — that is exactly what geneKeys exists to reconcile.
@@ -168,14 +166,14 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
 
   if (isLoading) {
     return (
-      <div className="py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="py-4 text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Loading DEG table…
       </div>
     );
   }
   if (isError) {
     return (
-      <div className="py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="py-4 text-body-sm" style={{ color: 'var(--text-muted)' }}>
         Failed to load the gene table.
       </div>
     );
@@ -196,7 +194,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             aria-label="Regulation filter"
             value={regulation}
             onChange={(e) => setRegulation(e.target.value as DegRegulationFilter)}
-            className="px-3 py-2 text-sm"
+            className="px-3 py-2 text-body-sm"
             style={controlStyle}
           >
             <option value="all">All</option>
@@ -205,7 +203,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           </select>
 
           {selectionView ? (
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <span className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Showing the {total.toLocaleString('en-US')} selected gene
               {total === 1 ? '' : 's'}
               {selectionView.missing > 0 ? (
@@ -222,7 +220,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
               ) : null}
             </span>
           ) : (
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
               {total.toLocaleString('en-US')} gene{total === 1 ? '' : 's'} at the current thresholds
             </span>
           )}
@@ -233,7 +231,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             aria-label="Rows per page"
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="px-3 py-2 text-sm"
+            className="px-3 py-2 text-body-sm"
             style={controlStyle}
           >
             {[25, 50, 100, 200].map((size) => (
@@ -246,7 +244,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
           <div className="relative">
             <button
               onClick={() => setShowColumnSelector(!showColumnSelector)}
-              className="inline-flex items-center px-3 py-2 text-sm"
+              className="inline-flex items-center px-3 py-2 text-body-sm"
               style={controlStyle}
             >
               <Settings className="mr-2 h-4 w-4" />
@@ -259,15 +257,15 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                 style={{
                   background: 'var(--surface)',
                   border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-panel)',
+                  borderRadius: 'var(--radius-card)',
                 }}
               >
-                <div className="mb-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                <div className="mb-2 text-caption font-semibold" style={{ color: 'var(--text-secondary)' }}>
                   Show/Hide Columns
                 </div>
                 <div className="space-y-2">
                   {Object.entries(COLUMN_LABELS).map(([key, label]) => (
-                    <label key={key} className="flex cursor-pointer items-center gap-2 rounded p-1">
+                    <label key={key} className="flex cursor-pointer items-center gap-2 rounded-sm p-1">
                       <input
                         type="checkbox"
                         checked={visibleColumns[key as keyof typeof visibleColumns]}
@@ -275,7 +273,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                           setVisibleColumns({ ...visibleColumns, [key]: e.target.checked })
                         }
                       />
-                      <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                      <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
                         {label}
                       </span>
                     </label>
@@ -304,7 +302,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
 
       <div
         className="overflow-x-auto"
-        style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-panel)' }}
+        style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-card)' }}
       >
         <table className="data-table min-w-full">
           <thead>
@@ -416,7 +414,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                   {visibleColumns.regulation && (
                     <td className="whitespace-nowrap">
                       <span
-                        className="px-2 py-1 text-xs font-semibold"
+                        className="px-2 py-1 text-caption font-semibold"
                         style={{
                           borderRadius: 6,
                           color: isUp ? palette.up : palette.down,
@@ -436,7 +434,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
 
       {totalPages > 1 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <div className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
             Showing {firstRow.toLocaleString('en-US')} to {lastRow.toLocaleString('en-US')} of{' '}
             {total.toLocaleString('en-US')} genes
           </div>
@@ -445,7 +443,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             <button
               onClick={() => goToPage(page - 1)}
               disabled={page === 1}
-              className="px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="px-3 py-1 text-body-sm disabled:cursor-not-allowed disabled:opacity-50"
               style={controlStyle}
             >
               Previous
@@ -465,7 +463,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                   key={entry}
                   onClick={() => goToPage(entry)}
                   aria-current={page === entry ? 'page' : undefined}
-                  className="px-3 py-1 text-sm"
+                  className="px-3 py-1 text-body-sm"
                   style={
                     page === entry
                       ? {
@@ -485,7 +483,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
             <button
               onClick={() => goToPage(page + 1)}
               disabled={page === totalPages}
-              className="px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="px-3 py-1 text-body-sm disabled:cursor-not-allowed disabled:opacity-50"
               style={controlStyle}
             >
               Next

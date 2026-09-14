@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useBookmarks';
 import { GeneList } from '@/types/bookmark';
 import ExportMenu from '@/components/ExportMenu';
+import { cn } from '@/lib/cn';
 
 interface GeneListManagerProps {
   projectId: string;
@@ -128,7 +129,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600" />
+        <div className="h-8 w-8 animate-spin rounded-pill border-4 border-line border-t-indigo-600" />
       </div>
     );
   }
@@ -136,10 +137,10 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Gene Lists</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-title text-primary">Gene Lists</h2>
+          <p className="mt-1 text-body-sm text-secondary">
             {geneLists?.length || 0} custom lists
           </p>
         </div>
@@ -172,7 +173,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
           )}
           <button
             onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover"
           >
             <Plus className="h-4 w-4" />
             New List
@@ -180,7 +181,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
           {onClose && (
             <button
               onClick={onClose}
-              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+              className="rounded-pill p-1 text-muted hover:bg-hover hover:text-secondary"
             >
               <X className="h-5 w-5" />
             </button>
@@ -192,67 +193,68 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
       <div className="flex-1 overflow-y-auto p-6">
         {/* Create form */}
         {showCreateForm && (
-          <div className="mb-6 rounded-lg border-2 border-indigo-200 bg-indigo-50 p-4">
-            <h3 className="mb-3 text-lg font-medium text-gray-900">Create New Gene List</h3>
+          <div className="mb-6 rounded-control border-2 border-accent-ring bg-accent-soft p-4">
+            <h3 className="mb-3 text-title font-medium text-primary">Create New Gene List</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name *</label>
+                <label className="block text-body-sm font-medium text-primary">Name *</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g., Cancer markers"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-body-sm font-medium text-primary">Description</label>
                 <input
                   type="text"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Optional description"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-body-sm font-medium text-primary">
                   Genes (one per line, or comma/semicolon separated)
                 </label>
                 <textarea
                   value={newGenes}
                   onChange={(e) => setNewGenes(e.target.value)}
                   placeholder="TP53&#10;BRCA1&#10;MYC"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 w-full rounded-sm border border-strong px-3 py-2 font-mono text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   rows={5}
                 />
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">Color</label>
+                  <label className="text-body-sm font-medium text-primary">Color</label>
                   <div className="flex gap-1">
                     {PRESET_COLORS.slice(0, 8).map((color) => (
                       <button
                         key={color}
                         onClick={() => setNewColor(color)}
-                        className={`h-6 w-6 rounded border-2 ${
-                          newColor === color ? 'border-gray-900' : 'border-transparent'
-                        }`}
+                        className={cn(
+                          'h-6 w-6 rounded-sm border-2',
+                          newColor === color ? 'border-strong' : 'border-transparent',
+                        )}
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
                 </div>
 
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-body-sm">
                   <input
                     type="checkbox"
                     checked={newIsPublic}
                     onChange={(e) => setNewIsPublic(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded-sm border-strong text-accent-ink focus:ring-accent"
                   />
                   Make public
                 </label>
@@ -261,14 +263,14 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={resetCreateForm}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-sm border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={!newName.trim() || createList.isPending}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded-sm bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
                 >
                   Create List
                 </button>
@@ -280,9 +282,9 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
         {/* Gene lists */}
         {!geneLists || geneLists.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <List className="mb-4 h-12 w-12 text-gray-300" />
-            <p className="text-lg font-medium text-gray-900">No gene lists yet</p>
-            <p className="mt-1 text-sm text-gray-500">
+            <List className="mb-4 h-12 w-12 text-muted" />
+            <p className="text-title font-medium text-primary">No gene lists yet</p>
+            <p className="mt-1 text-body-sm text-secondary">
               Create custom lists to organize genes by theme or function
             </p>
           </div>
@@ -294,30 +296,30 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
               return (
                 <div
                   key={list.id}
-                  className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                  className="rounded-card bg-surface p-4 shadow-sm"
                   style={list.color ? { borderLeftColor: list.color, borderLeftWidth: '4px' } : {}}
                 >
                   {/* List header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <List className="mt-1 h-5 w-5 text-gray-400" />
+                      <List className="mt-1 h-5 w-5 text-muted" />
                       <div>
                         {isEditing ? (
                           <input
                             type="text"
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
-                            className="rounded border border-gray-300 px-2 py-1 font-semibold"
+                            className="rounded-sm border border-strong px-2 py-1 font-semibold"
                           />
                         ) : (
                           <>
-                            <h3 className="text-lg font-semibold text-gray-900">{list.name}</h3>
+                            <h3 className="text-title text-primary">{list.name}</h3>
                             {list.description && (
-                              <p className="mt-1 text-sm text-gray-600">{list.description}</p>
+                              <p className="mt-1 text-body-sm text-secondary">{list.description}</p>
                             )}
                           </>
                         )}
-                        <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+                        <div className="mt-2 flex items-center gap-3 text-caption text-secondary">
                           <span>{list.gene_count} genes</span>
                           {list.is_public ? (
                             <span className="inline-flex items-center gap-1">
@@ -339,13 +341,13 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                         <>
                           <button
                             onClick={cancelEdit}
-                            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            className="rounded-pill p-1 text-muted hover:bg-hover hover:text-secondary"
                           >
                             <X className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => saveEdit(list.id)}
-                            className="rounded-full p-1 text-green-600 hover:bg-green-100"
+                            className="rounded-pill p-1 text-success-ink hover:bg-success-soft"
                           >
                             <Save className="h-4 w-4" />
                           </button>
@@ -354,14 +356,14 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                         <>
                           <button
                             onClick={() => startEdit(list)}
-                            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            className="rounded-pill p-1 text-muted hover:bg-hover hover:text-secondary"
                             title="Edit"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(list.id, list.name)}
-                            className="rounded-full p-1 text-gray-400 hover:bg-red-100 hover:text-red-600"
+                            className="rounded-pill p-1 text-muted hover:bg-danger-soft hover:text-danger-ink-hover"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -373,9 +375,9 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
 
                   {/* Genes preview */}
                   {list.genes.length > 0 && (
-                    <div className="mt-3 rounded bg-gray-50 p-3">
-                      <p className="text-xs font-medium text-gray-700">Genes:</p>
-                      <p className="mt-1 font-mono text-xs text-gray-600">
+                    <div className="mt-3 rounded-sm bg-surface-2 p-3">
+                      <p className="text-caption font-medium text-primary">Genes:</p>
+                      <p className="mt-1 font-mono text-caption text-secondary">
                         {list.genes.slice(0, 10).join(', ')}
                         {list.genes.length > 10 && ` ... +${list.genes.length - 10} more`}
                       </p>

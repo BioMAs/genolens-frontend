@@ -21,7 +21,7 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
   if (role === 'ADMIN') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-caption font-semibold"
         style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
       >
         <Sparkles className="w-3 h-3" />
@@ -40,7 +40,9 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
 
   if (gridPlan && !isEntryTier) {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-linear-to-r from-purple-500 to-indigo-500 text-white">
+      <span // Dernier degre de l'application connectee apres celui du pied de barre
+        // laterale et celui du profil : violet→indigo sur une pastille de plan.
+        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-caption font-semibold bg-accent text-on-accent">
         <Sparkles className="w-3 h-3" />
         {label}
       </span>
@@ -49,7 +51,7 @@ function PlanBadge({ plan, role }: { plan: string; role?: string }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-caption font-semibold"
       style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
     >
       {label}
@@ -73,12 +75,12 @@ function UnlockedModules({ profile }: { profile?: UserProfile | null }) {
 
   return (
     <div>
-      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Features</p>
-      <div className="flex flex-wrap gap-1.5">
+      <p className="text-caption font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Features</p>
+      <div className="flex flex-wrap gap-2">
         {modules.map((mod) => (
           <span
             key={mod.label}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-caption font-medium"
             style={mod.unlocked
               ? { background: 'var(--sl-teal-light)', color: 'var(--sl-teal-dark)' }
               : { background: 'var(--surface-raised)', color: 'var(--text-muted)' }
@@ -142,10 +144,10 @@ export default function DashboardSubscriptionCard({
   if (isLoading) {
     return (
       <div className="gl-card p-5 h-full space-y-3">
-        <div className="skeleton rounded-md" style={{ height: '20px', width: '40%' }} />
-        <div className="skeleton rounded-md" style={{ height: '14px', width: '70%' }} />
-        <div className="skeleton rounded-full" style={{ height: '6px' }} />
-        <div className="skeleton rounded-md" style={{ height: '32px' }} />
+        <div className="skeleton rounded-sm" style={{ height: '20px', width: '40%' }} />
+        <div className="skeleton rounded-sm" style={{ height: '14px', width: '70%' }} />
+        <div className="skeleton rounded-pill" style={{ height: '6px' }} />
+        <div className="skeleton rounded-sm" style={{ height: '32px' }} />
       </div>
     );
   }
@@ -157,12 +159,12 @@ export default function DashboardSubscriptionCard({
     new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="gl-card p-5 h-full flex flex-col gap-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
+    <div className="gl-card p-5 h-full flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4" style={{ color: 'var(--sl-purple)' }} />
-          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             My Plan
           </span>
         </div>
@@ -179,7 +181,7 @@ export default function DashboardSubscriptionCard({
 
       {/* Dates */}
       {(subsStart || subsEnd) && (
-        <div className="text-xs space-y-0.5" style={{ color: 'var(--text-muted)' }}>
+        <div className="text-caption space-y-1" style={{ color: 'var(--text-muted)' }}>
           {subsStart && <div>Started: {fmt(subsStart)}</div>}
           {subsEnd && <div>Renews: {fmt(subsEnd)}</div>}
         </div>
@@ -192,7 +194,7 @@ export default function DashboardSubscriptionCard({
             <button
               onClick={handleManageBilling}
               disabled={billingLoading || redirecting}
-              className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-control px-3 py-2 text-caption font-semibold transition-all"
               style={{
                 border: '1px solid var(--border)',
                 background: 'transparent',
@@ -206,7 +208,7 @@ export default function DashboardSubscriptionCard({
             <button
               onClick={handleUpgrade}
               disabled={billingLoading || redirecting}
-              className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-control px-3 py-2 text-caption font-semibold text-on-accent transition-all"
               style={{ background: 'var(--sl-purple)' }}
               onMouseEnter={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background = 'var(--sl-purple-dark)')

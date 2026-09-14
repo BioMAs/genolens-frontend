@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface ConditionPillProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Human-readable condition/group label. */
@@ -22,10 +23,14 @@ export function ConditionPill({
   style,
   ...props
 }: ConditionPillProps) {
-  const pad = size === 'sm' ? 'px-2.5 py-1 text-[11.5px]' : 'px-[11px] py-1.5 text-[12.5px]';
+  const pad = size === 'sm' ? 'px-2.5 py-1 text-micro' : 'px-[11px] py-1.5 text-caption';
   return (
     <span
-      className={`inline-flex items-center gap-[7px] rounded-lg border font-semibold ${pad} ${className}`}
+      className={cn(
+        'inline-flex items-center gap-[7px] rounded-control border font-semibold',
+        pad,
+        className,
+      )}
       style={{
         background: `color-mix(in oklab, ${color} 10%, var(--surface))`,
         borderColor: `color-mix(in oklab, ${color} 30%, var(--surface))`,
@@ -35,7 +40,7 @@ export function ConditionPill({
       {...props}
     >
       <span
-        className="h-2 w-2 flex-none rounded-full"
+        className="h-2 w-2 flex-none rounded-pill"
         style={{ background: color }}
       />
       {label}

@@ -7,6 +7,7 @@ import { useProjectDatasets } from '@/hooks/useProjectData';
 import { useProjectSummary } from '@/hooks/useProjectData';
 import { CheckCircle, BarChart2, Grid, FlaskConical, ArrowLeft, RotateCcw } from 'lucide-react';
 import { ClusteringConfig, EnrichmentConfig } from './StepAnalysisSettings';
+import { cn } from '@/lib/cn';
 
 interface StepResultsProps {
   projectId: string;
@@ -54,14 +55,14 @@ export default function StepResults({
   return (
     <div className="space-y-6">
       {/* Success header */}
-      <div className="rounded-xl bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 p-6 text-center">
-        <CheckCircle className="mx-auto h-10 w-10 text-green-500 mb-3" />
-        <h2 className="text-xl font-bold text-green-900">Analysis Complete!</h2>
-        <p className="mt-1 text-sm text-green-700">
+      <div className="rounded-card bg-success-soft p-6 text-center">
+        <CheckCircle className="mx-auto h-10 w-10 text-success-ink mb-3" />
+        <h2 className="text-heading text-success-ink">Analysis Complete!</h2>
+        <p className="mt-1 text-body-sm text-success-ink">
           Your multi-method analysis has finished. Explore your results below.
         </p>
         {analysis?.name && (
-          <p className="mt-2 text-xs text-green-600 font-medium">{analysis.name}</p>
+          <p className="mt-2 text-caption text-success-ink font-medium">{analysis.name}</p>
         )}
       </div>
 
@@ -69,22 +70,21 @@ export default function StepResults({
       <div className="grid gap-4 sm:grid-cols-3">
         {/* DEG Results */}
         <ResultCard
-          icon={<BarChart2 className="h-6 w-6 text-indigo-500" />}
+          icon={<BarChart2 className="h-6 w-6 text-accent-ink" />}
           title="Differential Expression"
           description={`${comparisons.length} comparison${comparisons.length !== 1 ? 's' : ''} generated`}
           badge={comparisons.length > 0 ? `${comparisons.reduce((a, c) => a + c.deg_total, 0).toLocaleString()} DEGs total` : undefined}
-          color="indigo"
         >
           {comparisons.length > 0 ? (
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 space-y-2">
               {comparisons.slice(0, 4).map(c => (
                 <Link
                   key={c.name}
                   href={`/projects/${projectId}/comparisons/${encodeURIComponent(c.name)}`}
-                  className="flex items-center justify-between rounded-md bg-indigo-50 px-3 py-1.5 text-xs hover:bg-indigo-100"
+                  className="flex items-center justify-between rounded-sm bg-accent-soft px-3 py-1.5 text-caption hover:bg-accent-soft"
                 >
-                  <span className="font-medium text-indigo-700 truncate">{c.name}</span>
-                  <span className="ml-2 shrink-0 text-indigo-500">
+                  <span className="font-medium text-accent-ink truncate">{c.name}</span>
+                  <span className="ml-2 shrink-0 text-accent-ink">
                     ↑{c.deg_up} ↓{c.deg_down}
                   </span>
                 </Link>
@@ -92,72 +92,70 @@ export default function StepResults({
               {comparisons.length > 4 && (
                 <Link
                   href={`/projects/${projectId}`}
-                  className="block text-center text-xs text-indigo-500 hover:underline"
+                  className="block text-center text-caption text-accent-ink hover:underline"
                 >
                   + {comparisons.length - 4} more — View all
                 </Link>
               )}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-gray-400">Results are being indexed…</p>
+            <p className="mt-2 text-caption text-muted">Results are being indexed…</p>
           )}
         </ResultCard>
 
         {/* Clustering */}
         <ResultCard
-          icon={<Grid className="h-6 w-6 text-violet-500" />}
+          icon={<Grid className="h-6 w-6 text-accent-ink" />}
           title="Clustering"
           description="Interactive heatmap of expression patterns"
-          color="violet"
         >
           <Link
             href={`/projects/${projectId}/datasets/${matrixDatasetId}/clustering?${clusteringParams}`}
-            className="mt-3 block w-full rounded-lg bg-violet-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-violet-700"
+            className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
           >
             Explore Clustering →
           </Link>
-          <p className="mt-1.5 text-[10px] text-gray-400 text-center">
+          <p className="mt-2 text-micro text-muted text-center">
             {clusteringConfig.method} · {clusteringConfig.metric} · top {clusteringConfig.top_n_genes} genes
           </p>
         </ResultCard>
 
         {/* Enrichment */}
         <ResultCard
-          icon={<FlaskConical className="h-6 w-6 text-teal-500" />}
+          icon={<FlaskConical className="h-6 w-6 text-accent-ink" />}
           title="Pathway Enrichment"
           description="GO, KEGG & Reactome analysis"
-          color="teal"
         >
           {firstResultDs ? (
             <>
               <Link
                 href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-teal-700"
+                className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
               >
                 Explore Enrichment →
               </Link>
-              <p className="mt-1.5 text-[10px] text-gray-400 text-center">
+              <p className="mt-2 text-micro text-muted text-center">
                 {enrichmentConfig.databases === null ? 'All databases (anno.db)' : enrichmentConfig.databases.join(', ')} · FDR {enrichmentConfig.fdr}
               </p>
             </>
           ) : (
-            <p className="mt-2 text-xs text-gray-400">Results are being indexed…</p>
+            <p className="mt-2 text-caption text-muted">Results are being indexed…</p>
           )}
         </ResultCard>
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-subtle">
         <Link
           href={`/projects/${projectId}`}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+          className="flex items-center gap-2 text-body-sm text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Project
         </Link>
         <button
           type="button"
           onClick={onRunNew}
-          className="flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+          className="flex items-center gap-2 rounded-control border border-accent-ring bg-accent-soft px-4 py-2 text-body-sm font-medium text-accent-ink hover:bg-accent-soft"
         >
           <RotateCcw className="h-4 w-4" /> Run New Analysis
         </button>
@@ -168,31 +166,35 @@ export default function StepResults({
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 function ResultCard({
-  icon, title, description, badge, color = 'gray', children,
+  icon, title, description, badge, children,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   badge?: string;
-  color?: string;
   children?: React.ReactNode;
 }) {
-  const borderColors: Record<string, string> = {
-    indigo: 'border-indigo-200',
-    violet: 'border-violet-200',
-    teal:   'border-teal-200',
-    gray:   'border-gray-200',
-  };
-
+  /**
+   * SIXIEME concatenation sans espace du produit :
+   * `${borderColors[...]}bg-surface` fusionnait la couleur de bordure avec le
+   * fond. Les DEUX etaient perdus — la carte n'avait ni fond de surface, ni
+   * couleur de filet, et `border` seul retombait sur `currentColor`.
+   *
+   * Les trois teintes etaient par ailleurs de la palette Tailwind brute, et
+   * `indigo` y servait de couleur decorative alors que la regle le reserve a
+   * l'accent interactif. Une carte de resultat n'est pas cliquable : ces
+   * filets n'ont aucune raison d'etre colores, et la regle L1 dit deja que
+   * grouper n'est pas une raison de border.
+   */
   return (
-    <div className={`rounded-xl border ${borderColors[color] ?? borderColors.gray} bg-white p-4 shadow-sm flex flex-col`}>
+    <div className={cn('gl-card p-4 flex flex-col')}>
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-gray-50 p-2">{icon}</div>
+        <div className="rounded-control bg-surface-2 p-2">{icon}</div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{title}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          <p className="text-body-sm font-semibold text-primary">{title}</p>
+          <p className="text-caption text-secondary mt-1">{description}</p>
           {badge && (
-            <span className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
+            <span className="mt-1 inline-block rounded-pill bg-surface-2 px-2 py-0.5 text-micro text-secondary">
               {badge}
             </span>
           )}

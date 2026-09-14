@@ -20,6 +20,7 @@
 import { useId } from 'react';
 import { useThresholdControl } from '@/contexts/ComparisonSelectionContext';
 import { INGESTION_LOGFC_MIN, INGESTION_PADJ_MAX } from '@/utils/volcano';
+import { cn } from '@/lib/cn';
 
 /** Tightening steps, loosest (the ingestion ceiling) first. */
 const PADJ_OPTIONS = [INGESTION_PADJ_MAX, 0.01, 0.005, 0.001, 0.0001];
@@ -46,9 +47,9 @@ export default function ThresholdControl({ className = '' }: { className?: strin
   const logfcId = useId();
 
   return (
-    <div className={`flex flex-wrap items-center gap-x-5 gap-y-2 ${className}`}>
+    <div className={cn('flex flex-wrap items-center gap-x-5 gap-y-2', className)}>
       <div className="flex items-center gap-2">
-        <label htmlFor={padjId} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <label htmlFor={padjId} className="text-caption" style={{ color: 'var(--text-secondary)' }}>
           padj &lt;
         </label>
         <select
@@ -56,7 +57,7 @@ export default function ThresholdControl({ className = '' }: { className?: strin
           aria-label="Adjusted p-value threshold"
           value={thresholds.padj}
           onChange={(e) => setThresholds({ padj: Number(e.target.value) })}
-          className="px-2 py-1 text-xs"
+          className="px-2 py-1 text-caption"
           style={selectStyle}
         >
           {PADJ_OPTIONS.map((value) => (
@@ -68,7 +69,7 @@ export default function ThresholdControl({ className = '' }: { className?: strin
       </div>
 
       <div className="flex items-center gap-2">
-        <label htmlFor={logfcId} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <label htmlFor={logfcId} className="text-caption" style={{ color: 'var(--text-secondary)' }}>
           |log2FC| &gt;
         </label>
         <select
@@ -76,7 +77,7 @@ export default function ThresholdControl({ className = '' }: { className?: strin
           aria-label="Absolute log2 fold change threshold"
           value={thresholds.logfc}
           onChange={(e) => setThresholds({ logfc: Number(e.target.value) })}
-          className="px-2 py-1 text-xs"
+          className="px-2 py-1 text-caption"
           style={selectStyle}
         >
           {LOGFC_OPTIONS.map(({ value, label }) => (
@@ -88,7 +89,7 @@ export default function ThresholdControl({ className = '' }: { className?: strin
       </div>
 
       <p
-        className="text-xs"
+        className="text-caption"
         style={{ color: 'var(--text-muted)' }}
         title={
           `Genes were stored at ingestion using padj < ${INGESTION_PADJ_MAX} and ` +

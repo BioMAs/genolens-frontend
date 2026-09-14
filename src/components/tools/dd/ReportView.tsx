@@ -56,18 +56,18 @@ export default function ReportView({ report }: ReportViewProps) {
   return (
     <article className="space-y-8">
       {(report.n_targets_without_evidence ?? 0) > 0 && (
-        <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="rounded-sm bg-warning-soft p-3 text-body-sm text-warning-ink">
           {report.n_targets_without_evidence} top-ranked targets were excluded from this report
           for lack of citable evidence. This is therefore not the actual top of the ranking.
         </p>
       )}
 
       {report.disclosures && report.disclosures.length > 0 && (
-        <section className="rounded-md border border-amber-200 bg-amber-50 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-amber-900">
+        <section className="rounded-sm border border-warning/30 bg-warning-soft p-4">
+          <h3 className="mb-2 text-body-sm font-semibold text-warning-ink">
             What you must know about this report
           </h3>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-amber-900">
+          <ul className="list-disc space-y-1 pl-5 text-body-sm text-warning-ink">
             {report.disclosures.map((disclosure) => (
               <li key={disclosure}>{disclosure}</li>
             ))}
@@ -77,15 +77,15 @@ export default function ReportView({ report }: ReportViewProps) {
 
       {report.sections.map((section) => (
         <section key={section.title}>
-          <h3 className="mb-2 text-lg font-medium text-gray-900">{section.title}</h3>
+          <h3 className="mb-2 text-title font-medium text-primary">{section.title}</h3>
           <ul className="space-y-2">
             {section.claims.map((claim) => (
-              <li key={claim.text} className="text-sm text-gray-800">
+              <li key={claim.text} className="text-body-sm text-primary">
                 {claim.text}{' '}
                 {claim.evidence_ids
                   .filter((id) => citableEvidenceIds.has(id))
                   .map((id) => (
-                    <sup key={id} className="ml-0.5">
+                    <sup key={id} className="ml-1">
                       <a href={`#${refId(id)}`} className="text-brand-primary underline">
                         {id}
                       </a>
@@ -100,8 +100,8 @@ export default function ReportView({ report }: ReportViewProps) {
       <ReportFigures figures={report.figures ?? []} />
 
       <section>
-        <h3 className="mb-2 text-lg font-medium text-gray-900">Evidence</h3>
-        <ol className="space-y-1 text-sm text-gray-700">
+        <h3 className="mb-2 text-title font-medium text-primary">Evidence</h3>
+        <ol className="space-y-1 text-body-sm text-primary">
           {report.appendix.map((entry) => {
             const evidenceId = appendixEvidenceId(entry);
             return (
@@ -114,17 +114,17 @@ export default function ReportView({ report }: ReportViewProps) {
       </section>
 
       <section>
-        <h3 className="mb-2 text-lg font-medium text-gray-900">Sources</h3>
-        <ul className="space-y-1 text-sm text-gray-700">
+        <h3 className="mb-2 text-title font-medium text-primary">Sources</h3>
+        <ul className="space-y-1 text-body-sm text-primary">
           {report.bibliography.map((entry) => (
             <li key={entry}>{entry}</li>
           ))}
         </ul>
       </section>
 
-      <footer className="border-t border-gray-200 pt-4 text-xs text-gray-500">
+      <footer className="border-t border-line pt-4 text-caption text-secondary">
         <p className="mb-1 font-medium">Attributions</p>
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {report.attributions.map((attribution) => (
             <li key={attribution}>{attribution}</li>
           ))}

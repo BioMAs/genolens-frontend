@@ -70,7 +70,7 @@ export default function GeneExpressionViewer({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search a gene by symbol or id"
           aria-label="Search a gene"
-          className="w-full px-3 py-2 text-sm"
+          className="w-full px-3 py-2 text-body-sm"
           style={{
             background: 'var(--surface)',
             border: '1px solid var(--border)',
@@ -84,7 +84,7 @@ export default function GeneExpressionViewer({
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-panel)',
+              borderRadius: 'var(--radius-card)',
             }}
           >
             {suggestions.map((id) => (
@@ -95,12 +95,12 @@ export default function GeneExpressionViewer({
                     setGene(id);
                     setSearch('');
                   }}
-                  className="w-full px-3 py-1.5 text-left text-sm"
+                  className="w-full px-3 py-1.5 text-left text-body-sm"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   <span className="gene-symbol">{geneNameMap?.[id] ?? id}</span>
                   {geneNameMap?.[id] ? (
-                    <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <span className="ml-2 text-caption" style={{ color: 'var(--text-muted)' }}>
                       {id}
                     </span>
                   ) : null}
@@ -112,7 +112,7 @@ export default function GeneExpressionViewer({
       </div>
 
       <div>
-        <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <p className="mb-1 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           {label || 'No gene selected'}
         </p>
         <GeneExpressionBoxplot data={data} loading={isLoading} height={340} showModeBar />

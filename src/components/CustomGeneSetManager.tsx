@@ -64,14 +64,14 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-600">
+      <p className="text-body-sm text-secondary">
         Custom gene sets are scoped to this project. Use them in GSEA (pick the
         &quot;Custom&quot; database) or test them for over-representation.
       </p>
 
       {/* Create from paste */}
-      <div className="border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+      <div className="border border-line rounded-control p-4">
+        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-2">
           <Plus className="h-4 w-4" /> Create from pasted genes
         </h3>
         <input
@@ -79,21 +79,21 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Gene set name (e.g. My proliferation signature)"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-2"
+          className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm mb-2"
         />
         <textarea
           value={pasted}
           onChange={(e) => setPasted(e.target.value)}
           placeholder="Paste gene symbols separated by spaces, commas, or newlines…"
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+          className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm font-mono"
         />
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-gray-500">{parsedGenes.length} genes</span>
+          <span className="text-caption text-secondary">{parsedGenes.length} genes</span>
           <button
             onClick={handleCreate}
             disabled={createMut.isPending || !name.trim() || parsedGenes.length === 0}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 rounded-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
           >
             {createMut.isPending ? 'Creating…' : 'Create gene set'}
           </button>
@@ -101,8 +101,8 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
       </div>
 
       {/* Upload GMT */}
-      <div className="border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+      <div className="border border-line rounded-control p-4">
+        <h3 className="text-body-sm font-semibold text-primary mb-3 flex items-center gap-2">
           <Upload className="h-4 w-4" /> Import a GMT file
         </h3>
         <input
@@ -113,42 +113,42 @@ export default function CustomGeneSetManager({ projectId }: CustomGeneSetManager
             const f = e.target.files?.[0];
             if (f) handleUpload(f);
           }}
-          className="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+          className="block w-full text-body-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-body-sm file:font-medium file:bg-surface-2 file:text-primary hover:file:bg-hover"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-caption text-secondary">
           GMT format: one set per line — name &lt;tab&gt; description &lt;tab&gt; gene1 &lt;tab&gt; gene2 …
         </p>
-        {uploadMut.isPending && <p className="mt-1 text-xs text-blue-600">Uploading…</p>}
+        {uploadMut.isPending && <p className="mt-1 text-caption text-info-ink">Uploading…</p>}
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>
+        <div className="p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-body-sm">{error}</div>
       )}
       {notice && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{notice}</div>
+        <div className="p-3 bg-success-soft border border-success/30 rounded-sm text-success-ink text-body-sm">{notice}</div>
       )}
 
       {/* Existing sets */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
+        <h3 className="text-body-sm font-semibold text-primary mb-2">
           Project gene sets{sets ? ` (${sets.length})` : ''}
         </h3>
         {isLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-body-sm text-secondary">Loading…</p>
         ) : !sets || sets.length === 0 ? (
-          <p className="text-sm text-gray-500">No custom gene sets yet.</p>
+          <p className="text-body-sm text-secondary">No custom gene sets yet.</p>
         ) : (
-          <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg">
+          <ul className="divide-y divide-subtle border border-line rounded-control">
             {sets.map((gs) => (
               <li key={gs.id} className="flex items-center justify-between px-4 py-2.5">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">{gs.name}</div>
-                  <div className="text-xs text-gray-500">{gs.size} genes</div>
+                  <div className="text-body-sm font-medium text-primary truncate">{gs.name}</div>
+                  <div className="text-caption text-secondary">{gs.size} genes</div>
                 </div>
                 <button
                   onClick={() => deleteMut.mutate(gs.id)}
                   disabled={deleteMut.isPending}
-                  className="ml-3 p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50"
+                  className="ml-3 p-1.5 text-muted hover:text-danger-ink-hover disabled:opacity-50"
                   title="Delete gene set"
                 >
                   <Trash2 className="h-4 w-4" />

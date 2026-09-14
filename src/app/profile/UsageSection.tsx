@@ -22,12 +22,12 @@ export default function UsageSection() {
   return (
     <section>
       <h2
-        className="mb-1 flex items-center gap-2 font-display text-[15px] font-semibold"
+        className="mb-1 flex items-center gap-2 font-display text-body font-semibold"
         style={{ color: 'var(--text-primary)' }}
       >
         <Gauge className="h-4 w-4" style={{ color: 'var(--sl-teal)' }} /> Usage &amp; quotas
       </h2>
-      <p className="mb-3 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mb-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
         What is left on your plan this month. One analysis counts as one, whatever its
         number of contrasts. Quotas reset on the first of each month.
       </p>

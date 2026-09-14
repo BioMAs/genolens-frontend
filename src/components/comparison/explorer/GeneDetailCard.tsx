@@ -28,7 +28,6 @@ import {
   useComparisonActions,
   useSelection,
   useThresholds,
-  useViewPreferences,
 } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useGeneExpressionByCondition } from '@/hooks/useGeneExpressionByCondition';
@@ -36,7 +35,7 @@ import { useGeneToPathways } from '@/hooks/useGeneToPathways';
 import { useStringPartners } from '@/hooks/useStringPartners';
 import { isSignificant, type VolcanoPoint } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import { PValToken } from '@/components/ui/pval-token';
 import { GeneToken } from '@/components/ui/gene-token';
 import BookmarkButton from '@/components/BookmarkButton';
@@ -69,9 +68,8 @@ export default function GeneDetailCard({
 }: Props) {
   const selection = useSelection();
   const thresholds = useThresholds();
-  const { colorblind } = useViewPreferences();
   const { setFocusedGene, selectGenes, clearSelection } = useComparisonActions();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const { data: cloud } = useVolcanoPoints(dataset.id, comparisonName);
 
@@ -110,16 +108,16 @@ export default function GeneDetailCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="gene-symbol truncate text-base" title={gene}>
+          <h3 className="gene-symbol truncate text-body" title={gene}>
             {label}
           </h3>
           {symbol && symbol !== gene ? (
-            <p className="truncate text-xs font-mono" style={{ color: 'var(--text-muted)' }} title={gene}>
+            <p className="truncate text-caption font-mono" style={{ color: 'var(--text-muted)' }} title={gene}>
               {gene}
             </p>
           ) : null}
           {point ? (
-            <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <p className="mt-0.5 text-caption" style={{ color: 'var(--text-muted)' }}>
               {isSignificant(point, thresholds)
                 ? point.x > 0
                   ? 'Upregulated at these thresholds'
@@ -137,9 +135,9 @@ export default function GeneDetailCard({
       </div>
 
       {point ? (
-        <dl className="mt-4 space-y-2 text-sm">
+        <dl className="mt-4 space-y-2 text-body-sm">
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <dt className="text-caption" style={{ color: 'var(--text-muted)' }}>
               log2 fold change
             </dt>
             <dd
@@ -151,7 +149,7 @@ export default function GeneDetailCard({
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <dt className="text-caption" style={{ color: 'var(--text-muted)' }}>
               padj
             </dt>
             <dd>
@@ -160,7 +158,7 @@ export default function GeneDetailCard({
           </div>
         </dl>
       ) : (
-        <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <p className="mt-4 text-caption" style={{ color: 'var(--text-muted)' }}>
           This gene is not among the plotted points, so no statistics are available here.
         </p>
       )}
@@ -168,14 +166,13 @@ export default function GeneDetailCard({
       {/* Expression — the panel that was computed for and mounted nowhere */}
       {matrixDataset ? (
         <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-          <p className="mb-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="mb-1 text-caption" style={{ color: 'var(--text-muted)' }}>
             Expression by condition
           </p>
           <GeneExpressionBoxplot
             data={expression.data}
             loading={expression.isLoading}
             height={190}
-            colorblind={colorblind}
           />
         </div>
       ) : null}
@@ -183,7 +180,7 @@ export default function GeneDetailCard({
       {/* Enriched pathways containing this gene */}
       {enrichmentDataset ? (
         <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-          <p className="mb-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="mb-1.5 text-caption" style={{ color: 'var(--text-muted)' }}>
             {pathwaysLoading
               ? 'Looking through the enriched pathways…'
               : pathways.length === 0
@@ -194,18 +191,18 @@ export default function GeneDetailCard({
           </p>
           <ul className="space-y-1">
             {pathways.slice(0, PATHWAYS_SHOWN).map((pathway) => (
-              <li key={pathway.id} className="flex items-baseline justify-between gap-2 text-xs">
+              <li key={pathway.id} className="flex items-baseline justify-between gap-2 text-caption">
                 <span className="truncate" style={{ color: 'var(--text-primary)' }} title={pathway.name}>
                   {pathway.name}
                 </span>
                 {pathway.padj !== null ? (
-                  <PValToken value={pathway.padj.toExponential(1)} className="shrink-0 !text-[11px]" />
+                  <PValToken value={pathway.padj.toExponential(1)} className="shrink-0 !text-micro" />
                 ) : null}
               </li>
             ))}
           </ul>
           {pathways.length > PATHWAYS_SHOWN ? (
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <p className="mt-1 text-caption" style={{ color: 'var(--text-muted)' }}>
               +{(pathways.length - PATHWAYS_SHOWN).toLocaleString('en-US')} more
             </p>
           ) : null}
@@ -214,7 +211,7 @@ export default function GeneDetailCard({
 
       {/* Interaction partners */}
       <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-        <p className="mb-1.5 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <p className="mb-1.5 flex items-center gap-1.5 text-caption" style={{ color: 'var(--text-muted)' }}>
           Interaction partners
           {stringQuery ? (
             <a
@@ -229,15 +226,15 @@ export default function GeneDetailCard({
           ) : null}
         </p>
         {!stringQuery ? (
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
             STRING is keyed on gene symbols, and this dataset gives accessions only.
           </p>
         ) : partnersLoading ? (
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
             Asking STRING…
           </p>
         ) : !partners || partners.length === 0 ? (
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
             No high-confidence partner reported.
           </p>
         ) : (
@@ -265,7 +262,7 @@ export default function GeneDetailCard({
           <button
             type="button"
             onClick={() => setFocusedGene(null)}
-            className="mb-2 text-xs underline"
+            className="mb-2 text-caption underline"
             style={{ color: 'var(--sl-teal-dark)' }}
           >
             Back to the {(others.length + 1).toLocaleString('en-US')} selected
@@ -282,7 +279,7 @@ export default function GeneDetailCard({
               </button>
             ))}
             {others.length > 12 ? (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
                 +{(others.length - 12).toLocaleString('en-US')} more
               </span>
             ) : null}
@@ -293,7 +290,7 @@ export default function GeneDetailCard({
       <button
         type="button"
         onClick={clearSelection}
-        className="mt-4 text-xs underline"
+        className="mt-4 text-caption underline"
         style={{ color: 'var(--sl-teal-dark)' }}
       >
         Clear selection

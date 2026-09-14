@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
 import api from '@/utils/api';
+import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 const GOForceGraph = dynamic(() => import('./GOForceGraph'), { ssr: false });
 
@@ -33,10 +35,19 @@ const NS_FULL: Record<NamespaceKey, string> = {
   cellular_component: 'Cellular Component',
 };
 
-const NS_BADGE_CLASS: Record<NamespaceKey, string> = {
-  biological_process: 'bg-blue-100 text-blue-700',
-  molecular_function: 'bg-amber-100 text-amber-700',
-  cellular_component: 'bg-emerald-100 text-emerald-700',
+/**
+ * Les trois espaces de noms prennent les trois premiers crans de la palette
+ * mesuree — les plus separes entre eux, y compris sous dichromatie — comme
+ * dans le graphe de force GO, pour que le meme terme porte la meme couleur
+ * d'un ecran a l'autre.
+ *
+ * L'aplat colore disparait : le blanc echoue sur quatre des huit crans clairs,
+ * et cette palette a ete construite pour des MARQUES, pas pour porter du texte.
+ */
+const NS_SLOT: Record<NamespaceKey, number> = {
+  biological_process: 0,
+  molecular_function: 1,
+  cellular_component: 2,
 };
 
 // ─── FDR colour helper ────────────────────────────────────────────────────────
@@ -69,15 +80,16 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
   return (
     <div>
       <div
-        className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer text-sm transition-colors
-          ${isSelected ? 'bg-indigo-50 border-l-2 border-indigo-500' : 'hover:bg-gray-50'}
-          ${!node.is_enriched ? 'opacity-50' : ''}
-        `}
+        className={cn(
+          'flex items-center gap-1 px-2 py-1 rounded-sm cursor-pointer text-body-sm transition-colors',
+          isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover',
+          !node.is_enriched ? 'opacity-50' : '',
+        )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         onClick={() => onSelect(node)}
       >
         <button
-          className="w-4 h-4 flex items-center justify-center text-gray-400 flex-shrink-0"
+          className="w-4 h-4 flex items-center justify-center text-muted flex-shrink-0"
           onClick={(e) => { e.stopPropagation(); if (hasChildren) toggleExpand(node.go_id); }}
         >
           {hasChildren ? (
@@ -86,26 +98,29 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
         </button>
 
         <span
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          className="w-2.5 h-2.5 rounded-pill flex-shrink-0"
           style={{ backgroundColor: fdrDotColor(node.fdr) }}
         />
 
-        <span className={`flex-1 truncate ${node.is_enriched ? 'font-medium text-gray-900' : 'text-gray-400'}`}>
+        <span className={cn(
+                'flex-1 truncate',
+                node.is_enriched ? 'font-medium text-primary' : 'text-muted',
+              )}>
           {node.go_name}
         </span>
 
         {node.is_enriched && node.fdr != null && (
-          <span className="text-xs font-semibold text-indigo-600 ml-1 flex-shrink-0">
+          <span className="text-caption font-semibold text-accent-ink ml-1 flex-shrink-0">
             {node.fdr < 0.001 ? node.fdr.toExponential(1) : node.fdr.toFixed(3)}
           </span>
         )}
         {!node.is_enriched && (
-          <span className="text-xs text-gray-300 ml-1 flex-shrink-0">not sig.</span>
+          <span className="text-caption text-muted ml-1 flex-shrink-0">not sig.</span>
         )}
       </div>
 
       {isExpanded && hasChildren && (
-        <div className="border-l border-indigo-100 ml-5">
+        <div className="border-l border-accent-ring ml-6">
           {node.children.map(child => (
             <TreeNode
               key={child.go_id}
@@ -126,9 +141,14 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
 function DetailPanel({ node }: { node: GOTreeNode | null }) {
+  const palette = useChartPalette();
+  const namespaceDot = (key: NamespaceKey) => {
+    const slot = NS_SLOT[key];
+    return slot === undefined ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   if (!node) {
     return (
-      <div className="flex items-center justify-center h-full text-sm text-muted-foreground p-6 text-center">
+      <div className="flex items-center justify-center h-full text-body-sm text-muted p-6 text-center">
         Click a node in the tree to see details.
       </div>
     );
@@ -142,9 +162,14 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <div>
-        <div className="text-xs font-semibold text-indigo-500 mb-0.5">{node.go_id}</div>
-        <div className="text-base font-bold text-gray-900 leading-snug mb-2">{node.go_name}</div>
-        <Badge className={`text-xs ${NS_BADGE_CLASS[ns] ?? 'bg-gray-100 text-gray-600'}`}>
+        <div className="text-caption font-semibold text-accent-ink mb-1">{node.go_id}</div>
+        <div className="text-body font-bold text-primary leading-snug mb-2">{node.go_name}</div>
+        <Badge variant="neutral" className="gap-2 text-caption">
+          <span
+            className="inline-block h-2 w-2 shrink-0 rounded-pill"
+            style={{ background: namespaceDot(ns) }}
+            aria-hidden
+          />
           {NS_FULL[ns] ?? node.namespace}
         </Badge>
       </div>
@@ -157,9 +182,9 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
             { label: 'Genes', value: node.gene_count ?? '—' },
             { label: 'GO level', value: node.level ?? '—' },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-gray-50 rounded-lg p-2.5">
-              <div className="text-lg font-bold text-indigo-600">{value}</div>
-              <div className="text-xs text-gray-400">{label}</div>
+            <div key={label} className="bg-surface-2 rounded-control p-2.5">
+              <div className="text-title text-accent-ink">{value}</div>
+              <div className="text-caption text-muted">{label}</div>
             </div>
           ))}
         </div>
@@ -167,15 +192,15 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
 
       {node.is_enriched && genes.length > 0 && (
         <div>
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Enriched genes</div>
+          <div className="text-caption font-bold text-muted uppercase tracking-wide mb-2">Enriched genes</div>
           <div className="flex flex-wrap gap-1">
             {visibleGenes.map(g => (
-              <span key={g} className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-1.5 py-0.5 rounded">
+              <span key={g} className="bg-accent-soft text-accent-ink text-caption font-semibold px-1.5 py-0.5 rounded-sm">
                 {g}
               </span>
             ))}
             {extraCount > 0 && (
-              <span className="text-xs text-gray-400 self-center">+{extraCount} more</span>
+              <span className="text-caption text-muted self-center">+{extraCount} more</span>
             )}
           </div>
         </div>
@@ -185,7 +210,7 @@ function DetailPanel({ node }: { node: GOTreeNode | null }) {
         <Button
           variant="outline"
           size="sm"
-          className="text-xs"
+          className="text-caption"
           onClick={() => window.open(`https://amigo.geneontology.org/amigo/term/${node.go_id}`, '_blank')}
         >
           <ExternalLink className="w-3 h-3 mr-1" />
@@ -203,8 +228,8 @@ function TreeSkeleton() {
     <div className="p-4 space-y-2 animate-pulse">
       {[1, 2, 3, 4, 5].map(i => (
         <div key={i} className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-200" style={{ marginLeft: `${(i % 3) * 16}px` }} />
-          <div className="h-3 bg-gray-200 rounded flex-1" style={{ width: `${60 + (i * 13) % 30}%` }} />
+          <div className="w-3 h-3 rounded-pill bg-hover" style={{ marginLeft: `${(i % 3) * 16}px` }} />
+          <div className="h-3 bg-hover rounded-sm flex-1" style={{ width: `${60 + (i * 13) % 30}%` }} />
         </div>
       ))}
     </div>
@@ -305,17 +330,17 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       className="overflow-hidden"
       style={{
         border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-panel)',
+        borderRadius: 'var(--radius-card)',
         background: 'var(--surface)',
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-indigo-50/50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-subtle bg-accent-soft/50">
         <div className="flex items-center gap-3">
           <div>
-            <div className="text-xs font-bold text-indigo-600 uppercase tracking-wide">GO Hierarchy</div>
+            <div className="text-caption font-bold text-accent-ink uppercase tracking-wide">GO Hierarchy</div>
             {hierarchy && (
-              <div className="text-xs text-gray-400 mt-0.5">
+              <div className="text-caption text-muted mt-1">
                 {enrichedCount} enriched terms · grey = parent context
               </div>
             )}
@@ -324,27 +349,29 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
         <div className="flex items-center gap-2">
           {viewMode === 'tree' && (
             <>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-caption text-secondary">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />significant
+                  <span className="w-2 h-2 rounded-pill bg-accent inline-block" />significant
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-gray-200 inline-block" />context only
+                  <span className="w-2 h-2 rounded-pill bg-hover inline-block" />context only
                 </span>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={expandAll} disabled={!hierarchy}>
+              <Button variant="ghost" size="sm" className="text-caption h-7" onClick={expandAll} disabled={!hierarchy}>
                 Expand all
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={collapseAll} disabled={!hierarchy}>
+              <Button variant="ghost" size="sm" className="text-caption h-7" onClick={collapseAll} disabled={!hierarchy}>
                 Collapse all
               </Button>
             </>
           )}
-          <div className="flex border border-gray-200 rounded-md overflow-hidden">
+          <div className="flex border border-line rounded-sm overflow-hidden">
             <button
               onClick={() => setViewMode('tree')}
-              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
-                ${viewMode === 'tree' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 text-caption transition-colors',
+                viewMode === 'tree' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+              )}
               title="Tree view"
             >
               <List className="h-3.5 w-3.5" />
@@ -352,8 +379,10 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             </button>
             <button
               onClick={() => setViewMode('graph')}
-              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors
-                ${viewMode === 'graph' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 text-caption transition-colors',
+                viewMode === 'graph' ? 'bg-accent text-on-accent' : 'bg-surface text-secondary hover:bg-hover',
+              )}
               title="Force-directed graph"
             >
               <Network className="h-3.5 w-3.5" />
@@ -364,21 +393,22 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       </div>
 
       {/* Namespace tabs */}
-      <div className="flex border-b border-gray-100 bg-gray-50">
+      <div className="flex border-b border-subtle bg-surface-2">
         {(Object.keys(NS_LABELS) as NamespaceKey[]).map(ns => (
           <button
             key={ns}
             onClick={() => { setActiveNs(ns); setSelectedNode(null); }}
-            className={`px-4 py-2 text-xs font-semibold transition-colors border-b-2
-              ${activeNs === ns
-                ? 'text-indigo-600 border-indigo-500 bg-white'
-                : 'text-gray-400 border-transparent hover:text-gray-600'
-              }`}
+            className={cn(
+              'px-4 py-2 text-caption font-semibold transition-colors border-b-2',
+              activeNs === ns ? 'text-accent-ink border-accent bg-surface' : 'text-muted border-transparent hover:text-secondary',
+            )}
           >
             {NS_FULL[ns]}
             {hierarchy && (
-              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
-                ${activeNs === ns ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+              <span className={cn(
+                      'ml-2 px-1.5 py-0.5 rounded-pill text-micro',
+                      activeNs === ns ? 'bg-accent-soft text-accent-ink' : 'bg-surface-2 text-muted',
+                    )}>
                 {hierarchy[ns].length}
               </span>
             )}
@@ -390,7 +420,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
       {viewMode === 'graph' ? (
         <div style={{ height: 480 }}>
           {loading && <TreeSkeleton />}
-          {error && <div className="p-4 text-sm text-red-500 text-center">{error}</div>}
+          {error && <div className="p-4 text-body-sm text-danger-ink text-center">{error}</div>}
           {!loading && !error && hierarchy && (
             <GOForceGraph
               data={hierarchy}
@@ -398,19 +428,19 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
             />
           )}
           {!loading && !error && !hierarchy && loaded && (
-            <div className="p-6 text-sm text-center text-muted-foreground">No hierarchy data available.</div>
+            <div className="p-6 text-body-sm text-center text-muted">No hierarchy data available.</div>
           )}
         </div>
       ) : (
         <div className="flex" style={{ minHeight: 300, maxHeight: 420 }}>
           {/* Tree pane */}
-          <div className="flex-1 overflow-y-auto border-r border-gray-100 py-2">
+          <div className="flex-1 overflow-y-auto border-r border-subtle py-2">
             {loading && <TreeSkeleton />}
             {error && (
-              <div className="p-4 text-sm text-red-500 text-center">{error}</div>
+              <div className="p-4 text-body-sm text-danger-ink text-center">{error}</div>
             )}
             {!loading && !error && currentNodes.length === 0 && loaded && (
-              <div className="p-6 text-sm text-center text-muted-foreground">
+              <div className="p-6 text-body-sm text-center text-muted">
                 No enriched terms for {NS_FULL[activeNs]}.
               </div>
             )}
@@ -428,7 +458,7 @@ export default function GOTreePanel({ datasetId, comparisonName, regulation }: G
           </div>
 
           {/* Detail pane */}
-          <div className="w-72 shrink-0 bg-gray-50/50 overflow-y-auto">
+          <div className="w-72 shrink-0 bg-surface-2/50 overflow-y-auto">
             <DetailPanel node={selectedNode} />
           </div>
         </div>

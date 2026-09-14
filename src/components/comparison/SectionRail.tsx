@@ -78,7 +78,7 @@ export default function SectionRail({ entries, viewKey }: Props) {
             key={panel}
             href={`#${panel}`}
             aria-current={isActive ? 'true' : undefined}
-            className="whitespace-nowrap px-2.5 py-1 text-xs"
+            className="whitespace-nowrap px-2.5 py-1 text-caption"
             style={{
               borderRadius: 'var(--radius-control)',
               color: isActive ? 'var(--sl-teal-dark)' : 'var(--text-secondary)',

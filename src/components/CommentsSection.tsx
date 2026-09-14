@@ -67,12 +67,12 @@ export default function CommentsSection({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageSquare className="h-5 w-5 text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <MessageSquare className="h-5 w-5 text-muted" />
+          <h3 className="text-title text-primary">
             {title}
           </h3>
           {countData && (
-            <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+            <span className="rounded-pill bg-surface-2 px-2 py-1 text-caption font-medium text-secondary">
               {countData.count}
             </span>
           )}
@@ -82,7 +82,7 @@ export default function CommentsSection({
           {/* Filter toggle */}
           <button
             onClick={() => setIncludeResolved(!includeResolved)}
-            className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="flex items-center gap-2 rounded-sm border border-strong px-3 py-1.5 text-body-sm hover:bg-hover"
           >
             <Filter className="h-4 w-4" />
             {includeResolved ? 'All' : 'Unresolved'}
@@ -105,12 +105,12 @@ export default function CommentsSection({
 
       {/* Stats */}
       {(unresolvedCount > 0 || resolvedCount > 0) && (
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+        <div className="flex items-center gap-4 text-body-sm">
+          <div className="flex items-center gap-1 text-warning-ink">
             <Circle className="h-4 w-4" />
             <span>{unresolvedCount} unresolved</span>
           </div>
-          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-1 text-success-ink">
             <CheckCircle className="h-4 w-4" />
             <span>{resolvedCount} resolved</span>
           </div>
@@ -119,7 +119,7 @@ export default function CommentsSection({
 
       {/* New comment editor */}
       {isAddingComment && (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950">
+        <div className="rounded-control border border-accent-ring bg-accent-soft p-4">
           <CommentEditor
             projectId={projectId}
             commentType={commentType}
@@ -134,12 +134,12 @@ export default function CommentsSection({
       {/* Comments list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600" />
+          <div className="h-8 w-8 animate-spin rounded-pill border-4 border-line border-t-indigo-600" />
         </div>
       ) : !comments || comments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 text-center dark:border-gray-700">
-          <MessageSquare className="mb-3 h-12 w-12 text-gray-400" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
+        <div className="flex flex-col items-center justify-center rounded-control border-2 border-dashed border-strong py-12 text-center">
+          <MessageSquare className="mb-3 h-12 w-12 text-muted" />
+          <p className="text-body-sm text-secondary">{emptyMessage}</p>
         </div>
       ) : (
         <div className="space-y-4">

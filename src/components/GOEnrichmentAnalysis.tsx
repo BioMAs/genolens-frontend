@@ -96,6 +96,10 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartTooltip, ResponsiveContainer, Cell, ZAxis,
 } from 'recharts';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import {CHART_VARS } from '@/utils/chartTheme';
+import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface DotPlotTooltipProps {
   active?: boolean;
@@ -106,11 +110,11 @@ function DotPlotTooltip({ active, payload }: DotPlotTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs max-w-60">
-      <div className="font-semibold text-gray-900 mb-1 leading-snug">{d.go_name}</div>
-      <div className="text-indigo-500 mb-2">{d.go_id}</div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
-        <span>FDR</span><span className="font-semibold text-indigo-700">{d.fdr.toExponential(2)}</span>
+    <div className="bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-60">
+      <div className="font-semibold text-primary mb-1 leading-snug">{d.go_name}</div>
+      <div className="text-accent-ink mb-2">{d.go_id}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">
+        <span>FDR</span><span className="font-semibold text-accent-ink">{d.fdr.toExponential(2)}</span>
         <span>Gene ratio</span><span className="font-semibold">{d.x.toFixed(3)}</span>
         <span>Enrichment</span><span className="font-semibold">{d.enrichment_ratio.toFixed(2)}×</span>
         <span>Genes</span><span className="font-semibold">{d.study_count}</span>
@@ -121,7 +125,7 @@ function DotPlotTooltip({ active, payload }: DotPlotTooltipProps) {
 
 function GODotPlot({ terms }: { terms: GOTerm[] }) {
   if (!terms.length) return (
-    <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+    <div className="flex items-center justify-center h-48 text-body-sm text-muted">
       No enriched terms to display.
     </div>
   );
@@ -139,24 +143,26 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
+      <div className="flex items-center justify-between mb-3 text-caption text-muted">
         <span>Top 20 enriched terms · Dot size = gene count · Color = -log₁₀(FDR)</span>
         <div className="flex items-center gap-1">
-          <span className="inline-block w-10 h-2.5 rounded" style={{ background: 'linear-gradient(to right, #c7d2fe, #4338ca)' }} />
+          <span className="inline-block w-10 h-2.5 rounded-sm" // Degrade de legende : les deux bornes venaient de la palette Tailwind
+            // brute et restaient figees sur le theme clair.
+            style={{ background: `linear-gradient(to right, ${CHART_VARS.accentSoft}, ${CHART_VARS.accent})` }} />
           <span>High FDR → Low FDR</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={Math.max(240, top.length * 26)}>
         <ScatterChart margin={{ top: 4, right: 24, left: 8, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis
             type="number" dataKey="x" name="Gene Ratio"
-            tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false}
-            label={{ value: 'Gene Ratio', position: 'insideBottom', offset: -12, fontSize: 10, fill: '#94a3b8' }}
+            {...CHART_AXIS} tickLine={false} axisLine={false}
+            label={{ value: 'Gene Ratio', position: 'insideBottom', offset: -12, fontSize: 10, fill: CHART_VARS.inkMuted }}
           />
           <YAxis
             type="category" dataKey="y" width={210}
-            tick={{ fontSize: 10, fill: '#374151' }} tickLine={false} axisLine={false}
+            {...CHART_AXIS} tickLine={false} axisLine={false}
           />
           <ZAxis type="number" dataKey="z" range={[20, 120]} />
           <RechartTooltip content={<DotPlotTooltip />} cursor={{ strokeDasharray: '3 3' }} />
@@ -173,19 +179,33 @@ function GODotPlot({ terms }: { terms: GOTerm[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-// Known database categories with labels and colors for the selector
-const DB_CATEGORIES: { value: string; label: string; color: string }[] = [
-  { value: 'GO:BP', label: 'GO: Biological Process', color: 'text-blue-600' },
-  { value: 'GO:MF', label: 'GO: Molecular Function', color: 'text-green-600' },
-  { value: 'GO:CC', label: 'GO: Cellular Component', color: 'text-purple-600' },
-  { value: 'KEGG', label: 'KEGG Pathways', color: 'text-orange-600' },
-  { value: 'REACTOME', label: 'Reactome Pathways', color: 'text-cyan-700' },
-  { value: 'HALLMARK', label: 'MSigDB Hallmark', color: 'text-rose-600' },
-  { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology', color: 'text-teal-600' },
-  { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic', color: 'text-indigo-600' },
+/**
+ * Les bases de donnees sont des CATEGORIES. Elles etaient peintes par huit
+ * couleurs Tailwind brutes, et la migration des statuts a laisse la liste
+ * mi-brute mi-statut : « GO: Molecular Function » en SUCCES, « KEGG » en
+ * AVERTISSEMENT.
+ *
+ * L'ordre est l'index dans la palette mesuree — les huit crans sont separes
+ * sous les trois dichromaties simulees, ce que huit teintes choisies a l'oeil
+ * ne garantissaient pas.
+ */
+const DB_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'GO:BP', label: 'GO: Biological Process' },
+  { value: 'GO:MF', label: 'GO: Molecular Function' },
+  { value: 'GO:CC', label: 'GO: Cellular Component' },
+  { value: 'KEGG', label: 'KEGG Pathways' },
+  { value: 'REACTOME', label: 'Reactome Pathways' },
+  { value: 'HALLMARK', label: 'MSigDB Hallmark' },
+  { value: 'C5_ONTOLOGY', label: 'MSigDB C5 Ontology' },
+  { value: 'C7_IMMUNOLOGIC', label: 'MSigDB C7 Immunologic' },
 ];
 
 export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichmentDataset }: GOEnrichmentAnalysisProps) {
+  const palette = useChartPalette();
+  const dbDot = (value: string) => {
+    const slot = DB_CATEGORIES.findIndex((d) => d.value === value);
+    return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   const { focusTerm } = useComparisonActions();
   // Pathways live on the ENRICHMENT dataset (annoDB); DEG genes on the DEG dataset.
   const enrichmentDatasetId = enrichmentDataset?.id ?? dataset.id;
@@ -305,15 +325,15 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
       {/* ── Header bar ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-gray-900">Pathway Enrichment</h3>
+          <h3 className="font-semibold text-primary">Pathway Enrichment</h3>
           {isRunning && (
-            <span className="flex items-center gap-1.5 text-xs text-indigo-600">
+            <span className="flex items-center gap-2 text-caption text-accent-ink">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Loading…
             </span>
           )}
           {!isRunning && hasResults && (
-            <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+            <span className="text-caption text-success-ink bg-success-soft border border-success/30 rounded-pill px-2 py-0.5">
               {terms.length} enriched terms
             </span>
           )}
@@ -323,7 +343,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 text-xs gap-1.5 ${showSettings ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500'}`}
+            className={cn(
+              'h-7 text-caption gap-2',
+              showSettings ? 'text-accent-ink bg-accent-soft' : 'text-secondary',
+            )}
             onClick={() => setShowSettings(s => !s)}
           >
             <Settings2 className="w-3.5 h-3.5" />
@@ -338,20 +361,27 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
         <Card className="border-dashed">
           <CardContent className="pt-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Database / Category</Label>
+              <div className="space-y-2">
+                <Label className="text-caption">Database / Category</Label>
                 <Select
                   value={params.namespace || 'all'}
                   onValueChange={(v) => updateParams({ ...params, namespace: v === 'all' ? null : v })}
                 >
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All databases" /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-caption"><SelectValue placeholder="All databases" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Databases</SelectItem>
                     {DB_CATEGORIES
                       .filter(db => terms.some(t => t.namespace === db.value))
                       .map(db => (
                         <SelectItem key={db.value} value={db.value}>
-                          <span className={db.color}>{db.label}</span>
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                              style={{ background: dbDot(db.value) }}
+                              aria-hidden
+                            />
+                            {db.label}
+                          </span>
                         </SelectItem>
                       ))
                     }
@@ -366,13 +396,13 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">Regulation</Label>
+              <div className="space-y-2">
+                <Label className="text-caption">Regulation</Label>
                 <Select
                   value={params.regulation || 'all'}
                   onValueChange={(v) => updateParams({ ...params, regulation: v === 'all' ? null : v })}
                 >
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All genes" /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-caption"><SelectValue placeholder="All genes" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All DEGs</SelectItem>
                     <SelectItem value="UP">Upregulated Only</SelectItem>
@@ -381,10 +411,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">Adj. P-value Threshold</Label>
+              <div className="space-y-2">
+                <Label className="text-caption">Adj. P-value Threshold</Label>
                 <Input
-                  className="h-8 text-xs"
+                  className="h-9 text-caption"
                   type="number" step="0.01" min="0" max="1"
                   value={params.padjThreshold}
                   onChange={(e) => updateParams({ ...params, padjThreshold: parseFloat(e.target.value) })}
@@ -395,7 +425,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
             <button
               type="button"
               onClick={() => setShowAdvanced(s => !s)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
+              className="flex items-center gap-2 text-caption text-secondary hover:text-primary"
             >
               {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               Advanced options
@@ -403,31 +433,31 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
             {showAdvanced && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Log FC Threshold</Label>
-                  <Input className="h-8 text-xs" type="number" step="0.1" min="0" value={params.logFcThreshold}
+                <div className="space-y-2">
+                  <Label className="text-caption">Log FC Threshold</Label>
+                  <Input className="h-9 text-caption" type="number" step="0.1" min="0" value={params.logFcThreshold}
                     onChange={(e) => updateParams({ ...params, logFcThreshold: parseFloat(e.target.value) })} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Min Term Size</Label>
-                  <Input className="h-8 text-xs" type="number" min="1" value={params.minTermSize}
+                <div className="space-y-2">
+                  <Label className="text-caption">Min Term Size</Label>
+                  <Input className="h-9 text-caption" type="number" min="1" value={params.minTermSize}
                     onChange={(e) => updateParams({ ...params, minTermSize: parseInt(e.target.value) })} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Max Term Size</Label>
-                  <Input className="h-8 text-xs" type="number" min="1" value={params.maxTermSize}
+                <div className="space-y-2">
+                  <Label className="text-caption">Max Term Size</Label>
+                  <Input className="h-9 text-caption" type="number" min="1" value={params.maxTermSize}
                     onChange={(e) => updateParams({ ...params, maxTermSize: parseInt(e.target.value) })} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Enrichment P-value</Label>
-                  <Input className="h-8 text-xs" type="number" step="0.01" min="0" max="1" value={params.pvalueThreshold}
+                <div className="space-y-2">
+                  <Label className="text-caption">Enrichment P-value</Label>
+                  <Input className="h-9 text-caption" type="number" step="0.01" min="0" max="1" value={params.pvalueThreshold}
                     onChange={(e) => updateParams({ ...params, pvalueThreshold: parseFloat(e.target.value) })} />
                 </div>
                 <div className="flex items-center gap-2 pt-4">
                   <input type="checkbox" id="propagate" checked={params.propagateAnnotations}
                     onChange={(e) => updateParams({ ...params, propagateAnnotations: e.target.checked })}
-                    className="rounded" />
-                  <Label htmlFor="propagate" className="cursor-pointer text-xs">Propagate Annotations (True Path Rule)</Label>
+                    className="rounded-sm" />
+                  <Label htmlFor="propagate" className="cursor-pointer text-caption">Propagate Annotations (True Path Rule)</Label>
                 </div>
               </div>
             )}
@@ -437,8 +467,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-sm text-body-sm text-destructive">
+          <AlertCircle className="w-4 h-4 mt-1 shrink-0" />
           {error}
         </div>
       )}
@@ -446,8 +476,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
       {/* ── Loading skeleton (first load) ────────────────────────────────── */}
       {isInitialLoad && isRunning && (
         <div className="space-y-3 animate-pulse">
-          <div className="h-10 bg-gray-100 rounded-lg" />
-          <div className="h-64 bg-gray-50 rounded-xl border border-gray-100" />
+          <div className="h-9 bg-surface-2 rounded-control" />
+          <div className="h-64 bg-surface-2 rounded-card" />
         </div>
       )}
 
@@ -456,7 +486,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
         <>
           {/* Stats bar — dynamic: shows all categories present in results */}
           {terms.length > 0 && (
-            <div className="flex items-center gap-5 px-4 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-6 px-4 py-2 bg-surface-2 rounded-control text-caption text-muted flex-wrap">
               {[...new Set(terms.map(t => t.namespace).filter(Boolean))].map(cat => {
                 const count = terms.filter(t => t.namespace === cat).length;
                 const dbDef = DB_CATEGORIES.find(db => db.value === cat);
@@ -464,7 +494,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                   <button
                     key={cat}
                     onClick={() => updateParams({ ...params, namespace: params.namespace === cat ? null : cat })}
-                    className={`transition-colors ${params.namespace === cat ? 'font-semibold text-foreground' : 'hover:text-foreground'}`}
+                    className={cn(
+                      'transition-colors',
+                      params.namespace === cat ? 'font-semibold text-foreground' : 'hover:text-foreground',
+                    )}
                   >
                     {count} {dbDef ? dbDef.label.replace(/^(GO: |MSigDB )/, '') : cat}
                   </button>
@@ -475,16 +508,15 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
           {/* Visualization tabs */}
           <Card className={isRunning ? 'opacity-60 pointer-events-none transition-opacity' : 'transition-opacity'}>
-            <div className="flex border-b border-gray-100 bg-gray-50 rounded-t-xl overflow-hidden">
+            <div className="flex border-b border-subtle bg-surface-2 rounded-t-card overflow-hidden">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2.5 text-xs font-semibold border-b-2 transition-colors
-                    ${activeTab === tab.id
-                      ? 'text-indigo-600 border-indigo-500 bg-white'
-                      : 'text-gray-400 border-transparent hover:text-gray-600'
-                    }`}
+                  className={cn(
+                    'px-5 py-2.5 text-caption font-semibold border-b-2 transition-colors',
+                    activeTab === tab.id ? 'text-accent-ink border-accent bg-surface' : 'text-muted border-transparent hover:text-secondary',
+                  )}
                 >
                   {tab.label}
                 </button>
@@ -529,9 +561,9 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
       {/* ── Empty state (loaded but no results) ─────────────────────────── */}
       {!isRunning && !error && !isInitialLoad && !hasResults && (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
-          <p className="text-sm font-medium mb-1">No enriched terms found</p>
-          <p className="text-xs">Enrichment analysis has not been computed yet for this comparison.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center text-muted bg-surface-2 rounded-card border border-dashed">
+          <p className="text-body-sm font-medium mb-1">No enriched terms found</p>
+          <p className="text-caption">Enrichment analysis has not been computed yet for this comparison.</p>
         </div>
       )}
     </div>

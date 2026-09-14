@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import api from '@/utils/api';
 import type { Dataset } from '@/types';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 
 interface Props {
   /** Dataset holding the enrichment pathways; absent → nothing to show yet. */
@@ -52,7 +54,7 @@ function PathwayTooltip({
   const p = payload[0].payload;
   return (
     <div
-      className="max-w-xs rounded-lg border px-3 py-2 text-xs shadow-lg"
+      className="max-w-xs rounded-control border px-3 py-2 text-caption shadow-lg"
       style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}
     >
       <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{p.name}</div>
@@ -60,7 +62,7 @@ function PathwayTooltip({
         adj. p {p.padj.toExponential(2)} · {p.geneCount} gene{p.geneCount === 1 ? '' : 's'}
         {p.category ? ` · ${p.category}` : ''}
       </div>
-      {p.id && <div className="mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>{p.id}</div>}
+      {p.id && <div className="mt-1 font-mono" style={{ color: 'var(--text-muted)' }}>{p.id}</div>}
     </div>
   );
 }
@@ -141,38 +143,15 @@ export default function OverviewTopPathways({
     };
   }, [enrichmentDataset, comparisonName, maxTerms]);
 
+  const isEmpty = !enrichmentDataset || failed || pathways.length === 0;
+  const state: ChartState = loading ? 'loading' : isEmpty ? 'empty' : 'ready';
+  const emptyMessage = !enrichmentDataset
+    ? 'No enrichment results are attached to this comparison yet.'
+    : failed
+      ? 'Enrichment results could not be loaded.'
+      : `No pathway reaches adj. p ≤ ${PADJ_MAX}.`;
+
   const body = () => {
-    if (loading) {
-      return (
-        <div className="space-y-2 py-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-5 rounded" style={{ width: `${95 - i * 11}%` }} />
-          ))}
-        </div>
-      );
-    }
-
-    if (!enrichmentDataset || failed || pathways.length === 0) {
-      const message = !enrichmentDataset
-        ? 'No enrichment results are attached to this comparison yet.'
-        : failed
-          ? 'Enrichment results could not be loaded.'
-          : `No pathway reaches adj. p ≤ ${PADJ_MAX}.`;
-      return (
-        <div className="flex h-[260px] flex-col items-center justify-center gap-2 text-center">
-          <p className="max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>{message}</p>
-          <button
-            type="button"
-            onClick={onOpenEnrichment}
-            className="text-xs font-semibold"
-            style={{ color: 'var(--sl-teal-dark)' }}
-          >
-            Open Enrichment →
-          </button>
-        </div>
-      );
-    }
-
     // Strongest term on top: recharts draws categories top-down.
     const data = [...pathways].reverse();
 
@@ -181,7 +160,7 @@ export default function OverviewTopPathways({
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 16, left: 4 }}>
           <XAxis
             type="number"
-            tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
             label={{
               value: '−log10(adj. p)',
@@ -195,7 +174,7 @@ export default function OverviewTopPathways({
             dataKey="name"
             width={170}
             tickFormatter={(value: string) => truncate(value)}
-            tick={{ fontSize: 10.5, fill: 'var(--text-secondary)' }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <Tooltip content={<PathwayTooltip />} cursor={{ fill: 'var(--hover-overlay)' }} />
@@ -212,28 +191,39 @@ export default function OverviewTopPathways({
   };
 
   return (
-    <div className="gl-card p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Top enriched pathways
-          </h2>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Ranked by adjusted p-value · adj. p ≤ {PADJ_MAX}
-          </p>
-        </div>
-        {pathways.length > 0 && (
+    <ChartCard
+      title="Top enriched pathways"
+      subtitle={`Ranked by adjusted p-value · adj. p ≤ ${PADJ_MAX}`}
+      state={state}
+      minHeight={260}
+      exportName={`top_pathways_${comparisonName}`}
+      empty={
+        <span className="flex flex-col items-center gap-2">
+          <span className="max-w-xs">{emptyMessage}</span>
           <button
             type="button"
             onClick={onOpenEnrichment}
-            className="text-xs font-semibold"
-            style={{ color: 'var(--sl-teal-dark)' }}
+            // Le teal de MARQUE servait de couleur de lien : la regle reserve
+            // un seul accent interactif.
+            className="text-caption font-semibold text-accent-ink"
+          >
+            Open Enrichment →
+          </button>
+        </span>
+      }
+      actions={
+        pathways.length > 0 ? (
+          <button
+            type="button"
+            onClick={onOpenEnrichment}
+            className="text-caption font-semibold text-accent-ink"
           >
             All pathways →
           </button>
-        )}
-      </div>
+        ) : null
+      }
+    >
       {body()}
-    </div>
+    </ChartCard>
   );
 }

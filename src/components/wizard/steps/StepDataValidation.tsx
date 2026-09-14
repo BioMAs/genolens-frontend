@@ -5,6 +5,7 @@ import { useProjectDatasets } from '@/hooks/useProjectData';
 import { Dataset, DatasetStatus } from '@/types';
 import QCDashboard from '@/components/QCDashboard';
 import { AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StepDataValidationProps {
   projectId: string;
@@ -48,8 +49,8 @@ export default function StepDataValidation({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Data Validation & QC</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-heading text-primary">Data Validation & QC</h2>
+        <p className="mt-1 text-body-sm text-secondary">
           Review the quality metrics for your uploaded files before running the analysis.
         </p>
       </div>
@@ -62,35 +63,35 @@ export default function StepDataValidation({
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-1.5">
+        <div className="rounded-control border border-warning/30 bg-warning-soft p-4 space-y-2">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <p className="text-sm font-semibold text-amber-800">Warnings detected</p>
+            <AlertTriangle className="h-4 w-4 text-warning-ink" />
+            <p className="text-body-sm font-semibold text-warning-ink">Warnings detected</p>
           </div>
           {warnings.map((w, i) => (
-            <p key={i} className="text-xs text-amber-700 pl-6">{w}</p>
+            <p key={i} className="text-caption text-warning-ink pl-6">{w}</p>
           ))}
-          <p className="text-xs text-amber-600 pl-6 pt-1">
+          <p className="text-caption text-warning-ink pl-6 pt-1">
             You can continue, but review these before interpreting results.
           </p>
         </div>
       )}
 
       {warnings.length === 0 && isMatrixReady && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          <p className="text-sm text-green-800 font-medium">All checks passed — your data looks good!</p>
+        <div className="flex items-center gap-2 rounded-control border border-success/30 bg-success-soft px-4 py-3">
+          <CheckCircle className="h-4 w-4 text-success-ink" />
+          <p className="text-body-sm text-success-ink font-medium">All checks passed — your data looks good!</p>
         </div>
       )}
 
       {/* QC Dashboard */}
       {isMatrixReady ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-gray-700">Library Size & Quality Metrics</h3>
+        <div className="rounded-card bg-surface p-4 shadow-sm">
+          <h3 className="mb-4 text-body-sm font-semibold text-primary">Library Size & Quality Metrics</h3>
           <QCDashboard datasets={datasets} />
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-400">
+        <div className="rounded-card bg-surface-2 p-8 text-center text-body-sm text-muted">
           Processing matrix… QC charts will appear here once ready.
         </div>
       )}
@@ -100,14 +101,14 @@ export default function StepDataValidation({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-control border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
         >
           ← Back
         </button>
         <button
           type="button"
           onClick={onContinue}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
         >
           Continue to Settings
           <ChevronRight className="h-4 w-4" />
@@ -121,18 +122,18 @@ export default function StepDataValidation({
 function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset | undefined }) {
   if (!dataset) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-        <div className="h-2 w-2 rounded-full bg-gray-300" />
-        <p className="text-sm text-gray-400">{label} — not uploaded</p>
+      <div className="flex items-center gap-3 rounded-control bg-surface-2 px-4 py-3">
+        <div className="h-2 w-2 rounded-pill bg-hover" />
+        <p className="text-body-sm text-muted">{label} — not uploaded</p>
       </div>
     );
   }
 
   const statusColors: Record<string, string> = {
-    READY:      'bg-green-400',
-    PROCESSING: 'bg-blue-400 animate-pulse',
-    PENDING:    'bg-yellow-400 animate-pulse',
-    FAILED:     'bg-red-400',
+    READY:      'bg-success',
+    PROCESSING: 'bg-info animate-pulse',
+    PENDING:    'bg-warning animate-pulse',
+    FAILED:     'bg-danger',
   };
 
   const statusLabels: Record<string, string> = {
@@ -143,11 +144,14 @@ function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset 
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
-      <div className={`h-2 w-2 rounded-full shrink-0 ${statusColors[dataset.status] ?? 'bg-gray-300'}`} />
+    <div className="flex items-center gap-3 rounded-control bg-surface px-4 py-3">
+      <div className={cn(
+             'h-2 w-2 rounded-pill shrink-0',
+             statusColors[dataset.status] ?? 'bg-hover',
+           )} />
       <div className="min-w-0">
-        <p className="text-sm font-medium text-gray-800">{label}</p>
-        <p className="text-xs text-gray-400 truncate">{dataset.name} · {statusLabels[dataset.status] ?? dataset.status}</p>
+        <p className="text-body-sm font-medium text-primary">{label}</p>
+        <p className="text-caption text-muted truncate">{dataset.name} · {statusLabels[dataset.status] ?? dataset.status}</p>
       </div>
     </div>
   );

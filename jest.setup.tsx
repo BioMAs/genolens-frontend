@@ -26,6 +26,25 @@ jest.mock('next/link', () => {
   return Link;
 });
 
+/**
+ * jsdom n'implemente pas `matchMedia`. `ThemeProvider` s'en sert pour lire la
+ * preference systeme quand rien n'est stocke, donc tout test qui monte un
+ * arbre theme tombait ici. Le defaut est `light` : c'est ce que rend le
+ * serveur, et un test ne doit pas dependre du reglage de la machine.
+ */
+if (!window.matchMedia) {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+}
+
 // Silence known noisy console.error from React Testing Library
 const originalError = console.error;
 beforeAll(() => {

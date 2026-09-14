@@ -39,22 +39,22 @@ function GeneList({
   if (genes.length === 0) return null;
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white p-3">
+    <div className="rounded-sm bg-surface p-3">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="flex w-full items-baseline justify-between text-left"
       >
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-body-sm font-medium text-primary">
           {label} ({genes.length})
         </span>
-        <span className="text-xs text-brand-primary underline">
+        <span className="text-caption text-brand-primary underline">
           {open ? 'Hide' : 'Show the genes'}
         </span>
       </button>
-      <p className="mt-1 text-xs text-gray-500">{hint}</p>
+      <p className="mt-1 text-caption text-secondary">{hint}</p>
       {open && (
-        <p className="mt-2 break-words font-mono text-xs text-gray-700">{genes.join(', ')}</p>
+        <p className="mt-2 break-words font-mono text-caption text-primary">{genes.join(', ')}</p>
       )}
     </div>
   );
@@ -71,7 +71,7 @@ export default function SignatureDisclosures({ result }: SignatureDisclosuresPro
   return (
     <div className="space-y-3">
       {result.disclosures.length > 0 && (
-        <ul className="list-disc space-y-1 rounded-md border border-amber-200 bg-amber-50 p-4 pl-8 text-sm text-amber-900">
+        <ul className="list-disc space-y-1 rounded-sm border border-warning/30 bg-warning-soft p-4 pl-8 text-body-sm text-warning-ink">
           {result.disclosures.map((disclosure) => (
             <li key={disclosure}>{disclosure}</li>
           ))}

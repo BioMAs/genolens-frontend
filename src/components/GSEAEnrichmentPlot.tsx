@@ -195,43 +195,43 @@ export default function GSEAEnrichmentPlot({
         ref={canvasRef}
         width={800}
         height={500}
-        className="border border-gray-300 rounded-lg bg-white cursor-crosshair"
+        className="rounded-control bg-surface cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredGene(null)}
       />
 
       {/* Tooltip */}
       {hoveredGene && (
-        <div className="absolute top-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-sm">
+        <div className="absolute top-4 right-4 bg-raised rounded-card shadow-elev-2 p-3 text-body-sm">
           <div className="font-semibold">{hoveredGene.gene}</div>
-          <div className="text-gray-600">Metric: {hoveredGene.metric.toFixed(3)}</div>
+          <div className="text-secondary">Metric: {hoveredGene.metric.toFixed(3)}</div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+      <div className="mt-4 flex items-center justify-center gap-6 text-body-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-red-600"></div>
+          <div className="w-4 h-1 bg-danger"></div>
           <span>Positive Enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-blue-600"></div>
+          <div className="w-4 h-1 bg-info"></div>
           <span>Negative Enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-gray-600" style={{ borderTop: '2px dashed' }}></div>
+          <div className="w-4 h-1 bg-raised" style={{ borderTop: '2px dashed' }}></div>
           <span>Zero Line</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-3 border-b-2 border-gray-900"></div>
+          <div className="w-4 h-3 border-b-2 border-strong"></div>
           <span>Gene Set Hits ({geneSetSize})</span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+      <div className="mt-4 p-3 bg-info-soft border border-info/30 rounded-control text-body-sm">
         <p className="font-semibold mb-2">How to interpret this plot:</p>
-        <ul className="list-disc list-inside space-y-1 text-gray-700">
+        <ul className="list-disc list-inside space-y-1 text-primary">
           <li>The line shows the running enrichment score across all ranked genes</li>
           <li>Vertical ticks at the bottom mark where gene set members appear in the ranking</li>
           <li>Peak (or valley) indicates maximum enrichment</li>

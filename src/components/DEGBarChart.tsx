@@ -4,15 +4,11 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Layout, PlotData } from 'plotly.js';
-
-/* Direction colours: the literal values of --dc-up / --dc-down, which are
-   defined once and not overridden in dark mode. Plotly needs concrete colours,
-   so they are repeated here — up is green and down is red across the app, and
-   this chart used to say the opposite (up in red, down in blue). */
-const UP_COLOR = '#22c55e';
-const DOWN_COLOR = '#ef4444';
+import { useChartTheme } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
+import { cn } from '@/lib/cn';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -33,8 +29,7 @@ interface DEGGene {
 type QueryRow = Record<string, unknown>;
 
 export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProps) {
-  const { theme } = useTheme();
-  const dark = theme === 'dark';
+  const chartTheme = useChartTheme();
   const [topN, setTopN] = useState<TopN>(10);
   const [genes, setGenes] = useState<DEGGene[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,42 +145,30 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
     fetchDEGs();
   }, [dataset, comparisonName]);
 
-  if (loading) {
-    return (
-      <div className="gl-card p-5">
-        <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-          <div className="h-4 w-4 animate-spin rounded-full border-b-2" style={{ borderColor: 'var(--text-muted)' }} />
-          Loading DEG chart…
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="gl-card p-5">
-        <p className="text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</p>
-      </div>
-    );
-  }
-
   const upGenes = genes.filter((g) => g.direction === 'up').slice(0, topN);
   const downGenes = genes.filter((g) => g.direction === 'down').slice(0, topN);
 
-  if (upGenes.length === 0 && downGenes.length === 0) {
-    return (
-      <div className="gl-card p-5">
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No differentially expressed genes found.</p>
-      </div>
-    );
-  }
+  // Quatre cartes distinctes se relayaient — chargement, erreur, vide, pret —
+  // et AUCUNE ne portait l'en-tete : le selecteur « Top N » disparaissait
+  // pendant le chargement, puis reapparaissait ailleurs. Il vit desormais dans
+  // la legende de la figure, donc il reste ou il est.
+  const state: ChartState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : upGenes.length === 0 && downGenes.length === 0
+        ? 'empty'
+        : 'ready';
 
   // Build a single horizontal bar chart: up genes (positive logFC, red) then down genes (negative logFC, blue)
   // Genes ordered from most significant up at top to most significant down at bottom
   const chartGenes = [...upGenes.slice().reverse(), ...downGenes];
   const yLabels = chartGenes.map((g) => g.name);
   const xValues = chartGenes.map((g) => g.logFC);
-  const colors = chartGenes.map((g) => (g.direction === 'up' ? UP_COLOR : DOWN_COLOR));
+  // `#22c55e` / `#ef4444` etaient recopies ici « faute de pouvoir resoudre
+  // var() ». C'est exactement ce que `useChartTheme` fait, et la copie
+  // figeait la paire CLAIRE, ou le vert donne 2,28:1 sur blanc.
+  const colors = chartGenes.map((g) => (g.direction === 'up' ? chartTheme.up : chartTheme.down));
   const hoverTexts = chartGenes.map(
     (g) => `<b>${g.name}</b><br>log2FC: ${g.logFC.toFixed(3)}<br>adj.p: ${g.padj.toExponential(2)}`
   );
@@ -193,37 +176,43 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
   const chartHeight = Math.max(300, chartGenes.length * 24 + 80);
 
   return (
-    <div className="gl-card p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Top regulated genes
-        </h2>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Top</span>
+    <ChartCard
+      title="Top regulated genes"
+      state={state}
+      minHeight={380}
+      error={error ?? undefined}
+      empty="No differentially expressed genes found."
+      actions={
+        <>
+          <span className="text-caption text-muted">Top</span>
           {([5, 10, 15, 20] as TopN[]).map((n) => (
             <button
               key={n}
               onClick={() => setTopN(n)}
-              className="rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors"
-              style={
+              // L'etat selectionne passait par le teal de MARQUE : la regle
+              // reserve un seul accent interactif, l'indigo. Et la hauteur
+              // rejoint le cran `sm` du systeme au lieu d'un py-0.5 isole.
+              className={cn(
+                'h-7 rounded-sm border px-2.5 text-caption font-semibold transition-colors',
                 topN === n
-                  ? { background: 'var(--sl-teal)', borderColor: 'var(--sl-teal)', color: '#fff' }
-                  : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
-              }
+                  ? 'border-accent-soft bg-accent-soft text-accent-ink'
+                  : 'border-line bg-surface text-secondary hover:text-primary',
+              )}
             >
               {n}
             </button>
           ))}
-        </div>
-      </div>
+        </>
+      }
+    >
 
       <div className="mb-3 flex gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: UP_COLOR }} />
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: chartTheme.up }} />
           Upregulated ({upGenes.length})
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: DOWN_COLOR }} />
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: chartTheme.down }} />
           Downregulated ({downGenes.length})
         </span>
       </div>
@@ -240,24 +229,21 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
             customdata: hoverTexts,
           } as Partial<PlotData>,
         ]}
-        layout={{
+        layout={buildPlotlyLayout(chartTheme, {
           height: chartHeight,
           margin: { l: 120, r: 60, t: 20, b: 50 },
+          // Six couleurs etaient choisies ici par un ternaire sur le theme —
+          // grille, ligne de zero, encre, trait de reference, et un fond
+          // transparent. La fabrique les fournit toutes depuis les memes jetons
+          // que le reste de l'application, donc le ternaire disparait avec elles.
           xaxis: {
             title: 'log2 Fold Change',
             zeroline: true,
-            zerolinecolor: dark ? '#2d3550' : '#6b7280',
-            gridcolor: dark ? '#1f2840' : '#e5e7eb',
           },
           yaxis: {
             automargin: true,
             tickfont: { size: 11 },
           },
-          // Transparent in both themes: the card behind already carries the
-          // surface colour, so the chart can't end up as a white box in dark mode.
-          plot_bgcolor: 'rgba(0,0,0,0)',
-          paper_bgcolor: 'rgba(0,0,0,0)',
-          font: { color: dark ? '#8898ae' : '#4b5563' },
           shapes: [
             {
               type: 'line',
@@ -265,10 +251,10 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
               x1: 0,
               y0: -0.5,
               y1: chartGenes.length - 0.5,
-              line: { color: dark ? '#5a6a82' : '#9ca3af', width: 1, dash: 'dot' },
+              line: { color: chartTheme.axis, width: 1, dash: 'dot' },
             },
           ],
-        } as Partial<Layout>}
+        }) as Partial<Layout>}
         config={{
           displayModeBar: true,
           displaylogo: false,
@@ -283,6 +269,6 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
         style={{ width: '100%' }}
         useResizeHandler
       />
-    </div>
+    </ChartCard>
   );
 }

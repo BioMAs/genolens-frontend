@@ -10,6 +10,8 @@ import BookmarkButton from './BookmarkButton';
 import { useSelection } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
+import { useChartPalette, useChartScales } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface GOTerm {
   go_id: string;
@@ -49,7 +51,24 @@ interface GOEnrichmentTableProps {
   degGeneMap?: Record<string, DegGeneInfo>;
 }
 
+/**
+ * La teinte d'une direction, en pastille douce.
+ *
+ * Le produit montrait la SUR-expression en rouge et la sous-expression en bleu
+ * — l'inverse de sa propre convention — a cinq endroits differents. La couleur
+ * vient desormais de `directionColors`, une seule fois.
+ */
+function directionTone(color: string) {
+  return {
+    color,
+    background: `color-mix(in srgb, ${color} 12%, transparent)`,
+    borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+  };
+}
+
 export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
+  const palette = useChartPalette();
+  const scales = useChartScales();
   // Passive cross-filter: a selection made in Explorer becomes legible here without anyone
   // navigating anywhere. Reads the context directly rather than being drilled a prop, since
   // this table sits several levels down.
@@ -139,17 +158,35 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     setExpandedRows(newExpanded);
   };
 
-  const getNamespaceBadgeColor = (ns: string) => {
-    if (ns === 'GO:BP' || ns === 'biological_process') return 'bg-blue-500 hover:bg-blue-600';
-    if (ns === 'GO:MF' || ns === 'molecular_function') return 'bg-green-500 hover:bg-green-600';
-    if (ns === 'GO:CC' || ns === 'cellular_component') return 'bg-purple-500 hover:bg-purple-600';
-    if (ns === 'KEGG') return 'bg-orange-500 hover:bg-orange-600';
-    if (ns === 'REACTOME') return 'bg-cyan-600 hover:bg-cyan-700';
-    if (ns === 'HALLMARK') return 'bg-rose-500 hover:bg-rose-600';
-    if (ns === 'C5_ONTOLOGY') return 'bg-teal-500 hover:bg-teal-600';
-    if (ns === 'C7_IMMUNOLOGIC') return 'bg-indigo-500 hover:bg-indigo-600';
-    if (ns === 'TF') return 'bg-yellow-500 hover:bg-yellow-600';
-    return 'bg-gray-500 hover:bg-gray-600';
+  /**
+   * Les neuf espaces de noms etaient peints par neuf classes Tailwind brutes —
+   * une palette categorielle parallele, ni verifiee en contraste ni en
+   * dichromatie, et identique dans les deux themes.
+   *
+   * Ils prennent desormais la palette mesuree, mais en PASTILLE et non en
+   * aplat : le blanc echoue sur quatre des huit crans clairs (3,03 a 3,51:1,
+   * sous le plancher texte de 4,5). Cette palette a ete optimisee pour des
+   * MARQUES, pas pour porter du texte. La couleur reste donc un repere
+   * d'un coup d'oeil — une pastille non textuelle, ou 3:1 suffit et tous les
+   * crans passent — et le libelle vit sur une surface neutre.
+   */
+  const NAMESPACE_SLOT: Record<string, number> = {
+    'GO:BP': 0, biological_process: 0,
+    'GO:MF': 1, molecular_function: 1,
+    'GO:CC': 2, cellular_component: 2,
+    KEGG: 3,
+    REACTOME: 4,
+    HALLMARK: 5,
+    C5_ONTOLOGY: 6,
+    C7_IMMUNOLOGIC: 7,
+    TF: 8,
+  };
+
+  const namespaceDot = (ns: string) => {
+    const slot = NAMESPACE_SLOT[ns];
+    return slot === undefined
+      ? palette.ns
+      : palette.categorical[slot % palette.categorical.length];
   };
 
   const getNamespaceLabel = (ns: string) => {
@@ -166,15 +203,20 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
     const info = degGeneMap?.[key];
     const isUp = info?.regulation === 'UP';
     const isDown = info?.regulation === 'DOWN';
-    const chipClass = isUp
-      ? 'bg-red-100 text-red-800 border-red-200'
+    const chipClass = isUp || isDown ? 'border' : 'bg-surface-2 text-secondary border-line';
+    const chipTone = isUp
+      ? directionTone(scales.directionColors.up)
       : isDown
-        ? 'bg-blue-100 text-blue-800 border-blue-200'
-        : 'bg-gray-100 text-gray-700 border-gray-200';
+        ? directionTone(scales.directionColors.down)
+        : undefined;
     return (
       <span
         key={gene}
-        className={`relative inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border cursor-help ${chipClass}`}
+        style={chipTone}
+        className={cn(
+          'relative inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium border cursor-help',
+          chipClass,
+        )}
         onMouseEnter={(e) => setHoveredGene({ gene, x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHoveredGene(null)}
       >
@@ -195,19 +237,28 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs max-w-xs"
+            className="fixed z-[9999] pointer-events-none bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
-            <div className="font-semibold text-gray-900">{hoveredGene.gene}</div>
+            <div className="font-semibold text-primary">{hoveredGene.gene}</div>
             {info.gene_name && info.gene_name !== hoveredGene.gene && (
-              <div className="text-gray-500 mb-1">{info.gene_name}</div>
+              <div className="text-secondary mb-1">{info.gene_name}</div>
             )}
-            <div className={`font-bold mb-2 ${isUp ? 'text-red-600' : isDown ? 'text-blue-600' : 'text-gray-600'}`}>
+            <div
+              className="font-bold mb-2"
+              style={{
+                color: isUp
+                  ? scales.directionColors.up
+                  : isDown
+                    ? scales.directionColors.down
+                    : undefined,
+              }}
+            >
               {isUp ? '↑ Upregulated' : isDown ? '↓ Downregulated' : info.regulation}
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-gray-600">
-              <span>logFC</span><span className="font-semibold text-gray-900">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
-              <span>Adj. P-value</span><span className="font-semibold text-gray-900">{info.padj?.toExponential(2) ?? 'N/A'}</span>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-secondary">
+              <span>logFC</span><span className="font-semibold text-primary">{info.log_fc?.toFixed(3) ?? 'N/A'}</span>
+              <span>Adj. P-value</span><span className="font-semibold text-primary">{info.padj?.toExponential(2) ?? 'N/A'}</span>
             </div>
           </div>,
           document.body
@@ -216,7 +267,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       {/* Search and Export */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <Input
             placeholder="Search GO terms or IDs..."
             value={searchQuery}
@@ -267,33 +318,33 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-control overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
+          <table className="data-table">
+            <thead className="bg-surface-2">
               <tr>
-                <th className="text-left p-3 font-medium">GO Term</th>
-                <th className="text-left p-3 font-medium">Namespace</th>
+                <th>GO Term</th>
+                <th>Namespace</th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('fdr')}
                 >
                   FDR {sortBy === 'fdr' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('pvalue')}
                 >
                   P-value {sortBy === 'pvalue' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  className="text-right p-3 font-medium cursor-pointer hover:bg-muted/80"
+                  className="text-right cursor-pointer hover:bg-hover"
                   onClick={() => toggleSort('ratio')}
                 >
                   Enrichment {sortBy === 'ratio' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="text-right p-3 font-medium">Genes</th>
-                <th className="text-center p-3 font-medium">Actions</th>
+                <th className="text-right">Genes</th>
+                <th className="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -301,17 +352,17 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                 const isExpanded = expandedRows.has(term.go_id);
                 return (
                   <Fragment key={term.go_id}>
-                    <tr key={term.go_id} className="border-t hover:bg-muted/50 transition-colors">
-                      <td className="p-3">
+                    <tr key={term.go_id} className="border-t hover:bg-hover transition-colors">
+                      <td>
                         <div className="space-y-1">
                           <div className="font-medium">{term.go_name}</div>
-                          <div className="text-sm text-muted-foreground">{term.go_id}</div>
+                          <div className="text-body-sm text-muted">{term.go_id}</div>
                           {(() => {
                             const overlap = overlapOf(term);
                             if (overlap === null) return null;
                             return (
                               <div
-                                className="text-xs"
+                                className="text-caption"
                                 style={{
                                   color:
                                     overlap > 0 ? 'var(--sl-teal-dark)' : 'var(--text-muted)',
@@ -324,30 +375,40 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                             );
                           })()}
                           {term.description && (
-                            <div className="text-xs text-gray-500 italic max-w-sm leading-snug">{term.description}</div>
+                            <div className="text-caption text-secondary italic max-w-sm leading-snug">{term.description}</div>
                           )}
                         </div>
                       </td>
-                      <td className="p-3">
-                        <Badge className={`${getNamespaceBadgeColor(term.namespace)} text-white`}>
+                      <td>
+                        {/* `${fn(...)}text-on-accent` : sans espace avant
+                            l'interpolation, `text-on-accent` fusionnait avec la
+                            derniere classe rendue. L'encre du libelle ET le
+                            survol etaient donc perdus — troisieme occurrence de
+                            ce motif dans le produit. */}
+                        <Badge variant="neutral">
+                          <span
+                            className="mr-1.5 inline-block h-2 w-2 rounded-pill align-middle"
+                            style={{ background: namespaceDot(term.namespace) }}
+                            aria-hidden
+                          />
                           {getNamespaceLabel(term.namespace)}
                         </Badge>
                       </td>
-                      <td className="p-3 text-right font-mono text-sm">
+                      <td className="text-right font-mono text-body-sm">
                         {term.fdr.toExponential(2)}
                       </td>
-                      <td className="p-3 text-right font-mono text-sm">
+                      <td className="text-right font-mono text-body-sm">
                         {term.pvalue.toExponential(2)}
                       </td>
-                      <td className="p-3 text-right font-semibold">
+                      <td className="text-right font-semibold">
                         {term.enrichment_ratio.toFixed(2)}x
                       </td>
-                      <td className="p-3 text-right">
-                        <span className="text-sm">
+                      <td className="text-right">
+                        <span className="text-body-sm">
                           {term.study_count} / {term.background_count}
                         </span>
                       </td>
-                      <td className="p-3">
+                      <td>
                         <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="ghost"
@@ -374,10 +435,10 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr className="border-t bg-muted/30">
+                      <tr className="border-t bg-surface-2">
                         <td colSpan={7} className="p-4">
                           <div className="space-y-2">
-                            <div className="font-medium text-sm">
+                            <div className="font-medium text-body-sm">
                               Genes ({term.study_count}):
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -408,14 +469,14 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
       </div>
 
       {filteredTerms.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-muted">
           No GO terms found matching your search.
         </div>
       )}
 
       {filteredTerms.length > 0 && (
-        <div className="flex items-center justify-between gap-4 text-sm">
-          <span className="text-muted-foreground">
+        <div className="flex items-center justify-between gap-4 text-body-sm">
+          <span className="text-muted">
             Showing {Math.min((page - 1) * pageSize + 1, filteredTerms.length)}–{Math.min(page * pageSize, filteredTerms.length)} of {filteredTerms.length} terms
           </span>
 
@@ -452,7 +513,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-            className="border rounded px-2 py-1 text-sm bg-background"
+            className="border rounded-sm px-2 py-1 text-body-sm bg-background"
           >
             {[10, 25, 50, 100].map(s => (
               <option key={s} value={s}>{s} / page</option>

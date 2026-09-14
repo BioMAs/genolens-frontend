@@ -54,12 +54,12 @@ export default function CommentEditor({
           onChange={(e) => setContent(e.target.value)}
           placeholder={placeholder}
           disabled={isSubmitting}
-          className="w-full min-h-[100px] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className="w-full min-h-[100px] rounded-sm border border-strong px-3 py-2 text-body-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
           rows={4}
         />
         
         {/* Character count */}
-        <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+        <div className="absolute bottom-2 right-2 text-caption text-muted">
           {content.length} characters
         </div>
       </div>
@@ -70,12 +70,12 @@ export default function CommentEditor({
           <button
             type="button"
             onClick={() => setIsPreview(!isPreview)}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-caption text-secondary hover:text-primary"
           >
             {isPreview ? 'Edit' : 'Preview'}
           </button>
-          <span className="text-xs text-gray-400">|</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-caption text-muted">|</span>
+          <span className="text-caption text-secondary">
             Markdown supported
           </span>
         </div>
@@ -108,8 +108,8 @@ export default function CommentEditor({
 
       {/* Preview */}
       {isPreview && content && (
-        <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+        <div className="mt-3 rounded-sm bg-surface-2 p-3">
+          <p className="text-caption font-medium text-secondary mb-2">
             Preview:
           </p>
           <div className="prose prose-sm dark:prose-invert max-w-none">

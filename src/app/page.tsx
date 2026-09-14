@@ -92,12 +92,12 @@ export default function Home() {
       <AuthCard className="mt-4">
         <div className="mb-6">
           <h1
-            className="font-display text-[22px] font-bold"
+            className="font-display text-heading"
             style={{ color: 'var(--auth-text)', letterSpacing: '-0.02em' }}
           >
             {isSignin ? 'Welcome back' : 'Create your account'}
           </h1>
-          <p className="mt-1 text-[13px]" style={{ color: 'var(--auth-text-2)' }}>
+          <p className="mt-1 text-body-sm" style={{ color: 'var(--auth-text-2)' }}>
             {isSignin
               ? 'Sign in to your transcriptomics workspace'
               : 'Start analyzing your RNA-seq data'}
@@ -134,7 +134,7 @@ export default function Home() {
                 <div className="mt-2 text-right">
                   <Link
                     href="/auth/forgot"
-                    className="text-[12px]"
+                    className="text-caption"
                     style={{ color: 'var(--auth-muted)' }}
                   >
                     Forgot password?
@@ -171,7 +171,7 @@ export default function Home() {
         </form>
 
         <p
-          className="mt-3 flex items-center justify-center gap-1.5 text-[11px]"
+          className="mt-3 flex items-center justify-center gap-2 text-micro"
           style={{ color: 'var(--auth-muted)' }}
         >
           <Lock size={12} aria-hidden="true" />

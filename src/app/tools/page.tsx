@@ -36,47 +36,46 @@ const tools: Tool[] = [
 export default function ToolsIndexPage() {
     return (
         <div className="page-container">
-            <div className="mb-5">
+            <div className="mb-6">
                 <h2
                     className="font-display font-bold tracking-tight"
                     style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}
                 >
                     Research Tools
                 </h2>
-                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <p className="mt-1 text-caption" style={{ color: 'var(--text-muted)' }}>
                     Standalone utilities and databases that work outside a project.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {tools.map((tool, i) => (
+            <div data-enter className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {tools.map((tool) => (
                     <Link
                         key={tool.name}
                         href={tool.href}
-                        className="group gl-card gl-card-interactive flex flex-col p-5 animate-fade-up"
-                        style={{ animationDelay: `${i * 40}ms` }}
+                        className="group gl-card gl-card-interactive flex flex-col p-5"
                     >
                         <div className="mb-3 flex items-start justify-between gap-3">
                             <div
-                                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+                                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control"
                                 style={{ background: tool.tint.background }}
                             >
                                 <tool.icon className="h-4.5 w-4.5" style={{ color: tool.tint.color }} />
                             </div>
                             <ChevronRight
-                                className="mt-0.5 h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
+                                className="mt-1 h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
                                 style={{ color: 'var(--text-muted)' }}
                             />
                         </div>
 
                         <h3
-                            className="font-display text-sm font-semibold leading-snug mb-1.5"
+                            className="font-display text-body-sm font-semibold leading-snug mb-2"
                             style={{ color: 'var(--text-primary)' }}
                         >
                             {tool.name}
                         </h3>
                         <p
-                            className="text-xs leading-relaxed line-clamp-3"
+                            className="text-caption leading-relaxed line-clamp-3"
                             style={{ color: 'var(--text-secondary)' }}
                         >
                             {tool.description}

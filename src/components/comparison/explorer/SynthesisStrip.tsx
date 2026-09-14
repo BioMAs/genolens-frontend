@@ -13,9 +13,8 @@
  * the cached path (`datasets.py:2039`) versus genes tested on the cold path (`:2159`).
  */
 
-import { useViewPreferences } from '@/contexts/ComparisonSelectionContext';
 import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ThresholdControl from './ThresholdControl';
 
 interface Props {
@@ -26,8 +25,7 @@ interface Props {
 }
 
 export default function SynthesisStrip({ datasetId, comparisonName, conditions }: Props) {
-  const { colorblind } = useViewPreferences();
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const { summary, isLoading, isError } = useSignificanceSummary(datasetId, comparisonName);
 
@@ -37,40 +35,45 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
   return (
     <div
       className="gl-card p-4"
-      style={{ borderRadius: 'var(--radius-panel)' }}
+      style={{ borderRadius: 'var(--radius-card)' }}
       data-testid="synthesis-strip"
     >
+      {/* Le libelle distingue ces comptes de ceux de ComparisonSynthesis, qui
+          donnent la lecture de reference : ceux-ci suivent le ThresholdControl
+          voisin, ce qui est tout l'interet de l'ecran Explore. */}
+      <div className="mb-2 text-micro uppercase text-muted">At your current thresholds</div>
+
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           {isLoading ? (
-            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
               Counting significant genes…
             </span>
           ) : isError || !summary ? (
-            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
               Counts unavailable
             </span>
           ) : (
             <>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-xl font-semibold"
+                  className="font-display text-heading"
                   style={{ color: palette.up }}
                 >
                   {summary.up.toLocaleString('en-US')}
                 </span>{' '}
                 up
               </span>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span
-                  className="font-display text-xl font-semibold"
+                  className="font-display text-heading"
                   style={{ color: palette.down }}
                 >
                   {summary.down.toLocaleString('en-US')}
                 </span>{' '}
                 down
               </span>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
                 {summary.ns.toLocaleString('en-US')} not significant
               </span>
             </>
@@ -99,7 +102,7 @@ export default function SynthesisStrip({ datasetId, comparisonName, conditions }
           </div>
           {conditions && (
             <div
-              className="mt-1 flex justify-between text-xs"
+              className="mt-1 flex justify-between text-caption"
               style={{ color: 'var(--text-muted)' }}
             >
               <span className="truncate">{conditions.left}</span>

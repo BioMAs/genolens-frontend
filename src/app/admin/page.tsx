@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
-import { Users, Database, Activity, BarChart3, Shield, AlertCircle, Bot, LogIn, Key } from 'lucide-react';
+import { Users, Database, Activity, BarChart3, AlertCircle, Bot, LogIn, Key } from 'lucide-react';
 import UserManagement from '@/components/admin/UserManagement';
 import SystemStats from '@/components/admin/SystemStats';
 import ProjectManagement from '@/components/admin/ProjectManagement';
 import AIUsageLogs from '@/components/admin/AIUsageLogs';
 import UserConnections from '@/components/admin/UserConnections';
 import LicenseManagement from '@/components/admin/LicenseManagement';
+import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 interface ApiErrorShape {
   response?: {
@@ -49,10 +51,10 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <Activity className="h-12 w-12 text-brand-primary animate-pulse mx-auto mb-4" />
-          <p className="text-gray-600">Verifying admin access...</p>
+          <p className="text-secondary">Verifying admin access...</p>
         </div>
       </div>
     );
@@ -60,20 +62,20 @@ export default function AdminPage() {
 
   if (error || !hasAccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-          <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+      <div className="flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface shadow-lg rounded-card p-8">
+          <div className="flex items-center justify-center w-16 h-16 bg-danger-soft rounded-pill mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-danger-ink" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          <h2 className="text-heading text-primary text-center mb-2">
             Access Denied
           </h2>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-secondary text-center mb-6">
             {error || 'You do not have permission to access this page.'}
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full bg-brand-primary text-white py-2 px-4 rounded-md hover:bg-brand-primary/90 transition-colors"
+            className="w-full bg-brand-primary text-on-accent py-2 px-4 rounded-sm hover:bg-brand-primary/90 transition-colors"
           >
             Return to Dashboard
           </button>
@@ -82,101 +84,59 @@ export default function AdminPage() {
     );
   }
 
+  /**
+   * Les six onglets repetaient chacun le meme bloc de classes de cinq lignes —
+   * six copies a maintenir ensemble, donc six occasions de divergence. Ils
+   * signalaient de plus leur selection avec le teal de MARQUE : la regle
+   * reserve un seul accent interactif.
+   */
+  const TABS = [
+    { key: 'stats' as const, label: 'Statistics', Icon: BarChart3 },
+    { key: 'users' as const, label: 'User Management', Icon: Users },
+    { key: 'projects' as const, label: 'All Projects', Icon: Database },
+    { key: 'ai' as const, label: 'AI Activity', Icon: Bot },
+    { key: 'connections' as const, label: 'Connexions', Icon: LogIn },
+    { key: 'licenses' as const, label: 'Licences', Icon: Key },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-brand-primary rounded-lg">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">Administration</h1>
-          </div>
-          <p className="text-gray-600">Manage users, view system statistics, and monitor platform activity.</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`${
-                activeTab === 'stats'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <BarChart3 className="h-5 w-5" />
-              Statistics
-            </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`${
-                activeTab === 'users'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <Users className="h-5 w-5" />
-              User Management
-            </button>
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`${
-                activeTab === 'projects'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <Database className="h-5 w-5" />
-              All Projects
-            </button>
-            <button
-              onClick={() => setActiveTab('ai')}
-              className={`${
-                activeTab === 'ai'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <Bot className="h-5 w-5" />
-              AI Activity
-            </button>
-            <button
-              onClick={() => setActiveTab('connections')}
-              className={`${
-                activeTab === 'connections'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <LogIn className="h-5 w-5" />
-              Connexions
-            </button>
-            <button
-              onClick={() => setActiveTab('licenses')}
-              className={`${
-                activeTab === 'licenses'
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <Key className="h-5 w-5" />
-              Licences
-            </button>
+    <div className="page-container">
+      <PageHeader
+        eyebrow="Workspace"
+        title="Administration"
+        description="Manage users, view system statistics, and monitor platform activity."
+        crumbs={[{ label: 'Administration' }]}
+        tabs={
+          <nav className="-mb-px flex gap-8 border-b border-line" aria-label="Admin sections">
+            {TABS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                aria-current={activeTab === key ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-2 whitespace-nowrap border-b-2 px-1 py-4 text-body-sm font-medium transition-colors',
+                  activeTab === key
+                    ? 'border-accent text-accent-ink'
+                    : 'border-transparent text-secondary hover:border-strong hover:text-primary',
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
           </nav>
-        </div>
+        }
+      />
 
-        {/* Content */}
-        <div className="mt-6">
-          {activeTab === 'stats' && <SystemStats />}
-          {activeTab === 'users' && <UserManagement />}
-          {activeTab === 'projects' && <ProjectManagement />}
-          {activeTab === 'ai' && <AIUsageLogs />}
-          {activeTab === 'connections' && <UserConnections />}
-          {activeTab === 'licenses' && <LicenseManagement />}
-        </div>
+      {/* Content */}
+      <div className="mt-6">
+        {activeTab === 'stats' && <SystemStats />}
+        {activeTab === 'users' && <UserManagement />}
+        {activeTab === 'projects' && <ProjectManagement />}
+        {activeTab === 'ai' && <AIUsageLogs />}
+        {activeTab === 'connections' && <UserConnections />}
+        {activeTab === 'licenses' && <LicenseManagement />}
       </div>
     </div>
   );

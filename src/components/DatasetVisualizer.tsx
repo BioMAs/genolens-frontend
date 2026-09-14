@@ -14,6 +14,9 @@ import {
   Scatter,
 } from 'recharts';
 import { Dataset, DatasetQueryResponse, DatasetType } from '@/types';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { useChartPalette } from '@/utils/chartTheme';
+import ChartCard from '@/components/charts/ChartCard';
 
 interface DatasetVisualizerProps {
   dataset: Dataset;
@@ -21,6 +24,7 @@ interface DatasetVisualizerProps {
 }
 
 export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerProps) {
+  const palette = useChartPalette();
   const chartData = useMemo(() => {
     if (!data || !data.data) return [];
     return data.data;
@@ -51,7 +55,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
   }, [data]);
 
   if (!data || data.data.length === 0) {
-    return <div className="p-8 text-center text-gray-500">No data to visualize</div>;
+    return <div className="p-8 text-center text-secondary">No data to visualize</div>;
   }
 
   // Check for Volcano Plot candidates (Log2FoldChange vs P-value)
@@ -73,21 +77,21 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-medium mb-4">Volcano Plot</h3>
-        <div className="text-sm text-gray-500 mb-2">
-          X: {volcanoX} | Y: -log10({volcanoY})
-        </div>
+      <ChartCard
+        title="Volcano plot"
+        subtitle={`X: ${volcanoX} · Y: −log10(${volcanoY})`}
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <CartesianGrid />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis type="number" dataKey="x" name="Log2 Fold Change" />
             <YAxis type="number" dataKey="y" name="-log10(P-value)" />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter name="Genes" data={volcanoData} fill="#8884d8" />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
+            <Scatter name="Genes" data={volcanoData} fill={palette.categorical[0]} />
           </ScatterChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
     );
   }
 
@@ -102,29 +106,31 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     ) || numericColumns[0];
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-medium mb-4">Enrichment Overview</h3>
+      <ChartCard
+        title="Enrichment overview"
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
             data={chartData.slice(0, 20)} // Top 20
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis type="number" />
             <YAxis 
               dataKey={categoryColumn || 'term'} 
               type="category" 
               width={150} 
-              tick={{fontSize: 12}}
+              {...CHART_AXIS}
             />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
-            <Bar dataKey={scoreCol} fill="#8884d8" name={scoreCol} />
+            <Bar dataKey={scoreCol} fill={palette.categorical[0]} name={scoreCol} />
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 mt-2 text-center">Top 20 items by {scoreCol}</p>
-      </div>
+        <p className="text-body-sm text-secondary mt-2 text-center">Top 20 items by {scoreCol}</p>
+      </ChartCard>
     );
   }
 
@@ -134,41 +140,46 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
     const samplesToPlot = numericColumns.slice(0, 5);
 
     return (
-      <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-medium mb-4">Expression Distribution (First 5 Samples)</h3>
+      <ChartCard
+        title="Expression distribution"
+        subtitle="First 5 samples"
+        minHeight={440}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.slice(0, 50)}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis dataKey={categoryColumn || 'gene_id'} />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
             <Legend />
             {samplesToPlot.map((sample, idx) => (
-              <Bar key={sample} dataKey={sample} fill={`hsl(${idx * 60}, 70%, 50%)`} />
+              <Bar key={sample} dataKey={sample} fill={palette.categorical[idx % palette.categorical.length]} />
             ))}
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 mt-2 text-center">First 50 genes</p>
-      </div>
+        <p className="text-body-sm text-secondary mt-2 text-center">First 50 genes</p>
+      </ChartCard>
     );
   }
 
   // Default Fallback
   return (
-    <div className="h-[500px] w-full bg-white p-4 rounded-lg shadow">
-      <h3 className="text-lg font-medium mb-4">Data Overview</h3>
+    <ChartCard
+      title="Data overview"
+      minHeight={440}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData.slice(0, 20)}>
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis dataKey={categoryColumn} />
           <YAxis />
-          <Tooltip />
+          <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} />
           <Legend />
           {numericColumns.slice(0, 3).map((col, idx) => (
-            <Bar key={col} dataKey={col} fill={`hsl(${idx * 100}, 70%, 50%)`} />
+            <Bar key={col} dataKey={col} fill={palette.categorical[idx % palette.categorical.length]} />
           ))}
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

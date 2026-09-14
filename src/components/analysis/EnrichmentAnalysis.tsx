@@ -8,6 +8,9 @@ import Link from 'next/link';
 import { ExternalLink, TableIcon, Activity, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
+import { useChartTheme, useChartScales, useChartPalette } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { cn } from '@/lib/cn';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -32,6 +35,18 @@ interface ApiErrorShape {
 }
 
 export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProps) {
+  const chartTheme = useChartTheme();
+  /**
+   * Le radar donnait `#ef4444` — le ROUGE — a la trace « UP Regulated » et du
+   * bleu a « DOWN Regulated ». Troisieme occurrence de la meme inversion, apres
+   * les deux cartes de claims : partout ailleurs dans le produit le rouge
+   * signifie « sous-exprime ».
+   *
+   * La trace globale valait `#10b981`, l'emeraude de MARQUE, employee comme
+   * couleur de serie nominale. Elle prend un cran categoriel.
+   */
+  const scales = useChartScales();
+  const palette = useChartPalette();
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
     const [loadingComparisons, setLoadingComparisons] = useState(true);
@@ -210,7 +225,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: 'toself',
                 name: 'UP Regulated',
-                line: { color: '#ef4444' }, // Red-500
+                line: { color: scales.directionColors.up },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
             });
         }
@@ -223,7 +238,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: 'toself',
                 name: 'DOWN Regulated',
-                line: { color: '#3b82f6' }, // Blue-500
+                line: { color: scales.directionColors.down },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
             });
         }
@@ -238,7 +253,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 theta: [...labels, labels[0]],
                 fill: hasDirectional ? 'none' : 'toself', // Only fill if it's the main actor
                 name: 'Global (All Genes)',
-                line: { color: '#10b981', dash: hasDirectional ? 'dot' : 'solid' }, // Emerald-500
+                line: { color: palette.categorical[0], dash: hasDirectional ? 'dot' : 'solid' },
                 text: vals.map(v => v > 0 ? `Score: ${v.toFixed(2)}` : ''),
                 visible: hasDirectional ? 'legendonly' : true // Hide by default if we have split
              });
@@ -253,7 +268,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
         return {
             data: traces,
-            layout: {
+            // La fabrique prend la mise en page en ARGUMENT plutot qu'en
+            // etalement : etalee, elle remplacait `margin` en bloc.
+            layout: buildPlotlyLayout(chartTheme, {
                 polar: {
                     radialaxis: {
                         visible: true,
@@ -264,40 +281,59 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 title: { text: categoryFilter ? `Enrichment: ${categoryFilter}` : 'Top Enriched Pathways' },
                 margin: { t: 50, b: 50, l: 50, r: 50 },
                 height: 500,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)'
-            }
+            })
         };
 
-    }, [allResults, viewMode, categoryFilter]);
+    }, [allResults, viewMode, categoryFilter, chartTheme, scales, palette]);
 
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
-    // Color-code database badges
-    const getCategoryBadgeColor = (cat: string) => {
-        if (cat.startsWith('GO:BP')) return 'bg-blue-100 text-blue-800';
-        if (cat.startsWith('GO:MF')) return 'bg-green-100 text-green-800';
-        if (cat.startsWith('GO:CC')) return 'bg-purple-100 text-purple-800';
-        if (cat.toUpperCase().includes('KEGG')) return 'bg-orange-100 text-orange-800';
-        if (cat.toUpperCase().includes('REACTOME')) return 'bg-teal-100 text-teal-800';
-        if (cat.toUpperCase().includes('HALLMARK')) return 'bg-yellow-100 text-yellow-800';
-        if (cat.toUpperCase().includes('C5_ONTOLOGY')) return 'bg-teal-100 text-teal-800';
-        if (cat.toUpperCase().includes('C7_IMMUNOLOGIC')) return 'bg-indigo-100 text-indigo-800';
-        if (cat.toUpperCase().includes('C2_CURATED')) return 'bg-rose-100 text-rose-800';
-        if (cat.toUpperCase().includes('C6_ONCOGENIC')) return 'bg-amber-100 text-amber-800';
-        if (cat.toUpperCase().includes('WIKI')) return 'bg-pink-100 text-pink-800';
-        return 'bg-gray-100 text-gray-800';
+    /**
+     * La base de donnees d'origine est une CATEGORIE, pas un statut.
+     *
+     * Elle etait peinte par onze couples de classes Tailwind brutes, et la
+     * migration des couleurs de statut a rendu le probleme visible : KEGG et
+     * HALLMARK se sont retrouves aux couleurs d'un AVERTISSEMENT, GO:MF a
+     * celles d'un SUCCES. Une base de donnees n'est ni l'un ni l'autre.
+     *
+     * La couleur passe donc dans une pastille tiree de la palette mesuree — non
+     * textuelle, donc tenue au plancher de 3:1 que tous ses crans passent — et
+     * le libelle reste sur une surface neutre, ou il est toujours lisible.
+     */
+    const CATEGORY_ORDER = [
+        'GO:BP', 'GO:MF', 'GO:CC', 'KEGG', 'REACTOME',
+        'HALLMARK', 'C5_ONTOLOGY', 'C7_IMMUNOLOGIC', 'C2_CURATED', 'C6_ONCOGENIC', 'WIKI',
+    ];
+    const categoryDot = (cat: string) => {
+        const key = cat.toUpperCase();
+        const slot = CATEGORY_ORDER.findIndex(
+            (c) => key.startsWith(c) || key.includes(c),
+        );
+        return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
     };
 
     // Gene chip: UP/DOWN color + hover tooltip
     const renderGeneChip = (gene: string) => {
         const info = degGeneMap[gene.toUpperCase()];
         const reg = info?.regulation;
-        const chipColor = reg === 'UP'
-            ? 'bg-red-100 text-red-800 border border-red-200'
-            : reg === 'DOWN'
-            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-            : 'bg-gray-100 text-gray-700 border border-gray-200';
+        // QUATRIEME occurrence de l'inversion de direction : la puce montrait
+        // les genes SUR-exprimes en rouge et les sous-exprimes en bleu, alors
+        // que le volcan, la table des DEG et la carte de chaleur disent tous
+        // l'inverse. La migration des couleurs de statut l'a rendue flagrante
+        // en la nommant « danger ».
+        const chipStyle =
+            reg === 'UP' || reg === 'DOWN'
+                ? {
+                      color: reg === 'UP' ? scales.directionColors.up : scales.directionColors.down,
+                      background: `color-mix(in srgb, ${
+                          reg === 'UP' ? scales.directionColors.up : scales.directionColors.down
+                      } 12%, transparent)`,
+                  }
+                : undefined;
+        const chipColor =
+            reg === 'UP' || reg === 'DOWN'
+                ? 'border border-transparent'
+                : 'bg-surface-2 text-secondary border border-line';
 
         const tooltip = info
             ? `${info.gene_name ?? gene} · ${reg} · logFC: ${info.log_fc != null ? info.log_fc.toFixed(3) : 'N/A'} · padj: ${info.padj != null ? info.padj.toExponential(2) : 'N/A'}`
@@ -307,10 +343,16 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             <span
                 key={gene}
                 title={tooltip}
-                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-default ${chipColor}`}
+                className={cn(
+                  'inline-flex items-center px-2 py-0.5 rounded-sm text-caption font-medium cursor-default',
+                  chipColor,
+                )}
+                style={chipStyle}
             >
-                {reg === 'UP' && <span className="mr-0.5 text-red-500">↑</span>}
-                {reg === 'DOWN' && <span className="mr-0.5 text-blue-500">↓</span>}
+                {/* Les fleches heritent desormais la couleur de la puce, qui
+                    vient de `directionColors` : elles disaient rouge pour UP. */}
+                {reg === 'UP' && <span className="mr-1">↑</span>}
+                {reg === 'DOWN' && <span className="mr-1">↓</span>}
                 {gene}
             </span>
         );
@@ -327,12 +369,12 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
     return (
         <div className="space-y-6">
             {/* Controls */}
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-end">
+            <div className="bg-surface p-4 rounded-card shadow flex flex-col sm:flex-row gap-4 justify-between items-end">
                 <div className="flex flex-wrap gap-4 items-end w-full">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Comparison</label>
+                        <label className="block text-body-sm font-medium text-primary mb-1">Comparison</label>
                         <select
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            className="block w-full rounded-sm border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={selectedComparison}
                             onChange={(e) => setSelectedComparison(e.target.value)}
                             disabled={loadingComparisons || comparisons.length === 0}
@@ -344,9 +386,9 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Max p-adj</label>
+                        <label className="block text-body-sm font-medium text-primary mb-1">Max p-adj</label>
                         <select 
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            className="block w-full rounded-sm border-strong shadow-sm focus:border-accent focus:ring-accent sm:text-body-sm"
                             value={maxPadj}
                             onChange={(e) => setMaxPadj(parseFloat(e.target.value))}
                         >
@@ -359,22 +401,20 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 
                     {viewMode === 'table' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Regulation</label>
-                            <div className="flex rounded-md shadow-sm">
+                            <label className="block text-body-sm font-medium text-primary mb-1">Regulation</label>
+                            <div className="flex rounded-sm shadow-sm">
                                 {['ALL', 'UP', 'DOWN'].map((reg) => (
                                      <button
                                         key={reg}
                                         type="button"
                                         onClick={() => setRegulationFilter(reg)}
-                                        className={`
-                                            relative inline-flex items-center px-4 py-2 border text-sm font-medium 
-                                            ${reg === 'ALL' ? 'rounded-l-md' : ''} 
-                                            ${reg === 'DOWN' ? 'rounded-r-md' : ''}
-                                            ${regulationFilter === reg 
-                                                ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
-                                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}
-                                            focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500
-                                        `}
+                                        className={cn(
+                                          'relative inline-flex items-center px-4 py-2 border text-body-sm font-medium',
+                                          reg === 'ALL' ? 'rounded-l-sm' : '',
+                                          reg === 'DOWN' ? 'rounded-r-sm' : '',
+                                          regulationFilter === reg ? 'z-10 bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                                          'focus:z-10 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent',
+                                        )}
                                     >
                                         {reg}
                                     </button>
@@ -387,22 +427,20 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                 <div className="flex gap-2">
                      <button
                         onClick={() => setViewMode('table')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
-                            viewMode === 'table' 
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700' 
-                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                        className={cn(
+                          'inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium',
+                          viewMode === 'table' ? 'bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                        )}
                      >
                         <TableIcon className="h-4 w-4 mr-2" />
                         Table
                      </button>
                      <button
                         onClick={() => setViewMode('radar')}
-                        className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
-                            viewMode === 'radar' 
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700' 
-                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                        className={cn(
+                          'inline-flex items-center px-3 py-2 border rounded-sm text-body-sm font-medium',
+                          viewMode === 'radar' ? 'bg-accent-soft border-accent text-accent-ink' : 'bg-surface border-strong text-primary hover:bg-hover',
+                        )}
                      >
                         <Activity className="h-4 w-4 mr-2" />
                         Radar Plot
@@ -411,13 +449,13 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             </div>
 
             {loading && (
-                <div className="flex items-center justify-center gap-2 py-12 text-gray-500">
+                <div className="flex items-center justify-center gap-2 py-12 text-secondary">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>Loading enrichment results…</span>
                 </div>
             )}
             
-            {error && <div className="p-4 bg-red-50 text-red-700 rounded-md">{error}</div>}
+            {error && <div className="p-4 bg-danger-soft text-danger-ink rounded-sm">{error}</div>}
 
             {/* AI Assistant */}
             {!loading && !error && allResults.length > 0 && (
@@ -448,11 +486,10 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(categoryFilter === cat ? "" : cat)}
-                            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
-                                categoryFilter === cat
-                                ? 'bg-indigo-600 border-indigo-600 text-white'
-                                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={cn(
+                              'px-3 py-1 text-caption font-medium rounded-pill border transition-colors',
+                              categoryFilter === cat ? 'bg-accent border-accent text-on-accent' : 'bg-surface border-strong text-secondary hover:bg-hover',
+                            )}
                         >
                             {cat}
                         </button>
@@ -460,7 +497,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     {categoryFilter && (
                         <button
                             onClick={() => setCategoryFilter("")}
-                            className="px-2 py-1 text-xs text-indigo-600 hover:text-indigo-800"
+                            className="px-2 py-1 text-caption text-accent-ink hover:text-accent-ink"
                         >
                             Clear filter
                         </button>
@@ -469,28 +506,28 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && !error && viewMode === 'radar' && radarPlotData && (
-                 <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+                 <div className="bg-surface rounded-card shadow p-6">
                     <Plot
                         data={radarPlotData.data}
                         layout={radarPlotData.layout}
                         useResizeHandler={true}
                         style={{ width: '100%', height: '100%', minHeight: '500px' }}
                     />
-                    <div className="mt-4 text-center text-sm text-gray-500">
+                    <div className="mt-4 text-center text-body-sm text-secondary">
                         Showing top 10 significant pathways per regulation direction (-log10 P-adj).
                     </div>
                  </div>
             )}
 
             {!loading && !error && viewMode === 'radar' && !radarPlotData && (
-                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-dashed">
                     Not enough data to generate a Radar Plot (need both UP and DOWN regulated pathways).
                 </div>
             )}
 
 
             {!loading && !error && viewMode === 'table' && filteredResults.length === 0 && (
-                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-12 text-secondary bg-surface-2 rounded-control border-dashed">
                     {comparisons.length === 0
                         ? "No enrichment data available for this dataset."
                         : "No enrichment pathways found for these settings."}
@@ -498,42 +535,52 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
             )}
 
             {!loading && viewMode === 'table' && filteredResults.length > 0 && (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <span className="text-sm text-gray-700 font-medium">
+                <div className="bg-surface rounded-control shadow overflow-hidden">
+                    <div className="px-4 py-3 border-b border-line bg-surface-2 flex justify-between items-center">
+                        <span className="text-body-sm text-primary font-medium">
                             {filteredResults.length} pathways found
                         </span>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-red-100 border border-red-200" /> Upregulated</span>
-                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-200" /> Downregulated</span>
+                        <div className="flex items-center gap-2 text-caption text-secondary">
+                            <span className="flex items-center gap-1">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm"
+                                    style={{ background: scales.directionColors.up }}
+                                /> Upregulated
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm"
+                                    style={{ background: scales.directionColors.down }}
+                                /> Downregulated
+                            </span>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="data-table">
+                            <thead className="bg-surface-2">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8" />
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Term name &amp; description</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Database</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genes</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adj. p-value</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regulation</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Links</th>
+                                    <th className="w-8" />
+                                    <th>ID</th>
+                                    <th className="w-2/5">Term name &amp; description</th>
+                                    <th>Database</th>
+                                    <th>Genes</th>
+                                    <th>Adj. p-value</th>
+                                    <th>Regulation</th>
+                                    <th className="text-right">Links</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-surface divide-y divide-line">
                                 {filteredResults.map((r) => {
                                     const isExpanded = expandedRows.has(r.id);
                                     return (
                                         <Fragment key={r.id}>
-                                            <tr key={r.id} className="hover:bg-gray-50">
-                                                <td className="px-2 py-3 text-center">
+                                            <tr key={r.id} className="hover:bg-hover">
+                                                <td className="text-center">
                                                     {r.genes && r.genes.length > 0 && (
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleRow(r.id)}
-                                                            className="text-gray-400 hover:text-gray-600 p-1"
+                                                            className="text-muted hover:text-secondary p-1"
                                                             title={isExpanded ? 'Hide genes' : 'Show genes'}
                                                         >
                                                             {isExpanded
@@ -543,40 +590,58 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                         </button>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-indigo-600">
+                                                <td className="whitespace-nowrap text-caption font-mono text-accent-ink">
                                                     {r.pathway_id}
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                <td className="text-body-sm">
                                                     <div className="font-medium">{r.pathway_name}</div>
                                                     {r.description && r.description !== r.pathway_name && (
-                                                        <div className="text-xs text-gray-500 mt-0.5 leading-snug">{r.description}</div>
+                                                        <div className="text-caption text-secondary mt-1 leading-snug">{r.description}</div>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryBadgeColor(r.category)}`}>
+                                                <td className="whitespace-nowrap">
+                                                    <span className="inline-flex items-center gap-2 rounded-sm bg-surface-2 px-2 py-0.5 text-caption font-medium text-secondary">
+                                                        <span
+                                                            className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                                                            style={{ background: categoryDot(r.category) }}
+                                                            aria-hidden
+                                                        />
                                                         {r.category}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="whitespace-nowrap text-body-sm text-secondary">
                                                     {r.gene_count}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-700">
+                                                <td className="whitespace-nowrap text-body-sm font-mono">
                                                     {r.padj.toExponential(2)}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        r.regulation === 'UP' ? 'bg-red-100 text-red-800' :
-                                                        r.regulation === 'DOWN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                                                    }`}>
+                                                <td className="whitespace-nowrap text-body-sm">
+                                                    <span
+                                                        className="px-2 inline-flex text-caption leading-5 font-semibold rounded-pill bg-surface-2 text-primary"
+                                                        style={
+                                                            r.regulation === 'UP' || r.regulation === 'DOWN'
+                                                                ? {
+                                                                      color: r.regulation === 'UP'
+                                                                          ? scales.directionColors.up
+                                                                          : scales.directionColors.down,
+                                                                      background: `color-mix(in srgb, ${
+                                                                          r.regulation === 'UP'
+                                                                              ? scales.directionColors.up
+                                                                              : scales.directionColors.down
+                                                                      } 12%, transparent)`,
+                                                                  }
+                                                                : undefined
+                                                        }
+                                                    >
                                                         {r.regulation === 'UP' ? '↑ UP' : r.regulation === 'DOWN' ? '↓ DOWN' : r.regulation}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                                <td className="whitespace-nowrap text-right text-body-sm font-medium">
                                                     {(r.category.startsWith('GO:') || r.pathway_id.startsWith('GO:')) && (
                                                         <Link
                                                             href={`/tools/ontology/${encodeURIComponent(r.pathway_id)}`}
                                                             target="_blank"
-                                                            className="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1"
+                                                            className="text-accent-ink hover:text-accent-ink inline-flex items-center gap-1"
                                                             title="View in GO browser"
                                                         >
                                                             GO <ExternalLink className="h-3 w-3" />
@@ -585,12 +650,12 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                                                 </td>
                                             </tr>
                                             {isExpanded && r.genes && r.genes.length > 0 && (
-                                                <tr key={`${r.id}-genes`} className="bg-gray-50">
+                                                <tr key={`${r.id}-genes`} className="bg-surface-2">
                                                     <td colSpan={8} className="px-6 py-3">
-                                                        <p className="text-xs font-medium text-gray-500 mb-2">
+                                                        <p className="text-caption font-medium text-secondary mb-2">
                                                             Associated genes ({r.genes.length}) — hover for details
                                                         </p>
-                                                        <div className="flex flex-wrap gap-1.5">
+                                                        <div className="flex flex-wrap gap-2">
                                                             {r.genes.map(gene => renderGeneChip(gene))}
                                                         </div>
                                                     </td>

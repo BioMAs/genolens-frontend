@@ -14,6 +14,9 @@ import { Activity } from 'lucide-react';
 import { useGeneLists } from '@/hooks/useBookmarks';
 import { useSignatureScore, type ScoringMethod, type SampleScore } from '@/hooks/useSignatureScore';
 import { getPalette } from '@/utils/chartPalettes';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface SignatureScorePanelProps {
   projectId: string;
@@ -127,32 +130,34 @@ export default function SignatureScorePanel({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-surface rounded-card p-6">
         <div className="flex items-center gap-2 mb-1">
-          <Activity className="h-5 w-5 text-gray-700" />
-          <h2 className="text-xl font-bold text-gray-900">Signature scoring</h2>
+          <Activity className="h-5 w-5 text-primary" />
+          <h2 className="text-heading text-primary">Signature scoring</h2>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-body-sm text-secondary mb-4">
           Score a custom gene signature across every sample, then compare scores between conditions.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Source */}
           <div className="md:col-span-2">
-            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-3">
+            <div className="inline-flex rounded-control bg-surface-2 p-1 mb-3">
               <button
                 onClick={() => setSource('list')}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
-                  source === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'
-                }`}
+                className={cn(
+                  'px-3 py-1 text-body-sm font-medium rounded-sm',
+                  source === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-secondary',
+                )}
               >
                 Saved gene list
               </button>
               <button
                 onClick={() => setSource('paste')}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
-                  source === 'paste' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'
-                }`}
+                className={cn(
+                  'px-3 py-1 text-body-sm font-medium rounded-sm',
+                  source === 'paste' ? 'bg-surface shadow-sm text-primary' : 'text-secondary',
+                )}
               >
                 Paste genes
               </button>
@@ -160,7 +165,7 @@ export default function SignatureScorePanel({
 
             {/* Says where a pre-filled list came from, so it is not mysterious. */}
             {initialLabel && source === 'paste' && pastedGenes.length > 0 ? (
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
                 Pre-filled from <strong>{initialLabel}</strong> —{' '}
                 {pastedGenes.length.toLocaleString('en-US')} gene
                 {pastedGenes.length === 1 ? '' : 's'}. Edit freely.
@@ -171,7 +176,7 @@ export default function SignatureScorePanel({
               <select
                 value={selectedListId}
                 onChange={(e) => setSelectedListId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
               >
                 <option value="">Select a gene list…</option>
                 {(geneLists ?? []).map((gl) => (
@@ -186,22 +191,22 @@ export default function SignatureScorePanel({
                 onChange={(e) => setPasted(e.target.value)}
                 placeholder="Paste gene symbols separated by spaces, commas, or newlines…"
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm font-mono"
               />
             )}
             {source === 'paste' && (
-              <p className="mt-1 text-xs text-gray-500">{pastedGenes.length} genes parsed</p>
+              <p className="mt-1 text-caption text-secondary">{pastedGenes.length} genes parsed</p>
             )}
           </div>
 
           {/* Method + run */}
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Scoring method</label>
+              <label className="block text-body-sm font-medium text-primary mb-1">Scoring method</label>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as ScoringMethod)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-strong rounded-sm text-body-sm"
               >
                 <option value="mean_z">Mean z-score (recommended)</option>
                 <option value="mean_rank">Mean rank (AUCell-like)</option>
@@ -210,7 +215,7 @@ export default function SignatureScorePanel({
             <button
               onClick={handleRun}
               disabled={!canRun}
-              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-sm text-body-sm font-medium text-on-accent bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {loading ? 'Scoring…' : 'Score signature'}
             </button>
@@ -218,7 +223,7 @@ export default function SignatureScorePanel({
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="mt-4 p-3 bg-danger-soft border border-danger/30 rounded-sm text-danger-ink text-body-sm">
             {error}
           </div>
         )}
@@ -226,43 +231,43 @@ export default function SignatureScorePanel({
 
       {/* Results */}
       {result && chart && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-surface rounded-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-title text-primary">
               Score by condition{result.signature_name ? ` — ${result.signature_name}` : ''}
             </h3>
-            <div className="text-sm text-gray-600">
+            <div className="text-body-sm text-secondary">
               {result.test ? (
                 <>
                   <span className="font-medium">{result.test}</span>: p = {fmtP(result.pvalue)}
                 </>
               ) : (
-                <span className="text-gray-400">No between-group test (need ≥2 groups with ≥2 samples)</span>
+                <span className="text-muted">No between-group test (need ≥2 groups with ≥2 samples)</span>
               )}
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-caption text-secondary mb-3">
             {result.n_genes_used}/{result.n_genes_requested} signature genes found · {result.n_samples} samples ·
             method: {result.method === 'mean_z' ? 'mean z-score' : 'mean rank'}
           </p>
 
           <ResponsiveContainer width="100%" height={420}>
             <ScatterChart margin={{ top: 10, right: 20, bottom: 40, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <CartesianGrid {...CHART_GRID} />
               <XAxis
                 type="number"
                 dataKey="x"
                 domain={[-0.5, chart.groups.length - 0.5]}
                 ticks={chart.groups.map((_, i) => i)}
                 tickFormatter={(v: number) => chart.groups[v] ?? ''}
-                tick={{ fontSize: 12 }}
+                {...CHART_AXIS}
                 interval={0}
               />
               <YAxis
                 type="number"
                 dataKey="y"
-                tick={{ fontSize: 12 }}
+                {...CHART_AXIS}
                 label={{
                   value: result.method === 'mean_z' ? 'Signature score (z)' : 'Signature score (rank)',
                   angle: -90,
@@ -278,8 +283,8 @@ export default function SignatureScorePanel({
                   const p = payload[0].payload as { sample?: string; y: number };
                   if (!p.sample) return null;
                   return (
-                    <div className="bg-white border border-gray-200 rounded shadow px-3 py-2 text-xs">
-                      <div className="font-semibold text-gray-900">{p.sample}</div>
+                    <div className="bg-surface rounded-sm shadow px-3 py-2 text-caption">
+                      <div className="font-semibold text-primary">{p.sample}</div>
                       <div>score: {p.y.toFixed(3)}</div>
                     </div>
                   );
@@ -299,7 +304,7 @@ export default function SignatureScorePanel({
               <Scatter
                 name="Median"
                 data={chart.medians}
-                fill="#111827"
+                fill={CHART_VARS.ink}
                 shape="cross"
                 isAnimationActive={false}
               />
@@ -308,20 +313,20 @@ export default function SignatureScorePanel({
 
           {/* Group summary */}
           <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="data-table">
               <thead>
-                <tr className="text-left text-gray-600">
-                  <th className="px-3 py-2 font-medium">Condition</th>
-                  <th className="px-3 py-2 font-medium">n</th>
-                  <th className="px-3 py-2 font-medium">Median score</th>
+                <tr className="text-left text-secondary">
+                  <th>Condition</th>
+                  <th>n</th>
+                  <th>Median score</th>
                 </tr>
               </thead>
               <tbody>
                 {chart.groups.map((g) => (
-                  <tr key={g} className="border-t border-gray-100">
-                    <td className="px-3 py-1.5 font-medium text-gray-900">{g}</td>
-                    <td className="px-3 py-1.5">{result.groups[g].length}</td>
-                    <td className="px-3 py-1.5">{median(result.groups[g]).toFixed(3)}</td>
+                  <tr key={g} className="border-t border-subtle">
+                    <td className="font-medium">{g}</td>
+                    <td>{result.groups[g].length}</td>
+                    <td>{median(result.groups[g]).toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>

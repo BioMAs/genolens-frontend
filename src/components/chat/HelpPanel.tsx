@@ -26,10 +26,10 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
   return (
     <aside className="flex w-72 flex-shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]">
       <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Help</h3>
+        <h3 className="text-body-sm font-semibold text-[var(--text-primary)]">Help</h3>
         <button
           onClick={onClose}
-          className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[var(--hover-overlay)]"
+          className="rounded-sm p-1 text-[var(--text-muted)] hover:bg-[var(--hover-overlay)]"
           aria-label="Close help"
         >
           <X className="h-4 w-4" />
@@ -38,14 +38,14 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <section>
-          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Example commands
           </h4>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-2">
             {EXAMPLE_COMMANDS.map((cmd) => (
               <li
                 key={cmd}
-                className="rounded-md bg-[var(--surface-raised)] px-2.5 py-1.5 text-xs text-[var(--text-primary)]"
+                className="rounded-sm bg-[var(--surface-raised)] px-2.5 py-1.5 text-caption text-[var(--text-primary)]"
               >
                 “{cmd}”
               </li>
@@ -53,13 +53,13 @@ export default function HelpPanel({ onClose }: { onClose: () => void }) {
           </ul>
         </section>
 
-        <section className="mt-5">
-          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        <section className="mt-6">
+          <h4 className="mb-2 text-micro uppercase tracking-wide text-[var(--text-muted)]">
             Charts the assistant understands
           </h4>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-2">
             {CHART_TYPES.map((c) => (
-              <li key={c.name} className="text-xs text-[var(--text-primary)]">
+              <li key={c.name} className="text-caption text-[var(--text-primary)]">
                 <span className="font-medium">{c.name}</span>
                 <span className="text-[var(--text-muted)]"> — {c.desc}</span>
               </li>

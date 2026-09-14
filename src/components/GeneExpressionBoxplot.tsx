@@ -17,17 +17,13 @@
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { Layout, PlotData } from 'plotly.js';
-import { useTheme } from '@/contexts/ThemeContext';
-import { getPalette } from '@/utils/chartPalettes';
 import type { GeneExpression } from '@/hooks/useGeneExpressionByCondition';
+import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 /** Resolved values of `--border` and `--text-secondary`; Plotly cannot read a CSS variable. */
-const PLOT_THEME = {
-  light: { grid: '#edeff2', text: '#5b6472' },
-  dark: { grid: '#1f2840', text: '#8898ae' },
-} as const;
 
 interface Props {
   data: GeneExpression | null | undefined;
@@ -36,7 +32,6 @@ interface Props {
   height?: number;
   /** The modebar is noise inside a 300px column. */
   showModeBar?: boolean;
-  colorblind?: boolean;
 }
 
 export default function GeneExpressionBoxplot({
@@ -44,11 +39,11 @@ export default function GeneExpressionBoxplot({
   loading = false,
   height = 220,
   showModeBar = false,
-  colorblind = false,
 }: Props) {
-  const { theme } = useTheme();
-  const plotTheme = PLOT_THEME[theme === 'dark' ? 'dark' : 'light'];
-  const palette = getPalette(colorblind ? 'colorblind' : 'standard');
+  // PLOT_THEME etait defini independamment dans TROIS fichiers, avec les
+  // memes valeurs. useChartTheme le remplace.
+  const chartTheme = useChartTheme();
+  const palette = useChartPalette();
 
   const traces = useMemo<Partial<PlotData>[]>(() => {
     if (!data) return [];
@@ -68,25 +63,25 @@ export default function GeneExpressionBoxplot({
   }, [data, palette]);
 
   const layout = useMemo<Partial<Layout>>(
-    () => ({
+    () => buildPlotlyLayout(chartTheme, {
       autosize: true,
       height,
       margin: { l: 44, r: 8, t: 8, b: 28 },
       // Transparent, so the card behind shows through in either theme.
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { color: plotTheme.text, size: 10 },
+      font: { color: chartTheme.inkSubtle, size: 10 },
       showlegend: false,
-      xaxis: { gridcolor: plotTheme.grid, linecolor: plotTheme.grid },
-      yaxis: { gridcolor: plotTheme.grid, linecolor: plotTheme.grid, zeroline: false },
+      xaxis: { gridcolor: chartTheme.grid, linecolor: chartTheme.grid },
+      yaxis: { gridcolor: chartTheme.grid, linecolor: chartTheme.grid, zeroline: false },
     }),
-    [height, plotTheme]
+    [chartTheme, height]
   );
 
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center text-xs"
+        className="flex items-center justify-center text-caption"
         style={{ height, color: 'var(--text-muted)' }}
       >
         Loading expression…
@@ -97,7 +92,7 @@ export default function GeneExpressionBoxplot({
   if (!data || data.groups.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-center text-xs"
+        className="flex items-center justify-center text-center text-caption"
         style={{ height, color: 'var(--text-muted)' }}
       >
         No expression values for this gene in the samples of this comparison.

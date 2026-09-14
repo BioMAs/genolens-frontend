@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Bot, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/cn';
 
 interface AIUsageLog {
   id: string;
@@ -48,33 +49,33 @@ export default function AIUsageLogs() {
   );
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+    <div className="bg-surface shadow rounded-control">
+      <div className="px-4 py-5 sm:px-6 border-b border-line flex justify-between items-center">
         <div>
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+          <h3 className="text-title leading-6 font-medium text-primary">
             Recent AI Activity
           </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+          <p className="mt-1 max-w-2xl text-body-sm text-secondary">
             Monitor real-time AI model usage and token consumption.
           </p>
         </div>
         <button
           onClick={fetchLogs}
-          className="p-2 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+          className="p-2 text-muted hover:text-secondary rounded-pill hover:bg-hover"
           title="Refresh logs"
         >
-          <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={cn('h-5 w-5', loading ? 'animate-spin' : '')} />
         </button>
       </div>
 
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="relative rounded-md shadow-sm max-w-md">
+      <div className="p-4 border-b border-line bg-surface-2">
+        <div className="relative rounded-sm shadow-sm max-w-md">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-5 w-5 text-muted" />
           </div>
           <input
             type="text"
-            className="block w-full rounded-md border-gray-300 pl-10 focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
+            className="block w-full rounded-sm border-strong pl-10 focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm p-2"
             placeholder="Search by user or comparison..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -83,74 +84,73 @@ export default function AIUsageLogs() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="data-table">
+          <thead className="bg-surface-2">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 User
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Action
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Model / Details
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Cost Type
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Timestamp
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {loading && logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-body-sm text-secondary">
                   Loading logs...
                 </td>
               </tr>
             ) : filteredLogs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-body-sm text-secondary">
                   No logs found.
                 </td>
               </tr>
             ) : (
               filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={log.id} className="hover:bg-hover">
+                  <td className="whitespace-nowrap text-body-sm">
                     <div className="font-medium">{log.user_email || 'Unknown User'}</div>
-                    <div className="text-xs text-gray-500">{log.user_id.substring(0, 8)}...</div>
+                    <div className="text-caption text-secondary">{log.user_id.substring(0, 8)}...</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      log.action_type === 'interpretation' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
+                  <td className="whitespace-nowrap">
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            log.action_type === 'interpretation' ? 'bg-accent-soft text-accent-ink' : 'bg-info-soft text-info-ink',
+                          )}>
                       {log.action_type === 'interpretation' ? 'Interpretation' : 'Q&A Chat'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4 text-gray-400" />
+                      <Bot className="h-4 w-4 text-muted" />
                       <span>{log.model_used}</span>
                     </div>
                     {log.comparison_name && (
-                      <div className="text-xs mt-1 text-gray-400">
+                      <div className="text-caption mt-1 text-muted">
                         {log.comparison_name}
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="whitespace-nowrap text-body-sm">
                     {log.was_free ? (
-                      <span className="text-green-600 font-medium">Free Quota</span>
+                      <span className="text-success-ink font-medium">Free Quota</span>
                     ) : (
-                      <span className="text-amber-600 font-bold">Paid Token</span>
+                      <span className="text-warning-ink font-bold">Paid Token</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {format(new Date(log.created_at), 'MMM d, HH:mm:ss')}
                   </td>
                 </tr>

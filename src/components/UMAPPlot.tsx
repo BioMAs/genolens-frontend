@@ -14,9 +14,11 @@ import {
 import { useUMAPData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface UMAPPlotProps {
   dataset: Dataset;
@@ -51,8 +53,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
   const [metadata, setMetadata] = useState<MetadataRow[]>([]);
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
-  const [colorblindMode, setColorblindMode] = useState(false);
-  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
   const [joinColumn, setJoinColumn] = useState<string>('');
 
   const error = umapError 
@@ -146,27 +147,38 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
       uniqueCategories.forEach((cat, i) => {
           map[cat as string] = palette.categorical[i % palette.categorical.length];
       });
-      map['Unknown'] = '#d1d5db';
+      map['Unknown'] = palette.ns;
       return map;
   }, [uniqueCategories, palette]);
 
-  if (isLoading) return <div className="flex h-64 items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>Calculating UMAP…</div>;
-  if (error) return <div className="flex h-64 items-center justify-center p-4 text-center text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</div>;
-  if (!typedUmapData) return null;
+  // Meme restructuration que la PCA, dont cet ecran est le jumeau : l'etat se
+  // calcule, la carte reste en place dans les quatre cas.
+  const state: ChartState = isLoading
+    ? 'loading'
+    : error
+      ? 'error'
+      : !typedUmapData
+        ? 'empty'
+        : 'ready';
 
-  const nSamples = typedUmapData.data.length;
+  const nSamples = typedUmapData?.data.length ?? 0;
   const read = `A non-linear projection of ${nSamples} samples${selectedColorColumn ? `, coloured by ${selectedColorColumn}` : ''}. Points that sit close together have similar overall expression.`;
 
   return (
-    <div className="gl-card p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Sample UMAP</h3>
-        <div className="flex flex-wrap items-center gap-2">
+    <ChartCard
+      title="Sample UMAP"
+      state={state}
+      minHeight={540}
+      exportName={`umap_${dataset.name}`}
+      error={error ?? undefined}
+      empty="No UMAP could be computed for this dataset."
+      actions={
+        <>
           {metadataColumns.length > 0 && (
             <select
               value={selectedColorColumn}
               onChange={(e) => setSelectedColorColumn(e.target.value)}
-              className="rounded-lg border p-1.5 text-sm"
+              className="rounded-control border p-1.5 text-sm"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             >
               {metadataColumns.map((col) => (
@@ -174,7 +186,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
               ))}
             </select>
           )}
-          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <ColorblindToggle />
           <AIChartAssistant
             datasetId={dataset.id}
             chartType="umap"
@@ -187,24 +199,27 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             }}
             label="UMAP"
           />
-        </div>
-      </div>
+        </>
+      }
+    >
+      {typedUmapData ? (
+        <>
 
       {/* Plain-language read */}
-      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
-        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+      <div className="mb-4 flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-2 h-2 w-2 flex-none rounded-pill" style={{ background: 'var(--dc-green)' }} />
         <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
       <ResponsiveContainer width="100%" height={440}>
         <ScatterChart margin={{ top: 16, right: 16, bottom: 56, left: 16 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <CartesianGrid {...CHART_GRID} />
           <XAxis
             type="number"
             dataKey="x"
             name="UMAP1"
             label={{ value: 'UMAP 1', position: 'bottom', offset: 0, fill: 'var(--text-secondary)' }}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <YAxis
@@ -212,7 +227,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
             dataKey="y"
             name="UMAP2"
             label={{ value: 'UMAP 2', angle: -90, position: 'left', fill: 'var(--text-secondary)' }}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            {...CHART_AXIS}
             stroke="var(--border-strong)"
           />
           <Tooltip
@@ -221,7 +236,7 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as UmapDataPoint;
                 return (
-                  <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="rounded-control border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                     <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
                     {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>UMAP1: {data.x.toFixed(2)}</p>
@@ -242,7 +257,9 @@ export default function UMAPPlot({ dataset, metadataDataset }: UMAPPlotProps) {
           )}
         </ScatterChart>
       </ResponsiveContainer>
-    </div>
+        </>
+      ) : null}
+    </ChartCard>
   );
 }
 

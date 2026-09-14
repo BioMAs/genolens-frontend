@@ -16,6 +16,9 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/hooks/useProjects', () => ({
   useProject: () => ({ data: { name: 'Skin Study' } }),
+  // Le sélecteur de projet du groupe Project consomme la liste. Elle n'est
+  // demandée qu'à l'ouverture du menu — d'où le tableau vide au repos.
+  useProjects: () => ({ data: { items: [] } }),
 }));
 
 jest.mock('@/hooks/useAddOnModules', () => ({

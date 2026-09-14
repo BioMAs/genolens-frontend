@@ -67,21 +67,21 @@ export default function CoverInfoFields({ value, onChange, disabled }: Props) {
     onChange({ ...value, [key]: e.target.value });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {GROUPS.map((group) => (
         <div key={group.title}>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.title}</h4>
+          <h4 className="mb-2 text-caption font-semibold uppercase tracking-wide text-secondary">{group.title}</h4>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {group.fields.map((f) => (
               <div key={f.key}>
-                <label className="mb-1 block text-xs font-medium text-gray-600">{f.label}</label>
+                <label className="mb-1 block text-caption font-medium text-secondary">{f.label}</label>
                 <input
                   type="text"
                   value={value[f.key] ?? ""}
                   onChange={set(f.key)}
                   placeholder={f.placeholder}
                   disabled={disabled}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                  className="w-full rounded-control border border-strong px-3 py-1.5 text-body-sm disabled:opacity-50"
                 />
               </div>
             ))}

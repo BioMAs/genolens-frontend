@@ -1,6 +1,29 @@
 import React from 'react';
+import { cn } from '@/lib/cn';
 
-type StatChipTone = 'teal' | 'purple' | 'neutral' | 'warning';
+/**
+ * Pastille de metrique.
+ *
+ * Le ton est SEMANTIQUE, jamais decoratif. Une pastille qui n'exprime rien de
+ * particulier reste neutre : c'est le cas de la grande majorite d'entre elles
+ * (nombre de datasets, de fichiers, d'analyses). Alterner les teintes pour
+ * « egayer » une rangee produit une salade de fruits qui brouille le seul
+ * signal utile — ou la couleur, la, veut dire quelque chose.
+ *
+ * `up` / `down` sont l'alias chrome de la direction de regulation ; ils
+ * resolvent sur les memes teintes que utils/chartPalettes.ts, qui fait
+ * autorite. La version precedente mappait « down » sur le violet via un
+ * `tone="purple"`, ce qui contredisait le rouge des graphiques.
+ */
+export type StatChipTone =
+  | 'neutral'
+  | 'accent'
+  | 'up'
+  | 'down'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'ai';
 
 interface StatChipProps {
   icon?: React.ReactNode;
@@ -11,33 +34,43 @@ interface StatChipProps {
   style?: React.CSSProperties;
 }
 
-const toneBg: Record<StatChipTone, string> = {
-  teal:    'var(--sl-teal-light)',
-  purple:  'var(--sl-violet-light)',
-  neutral: 'var(--surface-secondary)',
-  warning: 'rgba(245,158,11,0.12)',
+/** Fond de la pastille et couleur de son icone, par ton. */
+const TONES: Record<StatChipTone, { chip: string; icon: string }> = {
+  neutral: { chip: 'bg-surface-2', icon: 'text-muted' },
+  accent: { chip: 'bg-accent-soft', icon: 'text-accent-ink' },
+  up: { chip: 'bg-success-soft', icon: 'text-up' },
+  down: { chip: 'bg-danger-soft', icon: 'text-down' },
+  success: { chip: 'bg-success-soft', icon: 'text-success' },
+  warning: { chip: 'bg-warning-soft', icon: 'text-warning' },
+  danger: { chip: 'bg-danger-soft', icon: 'text-danger' },
+  ai: { chip: 'bg-ai-soft', icon: 'text-ai' },
 };
 
-const toneIcon: Record<StatChipTone, string> = {
-  teal:    'var(--sl-teal)',
-  purple:  'var(--sl-violet)',
-  neutral: 'var(--text-muted)',
-  warning: '#f59e0b',
-};
-
-export function StatChip({ icon, value, label, tone = 'neutral', className = '', style }: StatChipProps) {
+export function StatChip({
+  icon,
+  value,
+  label,
+  tone = 'neutral',
+  className,
+  style,
+}: StatChipProps) {
+  const { chip, icon: iconColor } = TONES[tone];
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-[11px] px-3 py-2 text-sm ${className}`}
-      style={{ background: toneBg[tone], ...style }}
-    >
-      {icon && (
-        <span style={{ color: toneIcon[tone] }}>{icon}</span>
+      className={cn(
+        'inline-flex items-center gap-2 rounded-control px-3 py-2 text-body-sm',
+        chip,
+        className,
       )}
-      <span className="font-semibold" style={{ color: 'var(--text-primary, #111827)' }}>
+      style={style}
+    >
+      {icon && <span className={iconColor}>{icon}</span>}
+      {/* tabular-nums : sans cela une valeur qui change de chiffre fait
+          respirer la pastille et decale ses voisines dans la rangee. */}
+      <span className="font-semibold tabular-nums text-primary">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </span>
-      <span style={{ color: 'var(--text-muted, #6b7280)' }}>{label}</span>
+      <span className="text-muted">{label}</span>
     </div>
   );
 }

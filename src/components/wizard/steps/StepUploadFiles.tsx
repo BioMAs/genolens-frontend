@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ContrastBuilder from '../ContrastBuilder';
 import GeoImportPanel from '../GeoImportPanel';
+import { cn } from '@/lib/cn';
 
 // ─── Sub-step config ────────────────────────────────────────────────────────
 interface SubStepConfig {
@@ -112,21 +113,22 @@ export default function StepUploadFiles({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Upload your data files</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-heading text-primary">Upload your data files</h2>
+        <p className="mt-1 text-body-sm text-secondary">
           Upload your count matrix and sample sheet, then build the comparisons from the sample
           conditions (or upload a contrast file). Each file is validated automatically.
         </p>
       </div>
 
       {/* Data source toggle: manual upload vs GEO import */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div className="inline-flex rounded-control bg-surface-2 p-1">
         <button
           type="button"
           onClick={() => setSourceMode('upload')}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            sourceMode === 'upload' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors',
+            sourceMode === 'upload' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <UploadCloud className="h-4 w-4" />
           Upload files
@@ -134,9 +136,10 @@ export default function StepUploadFiles({
         <button
           type="button"
           onClick={() => setSourceMode('geo')}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            sourceMode === 'geo' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={cn(
+            'flex items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm font-medium transition-colors',
+            sourceMode === 'geo' ? 'bg-surface text-accent-ink shadow-sm' : 'text-secondary hover:text-primary',
+          )}
         >
           <Database className="h-4 w-4" />
           Import from GEO
@@ -168,12 +171,12 @@ export default function StepUploadFiles({
       {/* Comparisons: build from sample sheet conditions (default) or upload a contrast file */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-800">Comparisons</h3>
+          <h3 className="text-body-sm font-semibold text-primary">Comparisons</h3>
           {!localContrasts && (
             <button
               type="button"
               onClick={() => setContrastMode(contrastMode === 'builder' ? 'upload' : 'builder')}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
+              className="text-caption font-medium text-accent-ink hover:text-accent-ink underline underline-offset-2"
             >
               {contrastMode === 'builder'
                 ? 'Upload a contrast file instead'
@@ -201,23 +204,23 @@ export default function StepUploadFiles({
       </div>
 
       {/* File format reference */}
-      <details className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
-        <summary className="cursor-pointer font-medium text-gray-600 select-none">
-          <FileText className="inline h-4 w-4 mr-1.5 text-gray-400" />
+      <details className="rounded-control border border-subtle bg-surface-2 px-4 py-3 text-body-sm">
+        <summary className="cursor-pointer font-medium text-secondary select-none">
+          <FileText className="inline h-4 w-4 mr-2 text-muted" />
           File format reference
         </summary>
-        <div className="mt-3 space-y-3 text-xs text-gray-500">
+        <div className="mt-3 space-y-3 text-caption text-secondary">
           <div>
-            <p className="font-semibold text-gray-700">Count Matrix (CSV/TSV)</p>
-            <pre className="mt-1 rounded bg-white border border-gray-200 p-2 overflow-x-auto">
+            <p className="font-semibold text-primary">Count Matrix (CSV/TSV)</p>
+            <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
 {`gene_id,Sample_A1,Sample_A2,Sample_B1,Sample_B2
 ENSG000001,42,38,120,130
 ENSG000002,5,8,3,4`}
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-gray-700">Sample Metadata (CSV/TSV)</p>
-            <pre className="mt-1 rounded bg-white border border-gray-200 p-2 overflow-x-auto">
+            <p className="font-semibold text-primary">Sample Metadata (CSV/TSV)</p>
+            <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
 {`sample,condition,batch
 Sample_A1,Control,1
 Sample_A2,Control,1
@@ -226,9 +229,9 @@ Sample_B2,Treatment,2`}
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-gray-700">Contrast File (CSV/TSV) — optional</p>
-            <p className="mt-0.5">Only needed if you upload comparisons instead of building them from the sample sheet conditions.</p>
-            <pre className="mt-1 rounded bg-white border border-gray-200 p-2 overflow-x-auto">
+            <p className="font-semibold text-primary">Contrast File (CSV/TSV) — optional</p>
+            <p className="mt-1">Only needed if you upload comparisons instead of building them from the sample sheet conditions.</p>
+            <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
 {`group1,group2
 Treatment,Control`}
             </pre>
@@ -250,7 +253,7 @@ Treatment,Control`}
               });
             }
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Continue to Data Validation
           <ChevronRight className="h-4 w-4" />
@@ -332,14 +335,14 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.READY) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+      <div className="flex items-center gap-3 rounded-control border border-success/30 bg-success-soft px-4 py-3">
+        <CheckCircle className="h-5 w-5 text-success-ink shrink-0" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-green-800">{config.label}</p>
-          <p className="text-xs text-green-600 truncate">{dataset?.name}</p>
+          <p className="text-body-sm font-semibold text-success-ink">{config.label}</p>
+          <p className="text-caption text-success-ink truncate">{dataset?.name}</p>
           <button
             type="button"
-            className="mt-1 text-[10px] text-green-600 underline"
+            className="mt-1 text-micro text-success-ink underline"
             onClick={() => inputRef.current?.click()}
           >
             Replace file
@@ -358,11 +361,11 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.PROCESSING || status === DatasetStatus.PENDING) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-        <Clock className="h-5 w-5 text-blue-400 animate-spin shrink-0" />
+      <div className="flex items-center gap-3 rounded-control border border-info/30 bg-info-soft px-4 py-3">
+        <Clock className="h-5 w-5 text-info-ink animate-spin shrink-0" />
         <div>
-          <p className="text-sm font-semibold text-blue-800">{config.label}</p>
-          <p className="text-xs text-blue-600">Processing… this may take a moment.</p>
+          <p className="text-body-sm font-semibold text-info-ink">{config.label}</p>
+          <p className="text-caption text-info-ink">Processing… this may take a moment.</p>
         </div>
       </div>
     );
@@ -370,18 +373,18 @@ function UploadCardWithProjectId({
 
   if (status === DatasetStatus.FAILED) {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+      <div className="flex flex-col gap-2 rounded-control border border-danger/30 bg-danger-soft px-4 py-3">
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+          <AlertCircle className="h-5 w-5 text-danger-ink shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-red-800">{config.label} — processing failed</p>
-            <p className="text-xs text-red-600">{dataset?.error_message ?? 'Unknown error'}</p>
+            <p className="text-body-sm font-semibold text-danger-ink">{config.label} — processing failed</p>
+            <p className="text-caption text-danger-ink">{dataset?.error_message ?? 'Unknown error'}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="self-start rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+          className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger-hover"
         >
           Try a different file
         </button>
@@ -399,43 +402,41 @@ function UploadCardWithProjectId({
   // Not uploaded yet
   return (
     <div
-      className={`rounded-lg border-2 transition-colors ${
-        isActive
-          ? dragging
-            ? 'border-indigo-400 bg-indigo-50'
-            : 'border-dashed border-indigo-300 bg-white hover:border-indigo-400 hover:bg-indigo-50/40'
-          : 'border-dashed border-gray-200 bg-gray-50 opacity-60 pointer-events-none'
-      } p-5`}
+      className={cn(
+        'rounded-card border-2 transition-colors',
+        isActive ? dragging ? 'border-accent bg-accent-soft' : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft' : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none',
+        'p-5',
+      )}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
     >
       <div className="flex flex-col items-center text-center gap-2">
-        <div className={`rounded-full p-2 ${isActive ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+        <div className={cn('rounded-pill p-2', isActive ? 'bg-accent-soft' : 'bg-surface-2')}>
           {uploading
-            ? <Clock className="h-5 w-5 text-indigo-400 animate-spin" />
-            : <Upload className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />}
+            ? <Clock className="h-5 w-5 text-accent-ink animate-spin" />
+            : <Upload className={cn('h-5 w-5', isActive ? 'text-accent-ink' : 'text-muted')} />}
         </div>
         <div>
-          <p className={`text-sm font-semibold ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>
+          <p className={cn('text-body-sm font-semibold', isActive ? 'text-primary' : 'text-muted')}>
             {config.label}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">{config.description}</p>
+          <p className="text-caption text-muted mt-1">{config.description}</p>
         </div>
         {isActive && !uploading && (
           <>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="mt-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+              className="mt-1 rounded-sm bg-accent px-3 py-1.5 text-caption font-semibold text-on-accent hover:bg-accent-hover"
             >
               Choose file
             </button>
-            <p className="text-[10px] text-gray-400">{config.hint}</p>
+            <p className="text-micro text-muted">{config.hint}</p>
           </>
         )}
-        {uploading && <p className="text-xs text-indigo-500">Uploading…</p>}
-        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+        {uploading && <p className="text-caption text-accent-ink">Uploading…</p>}
+        {error && <p className="text-caption text-danger-ink mt-1">{error}</p>}
       </div>
       <input
         ref={inputRef}

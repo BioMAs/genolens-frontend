@@ -2,16 +2,26 @@
 
 import Link from 'next/link';
 import { ArrowRight, BookOpen } from 'lucide-react';
+import { buttonClasses } from '@/components/ui/button';
+import type { AggregatedStats } from '@/hooks/useUserDashboardStats';
 
 /**
- * Le bandeau ne porte plus aucune metrique.
+ * En-tete du dashboard.
  *
- * Il narrait « Last session: N comparisons analyzed · M AI interpretations
- * used » et affichait une tuile « Activity (7d) » : les deux premiers chiffres
- * etaient repetes par la barre de KPI juste en dessous, et le troisieme aussi.
- * Le meme ecran donnait donc deux fois la meme grandeur, a deux endroits, sans
- * dire lequel faisait autorite. Sa seule question est desormais « que fais-je
- * maintenant », et il y repond par UNE action.
+ * Ce bloc etait un bandeau decoratif : degrade emerald-vers-indigo et 220
+ * cercles SVG generes en douce forme de nuage de volcan. C'etait la seule
+ * surface degradee de l'ecran, et elle se lisait comme un artefact marketing
+ * pose au-dessus d'une interface de donnees. Le degrade et le nuage sont
+ * supprimes ; la hierarchie passe desormais par la taille et le poids du
+ * texte, ce qui est aussi ce qui permet de le lire d'un coup d'oeil.
+ *
+ * Il absorbe au passage la barre de KPI, qui occupait une rangee pleine
+ * largeur pour trois totaux. Deux d'entre eux tiennent dans le sous-titre ;
+ * « Activity (7d) » a ete abandonne — c'est une metrique de vanite, elle ne
+ * declenche aucune action.
+ *
+ * Une seule action, comme avant : reprendre, ou lire les guides. La creation
+ * de projet appartient a l'en-tete des projets recents.
  */
 interface DashboardWelcomeBannerProps {
   userName?: string;
@@ -19,127 +29,80 @@ interface DashboardWelcomeBannerProps {
   recentProjectName?: string;
   /** Lien de reprise. Absent = la CTA pointe vers /docs. */
   resumeHref?: string;
+  stats?: AggregatedStats;
+  statsLoading?: boolean;
 }
 
 function getFirstName(name?: string): string | null {
   if (!name) return null;
-  // If it looks like an email, use the part before @
   if (name.includes('@')) return name.split('@')[0];
-  // Otherwise use the first word
   return name.split(' ')[0];
-}
-
-function mulberry32(seed: number) {
-  let s = seed;
-  return () => {
-    s |= 0;
-    s = (s + 0x6D2B79F5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function buildScatter(seed = 777) {
-  const rnd = mulberry32(seed);
-  const width = 900;
-  const height = 150;
-  const points: { x: number; y: number; r: number; o: number }[] = [];
-  for (let i = 0; i < 220; i += 1) {
-    const fc = (rnd() - 0.5) * 2;
-    const x = width / 2 + fc * (width / 2.4) + (rnd() - 0.5) * 40;
-    const y = height - Math.abs(fc) * height * 0.7 - rnd() * 30;
-    const r = 1.2 + rnd() * 1.4;
-    const o = 0.05 + rnd() * 0.1;
-    points.push({ x, y, r, o });
-  }
-  return points;
 }
 
 export default function DashboardWelcomeBanner({
   userName,
   recentProjectName,
   resumeHref,
+  stats,
+  statsLoading = false,
 }: DashboardWelcomeBannerProps) {
   const firstName = getFirstName(userName);
-  const scatter = buildScatter();
+  const comparisons = stats?.total_comparisons ?? 0;
+  const degs = stats?.total_deg_genes ?? 0;
+  const hasProduced = !statsLoading && (comparisons > 0 || degs > 0);
 
   return (
-    <div
-      className="relative overflow-hidden rounded-[18px] px-6 py-5 mb-6 animate-fade-up"
-      style={{
-        background:
-          'linear-gradient(135deg, var(--sl-teal-light) 0%, color-mix(in srgb, var(--sl-purple) 8%, var(--surface)) 100%)',
-        border: '1px solid var(--border)',
-      }}
-    >
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        viewBox="0 0 900 150"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden
-      >
-        {scatter.map((p, idx) => (
-          <circle
-            key={idx}
-            cx={p.x}
-            cy={p.y}
-            r={p.r}
-            fill="var(--sl-teal)"
-            opacity={p.o}
-          />
-        ))}
-      </svg>
+    /* Le tableau de bord est l'exception assumee : cette salutation n'est pas
+       un en-tete de page, donc elle ne passe pas par `PageHeader`. Elle prend
+       en revanche le meme CRAN de titre — `text-display` — sinon le seul ecran
+       a ne pas l'utiliser serait aussi le premier qu'on voit, et la hierarchie
+       du produit y demarrerait un cran plus bas qu'ailleurs. */
+    <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="text-display text-primary">
+          {firstName ? `Welcome back, ${firstName}` : 'Welcome back'}
+        </h1>
 
-      <div className="relative z-10 grid grid-cols-1 gap-5 md:grid-cols-[1fr_auto] md:items-end">
-        <div>
-          <h2
-            className="font-display font-bold tracking-tight"
-            style={{ fontSize: '1.375rem', color: 'var(--text-primary)' }}
-          >
-            {firstName ? `Welcome back, ${firstName}` : 'Welcome back'}
-          </h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {recentProjectName ? (
-              <>
-                Pick up where you left off in <b>{recentProjectName}</b>.
-              </>
-            ) : (
-              'Start with the guides — they walk through an analysis end to end.'
-            )}
-          </p>
-        </div>
-
-        {/* Une seule action. La creation de projet est deja proposee par
-            l'en-tete des projets recents et par l'etat vide de la liste : la
-            proposer ici en faisait la troisieme sur le meme ecran. */}
-        <div className="flex items-center gap-2.5">
-          {resumeHref ? (
-            <Link
-              href={resumeHref}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
-              style={{ background: 'var(--sl-purple)' }}
-            >
-              {/* Un nom de projet va jusqu'a 255 caracteres : sans borne, le
-                  bouton s'etirait hors de sa colonne et faisait deborder la
-                  page. Le nom complet reste dans l'infobulle. */}
-              <span className="max-w-[16ch] truncate sm:max-w-[24ch]" title={recentProjectName}>
-                Resume {recentProjectName}
-              </span>
-              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-            </Link>
+        {/* Le tour pointe une etape « Key metrics » sur cette ancre. Elle
+            designait une rangee de trois pastilles ; elle designe desormais
+            cette ligne, ce que la description de l'etape decrit toujours. */}
+        <p data-tour="dashboard-kpis" className="mt-1 text-body-sm text-secondary">
+          {hasProduced ? (
+            <>
+              <b className="font-semibold tabular-nums text-primary">
+                {comparisons.toLocaleString()}
+              </b>{' '}
+              {comparisons === 1 ? 'comparison' : 'comparisons'} ·{' '}
+              <b className="font-semibold tabular-nums text-primary">
+                {degs.toLocaleString()}
+              </b>{' '}
+              differentially expressed genes
+            </>
+          ) : recentProjectName ? (
+            <>
+              Pick up where you left off in <b className="text-primary">{recentProjectName}</b>.
+            </>
           ) : (
-            <Link
-              href="/docs"
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all"
-              style={{ background: 'var(--sl-purple)' }}
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Read the guides
-            </Link>
+            'Start with the guides — they walk through an analysis end to end.'
           )}
-        </div>
+        </p>
       </div>
-    </div>
+
+      {resumeHref ? (
+        <Link href={resumeHref} className={buttonClasses({ className: 'shrink-0' })}>
+          {/* Un nom de projet va jusqu'a 255 caracteres : sans borne, le bouton
+              s'etirait hors de sa colonne et faisait deborder la page. */}
+          <span className="max-w-[16ch] truncate sm:max-w-[24ch]" title={recentProjectName}>
+            Resume {recentProjectName}
+          </span>
+          <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+        </Link>
+      ) : (
+        <Link href="/docs" className={buttonClasses({ className: 'shrink-0' })}>
+          <BookOpen className="h-3.5 w-3.5" />
+          Read the guides
+        </Link>
+      )}
+    </header>
   );
 }

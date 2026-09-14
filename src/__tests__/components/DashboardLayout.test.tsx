@@ -56,11 +56,9 @@ jest.mock('@/components/QuotaMeters', () => ({
 // dashboard's own composition, so they are stubbed to their identity.
 jest.mock('@/components/DashboardWelcomeBanner', () => ({
   __esModule: true,
-  default: () => <div data-testid="welcome-banner" />,
-}));
-jest.mock('@/components/DashboardKpiBar', () => ({
-  __esModule: true,
-  default: () => <div data-testid="kpi-bar" />,
+  // Le sous-titre de metriques porte l'ancre `dashboard-kpis` depuis que la
+  // barre de KPI a ete absorbee : le mock doit la rendre comme le vrai.
+  default: () => <div data-testid="welcome-banner" data-tour="dashboard-kpis" />,
 }));
 jest.mock('@/components/DashboardSubscriptionCard', () => ({
   __esModule: true,
@@ -101,7 +99,6 @@ describe('dashboard composition', () => {
 
     expect(screen.getByTestId('welcome-banner')).toBeInTheDocument();
     expect(screen.getByTestId('jump-back-in')).toBeInTheDocument();
-    expect(screen.getByTestId('kpi-bar')).toBeInTheDocument();
     expect(screen.getByTestId('quota-meters')).toBeInTheDocument();
     expect(screen.getByTestId('recent-projects')).toBeInTheDocument();
     expect(screen.getByTestId('plan-card')).toBeInTheDocument();

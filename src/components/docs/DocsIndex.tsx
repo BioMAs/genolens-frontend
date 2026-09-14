@@ -35,7 +35,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
           No guide matches “{query}”.
         </p>
       ) : (
@@ -46,7 +46,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
           return (
             <section key={category}>
               <h2
-                className="mb-3 font-display text-[15px] font-semibold"
+                className="mb-3 font-display text-body font-semibold"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {CATEGORY_LABELS[category]}
@@ -59,26 +59,26 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
                     className="gl-card group flex items-start gap-3 p-4 transition-colors hover:border-[var(--sl-purple)]"
                   >
                     <BookOpen
-                      className="mt-0.5 h-4 w-4 shrink-0"
+                      className="mt-1 h-4 w-4 shrink-0"
                       style={{ color: 'var(--sl-teal)' }}
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1">
                       <span
-                        className="block text-sm font-semibold"
+                        className="block text-body-sm font-semibold"
                         style={{ color: 'var(--text-primary)' }}
                       >
                         {doc.title}
                       </span>
                       <span
-                        className="mt-1 block text-xs"
+                        className="mt-1 block text-caption"
                         style={{ color: 'var(--text-secondary)' }}
                       >
                         {doc.description}
                       </span>
                     </span>
                     <ArrowRight
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="mt-1 h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                       style={{ color: 'var(--sl-purple)' }}
                       aria-hidden
                     />

@@ -12,6 +12,9 @@ import {
 } from 'recharts';
 import { Users, Activity, Calendar } from 'lucide-react';
 import { useLoginStats } from '@/hooks/useLoginStats';
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 const PERIOD_OPTIONS = [
   { label: '7 days', value: 7 },
@@ -29,17 +32,17 @@ export default function UserConnections() {
         {/* KPI skeleton */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+            <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
               <div className="p-5">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
-                <div className="h-8 bg-gray-200 rounded w-1/3" />
+                <div className="h-4 bg-hover rounded-sm w-1/2 mb-3" />
+                <div className="h-9 bg-hover rounded-sm w-1/3" />
               </div>
             </div>
           ))}
         </div>
         {/* Chart skeleton */}
-        <div className="bg-white shadow rounded-lg p-6 animate-pulse">
-          <div className="h-48 bg-gray-200 rounded" />
+        <div className="bg-surface shadow rounded-card p-6 animate-pulse">
+          <div className="h-48 bg-hover rounded-sm" />
         </div>
       </div>
     );
@@ -47,8 +50,8 @@ export default function UserConnections() {
 
   if (isError || !data) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Failed to load connection statistics.</p>
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
+        <p className="text-danger-ink">Failed to load connection statistics.</p>
       </div>
     );
   }
@@ -58,19 +61,16 @@ export default function UserConnections() {
       label: 'Active today',
       value: data.active_today,
       icon: Activity,
-      color: 'bg-green-500',
     },
     {
       label: 'Active last 7 days',
       value: data.active_7_days,
       icon: Calendar,
-      color: 'bg-blue-500',
     },
     {
       label: 'Active last 30 days',
       value: data.active_30_days,
       icon: Users,
-      color: 'bg-indigo-500',
     },
   ];
 
@@ -79,15 +79,15 @@ export default function UserConnections() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="bg-white overflow-hidden shadow rounded-lg">
+          <div key={kpi.label} className="bg-surface overflow-hidden shadow rounded-control">
             <div className="p-5">
               <div className="flex items-center">
-                <div className={`shrink-0 ${kpi.color} rounded-md p-3`}>
-                  <kpi.icon className="h-6 w-6 text-white" />
+                <div className="shrink-0 rounded-sm bg-surface-2 p-3">
+                  <kpi.icon className="h-6 w-6 text-secondary" />
                 </div>
                 <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500 truncate">{kpi.label}</p>
-                  <p className="mt-1 text-3xl font-semibold text-gray-900">{kpi.value}</p>
+                  <p className="text-body-sm font-medium text-secondary truncate">{kpi.label}</p>
+                  <p className="mt-1 text-display text-primary">{kpi.value}</p>
                 </div>
               </div>
             </div>
@@ -96,19 +96,18 @@ export default function UserConnections() {
       </div>
 
       {/* Chart */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-surface shadow rounded-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Daily connections</h2>
+          <h2 className="text-title font-medium text-primary">Daily connections</h2>
           <div className="flex gap-2">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setDays(opt.value)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  days === opt.value
-                    ? 'bg-brand-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={cn(
+                  'px-3 py-1 rounded-sm text-body-sm font-medium transition-colors',
+                  days === opt.value ? 'bg-accent text-on-accent' : 'bg-surface-2 text-secondary hover:bg-hover',
+                )}
               >
                 {opt.label}
               </button>
@@ -118,31 +117,28 @@ export default function UserConnections() {
 
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.daily_counts} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11 }}
+              {...CHART_AXIS}
               tickFormatter={(v: string) => {
                 const d = new Date(v);
                 return `${d.getDate()}/${d.getMonth() + 1}`;
               }}
               interval="preserveStartEnd"
             />
-            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-            <Tooltip
-                formatter={(value: number | undefined) => [value ?? 0, 'Connections']}
-              labelFormatter={(label: string) =>
+            <YAxis {...CHART_AXIS} allowDecimals={false} />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value: number | undefined) => [value ?? 0, 'Connections']} labelFormatter={(label: string) =>
                 new Date(label).toLocaleDateString('en-US', {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'short',
                 })
-              }
-            />
+              } />
             <Line
               type="monotone"
               dataKey="count"
-              stroke="var(--brand-primary, #6366f1)"
+              stroke={CHART_VARS.accent}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
@@ -152,50 +148,50 @@ export default function UserConnections() {
       </div>
 
       {/* Recent connections table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Recent connections</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Last 50 entries</p>
+      <div className="bg-surface shadow rounded-control overflow-hidden">
+        <div className="px-6 py-4 border-b border-line">
+          <h2 className="text-title font-medium text-primary">Recent connections</h2>
+          <p className="text-body-sm text-secondary mt-0.5">Last 50 entries</p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="data-table">
+            <thead className="bg-surface-2">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th>
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th>
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th>
                   Date &amp; time
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-line">
               {data.recent_events.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={3} className="px-6 py-8 text-center text-body-sm text-secondary">
                     No connections recorded yet.
                   </td>
                 </tr>
               ) : (
                 data.recent_events.map((event, idx) => (
-                  <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={`${event.user_id}-${event.created_at}-${idx}`} className="hover:bg-hover">
+                    <td className="whitespace-nowrap text-body-sm font-medium">
                       {event.full_name ?? (
-                        <span className="text-gray-400 italic">Unknown</span>
+                        <span className="text-muted italic">Unknown</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="whitespace-nowrap text-body-sm text-secondary">
                       {event.email ?? (
-                        <span className="text-gray-400 font-mono text-xs">
+                        <span className="text-muted font-mono text-caption">
                           {event.user_id.slice(0, 8)}…
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="whitespace-nowrap text-body-sm text-secondary">
                       {new Date(event.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: '2-digit',

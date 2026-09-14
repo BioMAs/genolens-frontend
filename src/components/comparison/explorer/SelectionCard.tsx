@@ -38,7 +38,7 @@ export default function SelectionCard({
     <aside
       className="gl-card p-4"
       style={{
-        borderRadius: 'var(--radius-panel)',
+        borderRadius: 'var(--radius-card)',
         position: 'sticky',
         top: 'calc(var(--topbar-height) + 1rem)',
       }}
@@ -52,10 +52,10 @@ export default function SelectionCard({
   if (selection.genes.length === 0) {
     return shell(
       <div className="py-6 text-center">
-        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+        <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
           No gene selected
         </p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <p className="mt-1 text-caption" style={{ color: 'var(--text-muted)' }}>
           Click a point in the volcano to see its fold change and significance here.
         </p>
       </div>

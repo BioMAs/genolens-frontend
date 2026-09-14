@@ -19,6 +19,8 @@ import { Fragment, useMemo, useState } from 'react';
 import { Download, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '@/utils/api';
 import { useDegStats, type DegStatsRow } from '@/hooks/useDegStats';
+import { useChartScales } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface MethodStatsPanelProps {
   datasetId: string;
@@ -63,6 +65,7 @@ function findMethodColumn(keys: string[], base: 'pvalue' | 'padj', method: strin
 }
 
 export default function MethodStatsPanel({ datasetId, comparisonName }: MethodStatsPanelProps) {
+  const scales = useChartScales();
   const { data, isLoading, isError, error } = useDegStats(datasetId, comparisonName);
 
   const [page, setPage] = useState(0);
@@ -158,12 +161,12 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
   };
 
   if (isLoading) {
-    return <div className="text-center py-12 text-gray-500">Loading method statistics…</div>;
+    return <div className="text-center py-12 text-secondary">Loading method statistics…</div>;
   }
 
   if (isError) {
     return (
-      <div className="text-center py-12 text-red-600">
+      <div className="text-center py-12 text-danger-ink">
         Failed to load method statistics{error instanceof Error ? `: ${error.message}` : ''}.
       </div>
     );
@@ -171,7 +174,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
   if (methods.length <= 1) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+      <div className="rounded-card bg-surface-2 p-6 text-body-sm text-secondary">
         This comparison was produced with a single statistical method, so there is no multi-method
         breakdown to display. The Stouffer combination and per-method p-values appear here only for
         datasets analysed with several methods (DESeq2, edgeR, limma, …).
@@ -185,14 +188,14 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Method statistics</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-heading text-primary">Method statistics</h2>
+            <p className="text-body-sm text-secondary">
               Differentially expressed genes per statistical method. The active method (used across
               the rest of the app) is highlighted.
             </p>
           </div>
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-sm border border-strong rounded-sm bg-surface hover:bg-hover text-primary disabled:opacity-50"
             onClick={handleDownload}
             disabled={downloading}
           >
@@ -201,33 +204,37 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto rounded-control border border-line">
+          <table className="data-table">
+            <thead className="bg-surface-2">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-600">Method</th>
-                <th className="px-4 py-2 text-right font-medium text-gray-600">Up</th>
-                <th className="px-4 py-2 text-right font-medium text-gray-600">Down</th>
-                <th className="px-4 py-2 text-right font-medium text-gray-600">Total</th>
+                <th>Method</th>
+                <th className="text-right">Up</th>
+                <th className="text-right">Down</th>
+                <th className="text-right">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-subtle">
               {methods.map((m) => {
                 const c = general[m];
                 const isActive = m === activeMethod;
                 return (
-                  <tr key={m} className={isActive ? 'bg-teal-50' : ''}>
-                    <td className="px-4 py-2 font-medium text-gray-900">
+                  <tr key={m} className={isActive ? 'bg-accent-soft' : ''}>
+                    <td className="font-medium">
                       {m}
                       {isActive && (
-                        <span className="ml-2 rounded bg-teal-100 px-1.5 py-0.5 text-xs text-teal-700">
+                        <span className="ml-2 rounded-sm bg-accent-soft px-1.5 py-0.5 text-caption text-accent-ink">
                           active
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right text-emerald-600">{c ? c.up.toLocaleString() : '—'}</td>
-                    <td className="px-4 py-2 text-right text-rose-600">{c ? c.down.toLocaleString() : '—'}</td>
-                    <td className="px-4 py-2 text-right font-medium text-gray-900">
+                    <td className="text-right" style={{ color: scales.directionColors.up }}>
+                      {c ? c.up.toLocaleString() : '—'}
+                    </td>
+                    <td className="text-right" style={{ color: scales.directionColors.down }}>
+                      {c ? c.down.toLocaleString() : '—'}
+                    </td>
+                    <td className="text-right font-medium">
                       {c ? c.total.toLocaleString() : '—'}
                     </td>
                   </tr>
@@ -241,8 +248,8 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
       {/* Per-gene multi-method table */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Per-gene p-values</h3>
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+          <h3 className="text-title text-primary">Per-gene p-values</h3>
+          <label className="flex items-center gap-2 text-body-sm text-secondary">
             <input
               type="checkbox"
               checked={significantOnly}
@@ -257,16 +264,16 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
 
         {colMap ? (
           <>
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="min-w-full text-xs">
-                <thead className="bg-gray-50">
+            <div className="overflow-x-auto rounded-control border border-line">
+              <table className="data-table">
+                <thead className="bg-surface-2">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-gray-600 sticky left-0 bg-gray-50">Gene</th>
-                    <th className="px-3 py-2 text-right font-medium text-gray-600">log2FC</th>
+                    <th className="sticky left-0 bg-surface-2">Gene</th>
+                    <th className="text-right">log2FC</th>
                     {colMap.perMethod.map((p) => (
                       <th
                         key={p.method}
-                        className="px-3 py-2 text-right font-medium text-gray-600 whitespace-nowrap cursor-pointer select-none hover:text-gray-900"
+                        className="px-3 py-2 text-right font-medium text-secondary whitespace-nowrap cursor-pointer select-none hover:text-primary"
                         colSpan={2}
                         onClick={() => p.padjKey && handleSort(p.method)}
                         title={p.padjKey ? 'Sort by adjusted p-value' : undefined}
@@ -284,37 +291,38 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
                     ))}
                   </tr>
                   <tr>
-                    <th className="px-3 py-1 sticky left-0 bg-gray-50" />
-                    <th className="px-3 py-1" />
+                    <th className="sticky left-0 bg-surface-2" />
+                    <th  />
                     {colMap.perMethod.map((p) => (
                       <Fragment key={p.method}>
-                        <th className="px-3 py-1 text-right font-normal text-gray-400">p</th>
-                        <th className="px-3 py-1 text-right font-normal text-gray-400">padj</th>
+                        <th className="text-right font-normal">p</th>
+                        <th className="text-right font-normal">padj</th>
                       </Fragment>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-subtle">
                   {pageRows.map((row, idx) => {
                     const geneId = colMap.geneIdKey ? String(row[colMap.geneIdKey] ?? '') : '';
                     const geneName = colMap.geneNameKey ? row[colMap.geneNameKey] : undefined;
                     return (
-                      <tr key={`${geneId}-${idx}`} className="hover:bg-gray-50">
-                        <td className="px-3 py-1.5 font-medium text-gray-900 sticky left-0 bg-white">
+                      <tr key={`${geneId}-${idx}`} className="hover:bg-hover">
+                        <td className="font-medium sticky left-0 bg-surface">
                           {geneName ? String(geneName) : geneId}
                         </td>
-                        <td className="px-3 py-1.5 text-right text-gray-700">
+                        <td className="text-right">
                           {colMap.logfcKey ? formatFc(row[colMap.logfcKey]) : '—'}
                         </td>
                         {colMap.perMethod.map((p) => (
                           <Fragment key={p.method}>
-                            <td className="px-3 py-1.5 text-right text-gray-600">
+                            <td className="text-right text-secondary">
                               {p.pvalueKey ? formatP(row[p.pvalueKey]) : '—'}
                             </td>
                             <td
-                              className={`px-3 py-1.5 text-right ${
-                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-teal-700' : 'text-gray-600'
-                              }`}
+                              className={cn(
+                                'px-3 py-1.5 text-right',
+                                p.sigKey && row[p.sigKey] === true ? 'font-semibold text-primary' : 'text-secondary',
+                              )}
                             >
                               {p.padjKey ? formatP(row[p.padjKey]) : '—'}
                             </td>
@@ -328,20 +336,20 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+            <div className="flex items-center justify-between mt-3 text-body-sm text-secondary">
               <span>
                 {filteredSortedRows.length.toLocaleString()} genes · page {currentPage + 1} / {totalPages}
               </span>
               <div className="flex gap-2">
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1 border border-strong rounded-sm disabled:opacity-40 hover:bg-hover"
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={currentPage === 0}
                 >
                   Previous
                 </button>
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1 border border-strong rounded-sm disabled:opacity-40 hover:bg-hover"
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={currentPage >= totalPages - 1}
                 >
@@ -351,7 +359,7 @@ export default function MethodStatsPanel({ datasetId, comparisonName }: MethodSt
             </div>
           </>
         ) : (
-          <div className="text-center py-8 text-gray-500">No gene-level statistics available.</div>
+          <div className="text-center py-8 text-secondary">No gene-level statistics available.</div>
         )}
       </div>
     </div>

@@ -58,6 +58,7 @@ import type {
   DdTopTargetsBar,
   DdTopTargetsFigure,
 } from '@/types/drugDiscovery';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 
 /** Épaisseur de marque, jamais dépassée : l'air restant fait partie du dessin. */
 const BAR_THICKNESS = 24;
@@ -162,7 +163,7 @@ function renderKnownFigure(figure: DdKnownFigure, index: number) {
 
 function UnknownFigureNotice({ caption }: { caption: string }) {
   return (
-    <figure className="rounded-md border border-dashed p-4 text-sm" style={{ borderColor: 'var(--border-strong)' }}>
+    <figure className="rounded-sm border border-dashed p-4 text-body-sm" style={{ borderColor: 'var(--border-strong)' }}>
       <figcaption className="mb-1 font-medium" style={{ color: 'var(--text-primary)' }}>
         {caption}
       </figcaption>
@@ -196,7 +197,7 @@ function TopTargetsFigure({ figure }: { figure: DdTopTargetsFigure }) {
 
   return (
     <figure>
-      <figcaption className="mb-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+      <figcaption className="mb-2 text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
         {figure.caption}
       </figcaption>
       <div style={{ width: '100%', maxWidth: 640 }}>
@@ -214,9 +215,7 @@ function TopTargetsFigure({ figure }: { figure: DdTopTargetsFigure }) {
               type="number"
               height={X_AXIS_HEIGHT}
               domain={[0, domainMax]}
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+              {...CHART_AXIS}
               tickFormatter={(value: number) => value.toFixed(2)}
             />
             <YAxis
@@ -291,7 +290,7 @@ export function BarTooltip({ active, payload }: Partial<TooltipContentProps<numb
   const row = payload[0].payload as ChartRow;
   return (
     <div
-      className="rounded-md border p-2 text-xs shadow-sm"
+      className="rounded-sm border p-2 text-caption shadow-sm"
       style={{
         background: 'var(--color-surface)',
         borderColor: 'var(--border)',

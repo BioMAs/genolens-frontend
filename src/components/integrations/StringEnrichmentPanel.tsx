@@ -15,6 +15,8 @@
 import { useState, useCallback } from 'react';
 import { Download, FlaskConical, RefreshCw } from 'lucide-react';
 import api from '@/utils/api';
+import { useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface StringEnrichment {
   category: string;
@@ -45,14 +47,24 @@ const SPECIES_OPTIONS = [
   { label: 'Saccharomyces cerevisiae', value: 4932 },
 ];
 
-const ENRICH_CATEGORIES: Record<string, { label: string; color: string }> = {
-  'Process': { label: 'Biological Process', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-  'Function': { label: 'Molecular Function', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-  'Component': { label: 'Cellular Component', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  'KEGG': { label: 'KEGG', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-  'Reactome': { label: 'Reactome', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400' },
-  'WikiPathways': { label: 'WikiPathways', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+/**
+ * La base de donnees d'origine est une CATEGORIE. Elle etait peinte par six
+ * couples de classes Tailwind brutes, et la migration des couleurs de statut a
+ * laisse la table mi-statut mi-brute : « Biological Process » en SUCCES,
+ * « KEGG » en AVERTISSEMENT. Ni l'un ni l'autre n'est un statut.
+ *
+ * L'ordre de declaration est l'index dans la palette mesuree : il porte donc la
+ * separation, et ne doit pas etre reordonne a la legere.
+ */
+const ENRICH_CATEGORIES: Record<string, string> = {
+  Process: 'Biological Process',
+  Function: 'Molecular Function',
+  Component: 'Cellular Component',
+  KEGG: 'KEGG',
+  Reactome: 'Reactome',
+  WikiPathways: 'WikiPathways',
 };
+const CATEGORY_ORDER = Object.keys(ENRICH_CATEGORIES);
 
 function fmtPval(v: number): string {
   if (v < 0.0001) return v.toExponential(2);
@@ -76,8 +88,8 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 function Stat({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div className="text-center">
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className={cn('text-heading', color)}>{value}</p>
+      <p className="text-caption text-secondary">{label}</p>
     </div>
   );
 }
@@ -87,6 +99,13 @@ export default function StringEnrichmentPanel({
 }: {
   initialGenes?: string;
 }) {
+  const palette = useChartPalette();
+  /** La couleur ne porte plus le libelle : une pastille suffit, et elle tient
+   *  le plancher non-textuel de 3:1 sur les huit crans. */
+  const categoryDot = (cat: string) => {
+    const slot = CATEGORY_ORDER.indexOf(cat);
+    return slot === -1 ? palette.ns : palette.categorical[slot % palette.categorical.length];
+  };
   const [genesInput, setGenesInput] = useState(initialGenes);
   const [species, setSpecies] = useState(9606);
   const [enrichments, setEnrichments] = useState<StringEnrichment[]>([]);
@@ -140,7 +159,7 @@ export default function StringEnrichmentPanel({
       {/* Input */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-body-sm font-medium text-primary mb-1">
             Gene list
           </label>
           <textarea
@@ -148,22 +167,22 @@ export default function StringEnrichmentPanel({
             onChange={(e) => setGenesInput(e.target.value)}
             rows={5}
             placeholder="TP53&#10;BRCA1&#10;MYC"
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono resize-y"
+            className="w-full px-3 py-2 text-body-sm border border-strong rounded-control bg-surface text-primary font-mono resize-y"
           />
-          <p className="mt-1 text-xs text-gray-500">{parseGenes().length} gene(s) · max 500</p>
+          <p className="mt-1 text-caption text-secondary">{parseGenes().length} gene(s) · max 500</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organism</label>
+          <label className="block text-body-sm font-medium text-primary mb-1">Organism</label>
           <select
             value={species}
             onChange={(e) => setSpecies(Number(e.target.value))}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full px-3 py-2 text-body-sm border border-strong rounded-control bg-surface text-primary"
           >
             {SPECIES_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
-          <p className="mt-3 text-xs text-gray-500 bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded border border-indigo-100 dark:border-indigo-800">
+          <p className="mt-3 text-caption text-secondary bg-accent-soft p-2 rounded-sm border border-accent-ring">
             <strong>Note:</strong> STRING uses the same biological data as GO/KEGG/Reactome
             but applies its own statistical enrichments. Complementary to local GO analysis.
           </p>
@@ -173,14 +192,14 @@ export default function StringEnrichmentPanel({
       <button
         onClick={run}
         disabled={loading || !parseGenes().length}
-        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+        className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-on-accent text-body-sm font-medium rounded-control"
       >
         {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
         {loading ? 'Analyzing…' : 'Run STRING enrichment'}
       </button>
 
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+        <div className="p-3 bg-danger-soft border border-danger/30 rounded-control text-body-sm text-danger-ink">
           {error}
         </div>
       )}
@@ -188,58 +207,66 @@ export default function StringEnrichmentPanel({
       {enrichments.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
-            <Stat label="Enriched terms" value={enrichments.length} color="text-indigo-700 dark:text-indigo-300" />
+            <Stat label="Enriched terms" value={enrichments.length} color="text-accent-ink" />
             <input
               type="text"
               placeholder="Filter by term…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="flex-1 min-w-48 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              className="flex-1 min-w-48 px-3 py-1.5 text-body-sm border border-strong rounded-control bg-surface"
             />
             <select
               value={catFilter}
               onChange={(e) => setCatFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              className="px-3 py-1.5 text-body-sm border border-strong rounded-control bg-surface"
             >
               <option value="">All categories</option>
               {allCats.map((c) => (
-                <option key={c} value={c}>{ENRICH_CATEGORIES[c]?.label || c}</option>
+                <option key={c} value={c}>{ENRICH_CATEGORIES[c] || c}</option>
               ))}
             </select>
             <button
               onClick={exportCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-400"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium bg-surface border border-strong rounded-control hover:border-accent"
             >
               <Download className="w-3 h-3" /> CSV
             </button>
           </div>
 
-          <div className="overflow-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <table className="min-w-full text-xs">
-              <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+          <div className="overflow-auto max-h-96 border border-line rounded-control">
+            <table className="data-table">
+              <thead className="bg-surface-2 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left">Category</th>
-                  <th className="px-3 py-2 text-left">Description</th>
-                  <th className="px-3 py-2 text-right">Genes</th>
-                  <th className="px-3 py-2 text-right">P-value</th>
-                  <th className="px-3 py-2 text-right">FDR</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th className="text-right">Genes</th>
+                  <th className="text-right">P-value</th>
+                  <th className="text-right">FDR</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.slice(0, 200).map((e, i) => (
-                  <tr key={i} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-3 py-1.5">
-                      <span className={`px-1.5 py-0.5 rounded-full text-xs ${ENRICH_CATEGORIES[e.category]?.color || 'bg-gray-100 text-gray-700'}`}>
-                        {ENRICH_CATEGORIES[e.category]?.label || e.category}
+                  <tr key={i} className="border-t border-subtle hover:bg-hover">
+                    <td>
+                      <span className="inline-flex items-center gap-2 rounded-pill bg-surface-2 px-1.5 py-0.5 text-caption text-secondary">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-pill"
+                          style={{ background: categoryDot(e.category) }}
+                          aria-hidden
+                        />
+                        {ENRICH_CATEGORIES[e.category] || e.category}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5 max-w-xs">
+                    <td className="max-w-xs">
                       <span title={e.description}>{e.description.length > 80 ? e.description.slice(0, 79) + '…' : e.description}</span>
-                      <span className="ml-1 text-gray-400">· {e.term}</span>
+                      <span className="ml-1 text-muted">· {e.term}</span>
                     </td>
-                    <td className="px-3 py-1.5 text-right">{e.number_of_genes}</td>
-                    <td className="px-3 py-1.5 text-right font-mono">{fmtPval(e.p_value)}</td>
-                    <td className={`px-3 py-1.5 text-right font-mono font-semibold ${e.fdr < 0.05 ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                    <td className="text-right">{e.number_of_genes}</td>
+                    <td className="text-right font-mono">{fmtPval(e.p_value)}</td>
+                    <td className={cn(
+                          'px-3 py-1.5 text-right font-mono font-semibold',
+                          e.fdr < 0.05 ? 'text-success-ink' : 'text-secondary',
+                        )}>
                       {fmtPval(e.fdr)}
                     </td>
                   </tr>
@@ -248,7 +275,7 @@ export default function StringEnrichmentPanel({
             </table>
           </div>
           {visible.length > 200 && (
-            <p className="text-xs text-gray-400">Display limited to 200 results. Use CSV export to retrieve all.</p>
+            <p className="text-caption text-muted">Display limited to 200 results. Use CSV export to retrieve all.</p>
           )}
         </div>
       )}

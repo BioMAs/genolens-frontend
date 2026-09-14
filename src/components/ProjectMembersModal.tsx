@@ -105,7 +105,7 @@ export default function ProjectMembersModal({
           {/* Invite Section - Project Admins Only */}
           {isProjectAdmin && (
             <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold mb-3">Invite Member</h3>
+              <h3 className="text-title mb-3">Invite Member</h3>
               <form onSubmit={handleInvite} className="space-y-3">
                 <div>
                   <Label htmlFor="email">Email Address</Label>
@@ -124,7 +124,7 @@ export default function ProjectMembersModal({
                     id="role"
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-sm"
                   >
                     <option value={UserRole.USER}>User (View & Analyze)</option>
                     <option value={UserRole.ADMIN}>Admin (Full Access)</option>
@@ -141,7 +141,7 @@ export default function ProjectMembersModal({
               </form>
 
               {/* Note about email invitation */}
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-body-sm text-secondary mt-2">
                 ⚠️ Note: Email-based invitation is not yet fully implemented.
                 The user must already have an account in the system.
               </p>
@@ -150,10 +150,10 @@ export default function ProjectMembersModal({
 
           {/* Members List */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Current Members</h3>
+            <h3 className="text-title mb-3">Current Members</h3>
 
             {isLoading ? (
-              <p className="text-gray-500">Loading members...</p>
+              <p className="text-secondary">Loading members...</p>
             ) : membersData && membersData.members.length > 0 ? (
               <div className="space-y-2">
                 {membersData.members.map((member) => (
@@ -168,7 +168,7 @@ export default function ProjectMembersModal({
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No members yet. Invite someone to collaborate!</p>
+              <p className="text-secondary">No members yet. Invite someone to collaborate!</p>
             )}
           </div>
         </CardContent>
@@ -214,25 +214,25 @@ function MemberRow({
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-md bg-gray-50 dark:bg-gray-800">
+    <div className="flex items-center justify-between p-3 border rounded-sm bg-surface-2">
       <div className="flex-1">
         <p className="font-medium">
           {member.user_email || `User ${member.user_id.slice(0, 8)}...`}
         </p>
         <div className="flex items-center gap-2 mt-1">
           {isProjectOwner ? (
-            <Badge variant="default">Owner</Badge>
+            <Badge variant="neutral">Owner</Badge>
           ) : isEditing ? (
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as UserRole)}
-              className="px-2 py-1 text-sm border rounded"
+              className="px-2 py-1 text-body-sm border rounded-sm"
             >
               <option value={UserRole.USER}>User</option>
               <option value={UserRole.ADMIN}>Admin</option>
             </select>
           ) : (
-            <Badge variant={member.access_level === UserRole.ADMIN ? "default" : "secondary"}>
+            <Badge variant={member.access_level === UserRole.ADMIN ? "accent" : "neutral"}>
               {member.access_level}
             </Badge>
           )}

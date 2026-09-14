@@ -4,6 +4,11 @@ import { useMemo } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from 'recharts';
 import { useDatasetQuery } from '@/hooks/useDatasets';
 import { Dataset } from '@/types';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useChartPalette } from '@/utils/chartTheme';
+import { significanceRamp } from '@/utils/chartScales';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 
 interface EnrichmentPlotProps {
   dataset: Dataset;
@@ -24,6 +29,8 @@ interface EnrichmentPoint {
 }
 
 export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPlotProps) {
+  const { theme } = useTheme();
+  const palette = useChartPalette();
   // Utilise React Query pour gérer le cache
   const { data: queryData, isLoading } = useDatasetQuery(dataset.id, 1000);
 
@@ -132,48 +139,56 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
     }
   }, [queryData, comparisonName]);
 
-  if (isLoading) return <div>Loading enrichment data...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  // Un `<div>` nu pour le chargement et un `text-red-500` pour l'erreur — du
+  // rouge Tailwind brut, a 3,76:1 sur blanc. Ni l'un ni l'autre ne reservait de
+  // place : le bloc de 800px arrivait d'un coup.
+  const state: ChartState = isLoading ? 'loading' : error ? 'error' : 'ready';
 
-  // Color scale based on -log10(p-value): gray to red gradient
+  const RAMP = significanceRamp(theme);
+
   const getColor = (negLogP: number | undefined) => {
-      if (!negLogP || negLogP <= 0) return '#e5e7eb'; // Light gray for invalid
-      
-      // Gradient from gray (not significant) to red (very significant)
-      if (negLogP > 10) return '#7f1d1d'; // Very dark red - extremely significant (p < 10^-10)
-      if (negLogP > 5) return '#991b1b'; // Dark red (p < 10^-5)
-      if (negLogP > 3) return '#dc2626'; // Red (p < 0.001)
-      if (negLogP > 2) return '#ef4444'; // Light red (p < 0.01)
-      if (negLogP > 1.3) return '#f87171'; // Lighter red (p < 0.05)
-      return '#9ca3af'; // Gray - not significant
+      if (!negLogP || negLogP <= 0) return palette.ns;
+      if (negLogP > 10) return RAMP[5];
+      if (negLogP > 5) return RAMP[4];
+      if (negLogP > 3) return RAMP[3];
+      if (negLogP > 2) return RAMP[2];
+      if (negLogP > 1.3) return RAMP[1];
+      return RAMP[0];
   };
   
   return (
-    <div className="space-y-4">
+    <ChartCard
+      title="Pathway enrichment"
+      subtitle="Gene ratio versus expected · colour = −log₁₀(p-value)"
+      state={state}
+      minHeight={800}
+      exportName={`enrichment_${comparisonName ?? "all"}`}
+      error={error ?? undefined}
+    >
       {/* Color scale legend */}
-      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-        <h3 className="text-sm font-semibold mb-2">-log10(p-value)</h3>
+      <div className="mb-4">
+        <h4 className="mb-2 text-caption font-semibold text-secondary">−log10(p-value)</h4>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-600">Not significant</span>
-          <div className="flex-1 h-6 rounded" style={{
-            background: 'linear-gradient(to right, #9ca3af, #f87171, #ef4444, #dc2626, #991b1b, #7f1d1d)'
+          <span className="text-xs text-secondary">Not significant</span>
+          <div className="flex-1 h-6 rounded-sm" style={{
+            background: `linear-gradient(to right, ${RAMP.join(', ')})`
           }}></div>
-          <span className="text-xs text-gray-600">Very significant</span>
+          <span className="text-xs text-secondary">Very significant</span>
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-500">0</span>
-          <span className="text-xs text-gray-500">1.3 (p=0.05)</span>
-          <span className="text-xs text-gray-500">2 (p=0.01)</span>
-          <span className="text-xs text-gray-500">3 (p=0.001)</span>
-          <span className="text-xs text-gray-500">&gt;10</span>
+          <span className="text-xs text-secondary">0</span>
+          <span className="text-xs text-secondary">1.3 (p=0.05)</span>
+          <span className="text-xs text-secondary">2 (p=0.01)</span>
+          <span className="text-xs text-secondary">3 (p=0.001)</span>
+          <span className="text-xs text-secondary">&gt;10</span>
         </div>
       </div>
       
       {/* Chart */}
-      <div className="h-[800px] w-full">
+      <div className="h-[760px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 250 }}>
-            <CartesianGrid />
+            <CartesianGrid {...CHART_GRID} />
             <XAxis 
               type="number" 
               dataKey="x" 
@@ -185,7 +200,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
               dataKey="y" 
               name="Pathway" 
               width={230} 
-              tick={{fontSize: 11}} 
+              {...CHART_AXIS} 
               interval={0}
             />
             <ZAxis type="number" dataKey="z" range={[20, 200]} name="Count" />
@@ -193,7 +208,7 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
                 if (active && payload && payload.length) {
                 const d = payload[0].payload as EnrichmentPoint;
                     return (
-                        <div className="bg-white p-2 border border-gray-200 shadow-sm rounded text-sm">
+                        <div className="bg-surface p-2 shadow-sm rounded-sm text-sm">
                             <p className="font-bold">{d.name}</p>
                             <p>Gene Ratio: {d.x?.toFixed(3) || 'N/A'}</p>
                             <p>adj.p.hyper.enri: {d.pvalue?.toExponential(2) || 'N/A'}</p>
@@ -212,6 +227,6 @@ export default function EnrichmentPlot({ dataset, comparisonName }: EnrichmentPl
           </ScatterChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </ChartCard>
   );
 }

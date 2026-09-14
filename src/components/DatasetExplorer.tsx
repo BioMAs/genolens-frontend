@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
+import { Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
 import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
 import DatasetVisualizer from './DatasetVisualizer';
+import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 interface DatasetExplorerProps {
   projectId: string;
@@ -75,19 +77,19 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
   if (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to load data. Please try again.';
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-md bg-red-50 p-4">
+      <div className="p-8">
+        <div className="page-container">
+          <div className="rounded-sm bg-danger-soft p-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
+                <h3 className="text-body-sm font-medium text-danger-ink">Error</h3>
+                <div className="mt-2 text-body-sm text-danger-ink">
                   <p>{errorMessage}</p>
                 </div>
                 <div className="mt-4">
                   <Link
                     href={`/projects/${projectId}`}
-                    className="text-sm font-medium text-red-800 hover:text-red-900"
+                    className="text-body-sm font-medium text-danger-ink hover:text-danger-ink-hover"
                   >
                     &larr; Back to Project
                   </Link>
@@ -101,30 +103,30 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm z-10">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link 
-              href={`/projects/${projectId}`}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {dataset?.name || 'Loading...'}
-              </h1>
-              <p className="text-sm text-gray-500">Dataset Explorer</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+    <div className="flex flex-col">
+      {/* L'en-tete etait une bande `bg-surface shadow-sm` collee en haut de
+          l'ecran, avec sa fleche de retour et sa barre d'outils dedans. La
+          fleche disparait — le fil d'Ariane dit d'ou l'on vient — et le nom du
+          jeu de donnees devient un titre de page plutot qu'un titre de bande.
+
+          `titleVariant="name"` : un nom de jeu de donnees est saisi. */}
+      <div className="page-container">
+        <PageHeader
+          eyebrow="Dataset explorer"
+          title={dataset?.name || 'Loading…'}
+          titleVariant="name"
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            { label: 'Project', href: `/projects/${projectId}` },
+            { label: dataset?.name ?? 'Dataset' },
+          ]}
+        />
+        <div className="mb-6 flex flex-wrap items-center gap-2">
             {/* Search */}
-            <div className="relative rounded-md shadow-sm">
+            <div className="relative rounded-sm shadow-sm">
               <input
                 type="text"
-                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                className="focus:ring-brand-primary focus:border-brand-primary block w-full sm:text-body-sm border-strong rounded-sm"
                 placeholder="Search IDs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,39 +137,39 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             <div className="relative">
               <button
                 onClick={() => setShowColumnSelector(!showColumnSelector)}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-sm text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Columns ({selectedColumns.length})
               </button>
               
               {showColumnSelector && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 max-h-96 overflow-y-auto">
+                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-sm shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 max-h-96 overflow-y-auto">
                   <div className="py-1" role="menu" aria-orientation="vertical">
-                    <div className="px-4 py-2 border-b border-gray-100">
+                    <div className="px-4 py-2 border-b border-subtle">
                       <button 
-                        className="text-xs text-brand-primary hover:text-brand-primary/80"
+                        className="text-caption text-brand-primary hover:text-brand-primary/80"
                         onClick={() => setSelectedColumns(availableColumns)}
                       >
                         Select All
                       </button>
-                      <span className="mx-2 text-gray-300">|</span>
+                      <span className="mx-2 text-muted">|</span>
                       <button 
-                        className="text-xs text-brand-primary hover:text-brand-primary/80"
+                        className="text-caption text-brand-primary hover:text-brand-primary/80"
                         onClick={() => setSelectedColumns([])}
                       >
                         Clear
                       </button>
                     </div>
                     {availableColumns.map((col) => (
-                      <label key={col} className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                      <label key={col} className="flex items-center px-4 py-2 hover:bg-hover cursor-pointer">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                          className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-strong rounded-sm"
                           checked={selectedColumns.includes(col)}
                           onChange={() => toggleColumn(col)}
                         />
-                        <span className="ml-2 text-sm text-gray-700 truncate" title={col}>
+                        <span className="ml-2 text-body-sm text-primary truncate" title={col}>
                           {col}
                         </span>
                       </label>
@@ -177,35 +179,32 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               )}
             </div>
 
-            <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-sm text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
               <Download className="h-4 w-4 mr-2" />
               Export
             </button>
-          </div>
         </div>
-        
+
         {/* View Mode Switcher */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="border-b border-gray-200">
+        <div className="mb-6">
+          <div className="border-b border-line">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
               <button
                 onClick={() => setViewMode('table')}
-                className={`${
-                  viewMode === 'table'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={cn(
+                  viewMode === 'table' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-secondary hover:text-primary hover:border-strong',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center',
+                )}
               >
                 <TableIcon className="h-4 w-4 mr-2" />
                 Table View
               </button>
               <button
                 onClick={() => setViewMode('chart')}
-                className={`${
-                  viewMode === 'chart'
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={cn(
+                  viewMode === 'chart' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-secondary hover:text-primary hover:border-strong',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center',
+                )}
               >
                 <BarChart2 className="h-4 w-4 mr-2" />
                 Visualization
@@ -214,7 +213,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               {dataset?.type === 'MATRIX' && (
                 <Link
                   href={`/projects/${projectId}/datasets/${datasetId}/clustering`}
-                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+                  className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center"
                 >
                   <GitMerge className="h-4 w-4 mr-2" />
                   Clustering
@@ -223,7 +222,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
 
               <Link
                 href={`/projects/${projectId}/datasets/${datasetId}/enrichment`}
-                className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+                className="border-transparent text-secondary hover:text-primary hover:border-strong whitespace-nowrap py-4 px-1 border-b-2 font-medium text-body-sm flex items-center"
               >
                 <Grid className="h-4 w-4 mr-2" />
                 Enrichment
@@ -231,38 +230,38 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
             </nav>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {viewMode === 'table' ? (
-            <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+            <div className="bg-surface shadow rounded-control overflow-hidden">
               {loading && !data ? (
-                <div className="p-12 text-center text-gray-500">Loading data...</div>
+                <div className="p-12 text-center text-secondary">Loading data...</div>
               ) : data ? (
                 <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="data-table">
+                  <thead className="bg-surface-2">
                     <tr>
                       {data.columns.map((col) => (
                         <th
                           key={col}
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                          className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider whitespace-nowrap"
                         >
                           {col}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-surface divide-y divide-line">
                     {data.data.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
+                      <tr key={idx} className="hover:bg-hover">
                         {data.columns.map((col) => (
                           <td
                             key={`${idx}-${col}`}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                            className="px-6 py-4 whitespace-nowrap text-body-sm text-secondary"
                           >
                             {typeof row[col] === 'number' 
                               ? row[col].toLocaleString(undefined, { maximumFractionDigits: 4 }) 
@@ -275,7 +274,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                 </table>
               </div>
             ) : (
-              <div className="p-12 text-center text-gray-500">No data available</div>
+              <div className="p-12 text-center text-secondary">No data available</div>
             )}
           </div>
           ) : (
@@ -283,7 +282,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               {dataset && data ? (
                 <DatasetVisualizer dataset={dataset} data={data} />
               ) : (
-                <div className="p-12 text-center text-gray-500">Loading visualization...</div>
+                <div className="p-12 text-center text-secondary">Loading visualization...</div>
               )}
             </div>
           )}
@@ -291,10 +290,10 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
 
         {/* Footer / Pagination */}
         {viewMode === 'table' && data && (
-          <div className="bg-white border-t border-gray-200 px-4 py-3 flex items-center justify-between sm:px-6">
+          <div className="bg-surface border-t border-line px-4 py-3 flex items-center justify-between sm:px-6">
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-gray-700">
+                <p className="text-body-sm text-primary">
                   Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
                   <span className="font-medium">
                     {Math.min(page * pageSize, data.total_rows)}
@@ -303,11 +302,11 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav className="relative z-0 inline-flex rounded-sm shadow-sm -space-x-px" aria-label="Pagination">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-sm border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Previous</span>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -315,7 +314,7 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
                   <button
                     onClick={() => setPage(p => p + 1)}
                     disabled={page * pageSize >= data.total_rows}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-sm border border-strong bg-surface text-body-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
                   >
                     <span className="sr-only">Next</span>
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />

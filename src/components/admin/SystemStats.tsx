@@ -21,7 +21,6 @@ interface StatCard {
   name: string;
   value: number;
   icon: typeof Users;
-  color: string;
   isMoney?: boolean;
 }
 
@@ -56,10 +55,10 @@ export default function SystemStats() {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+          <div key={i} className="bg-surface overflow-hidden shadow rounded-control animate-pulse">
             <div className="p-5">
-              <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
-              <div className="h-10 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-8 bg-hover rounded-sm w-1/2 mb-4"></div>
+              <div className="h-10 bg-hover rounded-sm w-3/4"></div>
             </div>
           </div>
         ))}
@@ -69,43 +68,44 @@ export default function SystemStats() {
 
   if (error || !stats) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error || 'Failed to load statistics'}</p>
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
+        <p className="text-danger-ink">{error || 'Failed to load statistics'}</p>
       </div>
     );
   }
 
+    /**
+   * Les tuiles d'icone portaient une couleur par compteur — cinq teintes pour
+   * cinq nombres, qui n'encodent rien : aucun de ces compteurs n'est meilleur
+   * ou pire qu'un autre. La migration des statuts l'a rendu visible en peignant
+   * « Total Datasets » en AVERTISSEMENT et « Active Users » en SUCCES.
+   */
   const statCards: StatCard[] = [
     {
       name: 'Total Users',
       value: stats.total_users,
       icon: Users,
-      color: 'bg-blue-500',
     },
     {
       name: 'Active Users',
       value: stats.active_users,
       icon: TrendingUp,
-      color: 'bg-green-500',
     },
     {
       name: 'Total Projects',
       value: stats.total_projects,
       icon: Database,
-      color: 'bg-purple-500',
     },
     {
       name: 'Total Datasets',
       value: stats.total_datasets,
       icon: Activity,
-      color: 'bg-orange-500',
     },
     {
       name: 'Est. Revenue',
       value: stats.estimated_revenue,
       isMoney: true,
       icon: TrendingUp,
-      color: 'bg-emerald-600',
     },
   ];
 
@@ -113,19 +113,19 @@ export default function SystemStats() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+          <div key={stat.name} className="bg-surface overflow-hidden shadow rounded-control hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`${stat.color} rounded-md p-3`}>
-                    <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                  <div className="rounded-sm bg-surface-2 p-3">
+                    <stat.icon className="h-6 w-6 text-secondary" aria-hidden="true" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
+                    <dt className="text-body-sm font-medium text-secondary truncate">{stat.name}</dt>
                     <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">
+                      <div className="text-heading text-primary">
                         {stat.isMoney ? `$${stat.value.toLocaleString()}` : stat.value.toLocaleString()}
                       </div>
                     </dd>
@@ -137,13 +137,13 @@ export default function SystemStats() {
         ))}
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">User Distribution by Plan</h3>
+      <div className="bg-surface shadow rounded-card p-6">
+        <h3 className="text-title font-medium leading-6 text-primary mb-4">User Distribution by Plan</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {Object.entries(stats.users_by_plan).map(([plan, count]) => (
-            <div key={plan} className="bg-gray-50 overflow-hidden rounded-lg p-4 border border-gray-200">
-               <dt className="text-sm font-medium text-gray-500 truncate">{plan}</dt>
-               <dd className="mt-1 text-2xl font-semibold text-gray-900">{count}</dd>
+            <div key={plan} className="bg-surface-2 overflow-hidden rounded-card p-4">
+               <dt className="text-body-sm font-medium text-secondary truncate">{plan}</dt>
+               <dd className="mt-1 text-heading text-primary">{count}</dd>
             </div>
           ))}
         </div>

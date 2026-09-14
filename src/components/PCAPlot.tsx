@@ -14,9 +14,11 @@ import {
 import { usePCAData } from '@/hooks/useVisualizations';
 import api from '@/utils/api';
 import { Dataset } from '@/types';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartPalette } from '@/utils/chartTheme';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
+import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 import AIChartAssistant from '@/components/AIChartAssistant';
+import { CHART_AXIS, CHART_GRID } from '@/components/charts/rechartsDefaults';
 
 interface PCAPlotProps {
   dataset: Dataset;
@@ -45,8 +47,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
   const [metadataColumns, setMetadataColumns] = useState<string[]>([]);
   const [selectedColorColumn, setSelectedColorColumn] = useState<string>('');
   const [joinColumn, setJoinColumn] = useState<string>('');
-  const [colorblindMode, setColorblindMode] = useState(false);
-  const palette = getPalette(colorblindMode ? 'colorblind' : 'standard');
+  const palette = useChartPalette();
 
   const error = pcaError ? 'Failed to calculate PCA. Ensure the dataset is a valid expression matrix.' : null;
 
@@ -136,31 +137,39 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
       uniqueCategories.forEach((cat, i) => {
           map[cat as string] = palette.categorical[i % palette.categorical.length];
       });
-      map['Unknown'] = '#d1d5db';
+      map['Unknown'] = palette.ns;
       return map;
   }, [uniqueCategories, palette]);
 
-  if (isLoading) return <div className="flex h-64 items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>Calculating PCA…</div>;
-  if (error) return <div className="flex h-64 items-center justify-center p-4 text-center text-sm" style={{ color: 'var(--sl-red-dark)' }}>{error}</div>;
-  if (!pcaData) return null;
+  // Les trois sorties anticipees rendaient chacune un bloc different — et deux
+  // d'entre elles HORS de la carte, donc le cadre disparaissait puis revenait.
+  // L'etat se calcule, la carte reste.
+  const state: ChartState = isLoading ? 'loading' : error ? 'error' : !pcaData ? 'empty' : 'ready';
 
-  const pc1 = (pcaData.explained_variance[0] * 100).toFixed(1);
-  const pc2 = (pcaData.explained_variance[1] * 100).toFixed(1);
+  const pc1 = ((pcaData?.explained_variance[0] ?? 0) * 100).toFixed(1);
+  const pc2 = ((pcaData?.explained_variance[1] ?? 0) * 100).toFixed(1);
   const xLabel = `PC1 (${pc1}%)`;
   const yLabel = `PC2 (${pc2}%)`;
-  const nSamples = pcaData.data?.length ?? 0;
+  const nSamples = pcaData?.data?.length ?? 0;
   const read = `PC1 captures ${pc1}% and PC2 ${pc2}% of the variance across ${nSamples} samples${selectedColorColumn ? `, coloured by ${selectedColorColumn}` : ''}.`;
 
   return (
-    <div className="gl-card p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Sample PCA</h3>
-        <div className="flex flex-wrap items-center gap-2">
+    <ChartCard
+      title="Sample PCA"
+      state={state}
+      // La lecture en clair et la barre laterale des variances vivent au-dessus
+      // du nuage : `minHeight` reserve leur place sans rogner la leur.
+      minHeight={560}
+      exportName={`pca_${dataset.name}`}
+      error={error ?? undefined}
+      empty="No PCA could be computed for this dataset."
+      actions={
+        <>
           {metadataColumns.length > 0 && (
             <select
               value={selectedColorColumn}
               onChange={(e) => setSelectedColorColumn(e.target.value)}
-              className="rounded-lg border p-1.5 text-sm"
+              className="rounded-control border p-1.5 text-sm"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             >
               {metadataColumns.map((col) => (
@@ -168,7 +177,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
               ))}
             </select>
           )}
-          <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+          <ColorblindToggle />
           <AIChartAssistant
             datasetId={dataset.id}
             chartType="pca"
@@ -183,27 +192,30 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
             }}
             label="PCA Plot"
           />
-        </div>
-      </div>
+        </>
+      }
+    >
+      {pcaData ? (
+        <>
 
       {/* Plain-language read */}
-      <div className="mb-4 flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
-        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
+      <div className="mb-4 flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-2 h-2 w-2 flex-none rounded-pill" style={{ background: 'var(--dc-green)' }} />
         <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_220px]">
         {/* Scatter */}
         <div className="min-w-0">
           <ResponsiveContainer width="100%" height={440}>
             <ScatterChart margin={{ top: 16, right: 16, bottom: 56, left: 16 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <CartesianGrid {...CHART_GRID} />
               <XAxis
                 type="number"
                 dataKey="x"
                 name="PC1"
                 label={{ value: xLabel, position: 'bottom', offset: 0, fill: 'var(--text-secondary)' }}
-                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                {...CHART_AXIS}
                 stroke="var(--border-strong)"
               />
               <YAxis
@@ -211,7 +223,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
                 dataKey="y"
                 name="PC2"
                 label={{ value: yLabel, angle: -90, position: 'left', fill: 'var(--text-secondary)' }}
-                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                {...CHART_AXIS}
                 stroke="var(--border-strong)"
               />
               <Tooltip
@@ -220,7 +232,7 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-lg border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                      <div className="rounded-control border p-2 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                         <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.sample}</p>
                         {data.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selectedColorColumn}: {data.category}</p>}
                         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>PC1: {data.x.toFixed(2)}</p>
@@ -250,24 +262,26 @@ export default function PCAPlot({ dataset, metadataDataset }: PCAPlotProps) {
         </div>
 
         {/* Variance rail */}
-        <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+        <div className="rounded-card border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
           <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-muted)' }}>Variance explained</div>
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {pcaData.explained_variance.slice(0, 6).map((v: number, i: number) => (
               <div key={i}>
                 <div className="mb-1 flex justify-between text-[11.5px]">
                   <span style={{ color: 'var(--text-secondary)' }}>PC{i + 1}</span>
                   <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{(v * 100).toFixed(1)}%</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded" style={{ background: 'var(--n-100)' }}>
-                  <div className="h-full rounded" style={{ width: `${Math.min(100, v * 100 * 3)}%`, background: i < 2 ? 'var(--sl-teal)' : 'var(--sl-purple)' }} />
+                <div className="h-1.5 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
+                  <div className="h-full rounded-sm" style={{ width: `${Math.min(100, v * 100 * 3)}%`, background: i < 2 ? 'var(--sl-teal)' : 'var(--sl-purple)' }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+        </>
+      ) : null}
+    </ChartCard>
   );
 }
 

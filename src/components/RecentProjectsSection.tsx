@@ -49,14 +49,12 @@ export default function RecentProjectsSection({
   if (projects.length === 0) {
     return (
       <EmptyStateHelix
-        className="animate-fade-up"
-        style={{ animationDelay: '60ms' }}
         title="No projects yet"
         description="Create your first project to start decoding your transcriptomics data."
         action={
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all"
+            className="inline-flex items-center gap-2 rounded-control px-4 py-1.5 text-caption font-semibold text-on-accent transition-all"
             style={{ background: 'var(--sl-purple)' }}
           >
             New Project
@@ -67,8 +65,8 @@ export default function RecentProjectsSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: '60ms' }}>
-      {recent.map((project, i) => {
+    <div data-enter className="flex flex-col gap-3">
+      {recent.map((project) => {
         const stats = statsMap[project.id];
         const status = resolveProjectStatus(stats);
         return (
@@ -76,11 +74,10 @@ export default function RecentProjectsSection({
             key={project.id}
             href={`/projects/${project.id}`}
             className="group gl-card gl-card-interactive flex items-center gap-4 p-4"
-            style={{ animationDelay: `${60 + i * 40}ms` }}
           >
             {/* Icon */}
             <div
-              className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl"
+              className="shrink-0 flex h-10 w-10 items-center justify-center rounded-card"
               style={{ background: 'var(--sl-teal-light)' }}
             >
               <Folder className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
@@ -89,15 +86,15 @@ export default function RecentProjectsSection({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p
-                className="font-display text-sm font-semibold truncate"
+                className="font-display text-body-sm font-semibold truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {project.name}
               </p>
 
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <div className="mt-1 flex flex-wrap items-center gap-2">
                 {statsLoading && !stats ? (
-                  <div className="skeleton rounded" style={{ height: '14px', width: '80px' }} />
+                  <div className="skeleton rounded-sm" style={{ height: '14px', width: '80px' }} />
                 ) : (
                   <>
                     <Chip icon={<Database className="h-3 w-3" />} value={stats?.total_datasets ?? 0}>
@@ -113,7 +110,7 @@ export default function RecentProjectsSection({
                 )}
               </div>
 
-              <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <div className="mt-2 flex items-center gap-2 text-caption" style={{ color: 'var(--text-secondary)' }}>
                 <Dot variant={status.variant} size={7} />
                 {status.label}
               </div>

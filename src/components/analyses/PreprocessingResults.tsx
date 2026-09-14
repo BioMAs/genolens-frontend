@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CheckCircle, XCircle, AlertCircle, Users, Dna } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 export interface QCReport {
   total_input_samples: number;
@@ -59,9 +60,9 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
 
   if (!qcReport && !thresholds) {
     return (
-      <div className="rounded-2xl border p-6 text-center" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
+      <div className="rounded-card border p-6 text-center" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
         <AlertCircle className="mx-auto mb-2 h-8 w-8" style={{ color: 'var(--sl-red)' }} />
-        <p className="text-sm font-medium" style={{ color: 'var(--sl-red-dark)' }}>QC report not available for this analysis.</p>
+        <p className="text-body-sm font-medium" style={{ color: 'var(--sl-red-dark)' }}>QC report not available for this analysis.</p>
       </div>
     );
   }
@@ -75,11 +76,11 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
     : 'Filtering thresholds applied to this run. Detailed per-sample QC counts were not recorded for this analysis.';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Plain-language read */}
-      <div className="flex items-start gap-2.5 rounded-xl border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
-        <span className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: 'var(--dc-green)' }} />
-        <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
+      <div className="flex items-start gap-3 rounded-card border p-3.5" style={{ background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)' }}>
+        <span className="mt-2 h-2 w-2 flex-none rounded-pill" style={{ background: 'var(--dc-green)' }} />
+        <p className="text-caption leading-relaxed" style={{ color: 'var(--text-primary)' }}>{read}</p>
       </div>
 
       {/* Summary cards — only when the aggregate QC counts exist */}
@@ -101,7 +102,7 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
       {/* Filtering thresholds */}
       {thresholds && (
         <div className="gl-card p-5">
-          <h3 className="mb-3 font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>Filtering thresholds applied</h3>
+          <h3 className="mb-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Filtering thresholds applied</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <ThresholdRow label="Min reads / sample" value={thresholds.minReads} />
             <ThresholdRow label="Min genes detected / sample" value={thresholds.minGenes} />
@@ -117,14 +118,14 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
 
       {/* Removed samples */}
       {qcReport && qcReport.removed_sample_ids && qcReport.removed_sample_ids.length > 0 && (
-        <div className="rounded-2xl border p-5" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>
+        <div className="rounded-card border p-5" style={{ background: 'var(--sl-red-light)', borderColor: 'var(--sl-red-muted)' }}>
+          <h3 className="mb-2 flex items-center gap-2 text-body-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>
             <XCircle className="h-4 w-4" />
             Removed samples ({qcReport.removed_sample_ids.length})
           </h3>
           <div className="flex flex-wrap gap-2">
             {qcReport.removed_sample_ids.map((s) => (
-              <span key={s} className="rounded-full px-2.5 py-0.5 font-mono text-xs font-medium" style={{ background: 'color-mix(in oklab, var(--sl-red) 14%, var(--surface))', color: 'var(--sl-red-dark)' }}>
+              <span key={s} className="rounded-pill px-2.5 py-0.5 font-mono text-caption font-medium" style={{ background: 'color-mix(in oklab, var(--sl-red) 14%, var(--surface))', color: 'var(--sl-red-dark)' }}>
                 {s}
               </span>
             ))}
@@ -150,17 +151,17 @@ function StatCard({
 }) {
   return (
     <div className="gl-card p-4">
-      <div className="mb-2 flex items-center gap-2.5">
+      <div className="mb-2 flex items-center gap-3">
         <span
-          className="grid h-9 w-9 place-items-center rounded-[10px]"
+          className="grid h-9 w-9 place-items-center rounded-control"
           style={{ background: `color-mix(in oklab, ${tone} 12%, var(--surface))`, color: tone }}
         >
           {icon}
         </span>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+        <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       </div>
-      <p className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
+      <p className="font-display text-heading" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      {sub && <p className="mt-1 text-caption" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
     </div>
   );
 }
@@ -177,10 +178,10 @@ function ThresholdRow({
   highlight?: 'green' | 'gray';
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: 'var(--surface-secondary)' }}>
-      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+    <div className="flex items-center justify-between gap-2 rounded-control px-3 py-2" style={{ background: 'var(--surface-secondary)' }}>
+      <span className="text-caption" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       <span
-        className={`text-xs font-semibold ${mono ? 'font-mono' : ''}`}
+        className={cn('text-caption font-semibold', mono ? 'font-mono' : '')}
         style={{
           color:
             highlight === 'green'

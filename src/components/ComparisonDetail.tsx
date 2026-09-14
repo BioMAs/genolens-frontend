@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { DatasetStatus } from '@/types';
-import { ArrowLeft, Database, Download, Lock } from 'lucide-react';
+import { ArrowLeft, Database, Download } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import { useQueryClient } from '@tanstack/react-query';
 import DEGBarChart from './DEGBarChart';
@@ -35,6 +35,8 @@ import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules, groupModulesByView } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
+import { SegmentedControl } from '@/components/ui/tabs';
+import { buttonClasses } from '@/components/ui/button';
 import SectionRail, { type RailEntry } from './comparison/SectionRail';
 import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
@@ -71,19 +73,13 @@ interface ComparisonDetailProps {
 function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () => void }) {
   return (
     <div
-      className="flex min-h-40 flex-col items-center justify-center gap-2 text-center"
-      style={{
-        border: '1px dashed var(--border)',
-        borderRadius: 'var(--radius-panel)',
-        color: 'var(--text-muted)',
-      }}
+      className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line text-center text-muted"
     >
-      <p className="text-sm">{label}</p>
+      <p className="text-body-sm">{label}</p>
       <button
         type="button"
         onClick={onReveal}
-        className="text-xs underline"
-        style={{ color: 'var(--sl-teal-dark)' }}
+        className="cursor-pointer text-caption text-accent-ink underline"
       >
         Load this section
       </button>
@@ -399,21 +395,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Loading…
       </div>
     );
   }
   if (isError) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Failed to load comparison details.
       </div>
     );
   }
   if (!project) {
     return (
-      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-8 text-center text-body-sm text-muted">
         Project not found
       </div>
     );
@@ -421,13 +417,13 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
   if (!degDataset) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+      <div className="py-8">
+        <div className="page-container">
+          <Link href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`} className="inline-flex items-center text-body-sm text-secondary hover:text-primary mb-4">
             <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
           </Link>
-          <div className="bg-yellow-50 p-4 rounded-md mt-4">
-            <p className="text-yellow-700">No Differential Expression (DEG) dataset found for this comparison.</p>
+          <div className="bg-warning-soft p-4 rounded-sm mt-4">
+            <p className="text-warning-ink">No Differential Expression (DEG) dataset found for this comparison.</p>
           </div>
         </div>
       </div>
@@ -443,7 +439,6 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         degDataset={degDataset}
         decodedName={decodedName}
         actualComparisonName={actualComparisonName}
-        stats={stats}
         statsLoading={statsLoading}
         reportUnlocked={reportCustomizationUnlocked}
         reprocessing={reprocessing}
@@ -458,14 +453,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       />
 
       {reprocessError ? (
-        <p className="mt-2 text-sm" style={{ color: 'var(--sl-red)' }}>
+        <p className="mt-2 text-body-sm text-danger">
           {reprocessError}
         </p>
       ) : null}
 
-      {/* The synthesis is true of every screen, so it sits above them rather than inside one —
-          which is also what dissolves the old overview view. */}
-      <div className="mt-4">
+      {/* Une seule bande d'orientation, plus quatre.
+          L'ecran empilait l'en-tete, la synthese, quatre grandes cartes d'ecran
+          et le repli des modules avant le moindre contenu — environ 500 a 600px
+          de chrome au-dessus du nuage de volcan. La synthese et le commutateur
+          d'ecran se serrent desormais sous l'identite de la comparaison.
+
+          La synthese reste au-dessus des quatre ecrans parce qu'elle est vraie
+          de chacun d'eux ; c'est aussi ce qui a dissous l'ancienne vue
+          « overview ». */}
+      <div className="mt-3 space-y-3">
         <ComparisonSynthesis
           comparisonName={decodedName}
           stats={stats}
@@ -474,11 +476,7 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           padjThreshold={thresholds.padj}
           log2fcThreshold={thresholds.logfc}
         />
-      </div>
 
-      {/* The four screens, named and numbered. Without this the split lived only in the
-          sidebar, so from here you could see the screen you were on and nothing else. */}
-      <div className="mt-4">
         <ComparisonViewHub
           groups={viewGroups}
           activeView={activeView}
@@ -492,379 +490,367 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       />
 
       {/* One screen at a time; within it, anchored sections rather than exclusive panes. */}
-      <div className="mt-4 gl-card overflow-hidden">
-          <div className="p-5 space-y-8">
-            <SectionRail entries={railEntries} viewKey={activeView} />
+      {/* Cette section etait enveloppee dans `<div className="mt-4 gl-card
+          overflow-hidden"><div className="p-5 space-y-8">` : tout l'ecran vivait
+          donc DANS une carte, et chaque carte interieure etait une carte dans une
+          carte. Retirer cette enveloppe supprime une bordure et un niveau de
+          padding pour l'ecran entier — c'est le rendement le plus eleve de la
+          regle « grouper par le vide, pas par la bordure ». */}
+      <div className="mt-8 space-y-8">
+        <SectionRail entries={railEntries} viewKey={activeView} />
 
-            {/* ── Explore ───────────────────────────────────────────────── */}
-            {activeView === 'explorer' && (
-              <section id="summary" className="scroll-mt-24">
-                {/* The two arrival questions, kept adjacent as the overview had them:
-                    which genes moved, and what they do. */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
-                  <OverviewTopPathways
-                    enrichmentDataset={enrichmentDataset}
-                    comparisonName={actualComparisonName}
-                    onOpenEnrichment={() => selectView('comprendre', 'enrichment')}
-                  />
-                </div>
-              </section>
-            )}
-
-            {activeView === 'explorer' && (
-              <section id="genes" className="scroll-mt-24 space-y-6">
-                {/* One significance control for the whole pane, with the counts it produces. */}
-                <SynthesisStrip
-                  datasetId={degDataset.id}
-                  comparisonName={actualComparisonName}
-                />
-
-                {/* Volcano plot — the whole comparison at a glance, next to the
-                    table it filters down to. */}
-                <div className="gl-card p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h2 className="font-display text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      Volcano plot
-                    </h2>
-                    <Link
-                      href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                      className="text-xs font-semibold"
-                      style={{ color: 'var(--sl-teal-dark)' }}
-                    >
-                      View dataset
-                    </Link>
-                  </div>
-
-                  {/* The plot takes the room; the card stays beside it and fills from
-                      whatever is selected. The legend lives in the panel itself now, so the
-                      dot row that used to duplicate it is gone. */}
-                  {/* Resolves a ?geneList= link into the shared selection. Renders nothing. */}
-                  <GeneListDeepLink projectId={projectId} />
-
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-                    <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
-                    <SelectionCard
-                      dataset={degDataset}
-                      comparisonName={actualComparisonName}
-                      matrixDataset={matrixDataset}
-                      enrichmentDataset={enrichmentDataset}
-                      sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                      conditionBySample={
-                        Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
-                      }
-                      geneNameMap={geneMap.nameByGene}
-                    />
-                  </div>
-                </div>
-
-                {/* DEG Table */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Differentially Expressed Genes</h2>
-                    <button
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700"
-                      onClick={async () => {
-                        try {
-                          const response = await api.get(
-                            `/datasets/${degDataset.id}/deg-stats/export`,
-                            {
-                              params: { comparison: actualComparisonName },
-                              responseType: 'blob',
-                            }
-                          );
-                          const url = URL.createObjectURL(new Blob([response.data]));
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `deg_stats_${actualComparisonName}.csv`;
-                          link.click();
-                          URL.revokeObjectURL(url);
-                        } catch (e) {
-                          console.error('DEG stats download failed', e);
-                        }
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                      Download DEG — per-method p-values (.csv)
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {activeView === 'explorer' && (
-              <section id="methods" className="scroll-mt-24">
-                <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-              </section>
-            )}
-
-            {activeView === 'explorer' && (
-              <section id="heatmap" className="scroll-mt-24">
-              {matrixDataset && degDataset ? (
-                  <HeatmapSection
-                    degDataset={degDataset}
-                    matrixDataset={matrixDataset}
-                    comparisonName={actualComparisonName}
-                    sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                    sampleConditionMap={
-                      Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
-                    }
-                  />
-              ) : matrixDataset ? (
-                <ClusteringAnalysis
-                  projectId={projectId}
-                  datasetId={matrixDataset.id}
-                  datasetName={matrixDataset.name}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Clustering requires an expression matrix (count matrix).
-                    Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {activeView === 'explorer' && (
-              <section id="external-lookup" className="scroll-mt-24">
-                <StringEnrichmentPanel />
-              </section>
-            )}
-
-            {activeView === 'explorer' && (
-              <section id="custom-viz" className="scroll-mt-24">
-                <CustomVisualizationPanel
-                  datasetId={degDataset.id}
-                  comparisonName={actualComparisonName}
-                  allGenes={allMatrixGenes}
-                />
-              </section>
-            )}
-
-            {/* ── Understand ────────────────────────────────────────────── */}
-            {activeView === 'comprendre' && (
-              <PathwayFocusBar
-                onShowInExplorer={(genes, label) => {
-                  // Explicit and user-initiated. The only crossing between screens in the
-                  // whole cross-filter; everything else happens in place.
-                  selectGenes(genes, 'pathway', label);
-                  focusTerm(null);
-                  selectView('explorer', 'genes');
-                }}
+        {/* ── Explore ───────────────────────────────────────────────── */}
+        {activeView === 'explorer' && (
+          <section id="summary" className="scroll-mt-24">
+            {/* The two arrival questions, kept adjacent as the overview had them:
+                which genes moved, and what they do. */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
+              <OverviewTopPathways
+                enrichmentDataset={enrichmentDataset}
+                comparisonName={actualComparisonName}
+                onOpenEnrichment={() => selectView('comprendre', 'enrichment')}
               />
-            )}
+            </div>
+          </section>
+        )}
 
-            {activeView === 'comprendre' && (
-              <section id="ai" className="scroll-mt-24">
-                {/* The AI reading opens the screen: the synthesis above gives the numbers,
-                    this says what they mean, and the sections below are the evidence. */}
-                <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-              </section>
-            )}
+        {activeView === 'explorer' && (
+          <section id="genes" className="scroll-mt-24 space-y-6">
+            {/* One significance control for the whole pane, with the counts it produces. */}
+            <SynthesisStrip
+              datasetId={degDataset.id}
+              comparisonName={actualComparisonName}
+            />
 
-            {activeView === 'comprendre' && (
-              <section id="enrichment" className="scroll-mt-24">
-              {degDataset ? (
-                <div className="space-y-4">
-                  {/* Sub-mode toggle: over-representation vs ranked GSEA. It carries the
-                      #gsea anchor itself, so the fragment always has something to land on. */}
-                  <div
-                    id={GSEA_HASH}
-                    className="inline-flex scroll-mt-32 rounded-lg p-1"
-                    style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border)' }}
-                  >
-                    <button
-                      onClick={() => setEnrichmentMode('ora')}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                        enrichmentMode === 'ora'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      Over-representation (ORA)
-                    </button>
-                    {scientificUnlocked ? (
-                      <button
-                        onClick={() => setEnrichmentMode('gsea')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                          enrichmentMode === 'gsea'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        GSEA (ranked)
-                      </button>
-                    ) : (
-                      <span
-                        title="GSEA is part of the Scientific tools add-on — request access from the comparison overview"
-                        className="inline-flex cursor-not-allowed items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-gray-400"
-                      >
-                        <Lock className="h-3.5 w-3.5" />
-                        GSEA (ranked)
-                      </span>
-                    )}
-                  </div>
+            {/* Volcano plot — the whole comparison at a glance, next to the
+                table it filters down to. */}
+            <div className="gl-card p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="font-display text-body font-semibold text-primary">
+                  Volcano plot
+                </h2>
+                <Link
+                  href={`/projects/${projectId}/datasets/${degDataset.id}`}
+                  className="text-caption font-semibold text-accent-ink"
+                >
+                  View dataset
+                </Link>
+              </div>
 
-                  {enrichmentMode === 'ora' ? (
-                    <GOEnrichmentAnalysis
-                      dataset={degDataset}
-                      enrichmentDataset={enrichmentDataset}
-                      comparisonName={actualComparisonName}
-                    />
-                  ) : scientificUnlocked ? (
-                    <GSEAAnalysis
-                      dataset={degDataset}
-                      comparisonName={actualComparisonName}
-                    />
-                  ) : null}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG data</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Enrichment requires a DEG dataset associated with this comparison.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
+              {/* The plot takes the room; the card stays beside it and fills from
+                  whatever is selected. The legend lives in the panel itself now, so the
+                  dot row that used to duplicate it is gone. */}
+              {/* Resolves a ?geneList= link into the shared selection. Renders nothing. */}
+              <GeneListDeepLink projectId={projectId} />
 
-            {activeView === 'comprendre' && (
-              <section id="network" className="scroll-mt-24" ref={attachNetwork}>
-                {networkVisible ? (
-                  <PPINetworkSection
-                    dataset={degDataset}
-                    comparisonName={actualComparisonName}
-                  />
-                ) : (
-                  <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
-                )}
-              </section>
-            )}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
+                <SelectionCard
+                  dataset={degDataset}
+                  comparisonName={actualComparisonName}
+                  matrixDataset={matrixDataset}
+                  enrichmentDataset={enrichmentDataset}
+                  sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  conditionBySample={
+                    Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                  }
+                  geneNameMap={geneMap.nameByGene}
+                />
+              </div>
+            </div>
 
-            {/* ── Apply ─────────────────────────────────────────────────── */}
-            {activeView === 'appliquer' && drugDiscoveryUnlocked && (
-              <section id="drug-discovery" className="scroll-mt-24">
-              {degDataset ? (
-                /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
-                   que porte `deg_genes.comparison_name` côté base. */
-                <DrugDiscoveryComparisonPanel
-                  datasetId={degDataset.id}
+            {/* DEG Table */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-heading text-primary">Differentially Expressed Genes</h2>
+                <button
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-body-sm border border-strong rounded-sm bg-surface hover:bg-hover text-primary"
+                  onClick={async () => {
+                    try {
+                      const response = await api.get(
+                        `/datasets/${degDataset.id}/deg-stats/export`,
+                        {
+                          params: { comparison: actualComparisonName },
+                          responseType: 'blob',
+                        }
+                      );
+                      const url = URL.createObjectURL(new Blob([response.data]));
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `deg_stats_${actualComparisonName}.csv`;
+                      link.click();
+                      URL.revokeObjectURL(url);
+                    } catch (e) {
+                      console.error('DEG stats download failed', e);
+                    }
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                  Download DEG — per-method p-values (.csv)
+                </button>
+              </div>
+              <p className="text-body-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
+              <div className="bg-surface rounded-control overflow-hidden">
+                <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeView === 'explorer' && (
+          <section id="methods" className="scroll-mt-24">
+            <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+          </section>
+        )}
+
+        {activeView === 'explorer' && (
+          <section id="heatmap" className="scroll-mt-24">
+          {matrixDataset && degDataset ? (
+              <HeatmapSection
+                degDataset={degDataset}
+                matrixDataset={matrixDataset}
+                comparisonName={actualComparisonName}
+                sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                sampleConditionMap={
+                  Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                }
+              />
+          ) : matrixDataset ? (
+            <ClusteringAnalysis
+              projectId={projectId}
+              datasetId={matrixDataset.id}
+              datasetName={matrixDataset.name}
+            />
+          ) : (
+            <div className="text-center py-16">
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
+              <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
+              <p className="text-body-sm text-secondary max-w-sm mx-auto">
+                Clustering requires an expression matrix (count matrix).
+                Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
+              </p>
+            </div>
+          )}
+          </section>
+        )}
+
+        {activeView === 'explorer' && (
+          <section id="external-lookup" className="scroll-mt-24">
+            <StringEnrichmentPanel />
+          </section>
+        )}
+
+        {activeView === 'explorer' && (
+          <section id="custom-viz" className="scroll-mt-24">
+            <CustomVisualizationPanel
+              datasetId={degDataset.id}
+              comparisonName={actualComparisonName}
+              allGenes={allMatrixGenes}
+            />
+          </section>
+        )}
+
+        {/* ── Understand ────────────────────────────────────────────── */}
+        {activeView === 'comprendre' && (
+          <PathwayFocusBar
+            onShowInExplorer={(genes, label) => {
+              // Explicit and user-initiated. The only crossing between screens in the
+              // whole cross-filter; everything else happens in place.
+              selectGenes(genes, 'pathway', label);
+              focusTerm(null);
+              selectView('explorer', 'genes');
+            }}
+          />
+        )}
+
+        {activeView === 'comprendre' && (
+          <section id="ai" className="scroll-mt-24">
+            {/* The AI reading opens the screen: the synthesis above gives the numbers,
+                this says what they mean, and the sections below are the evidence. */}
+            <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+          </section>
+        )}
+
+        {activeView === 'comprendre' && (
+          <section id="enrichment" className="scroll-mt-24">
+          {degDataset ? (
+            <div className="space-y-4">
+              {/* Bascule ORA / GSEA rankee.
+
+                  L'etat ACTIF etait `bg-white text-primary` : sur
+                  --surface #131720, un bouton blanc a texte quasi noir —
+                  l'onglet selectionne etait le seul illisible en theme
+                  sombre. Troisieme segmente fait main du code, desormais
+                  sur la primitive comme les deux autres.
+
+                  L'ancre #gsea vivait sur le conteneur de la bascule ; la
+                  primitive ne prend pas d'id, elle passe donc sur un point
+                  d'ancrage dedie, pour que le fragment garde ou atterrir. */}
+              <span id={GSEA_HASH} className="block scroll-mt-32" aria-hidden />
+              <SegmentedControl
+                label="Enrichment method"
+                items={[
+                  { value: 'ora' as const, label: 'Over-representation (ORA)' },
+                  {
+                    value: 'gsea' as const,
+                    label: 'GSEA (ranked)',
+                    locked: !scientificUnlocked,
+                    lockedHint:
+                      'GSEA is part of the Scientific tools add-on — request access from the comparison overview',
+                  },
+                ]}
+                value={enrichmentMode}
+                onValueChange={setEnrichmentMode}
+              />
+
+              {enrichmentMode === 'ora' ? (
+                <GOEnrichmentAnalysis
+                  dataset={degDataset}
+                  enrichmentDataset={enrichmentDataset}
                   comparisonName={actualComparisonName}
                 />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No DEG results</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Drug target scoring is built from the differentially expressed genes of this
-                    comparison, so it needs the DEG results to be available.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {activeView === 'appliquer' && scientificUnlocked && (
-              <section id="signature" className="scroll-mt-24" ref={attachSignature}>
-              {!signatureVisible ? (
-                <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
-              ) : matrixDataset ? (
-                <SignatureScorePanel
-                  projectId={projectId}
-                  matrixDatasetId={matrixDataset.id}
-                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
-                  sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-                  initialGenes={focusedTerm?.genes}
-                  initialLabel={focusedTerm?.name}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <Database className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No expression matrix</h3>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                    Signature scoring requires an expression matrix (count matrix) for this project.
-                  </p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {activeView === 'appliquer' && cosmeticsUnlocked && (
-              <section id="cosmetics" className="scroll-mt-24">
-                <CosmeticsTab
-                  datasetId={degDataset?.id}
+              ) : scientificUnlocked ? (
+                <GSEAAnalysis
+                  dataset={degDataset}
                   comparisonName={actualComparisonName}
                 />
-              </section>
-            )}
+              ) : null}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
+              <h3 className="text-title font-medium text-primary mb-2">No DEG data</h3>
+              <p className="text-body-sm text-secondary max-w-sm mx-auto">
+                Enrichment requires a DEG dataset associated with this comparison.
+              </p>
+            </div>
+          )}
+          </section>
+        )}
 
-            {/* ── Share ─────────────────────────────────────────────────── */}
-            {activeView === 'partager' && (
-              <section id="exports" className="scroll-mt-24 space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Exports
-                  </h3>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    The gene table of this comparison, and its per-method p-values.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ExportMenu
-                    filename={`${actualComparisonName}_comparison`}
-                    formats={['csv', 'json']}
-                    variant="outline"
-                    size="sm"
-                  />
-                  <button
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-control)',
-                      color: 'var(--text-secondary)',
-                    }}
-                    onClick={async () => {
-                      try {
-                        const response = await api.get(
-                          `/datasets/${degDataset.id}/deg-stats/export`,
-                          { params: { comparison: actualComparisonName }, responseType: 'blob' }
-                        );
-                        const url = URL.createObjectURL(new Blob([response.data]));
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `deg_stats_${actualComparisonName}.csv`;
-                        link.click();
-                        URL.revokeObjectURL(url);
-                      } catch (e) {
-                        console.error('DEG stats download failed', e);
-                      }
-                    }}
-                  >
-                    <Download className="h-4 w-4" />
-                    Per-method p-values (.csv)
-                  </button>
-                </div>
-              </section>
+        {activeView === 'comprendre' && (
+          <section id="network" className="scroll-mt-24" ref={attachNetwork}>
+            {networkVisible ? (
+              <PPINetworkSection
+                dataset={degDataset}
+                comparisonName={actualComparisonName}
+              />
+            ) : (
+              <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
             )}
+          </section>
+        )}
 
-            {activeView === 'partager' && reportCustomizationUnlocked && (
-              <section id="report" className="scroll-mt-24">
-                <ReportCustomizationPanel />
-              </section>
-            )}
-          </div>
-        </div>
+        {/* ── Apply ─────────────────────────────────────────────────── */}
+        {activeView === 'appliquer' && drugDiscoveryUnlocked && (
+          <section id="drug-discovery" className="scroll-mt-24">
+          {degDataset ? (
+            /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
+               que porte `deg_genes.comparison_name` côté base. */
+            <DrugDiscoveryComparisonPanel
+              datasetId={degDataset.id}
+              comparisonName={actualComparisonName}
+            />
+          ) : (
+            <div className="text-center py-16">
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
+              <h3 className="text-title font-medium text-primary mb-2">No DEG results</h3>
+              <p className="text-body-sm text-secondary max-w-sm mx-auto">
+                Drug target scoring is built from the differentially expressed genes of this
+                comparison, so it needs the DEG results to be available.
+              </p>
+            </div>
+          )}
+          </section>
+        )}
+
+        {activeView === 'appliquer' && scientificUnlocked && (
+          <section id="signature" className="scroll-mt-24" ref={attachSignature}>
+          {!signatureVisible ? (
+            <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
+          ) : matrixDataset ? (
+            <SignatureScorePanel
+              projectId={projectId}
+              matrixDatasetId={matrixDataset.id}
+              samples={relevantSamples.length > 0 ? relevantSamples : undefined}
+              sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
+              initialGenes={focusedTerm?.genes}
+              initialLabel={focusedTerm?.name}
+            />
+          ) : (
+            <div className="text-center py-16">
+              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
+              <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
+              <p className="text-body-sm text-secondary max-w-sm mx-auto">
+                Signature scoring requires an expression matrix (count matrix) for this project.
+              </p>
+            </div>
+          )}
+          </section>
+        )}
+
+        {activeView === 'appliquer' && cosmeticsUnlocked && (
+          <section id="cosmetics" className="scroll-mt-24">
+            <CosmeticsTab
+              datasetId={degDataset?.id}
+              comparisonName={actualComparisonName}
+            />
+          </section>
+        )}
+
+        {/* ── Share ─────────────────────────────────────────────────── */}
+        {activeView === 'partager' && (
+          <section id="exports" className="scroll-mt-24 space-y-3">
+            <div>
+              <h3 className="text-body-sm font-semibold text-primary">
+                Exports
+              </h3>
+              <p className="text-caption text-muted">
+                The gene table of this comparison, and its per-method p-values.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ExportMenu
+                filename={`${actualComparisonName}_comparison`}
+                formats={['csv', 'json']}
+                variant="outline"
+                size="sm"
+              />
+              <button
+                type="button"
+                className={buttonClasses({ variant: 'outline', size: 'sm' })}
+                onClick={async () => {
+                  try {
+                    const response = await api.get(
+                      `/datasets/${degDataset.id}/deg-stats/export`,
+                      { params: { comparison: actualComparisonName }, responseType: 'blob' }
+                    );
+                    const url = URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `deg_stats_${actualComparisonName}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) {
+                    console.error('DEG stats download failed', e);
+                  }
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Per-method p-values (.csv)
+              </button>
+            </div>
+          </section>
+        )}
+
+        {activeView === 'partager' && reportCustomizationUnlocked && (
+          <section id="report" className="scroll-mt-24">
+            <ReportCustomizationPanel />
+          </section>
+        )}
       </div>
+    </div>
     );
     }
 

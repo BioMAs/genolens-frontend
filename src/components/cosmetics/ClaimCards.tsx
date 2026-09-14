@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
 import ClaimPathwayMap from './ClaimPathwayMap';
+import { cn } from '@/lib/cn';
 
 // ── Verdict system ─────────────────────────────────────────────────────────────
 // Merges direction + score + confidence into a single readable signal.
@@ -56,19 +57,19 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 shrink-0 rounded-full" style={{ background: claim.color }} />
-            <h4 className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <span className="inline-block h-3 w-3 shrink-0 rounded-pill" style={{ background: claim.color }} />
+            <h4 className="truncate text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {claim.label}
             </h4>
           </div>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>
             {claim.description}
           </p>
         </div>
 
         {/* Verdict badge */}
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          className="shrink-0 rounded-pill px-2.5 py-1 text-micro"
           style={{ background: verdict.bg, color: verdict.color }}
         >
           {verdict.icon} {verdict.label}
@@ -78,22 +79,22 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
       {/* ── Score bar ── */}
       <div className="px-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold" style={{ color: verdict.color }}>
+          <span className="text-heading" style={{ color: verdict.color }}>
             {claim.score}
-            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
+            <span className="text-body-sm font-normal" style={{ color: 'var(--text-secondary)' }}>/100</span>
           </span>
           {/* Reliability sub-info — small and unobtrusive */}
-          <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-micro" style={{ color: 'var(--text-secondary)' }}>
             {claim.confidence} reliability
           </span>
         </div>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-pill bg-surface-2">
           <div
-            className="h-full rounded-full transition-all"
+            className="h-full rounded-pill transition-all"
             style={{ width: `${claim.score}%`, background: verdict.color }}
           />
         </div>
-        <div className="mt-1.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+        <div className="mt-2 text-micro" style={{ color: 'var(--text-secondary)' }}>
           {claim.n_supporting} supporting · {claim.n_contradicting} contradicting pathways
         </div>
       </div>
@@ -104,7 +105,7 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
           {claim.top_genes.slice(0, 6).map((g) => (
             <span
               key={g}
-              className="rounded border border-gray-100 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-600"
+              className="rounded-sm bg-surface-2 px-1.5 py-0.5 font-mono text-micro text-secondary"
             >
               {g}
             </span>
@@ -117,10 +118,13 @@ function ClaimCard({ claim, open, onToggle }: ClaimCardProps) {
         <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: 'var(--border-default)' }}>
           <button
             onClick={onToggle}
-            className="flex items-center gap-1 text-xs font-medium"
+            className="flex items-center gap-1 text-caption font-medium"
             style={{ color: 'var(--sl-teal-dark, #0f766e)' }}
           >
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+            <ChevronDown className={cn(
+                           'h-3.5 w-3.5 transition-transform',
+                           open ? 'rotate-180' : '',
+                         )} />
             {open ? 'Hide' : 'Show'} pathway network
           </button>
 
@@ -150,8 +154,8 @@ export default function ClaimCards({ claims }: { claims: CosmeticClaimScore[] })
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-center gap-2">
+        <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           Claim details
         </h3>
         <PanelInfo title="Claim details — how to read each card">

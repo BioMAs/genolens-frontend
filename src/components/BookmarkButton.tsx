@@ -7,6 +7,7 @@
 import { Star } from 'lucide-react';
 import { useState } from 'react';
 import { useCreateBookmark, useDeleteBookmark, useIsBookmarked, useBookmarks } from '@/hooks/useBookmarks';
+import { cn } from '@/lib/cn';
 
 interface BookmarkButtonProps {
   projectId: string;
@@ -39,9 +40,9 @@ export default function BookmarkButton({
   };
 
   const buttonSizeClasses = {
-    sm: 'px-2 py-1 text-xs',
-    md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base',
+    sm: 'px-2 py-1 text-caption',
+    md: 'px-3 py-1.5 text-body-sm',
+    lg: 'px-4 py-2 text-body',
   };
 
   const handleToggleBookmark = async (e: React.MouseEvent) => {
@@ -80,17 +81,18 @@ export default function BookmarkButton({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-        className={`inline-flex items-center justify-center rounded-full p-1 transition-colors hover:bg-gray-100 disabled:opacity-50 ${className}`}
+        className={cn(
+          'inline-flex items-center justify-center rounded-pill p-1 transition-colors hover:bg-hover disabled:opacity-50',
+          className,
+        )}
         title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
       >
         <Star
-          className={`${sizeClasses[size]} transition-colors ${
-            isBookmarked
-              ? 'fill-yellow-400 text-yellow-400'
-              : isHovered
-              ? 'text-yellow-400'
-              : 'text-gray-400'
-          }`}
+          className={cn(
+            sizeClasses[size],
+            'transition-colors',
+            isBookmarked ? 'fill-warning-ink text-warning-ink' : isHovered ? 'text-warning-ink' : 'text-muted',
+          )}
         />
       </button>
     );
@@ -100,16 +102,18 @@ export default function BookmarkButton({
     <button
       onClick={handleToggleBookmark}
       disabled={checkLoading || createBookmark.isPending || deleteBookmark.isPending}
-      className={`inline-flex items-center gap-2 rounded-md border transition-colors disabled:opacity-50 ${
-        isBookmarked
-          ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
-          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-      } ${buttonSizeClasses[size]} ${className}`}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-sm border transition-colors disabled:opacity-50',
+        isBookmarked ? 'border-warning bg-warning-soft text-warning-ink hover:bg-warning-soft' : 'border-strong bg-surface text-primary hover:bg-hover',
+        buttonSizeClasses[size],
+        className,
+      )}
     >
       <Star
-        className={`${sizeClasses[size]} ${
-          isBookmarked ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
-        }`}
+        className={cn(
+          sizeClasses[size],
+          isBookmarked ? 'fill-warning-ink text-warning-ink' : 'text-muted',
+        )}
       />
       {isBookmarked ? 'Bookmarked' : 'Bookmark'}
     </button>

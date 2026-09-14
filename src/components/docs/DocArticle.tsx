@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { CATEGORY_LABELS } from '@/lib/docs-categories';
 import type { Doc, DocMeta, Heading } from '@/lib/docs';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface DocArticleProps {
   doc: Doc;
@@ -55,20 +56,18 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_200px]">
       <article className="min-w-0">
-        <p
-          className="text-[11px] font-semibold uppercase tracking-wide"
-          style={{ color: 'var(--sl-teal)' }}
-        >
-          {CATEGORY_LABELS[doc.category]}
-        </p>
-        <h1 className="page-title mt-1">{doc.title}</h1>
-        {doc.description && (
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {doc.description}
-          </p>
-        )}
+        {/* Le sur-titre de categorie etait un `<p>` en teal de MARQUE, pose a
+            la main au-dessus d'un `.page-title`. C'est exactement ce que
+            `eyebrow` designe, et la classe `.eyebrow` le rend dans l'encre
+            discrete plutot que dans une couleur de marque. */}
+        <PageHeader
+          eyebrow={CATEGORY_LABELS[doc.category]}
+          title={doc.title}
+          titleVariant="name"
+          description={doc.description}
+        />
 
-        <div className="doc-prose mt-6">
+        <div className="doc-prose">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -89,13 +88,13 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
 
         {(previous || next) && (
           <div
-            className="mt-10 flex flex-wrap items-stretch justify-between gap-3 border-t pt-5"
+            className="mt-12 flex flex-wrap items-stretch justify-between gap-3 border-t pt-5"
             style={{ borderColor: 'var(--border)' }}
           >
             {previous ? (
               <Link
                 href={`/docs/${previous.slug}`}
-                className="gl-card flex items-center gap-2 p-3 text-xs transition-colors hover:border-[var(--sl-purple)]"
+                className="gl-card flex items-center gap-2 p-3 text-caption transition-colors hover:border-[var(--sl-purple)]"
               >
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
                 <span>
@@ -113,7 +112,7 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
             {next && (
               <Link
                 href={`/docs/${next.slug}`}
-                className="gl-card ml-auto flex items-center gap-2 p-3 text-right text-xs transition-colors hover:border-[var(--sl-purple)]"
+                className="gl-card ml-auto flex items-center gap-2 p-3 text-right text-caption transition-colors hover:border-[var(--sl-purple)]"
               >
                 <span>
                   <span className="block" style={{ color: 'var(--text-muted)' }}>
@@ -133,17 +132,17 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
       {doc.headings.length > 0 && (
         <nav aria-label="On this page" className="hidden lg:block">
           <p
-            className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
+            className="mb-2 text-micro uppercase tracking-wide"
             style={{ color: 'var(--text-muted)' }}
           >
             On this page
           </p>
-          <ul className="sticky top-4 space-y-1.5 border-l pl-3" style={{ borderColor: 'var(--border)' }}>
+          <ul className="sticky top-4 space-y-2 border-l pl-3" style={{ borderColor: 'var(--border)' }}>
             {doc.headings.map((heading) => (
               <li key={heading.id} style={{ paddingLeft: heading.depth === 3 ? 10 : 0 }}>
                 <a
                   href={`#${heading.id}`}
-                  className="text-xs hover:underline"
+                  className="text-caption hover:underline"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   {heading.text}

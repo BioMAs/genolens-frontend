@@ -7,20 +7,10 @@ import { ClusteringParams } from '@/components/heatmap/types';
 import { useHeatmapData, type HeatmapGeneRow } from '@/components/heatmap/useHeatmapData';
 import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
-import { getPalette } from '@/utils/chartPalettes';
+import { useChartTheme, useChartPalette, useChartScales } from '@/utils/chartTheme';
+import { discreteScale } from '@/utils/chartScales';
+import { buildPlotlyLayout } from '@/utils/plotlyLayout';
 import { Layout, PlotData } from 'plotly.js';
-
-// Build a Plotly discrete (stepped) colorscale so each category maps to a flat color.
-// Category i is encoded as z = (i + 0.5) / n, which lands in the middle of its band.
-function discreteColorscale(colors: string[]): [number, string][] {
-  const n = colors.length;
-  const scale: [number, string][] = [];
-  for (let i = 0; i < n; i++) {
-    scale.push([i / n, colors[i]]);
-    scale.push([(i + 1) / n, colors[i]]);
-  }
-  return scale;
-}
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -35,33 +25,6 @@ interface DEGClusteringViewProps {
 }
 
 type DisplayMode = 'expression' | 'log2fc';
-
-// Viridis-like colorscale (blue → grey → yellow) matching the reference figure
-const VIRIDIS_COLORSCALE: [number, string][] = [
-  [0.0, '#000080'],
-  [0.15, '#0c3b6b'],
-  [0.3, '#2e6fa3'],
-  [0.45, '#6e91a8'],
-  [0.6, '#a8a878'],
-  [0.75, '#d4c836'],
-  [1.0, '#ffff00'],
-];
-
-// Colorblind-safe sequential scale (dark blue → light yellow)
-const COLORBLIND_SEQ_COLORSCALE: [number, string][] = [
-  [0.0, '#0072B2'],
-  [0.33, '#56B4E9'],
-  [0.66, '#F0E442'],
-  [1.0, '#E69F00'],
-];
-
-// DEG status sidebar: purple for DOWN (-1), green for UP (+1)
-const DEG_STATUS_COLORSCALE: [number, string][] = [
-  [0.0, '#7B2D8B'],  // purple  — DOWN
-  [0.49, '#7B2D8B'],
-  [0.51, '#3A7D44'],  // green  — UP
-  [1.0, '#3A7D44'],
-];
 
 // Default params: show ALL DEGs (top_n_genes: 0 = no limit)
 const DEG_CLUSTERING_PARAMS: ClusteringParams = {
@@ -80,8 +43,10 @@ export default function DEGClusteringView({
   sampleConditionMap,
   genesOverride,
 }: DEGClusteringViewProps) {
+  const chartTheme = useChartTheme();
+  const palette = useChartPalette();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
-  const [colorblindMode, setColorblindMode] = useState(false);
+  const scales = useChartScales();
 
   // If sampleIds is undefined or empty, ALL matrix samples will be shown
   // (happens when no metadata dataset is uploaded for the study).
@@ -99,18 +64,18 @@ export default function DEGClusteringView({
   // ---- Loading / Error states ----
   if (loading && !plotData) {
     return (
-      <div className="flex h-96 items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
-        <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-        <span className="ml-2 text-gray-500">Generating DEG heatmap…</span>
+      <div className="flex h-96 items-center justify-center bg-surface-2 rounded-control border-dashed">
+        <Loader2 className="w-8 h-8 text-accent-ink animate-spin" />
+        <span className="ml-2 text-secondary">Generating DEG heatmap…</span>
       </div>
     );
   }
 
   if (error && !plotData) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded border border-red-200">
+      <div className="p-4 bg-danger-soft text-danger-ink rounded-sm border border-danger/30">
         <p className="font-semibold">Error</p>
-        <p className="text-sm mt-1">{error}</p>
+        <p className="text-body-sm mt-1">{error}</p>
       </div>
     );
   }
@@ -133,7 +98,10 @@ export default function DEGClusteringView({
 
   if (displayMode === 'expression') {
     mainZ = plotData.z;
-    colorscale = colorblindMode ? COLORBLIND_SEQ_COLORSCALE : VIRIDIS_COLORSCALE;
+    // Rampe sequentielle : le z-score est centre, mais la convention des
+    // cartes de chaleur RNA-seq est une rampe continue, et la figure de
+    // reference de cet ecran en est une.
+    colorscale = scales.sequential;
     // z-scored by backend: clamp between -2 and 2 for visual clarity
     zmin = -2;
     zmax = 2;
@@ -141,9 +109,9 @@ export default function DEGClusteringView({
   } else {
     // Replicate the gene's log2FC across all samples to fill the z matrix
     mainZ = plotData.logFCs.map(lfc => plotData.x.map(() => lfc));
-    colorscale = colorblindMode
-      ? ([[0, '#0072B2'], [0.5, '#f7f7f7'], [1, '#D55E00']] as [number, string][])
-      : 'RdBu';
+    // Divergente, median sur la surface du panneau : 'RdBu' portait un blanc
+    // cuit au milieu, donc un trou blanc au centre de la carte en sombre.
+    colorscale = scales.diverging;
     zmin = -3;
     zmax = 3;
     colorbarTitle = 'Log2FC';
@@ -173,7 +141,7 @@ export default function DEGClusteringView({
 
   // ---- Condition annotation track (above the heatmap columns) ----
   // Uses the sample→condition map already resolved by ComparisonDetail.
-  const condPalette = getPalette(colorblindMode ? 'colorblind' : 'standard').categorical;
+  const condPalette = palette.categorical;
   const sampleConditions = plotData.x.map((s) => sampleConditionMap?.[s]);
   const hasConditions = sampleConditions.some((c) => c != null);
   const uniqueConds = Array.from(new Set(sampleConditions.filter((c): c is string => c != null)));
@@ -226,8 +194,8 @@ export default function DEGClusteringView({
     <div className="flex flex-col gap-3">
       {/* Warning: no sample filter */}
       {!hasSampleFilter && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-xs text-amber-800">
-          <span className="mt-0.5">⚠️</span>
+        <div className="flex items-start gap-2 bg-warning-soft border border-warning/30 rounded-sm px-3 py-2 text-caption text-warning-ink">
+          <span className="mt-1">⚠️</span>
           <span>
             <strong>Metadata file missing</strong> — samples are not filtered for this comparison.
             All matrix samples are displayed. Upload a metadata (sample design) file to restrict the view to the samples of <em>{comparisonName}</em>.
@@ -235,10 +203,10 @@ export default function DEGClusteringView({
         </div>
       )}
       {/* Controls bar */}
-      <div className="flex items-center gap-6 flex-wrap bg-white rounded-lg border border-gray-200 px-4 py-2.5">
-        <span className="text-sm font-medium text-gray-700">Displayed value:</span>
+      <div className="flex items-center gap-6 flex-wrap bg-surface rounded-control px-4 py-2.5">
+        <span className="text-body-sm font-medium text-primary">Displayed value:</span>
         <div className="flex gap-4">
-          <label className="flex items-center gap-1.5 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
               name="degDisplayMode"
@@ -247,9 +215,9 @@ export default function DEGClusteringView({
               onChange={() => setDisplayMode('expression')}
               className="text-brand-primary"
             />
-            <span className="text-sm text-gray-700">Normalized expression (z-score)</span>
+            <span className="text-body-sm text-primary">Normalized expression (z-score)</span>
           </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
               name="degDisplayMode"
@@ -258,20 +226,20 @@ export default function DEGClusteringView({
               onChange={() => setDisplayMode('log2fc')}
               className="text-brand-primary"
             />
-            <span className="text-sm text-gray-700">Log2FC</span>
+            <span className="text-body-sm text-primary">Log2FC</span>
           </label>
         </div>
 
         <div className="flex-1" />
 
         {isPreview && (
-          <span className="text-xs text-amber-600 flex items-center gap-1">
+          <span className="text-caption text-warning-ink flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
             Preview (loading full data…)
           </span>
         )}
         {loading && plotData && (
-          <span className="text-xs text-purple-600 flex items-center gap-1">
+          <span className="text-caption text-accent-ink flex items-center gap-1">
             <Loader2 className="w-3 h-3 animate-spin" />
             Updating…
           </span>
@@ -279,18 +247,18 @@ export default function DEGClusteringView({
 
         <button
           onClick={exportMatrixCSV}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-2 text-caption text-secondary hover:text-primary"
           title="Export the clustered matrix (genes × samples, in display order) as CSV"
         >
           <Download className="w-3.5 h-3.5" /> Export matrix (.csv)
         </button>
 
-        <ColorblindToggle value={colorblindMode} onChange={setColorblindMode} />
+        <ColorblindToggle />
       </div>
 
       {/* Plotly heatmap with DEG-status sidebar */}
       <div
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+        className="bg-surface rounded-control overflow-hidden"
         style={{ height: Math.max(600, Math.min(nDEGs * 1.2 + 200, 900)) }}
       >
         <Plot
@@ -302,7 +270,7 @@ export default function DEGClusteringView({
                   z: condTrackZ,
                   x: plotData.x,
                   y: ['Condition'],
-                  colorscale: discreteColorscale(condColors),
+                  colorscale: discreteScale(condColors),
                   zmin: 0,
                   zmax: 1,
                   showscale: false,
@@ -319,7 +287,7 @@ export default function DEGClusteringView({
               z: degStatus.map(v => [v]),
               x: ['DEG'],
               y: plotData.y,
-              colorscale: DEG_STATUS_COLORSCALE,
+              colorscale: scales.direction,
               zmin: -1,
               zmax: 1,
               showscale: false,
@@ -355,7 +323,13 @@ export default function DEGClusteringView({
               yaxis: 'y',
             } as unknown as Partial<PlotData>,
           ]}
-          layout={{
+          // La fabrique prend la mise en page en ARGUMENT. Etalee en
+          // dernier — ce qu'elle etait — elle remplacait `xaxis`, `yaxis`
+          // et `margin` en bloc : la barre laterale des statuts DEG
+          // perdait son domaine et chevauchait la carte, les genes
+          // partaient du bas faute de `autorange: 'reversed'`, et le
+          // titre etait rogne par une marge haute de 16 au lieu de 140.
+          layout={buildPlotlyLayout(chartTheme, {
             autosize: true,
             // sidebar occupies ~4% of width, main heatmap the rest
             xaxis: {
@@ -394,10 +368,11 @@ export default function DEGClusteringView({
               x: 0.5,
               xanchor: 'center',
             },
+            // `paper_bgcolor: 'white'` et `plot_bgcolor: 'white'` etaient poses
+            // ici en dur : la carte de chaleur rendait un rectangle blanc au
+            // milieu d'une application en theme sombre. La fabrique les fixe.
             margin: { l: 55, r: 90, b: 120, t: 140 },
-            paper_bgcolor: 'white',
-            plot_bgcolor: 'white',
-          } as Partial<Layout>}
+          }) as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}
           config={{
@@ -414,30 +389,30 @@ export default function DEGClusteringView({
       </div>
 
       {/* Legend strip */}
-      <div className="flex flex-wrap items-center gap-5 text-xs text-gray-600 bg-gray-50 rounded px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#7B2D8B' }} />
+      <div className="flex flex-wrap items-center gap-6 text-caption text-secondary bg-surface-2 rounded-sm px-4 py-2">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: scales.directionColors.down }} />
           <span>DOWN-regulated</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3A7D44' }} />
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: scales.directionColors.up }} />
           <span>UP-regulated</span>
         </div>
         {hasConditions && (
           <>
-            <span className="text-gray-300">|</span>
-            <span className="text-gray-500">Condition:</span>
+            <span className="text-muted" aria-hidden>|</span>
+            <span className="text-secondary">Condition:</span>
             {uniqueConds.map((c, i) => (
-              <div key={c} className="flex items-center gap-1.5">
+              <div key={c} className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: condColors[i] }} />
                 <span>{c}</span>
               </div>
             ))}
           </>
         )}
-        <span className="text-gray-300">|</span>
-        <span className="text-gray-500">
-          Comparison: <strong className="text-gray-700">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
+        <span className="text-muted" aria-hidden>|</span>
+        <span className="text-secondary">
+          Comparison: <strong className="text-primary">{comparisonName}</strong> — {nSamples} samples, {nDEGs} DEGs
         </span>
       </div>
     </div>

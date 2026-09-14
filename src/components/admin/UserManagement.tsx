@@ -7,6 +7,7 @@ import { Users, Edit2, Shield, Trash2, Plus, X, Loader2, Coins, Crown, Zap, Flas
 import ModuleSelector, { ModuleId } from '@/components/modules/ModuleSelector';
 import { usePricing } from '@/hooks/usePricing';
 import { plansOrdered } from '@/types/pricing';
+import { cn } from '@/lib/cn';
 
 interface User {
   id: string;
@@ -59,14 +60,17 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 function StatusBadge({ status }: { status?: string }) {
   const styles: Record<string, string> = {
-    active:    "bg-green-100 text-green-700",
-    pending:   "bg-yellow-100 text-yellow-700",
-    suspended: "bg-orange-100 text-orange-700",
-    cancelled: "bg-red-100 text-red-700",
+    active:    "bg-success-soft text-success-ink",
+    pending:   "bg-warning-soft text-warning-ink",
+    suspended: "bg-warning-soft text-warning-ink",
+    cancelled: "bg-danger-soft text-danger-ink",
   };
   const s = status ?? "active";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[s] ?? "bg-gray-100 text-gray-700"}`}>
+    <span className={cn(
+            'inline-flex items-center px-2 py-0.5 rounded-pill text-caption font-medium',
+            styles[s] ?? "bg-surface-2 text-primary",
+          )}>
       {s}
     </span>
   );
@@ -329,59 +333,59 @@ export default function UserManagement() {
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-soft text-danger-ink';
       case 'analyst':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-info-soft text-info-ink';
       case 'user':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-soft text-success-ink';
       case 'viewer':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-2 text-primary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-2 text-primary';
     }
   };
 
   if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-12 text-center">
+      <div className="bg-surface shadow rounded-card p-12 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-4" />
-        <p className="text-gray-600">Loading users...</p>
+        <p className="text-secondary">Loading users...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
+        <p className="text-danger-ink">{error}</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-surface shadow rounded-control overflow-hidden">
+        <div className="px-6 py-4 border-b border-line flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
               <Users className="h-6 w-6 text-brand-primary" />
-              <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
+              <h2 className="text-heading text-primary">User Management</h2>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-body-sm text-secondary">
               Manage user roles and permissions. Total users: {users.length}
             </p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowInviteModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-md hover:bg-brand-primary/5 transition-colors gap-2"
+              className="inline-flex items-center px-4 py-2 border border-brand-primary text-brand-primary rounded-sm hover:bg-brand-primary/5 transition-colors gap-2"
             >
               <Plus className="h-5 w-5" />
               Invite User
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors gap-2"
+              className="inline-flex items-center px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 transition-colors gap-2"
             >
               <Plus className="h-5 w-5" />
               Add User
@@ -390,91 +394,93 @@ export default function UserManagement() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="data-table">
+            <thead className="bg-surface-2">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Subscription
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   AI Usage
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Role
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Last Sign In
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-line">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={user.id} className="hover:bg-hover">
+                  <td className="whitespace-nowrap">
                     <div className="flex items-center">
                       {user.avatar_url ? (
-                        <Image className="h-10 w-10 rounded-full" src={user.avatar_url} alt="" width={40} height={40} />
+                        <Image className="h-10 w-10 rounded-pill" src={user.avatar_url} alt="" width={40} height={40} />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-brand-primary flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
+                        <div className="h-10 w-10 rounded-pill bg-brand-primary flex items-center justify-center">
+                          <span className="text-on-accent font-medium text-body-sm">
                             {user.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                           </span>
                         </div>
                       )}
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-body-sm font-medium text-primary">
                           {user.full_name || user.email || 'Unnamed User'}
                         </div>
-                        <div className="text-xs text-gray-400 truncate max-w-[150px]" title={user.id}>
+                        <div className="text-caption text-muted truncate max-w-[150px]" title={user.id}>
                           {user.id.substring(0, 8)}...
                         </div>
-                        <div className="text-xs text-gray-500">{user.email || '-'}</div>
+                        <div className="text-caption text-secondary">{user.email || '-'}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.subscription_plan === 'ON_PREMISE' ? 'bg-purple-100 text-purple-800' :
-                      user.subscription_plan === 'TEAM' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                  <td className="whitespace-nowrap">
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            user.subscription_plan === 'ON_PREMISE' ? 'bg-accent-soft text-accent-ink' : user.subscription_plan === 'TEAM' ? 'bg-info-soft text-info-ink' : 'bg-surface-2 text-primary',
+                          )}>
                       {user.subscription_plan === 'ON_PREMISE' && <Crown className="h-3 w-3 mr-1" />}
                       {user.subscription_plan === 'TEAM' && <Zap className="h-3 w-3 mr-1" />}
                       {user.subscription_plan || 'STARTER'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     <div className="flex flex-col gap-1">
                       <div>Used: {user.ai_interpretations_used} ({user.ai_tokens_used} paid)</div>
-                      <div className="text-xs">
+                      <div className="text-caption">
                         Remaining: {user.ai_interpretations_remaining === -1 ? 'Unlimited' : user.ai_interpretations_remaining}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     <StatusBadge status={user.status} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                  <td className="whitespace-nowrap">
+                    <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-pill text-caption font-medium',
+                            getRoleBadgeColor(user.role),
+                          )}>
                       {user.role === 'admin' && <Shield className="h-3 w-3 mr-1" />}
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {user.last_sign_in_at
                       ? new Date(user.last_sign_in_at).toLocaleDateString()
                       : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-2">
                       {user.status === "pending" ? (
                         <button
@@ -487,7 +493,7 @@ export default function UserManagement() {
                               alert("Failed to resend invitation. Please try again.");
                             }
                           }}
-                          className="text-xs text-yellow-600 hover:text-yellow-800 underline"
+                          className="text-caption text-warning-ink hover:text-warning-ink-hover underline"
                         >
                           Resend invite
                         </button>
@@ -503,7 +509,7 @@ export default function UserManagement() {
                               alert(`Failed to ${newStatus === "suspended" ? "suspend" : "activate"} user. Please try again.`);
                             }
                           }}
-                          className="text-xs text-gray-500 hover:text-gray-800 underline"
+                          className="text-caption text-secondary hover:text-primary underline"
                         >
                           {user.status === "active" ? "Suspend" : "Activate"}
                         </button>
@@ -511,7 +517,7 @@ export default function UserManagement() {
                       <button
                         onClick={() => handleAssignDemo(user.id, user.full_name || user.email || '')}
                         disabled={assigningDemo === user.id}
-                        className="text-emerald-600 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-success-ink hover:text-success-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Assign Demo Data"
                       >
                         {assigningDemo === user.id ? (
@@ -526,7 +532,7 @@ export default function UserManagement() {
                           setTokenAmount(10);
                           setShowTokenModal(true);
                         }}
-                        className="text-yellow-600 hover:text-yellow-800"
+                        className="text-warning-ink hover:text-warning-ink-hover"
                         title="Add AI Tokens"
                       >
                         <Coins className="h-5 w-5" />
@@ -541,7 +547,7 @@ export default function UserManagement() {
                       <button
                         onClick={() => handleDelete(user.id, user.full_name || '')}
                         disabled={deleting === user.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-danger-ink hover:text-danger-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete User"
                       >
                         {deleting === user.id ? (
@@ -562,44 +568,44 @@ export default function UserManagement() {
       {/* Invite User Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Invite User</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Creates a pending account and sends an invitation email.</p>
+                <h3 className="text-title text-primary">Invite User</h3>
+                <p className="text-caption text-secondary mt-0.5">Creates a pending account and sends an invitation email.</p>
               </div>
-              <button onClick={() => setShowInviteModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowInviteModal(false)} className="text-muted hover:text-secondary">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleInvite} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Email *</label>
                 <input
                   type="email"
                   required
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="user@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={inviteForm.full_name}
                   onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Jane Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Plan</label>
                 <select
                   value={inviteForm.plan}
                   onChange={(e) => setInviteForm({ ...inviteForm, plan: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((p) => (
                     <option key={p} value={p}>{p}</option>
@@ -607,28 +613,28 @@ export default function UserManagement() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Access expires on <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-body-sm font-medium text-primary mb-1">
+                  Access expires on <span className="text-muted font-normal">(optional)</span>
                 </label>
                 <input
                   type="date"
                   value={inviteForm.subscription_ends_at}
                   onChange={(e) => setInviteForm({ ...inviteForm, subscription_ends_at: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={inviting}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {inviting ? 'Sending...' : 'Send Invitation'}
                 </button>
@@ -641,56 +647,56 @@ export default function UserManagement() {
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Create New User</h3>
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
+              <h3 className="text-title text-primary">Create New User</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Email *</label>
                 <input
                   type="email"
                   required
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="user@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Password *</label>
                 <input
                   type="password"
                   required
                   minLength={6}
                   value={createForm.password}
                   onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Minimum 6 characters"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={createForm.full_name}
                   onChange={(e) => setCreateForm({ ...createForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="John Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Role *</label>
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>
@@ -703,14 +709,14 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {creating ? 'Creating...' : 'Create User'}
                 </button>
@@ -723,33 +729,33 @@ export default function UserManagement() {
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
+          <div className="bg-surface rounded-control shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
+              <h3 className="text-title text-primary">Edit User</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={editForm.full_name}
                   onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="John Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Role</label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>
@@ -759,11 +765,11 @@ export default function UserManagement() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Plan</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Subscription Plan</label>
                 <select
                   value={editForm.subscription_plan}
                   onChange={(e) => setEditForm({ ...editForm, subscription_plan: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {plans.map((plan) => (
                     <option key={plan} value={plan}>
@@ -775,8 +781,8 @@ export default function UserManagement() {
 
               {/* Add-on modules */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Add-on modules</label>
-                <p className="mb-3 text-xs text-gray-500">Toggle to enable instantly — no need to save.</p>
+                <label className="mb-1 block text-body-sm font-medium text-primary">Add-on modules</label>
+                <p className="mb-3 text-caption text-secondary">Toggle to enable instantly — no need to save.</p>
                 <ModuleSelector
                   value={{
                     claim: !!editingUser.cosmetics_module_enabled,
@@ -793,14 +799,14 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {updating ? 'Updating...' : 'Update User'}
                 </button>
@@ -813,52 +819,52 @@ export default function UserManagement() {
       {/* Token Modal */}
       {showTokenModal && tokenUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Add AI Tokens</h3>
+          <div className="bg-surface rounded-control shadow-xl max-w-sm w-full">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
+              <h3 className="text-title text-primary">Add AI Tokens</h3>
               <button
                 onClick={() => setShowTokenModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleAddTokens} className="p-6 space-y-4">
-              <div className="bg-yellow-50 p-4 rounded-lg flex items-start gap-3">
-                 <Coins className="h-6 w-6 text-yellow-600 mt-1" />
+              <div className="bg-warning-soft p-4 rounded-control flex items-start gap-3">
+                 <Coins className="h-6 w-6 text-warning-ink mt-1" />
                  <div>
-                   <p className="text-sm font-medium text-yellow-800">
+                   <p className="text-body-sm font-medium text-warning-ink">
                      Adding tokens to {tokenUser.full_name || tokenUser.email}
                    </p>
-                   <p className="text-xs text-yellow-700 mt-1">
+                   <p className="text-caption text-warning-ink mt-1">
                      Current purchased balance: {tokenUser.ai_tokens_purchased || 0}
                    </p>
                  </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount to Add</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Amount to Add</label>
                 <input
                   type="number"
                   min="1"
                   step="1"
                   value={tokenAmount}
                   onChange={(e) => setTokenAmount(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowTokenModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingTokens}
-                  className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-warning text-on-accent rounded-sm hover:bg-warning-hover disabled:opacity-50"
                 >
                   {addingTokens ? 'Adding...' : 'Add Tokens'}
                 </button>

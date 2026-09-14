@@ -170,18 +170,18 @@ export default function ExportMenu({
   };
 
   // Button styles
-  const baseStyles = "inline-flex items-center gap-2 font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2";
+  const baseStyles = "inline-flex items-center gap-2 font-medium rounded-control transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2";
   
   const variantStyles = {
     default: "bg-brand-primary text-white hover:bg-brand-primary/90",
-    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700",
-    ghost: "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+    outline: "border border-strong bg-white text-secondary hover:bg-surface-2",
+    ghost: "text-secondary hover:bg-surface-2",
   };
   
   const sizeStyles = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-5 py-2.5 text-lg",
+    sm: "px-3 py-1.5 text-body-sm",
+    md: "px-4 py-2 text-body",
+    lg: "px-5 py-2.5 text-title",
   };
 
   const buttonClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className} ${
@@ -239,7 +239,7 @@ export default function ExportMenu({
       {isOpen && !isExporting && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50"
+          className="absolute right-0 mt-2 w-56 bg-raised rounded-sm shadow-elev-2 z-50"
         >
           <div className="py-1">
             {formats.map((format) => {
@@ -252,18 +252,18 @@ export default function ExportMenu({
                   key={format}
                   onClick={() => handleExport(format)}
                   disabled={isFormatExporting}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-start gap-3 disabled:opacity-50"
+                  className="w-full px-4 py-3 text-left hover:bg-hover transition-colors flex items-start gap-3 disabled:opacity-50"
                 >
                   {isFormatExporting ? (
-                    <Loader2 className="h-5 w-5 text-brand-primary animate-spin mt-0.5" />
+                    <Loader2 className="h-5 w-5 text-brand-primary animate-spin mt-1" />
                   ) : (
-                    <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
+                    <Icon className="h-5 w-5 text-secondary mt-1" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-body-sm font-medium text-primary">
                       {meta.label}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-caption text-secondary">
                       {meta.description}
                     </div>
                   </div>

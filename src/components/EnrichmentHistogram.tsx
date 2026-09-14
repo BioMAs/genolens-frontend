@@ -11,6 +11,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
+import type { Palette } from '@/utils/chartPalettes';
+import { mixColors } from '@/utils/chartScales';
+import ChartCard from '@/components/charts/ChartCard';
 
 interface GOTerm {
   go_id: string;
@@ -33,13 +38,18 @@ interface EnrichmentHistogramProps {
 const FDR_THRESHOLD = 0.05;
 const LOG10_THRESHOLD = -Math.log10(FDR_THRESHOLD); // ≈ 1.301
 
-function fdrColor(enrichmentRatio: number, maxRatio: number): string {
-  // Indigo scale: low enrichment → light, high → dark
+/**
+ * Rampe d'enrichissement : du gris de recul vers la couleur de serie.
+ *
+ * Elle interpolait indigo-200 → indigo-700, codes en dur canal par canal —
+ * l'accent INTERACTIF du produit employe comme couleur de donnee, et une rampe
+ * claire servie telle quelle sur panneau sombre. Partir de `palette.ns`, bas en
+ * contraste dans les deux themes, fait reculer le faible enrichissement au lieu
+ * de l'eclaircir arbitrairement.
+ */
+function ratioColor(enrichmentRatio: number, maxRatio: number, palette: Palette): string {
   const t = maxRatio > 0 ? Math.min(enrichmentRatio / maxRatio, 1) : 0;
-  const r = Math.round(199 - t * (199 - 67));
-  const g = Math.round(210 - t * (210 - 56));
-  const b = Math.round(254 - t * (254 - 202));
-  return `rgb(${r},${g},${b})`;
+  return mixColors(palette.ns, palette.categorical[0], t);
 }
 
 interface ChartEntry {
@@ -60,11 +70,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs max-w-64">
-      <div className="font-semibold text-gray-900 mb-1 leading-snug">{d.name}</div>
-      <div className="text-indigo-500 mb-2">{d.go_id}</div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
-        <span>FDR</span><span className="font-semibold text-indigo-700">{d.fdr.toExponential(2)}</span>
+    <div className="bg-raised rounded-control shadow-elev-2 p-3 text-xs max-w-64">
+      <div className="font-semibold text-primary mb-1 leading-snug">{d.name}</div>
+      <div className="text-accent-ink mb-2">{d.go_id}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-secondary">
+        <span>FDR</span><span className="font-semibold text-accent-ink">{d.fdr.toExponential(2)}</span>
         <span>-log₁₀(FDR)</span><span className="font-semibold">{d.value.toFixed(2)}</span>
         <span>Enrichment</span><span className="font-semibold">{d.enrichment_ratio.toFixed(2)}×</span>
         <span>Genes</span><span className="font-semibold">{d.gene_count}</span>
@@ -74,14 +84,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export default function EnrichmentHistogram({ terms, maxTerms = 20 }: EnrichmentHistogramProps) {
-  if (!terms.length) {
-    return (
-      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
-        No enriched terms to display.
-      </div>
-    );
-  }
-
+  const palette = useChartPalette();
   // Top N by FDR ascending, then reverse so most significant is at top
   const top = [...terms]
     .sort((a, b) => a.fdr - b.fdr)
@@ -103,58 +106,60 @@ export default function EnrichmentHistogram({ terms, maxTerms = 20 }: Enrichment
   const xMax = Math.ceil(maxValue) + 0.5;
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <span className="text-xs font-semibold text-gray-700">Top {top.length} Enriched Terms</span>
-          <span className="text-xs text-muted-foreground ml-2">Color = enrichment ratio · Length = -log₁₀(FDR)</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-block w-10 h-3 rounded" style={{ background: 'linear-gradient(to right, rgb(199,210,254), rgb(67,56,202))' }} />
+    <ChartCard
+      title={`Top ${top.length} enriched terms`}
+      subtitle="Colour = enrichment ratio · Length = −log₁₀(FDR)"
+      state={terms.length ? 'ready' : 'empty'}
+      minHeight={220}
+      empty="No enriched terms to display."
+      actions={
+        <span className="flex items-center gap-2 text-caption text-muted">
+          <span
+            className="inline-block h-3 w-10 rounded-sm"
+            // La rampe de legende reprenait indigo-200 → indigo-700, soit
+            // l'accent INTERACTIF employe comme couleur de donnee.
+            style={{ background: `linear-gradient(to right, ${palette.ns}, ${palette.categorical[0]})` }}
+          />
           <span>Low → High enrichment</span>
-        </div>
-      </div>
-
+        </span>
+      }
+    >
       <ResponsiveContainer width="100%" height={Math.max(220, top.length * 28)}>
         <BarChart
           data={data}
           layout="vertical"
           margin={{ top: 4, right: 48, left: 8, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={CHART_VARS.grid} />
           <XAxis
             type="number"
             domain={[0, xMax]}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
-            label={{ value: '-log₁₀(FDR)', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#94a3b8' }}
+            {...CHART_AXIS}
+            label={{ value: '-log₁₀(FDR)', position: 'insideBottom', offset: -2, fontSize: 10, fill: CHART_VARS.inkMuted }}
           />
           <YAxis
             type="category"
             dataKey="name"
             width={200}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 10, fill: '#374151' }}
+            {...CHART_AXIS}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: CHART_VARS.hover }} />
           <ReferenceLine
             x={LOG10_THRESHOLD}
-            stroke="#6366f1"
+            stroke={CHART_VARS.axis}
             strokeDasharray="4 2"
-            label={{ value: 'FDR 0.05', position: 'top', fontSize: 9, fill: '#6366f1' }}
+            label={{ value: 'FDR 0.05', position: 'top', fontSize: 9, fill: CHART_VARS.accent }}
           />
           <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={fdrColor(entry.enrichment_ratio, maxRatio)}
+                fill={ratioColor(entry.enrichment_ratio, maxRatio, palette)}
               />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

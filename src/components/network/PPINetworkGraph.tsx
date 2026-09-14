@@ -168,7 +168,7 @@ export default function PPINetworkGraph({ elements, height, onNodeClick, ariaLab
       style={{
         height,
         width: '100%',
-        borderRadius: 'var(--radius-panel)',
+        borderRadius: 'var(--radius-card)',
         border: '1px solid var(--border)',
         background: 'var(--surface)',
       }}

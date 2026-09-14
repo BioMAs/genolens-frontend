@@ -12,6 +12,7 @@ import {
   useComparisonActions,
 } from '@/contexts/ComparisonSelectionContext';
 import GOEnrichmentTable from '@/components/GOEnrichmentTable';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 jest.mock('@/components/BookmarkButton', () => {
   const Stub = () => <button type="button">bookmark</button>;
@@ -52,10 +53,14 @@ function Seed({ genes }: { genes: string[] }) {
 
 function renderTable(selected: string[] = []) {
   return render(
-    <ComparisonSelectionProvider>
-      <Seed genes={selected} />
-      <GOEnrichmentTable terms={TERMS} />
-    </ComparisonSelectionProvider>
+    // Les pastilles d'espace de noms prennent la palette mesuree, qui suit le
+    // theme : le fournisseur de theme fait donc partie de l'arbre reel.
+    <ThemeProvider>
+      <ComparisonSelectionProvider>
+        <Seed genes={selected} />
+        <GOEnrichmentTable terms={TERMS} />
+      </ComparisonSelectionProvider>
+    </ThemeProvider>
   );
 }
 
@@ -95,9 +100,11 @@ describe('the focus button', () => {
   it('carries the whole term, genes included, so the caller need not look it up again', async () => {
     const onTermSelect = jest.fn();
     render(
-      <ComparisonSelectionProvider>
-        <GOEnrichmentTable terms={TERMS} onTermSelect={onTermSelect} />
-      </ComparisonSelectionProvider>
+      <ThemeProvider>
+        <ComparisonSelectionProvider>
+          <GOEnrichmentTable terms={TERMS} onTermSelect={onTermSelect} />
+        </ComparisonSelectionProvider>
+      </ThemeProvider>
     );
 
     const button = screen.getByTitle('Look through Apoptotic process');

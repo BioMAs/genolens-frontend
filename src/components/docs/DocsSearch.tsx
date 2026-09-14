@@ -23,7 +23,7 @@ export default function DocsSearch({ value, onChange, count }: DocsSearchProps) 
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Search ${count} guides…`}
         aria-label="Search the documentation"
-        className="w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-[var(--sl-purple)]"
+        className="w-full rounded-card border py-2.5 pl-9 pr-3 text-body-sm outline-none transition-colors focus:border-[var(--sl-purple)]"
         style={{
           background: 'var(--surface)',
           borderColor: 'var(--border)',

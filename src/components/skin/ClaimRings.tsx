@@ -19,7 +19,7 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
 
   return (
     <div
-      className="flex-1 rounded-2xl border p-[18px] px-3.5 text-center"
+      className="flex-1 rounded-card border p-[18px] px-3.5 text-center"
       style={{
         background: `color-mix(in oklab, ${color} 7%, var(--surface))`,
         borderColor: `color-mix(in oklab, ${color} 22%, var(--surface))`,
@@ -49,17 +49,21 @@ function Ring({ claim }: { claim: CosmeticClaimScore }) {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-[22px] font-bold" style={{ color }}>
+          <span className="font-display text-heading" style={{ color }}>
             {Math.round(score)}
           </span>
         </div>
       </div>
-      <div className="mt-2.5 text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="mt-3 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
         {claim.label}
       </div>
       <div
-        className="mt-1 text-[11px] font-semibold"
-        style={{ color: favorable ? 'var(--dc-up-dark)' : '#d97706' }}
+        className="mt-1 text-micro"
+        // Encres semantiques : les deux valeurs precedentes plafonnaient a
+        // 3,30 et 3,19:1 sur blanc, sous le plancher TEXTE de 4,5:1. Et ce
+        // n'est pas une direction de regulation mais un VERDICT — d'ou
+        // succes/avertissement plutot que --chart-up/--chart-down.
+        style={{ color: favorable ? 'var(--success-ink)' : 'var(--warning-ink)' }}
       >
         {favorable ? '↗ Favorable' : '↘ To watch'}
       </div>
@@ -75,7 +79,7 @@ export default function ClaimRings({ claims, max = 3 }: { claims: CosmeticClaimS
 
   if (!top.length) {
     return (
-      <div className="text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="text-caption" style={{ color: 'var(--text-secondary)' }}>
         No claim reached a significant activation score for this comparison.
       </div>
     );
@@ -83,10 +87,10 @@ export default function ClaimRings({ claims, max = 3 }: { claims: CosmeticClaimS
 
   return (
     <div>
-      <div className="mb-3.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-4 text-caption" style={{ color: 'var(--text-secondary)' }}>
         Top skin claims — <b style={{ color: 'var(--text-primary)' }}>activation score, 0–100</b>
       </div>
-      <div className="flex gap-3.5">
+      <div className="flex gap-4">
         {top.map((c) => (
           <Ring key={c.slug} claim={c} />
         ))}

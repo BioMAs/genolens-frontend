@@ -207,88 +207,88 @@ export default function ProjectManagement() {
 
   if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-12 text-center">
+      <div className="bg-surface shadow rounded-card p-12 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand-primary mx-auto mb-4" />
-        <p className="text-gray-600">Loading projects...</p>
+        <p className="text-secondary">Loading projects...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-danger-soft border border-danger/30 rounded-control p-4">
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600" />
-          <p className="text-red-800">{error}</p>
+          <AlertCircle className="h-5 w-5 text-danger-ink" />
+          <p className="text-danger-ink">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="bg-surface shadow rounded-control overflow-hidden">
+      <div className="px-6 py-4 border-b border-line">
         <div className="flex items-center gap-3">
           <Database className="h-6 w-6 text-brand-primary" />
-          <h2 className="text-xl font-semibold text-gray-900">Project Management</h2>
+          <h2 className="text-heading text-primary">Project Management</h2>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-body-sm text-secondary">
           View and manage all projects in the system. Total projects: {projects.length}
         </p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="data-table">
+          <thead className="bg-surface-2">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Project Name
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Description
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Owner
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Created
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-caption font-medium text-secondary uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {projects.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-8 text-center text-secondary">
                   No projects found
                 </td>
               </tr>
             ) : (
               projects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{project.name}</div>
-                    <div className="text-xs text-gray-500">{project.id}</div>
+                <tr key={project.id} className="hover:bg-hover">
+                  <td className="whitespace-nowrap">
+                    <div className="text-body-sm font-medium text-primary">{project.name}</div>
+                    <div className="text-caption text-secondary">{project.id}</div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 max-w-md truncate">
+                  <td>
+                    <div className="text-body-sm text-secondary max-w-md truncate">
                       {project.description || '-'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                  <td className="whitespace-nowrap">
+                    <div className="text-body-sm text-primary">
                       {project.owner_email || project.owner_full_name || '-'}
                     </div>
-                    <div className="text-xs text-gray-500 truncate max-w-50" title={project.owner_id}>
+                    <div className="text-caption text-secondary truncate max-w-50" title={project.owner_id}>
                       ID: {project.owner_id.substring(0, 8)}...
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap text-body-sm text-secondary">
                     {new Date(project.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="whitespace-nowrap text-body-sm font-medium">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleEdit(project)}
@@ -299,7 +299,7 @@ export default function ProjectManagement() {
                       </button>
                       <button
                         onClick={() => handleManageMembers(project)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-info-ink hover:text-info-ink-hover"
                         title="Manage Members"
                       >
                         <Users className="h-5 w-5" />
@@ -307,7 +307,7 @@ export default function ProjectManagement() {
                       <button
                         onClick={() => handleDelete(project.id, project.name)}
                         disabled={deleting === project.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-danger-ink hover:text-danger-ink-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete Project"
                       >
                         {deleting === project.id ? (
@@ -328,45 +328,45 @@ export default function ProjectManagement() {
       {/* Edit Project Modal */}
       {showEditModal && editingProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Project</h3>
+          <div className="bg-surface rounded-control shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
+              <h3 className="text-title text-primary">Edit Project</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Project Name *</label>
                 <input
                   type="text"
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="My Project"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Description</label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   placeholder="Project description..."
                   rows={3}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                <label className="block text-body-sm font-medium text-primary mb-1">Owner</label>
                 <select
                   value={editForm.owner_id}
                   onChange={(e) => setEditForm({ ...editForm, owner_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary bg-white"
+                  className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary bg-surface"
                 >
                   <option value="" disabled>Select project owner</option>
                   {allUsers.map((user) => (
@@ -375,7 +375,7 @@ export default function ProjectManagement() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-red-500">
+                <p className="mt-1 text-caption text-danger-ink">
                   ⚠ Warning: Changing ownership will remove the current owner&apos;s access unless they are a member.
                 </p>
               </div>
@@ -384,14 +384,14 @@ export default function ProjectManagement() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-strong rounded-sm text-primary hover:bg-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50"
                 >
                   {updating ? 'Updating...' : 'Update Project'}
                 </button>
@@ -404,15 +404,15 @@ export default function ProjectManagement() {
       {/* Manage Members Modal */}
       {showMembersModal && selectedProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-surface rounded-control shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Manage Project Members</h3>
-                <p className="text-sm text-gray-500 mt-1">{selectedProject.name}</p>
+                <h3 className="text-title text-primary">Manage Project Members</h3>
+                <p className="text-body-sm text-secondary mt-1">{selectedProject.name}</p>
               </div>
               <button
                 onClick={() => setShowMembersModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -420,16 +420,16 @@ export default function ProjectManagement() {
 
             <div className="flex-1 overflow-y-auto p-6">
               {/* Add Member Form */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Add Member</h4>
+              <div className="mb-6 p-4 bg-surface-2 rounded-card">
+                <h4 className="text-body-sm font-semibold text-primary mb-3">Add Member</h4>
                 <form onSubmit={handleAddMember} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">User</label>
+                      <label className="block text-caption font-medium text-primary mb-1">User</label>
                       <select
                         value={newMember.user_id}
                         onChange={(e) => setNewMember({ ...newMember, user_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                         required
                       >
                         <option value="">Select user...</option>
@@ -443,11 +443,11 @@ export default function ProjectManagement() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Access Level</label>
+                      <label className="block text-caption font-medium text-primary mb-1">Access Level</label>
                       <select
                         value={newMember.access_level}
                         onChange={(e) => setNewMember({ ...newMember, access_level: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm"
+                        className="w-full px-3 py-2 border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-brand-primary text-body-sm"
                       >
                         <option value="VIEWER">Viewer</option>
                         <option value="ANALYST">Analyst</option>
@@ -458,7 +458,7 @@ export default function ProjectManagement() {
                   <button
                     type="submit"
                     disabled={addingMember || !newMember.user_id}
-                    className="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-brand-primary text-on-accent rounded-sm hover:bg-brand-primary/90 disabled:opacity-50 text-body-sm flex items-center justify-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     {addingMember ? 'Adding...' : 'Add Member'}
@@ -468,33 +468,33 @@ export default function ProjectManagement() {
 
               {/* Members List */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Current Members ({projectMembers.length})</h4>
+                <h4 className="text-body-sm font-semibold text-primary mb-3">Current Members ({projectMembers.length})</h4>
                 {loadingMembers ? (
                   <div className="text-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-brand-primary mx-auto" />
                   </div>
                 ) : projectMembers.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8 text-sm">No members yet. Add the first member above.</p>
+                  <p className="text-center text-secondary py-8 text-body-sm">No members yet. Add the first member above.</p>
                 ) : (
                   <div className="space-y-2">
                     {projectMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50"
+                        className="flex items-center justify-between p-3 bg-surface border border-line rounded-sm hover:bg-hover"
                       >
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-body-sm font-medium text-primary">
                             {member.user_full_name || member.user_email || 'Unknown User'}
                           </div>
-                          <div className="text-xs text-gray-500">{member.user_email}</div>
+                          <div className="text-caption text-secondary">{member.user_email}</div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                          <span className="px-2 py-1 text-caption font-medium bg-info-soft text-info-ink rounded-sm">
                             {member.access_level}
                           </span>
                           <button
                             onClick={() => handleRemoveMember(member.user_id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-danger-ink hover:text-danger-ink-hover"
                             title="Remove member"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -507,10 +507,10 @@ export default function ProjectManagement() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="px-6 py-4 border-t border-line bg-surface-2">
               <button
                 onClick={() => setShowMembersModal(false)}
-                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                className="w-full px-4 py-2 bg-hover text-primary rounded-sm hover:bg-hover"
               >
                 Close
               </button>

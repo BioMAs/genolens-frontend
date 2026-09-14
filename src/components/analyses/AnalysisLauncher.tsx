@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAnnoDbCategories } from '@/hooks/useAnalyses';
 import { AnalysisParams } from '@/types';
 import api from '@/utils/api';
+import { cn } from '@/lib/cn';
 
 interface Props {
   projectId: string;
@@ -90,22 +91,22 @@ export default function AnalysisLauncher({ projectId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+        <div className="rounded-sm bg-danger-soft p-4 text-body-sm text-danger-ink border border-danger/30">
           {error}
         </div>
       )}
 
       {/* Analysis name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Analysis name <span className="text-red-500">*</span>
+        <label className="block text-body-sm font-medium text-primary mb-1">
+          Analysis name <span className="text-danger-ink">*</span>
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Treatment A vs Control — Batch 1"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-sm border border-strong px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
@@ -132,8 +133,8 @@ export default function AnalysisLauncher({ projectId }: Props) {
       </div>
 
       {/* Analysis parameters */}
-      <details className="rounded-md border border-gray-200 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-gray-700 select-none">
+      <details className="rounded-sm border border-line p-4">
+        <summary className="cursor-pointer text-body-sm font-medium text-primary select-none">
           Advanced parameters
         </summary>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -190,17 +191,17 @@ export default function AnalysisLauncher({ projectId }: Props) {
         </div>
 
         {/* Enrichment database selection */}
-        <div className="mt-4 border-t border-gray-100 pt-4">
+        <div className="mt-4 border-t border-subtle pt-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-body-sm font-medium text-primary">
               Enrichment databases
             </p>
             <div className="flex items-center gap-2 mb-2">
-              <label className="text-xs text-gray-500 shrink-0">Species:</label>
+              <label className="text-caption text-secondary shrink-0">Species:</label>
               <select
                 value={species}
                 onChange={e => setSpecies(e.target.value)}
-                className="rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="rounded-sm border border-strong px-2 py-1 text-caption focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="human">Homo sapiens (Human)</option>
                 <option value="mouse">Mus musculus (Mouse)</option>
@@ -211,15 +212,15 @@ export default function AnalysisLauncher({ projectId }: Props) {
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={() => setEnrichmentDatabases(null)}
-                className="text-xs text-indigo-600 hover:underline">Select all</button>
+                className="text-caption text-accent-ink hover:underline">Select all</button>
               <button type="button" onClick={() => setEnrichmentDatabases([])}
-                className="text-xs text-gray-500 hover:underline">Clear</button>
+                className="text-caption text-secondary hover:underline">Clear</button>
             </div>
           </div>
           {annoLoading ? (
-            <p className="text-xs text-gray-400">Loading databases...</p>
+            <p className="text-caption text-muted">Loading databases...</p>
           ) : availableCategories.length === 0 ? (
-            <p className="text-xs text-gray-400">All available databases will be used.</p>
+            <p className="text-caption text-muted">All available databases will be used.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {availableCategories.map(cat => {
@@ -238,11 +239,10 @@ export default function AnalysisLauncher({ projectId }: Props) {
                         setEnrichmentDatabases(next.length === availableCategories.length ? null : next);
                       }
                     }}
-                    className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                      selected
-                        ? 'bg-indigo-600 border-indigo-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400'
-                    }`}
+                    className={cn(
+                      'rounded-pill px-3 py-1 text-caption font-medium border transition-colors',
+                      selected ? 'bg-accent border-accent text-on-accent' : 'bg-surface border-strong text-secondary hover:border-accent',
+                    )}
                   >
                     {cat}
                   </button>
@@ -256,7 +256,7 @@ export default function AnalysisLauncher({ projectId }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-50"
+        className="inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-50"
       >
         {isPending ? 'Launching…' : 'Launch analysis'}
       </button>
@@ -280,18 +280,18 @@ function FileInput({
   const [fileName, setFileName] = useState<string>('');
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-body-sm font-medium text-primary mb-1">
+        {label} {required && <span className="text-danger-ink">*</span>}
       </label>
-      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-indigo-400 transition-colors bg-gray-50 hover:bg-indigo-50">
-        <span className="text-xs text-gray-500 text-center px-2">
+      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-strong rounded-sm cursor-pointer hover:border-accent transition-colors bg-surface-2 hover:bg-accent-soft">
+        <span className="text-caption text-secondary text-center px-2">
           {fileName ? (
-            <span className="text-indigo-700 font-medium">{fileName}</span>
+            <span className="text-accent-ink font-medium">{fileName}</span>
           ) : (
             <>Click or drag</>
           )}
         </span>
-        <span className="text-xs text-gray-400 mt-0.5">{hint}</span>
+        <span className="text-caption text-muted mt-1">{hint}</span>
         <input
           type="file"
           accept=".csv,.tsv,.txt,.xlsx"
@@ -318,11 +318,11 @@ function ParamSelect({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-caption font-medium text-secondary mb-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-sm border border-strong px-2 py-1.5 text-body-sm"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -351,7 +351,7 @@ function NumberParam({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-caption font-medium text-secondary mb-1">{label}</label>
       <input
         type="number"
         value={value}
@@ -359,7 +359,7 @@ function NumberParam({
         min={min}
         max={max}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-sm border border-strong px-2 py-1.5 text-body-sm"
       />
     </div>
   );

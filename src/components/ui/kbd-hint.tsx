@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface KbdHintProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
@@ -11,12 +12,13 @@ export interface KbdHintProps extends React.HTMLAttributes<HTMLElement> {
 function KbdHint({ children, className = '', style, ...props }: KbdHintProps) {
   return (
     <kbd
-      className={`font-mono ${className}`}
+      className={cn('font-mono', className)}
       style={{
         fontSize: 10.5,
         color: 'var(--text-muted)',
         border: '1px solid var(--border)',
-        borderRadius: 4,
+        // Un style inline echappe aux codemods, qui ne lisent que className.
+        borderRadius: 'var(--radius-sm-px)',
         padding: '1px 5px',
         background: 'var(--surface)',
         ...style,

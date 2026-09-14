@@ -1,6 +1,7 @@
 "use client";
 
 import type { FirstPageType, LastPageType } from "@/types/report";
+import { cn } from '@/lib/cn';
 
 const DEFAULT_PRIMARY = "#003C65";
 const DEFAULT_SECONDARY = "#42E2BA";
@@ -14,7 +15,17 @@ interface Props {
   secondaryColor?: string | null;
 }
 
-/* ---- Mini A4 page mock-ups (viewBox 70 x 99) ------------------------------- */
+/* ---- Mini A4 page mock-ups (viewBox 70 x 99) -------------------------------
+ *
+ * Les litteraux de ce bloc sont DELIBERES et ne doivent pas etre convertis en
+ * jetons de theme : ces vignettes representent une feuille A4 imprimee. Le
+ * papier est blanc et ses lignes de texte sont grises quel que soit le theme de
+ * l'interface ; un apercu « papier sombre » decrirait un PDF qui n'existe pas.
+ *
+ * `DEFAULT_PRIMARY` et `DEFAULT_SECONDARY` sont les couleurs de marque du
+ * rapport, remplacables par l'utilisateur — elles appartiennent au document,
+ * pas a l'application.
+ */
 
 function Page({ children }: { children: React.ReactNode }) {
   return (
@@ -124,20 +135,21 @@ export default function PageModelSelector({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 rounded-lg border p-3 text-left transition-colors disabled:opacity-50 ${
-        active ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500" : "border-gray-300 hover:bg-gray-50"
-      }`}
+      className={cn(
+        'flex-1 rounded-control border p-3 text-left transition-colors disabled:opacity-50',
+        active ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-strong hover:bg-hover",
+      )}
     >
-      <div className="mb-2 flex justify-center rounded-md bg-gray-50 py-2">{thumb}</div>
-      <div className="text-sm font-medium text-gray-900">{label}</div>
-      <div className="mt-0.5 text-xs text-gray-500">{desc}</div>
+      <div className="mb-2 flex justify-center rounded-sm bg-surface-2 py-2">{thumb}</div>
+      <div className="text-body-sm font-medium text-primary">{label}</div>
+      <div className="mt-1 text-caption text-secondary">{desc}</div>
     </button>
   );
 
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">First page</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">First page</label>
         <div className="flex flex-col gap-2 sm:flex-row">
           {firstPages.map((pg) => (
             <Card
@@ -152,7 +164,7 @@ export default function PageModelSelector({
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Last page</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Last page</label>
         <div className="flex flex-col gap-2 sm:flex-row">
           {lastPages.map((pg) => (
             <Card

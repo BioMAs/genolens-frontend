@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface GeneTokenProps extends React.HTMLAttributes<HTMLSpanElement> {
   symbol: string;
@@ -11,7 +12,7 @@ export interface GeneTokenProps extends React.HTMLAttributes<HTMLSpanElement> {
 function GeneToken({ symbol, className = '', style, ...props }: GeneTokenProps) {
   return (
     <span
-      className={`font-mono font-semibold tracking-tight gl-gene-token ${className}`}
+      className={cn('font-mono font-semibold tracking-tight gl-gene-token', className)}
       style={{
         color: 'var(--sl-teal)',
         fontSize: 13,

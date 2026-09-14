@@ -7,6 +7,9 @@ import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
 import { canUseAI } from '@/utils/plan';
+import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
+import { cn } from '@/lib/cn';
 
 interface EnrichmentRadarPlotProps {
   datasetId: string;
@@ -48,6 +51,7 @@ export default function EnrichmentRadarPlot({
   comparisonName, 
   maxTerms = 10
 }: EnrichmentRadarPlotProps) {
+  const palette = useChartPalette();
   const [data, setData] = useState<RadarDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -341,30 +345,30 @@ export default function EnrichmentRadarPlot({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-4 border-2 border-purple-300 shadow-lg rounded-lg max-w-sm">
-          <p className="font-bold text-sm text-gray-900 mb-2">{data.term}</p>
+        <div className="bg-surface p-4 border-2 border-accent-ring shadow-lg rounded-control max-w-sm">
+          <p className="font-bold text-sm text-primary mb-2">{data.term}</p>
           <div className="space-y-1 text-xs">
-            <p className="text-gray-700 font-semibold mb-2">Category: {data.category}</p>
+            <p className="text-primary font-semibold mb-2">Category: {data.category}</p>
             
             {data.negLogPValue_ALL > 0 && (
-               <div className="flex items-center gap-2 text-purple-700">
+               <div className="flex items-center gap-2 text-accent-ink">
                    <span className="font-bold w-12">ALL:</span>
                    <span>p={Math.pow(10, -data.negLogPValue_ALL).toExponential(1)}</span>
-                   <span className="text-gray-500">(GR: {data.geneRatio_ALL.toFixed(1)}%)</span>
+                   <span className="text-secondary">(GR: {data.geneRatio_ALL.toFixed(1)}%)</span>
                </div>
             )}
             {data.negLogPValue_UP > 0 && (
-               <div className="flex items-center gap-2 text-red-600">
+               <div className="flex items-center gap-2 text-danger-ink">
                    <span className="font-bold w-12">UP:</span>
                    <span>p={Math.pow(10, -data.negLogPValue_UP).toExponential(1)}</span>
-                   <span className="text-gray-500">(GR: {data.geneRatio_UP.toFixed(1)}%)</span>
+                   <span className="text-secondary">(GR: {data.geneRatio_UP.toFixed(1)}%)</span>
                </div>
             )}
             {data.negLogPValue_DOWN > 0 && (
-               <div className="flex items-center gap-2 text-blue-600">
+               <div className="flex items-center gap-2 text-info-ink">
                    <span className="font-bold w-12">DOWN:</span>
                    <span>p={Math.pow(10, -data.negLogPValue_DOWN).toExponential(1)}</span>
-                   <span className="text-gray-500">(GR: {data.geneRatio_DOWN.toFixed(1)}%)</span>
+                   <span className="text-secondary">(GR: {data.geneRatio_DOWN.toFixed(1)}%)</span>
                </div>
             )}
           </div>
@@ -376,10 +380,10 @@ export default function EnrichmentRadarPlot({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+      <div className="flex items-center justify-center h-96 bg-surface-2 rounded-control border-dashed">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-3" />
-          <p className="text-sm text-gray-600">Loading radar plot...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-accent-ink mx-auto mb-3" />
+          <p className="text-sm text-secondary">Loading radar plot...</p>
         </div>
       </div>
     );
@@ -388,12 +392,15 @@ export default function EnrichmentRadarPlot({
   if (error) {
     const isPlanError = error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription');
     return (
-      <div className={`border rounded-lg p-4 ${isPlanError ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200'}`}>
-        <p className={`text-sm ${isPlanError ? 'text-purple-800' : 'text-red-700'}`}>{error}</p>
+      <div className={cn(
+             'border rounded-control p-4',
+             isPlanError ? 'bg-accent-soft border-accent-ring' : 'bg-danger-soft border-danger/30',
+           )}>
+        <p className={cn('text-sm', isPlanError ? 'text-accent-ink' : 'text-danger-ink')}>{error}</p>
         {isPlanError && (
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-purple-700 hover:text-purple-900 underline underline-offset-2"
+            className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-accent-ink hover:text-accent-ink underline underline-offset-2"
           >
             View Plans →
           </Link>
@@ -404,8 +411,8 @@ export default function EnrichmentRadarPlot({
 
   if (data.length === 0) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p className="text-sm text-yellow-700">No enrichment terms selected</p>
+      <div className="bg-warning-soft border border-warning/30 rounded-control p-4">
+        <p className="text-sm text-warning-ink">No enrichment terms selected</p>
       </div>
     );
   }
@@ -413,17 +420,16 @@ export default function EnrichmentRadarPlot({
   return (
     <div className="space-y-4">
       {/* Selection Mode Controls */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+      <div className="flex items-center justify-between bg-surface-2 p-4 rounded-control">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">Term Selection:</span>
+          <span className="text-sm font-semibold text-primary">Term Selection:</span>
           <div className="flex gap-2">
             <button
               onClick={() => setSelectionMode('top')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                selectionMode === 'top'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-purple-100'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors',
+                selectionMode === 'top' ? 'bg-accent text-on-accent' : 'bg-surface text-primary hover:bg-accent-soft',
+              )}
             >
               Top {maxTerms}
             </button>
@@ -437,13 +443,10 @@ export default function EnrichmentRadarPlot({
                   setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
                 }
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
-                selectionMode === 'ai'
-                  ? 'bg-purple-600 text-white'
-                  : userCanUseAI
-                  ? 'bg-white text-gray-700 hover:bg-purple-100'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1',
+                selectionMode === 'ai' ? 'bg-accent text-on-accent' : userCanUseAI ? 'bg-surface text-primary hover:bg-accent-soft' : 'bg-surface-2 text-muted cursor-not-allowed',
+              )}
               disabled={!userCanUseAI}
             >
               {!userCanUseAI && <Lock className="w-3 h-3" />}
@@ -456,48 +459,50 @@ export default function EnrichmentRadarPlot({
                 setShowTermSelector(!showTermSelector);
                 setShowAiPrompt(false);
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
-                selectionMode === 'custom'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-purple-100'
-              }`}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-sm transition-colors flex items-center gap-1',
+                selectionMode === 'custom' ? 'bg-accent text-on-accent' : 'bg-surface text-primary hover:bg-accent-soft',
+              )}
             >
               Custom
-              <ChevronDown className={`w-3 h-3 transition-transform ${showTermSelector ? 'rotate-180' : ''}`} />
+              <ChevronDown className={cn(
+                             'w-3 h-3 transition-transform',
+                             showTermSelector ? 'rotate-180' : '',
+                           )} />
             </button>
           </div>
         </div>
-        <span className="text-xs text-gray-600">
+        <span className="text-xs text-secondary">
           {data.length} term{data.length > 1 ? 's' : ''} displayed
         </span>
       </div>
 
       {/* AI Prompt Input */}
       {showAiPrompt && selectionMode === 'ai' && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+        <div className="bg-surface-2 rounded-control p-4">
           <div className="flex items-start gap-2 mb-3">
-            <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+            <Sparkles className="w-5 h-5 text-accent-ink mt-1 flex-shrink-0" />
             <div className="flex-1">
-              <h4 className="text-sm font-semibold text-gray-900 mb-1">AI-Powered Term Selection</h4>
-              <p className="text-xs text-gray-600 mb-3">
+              <h4 className="text-sm font-semibold text-primary mb-1">AI-Powered Term Selection</h4>
+              <p className="text-xs text-secondary mb-3">
                 Describe what biological processes you&apos;re interested in, and AI will select the most relevant terms
               </p>
               <textarea
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 placeholder="Example: &apos;focus on liver metabolism and lipid pathways&apos; or &apos;immune response related to hepatocytes&apos;"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-2 text-sm border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                 rows={3}
                 disabled={aiLoading}
               />
               <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-secondary">
                   {aiPrompt.length}/200 characters
                 </span>
                 <button
                   onClick={handleAiSelection}
                   disabled={aiLoading || !aiPrompt.trim()}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-accent bg-accent rounded-sm hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {aiLoading ? (
                     <>
@@ -519,17 +524,17 @@ export default function EnrichmentRadarPlot({
 
       {/* Custom Term Selector */}
       {showTermSelector && selectionMode === 'custom' && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-surface rounded-control p-4">
           <div className="mb-3">
             <input
               type="text"
               placeholder="Search pathways..."
               value={termSearchQuery}
               onChange={(e) => setTermSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 text-sm border border-strong rounded-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
-          <p className="text-xs text-gray-600 mb-3">
+          <p className="text-xs text-secondary mb-3">
             Select up to {maxTerms} terms (currently: {customSelected.length}/{maxTerms})
           </p>
           <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -541,7 +546,7 @@ export default function EnrichmentRadarPlot({
               )
               .slice(0, 50)
               .map((term, idx) => (
-              <label key={idx} className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+              <label key={idx} className="flex items-start gap-2 cursor-pointer hover:bg-hover p-2 rounded-sm">
                 <input
                   type="checkbox"
                   checked={customSelected.includes(term.term)}
@@ -550,8 +555,8 @@ export default function EnrichmentRadarPlot({
                   className="mt-1"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900 truncate">{term.term}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs font-medium text-primary truncate">{term.term}</p>
+                  <p className="text-xs text-secondary">
                     {term.category} • p={term.pValue.toExponential(2)}
                   </p>
                 </div>
@@ -560,12 +565,12 @@ export default function EnrichmentRadarPlot({
           </div>
           {customSelected.length > 0 && (
             <div className="mt-3 flex justify-between items-center border-t pt-3">
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-secondary">
                 {customSelected.length} term{customSelected.length > 1 ? 's' : ''} selected
               </span>
               <button
                 onClick={() => setCustomSelected([])}
-                className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                className="text-xs text-accent-ink hover:text-accent-ink font-medium"
               >
                 Clear selection
               </button>
@@ -575,61 +580,61 @@ export default function EnrichmentRadarPlot({
       )}
 
       {/* Radar Plot */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-surface rounded-control p-6">
         <ResponsiveContainer width="100%" height={500}>
           <RadarChart data={data}>
-            <PolarGrid stroke="#d1d5db" />
+            <PolarGrid stroke={CHART_VARS.grid} />
             <PolarAngleAxis
               dataKey="shortTerm"
-              tick={{ fill: '#374151', fontSize: 11 }}
-              tickLine={{ stroke: '#9ca3af' }}
+              {...CHART_AXIS}
+              tickLine={{ stroke: CHART_VARS.inkMuted }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[-1, 5]}
-              tick={{ fill: '#6b7280', fontSize: 10 }}
-              label={{ value: '-log10(p-value)', position: 'insideTop', fill: '#374151', fontSize: 12 }}
+              {...CHART_AXIS}
+              label={{ value: '-log10(p-value)', position: 'insideTop', fill: CHART_VARS.inkSubtle, fontSize: 12 }}
             />
             
             <Radar
               name="ALL"
               dataKey="negLogPValue_ALL"
-              stroke="#8b5cf6"
-              fill="#8b5cf6"
+              stroke={palette.categorical[0]}
+              fill={palette.categorical[0]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_ALL) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#7c3aed" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[0]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             
             <Radar
               name="UP"
               dataKey="negLogPValue_UP"
-              stroke="#ef4444"
-              fill="#ef4444"
+              stroke={palette.categorical[1]}
+              fill={palette.categorical[1]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_UP) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#ef4444" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[1]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             
             <Radar
               name="DOWN"
               dataKey="negLogPValue_DOWN"
-              stroke="#3b82f6"
-              fill="#3b82f6"
+              stroke={palette.categorical[2]}
+              fill={palette.categorical[2]}
               fillOpacity={0.2}
               strokeWidth={2}
                 dot={(props: { cx?: number; cy?: number; payload?: RadarDataPoint }) => {
                  const { cx, cy, payload } = props;
                   const r = 3 + (((payload?.geneRatio_DOWN) || 0) / 10);
-                 return <circle cx={cx} cy={cy} r={r} fill="#3b82f6" stroke="#fff" strokeWidth={1} />;
+                 return <circle cx={cx} cy={cy} r={r} fill={palette.categorical[2]} stroke={CHART_VARS.surface} strokeWidth={1} />;
               }}
             />
             
@@ -639,22 +644,22 @@ export default function EnrichmentRadarPlot({
         </ResponsiveContainer>
 
         {/* Legend */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-center gap-6 text-xs text-gray-600">
+        <div className="mt-4 pt-4 border-t border-line">
+          <div className="flex items-center justify-center gap-6 text-xs text-secondary">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500 opacity-50"></div>
+              <div className="w-4 h-4 rounded-pill bg-accent opacity-50"></div>
               <span>Radial distance = -log10(p-value)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-                <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-                <div className="w-4 h-4 rounded-full bg-purple-600"></div>
+                <div className="w-2 h-2 rounded-pill bg-accent"></div>
+                <div className="w-3 h-3 rounded-pill bg-accent"></div>
+                <div className="w-4 h-4 rounded-pill bg-accent"></div>
               </div>
               <span>Dot size = % genes in term</span>
             </div>
           </div>
-          <p className="text-center text-xs text-gray-500 mt-2">
+          <p className="text-center text-xs text-secondary mt-2">
             Nominal p-values (unadjusted) • Preselected family of {data.length} terms
           </p>
         </div>

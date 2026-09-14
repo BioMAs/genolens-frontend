@@ -113,7 +113,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
   const { id, name, tagline, icon: Icon, color, capabilities } = meta;
   return (
     <div
-      className="relative flex flex-col rounded-[18px] border p-5 transition-all duration-300"
+      className="relative flex flex-col rounded-card border p-5 transition-all duration-300"
       style={{
         borderColor: active ? `color-mix(in oklab, ${color} 45%, var(--surface))` : 'var(--border)',
         background: active ? `color-mix(in oklab, ${color} 7%, var(--surface))` : 'var(--surface)',
@@ -123,7 +123,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span
-            className="grid h-11 w-11 place-items-center rounded-2xl transition-all duration-300"
+            className="grid h-11 w-11 place-items-center rounded-card transition-all duration-300"
             style={{
               background: active ? color : `color-mix(in oklab, ${color} 12%, var(--surface))`,
               color: active ? '#fff' : color,
@@ -133,8 +133,8 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             <Icon className="h-[22px] w-[22px]" />
           </span>
           <div>
-            <div className="font-display text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
-            <div className="mt-0.5 text-[11.5px]" style={{ color: 'var(--text-secondary)' }}>{tagline}</div>
+            <div className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
+            <div className="mt-1 text-micro" style={{ color: 'var(--text-secondary)' }}>{tagline}</div>
           </div>
         </div>
 
@@ -142,7 +142,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
         {readOnly ? (
           active ? (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              className="inline-flex items-center gap-1 rounded-pill px-2.5 py-1 text-micro"
               style={{ background: `color-mix(in oklab, ${color} 14%, var(--surface))`, color }}
             >
               <Check className="h-3 w-3" /> Active
@@ -152,14 +152,14 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
               type="button"
               disabled={busy}
               onClick={() => onRequestAccess(id)}
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1 rounded-pill border px-2.5 py-1 text-micro transition-colors disabled:opacity-60"
               style={{ borderColor: `color-mix(in oklab, ${color} 35%, var(--surface))`, color }}
             >
               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
               {busy ? 'Sending…' : 'Request access'}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
+            <span className="inline-flex items-center gap-1 rounded-pill px-2.5 py-1 text-micro" style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}>
               <Lock className="h-3 w-3" /> Locked
             </span>
           )
@@ -170,12 +170,12 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             aria-checked={active}
             disabled={busy}
             onClick={() => onToggle?.(id, !active)}
-            className="relative h-6 w-11 flex-none rounded-full transition-colors duration-300 disabled:opacity-60"
+            className="relative h-7 w-11 flex-none rounded-pill transition-colors duration-300 disabled:opacity-60"
             style={{ background: active ? color : 'var(--border-strong)' }}
             title={active ? `Disable ${name}` : `Enable ${name}`}
           >
             <span
-              className="absolute top-0.5 grid h-5 w-5 place-items-center rounded-full bg-white shadow transition-all duration-300"
+              className="absolute top-0.5 grid h-5 w-5 place-items-center rounded-pill bg-surface shadow transition-all duration-300"
               style={{ left: active ? '22px' : '2px' }}
             >
               {busy && <Loader2 className="h-3 w-3 animate-spin" style={{ color }} />}
@@ -187,9 +187,9 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
       {/* Capabilities */}
       <ul className="mt-4 flex flex-col gap-2">
         {capabilities.map((cap) => (
-          <li key={cap} className="flex items-center gap-2 text-[12.5px] transition-colors duration-300" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+          <li key={cap} className="flex items-center gap-2 text-caption transition-colors duration-300" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
             <span
-              className="grid h-4 w-4 flex-none place-items-center rounded-full transition-all duration-300"
+              className="grid h-4 w-4 flex-none place-items-center rounded-pill transition-all duration-300"
               style={{
                 background: active ? color : 'var(--surface-secondary)',
                 color: active ? '#fff' : 'var(--text-muted)',

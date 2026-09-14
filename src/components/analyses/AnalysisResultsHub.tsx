@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, FlaskConical, Loader2, AlertCircle, RotateCcw, Database,
+  Loader2, AlertCircle, RotateCcw, Database,
   GitCompare, GitBranch, Network, Activity, Settings2, ChevronRight, ArrowUpRight,
 } from 'lucide-react';
 import { useAnalysis } from '@/hooks/useAnalyses';
@@ -19,13 +19,15 @@ import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 import { useScientificModule } from '@/hooks/useAddOnModules';
 import { scrollToId } from '@/utils/scrollToId';
+import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-[17px] font-semibold tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-        {subtitle && <p className="mt-0.5 text-[12.5px]" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+        <h2 className="font-display text-title tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+        {subtitle && <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
       </div>
       {right}
     </div>
@@ -160,7 +162,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
   if (analysisLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent-ink" />
       </div>
     );
   }
@@ -178,9 +180,9 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <div className="text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
+          <AlertCircle className="mx-auto h-8 w-8 text-danger-ink mb-2" />
           <p style={{ color: 'var(--text-secondary)' }}>{message}</p>
-          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-sm text-indigo-500 hover:underline">
+          <Link href={`/projects/${projectId}`} className="mt-3 inline-block text-body-sm text-accent-ink hover:underline">
             ← Back to project
           </Link>
         </div>
@@ -192,33 +194,48 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
   return (
     <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--app-bg)' }}>
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="page-container space-y-6">
 
-        {/* Breadcrumb */}
-        <div>
-          <Link
-            href={`/projects/${projectId}`}
-            className="inline-flex items-center gap-1.5 text-sm"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            <ArrowLeft className="h-4 w-4" /> {projectName}
-          </Link>
-        </div>
+        {/* Le titre de l'ecran vivait DANS une carte, precede d'un lien de
+            retour et d'une tuile d'icone. Un ecran qui commence par une carte
+            n'a pas de titre de page, il a une premiere carte. Le fil d'Ariane
+            remplace le lien, PageHeader porte le titre, et les six tuiles de
+            statistiques restent ce qu'elles sont : un bloc de donnees, pas une
+            partie de l'en-tete.
 
-        {/* ── Analysis information card ── */}
-        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'var(--sl-teal-light)' }}>
-                <FlaskConical className="h-5 w-5" style={{ color: 'var(--sl-teal-dark)' }} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{analysis.name}</h1>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  Created {new Date(analysis.created_at).toLocaleString('en-US')}
-                </p>
-              </div>
-            </div>
+            `titleVariant="name"` : le nom d'une analyse est saisi par
+            l'utilisateur. */}
+        <PageHeader
+          title={analysis.name}
+          titleVariant="name"
+          crumbs={[
+            { label: 'Projects', href: '/projects' },
+            { label: projectName, href: `/projects/${projectId}` },
+            { label: analysis.name },
+          ]}
+          meta={
+            <span className="text-caption text-muted">
+              Created {new Date(analysis.created_at).toLocaleString('en-US')}
+            </span>
+          }
+          actions={[
+            {
+              node: (
+                <Link
+                  href={`/projects/${projectId}/setup?rerun=${analysisId}`}
+                  className="flex h-9 items-center gap-2 rounded-control border border-line bg-surface px-3 text-caption font-medium text-secondary transition-colors hover:bg-hover"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Re-run
+                </Link>
+              ),
+            },
+          ]}
+        />
+
+        {/* ── Analysis facts ── */}
+        <div className="gl-card overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+            <StatusBadge status={analysis.status} />
             <div className="flex items-center gap-2">
               {(() => {
                 const meta = matrixDataset?.dataset_metadata as
@@ -231,21 +248,13 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Data imported from NCBI GEO — ${meta.geo_accession}`}
-                    className="flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                    className="flex items-center gap-1 rounded-pill border border-accent-ring bg-accent-soft px-2.5 py-1 text-caption font-medium text-accent-ink hover:bg-accent-soft"
                   >
                     <Database className="h-3.5 w-3.5" />
                     GEO · {meta.geo_accession}
                   </a>
                 );
               })()}
-              <StatusBadge status={analysis.status} />
-              <Link
-                href={`/projects/${projectId}/setup?rerun=${analysisId}`}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
-                style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-secondary)' }}
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Re-run
-              </Link>
             </div>
           </div>
           {/* Stat tiles — 1px dividers via gap-px over a border-coloured background */}
@@ -359,13 +368,13 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
             title="Sample structure"
             subtitle="How samples relate to each other, computed from the normalized matrix"
             right={
-              <div className="inline-flex rounded-lg border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
+              <div className="inline-flex rounded-control border p-0.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-secondary)' }}>
                 {(['pca', 'umap'] as const).map((v) => (
                   <button
                     key={v}
                     type="button"
                     onClick={() => setStructureView(v)}
-                    className="rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors"
+                    className="rounded-sm px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
                     style={
                       structureView === v
                         ? { background: 'var(--sl-teal)', color: '#fff' }
@@ -385,7 +394,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
               <UMAPPlot dataset={vstDataset} metadataDataset={samplesDataset} />
             )
           ) : (
-            <div className="gl-card p-16 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            <div className="gl-card p-16 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
               No normalized matrix available for {structureView.toUpperCase()}.
             </div>
           )}
@@ -404,7 +413,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           open={paramsOpen}
           onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer font-display text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <summary className="cursor-pointer font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Analysis parameters
           </summary>
           <div className="mt-4">
@@ -426,8 +435,8 @@ type IconType = React.ComponentType<{ className?: string; style?: React.CSSPrope
 function StatTile({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="px-4 py-3" style={{ background: 'var(--surface)' }}>
-      <div className="text-[10.5px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
-      <div className={`mt-1 text-[15px] font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: 'var(--text-primary)' }}>{value}</div>
+      <div className="text-micro font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className={cn('mt-1 text-body font-semibold', mono ? 'font-mono' : '')} style={{ color: 'var(--text-primary)' }}>{value}</div>
     </div>
   );
 }
@@ -455,28 +464,26 @@ function ModuleCard({
       onClick={activate}
       disabled={disabled}
       aria-label={`Go to ${title}`}
-      className="group text-left rounded-2xl p-4 shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      className="group gl-card gl-card-interactive text-left p-4 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
         opacity: disabled ? 0.55 : 1,
         // @ts-expect-error CSS custom prop for focus ring colour
         '--tw-ring-color': 'var(--sl-teal)',
       }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'var(--sl-teal-light)' }}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-control" style={{ background: 'var(--sl-teal-light)' }}>
           <Icon className="h-4 w-4" style={{ color: 'var(--sl-teal-dark)' }} />
         </div>
         {!disabled && (
           <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
         )}
       </div>
-      <h3 className="mt-3 font-display text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-      <p className="mt-0.5 text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      <h3 className="mt-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <p className="mt-1 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       {(disabled ? disabledHint : metric) && (
         <div
-          className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium"
+          className="mt-2 inline-flex items-center gap-1 text-micro font-medium"
           style={{ color: disabled ? 'var(--text-muted)' : 'var(--sl-teal-dark)' }}
         >
           {!disabled && <ChevronRight className="h-3 w-3" />}
@@ -489,11 +496,11 @@ function ModuleCard({
 
 function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
   const styles: Record<SelfServiceAnalysisStatus, string> = {
-    [SelfServiceAnalysisStatus.PENDING]:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-    [SelfServiceAnalysisStatus.RUNNING]:   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    [SelfServiceAnalysisStatus.DONE]:      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    [SelfServiceAnalysisStatus.FAILED]:    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    [SelfServiceAnalysisStatus.CANCELLED]: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+    [SelfServiceAnalysisStatus.PENDING]:   'bg-warning-soft text-warning-ink',
+    [SelfServiceAnalysisStatus.RUNNING]:   'bg-info-soft text-info-ink',
+    [SelfServiceAnalysisStatus.DONE]:      'bg-success-soft text-success-ink',
+    [SelfServiceAnalysisStatus.FAILED]:    'bg-danger-soft text-danger-ink',
+    [SelfServiceAnalysisStatus.CANCELLED]: 'bg-surface-2 text-secondary',
   };
   const labels: Record<SelfServiceAnalysisStatus, string> = {
     [SelfServiceAnalysisStatus.PENDING]:   'Pending',
@@ -503,7 +510,10 @@ function StatusBadge({ status }: { status: SelfServiceAnalysisStatus }) {
     [SelfServiceAnalysisStatus.CANCELLED]: 'Cancelled',
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}>
+    <span className={cn(
+            'inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption font-medium',
+            styles[status],
+          )}>
       {labels[status]}
     </span>
   );
@@ -527,21 +537,21 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+      <div className="rounded-card overflow-hidden" style={{ border: '1px solid var(--border)' }}>
         {rows.map(({ label, value }, i) => (
           <div
             key={label}
             className="flex items-center justify-between px-4 py-2.5"
             style={{ background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-raised)' }}
           >
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
-            <span className="text-xs font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{value}</span>
+            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>{label}</span>
+            <span className="text-caption font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{value}</span>
           </div>
         ))}
       </div>
       <Link
         href={`/projects/${analysis.project_id}/setup?rerun=${analysis.id}`}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-caption font-semibold text-on-accent hover:bg-accent-hover"
       >
         <RotateCcw className="h-3.5 w-3.5" /> Re-run with new parameters
       </Link>

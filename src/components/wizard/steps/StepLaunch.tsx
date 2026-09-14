@@ -14,6 +14,7 @@ import { AnalysisParams as AP } from '@/types';
 import {
   Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StepLaunchProps {
   projectId: string;
@@ -121,8 +122,8 @@ export default function StepLaunch({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Launch Analysis</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-heading text-primary">Launch Analysis</h2>
+        <p className="mt-1 text-body-sm text-secondary">
           Review your configuration and launch the multi-method differential expression analysis.
         </p>
       </div>
@@ -132,55 +133,57 @@ export default function StepLaunch({
 
       {/* Summary card */}
       {!analysisId && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y divide-gray-100">
+        <div className="rounded-card bg-surface-2 divide-y divide-subtle">
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Files</p>
-            <div className="space-y-1 text-sm">
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Files</p>
+            <div className="space-y-1 text-body-sm">
               <SummaryRow label="Count Matrix"    value={matrixDs?.name    ?? matrixDatasetId} />
               <SummaryRow label="Sample Metadata" value={samplesDs?.name   ?? samplesDatasetId} />
               <SummaryRow label="Contrast File"   value={contrastsDs?.name ?? contrastsDatasetId} />
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Analysis Settings</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-2">Analysis Settings</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-body-sm">
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
               <SummaryRow label="Fold-change" value={`${(2 ** deseq2Params.min_log2fc).toFixed(2)}×`} />
             </div>
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Analysis Name</p>
-            <p className="text-sm font-medium text-gray-800">{analysisName}</p>
+            <p className="text-caption font-semibold text-secondary uppercase tracking-wide mb-1">Analysis Name</p>
+            <p className="text-body-sm font-medium text-primary">{analysisName}</p>
           </div>
         </div>
       )}
 
       {/* Error */}
       {launchError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-control border border-danger/30 bg-danger-soft p-4">
+          <AlertCircle className="h-5 w-5 text-danger-ink shrink-0 mt-1" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Launch failed</p>
-            <p className="text-xs text-red-600 mt-0.5">{launchError}</p>
+            <p className="text-body-sm font-semibold text-danger-ink">Launch failed</p>
+            <p className="text-caption text-danger-ink mt-1">{launchError}</p>
           </div>
         </div>
       )}
 
       {/* Progress section */}
       {analysisId && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-card bg-surface overflow-hidden">
           {/* Status header */}
-          <div className={`px-4 py-3 flex items-center gap-3 ${
-            isDone ? 'bg-green-50 border-b border-green-100'
-            : isFailed ? 'bg-red-50 border-b border-red-100'
-            : 'bg-blue-50 border-b border-blue-100'
-          }`}>
-            {isDone   && <CheckCircle className="h-5 w-5 text-green-500" />}
-            {isFailed && <AlertCircle className="h-5 w-5 text-red-500" />}
-            {isRunning && <Loader className="h-5 w-5 text-blue-400 animate-spin" />}
+          <div className={cn(
+                 'px-4 py-3 flex items-center gap-3',
+                 isDone ? 'bg-success-soft border-b border-success/30' : isFailed ? 'bg-danger-soft border-b border-danger/30' : 'bg-info-soft border-b border-info/30',
+               )}>
+            {isDone   && <CheckCircle className="h-5 w-5 text-success-ink" />}
+            {isFailed && <AlertCircle className="h-5 w-5 text-danger-ink" />}
+            {isRunning && <Loader className="h-5 w-5 text-info-ink animate-spin" />}
             <div>
-              <p className={`text-sm font-semibold ${isDone ? 'text-green-800' : isFailed ? 'text-red-800' : 'text-blue-800'}`}>
+              <p className={cn(
+                   'text-body-sm font-semibold',
+                   isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-info-ink',
+                 )}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
                 : currentStep
@@ -188,14 +191,14 @@ export default function StepLaunch({
                   : 'Analysis queued…'}
               </p>
               {analysis?.error_message && (
-                <p className="text-xs text-red-600 mt-0.5">{analysis.error_message}</p>
+                <p className="text-caption text-danger-ink mt-1">{analysis.error_message}</p>
               )}
             </div>
             {isRunning && (
               <button
                 type="button"
                 onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                className="ml-auto flex items-center gap-1 rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
               >
                 <X className="h-3 w-3" /> Cancel
               </button>
@@ -205,14 +208,16 @@ export default function StepLaunch({
           {/* Progress log */}
           {progressLog.length > 0 && (
             <div className="px-4 py-3">
-              <p className="text-xs font-medium text-gray-500 mb-2">Progress log</p>
+              <p className="text-caption font-medium text-secondary mb-2">Progress log</p>
               <ul className="space-y-1 max-h-48 overflow-y-auto">
                 {progressLog.map((entry, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
-                    <span className="text-gray-400 shrink-0 tabular-nums">
+                  <li key={i} className="flex items-start gap-2 text-caption">
+                    <span className="text-muted shrink-0 tabular-nums">
                       {new Date(entry.timestamp).toLocaleTimeString('en-GB')}
                     </span>
-                    <span className={`${i === progressLog.length - 1 && isRunning ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                    <span className={cn(
+                            i === progressLog.length - 1 && isRunning ? 'text-info-ink font-medium' : 'text-secondary',
+                          )}>
                       {entry.step.replace(/_/g, ' ')}
                       {entry.message ? ` — ${entry.message}` : ''}
                     </span>
@@ -224,8 +229,8 @@ export default function StepLaunch({
 
           {/* Indeterminate progress bar */}
           {isRunning && (
-            <div className="h-1 bg-blue-100">
-              <div className="h-full bg-blue-400 animate-pulse w-full" />
+            <div className="h-1 bg-info-soft">
+              <div className="h-full bg-info animate-pulse w-full" />
             </div>
           )}
         </div>
@@ -237,7 +242,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-control border border-strong px-4 py-2 text-body-sm font-medium text-primary hover:bg-hover"
           >
             ← Back
           </button>
@@ -251,7 +256,7 @@ export default function StepLaunch({
             title={
               quotaBlocked ? 'No analysis left this month. Upgrade to continue.' : undefined
             }
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-40"
+            className="ml-auto inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:opacity-40"
           >
             {createAnalysis.isPending ? (
               <><Loader className="h-4 w-4 animate-spin" /> Launching…</>
@@ -265,7 +270,7 @@ export default function StepLaunch({
           <button
             type="button"
             onClick={() => analysisId && onComplete(analysisId)}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-green-700"
+            className="ml-auto inline-flex items-center gap-2 rounded-control bg-success px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-success-hover"
           >
             View Results
             <ChevronRight className="h-4 w-4" />
@@ -278,9 +283,9 @@ export default function StepLaunch({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline gap-1.5">
-      <span className="text-gray-500 shrink-0">{label}:</span>
-      <span className="font-medium text-gray-800 truncate">{value}</span>
+    <div className="flex items-baseline gap-2">
+      <span className="text-secondary shrink-0">{label}:</span>
+      <span className="font-medium text-primary truncate">{value}</span>
     </div>
   );
 }

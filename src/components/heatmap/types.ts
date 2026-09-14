@@ -13,21 +13,3 @@ export interface HeatmapData {
   logFCs: number[];
   type: string;
 }
-
-export interface HeatmapConfig {
-  height: number;
-  mainMargin: { l: number; r: number; b: number; t: number };
-  sidebarMargin: { l: number; r: number; b: number; t: number };
-  colorscale: string;
-  logFCColorscale: string;
-  zmin: number;
-  zmax: number;
-  logFCmin: number;
-  logFCmax: number;
-}
-
-export interface TopNOption {
-  value: number;
-  label: string;
-  description: string;
-}

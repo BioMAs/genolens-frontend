@@ -41,7 +41,7 @@ export default function ReportBrandingEditor({ demo = false }: Props) {
 
   if (!demo && isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-gray-400">
+      <div className="flex items-center justify-center py-12 text-muted">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
@@ -107,43 +107,43 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50">
-          <FileText className="h-5 w-5 text-indigo-500" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-pill bg-accent-soft">
+          <FileText className="h-5 w-5 text-accent-ink" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Report customization</h3>
-          <p className="text-sm text-gray-500">Branding applied to every PDF report you generate.</p>
+          <h3 className="text-body font-semibold text-primary">Report customization</h3>
+          <p className="text-body-sm text-secondary">Branding applied to every PDF report you generate.</p>
         </div>
       </div>
 
       {/* Live preview of the report header */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Preview</label>
-        <div className="overflow-hidden rounded-xl border shadow-sm" style={{ borderColor: "#e5e7eb" }}>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Preview</label>
+        <div className="overflow-hidden rounded-card border shadow-sm" style={{ borderColor: "#e5e7eb" }}>
           <div className="flex items-center justify-between p-4" style={{ background: form.primary_color }}>
             {logoPreviewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoPreviewUrl} alt="logo" className="h-10 max-w-[160px] object-contain" />
+              <img src={logoPreviewUrl} alt="logo" className="h-9 max-w-[160px] object-contain" />
             ) : (
-              <span className="text-sm font-semibold text-white/90">
+              <span className="text-body-sm font-semibold text-on-accent/90">
                 {form.institute_name || "Your logo"}
               </span>
             )}
-            <span className="text-xs font-medium uppercase tracking-wide text-white/80">
+            <span className="text-caption font-medium uppercase tracking-wide text-on-accent/80">
               Transcriptomics Report
             </span>
           </div>
           <div className="h-1.5 w-full" style={{ background: form.secondary_color }} />
-          <div className="bg-white px-4 py-3">
-            <div className="text-lg font-bold text-gray-900">{form.institute_name || "Institute name"}</div>
-            <div className="text-xs text-gray-500">{form.institute_address || "Institute address"}</div>
+          <div className="bg-surface px-4 py-3">
+            <div className="text-title text-primary">{form.institute_name || "Institute name"}</div>
+            <div className="text-caption text-secondary">{form.institute_address || "Institute address"}</div>
           </div>
         </div>
       </div>
 
       {/* Logo */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Logo</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Logo</label>
         <div className="flex flex-wrap items-center gap-3">
           <input
             ref={fileInput}
@@ -156,39 +156,39 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={uploadLogo.isPending || demo}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control border border-strong px-3 py-1.5 text-body-sm font-medium text-primary hover:bg-hover disabled:opacity-50"
           >
             {uploadLogo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             Upload logo
           </button>
-          {logoIsPdf && <span className="text-xs text-gray-500">PDF logo uploaded</span>}
-          <span className="text-xs text-gray-400">PNG, JPG or PDF · max 5 MB</span>
+          {logoIsPdf && <span className="text-caption text-secondary">PDF logo uploaded</span>}
+          <span className="text-caption text-muted">PNG, JPG or PDF · max 5 MB</span>
         </div>
       </div>
 
       {/* Colours */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Primary colour</label>
+          <label className="mb-1 block text-body-sm font-medium text-primary">Primary colour</label>
           <div className="flex items-center gap-2">
-            <input type="color" value={form.primary_color} onChange={set("primary_color")} className="h-9 w-12 rounded" />
+            <input type="color" value={form.primary_color} onChange={set("primary_color")} className="h-9 w-12 rounded-sm" />
             <input
               type="text"
               value={form.primary_color}
               onChange={set("primary_color")}
-              className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+              className="w-28 rounded-control border border-strong px-2 py-1.5 text-body-sm"
             />
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Secondary colour</label>
+          <label className="mb-1 block text-body-sm font-medium text-primary">Secondary colour</label>
           <div className="flex items-center gap-2">
-            <input type="color" value={form.secondary_color} onChange={set("secondary_color")} className="h-9 w-12 rounded" />
+            <input type="color" value={form.secondary_color} onChange={set("secondary_color")} className="h-9 w-12 rounded-sm" />
             <input
               type="text"
               value={form.secondary_color}
               onChange={set("secondary_color")}
-              className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+              className="w-28 rounded-control border border-strong px-2 py-1.5 text-body-sm"
             />
           </div>
         </div>
@@ -197,48 +197,48 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
       {/* Institute */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Institute name</label>
+          <label className="mb-1 block text-body-sm font-medium text-primary">Institute name</label>
           <input
             type="text"
             value={form.institute_name}
             onChange={set("institute_name")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Institute address</label>
+          <label className="mb-1 block text-body-sm font-medium text-primary">Institute address</label>
           <input
             type="text"
             value={form.institute_address}
             onChange={set("institute_address")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
           />
         </div>
       </div>
 
       {/* Defaults */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Default Material &amp; Methods</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Default Material &amp; Methods</label>
         <textarea
           value={form.default_materials_methods}
           onChange={set("default_materials_methods")}
           rows={4}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Default conclusion</label>
+        <label className="mb-1 block text-body-sm font-medium text-primary">Default conclusion</label>
         <textarea
           value={form.default_conclusion}
           onChange={set("default_conclusion")}
           rows={3}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-control border border-strong px-3 py-2 text-body-sm"
         />
       </div>
 
       {/* Page models */}
-      <div className="border-t border-gray-100 pt-5">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Page layout</h3>
+      <div className="border-t border-subtle pt-5">
+        <h3 className="mb-3 text-body-sm font-semibold text-primary">Page layout</h3>
         <PageModelSelector
           firstPageType={pages.first_page_type}
           lastPageType={pages.last_page_type}
@@ -250,8 +250,8 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
       </div>
 
       {/* Project information */}
-      <div className="border-t border-gray-100 pt-5">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Project information</h3>
+      <div className="border-t border-subtle pt-5">
+        <h3 className="mb-3 text-body-sm font-semibold text-primary">Project information</h3>
         <CoverInfoFields value={cover} onChange={setCover} disabled={demo} />
       </div>
 
@@ -260,12 +260,12 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
           type="button"
           onClick={handleSave}
           disabled={update.isPending || demo}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
         >
           {update.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save settings
         </button>
-        {saved && <span className="text-sm text-green-600">Saved.</span>}
+        {saved && <span className="text-body-sm text-success-ink">Saved.</span>}
       </div>
     </div>
   );

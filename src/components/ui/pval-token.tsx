@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface PValTokenProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Already-formatted p-value string (e.g. `3.2e-12`). */
@@ -11,7 +12,7 @@ export interface PValTokenProps extends React.HTMLAttributes<HTMLSpanElement> {
 function PValToken({ value, className = '', style, ...props }: PValTokenProps) {
   return (
     <span
-      className={`font-mono ${className}`}
+      className={cn('font-mono', className)}
       style={{
         color: 'var(--sl-purple)',
         fontWeight: 500,

@@ -63,9 +63,9 @@ export default function ComparisonSynthesis({
   if (loading) {
     return (
       <div className="gl-card p-5">
-        <div className="skeleton h-5 w-2/3 rounded" />
-        <div className="skeleton mt-4 h-2.5 w-full rounded" />
-        <div className="skeleton mt-4 h-3 w-1/2 rounded" />
+        <div className="skeleton h-5 w-2/3 rounded-sm" />
+        <div className="skeleton mt-4 h-2.5 w-full rounded-sm" />
+        <div className="skeleton mt-4 h-3 w-1/2 rounded-sm" />
       </div>
     );
   }
@@ -85,9 +85,14 @@ export default function ComparisonSynthesis({
     .map((c) => `${c} ${sampleCounts[c]}`)
     .join(' · ');
 
+  // « default » est explicite pour distinguer ces comptes de ceux du
+  // SynthesisStrip d'Explore, qui bougent avec le controle de seuil. Les deux
+  // repetitions sont deliberees — l'une donne la lecture de reference, l'autre
+  // repond au reglage en cours — mais sans etiquette elles se lisaient comme
+  // une incoherence.
   const context = [
     genesTested ? `of ${num(genesTested)} genes tested` : null,
-    `padj < ${padjThreshold}`,
+    `at default thresholds — padj < ${padjThreshold}`,
     `|log2FC| > ${log2fcThreshold}`,
     totalSamples > 0
       ? `${totalSamples} sample${totalSamples === 1 ? '' : 's'}${sampleDetail ? ` (${sampleDetail})` : ''}`
@@ -97,14 +102,14 @@ export default function ComparisonSynthesis({
   return (
     <div className="gl-card p-5">
       <div
-        className="text-[11px] font-semibold uppercase tracking-[0.6px]"
+        className="text-micro uppercase tracking-[0.6px]"
         style={{ color: 'var(--sl-teal)' }}
       >
         Response
       </div>
 
       <h2
-        className="mt-1 font-display text-[19px] font-semibold leading-[1.3]"
+        className="mt-1 font-display text-title leading-[1.3]"
         style={{ color: 'var(--text-primary)' }}
       >
         {degTotal === 0 ? (
@@ -120,7 +125,7 @@ export default function ComparisonSynthesis({
       {degTotal > 0 && (
         <div className="mt-4">
           {/* Ends of the bar name the two sides of the contrast */}
-          <div className="mb-1.5 flex items-baseline justify-between gap-4 text-[12px]">
+          <div className="mb-2 flex items-baseline justify-between gap-4 text-caption">
             <span className="font-semibold" style={{ color: 'var(--dc-up-dark)' }}>
               ↑ {num(degUp)} up{testCondition ? ` in ${testCondition}` : ''}
             </span>
@@ -133,7 +138,7 @@ export default function ComparisonSynthesis({
           <div
             role="img"
             aria-label={`${num(degUp)} genes upregulated, ${num(degDown)} downregulated`}
-            className="flex h-2.5 overflow-hidden rounded"
+            className="flex h-2.5 overflow-hidden rounded-sm"
             style={{ background: 'var(--n-100)' }}
           >
             <span
@@ -145,7 +150,7 @@ export default function ComparisonSynthesis({
         </div>
       )}
 
-      <p className="mt-3 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mt-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
         {context.join(' · ')}
       </p>
     </div>

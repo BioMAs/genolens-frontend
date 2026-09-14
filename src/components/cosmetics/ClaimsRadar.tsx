@@ -11,6 +11,9 @@ import {
 } from 'recharts';
 import { CosmeticClaimScore } from '@/hooks/useCosmetics';
 import PanelInfo from './PanelInfo';
+import ChartCard from '@/components/charts/ChartCard';
+import { CHART_AXIS, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
+import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 
 interface ClaimsRadarProps {
   claims: CosmeticClaimScore[];
@@ -18,6 +21,7 @@ interface ClaimsRadarProps {
 
 /** Spider chart of cosmetic claim activation scores (0-100). */
 export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
+  const palette = useChartPalette();
   const data = claims.map((c) => ({
     claim: c.label.replace(/ & /g, ' &\n'),
     score: c.score,
@@ -25,12 +29,11 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
   }));
 
   return (
-    <div className="gl-card p-4">
-      <div className="mb-1 flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+    <ChartCard
+      title={
+        <span className="flex items-center gap-2">
           Skin claim profile
-        </h3>
-        <PanelInfo title="Skin claim profile — how the score is computed">
+          <PanelInfo title="Skin claim profile — how the score is computed">
           <p>
             Each axis is a cosmetic <b>claim</b> with an <b>activation score from 0
             to 100</b>, summarizing how strongly and how consistently the modulated
@@ -50,30 +53,31 @@ export default function ClaimsRadar({ claims }: ClaimsRadarProps) {
             <li>A near-zero axis means little or conflicting evidence — not necessarily a negative effect.</li>
           </ul>
         </PanelInfo>
-      </div>
-      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
-        Activation score per claim (0–100), based on modulated pathways.
-      </p>
+        </span>
+      }
+      subtitle="Activation score per claim (0–100), based on modulated pathways."
+      minHeight={340}
+    >
       <div style={{ width: '100%', height: 340 }}>
         <ResponsiveContainer>
           <RadarChart data={data} outerRadius="72%">
-            <PolarGrid stroke="var(--border-subtle, #e5e7eb)" />
+            <PolarGrid stroke={CHART_VARS.grid} />
             <PolarAngleAxis
               dataKey="claim"
-              tick={{ fontSize: 11, fill: 'var(--text-secondary, #6b7280)' }}
+              {...CHART_AXIS}
             />
-            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9 }} />
+            <PolarRadiusAxis angle={90} domain={[0, 100]} {...CHART_AXIS} />
             <Radar
               name="Score"
               dataKey="score"
-              stroke="#db2777"
-              fill="#db2777"
+              stroke={palette.categorical[4]}
+              fill={palette.categorical[4]}
               fillOpacity={0.35}
             />
-            <Tooltip formatter={(value) => [`${value as number}/100`, 'Score']} />
+            <Tooltip content={<ChartTooltip />} cursor={CHART_TOOLTIP_CURSOR} formatter={(value) => [`${value as number}/100`, 'Score']} />
           </RadarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </ChartCard>
   );
 }

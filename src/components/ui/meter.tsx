@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cn } from '@/lib/cn';
 
 export interface MeterProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Filled fraction, 0..1 (values are clamped). */
@@ -32,7 +33,7 @@ function Meter({
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={`overflow-hidden rounded ${className}`}
+      className={cn('overflow-hidden rounded-sm', className)}
       style={{
         height,
         background: 'var(--n-100)',
@@ -41,7 +42,7 @@ function Meter({
       {...props}
     >
       <span
-        className="block h-full rounded"
+        className="block h-full rounded-sm"
         style={{
           width: `${pct}%`,
           background: gradient[tone],
