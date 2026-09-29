@@ -22,8 +22,11 @@ Open **Analyses** in the project sidebar, find the analysis and click **View err
 **The files are not tab-separated.**
 The pipeline reads tab-separated files. A CSV or Excel file can upload without an error and still make the analysis fail. Save the three files as `.tsv` and upload them again (**Replace file**). See [Preparing your files](/docs/preparing-files).
 
-**"samples.tsv must have 'sample_id' and 'condition' columns".**
-Rename the columns of your sample sheet: the sample column must be called `sample_id`, `sample`, `sampleid` or `id`, and the condition column `condition`, `group`, `treatment` or `genotype` (capitals do not matter). The **Data Validation** step of the wizard now flags a missing column before you launch.
+**"samples.tsv needs a sample ID column" or "needs a condition column".**
+The sample column must be called `sample_id`, `sample`, `sampleid`, `id` or `name` (capitals do not matter). For the condition column, the easiest fix is to build the comparisons with the wizard's comparison builder and pick your column under **Grouping (condition) column**: any name works then. With an uploaded comparison file, the condition column must be called `condition`, `group`, `groupe`, `treatment` or `genotype`. The **Data Validation** step of the wizard flags a missing column before you launch.
+
+**"Condition column '…' was not found in samples.tsv".**
+The comparisons were built on a column that is not in the sample sheet used by the analysis, usually because the sheet was replaced afterwards. Build the comparisons again in the wizard on the current sample sheet.
 
 **An error about the comparison file.**
 Your comparison file needs three columns: a name (`comparison`), the test condition (`condition1`) and the reference (`condition2`). The easiest fix is to use the comparison builder of the wizard instead of a file.

@@ -10,8 +10,8 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
-// The pipeline's own aliases (run_multimethod_pipeline.R): the grouping column R
-// uses is the one comparisons must be built on.
+// The pipeline's own aliases (run_multimethod_pipeline.R), used only to pre-select
+// a column: whichever column the user keeps is sent at launch and R groups by it.
 import { CONDITION_ALIASES, SAMPLE_ID_ALIASES, findAliasColumn } from '@/lib/dataValidation';
 
 interface ComparisonRow {
@@ -28,8 +28,10 @@ interface ContrastBuilderProps {
   samplesDatasetId: string | null;
   /** Whether the sample sheet has finished processing (READY). */
   samplesReady: boolean;
-  /** Called with the id of the freshly created METADATA_CONTRAST dataset. */
-  onBuilt: (datasetId: string) => void;
+  /** Called with the id of the freshly created METADATA_CONTRAST dataset and the
+   *  sample-sheet column its conditions come from (sent at launch so the R
+   *  pipeline compares on that column rather than guessing one). */
+  onBuilt: (datasetId: string, conditionColumn: string) => void;
 }
 
 let _rowSeq = 0;
@@ -57,7 +59,8 @@ export default function ContrastBuilder({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // The column R will group samples by: first alias in pipeline order, not file order.
+  // Pre-selection: first alias in pipeline order (not file order), as R would pick
+  // for an uploaded contrast file.
   const pipelineConditionColumn = useMemo(
     () => findAliasColumn(columns, CONDITION_ALIASES),
     [columns],
@@ -155,7 +158,7 @@ export default function ContrastBuilder({
       const res = await api.post<{ dataset_id: string }>('/datasets/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      onBuilt(res.data.dataset_id);
+      onBuilt(res.data.dataset_id, conditionColumn);
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
       const msg = Array.isArray(detail)
@@ -243,32 +246,6 @@ export default function ContrastBuilder({
           {conditionValues.length} conditions detected: {conditionValues.join(', ')}
         </p>
       </div>
-
-      {conditionColumn !== pipelineConditionColumn && (
-        <div
-          data-testid="condition-column-mismatch"
-          className="flex items-start gap-2 rounded-control border border-warning/30 bg-warning-soft px-3 py-2 text-caption text-warning-ink"
-        >
-          <AlertCircle className="h-4 w-4 shrink-0 mt-1" />
-          <p>
-            {pipelineConditionColumn ? (
-              <>
-                The analysis groups samples by the <span className="font-medium">{pipelineConditionColumn}</span> column,
-                not <span className="font-medium">{conditionColumn}</span>. Comparisons built on this column
-                will not match any group — pick <span className="font-medium">{pipelineConditionColumn}</span>,
-                or rename the columns in your sample sheet and upload it again.
-              </>
-            ) : (
-              <>
-                The analysis only recognises a grouping column named condition, group, treatment or
-                genotype (any case), and stops without one. Rename
-                the <span className="font-medium">{conditionColumn}</span> column in your sample sheet
-                and upload it again.
-              </>
-            )}
-          </p>
-        </div>
-      )}
 
       {/* Comparison rows */}
       <div className="space-y-3">

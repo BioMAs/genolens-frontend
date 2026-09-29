@@ -6,7 +6,7 @@
  * its own list ("groupe", "name") and took the first match in file order, so it
  * could build comparisons on a column the pipeline never reads.
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import ContrastBuilder from '@/components/wizard/ContrastBuilder';
 
@@ -25,6 +25,7 @@ function renderWith(rows: Record<string, string>[]) {
   render(<ContrastBuilder projectId="p" samplesDatasetId="s" samplesReady onBuilt={jest.fn()} />);
 }
 
+// Removed with the column now being sent at launch; kept to prove it stays gone.
 const MISMATCH = 'condition-column-mismatch';
 
 beforeEach(() => jest.clearAllMocks());
@@ -47,14 +48,24 @@ it('matches aliases case-insensitively', () => {
   expect(screen.queryByTestId(MISMATCH)).not.toBeInTheDocument();
 });
 
-it('warns when no column is one R recognises ("groupe" is not an alias)', () => {
+it('never warns about the picked column: it is sent to the pipeline at launch', () => {
+  renderWith([
+    { sample: 'S1', treatment: 'drug', cohort: 'a' },
+    { sample: 'S2', treatment: 'none', cohort: 'b' },
+  ]);
+  // Pre-selects the alias column the pipeline would have guessed…
+  expect(screen.getByText('2 conditions detected: drug, none')).toBeInTheDocument();
+  // …and the user may switch to any column without being told the analysis will fail.
+  fireEvent.click(screen.getByRole('button', { name: /^treatment/ }));
+  fireEvent.click(screen.getByText('cohort', { selector: 'div' }));
+  expect(screen.getByText('2 conditions detected: a, b')).toBeInTheDocument();
+  expect(screen.queryByTestId(MISMATCH)).not.toBeInTheDocument();
+});
+
+it('pre-selects "groupe", which the pipeline now recognises', () => {
   renderWith([
     { sample: 'S1', groupe: 'a' },
     { sample: 'S2', groupe: 'b' },
   ]);
-  // Still offered, so the user sees their groups — but told the analysis will stop.
   expect(screen.getByText('2 conditions detected: a, b')).toBeInTheDocument();
-  expect(screen.getByTestId(MISMATCH)).toHaveTextContent(
-    'only recognises a grouping column named condition, group, treatment or genotype',
-  );
 });

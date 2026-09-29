@@ -146,7 +146,7 @@ it('warns about sample-sheet entries missing from the matrix', () => {
 it('warns when the sample sheet has no recognised sample-ID or condition column', () => {
   setup({
     sheet: {
-      data: { columns: ['name', 'groupe'], data: SAMPLES.map(s => ({ name: s, groupe: 'x' })) },
+      data: { columns: ['label', 'cohort'], data: SAMPLES.map(s => ({ label: s, cohort: 'x' })) },
       isError: false,
     },
   });

@@ -120,17 +120,40 @@ describe('sample sheet columns', () => {
   });
 
   it('warns when no sample-ID column is recognised, listing the columns found', () => {
-    const r = report(sheet(CLEAN_ROWS, ['name', 'condition']));
+    const r = report(sheet(CLEAN_ROWS, ['label', 'condition']));
     const issue = r.issues.find(i => i.id === 'no-sample-id-column')!;
-    expect(issue.detail).toContain('Columns found: name, condition.');
+    expect(issue.detail).toContain('Columns found: label, condition.');
     expect(issue.blocking).toBe(false);
     expect(r.complete).toBe(false); // the mismatch check could not run
   });
 
-  it('warns when no condition column is recognised', () => {
-    // "groupe" is not one of the pipeline's aliases.
-    const r = report(sheet(CLEAN_ROWS, ['sample', 'groupe']));
+  it('warns when no condition column is recognised (uploaded contrast file)', () => {
+    const r = report(sheet(CLEAN_ROWS, ['sample', 'cohort']));
     expect(r.issues.map(i => i.id)).toEqual(['no-condition-column']);
+  });
+
+  it('recognises "groupe" and "name", like the pipeline', () => {
+    expect(report(sheet(CLEAN_ROWS, ['name', 'groupe'])).issues).toEqual([]);
+  });
+
+  it('checks the column picked in the builder instead of guessing one', () => {
+    // No alias column: fine, because R receives the picked column at launch.
+    const r = report({ ...sheet(CLEAN_ROWS, ['sample', 'Cohort']), conditionColumn: 'cohort' });
+    expect(r.issues).toEqual([]);
+  });
+
+  it('counts replicates on the picked column, not on an alias column', () => {
+    const rows = CLEAN_ROWS.map(([s, c], i) => ({ sample: s, condition: c, cohort: i === 0 ? 'a' : 'b' }));
+    const r = report({ sampleColumns: ['sample', 'condition', 'cohort'], sampleRows: rows, conditionColumn: 'cohort' });
+    const issue = r.issues.find(i => i.id === 'small-conditions')!;
+    expect(issue.detail).toContain('a (1)');
+    expect(issue.detail).toContain('"cohort" column');
+  });
+
+  it('warns when the picked column is no longer in the sample sheet', () => {
+    const r = report({ ...sheet(CLEAN_ROWS, ['sample', 'condition']), conditionColumn: 'cohort' });
+    expect(r.issues.map(i => i.id)).toEqual(['condition-column-missing']);
+    expect(r.issues[0].detail).toContain('Columns found: sample, condition.');
   });
 
   it('picks the first alias in pipeline order', () => {

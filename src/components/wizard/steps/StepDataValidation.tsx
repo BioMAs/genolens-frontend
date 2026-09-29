@@ -13,6 +13,8 @@ interface StepDataValidationProps {
   projectId: string;
   matrixDatasetId: string;
   samplesDatasetId: string;
+  /** Grouping column picked in the contrast builder; null for an uploaded contrast file. */
+  conditionColumn?: string | null;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -21,6 +23,7 @@ export default function StepDataValidation({
   projectId,
   matrixDatasetId,
   samplesDatasetId,
+  conditionColumn = null,
   onContinue,
   onBack,
 }: StepDataValidationProps) {
@@ -41,8 +44,9 @@ export default function StepDataValidation({
       matrixMetadata: matrixDs?.dataset_metadata,
       sampleRows: sampleSheet?.data,
       sampleColumns: sampleSheet?.columns,
+      conditionColumn,
     }),
-    [matrixDs?.dataset_metadata, sampleSheet],
+    [matrixDs?.dataset_metadata, sampleSheet, conditionColumn],
   );
 
   const bothReady = isMatrixReady && isSamplesReady;

@@ -39,8 +39,8 @@ Treated_2	Treated	run1
 Treated_3	Treated	run2
 ```
 
-- **A sample column**, named `sample_id`, `sample`, `sampleid` or `id`. Its values must be the column names of the count matrix.
-- **A condition column**, named `condition`, `group`, `treatment` or `genotype`. The pipeline finds it by this name, so **use one of these four names** even if the wizard lets you pick another column.
+- **A sample column**, named `sample_id`, `sample`, `sampleid`, `id` or `name`. Its values must be the column names of the count matrix.
+- **A condition column**, with any name. In the wizard's comparison builder you pick it under **Grouping (condition) column**, and the analysis groups your samples by that column. If you upload your own comparison file instead, the analysis looks for a column named `condition`, `group`, `groupe`, `treatment` or `genotype`, so use one of these names in that case.
 - **An optional batch column**, named `batch`, `run` or `lane`. It lets the pipeline account for batch effects (see [Analysis settings explained](/docs/analysis-settings)).
 - Other columns are allowed. You can use them to colour the sample map later.
 

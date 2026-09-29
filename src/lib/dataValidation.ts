@@ -15,8 +15,10 @@ export const MIN_TOTAL_SAMPLES = 4;
 export const MIN_SAMPLES_PER_CONDITION = 2;
 
 // Same aliases, same order, as run_multimethod_pipeline.R (matched on lower-cased headers).
-export const SAMPLE_ID_ALIASES = ['sample_id', 'sample', 'sampleid', 'id'];
-export const CONDITION_ALIASES = ['condition', 'group', 'treatment', 'genotype'];
+// R only falls back on the condition aliases when no condition column is sent at
+// launch (i.e. for an uploaded contrast file).
+export const SAMPLE_ID_ALIASES = ['sample_id', 'sample', 'sampleid', 'id', 'name'];
+export const CONDITION_ALIASES = ['condition', 'group', 'groupe', 'treatment', 'genotype'];
 
 export interface ValidationIssue {
   id: string;
@@ -52,6 +54,9 @@ export interface ValidationInput {
   sampleRows?: Row[];
   /** Sample-sheet header, in file order. */
   sampleColumns?: string[];
+  /** Grouping column picked in the contrast builder (sent to R at launch). Null for an
+   *  uploaded contrast file, where R falls back on its aliases. */
+  conditionColumn?: string | null;
 }
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
@@ -128,6 +133,7 @@ export function buildValidationReport({
   matrixMetadata,
   sampleRows,
   sampleColumns,
+  conditionColumn,
 }: ValidationInput): ValidationReport {
   const qc = readMatrixQC(matrixMetadata);
   const issues: ValidationIssue[] = [];
@@ -168,7 +174,11 @@ export function buildValidationReport({
   }
 
   const sidCol = findAliasColumn(sampleColumns, SAMPLE_ID_ALIASES);
-  const condCol = findAliasColumn(sampleColumns, CONDITION_ALIASES);
+  // R matches the requested column case-insensitively on trimmed headers.
+  const chosen = conditionColumn?.trim().toLowerCase();
+  const condCol = chosen
+    ? sampleColumns.find(c => c.trim().toLowerCase() === chosen)
+    : findAliasColumn(sampleColumns, CONDITION_ALIASES);
   const header = sampleColumns.length ? `Columns found: ${sampleColumns.join(', ')}.` : '';
 
   if (!sidCol) {
@@ -176,20 +186,31 @@ export function buildValidationReport({
       id: 'no-sample-id-column',
       title: 'No sample ID column in the sample sheet',
       detail:
-        `The pipeline looks for a column named sample_id, sample, sampleid or id (any case) ` +
-        `and stops without one. ${header} Rename the column holding the sample names and ` +
+        `The pipeline looks for a column named sample_id, sample, sampleid, id or name (any ` +
+        `case) and stops without one. ${header} Rename the column holding the sample names and ` +
         `upload the sheet again.`,
       blocking: false,
     });
   }
-  if (!condCol) {
+  if (chosen && !condCol) {
+    issues.push({
+      id: 'condition-column-missing',
+      title: `The "${conditionColumn}" column is not in the sample sheet`,
+      detail:
+        `Your comparisons were built on the "${conditionColumn}" column, and the analysis stops ` +
+        `if the sample sheet does not have it. ${header} Go back and build the comparisons again ` +
+        `on the current sample sheet.`,
+      blocking: false,
+    });
+  } else if (!condCol) {
     issues.push({
       id: 'no-condition-column',
       title: 'No condition column in the sample sheet',
       detail:
-        `The pipeline looks for a column named condition, group, treatment or genotype ` +
-        `(any case) and stops without one. ${header} Rename the column holding the ` +
-        `experimental groups and upload the sheet again.`,
+        `With an uploaded contrast file, the pipeline looks for a column named condition, ` +
+        `group, groupe, treatment or genotype (any case) and stops without one. ${header} ` +
+        `Go back and build the comparisons in the wizard on the column holding the ` +
+        `experimental groups, or rename that column and upload the sheet again.`,
       blocking: false,
     });
   }
