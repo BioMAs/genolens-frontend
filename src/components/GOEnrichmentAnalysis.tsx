@@ -8,11 +8,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings2, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Loader2, AlertCircle, Info } from 'lucide-react';
 import GOEnrichmentTable from './GOEnrichmentTable';
 import EnrichmentHistogram from './EnrichmentHistogram';
 import GOTreePanel from './GOTreePanel';
 import { useComparisonActions } from '@/contexts/ComparisonSelectionContext';
+import { useAnalysis } from '@/hooks/useAnalyses';
 import dynamic from 'next/dynamic';
 
 const EnrichmentRadarPlot = dynamic(() => import('./EnrichmentRadarPlot'), { ssr: false });
@@ -27,15 +28,23 @@ interface GOEnrichmentAnalysisProps {
   enrichmentDataset?: Dataset;
 }
 
+/**
+ * Every control here FILTERS the stored results; none of them re-runs the enrichment.
+ *
+ * The terms are computed once, during the analysis (R/annoDB on the r-worker, or the legacy
+ * Python path for plain DEG uploads), and read back from the database. The panel used to offer
+ * a log FC threshold, an enrichment p-value, min/max term size and a "true path rule" toggle
+ * that were stored in state and read by nothing — users believed they were recomputing. Only
+ * the cut-offs that can act on stored columns are left: `padj`, and the term size carried by
+ * `bg_ratio` ("n/N", n = genes annotated to the term). `null` means no bound, so opening the
+ * panel never hides a term by itself.
+ */
 interface GOEnrichmentParams {
   namespace: string | null;
   regulation: string | null;
-  padjThreshold: number;
-  logFcThreshold: number;
-  minTermSize: number;
-  maxTermSize: number;
-  pvalueThreshold: number;
-  propagateAnnotations: boolean;
+  padjThreshold: number | null;
+  minTermSize: number | null;
+  maxTermSize: number | null;
 }
 
 interface GOTerm {
@@ -50,6 +59,8 @@ interface GOTerm {
   study_genes: string[];
   background_count: number;
   level?: number;
+  /** Gene set the term was enriched on: ALL significant DEGs, or only the UP / DOWN ones. */
+  regulation?: string;
 }
 
 interface DegGeneInfo {
@@ -78,7 +89,37 @@ function transformCachedRow(row: Record<string, unknown>): GOTerm {
     study_genes: (row.genes as string[]) ?? [],
     background_count: bgCount ?? 0,
     level: (row.level as number | undefined),
+    regulation: (row.regulation as string | undefined) ?? 'ALL',
   };
+}
+
+/** Empty input = no bound. */
+function parseBound(raw: string, parse: (v: string) => number): number | null {
+  if (raw.trim() === '') return null;
+  const n = parse(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * The regulation select picks which of the three stored enrichments is shown. "All DEGs" is the
+ * enrichment on every significant DEG — not the union of the three, which listed a term up to
+ * three times. A file carrying no ALL rows (only UP/DOWN) keeps showing everything under "All".
+ */
+function filterEnrichmentTerms(terms: GOTerm[], params: GOEnrichmentParams): GOTerm[] {
+  const hasAllSet = terms.some(t => (t.regulation ?? 'ALL') === 'ALL');
+  return terms.filter(t => {
+    if (params.namespace && t.namespace !== params.namespace) return false;
+    const reg = t.regulation ?? 'ALL';
+    if (params.regulation) {
+      if (reg !== params.regulation) return false;
+    } else if (hasAllSet && reg !== 'ALL') {
+      return false;
+    }
+    if (params.padjThreshold != null && !(t.fdr <= params.padjThreshold)) return false;
+    if (params.minTermSize != null && t.background_count < params.minTermSize) return false;
+    if (params.maxTermSize != null && t.background_count > params.maxTermSize) return false;
+    return true;
+  });
 }
 
 type TabId = 'dotplot' | 'histogram' | 'radar' | 'table';
@@ -215,19 +256,24 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('dotplot');
   const [showSettings, setShowSettings] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [degGeneMap, setDegGeneMap] = useState<Record<string, DegGeneInfo>>({});
 
   const [params, setParams] = useState<GOEnrichmentParams>({
     namespace: null,
     regulation: null,
-    padjThreshold: 0.05,
-    logFcThreshold: 0.5,
-    minTermSize: 5,
-    maxTermSize: 500,
-    pvalueThreshold: 0.05,
-    propagateAnnotations: true,
+    padjThreshold: null,
+    minTermSize: null,
+    maxTermSize: null,
   });
+
+  // The thresholds the enrichment was actually computed with: the analysis's DEG thresholds,
+  // which the R step reuses. Read, not assumed — the wizard's default fold change is 1.5
+  // (log2 ≈ 0.58), and the 1.0 in the worker is only a fallback. A plain upload has no analysis.
+  const analysisId = (dataset.dataset_metadata?.analysis_id as string | undefined) ?? '';
+  const { data: analysis } = useAnalysis(analysisId, !!analysisId);
+  const computedFdr = analysis?.params?.fdr;
+  const computedLog2fc =
+    analysis?.params?.min_log2fc ?? (dataset.dataset_metadata?.min_log2fc as number | undefined);
 
   const updateParams = (next: GOEnrichmentParams) => setParams(next);
 
@@ -309,15 +355,10 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
 
   const hasResults = terms.length > 0;
 
-  // Apply category + regulation filters for display
-  const displayTerms = terms.filter(t => {
-    if (params.namespace && t.namespace !== params.namespace) return false;
-    if (params.regulation && params.regulation !== 'all') {
-      const reg = (t as GOTerm & { regulation?: string }).regulation;
-      if (reg && reg !== params.regulation) return false;
-    }
-    return true;
-  });
+  const displayTerms = filterEnrichmentTerms(terms, params);
+  // Category counts follow every filter but the category itself, so each button says what
+  // clicking it would show.
+  const countableTerms = filterEnrichmentTerms(terms, { ...params, namespace: null });
 
   return (
     <div className="space-y-4">
@@ -334,7 +375,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
           )}
           {!isRunning && hasResults && (
             <span className="text-caption text-success-ink bg-success-soft border border-success/30 rounded-pill px-2 py-0.5">
-              {terms.length} enriched terms
+              {displayTerms.length} enriched terms
             </span>
           )}
         </div>
@@ -412,55 +453,51 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
               </div>
 
               <div className="space-y-2">
-                <Label className="text-caption">Adj. P-value Threshold</Label>
+                <Label htmlFor="enrichment-max-padj" className="text-caption">Show terms with adj. p-value ≤</Label>
                 <Input
+                  id="enrichment-max-padj"
                   className="h-9 text-caption"
-                  type="number" step="0.01" min="0" max="1"
-                  value={params.padjThreshold}
-                  onChange={(e) => updateParams({ ...params, padjThreshold: parseFloat(e.target.value) })}
+                  type="number" step="0.001" min="0" max="1"
+                  placeholder="Any"
+                  value={params.padjThreshold ?? ''}
+                  onChange={(e) => updateParams({ ...params, padjThreshold: parseBound(e.target.value, parseFloat) })}
                 />
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(s => !s)}
-              className="flex items-center gap-2 text-caption text-secondary hover:text-primary"
-            >
-              {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              Advanced options
-            </button>
-
-            {showAdvanced && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                <div className="space-y-2">
-                  <Label className="text-caption">Log FC Threshold</Label>
-                  <Input className="h-9 text-caption" type="number" step="0.1" min="0" value={params.logFcThreshold}
-                    onChange={(e) => updateParams({ ...params, logFcThreshold: parseFloat(e.target.value) })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-caption">Min Term Size</Label>
-                  <Input className="h-9 text-caption" type="number" min="1" value={params.minTermSize}
-                    onChange={(e) => updateParams({ ...params, minTermSize: parseInt(e.target.value) })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-caption">Max Term Size</Label>
-                  <Input className="h-9 text-caption" type="number" min="1" value={params.maxTermSize}
-                    onChange={(e) => updateParams({ ...params, maxTermSize: parseInt(e.target.value) })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-caption">Enrichment P-value</Label>
-                  <Input className="h-9 text-caption" type="number" step="0.01" min="0" max="1" value={params.pvalueThreshold}
-                    onChange={(e) => updateParams({ ...params, pvalueThreshold: parseFloat(e.target.value) })} />
-                </div>
-                <div className="flex items-center gap-2 pt-4">
-                  <input type="checkbox" id="propagate" checked={params.propagateAnnotations}
-                    onChange={(e) => updateParams({ ...params, propagateAnnotations: e.target.checked })}
-                    className="rounded-sm" />
-                  <Label htmlFor="propagate" className="cursor-pointer text-caption">Propagate Annotations (True Path Rule)</Label>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="enrichment-min-term-size" className="text-caption">Min term size (annotated genes)</Label>
+                <Input
+                  id="enrichment-min-term-size"
+                  className="h-9 text-caption"
+                  type="number" min="1" step="1"
+                  placeholder="Any"
+                  value={params.minTermSize ?? ''}
+                  onChange={(e) => updateParams({ ...params, minTermSize: parseBound(e.target.value, (v) => parseInt(v, 10)) })}
+                />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="enrichment-max-term-size" className="text-caption">Max term size (annotated genes)</Label>
+                <Input
+                  id="enrichment-max-term-size"
+                  className="h-9 text-caption"
+                  type="number" min="1" step="1"
+                  placeholder="Any"
+                  value={params.maxTermSize ?? ''}
+                  onChange={(e) => updateParams({ ...params, maxTermSize: parseBound(e.target.value, (v) => parseInt(v, 10)) })}
+                />
+              </div>
+            </div>
+
+            <p className="flex items-start gap-2 text-caption text-muted">
+              <Info className="w-3.5 h-3.5 mt-1 shrink-0" aria-hidden />
+              <span>
+                {computedFdr != null && computedLog2fc != null
+                  ? `Enrichment was computed during the analysis on DEGs at FDR ${computedFdr} and |log2FC| ≥ ${Number(computedLog2fc.toFixed(2))}. These filters narrow the stored terms; they do not re-run it.`
+                  : 'Enrichment was computed when the results were produced. These filters narrow the stored terms; they do not re-run it.'}
+              </span>
+            </p>
           </CardContent>
         </Card>
       )}
@@ -488,7 +525,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
           {terms.length > 0 && (
             <div className="flex items-center gap-6 px-4 py-2 bg-surface-2 rounded-control text-caption text-muted flex-wrap">
               {[...new Set(terms.map(t => t.namespace).filter(Boolean))].map(cat => {
-                const count = terms.filter(t => t.namespace === cat).length;
+                const count = countableTerms.filter(t => t.namespace === cat).length;
                 const dbDef = DB_CATEGORIES.find(db => db.value === cat);
                 return (
                   <button
