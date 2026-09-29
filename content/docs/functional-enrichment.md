@@ -19,7 +19,7 @@ Enrichment runs **automatically at the end of every analysis**, for each compari
 
 Look at the directions separately: up- and down-regulated genes often point to different biology, which is blurred when they are pooled.
 
-Genes enter the enrichment at the thresholds set for the analysis: by default **FDR < 0.05** and a **1.5-fold change** (|log2FC| ≥ 0.58). Only terms with an adjusted p-value below 0.05 are kept. The enrichment filters on the Understand screen show the thresholds your analysis used.
+Genes enter the enrichment at the thresholds set for the analysis: by default **FDR < 0.05** and a **1.5-fold change** (|log2FC| ≥ 0.58). Only terms with an adjusted p-value below 0.05 are kept. The **Filter** panel on the Understand screen shows the thresholds your analysis used.
 
 If the enrichment step fails, the analysis still succeeds: you keep your differential genes, and the enrichment section says no results are available.
 
@@ -46,7 +46,7 @@ Enrichment is computed once, during the analysis. The **Filter** panel only narr
 
 - **Database / Category** and **Regulation** choose which stored enrichment you see;
 - **Show terms with adj. p-value ≤** hides terms above a stricter cut-off than the one used for the analysis;
-- **Min / Max term size** hide terms annotated to too few or too many genes (the second number in the table's **Genes** column). Raising the maximum drops broad, generic terms.
+- **Min / Max term size** hide terms annotated to too few or too many genes (the second number in the table's **Genes** column). Lowering the maximum drops broad, generic terms.
 
 To enrich with other thresholds, run a new analysis with different settings.
 
