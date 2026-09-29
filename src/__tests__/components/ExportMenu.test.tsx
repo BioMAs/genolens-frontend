@@ -9,7 +9,9 @@
  * - Calls exportToJSON when JSON option is clicked
  * - Calls exportToPDF when PDF option is clicked
  * - Calls onExport callback after successful export
- * - Shows alert when no data provided for CSV/JSON
+ * - Disables the button when the rows are known to be empty
+ * - Hides formats that are not wired up, and renders nothing if none is
+ * - Fetches rows at click time through `fetchData`
  * - Disabled state prevents dropdown from opening
  * - Only shows configured formats
  */
@@ -130,15 +132,51 @@ describe('ExportMenu — CSV export', () => {
     expect(onExport).toHaveBeenCalledWith('csv');
   });
 
-  it('shows alert when no data is provided for CSV export', async () => {
+  it('disables the button when the rows are known to be empty', () => {
     const { default: ExportMenu } = require('@/components/ExportMenu');
     render(<ExportMenu filename="test" data={[]} formats={['csv']} />);
 
+    expect(screen.getByRole('button')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button'));
+    expect(screen.queryByText('Export CSV')).not.toBeInTheDocument();
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing when no data source is wired up', () => {
+    // The Share screen once shipped exactly this: a menu whose every item raised an alert.
+    const { default: ExportMenu } = require('@/components/ExportMenu');
+    const { container } = render(<ExportMenu filename="test" formats={['csv', 'json']} />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe('ExportMenu — rows fetched on click', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('fetches only when a format is picked, then exports the fetched rows', async () => {
+    const { default: ExportMenu } = require('@/components/ExportMenu');
+    const fetchData = jest.fn().mockResolvedValue(SAMPLE_DATA);
+    render(<ExportMenu filename="all" fetchData={fetchData} formats={['csv', 'json']} csvColumns={['gene']} />);
+
+    expect(fetchData).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button'));
     fireEvent.click(screen.getByText('Export CSV'));
 
-    await waitFor(() => expect(mockAlert).toHaveBeenCalled());
-    expect(mockExportToCSV).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockExportToCSV).toHaveBeenCalledWith(SAMPLE_DATA, 'all', ['gene']));
+    expect(fetchData).toHaveBeenCalledTimes(1);
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('says so when the fetch comes back empty, and downloads nothing', async () => {
+    const { default: ExportMenu } = require('@/components/ExportMenu');
+    render(<ExportMenu filename="all" fetchData={jest.fn().mockResolvedValue([])} formats={['json']} />);
+
+    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByText('Export JSON'));
+
+    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith(expect.stringMatching(/no rows/i)));
+    expect(mockExportToJSON).not.toHaveBeenCalled();
   });
 });
 
@@ -190,14 +228,13 @@ describe('ExportMenu — PDF export', () => {
     expect(onExport).toHaveBeenCalledWith('pdf');
   });
 
-  it('shows alert when pdfElementId is not configured', async () => {
+  it('hides PDF when pdfElementId is not configured', () => {
     const { default: ExportMenu } = require('@/components/ExportMenu');
-    render(<ExportMenu filename="test" formats={['pdf']} />);
+    render(<ExportMenu {...DEFAULT_PROPS} formats={['csv', 'pdf']} />);
 
     fireEvent.click(screen.getByRole('button'));
-    fireEvent.click(screen.getByText('Export PDF'));
-
-    await waitFor(() => expect(mockAlert).toHaveBeenCalled());
+    expect(screen.getByText('Export CSV')).toBeInTheDocument();
+    expect(screen.queryByText('Export PDF')).not.toBeInTheDocument();
     expect(mockExportToPDF).not.toHaveBeenCalled();
   });
 });
