@@ -10,8 +10,40 @@ export interface DatasetFilters {
   logfc_min?: number;
   logfc_max?: number;
   columns?: string[];
+  gene_ids?: string[];
   limit?: number;
   offset?: number;
+}
+
+/**
+ * Rows per export request. The endpoint accepts up to 100000 (`limit: le=100000`), but a wide
+ * matrix at that size is a response of well over a hundred megabytes; smaller pages keep each
+ * one bounded at the cost of a few more round trips.
+ */
+export const DATASET_EXPORT_PAGE_SIZE = 25000;
+
+/**
+ * Every row of a dataset matching `filters`, walked page by page, for exports.
+ *
+ * Called at click time rather than held by a query: a matrix can be tens of thousands of rows
+ * wide by hundreds of samples, which has no business sitting in the cache.
+ */
+export async function fetchAllDatasetRows(
+  datasetId: string,
+  filters: Omit<DatasetFilters, 'limit' | 'offset'> = {},
+  pageSize: number = DATASET_EXPORT_PAGE_SIZE
+): Promise<DatasetQueryResponse['data']> {
+  const rows: DatasetQueryResponse['data'] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const response = await api.post<DatasetQueryResponse>(`/datasets/${datasetId}/query`, {
+      ...filters,
+      limit: pageSize,
+      offset,
+    });
+    const page = response.data.data ?? [];
+    rows.push(...page);
+    if (page.length < pageSize || rows.length >= response.data.total_rows) return rows;
+  }
 }
 
 /**
@@ -139,9 +171,9 @@ export function useDatasetData(
   return useQuery({
     queryKey: ['dataset', datasetId, 'data', filters],
     queryFn: async () => {
-      const response = await api.get<DatasetQueryResponse>(`/datasets/${datasetId}/data`, {
-        params: filters,
-      });
+      // POST /query, not GET /data: the latter never existed on the backend and answered 404,
+      // so the dataset page showed an error instead of its table.
+      const response = await api.post<DatasetQueryResponse>(`/datasets/${datasetId}/query`, filters);
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

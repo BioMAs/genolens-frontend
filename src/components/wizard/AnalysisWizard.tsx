@@ -137,6 +137,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
                   projectId={projectId}
                   matrixDatasetId={state.matrixDatasetId}
                   samplesDatasetId={state.samplesDatasetId}
+                  conditionColumn={state.conditionColumn}
                   onContinue={() => goTo(3)}
                   onBack={() => goTo(1)}
                 />

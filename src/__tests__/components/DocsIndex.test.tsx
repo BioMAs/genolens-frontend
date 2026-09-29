@@ -3,7 +3,7 @@
  * Le filtre porte sur le titre, la description et les titres de sections —
  * chercher « volcano » doit trouver un guide qui n'en parle qu'en section.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DocsIndex from '@/components/docs/DocsIndex';
 import type { SearchEntry } from '@/lib/docs';
@@ -39,8 +39,8 @@ it('renders every guide grouped under its category label', () => {
   render(<DocsIndex docs={DOCS} />);
 
   expect(screen.getByRole('heading', { name: 'Getting started' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Analysis' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Enrichment' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Running an analysis' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Biological interpretation' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Analysis pipeline/ })).toHaveAttribute(
     'href',
     '/docs/analysis-pipeline'
@@ -49,7 +49,7 @@ it('renders every guide grouped under its category label', () => {
 
 it('shows no empty category heading', () => {
   render(<DocsIndex docs={DOCS} />);
-  expect(screen.queryByRole('heading', { name: 'Collaboration' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Sharing & exporting' })).not.toBeInTheDocument();
 });
 
 it('filters on the title', async () => {
@@ -80,4 +80,27 @@ it('tells the reader when nothing matches', async () => {
   await userEvent.type(screen.getByRole('searchbox'), 'zzzznotfound');
 
   expect(screen.getByText(/no guide matches/i)).toBeInTheDocument();
+});
+
+it('points newcomers to the start-here guides, and hides them while searching', async () => {
+  const docs: SearchEntry[] = [
+    ...DOCS,
+    {
+      slug: 'first-analysis',
+      title: 'Your first analysis, step by step',
+      description: 'From an empty account to your first results.',
+      category: 'getting-started',
+      order: 20,
+      headings: [],
+    },
+  ];
+  render(<DocsIndex docs={docs} />);
+
+  const start = screen.getByRole('region', { name: /Start here/ });
+  // Seul le guide présent est proposé : les slugs absents sont ignorés.
+  expect(within(start).getAllByRole('link')).toHaveLength(1);
+  expect(within(start).getByRole('link')).toHaveAttribute('href', '/docs/first-analysis');
+
+  await userEvent.type(screen.getByRole('searchbox'), 'gsea');
+  expect(screen.queryByRole('region', { name: /Start here/ })).not.toBeInTheDocument();
 });

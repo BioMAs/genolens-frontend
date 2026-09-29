@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
+import CancelAnalysisButton from '@/components/analyses/CancelAnalysisButton';
 import AnalysisQuotaNotice, {
   useAnalysisQuotaBlocked,
 } from '@/components/analyses/AnalysisQuotaNotice';
@@ -103,21 +104,12 @@ export default function StepLaunch({
     }
   };
 
-  const handleCancel = async () => {
-    if (!analysisId || !confirm('Cancel this analysis?')) return;
-    try {
-      // The delete endpoint acts as cancel for running jobs
-      await fetch(`/api/v2/analyses/${analysisId}`, { method: 'DELETE' });
-    } catch {
-      // Ignore cancel errors
-    }
-  };
-
   const isRunning =
     analysis?.status === SelfServiceAnalysisStatus.PENDING ||
     analysis?.status === SelfServiceAnalysisStatus.RUNNING;
   const isFailed  = analysis?.status === SelfServiceAnalysisStatus.FAILED;
   const isDone    = analysis?.status === SelfServiceAnalysisStatus.DONE;
+  const isCancelled = analysis?.status === SelfServiceAnalysisStatus.CANCELLED;
 
   const progressLog = analysis?.progress_log ?? [];
   const currentStep = analysis?.current_step;
@@ -177,34 +169,42 @@ export default function StepLaunch({
           {/* Status header */}
           <div className={cn(
                  'px-4 py-3 flex items-center gap-3',
-                 isDone ? 'bg-success-soft border-b border-success/30' : isFailed ? 'bg-danger-soft border-b border-danger/30' : 'bg-info-soft border-b border-info/30',
+                 isDone ? 'bg-success-soft border-b border-success/30'
+                 : isFailed ? 'bg-danger-soft border-b border-danger/30'
+                 : isCancelled ? 'bg-surface-2 border-b border-subtle'
+                 : 'bg-info-soft border-b border-info/30',
                )}>
             {isDone   && <CheckCircle className="h-5 w-5 text-success-ink" />}
             {isFailed && <AlertCircle className="h-5 w-5 text-danger-ink" />}
+            {isCancelled && <X className="h-5 w-5 text-secondary" />}
             {isRunning && <Loader className="h-5 w-5 text-info-ink animate-spin" />}
             <div>
               <p className={cn(
                    'text-body-sm font-semibold',
-                   isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-info-ink',
+                   isDone ? 'text-success-ink'
+                   : isFailed ? 'text-danger-ink'
+                   : isCancelled ? 'text-secondary'
+                   : 'text-info-ink',
                  )}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
+                : isCancelled ? 'Analysis cancelled — no quota was used'
                 : currentStep
                   ? (STEP_LABELS[currentStep] ?? currentStep.replace(/_/g, ' '))
                   : 'Analysis queued…'}
               </p>
-              {analysis?.error_message && (
+              {isFailed && analysis?.error_message && (
                 <p className="text-caption text-danger-ink mt-1">{analysis.error_message}</p>
               )}
             </div>
-            {isRunning && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
-              >
-                <X className="h-3 w-3" /> Cancel
-              </button>
+            {isRunning && analysisId && (
+              <div className="ml-auto">
+                <CancelAnalysisButton
+                  analysisId={analysisId}
+                  showIcon
+                  className="rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
+                />
+              </div>
             )}
           </div>
 

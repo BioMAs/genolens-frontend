@@ -10,13 +10,9 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
-
-// Column-name aliases used to auto-detect the grouping (condition) column and to
-// skip obvious sample-identifier columns. Kept in sync with the R pipeline's
-// aliases (run_multimethod_pipeline.R), which it only falls back on when no
-// condition column is sent at launch.
-const CONDITION_ALIASES = ['condition', 'group', 'groupe', 'treatment', 'genotype'];
-const SAMPLE_ID_ALIASES = ['sample', 'sample_id', 'sampleid', 'id', 'name'];
+// The pipeline's own aliases (run_multimethod_pipeline.R), used only to pre-select
+// a column: whichever column the user keeps is sent at launch and R groups by it.
+import { CONDITION_ALIASES, SAMPLE_ID_ALIASES, findAliasColumn } from '@/lib/dataValidation';
 
 interface ComparisonRow {
   id: string;
@@ -63,13 +59,19 @@ export default function ContrastBuilder({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Pre-selection: first alias in pipeline order (not file order), as R would pick
+  // for an uploaded contrast file.
+  const pipelineConditionColumn = useMemo(
+    () => findAliasColumn(columns, CONDITION_ALIASES),
+    [columns],
+  );
+
   // Auto-detect the condition column once columns are known (user can override).
   useEffect(() => {
     if (!columns.length || conditionColumn) return;
-    const byAlias = columns.find((c) => CONDITION_ALIASES.includes(c.toLowerCase()));
-    const nonId = columns.find((c) => !SAMPLE_ID_ALIASES.includes(c.toLowerCase()));
-    setConditionColumn(byAlias ?? nonId ?? columns[0]);
-  }, [columns, conditionColumn]);
+    const nonId = columns.find((c) => !SAMPLE_ID_ALIASES.includes(c.trim().toLowerCase()));
+    setConditionColumn(pipelineConditionColumn ?? nonId ?? columns[0]);
+  }, [columns, conditionColumn, pipelineConditionColumn]);
 
   // Unique, non-empty condition values (order preserved, case untouched — must match R).
   const conditionValues = useMemo(() => {

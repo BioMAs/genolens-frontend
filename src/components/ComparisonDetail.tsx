@@ -43,6 +43,7 @@ import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
 import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import { useDeferredAnchorScroll } from '@/hooks/useDeferredAnchorScroll';
 import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
+import { DEG_EXPORT_COLUMNS, fetchAllDegGenes, toDegExportRow } from '@/hooks/useDegGenes';
 import {
   resolveView,
   upgradeLegacyQuery,
@@ -807,13 +808,21 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                 Exports
               </h3>
               <p className="text-caption text-muted">
-                The gene table of this comparison, and its per-method p-values.
+                Every differentially expressed gene of this comparison at the current thresholds
+                (padj ≤ {thresholds.padj}, |log2FC| ≥ {thresholds.logfc}), and its per-method
+                p-values.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <ExportMenu
-                filename={`${actualComparisonName}_comparison`}
+                fetchData={async () =>
+                  (await fetchAllDegGenes(degDataset.id, actualComparisonName, thresholds)).map(
+                    toDegExportRow
+                  )
+                }
+                filename={`${actualComparisonName}_all_DEGs`}
                 formats={['csv', 'json']}
+                csvColumns={DEG_EXPORT_COLUMNS}
                 variant="outline"
                 size="sm"
               />

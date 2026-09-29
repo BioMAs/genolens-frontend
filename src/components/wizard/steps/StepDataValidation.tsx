@@ -1,16 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useProjectDatasets } from '@/hooks/useProjectData';
+import { useDatasetQuery } from '@/hooks/useDatasets';
 import { Dataset, DatasetStatus } from '@/types';
 import QCDashboard from '@/components/QCDashboard';
-import { AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ChevronRight, Info, XCircle } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { buildValidationReport, ValidationIssue } from '@/lib/dataValidation';
 
 interface StepDataValidationProps {
   projectId: string;
   matrixDatasetId: string;
   samplesDatasetId: string;
+  /** Grouping column picked in the contrast builder; null for an uploaded contrast file. */
+  conditionColumn?: string | null;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -19,6 +23,7 @@ export default function StepDataValidation({
   projectId,
   matrixDatasetId,
   samplesDatasetId,
+  conditionColumn = null,
   onContinue,
   onBack,
 }: StepDataValidationProps) {
@@ -27,24 +32,28 @@ export default function StepDataValidation({
   const matrixDs  = datasets.find(d => d.id === matrixDatasetId);
   const samplesDs = datasets.find(d => d.id === samplesDatasetId);
 
-  // Basic validation signals from dataset metadata
-  const meta = matrixDs?.dataset_metadata as Record<string, unknown> | undefined;
-  const geneCount    = (meta?.n_genes    as number | undefined) ?? (meta?.num_genes as number | undefined);
-  const sampleCount  = (meta?.n_samples  as number | undefined) ?? (meta?.num_samples as number | undefined);
-  const minLibSize   = (meta?.min_lib_size as number | undefined);
+  const isMatrixReady  = matrixDs?.status === DatasetStatus.READY;
+  const isSamplesReady = samplesDs?.status === DatasetStatus.READY;
 
-  const warnings: string[] = [];
-  if (geneCount !== undefined && geneCount < 500) {
-    warnings.push(`Low gene count detected: ${geneCount.toLocaleString()} genes. The pipeline expects ≥ 500 genes.`);
-  }
-  if (minLibSize !== undefined && minLibSize < 100_000) {
-    warnings.push(`At least one sample has fewer than 100,000 reads (min: ${minLibSize.toLocaleString()}). Consider quality filtering.`);
-  }
-  if (sampleCount !== undefined && sampleCount < 4) {
-    warnings.push(`Only ${sampleCount} samples detected. The pipeline typically needs ≥ 2 replicates per group.`);
-  }
+  // Same query (and cache entry) as the ContrastBuilder in the next step.
+  const { data: sampleSheet, isError: sampleSheetError } =
+    useDatasetQuery(samplesDatasetId, 10000, isSamplesReady);
 
-  const isMatrixReady = matrixDs?.status === DatasetStatus.READY;
+  const report = useMemo(
+    () => buildValidationReport({
+      matrixMetadata: matrixDs?.dataset_metadata,
+      sampleRows: sampleSheet?.data,
+      sampleColumns: sampleSheet?.columns,
+      conditionColumn,
+    }),
+    [matrixDs?.dataset_metadata, sampleSheet, conditionColumn],
+  );
+
+  const bothReady = isMatrixReady && isSamplesReady;
+  const warnings = report.issues.filter(i => !i.blocking);
+  const errors   = report.issues.filter(i => i.blocking);
+  const allPassed = bothReady && report.complete && report.issues.length === 0;
+  const metricsUnavailable = bothReady && (sampleSheetError || report.matrixMetricsMissing);
 
   return (
     <div className="space-y-6">
@@ -61,23 +70,47 @@ export default function StepDataValidation({
         <DatasetStatusRow label="Sample Metadata" dataset={samplesDs} />
       </div>
 
+      {/* Blocking problems */}
+      {errors.length > 0 && (
+        <div role="alert" className="rounded-control border border-danger/30 bg-danger-soft p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-danger-ink" />
+            <p className="text-body-sm font-semibold text-danger-ink">Fix this before continuing</p>
+          </div>
+          <IssueList issues={errors} tone="text-danger-ink" />
+        </div>
+      )}
+
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-control border border-warning/30 bg-warning-soft p-4 space-y-2">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="rounded-control border border-warning/30 bg-warning-soft p-4 space-y-3">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-warning-ink" />
-            <p className="text-body-sm font-semibold text-warning-ink">Warnings detected</p>
+            <p className="text-body-sm font-semibold text-warning-ink">
+              {warnings.length === 1 ? '1 warning' : `${warnings.length} warnings`}
+            </p>
           </div>
-          {warnings.map((w, i) => (
-            <p key={i} className="text-caption text-warning-ink pl-6">{w}</p>
-          ))}
-          <p className="text-caption text-warning-ink pl-6 pt-1">
+          <IssueList issues={warnings} tone="text-warning-ink" />
+          <p className="text-caption text-warning-ink pl-6">
             You can continue, but review these before interpreting results.
           </p>
         </div>
       )}
 
-      {warnings.length === 0 && isMatrixReady && (
+      {metricsUnavailable && (
+        <div className="flex items-start gap-2 rounded-control border border-info/30 bg-info-soft px-4 py-3">
+          <Info className="mt-1 h-4 w-4 shrink-0 text-info-ink" />
+          <p className="text-body-sm text-info-ink">
+            {sampleSheetError
+              ? 'The sample sheet could not be read, so it was not checked against the count matrix.'
+              : 'Some checks could not run: per-sample read and gene counts are missing for this ' +
+                'count matrix (it was probably uploaded before these checks existed). Upload it ' +
+                'again to run them.'}
+          </p>
+        </div>
+      )}
+
+      {allPassed && (
         <div className="flex items-center gap-2 rounded-control border border-success/30 bg-success-soft px-4 py-3">
           <CheckCircle className="h-4 w-4 text-success-ink" />
           <p className="text-body-sm text-success-ink font-medium">All checks passed — your data looks good!</p>
@@ -108,7 +141,9 @@ export default function StepDataValidation({
         <button
           type="button"
           onClick={onContinue}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+          disabled={report.blocking}
+          title={report.blocking ? 'Fix the sample mismatch above to continue' : undefined}
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-accent"
         >
           Continue to Settings
           <ChevronRight className="h-4 w-4" />
@@ -118,7 +153,20 @@ export default function StepDataValidation({
   );
 }
 
-// ─── Small helper ─────────────────────────────────────────────────────────────
+// ─── Small helpers ────────────────────────────────────────────────────────────
+function IssueList({ issues, tone }: { issues: ValidationIssue[]; tone: string }) {
+  return (
+    <ul className="space-y-2 pl-6">
+      {issues.map(issue => (
+        <li key={issue.id} data-issue={issue.id}>
+          <p className={cn('text-body-sm font-medium', tone)}>{issue.title}</p>
+          <p className={cn('text-caption', tone)}>{issue.detail}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function DatasetStatusRow({ label, dataset }: { label: string; dataset: Dataset | undefined }) {
   if (!dataset) {
     return (
