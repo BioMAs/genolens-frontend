@@ -272,6 +272,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
   const analysisId = (dataset.dataset_metadata?.analysis_id as string | undefined) ?? '';
   const { data: analysis } = useAnalysis(analysisId, !!analysisId);
   const computedFdr = analysis?.params?.fdr;
+  // Analyses launched before the wizard sent it ran at the R script's default, 0.05.
+  const computedTermFdr = analysis?.params?.enrichment_fdr ?? 0.05;
   const computedLog2fc =
     analysis?.params?.min_log2fc ?? (dataset.dataset_metadata?.min_log2fc as number | undefined);
 
@@ -494,7 +496,7 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
               <Info className="w-3.5 h-3.5 mt-1 shrink-0" aria-hidden />
               <span>
                 {computedFdr != null && computedLog2fc != null
-                  ? `Enrichment was computed during the analysis on DEGs at FDR ${computedFdr} and |log2FC| ≥ ${Number(computedLog2fc.toFixed(2))}. These filters narrow the stored terms; they do not re-run it.`
+                  ? `Enrichment was computed during the analysis on DEGs at FDR ${computedFdr} and |log2FC| ≥ ${Number(computedLog2fc.toFixed(2))}, keeping terms with adj. p-value < ${computedTermFdr}. These filters narrow the stored terms; they do not re-run it.`
                   : 'Enrichment was computed when the results were produced. These filters narrow the stored terms; they do not re-run it.'}
               </span>
             </p>

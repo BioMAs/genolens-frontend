@@ -62,7 +62,7 @@ function dataset(metadata: Record<string, unknown> = {}): Dataset {
   } as unknown as Dataset;
 }
 
-function mockApi(analysisParams?: { fdr: number; min_log2fc: number }) {
+function mockApi(analysisParams?: { fdr: number; min_log2fc: number; enrichment_fdr?: number }) {
   mockGet.mockImplementation((url: string) => {
     if (url.includes('/enrichment-pathways/')) return Promise.resolve({ data: { pathways: PATHWAYS } });
     if (url.includes('/deg-genes/')) return Promise.resolve({ data: { genes: [], pagination: { total_pages: 1 } } });
@@ -178,7 +178,20 @@ describe('the line saying how the enrichment was computed', () => {
   it('shows the wizard default fold change as a readable log2FC', async () => {
     mockApi({ fdr: 0.05, min_log2fc: Math.log2(1.5) });
     await renderPanel(dataset({ analysis_id: 'an-1' }));
-    expect(await screen.findByText(/FDR 0\.05 and \|log2FC\| ≥ 0\.58\./)).toBeInTheDocument();
+    expect(await screen.findByText(/FDR 0\.05 and \|log2FC\| ≥ 0\.58,/)).toBeInTheDocument();
+  });
+
+  it('quotes the term cut-off chosen in the wizard', async () => {
+    mockApi({ fdr: 0.05, min_log2fc: 1, enrichment_fdr: 0.01 });
+    await renderPanel(dataset({ analysis_id: 'an-1' }));
+    expect(await screen.findByText(/keeping terms with adj\. p-value < 0\.01\./)).toBeInTheDocument();
+  });
+
+  // Analyses launched before the wizard sent the field ran at the R script's 0.05.
+  it('falls back to 0.05 for analyses that predate the field', async () => {
+    mockApi({ fdr: 0.05, min_log2fc: 1 });
+    await renderPanel(dataset({ analysis_id: 'an-1' }));
+    expect(await screen.findByText(/keeping terms with adj\. p-value < 0\.05\./)).toBeInTheDocument();
   });
 
   it('claims no thresholds when there is no analysis to read them from', async () => {

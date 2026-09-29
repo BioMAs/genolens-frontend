@@ -14,6 +14,7 @@ import StepAnalysisSettings, {
 } from './steps/StepAnalysisSettings';
 import StepLaunch from './steps/StepLaunch';
 import StepResults from './steps/StepResults';
+import { buildLaunchParams } from './launchParams';
 import { AnalysisParams } from '@/types';
 import { useProjectSummary } from '@/hooks/useProjectData';
 import { PageHeader } from '@/components/ui/page-header';
@@ -165,7 +166,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
                     matrixDatasetId={state.matrixDatasetId}
                     samplesDatasetId={state.samplesDatasetId}
                     contrastsDatasetId={state.contrastsDatasetId}
-                    deseq2Params={{ ...state.deseq2Params, enrichment_databases: state.enrichmentConfig.databases, species: state.species }}
+                    deseq2Params={buildLaunchParams(state.deseq2Params, state.enrichmentConfig, state.species)}
                     analysisId={state.launchedAnalysisId}
                     onLaunched={id => patchState({ launchedAnalysisId: id })}
                     onComplete={id => { patchState({ launchedAnalysisId: id }); goTo(5); }}
