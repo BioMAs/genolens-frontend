@@ -15,6 +15,7 @@ import {
   Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { analysisStepLabel } from '@/utils/analysisSteps';
 
 interface StepLaunchProps {
   projectId: string;
@@ -30,16 +31,6 @@ interface StepLaunchProps {
   onComplete: (analysisId: string) => void;
   onBack: () => void;
 }
-
-const STEP_LABELS: Record<string, string> = {
-  loading_data:       'Loading data',
-  validating:         'Validating inputs',
-  normalizing:        'Normalizing counts',
-  running_deseq2:     'Running analysis',
-  filtering_results:  'Filtering results',
-  saving_results:     'Saving results',
-  done:               'Completed',
-};
 
 export default function StepLaunch({
   projectId,
@@ -187,7 +178,7 @@ export default function StepLaunch({
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
                 : currentStep
-                  ? (STEP_LABELS[currentStep] ?? currentStep.replace(/_/g, ' '))
+                  ? analysisStepLabel(currentStep)
                   : 'Analysis queued…'}
               </p>
               {analysis?.error_message && (
@@ -218,7 +209,7 @@ export default function StepLaunch({
                     <span className={cn(
                             i === progressLog.length - 1 && isRunning ? 'text-info-ink font-medium' : 'text-secondary',
                           )}>
-                      {entry.step.replace(/_/g, ' ')}
+                      {analysisStepLabel(entry.step)}
                       {entry.message ? ` — ${entry.message}` : ''}
                     </span>
                   </li>

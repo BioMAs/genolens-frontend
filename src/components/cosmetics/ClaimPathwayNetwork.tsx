@@ -134,10 +134,10 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Réseau Pathway → Claim
+            Pathway → Claim network
           </h3>
           <p className="mt-1 text-caption" style={{ color: 'var(--text-secondary)' }}>
-            Pathways d'évidence connectés aux claims qu'ils soutiennent. Cliquez sur un claim pour isoler.
+            Evidence pathways linked to the claims they support. Click a claim to isolate it.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -165,7 +165,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
               className="rounded-sm px-3 py-1 text-caption font-medium"
               style={{ background: 'var(--surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)' }}
             >
-              ✕ Réinitialiser
+              ✕ Reset
             </button>
           )}
         </div>
@@ -175,11 +175,11 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       <div className="flex items-center gap-6 text-micro" style={{ color: 'var(--text-secondary)' }}>
         <span className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-pill" style={{ background: scales.directionColors.up }} />
-          UP-régulé
+          Up-regulated
         </span>
         <span className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-pill" style={{ background: scales.directionColors.down }} />
-          DOWN-régulé
+          Down-regulated
         </span>
         <span className="flex items-center gap-2">
           <span className="inline-block h-4 w-4 rounded-pill border-2" style={{ borderColor: 'var(--border-strong)' }} />
@@ -196,13 +196,13 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
       >
         {!hasData ? (
           <div className="flex items-center justify-center py-20 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-            Aucun pathway d'évidence disponible{filterDir !== 'ALL' ? ` pour la direction ${filterDir}` : ''}.
+            No evidence pathway available{filterDir !== 'ALL' ? ` for direction ${filterDir}` : ''}.
           </div>
         ) : (
           <svg
             viewBox={`0 0 ${W} ${H}`}
             style={{ display: 'block', width: '100%', height: 'auto', minHeight: 360 }}
-            aria-label="Réseau pathway-claim"
+            aria-label="Pathway-claim network"
           >
             <defs>
               {['UP', 'DOWN'].map((dir) => (
@@ -276,7 +276,7 @@ export default function ClaimPathwayNetwork({ claims }: Props) {
                         lines: [
                           pw.name,
                           `Direction : ${pw.direction === 'UP' ? '↑ UP' : '↓ DOWN'}`,
-                          `Évidence : ${pw.evidence_level}`,
+                          `Evidence: ${pw.evidence_level}`,
                           `FDR : ${pw.padj.toExponential(2)}`,
                         ],
                       });

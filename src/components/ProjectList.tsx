@@ -156,7 +156,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
                   setProjectToDelete(project);
                 }}
                 className="opacity-0 group-hover:opacity-100 rounded-sm p-1 transition-opacity duration-150 hover:bg-danger-soft"
-                title="Supprimer le projet"
+                title="Delete project"
               >
                 <Trash2 className="h-3.5 w-3.5 text-danger-ink hover:text-danger-ink-hover" />
               </button>

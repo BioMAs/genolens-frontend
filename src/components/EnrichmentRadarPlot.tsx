@@ -6,7 +6,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip,
 import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
-import { canUseAI } from '@/utils/plan';
+import { canUseAI, PAID_PLANS_LABEL } from '@/utils/plan';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 import { cn } from '@/lib/cn';
@@ -264,7 +264,7 @@ export default function EnrichmentRadarPlot({
       console.error('AI selection failed:', err);
       const apiError = err as { response?: { status?: number; data?: { detail?: string } } };
       if (apiError.response?.status === 403) {
-        setError('AI features require a PREMIUM or ADVANCED subscription');
+        setError(`AI features require a ${PAID_PLANS_LABEL} plan.`);
       } else {
         setError(apiError.response?.data?.detail || 'AI selection failed');
       }
@@ -440,7 +440,7 @@ export default function EnrichmentRadarPlot({
                   setShowAiPrompt(true);
                   setShowTermSelector(false);
                 } else {
-                  setError('AI term selection requires a PREMIUM or ADVANCED subscription.');
+                  setError(`AI term selection requires a ${PAID_PLANS_LABEL} plan.`);
                 }
               }}
               className={cn(

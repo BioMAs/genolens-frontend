@@ -1,6 +1,7 @@
 'use client';
 
 import { useLicenseStatus } from '@/hooks/useLicenseStatus';
+import { SUPPORT_EMAIL } from '@/lib/contact';
 
 export default function LicenseExpiredBanner() {
   const { data: license, isLoading } = useLicenseStatus();
@@ -8,7 +9,7 @@ export default function LicenseExpiredBanner() {
   if (isLoading || !license || license.valid) return null;
 
   const expiredAt = license.expires_at
-    ? new Date(license.expires_at * 1000).toLocaleDateString('fr-FR', {
+    ? new Date(license.expires_at * 1000).toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -26,10 +27,10 @@ export default function LicenseExpiredBanner() {
       Creating projects and users and launching analyses are disabled.
       Contact{' '}
       <a
-        href="mailto:support@scilicium.com"
+        href={`mailto:${SUPPORT_EMAIL}`}
         className="underline hover:text-danger-ink-hover transition-colors"
       >
-        support@scilicium.com
+        {SUPPORT_EMAIL}
       </a>{' '}
       to renew your license.
     </div>

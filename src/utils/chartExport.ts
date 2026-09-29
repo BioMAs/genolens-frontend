@@ -406,7 +406,7 @@ export async function exportChartPng(svg: SVGSVGElement, opts: ExportOptions) {
   image.decoding = 'sync';
   await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve();
-    image.onerror = () => reject(new Error('Le graphique n’a pas pu être rendu en image.'));
+    image.onerror = () => reject(new Error('The chart could not be rendered as an image.'));
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
   });
 
@@ -414,7 +414,7 @@ export async function exportChartPng(svg: SVGSVGElement, opts: ExportOptions) {
   canvas.width = width * scale;
   canvas.height = height * scale;
   const context = canvas.getContext('2d');
-  if (!context) throw new Error('Canvas indisponible.');
+  if (!context) throw new Error('Canvas is not available in this browser.');
   // Un canvas part TRANSPARENT : sans cette peinture, un export en theme sombre
   // sort en texte clair sur rien, que tout visualiseur pose sur du blanc.
   context.fillStyle = opts.background;
@@ -422,6 +422,6 @@ export async function exportChartPng(svg: SVGSVGElement, opts: ExportOptions) {
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-  if (!blob) throw new Error('L’image n’a pas pu être encodée.');
+  if (!blob) throw new Error('The image could not be encoded.');
   downloadBlob(blob, `${safeFilename(opts.filename)}.png`);
 }

@@ -14,7 +14,7 @@ import {
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
-import { canUseAI } from '@/utils/plan';
+import { canUseAI, PLAN_GATE_COPY, UPGRADE_HREF } from '@/utils/plan';
 import { cn } from '@/lib/cn';
 
 interface AIInterpretationPanelProps {
@@ -69,7 +69,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     const [data, setData] = useState<InterpretationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
+    const [errorType, setErrorType] = useState<'plan' | 'generic' | null>(null);
     const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -187,11 +187,8 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             const status = (err as ApiError).response?.status;
 
             if (status === 403) {
-                setError("AI interpretation requires a Pro or Advanced plan.");
+                setError(PLAN_GATE_COPY.ai);
                 setErrorType('plan');
-            } else if (status === 402) {
-                setError("You've used all your AI interpretations for this month.");
-                setErrorType('quota');
             } else {
                 setError(
                     getApiErrorDetail(err) ||
@@ -240,9 +237,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             let errorMsg = "Sorry, I couldn't answer your question. The AI service may be starting up — please try again.";
 
             if (status === 403) {
-                errorMsg = "AI interpretation requires a Pro or Advanced plan. Visit /pricing to upgrade.";
-            } else if (status === 402) {
-                errorMsg = "You've used all your AI interpretations for this month. Visit /pricing to upgrade or /profile to buy more tokens.";
+                errorMsg = `${PLAN_GATE_COPY.ai} Visit ${UPGRADE_HREF} to upgrade.`;
             } else if (getApiErrorDetail(err)) {
                 errorMsg = getApiErrorDetail(err) as string;
             }
@@ -297,7 +292,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                 style={{ color: 'var(--text-primary)' }}
                             >
                                 <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--sl-purple)' }} />
-                                Available with PREMIUM or ADVANCED plans:
+                                {PLAN_GATE_COPY.aiAvailableWith}:
                             </h4>
                             <ul className="space-y-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                                 {perks.map((perk) => (
@@ -314,16 +309,13 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
 
                         <div className="flex items-center gap-3">
                             <Link
-                                href="/pricing"
+                                href={UPGRADE_HREF}
                                 className="inline-flex items-center gap-2 rounded-control px-5 py-2.5 text-body-sm font-semibold text-on-accent shadow-sm transition-colors"
                                 style={{ background: 'var(--sl-purple)' }}
                             >
                                 <Zap className="h-4 w-4" />
                                 View Plans →
                             </Link>
-                            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                                Starting at $29/month
-                            </span>
                         </div>
                     </div>
                 </div>
@@ -416,39 +408,11 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                             <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                             <div className="mt-3">
                                 <Link
-                                    href="/pricing"
+                                    href={UPGRADE_HREF}
                                     className="inline-flex items-center gap-1 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
                                     style={{ background: 'var(--sl-purple)' }}
                                 >
                                     View Plans →
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {error && errorType === 'quota' && (
-                <div className="border-t p-4" style={{ background: 'rgba(245,158,11,0.10)', borderColor: 'rgba(245,158,11,0.35)' }}>
-                    <div className="flex items-start gap-2">
-                        <Zap className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
-                        <div className="flex-1">
-                            <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Monthly Quota Reached</p>
-                            <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
-                            <p className="mt-1 text-body-sm" style={{ color: 'var(--text-muted)' }}>Purchase more tokens or upgrade your plan.</p>
-                            <div className="mt-3 flex items-center gap-2">
-                                <Link
-                                    href="/pricing"
-                                    className="inline-flex items-center gap-1 rounded-control px-4 py-2 text-body-sm font-semibold text-on-accent transition-colors"
-                                    style={{ background: 'var(--sl-purple)' }}
-                                >
-                                    Upgrade Plan
-                                </Link>
-                                <Link
-                                    href="/profile#billing"
-                                    className="inline-flex items-center gap-1 rounded-control border px-4 py-2 text-body-sm font-semibold transition-colors hover:bg-[var(--hover-overlay)]"
-                                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                                >
-                                    Buy More Tokens
                                 </Link>
                             </div>
                         </div>
