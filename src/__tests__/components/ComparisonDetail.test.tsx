@@ -11,11 +11,13 @@
  * The panels themselves are stubbed to a marker. They have their own tests, they drag in Plotly,
  * cytoscape and a dozen queries, and none of that is what a wiring test is for.
  */
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DatasetStatus, DatasetType, type Dataset, type Project } from '@/types';
 import ComparisonDetail from '@/components/ComparisonDetail';
+import api from '@/utils/api';
+import { captureDownloads } from '@/test-utils/downloads';
 
 // ── the URL is the screen ───────────────────────────────────────────────────────────
 // Next's `useSearchParams` reflects a native `replaceState` and re-renders (>= 14.1), which is
@@ -104,11 +106,8 @@ jest.mock('@/components/SignatureScorePanel', () => {
   return { __esModule: true, default: Stub };
 });
 
-jest.mock('@/components/ExportMenu', () => {
-  const Stub = () => <div data-testid="ExportMenu">ExportMenu</div>;
-  Stub.displayName = 'ExportMenu';
-  return { __esModule: true, default: Stub };
-});
+// ExportMenu is left real: it is light, and the Share screen's export is wiring worth testing —
+// it shipped once rendering a menu with no data behind it.
 
 jest.mock('@/components/GOEnrichmentAnalysis', () => {
   const Stub = () => <div data-testid="GOEnrichmentAnalysis">GOEnrichmentAnalysis</div>;
@@ -517,5 +516,89 @@ describe('when there is nothing to show', () => {
 
     expect(screen.getByText(/No Differential Expression \(DEG\) dataset found/)).toBeInTheDocument();
     expect(renderedSections()).toEqual([]);
+  });
+});
+
+describe('Share → Exports', () => {
+  const mockApi = api as jest.Mocked<typeof api>;
+
+  // Two pages, so a single-request export (the old thousand-row reach) would lose a gene.
+  const PAGES: Record<number, object[]> = {
+    1: [
+      { gene_id: 'ENSG01', gene_name: 'TP53', log_fc: 2.5, padj: 1e-8, regulation: 'UP' },
+      { gene_id: 'ENSG02', gene_name: null, log_fc: -1.75, padj: 0.004, regulation: 'DOWN' },
+    ],
+    2: [{ gene_id: 'ENSG03', gene_name: 'MYC', log_fc: 1.2, padj: 0.03, regulation: 'UP' }],
+  };
+
+  let downloads: ReturnType<typeof captureDownloads>;
+  let alertSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    downloads = captureDownloads();
+    alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    mockApi.get.mockImplementation(((url: string, config?: { params?: { page?: number } }) => {
+      if (url.includes('/deg-genes/')) {
+        const page = config?.params?.page ?? 1;
+        return Promise.resolve({
+          data: {
+            genes: PAGES[page] ?? [],
+            pagination: { page, page_size: 1000, total: 3, total_pages: 2 },
+          },
+        });
+      }
+      // Nothing else on this screen is under test; leave it pending rather than invent a shape.
+      return new Promise(() => {});
+    }) as typeof api.get);
+  });
+
+  afterEach(() => {
+    downloads.restore();
+    alertSpy.mockRestore();
+  });
+
+  async function exportAs(label: 'Export CSV' | 'Export JSON') {
+    const user = userEvent.setup();
+    renderDetail({ search: 'view=partager' });
+    const exportsSection = document.getElementById('exports') as HTMLElement;
+    await user.click(within(exportsSection).getByRole('button', { name: /^export$/i }));
+    await user.click(within(exportsSection).getByText(label));
+    await waitFor(() => expect(downloads.count()).toBe(1));
+    return (await downloads.files())[0];
+  }
+
+  it('downloads every DEG as CSV, across pages, with the documented columns', async () => {
+    const file = await exportAs('Export CSV');
+
+    expect(file.filename).toBe('KO_vs_WT_all_DEGs.csv');
+    const [header, ...rows] = file.text.split('\n');
+    expect(header).toBe('gene_id,gene_symbol,log2_fold_change,adjusted_p_value,regulation');
+    expect(rows).toEqual([
+      'ENSG01,TP53,2.5,1e-8,UP',
+      'ENSG02,,-1.75,0.004,DOWN',
+      'ENSG03,MYC,1.2,0.03,UP',
+    ]);
+
+    // Fetched on click, full pages, at the screen's thresholds.
+    const degCalls = mockApi.get.mock.calls.filter(([url]) => String(url).includes('/deg-genes/'));
+    expect(degCalls.map(([, config]) => (config as { params: { page: number } }).params.page)).toEqual([1, 2]);
+    expect(degCalls[0][1]).toEqual(
+      expect.objectContaining({
+        params: expect.objectContaining({ page_size: 1000, padj_max: 0.05, logfc_min: 0.58 }),
+      })
+    );
+    expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it('downloads the same rows as JSON, numbers kept as numbers', async () => {
+    const file = await exportAs('Export JSON');
+
+    expect(file.filename).toBe('KO_vs_WT_all_DEGs.json');
+    expect(JSON.parse(file.text)).toEqual([
+      { gene_id: 'ENSG01', gene_symbol: 'TP53', log2_fold_change: 2.5, adjusted_p_value: 1e-8, regulation: 'UP' },
+      { gene_id: 'ENSG02', gene_symbol: '', log2_fold_change: -1.75, adjusted_p_value: 0.004, regulation: 'DOWN' },
+      { gene_id: 'ENSG03', gene_symbol: 'MYC', log2_fold_change: 1.2, adjusted_p_value: 0.03, regulation: 'UP' },
+    ]);
+    expect(alertSpy).not.toHaveBeenCalled();
   });
 });
