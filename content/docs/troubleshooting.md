@@ -23,18 +23,21 @@ Open **Analyses** in the project sidebar, find the analysis and click **View err
 The pipeline reads tab-separated files. A CSV or Excel file can upload without an error and still make the analysis fail. Save the three files as `.tsv` and upload them again (**Replace file**). See [Preparing your files](/docs/preparing-files).
 
 **"samples.tsv must have 'sample_id' and 'condition' columns".**
-Rename the columns of your sample sheet: the sample column must be called `sample_id`, `sample`, `sampleid` or `id`, and the condition column `condition`, `group`, `treatment` or `genotype`.
+Rename the columns of your sample sheet: the sample column must be called `sample_id`, `sample`, `sampleid` or `id`, and the condition column `condition`, `group`, `treatment` or `genotype` (capitals do not matter). The **Data Validation** step of the wizard now flags a missing column before you launch.
 
 **An error about the comparison file.**
 Your comparison file needs three columns: a name (`comparison`), the test condition (`condition1`) and the reference (`condition2`). The easiest fix is to use the comparison builder of the wizard instead of a file.
 
 ## The analysis finished but a comparison is missing, or there are no results
 
-The analysis succeeded but skipped comparisons it could not run. The log explains why. Check that:
+The analysis succeeded but skipped comparisons it could not run. The log explains why. Most of these causes are also flagged by the **Data Validation** step of the wizard, before launch, so look there first when you set up the next analysis. Check that:
 
 - the sample names of the count matrix and the sample sheet are **exactly** the same, including capitals, spaces and underscores;
 - the condition names in your comparisons are spelled exactly as in the sample sheet;
-- each condition still has **at least two samples** after filtering. Samples with too few reads are dropped: look at **Samples kept** and **Quality control** on the analysis page.
+- each condition still has **at least two samples** after filtering. Samples with fewer than 100,000 reads or 500 detected genes are dropped with the default settings: look at **Samples kept** and **Quality control** on the analysis page.
+
+**"Continue" is disabled on the Data Validation step.**
+No sample name of your count matrix appears in the sample sheet. The screen lists both sets of names so you can compare them. Common causes: a prefix or suffix on one side (`S1` against `S1.bam`), a different case (`ctrl_1` against `Ctrl_1`), or the wrong column used for sample names. Fix one file and upload it again with **Replace file**.
 
 An analysis that produced no comparison does not count against your quota.
 
