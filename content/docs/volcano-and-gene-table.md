@@ -61,6 +61,16 @@ Selecting a single gene opens its card:
 
 > **Tip:** look at the box plot before you trust a single gene. A large fold change carried by one outlier sample shows up immediately.
 
+### Finding a gene across your projects
+
+To see where a gene changes without opening each comparison, press **⌘K** (Mac) or **Ctrl+K** (Windows, Linux) and type at least two characters of its symbol or Ensembl ID. The **Genes** group lists the comparisons where the gene was found, in your own projects and in projects shared with you:
+
+- each line reads **gene · comparison · project**, followed by the direction (**Up**, **Down** or **NS**), the log2 fold change and the adjusted p-value;
+- exact matches come first, then genes that only start with what you typed (TP53 before TP53BP1), each sorted by adjusted p-value;
+- only the six best matches are shown, so type more of the name to narrow the list.
+
+Choosing a line opens that comparison with the gene card already open. If no comparison contains the gene, the palette says *No gene matches*. Only comparisons whose results are ready are searched.
+
 ## Working with a set of genes
 
 Selecting several genes opens a summary card instead. It shows the **Strongest fold change** and **Most significant** genes of the set, and offers:

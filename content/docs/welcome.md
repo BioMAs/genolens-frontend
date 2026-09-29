@@ -41,7 +41,7 @@ The left sidebar holds everything:
 
 When you open a project, the sidebar also shows that project's pages: **Overview**, **Setup**, **Analyses**, **Multi-comparison** and **Contrast scatter**.
 
-> **Tip:** press **⌘K** (Mac) or **Ctrl+K** (Windows, Linux) anywhere to open the command palette. From it you can jump to a project or a page, switch between the light and dark themes, turn on the colour-blind-safe chart palette, or replay the guided tour of the current screen.
+> **Tip:** press **⌘K** (Mac) or **Ctrl+K** (Windows, Linux) anywhere to open the command palette. From it you can find a gene in all your comparisons (type its symbol or Ensembl ID), jump to a project or a page, switch between the light and dark themes, turn on the colour-blind-safe chart palette, or replay the guided tour of the current screen.
 
 ## What GenoLens does not do
 
