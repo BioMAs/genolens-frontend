@@ -57,7 +57,14 @@ interface StepUploadFilesProps {
   matrixDatasetId: string | null;
   samplesDatasetId: string | null;
   contrastsDatasetId: string | null;
-  onComplete: (ids: { matrixDatasetId: string; samplesDatasetId: string; contrastsDatasetId: string }) => void;
+  /** Condition column of a contrast file built in the wizard; null for an uploaded file. */
+  conditionColumn: string | null;
+  onComplete: (ids: {
+    matrixDatasetId: string;
+    samplesDatasetId: string;
+    contrastsDatasetId: string;
+    conditionColumn: string | null;
+  }) => void;
 }
 
 // ─── Main step component ──────────────────────────────────────────────────────
@@ -66,6 +73,7 @@ export default function StepUploadFiles({
   matrixDatasetId,
   samplesDatasetId,
   contrastsDatasetId,
+  conditionColumn,
   onComplete,
 }: StepUploadFilesProps) {
   const { data: datasets = [], refetch } = useProjectDatasets(projectId);
@@ -74,6 +82,7 @@ export default function StepUploadFiles({
   const [localMatrix,    setLocalMatrix]    = useState<string | null>(matrixDatasetId);
   const [localSamples,   setLocalSamples]   = useState<string | null>(samplesDatasetId);
   const [localContrasts, setLocalContrasts] = useState<string | null>(contrastsDatasetId);
+  const [localConditionColumn, setLocalConditionColumn] = useState<string | null>(conditionColumn);
 
   // Comparisons can be built from the sample sheet conditions (default) or uploaded as a file.
   const [contrastMode, setContrastMode] = useState<'builder' | 'upload'>('builder');
@@ -106,7 +115,18 @@ export default function StepUploadFiles({
   const handleUploaded = (key: 'matrix' | 'samples' | 'contrasts') => (datasetId: string) => {
     if (key === 'matrix')    setLocalMatrix(datasetId);
     if (key === 'samples')   setLocalSamples(datasetId);
-    if (key === 'contrasts') setLocalContrasts(datasetId);
+    if (key === 'contrasts') {
+      setLocalContrasts(datasetId);
+      // An uploaded contrast file does not say which column it was built on:
+      // the pipeline falls back to its alias detection.
+      setLocalConditionColumn(null);
+    }
+    refetch();
+  };
+
+  const handleContrastsBuilt = (datasetId: string, column: string) => {
+    setLocalContrasts(datasetId);
+    setLocalConditionColumn(column);
     refetch();
   };
 
@@ -198,7 +218,7 @@ export default function StepUploadFiles({
             projectId={projectId}
             samplesDatasetId={localSamples}
             samplesReady={samplesDs?.status === DatasetStatus.READY}
-            onBuilt={handleUploaded('contrasts')}
+            onBuilt={handleContrastsBuilt}
           />
         )}
       </div>
@@ -250,6 +270,7 @@ Treatment,Control`}
                 matrixDatasetId: localMatrix,
                 samplesDatasetId: localSamples,
                 contrastsDatasetId: localContrasts,
+                conditionColumn: localConditionColumn,
               });
             }
           }}

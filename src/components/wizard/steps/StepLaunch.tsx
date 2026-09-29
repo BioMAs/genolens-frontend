@@ -23,6 +23,8 @@ interface StepLaunchProps {
   matrixDatasetId: string;
   samplesDatasetId: string;
   contrastsDatasetId: string;
+  /** Sample-sheet column the comparisons were built on; null lets the pipeline auto-detect. */
+  conditionColumn?: string | null;
   deseq2Params: AP;
   /** ID of an already-launched analysis (e.g. when resuming) */
   analysisId: string | null;
@@ -48,6 +50,7 @@ export default function StepLaunch({
   matrixDatasetId,
   samplesDatasetId,
   contrastsDatasetId,
+  conditionColumn = null,
   deseq2Params,
   analysisId: initialAnalysisId,
   onLaunched,
@@ -88,7 +91,7 @@ export default function StepLaunch({
         matrix_dataset_id:       matrixDatasetId,
         samples_dataset_id:      samplesDatasetId,
         comparisons_dataset_id:  contrastsDatasetId,
-        params:                  deseq2Params,
+        params:                  { ...deseq2Params, condition_column: conditionColumn },
       });
       setAnalysisId(result.id);
       onLaunched(result.id);

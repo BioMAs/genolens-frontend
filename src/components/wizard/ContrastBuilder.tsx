@@ -13,7 +13,8 @@ import {
 
 // Column-name aliases used to auto-detect the grouping (condition) column and to
 // skip obvious sample-identifier columns. Kept in sync with the R pipeline's
-// condition aliases (run_multimethod_pipeline.R).
+// aliases (run_multimethod_pipeline.R), which it only falls back on when no
+// condition column is sent at launch.
 const CONDITION_ALIASES = ['condition', 'group', 'groupe', 'treatment', 'genotype'];
 const SAMPLE_ID_ALIASES = ['sample', 'sample_id', 'sampleid', 'id', 'name'];
 
@@ -31,8 +32,10 @@ interface ContrastBuilderProps {
   samplesDatasetId: string | null;
   /** Whether the sample sheet has finished processing (READY). */
   samplesReady: boolean;
-  /** Called with the id of the freshly created METADATA_CONTRAST dataset. */
-  onBuilt: (datasetId: string) => void;
+  /** Called with the id of the freshly created METADATA_CONTRAST dataset and the
+   *  sample-sheet column its conditions come from (sent at launch so the R
+   *  pipeline compares on that column rather than guessing one). */
+  onBuilt: (datasetId: string, conditionColumn: string) => void;
 }
 
 let _rowSeq = 0;
@@ -153,7 +156,7 @@ export default function ContrastBuilder({
       const res = await api.post<{ dataset_id: string }>('/datasets/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      onBuilt(res.data.dataset_id);
+      onBuilt(res.data.dataset_id, conditionColumn);
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
       const msg = Array.isArray(detail)

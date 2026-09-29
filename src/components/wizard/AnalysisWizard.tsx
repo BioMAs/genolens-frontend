@@ -24,6 +24,8 @@ interface WizardState {
   matrixDatasetId:    string | null;
   samplesDatasetId:   string | null;
   contrastsDatasetId: string | null;
+  /** Sample-sheet column the built comparisons use; null for an uploaded contrast file. */
+  conditionColumn:    string | null;
   // Step 3
   analysisName:       string;
   species:            string;
@@ -38,7 +40,8 @@ const INITIAL_STATE: WizardState = {
   matrixDatasetId:    null,
   samplesDatasetId:   null,
   contrastsDatasetId: null,
-  analysisName:       '',
+  conditionColumn:    null,
+  analysisName:      '',
   species:            'human',
   deseq2Params:       { ...DEFAULT_DESEQ2_PARAMS },
   clusteringConfig:   { ...DEFAULT_CLUSTERING },
@@ -67,6 +70,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
     matrixDatasetId: string;
     samplesDatasetId: string;
     contrastsDatasetId: string;
+    conditionColumn: string | null;
   }) => {
     patchState(ids);
     setCurrentStep(2);
@@ -123,6 +127,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
                   matrixDatasetId={state.matrixDatasetId}
                   samplesDatasetId={state.samplesDatasetId}
                   contrastsDatasetId={state.contrastsDatasetId}
+                  conditionColumn={state.conditionColumn}
                   onComplete={handleUploadComplete}
                 />
               )}
@@ -165,6 +170,7 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
                     matrixDatasetId={state.matrixDatasetId}
                     samplesDatasetId={state.samplesDatasetId}
                     contrastsDatasetId={state.contrastsDatasetId}
+                    conditionColumn={state.conditionColumn}
                     deseq2Params={{ ...state.deseq2Params, enrichment_databases: state.enrichmentConfig.databases, species: state.species }}
                     analysisId={state.launchedAnalysisId}
                     onLaunched={id => patchState({ launchedAnalysisId: id })}
