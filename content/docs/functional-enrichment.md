@@ -19,7 +19,7 @@ Enrichment runs **automatically at the end of every analysis**, for each compari
 
 Look at the directions separately: up- and down-regulated genes often point to different biology, which is blurred when they are pooled.
 
-Genes enter the enrichment at the thresholds set for the analysis: by default **FDR < 0.05** and a **1.5-fold change** (|log2FC| ≥ 0.58). Only terms with an adjusted p-value below 0.05 are kept. The **Filter** panel on the Understand screen shows the thresholds your analysis used.
+Genes enter the enrichment at the thresholds set for the analysis: by default **FDR < 0.05** and a **1.5-fold change** (|log2FC| ≥ 0.58). Only terms with an adjusted p-value below the **Enrichment FDR threshold** (0.05 by default, in the wizard's advanced settings) are kept. The **Filter** panel on the Understand screen shows the thresholds your analysis used.
 
 If the enrichment step fails, the analysis still succeeds: you keep your differential genes, and the enrichment section says no results are available.
 
@@ -50,7 +50,7 @@ Enrichment is computed once, during the analysis. The **Filter** panel only narr
 
 To enrich with other thresholds, run a new analysis with different settings.
 
-The project's enrichment page (open the enrichment dataset from the **Datasets** tab) offers the same results with a **Max p-adj** filter (0.01 to 0.25; values above 0.05 only matter for enrichment files you uploaded, since the analysis keeps terms below 0.05) and a **Radar Plot**. Click **Show genes** to see the genes of a term with their fold changes, or **View in GO browser** to read the definition of a GO term.
+The project's enrichment page (open the enrichment dataset from the **Datasets** tab) offers the same results with a **Max p-adj** filter (0.01 to 0.25; values above the analysis's enrichment FDR threshold, 0.05 by default, only matter for enrichment files you uploaded) and a **Radar Plot**. Click **Show genes** to see the genes of a term with their fold changes, or **View in GO browser** to read the definition of a GO term.
 
 ## Interpreting enrichment well
 
