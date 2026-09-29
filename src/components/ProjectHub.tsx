@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useProjectSummary, useProjectDatasets } from '@/hooks/useProjectData';
 import { useAnalyses } from '@/hooks/useAnalyses';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useProjectMembers } from '@/hooks/useProjectMembers';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { DatasetStatus, DatasetType, SelfServiceAnalysisStatus, Dataset } from '@/types';
 import BookmarkManager from '@/components/BookmarkManager';
 import GeneListManager from '@/components/GeneListManager';
@@ -64,7 +64,6 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
   const { data: summary, isLoading } = useProjectSummary(projectId);
   const { data: datasets = [] } = useProjectDatasets(projectId);
   const { data: analysesData } = useAnalyses(projectId);
-  const { data: membersData } = useProjectMembers(projectId);
 
   const [activeTab, setActiveTab] = useState<ProjectTab>('analyses');
   const [isBookmarkModalOpen, setBookmarkModalOpen] = useState(false);
@@ -88,9 +87,7 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
     return map;
   }, [analysesData?.items]);
 
-  const isOwner = !!project && !!currentUser && project.owner_id === currentUser.id;
-  const currentMember = membersData?.members?.find((m) => m.user_id === currentUser?.id);
-  const canManageData = isOwner || currentMember?.access_level === 'ADMIN';
+  const { isOwner, canManageData } = useProjectPermissions(projectId);
 
   const runningAnalyses = analyses.filter(
     (a) =>
@@ -167,13 +164,15 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
         // Deux actions visibles au plus ; le reste part au depassement, tenu
         // par la primitive et non par la revue.
         actions={[
-          {
-            node: (
-              <Link href={`/projects/${projectId}/setup`} className={buttonClasses({ size: 'sm' })}>
-                <Plus className="h-3.5 w-3.5" /> New analysis
-              </Link>
-            ),
-          },
+          ...(canManageData
+            ? [{
+                node: (
+                  <Link href={`/projects/${projectId}/setup`} className={buttonClasses({ size: 'sm' })}>
+                    <Plus className="h-3.5 w-3.5" /> New analysis
+                  </Link>
+                ),
+              }]
+            : []),
           ...(comparisons.length >= 2
             ? [{
                 node: (

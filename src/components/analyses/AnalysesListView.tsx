@@ -6,6 +6,7 @@ import { useAnalyses } from '@/hooks/useAnalyses';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import AnalysisStatusCard from '@/components/analyses/AnalysisStatusCard';
 import { useAutoTour } from '@/hooks/useAutoTour';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 
 interface Props {
   projectId: string;
@@ -15,6 +16,7 @@ export default function AnalysesListView({ projectId }: Props) {
   useAutoTour('analyses');
   const { data, isLoading, isError } = useAnalyses(projectId);
   const { data: datasets } = useProjectDatasets(projectId);
+  const { canManageData } = useProjectPermissions(projectId);
 
   // Map matrix_dataset_id → GEO accession for datasets imported from NCBI GEO.
   const geoByDatasetId = useMemo(() => {
@@ -51,24 +53,30 @@ export default function AnalysesListView({ projectId }: Props) {
         <h2 className="text-title text-primary">
           Self-service analyses ({analyses.length})
         </h2>
-        <Link
-          data-tour="analyses-new"
-          href={`/projects/${projectId}/analyses/new`}
-          className="inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
-        >
-          + New analysis
-        </Link>
+        {/* Same entry point as the overview's « New analysis »: the setup
+            wizard. Only the owner or an ADMIN member may launch. */}
+        {canManageData ? (
+          <Link
+            data-tour="analyses-new"
+            href={`/projects/${projectId}/setup`}
+            className="inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+          >
+            + New analysis
+          </Link>
+        ) : null}
       </div>
 
       {analyses.length === 0 ? (
         <div className="rounded-control border-2 border-dashed border-line p-12 text-center">
           <p className="text-body-sm text-secondary">No analyses launched for this project.</p>
-          <Link
-            href={`/projects/${projectId}/analyses/new`}
-            className="mt-4 inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
-          >
-            Launch your first analysis
-          </Link>
+          {canManageData ? (
+            <Link
+              href={`/projects/${projectId}/setup`}
+              className="mt-4 inline-flex items-center rounded-sm bg-accent px-4 py-2 text-body-sm font-semibold text-on-accent shadow hover:bg-accent-hover"
+            >
+              Launch your first analysis
+            </Link>
+          ) : null}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
