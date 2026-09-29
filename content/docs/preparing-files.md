@@ -62,9 +62,9 @@ KO_vs_WT	KO	WT
 - `condition1`: the **test** condition.
 - `condition2`: the **reference** condition.
 
-The condition values must match the condition column of the sample sheet exactly.
+The pipeline also accepts `comparison_id`, `comparison_name`, `name` or `contrast` for the name column, `test`, `numerator` or `group1` for the test column, and `ref`, `denominator` or `group2` for the reference column. **All three columns are required**: a file with only `group1` and `group2` has no comparison name, and the analysis stops with an error. When you upload a text (CSV, TSV or TXT) contrast file, the wizard checks its header and warns you if a column is missing.
 
-> **Note:** the *File format reference* panel in the wizard shows a two-column `group1, group2` example. That layout has no comparison name, and the analysis stops with an error. Always include the name column.
+The condition values must match the condition column of the sample sheet exactly.
 
 ## Checklist before uploading
 

@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import { Dataset, DatasetType, DatasetStatus } from '@/types';
 import api from '@/utils/api';
 import {
-  Upload, CheckCircle, Clock, AlertCircle, FileText, ChevronRight, UploadCloud, Database,
+  Upload, CheckCircle, Clock, AlertCircle, AlertTriangle, FileText, ChevronRight, UploadCloud, Database,
 } from 'lucide-react';
 import ContrastBuilder from '../ContrastBuilder';
 import GeoImportPanel from '../GeoImportPanel';
 import { cn } from '@/lib/cn';
+import { checkContrastFile } from '@/lib/contrastHeader';
 
 // ─── Sub-step config ────────────────────────────────────────────────────────
 interface SubStepConfig {
@@ -26,7 +28,7 @@ const SUB_STEPS: SubStepConfig[] = [
     key: 'matrix',
     label: 'Count Matrix',
     description: 'Gene expression count matrix',
-    hint: 'Rows = genes, columns = samples. Accepted: CSV, TSV, XLSX.',
+    hint: 'First column gene_id, optional gene_name, then one column of raw counts per sample. Tab-separated (TSV).',
     type: DatasetType.MATRIX,
     datasetName: 'Count Matrix',
   },
@@ -34,7 +36,7 @@ const SUB_STEPS: SubStepConfig[] = [
     key: 'samples',
     label: 'Sample Metadata',
     description: 'Sample group annotations',
-    hint: 'Must contain a column matching your sample names and a group/condition column.',
+    hint: 'Columns sample_id (the matrix column names) and condition. Tab-separated (TSV).',
     type: DatasetType.METADATA_SAMPLE,
     datasetName: 'Sample Metadata',
   },
@@ -42,13 +44,37 @@ const SUB_STEPS: SubStepConfig[] = [
     key: 'contrasts',
     label: 'Contrast File',
     description: 'Groups to compare (e.g. Treatment vs Control)',
-    hint: 'Two columns: group1 and group2. Each row = one comparison.',
+    hint: 'Three columns: comparison, condition1 (test), condition2 (reference). Each row = one comparison. Tab-separated (TSV).',
     type: DatasetType.METADATA_CONTRAST,
     datasetName: 'Contrast File',
   },
 ];
 
 const ALLOWED_EXT = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'] as const;
+
+// Tab-separated examples, identical to content/docs/preparing-files.md. The contrast
+// layout is the one ContrastBuilder writes and run_multimethod_pipeline.R expects.
+export const FORMAT_EXAMPLES = {
+  matrix: [
+    'gene_id\tgene_name\tCtrl_1\tCtrl_2\tCtrl_3\tTreated_1\tTreated_2\tTreated_3',
+    'ENSG00000141510\tTP53\t1520\t1432\t1611\t2894\t3010\t2766',
+    'ENSG00000012048\tBRCA1\t310\t295\t322\t118\t131\t109',
+  ].join('\n'),
+  samples: [
+    'sample_id\tcondition\tbatch',
+    'Ctrl_1\tControl\trun1',
+    'Ctrl_2\tControl\trun2',
+    'Ctrl_3\tControl\trun1',
+    'Treated_1\tTreated\trun2',
+    'Treated_2\tTreated\trun1',
+    'Treated_3\tTreated\trun2',
+  ].join('\n'),
+  contrasts: [
+    'comparison\tcondition1\tcondition2',
+    'Treated_vs_Control\tTreated\tControl',
+    'KO_vs_WT\tKO\tWT',
+  ].join('\n'),
+} as const;
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 interface StepUploadFilesProps {
@@ -210,30 +236,45 @@ export default function StepUploadFiles({
           File format reference
         </summary>
         <div className="mt-3 space-y-3 text-caption text-secondary">
+          <p>
+            Save each file as <strong>tab-separated text</strong> (.tsv or .txt): the analysis
+            pipeline reads tab-separated files. Full rules in{' '}
+            <Link href="/docs/preparing-files" className="font-medium text-accent-ink underline underline-offset-2">
+              Preparing your files
+            </Link>.
+          </p>
           <div>
-            <p className="font-semibold text-primary">Count Matrix (CSV/TSV)</p>
+            <p className="font-semibold text-primary">Count Matrix (TSV)</p>
+            <p className="mt-1">
+              First column <code>gene_id</code>, optional <code>gene_name</code>, then one column
+              of raw integer counts per sample.
+            </p>
             <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
-{`gene_id,Sample_A1,Sample_A2,Sample_B1,Sample_B2
-ENSG000001,42,38,120,130
-ENSG000002,5,8,3,4`}
+              {FORMAT_EXAMPLES.matrix}
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-primary">Sample Metadata (CSV/TSV)</p>
+            <p className="font-semibold text-primary">Sample Metadata (TSV)</p>
+            <p className="mt-1">
+              A <code>sample_id</code> column (or <code>sample</code>, <code>sampleid</code>,{' '}
+              <code>id</code>) whose values are the matrix column names, and a{' '}
+              <code>condition</code> column (or <code>group</code>, <code>treatment</code>,{' '}
+              <code>genotype</code>). Optional <code>batch</code>.
+            </p>
             <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
-{`sample,condition,batch
-Sample_A1,Control,1
-Sample_A2,Control,1
-Sample_B1,Treatment,2
-Sample_B2,Treatment,2`}
+              {FORMAT_EXAMPLES.samples}
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-primary">Contrast File (CSV/TSV) — optional</p>
-            <p className="mt-1">Only needed if you upload comparisons instead of building them from the sample sheet conditions.</p>
+            <p className="font-semibold text-primary">Contrast File (TSV) — optional</p>
+            <p className="mt-1">
+              Only needed if you upload comparisons instead of building them from the sample sheet
+              conditions. Three columns: <code>comparison</code> (a unique name),{' '}
+              <code>condition1</code> (the test condition) and <code>condition2</code> (the
+              reference). A positive log2 fold change means higher in the test condition.
+            </p>
             <pre className="mt-1 rounded-sm bg-surface border border-line p-2 overflow-x-auto">
-{`group1,group2
-Treatment,Control`}
+              {FORMAT_EXAMPLES.contrasts}
             </pre>
           </div>
         </div>
@@ -282,6 +323,9 @@ function UploadCardWithProjectId({
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Non-blocking: a contrast header the pipeline cannot read. Kept after upload so it
+  // is still visible next to the Continue button.
+  const [headerWarning, setHeaderWarning] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -291,6 +335,9 @@ function UploadCardWithProjectId({
       return;
     }
     setError(null);
+    if (config.key === 'contrasts') {
+      setHeaderWarning(await checkContrastFile(file).catch(() => null));
+    }
     setUploading(true);
     try {
       const form = new FormData();
@@ -331,120 +378,137 @@ function UploadCardWithProjectId({
     if (file) uploadFile(file);
   };
 
-  const status = dataset?.status;
-
-  if (status === DatasetStatus.READY) {
-    return (
-      <div className="flex items-center gap-3 rounded-control border border-success/30 bg-success-soft px-4 py-3">
-        <CheckCircle className="h-5 w-5 text-success-ink shrink-0" />
-        <div className="min-w-0">
-          <p className="text-body-sm font-semibold text-success-ink">{config.label}</p>
-          <p className="text-caption text-success-ink truncate">{dataset?.name}</p>
-          <button
-            type="button"
-            className="mt-1 text-micro text-success-ink underline"
-            onClick={() => inputRef.current?.click()}
-          >
-            Replace file
-          </button>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.tsv,.txt,.xlsx,.xls"
-          className="hidden"
-          onChange={handleChange}
-        />
-      </div>
-    );
-  }
-
-  if (status === DatasetStatus.PROCESSING || status === DatasetStatus.PENDING) {
-    return (
-      <div className="flex items-center gap-3 rounded-control border border-info/30 bg-info-soft px-4 py-3">
-        <Clock className="h-5 w-5 text-info-ink animate-spin shrink-0" />
-        <div>
-          <p className="text-body-sm font-semibold text-info-ink">{config.label}</p>
-          <p className="text-caption text-info-ink">Processing… this may take a moment.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === DatasetStatus.FAILED) {
-    return (
-      <div className="flex flex-col gap-2 rounded-control border border-danger/30 bg-danger-soft px-4 py-3">
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-danger-ink shrink-0" />
-          <div>
-            <p className="text-body-sm font-semibold text-danger-ink">{config.label} — processing failed</p>
-            <p className="text-caption text-danger-ink">{dataset?.error_message ?? 'Unknown error'}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger-hover"
-        >
-          Try a different file
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.tsv,.txt,.xlsx,.xls"
-          className="hidden"
-          onChange={handleChange}
-        />
-      </div>
-    );
-  }
-
-  // Not uploaded yet
+  const card = renderCard();
+  if (!headerWarning) return card;
   return (
-    <div
-      className={cn(
-        'rounded-card border-2 transition-colors',
-        isActive ? dragging ? 'border-accent bg-accent-soft' : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft' : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none',
-        'p-5',
-      )}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
-    >
-      <div className="flex flex-col items-center text-center gap-2">
-        <div className={cn('rounded-pill p-2', isActive ? 'bg-accent-soft' : 'bg-surface-2')}>
-          {uploading
-            ? <Clock className="h-5 w-5 text-accent-ink animate-spin" />
-            : <Upload className={cn('h-5 w-5', isActive ? 'text-accent-ink' : 'text-muted')} />}
-        </div>
-        <div>
-          <p className={cn('text-body-sm font-semibold', isActive ? 'text-primary' : 'text-muted')}>
-            {config.label}
-          </p>
-          <p className="text-caption text-muted mt-1">{config.description}</p>
-        </div>
-        {isActive && !uploading && (
-          <>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="mt-1 rounded-sm bg-accent px-3 py-1.5 text-caption font-semibold text-on-accent hover:bg-accent-hover"
-            >
-              Choose file
-            </button>
-            <p className="text-micro text-muted">{config.hint}</p>
-          </>
-        )}
-        {uploading && <p className="text-caption text-accent-ink">Uploading…</p>}
-        {error && <p className="text-caption text-danger-ink mt-1">{error}</p>}
+    <div className="space-y-2">
+      {card}
+      <div
+        role="alert"
+        className="flex items-start gap-2 rounded-control border border-warning/30 bg-warning-soft px-4 py-3 text-caption text-warning-ink"
+      >
+        <AlertTriangle className="h-4 w-4 shrink-0" />
+        <p>{headerWarning}</p>
       </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".csv,.tsv,.txt,.xlsx,.xls"
-        className="hidden"
-        onChange={handleChange}
-      />
     </div>
   );
+
+  function renderCard() {
+    const status = dataset?.status;
+
+    if (status === DatasetStatus.READY) {
+      return (
+        <div className="flex items-center gap-3 rounded-control border border-success/30 bg-success-soft px-4 py-3">
+          <CheckCircle className="h-5 w-5 text-success-ink shrink-0" />
+          <div className="min-w-0">
+            <p className="text-body-sm font-semibold text-success-ink">{config.label}</p>
+            <p className="text-caption text-success-ink truncate">{dataset?.name}</p>
+            <button
+              type="button"
+              className="mt-1 text-micro text-success-ink underline"
+              onClick={() => inputRef.current?.click()}
+            >
+              Replace file
+            </button>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.tsv,.txt,.xlsx,.xls"
+            className="hidden"
+            onChange={handleChange}
+          />
+        </div>
+      );
+    }
+
+    if (status === DatasetStatus.PROCESSING || status === DatasetStatus.PENDING) {
+      return (
+        <div className="flex items-center gap-3 rounded-control border border-info/30 bg-info-soft px-4 py-3">
+          <Clock className="h-5 w-5 text-info-ink animate-spin shrink-0" />
+          <div>
+            <p className="text-body-sm font-semibold text-info-ink">{config.label}</p>
+            <p className="text-caption text-info-ink">Processing… this may take a moment.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === DatasetStatus.FAILED) {
+      return (
+        <div className="flex flex-col gap-2 rounded-control border border-danger/30 bg-danger-soft px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-danger-ink shrink-0" />
+            <div>
+              <p className="text-body-sm font-semibold text-danger-ink">{config.label} — processing failed</p>
+              <p className="text-caption text-danger-ink">{dataset?.error_message ?? 'Unknown error'}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger-hover"
+          >
+            Try a different file
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.tsv,.txt,.xlsx,.xls"
+            className="hidden"
+            onChange={handleChange}
+          />
+        </div>
+      );
+    }
+
+    // Not uploaded yet
+    return (
+      <div
+        className={cn(
+          'rounded-card border-2 transition-colors',
+          isActive ? dragging ? 'border-accent bg-accent-soft' : 'border-dashed border-accent-ring bg-surface hover:border-accent hover:bg-accent-soft' : 'border-dashed border-line bg-surface-2 opacity-60 pointer-events-none',
+          'p-5',
+        )}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center text-center gap-2">
+          <div className={cn('rounded-pill p-2', isActive ? 'bg-accent-soft' : 'bg-surface-2')}>
+            {uploading
+              ? <Clock className="h-5 w-5 text-accent-ink animate-spin" />
+              : <Upload className={cn('h-5 w-5', isActive ? 'text-accent-ink' : 'text-muted')} />}
+          </div>
+          <div>
+            <p className={cn('text-body-sm font-semibold', isActive ? 'text-primary' : 'text-muted')}>
+              {config.label}
+            </p>
+            <p className="text-caption text-muted mt-1">{config.description}</p>
+          </div>
+          {isActive && !uploading && (
+            <>
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="mt-1 rounded-sm bg-accent px-3 py-1.5 text-caption font-semibold text-on-accent hover:bg-accent-hover"
+              >
+                Choose file
+              </button>
+              <p className="text-micro text-muted">{config.hint}</p>
+            </>
+          )}
+          {uploading && <p className="text-caption text-accent-ink">Uploading…</p>}
+          {error && <p className="text-caption text-danger-ink mt-1">{error}</p>}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.tsv,.txt,.xlsx,.xls"
+          className="hidden"
+          onChange={handleChange}
+        />
+      </div>
+    );
+  }
 }
