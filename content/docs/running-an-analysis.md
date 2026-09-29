@@ -19,7 +19,19 @@ You can only continue once all three files are marked ready.
 
 ## Data Validation
 
-This screen lists your files and their status, with library sizes for your samples. Sample and gene filtering happens later, during the analysis: samples with too few reads are dropped at that point.
+This screen lists your files and their status, with library sizes for your samples, and checks your data before anything runs. It warns you when:
+
+- a sample has fewer than **100,000 reads** or fewer than **500 detected genes**. With the default settings the analysis drops these samples, so the warning names them now. If the low depth is expected, lower **Min reads / sample** or **Min genes / sample** in the next step (Advanced mode);
+- the count matrix has fewer than **4 samples**, which means fewer than two replicates per condition for a comparison;
+- sample names do not match between the two files: matrix columns missing from the sample sheet, or sample-sheet entries with no column in the matrix. Names must match exactly, including capitals;
+- the sample sheet has no column the analysis recognises for sample names (`sample_id`, `sample`, `sampleid` or `id`) or for conditions (`condition`, `group`, `treatment` or `genotype`);
+- a condition has fewer than **2 samples**. Comparisons involving it are skipped.
+
+Warnings do not stop you: you can continue and decide later. The one exception is when **no** sample of the count matrix matches the sample sheet. The analysis cannot run in that case, so **Continue** stays disabled until you fix one of the files (**Replace file** in the previous step).
+
+**All checks passed** appears only when every check ran and found nothing. For a count matrix uploaded before these checks existed, the per-sample figures are missing and the screen says so; upload the matrix again to check it.
+
+The filtering itself still happens during the analysis, using the thresholds from **Analysis Settings**.
 
 ## Analysis Settings
 
