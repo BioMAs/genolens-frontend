@@ -16,6 +16,7 @@ import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import { canUseAI, PLAN_GATE_COPY, UPGRADE_HREF } from '@/utils/plan';
 import { cn } from '@/lib/cn';
+import { SUPPORT_EMAIL } from '@/lib/contact';
 
 interface AIInterpretationPanelProps {
     datasetId: string;
@@ -426,12 +427,17 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                         <div className="flex-1">
                             <p className="text-body-sm font-semibold" style={{ color: 'var(--sl-red-dark)' }}>Error</p>
                             <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
-                            {error.includes('memory') && (
+                            {/* Inference runs on a remote GPU service, so an out-of-memory
+                                error is on our side and the user cannot fix it locally. The
+                                former hint (raise Docker RAM) dated from local Ollama. */}
+                            {/memory/i.test(error) && (
                                 <div
                                     className="mt-2 rounded-control p-2 text-caption"
                                     style={{ background: 'var(--sl-red-light)', color: 'var(--sl-red-dark)' }}
                                 >
-                                    <strong>Solution:</strong> Increase Docker RAM to 8+ GB in Docker Desktop → Settings → Resources → Memory
+                                    The AI service is under heavy load. Please try again in a few minutes.
+                                    If it keeps happening, contact{' '}
+                                    <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>.
                                 </div>
                             )}
                         </div>

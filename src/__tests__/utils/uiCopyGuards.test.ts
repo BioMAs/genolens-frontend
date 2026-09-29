@@ -33,6 +33,10 @@ describe('UI copy guards', () => {
     expect(offenders(/status === 402/)).toEqual([]);
   });
 
+  it('gives end users no local infrastructure instructions', () => {
+    expect(offenders(/Docker Desktop|Increase Docker RAM/)).toEqual([]);
+  });
+
   it('uses a single support address, from lib/contact', () => {
     expect(SUPPORT_EMAIL).toBe('support@scilicium.com');
     const hardCoded = SOURCES.filter(
