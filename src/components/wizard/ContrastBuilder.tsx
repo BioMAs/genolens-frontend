@@ -10,12 +10,9 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
-
-// Column-name aliases used to auto-detect the grouping (condition) column and to
-// skip obvious sample-identifier columns. Kept in sync with the R pipeline's
-// condition aliases (run_multimethod_pipeline.R).
-const CONDITION_ALIASES = ['condition', 'group', 'groupe', 'treatment', 'genotype'];
-const SAMPLE_ID_ALIASES = ['sample', 'sample_id', 'sampleid', 'id', 'name'];
+// The pipeline's own aliases (run_multimethod_pipeline.R): the grouping column R
+// uses is the one comparisons must be built on.
+import { CONDITION_ALIASES, SAMPLE_ID_ALIASES, findAliasColumn } from '@/lib/dataValidation';
 
 interface ComparisonRow {
   id: string;
@@ -60,13 +57,18 @@ export default function ContrastBuilder({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // The column R will group samples by: first alias in pipeline order, not file order.
+  const pipelineConditionColumn = useMemo(
+    () => findAliasColumn(columns, CONDITION_ALIASES),
+    [columns],
+  );
+
   // Auto-detect the condition column once columns are known (user can override).
   useEffect(() => {
     if (!columns.length || conditionColumn) return;
-    const byAlias = columns.find((c) => CONDITION_ALIASES.includes(c.toLowerCase()));
-    const nonId = columns.find((c) => !SAMPLE_ID_ALIASES.includes(c.toLowerCase()));
-    setConditionColumn(byAlias ?? nonId ?? columns[0]);
-  }, [columns, conditionColumn]);
+    const nonId = columns.find((c) => !SAMPLE_ID_ALIASES.includes(c.trim().toLowerCase()));
+    setConditionColumn(pipelineConditionColumn ?? nonId ?? columns[0]);
+  }, [columns, conditionColumn, pipelineConditionColumn]);
 
   // Unique, non-empty condition values (order preserved, case untouched — must match R).
   const conditionValues = useMemo(() => {
@@ -241,6 +243,32 @@ export default function ContrastBuilder({
           {conditionValues.length} conditions detected: {conditionValues.join(', ')}
         </p>
       </div>
+
+      {conditionColumn !== pipelineConditionColumn && (
+        <div
+          data-testid="condition-column-mismatch"
+          className="flex items-start gap-2 rounded-control border border-warning/30 bg-warning-soft px-3 py-2 text-caption text-warning-ink"
+        >
+          <AlertCircle className="h-4 w-4 shrink-0 mt-1" />
+          <p>
+            {pipelineConditionColumn ? (
+              <>
+                The analysis groups samples by the <span className="font-medium">{pipelineConditionColumn}</span> column,
+                not <span className="font-medium">{conditionColumn}</span>. Comparisons built on this column
+                will not match any group — pick <span className="font-medium">{pipelineConditionColumn}</span>,
+                or rename the columns in your sample sheet and upload it again.
+              </>
+            ) : (
+              <>
+                The analysis only recognises a grouping column named condition, group, treatment or
+                genotype (any case), and stops without one. Rename
+                the <span className="font-medium">{conditionColumn}</span> column in your sample sheet
+                and upload it again.
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Comparison rows */}
       <div className="space-y-3">
