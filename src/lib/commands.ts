@@ -8,7 +8,13 @@
  * main, une fois sur deux.
  */
 
+import { PARAM_GENE } from '@/components/comparison/explorerUrl';
+import type { GeneSearchResult } from '@/types/gene-search';
+
 export type CommandKind = 'navigate' | 'project' | 'gene' | 'action';
+
+/** Sens de variation d'un gene dans une comparaison, tel que l'ingestion l'a classe. */
+export type GeneDirection = 'up' | 'down' | 'ns';
 
 export interface Command {
   id: string;
@@ -20,6 +26,8 @@ export interface Command {
   keywords?: string[];
   href?: string;
   run?: () => void;
+  /** Genes seulement : le sens de variation, affiche en tete de la precision. */
+  direction?: GeneDirection;
 }
 
 export interface CommandGroup {
@@ -157,4 +165,58 @@ export function filterCommands(groups: CommandGroup[], query: string): CommandGr
 /** La liste a plat, dans l'ordre d'affichage — c'est elle que le clavier parcourt. */
 export function flattenCommands(groups: CommandGroup[]): Command[] {
   return groups.flatMap((g) => g.items);
+}
+
+/**
+ * La page de comparaison ou vit ce resultat, gene deja ouvert.
+ *
+ * Un dataset produit par une analyse a une URL d'analyse ; un DEG televerse n'en a
+ * pas et passe par la route de projet. `?gene=` porte l'IDENTIFIANT, pas le
+ * symbole : c'est la cle primaire de la table des DEG, et `geneKeys` la rapproche
+ * du symbole cote volcano. Un symbole absent ne casse donc pas le lien.
+ */
+export function geneHref(hit: GeneSearchResult): string {
+  const comparison = encodeURIComponent(hit.comparison_name);
+  const base = hit.analysis_id
+    ? `/projects/${hit.project_id}/analyses/${hit.analysis_id}/comparisons/${comparison}`
+    : `/projects/${hit.project_id}/comparisons/${comparison}`;
+  const params = new URLSearchParams({ [PARAM_GENE]: hit.gene_id });
+  return `${base}?${params.toString()}`;
+}
+
+/** `UP` / `DOWN` du backend ; tout le reste (`NS`, absent) est non significatif. */
+export function geneDirection(regulation: string | null | undefined): GeneDirection {
+  const value = regulation?.toUpperCase();
+  if (value === 'UP') return 'up';
+  if (value === 'DOWN') return 'down';
+  return 'ns';
+}
+
+function formatLogFc(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return `log2FC ${value > 0 ? '+' : ''}${value.toFixed(2)}`;
+}
+
+function formatPadj(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  // En dessous du millieme, l'ecriture decimale ne dit plus rien a l'oeil.
+  return `padj ${value < 0.001 ? value.toExponential(1) : value.toFixed(3)}`;
+}
+
+/**
+ * Un resultat de recherche de gene = une commande « GENE · comparaison · projet ».
+ *
+ * Le libelle nomme OU le gene a ete trouve, parce que le meme gene revient dans
+ * chaque comparaison : sans la comparaison et le projet, six lignes « TP53 »
+ * identiques ne se distingueraient pas. Les chiffres vont dans la precision.
+ */
+export function buildGeneCommands(hits: GeneSearchResult[]): Command[] {
+  return hits.map((hit) => ({
+    id: `gene:${hit.dataset_id}:${hit.comparison_name}:${hit.gene_id}`,
+    label: [hit.gene_symbol, hit.comparison_name, hit.project_name].join(' · '),
+    hint: [formatLogFc(hit.log_fc), formatPadj(hit.padj)].filter(Boolean).join(' · ') || undefined,
+    kind: 'gene' as const,
+    direction: geneDirection(hit.regulation),
+    href: geneHref(hit),
+  }));
 }
