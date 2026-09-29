@@ -11,8 +11,10 @@ order: 30
 
 | What | Where | Content |
 |---|---|---|
-| **Differential genes** | Gene table, export menu (CSV or JSON) | Gene ID, symbol, log2 fold change, adjusted p-value and direction, at the current thresholds and filters. Up to the first 1,000 genes. |
-| **Full results, all methods** | **Share → Per-method p-values (.csv)**, or **Download all methods (.csv)** in Method statistics | Every tested gene, with the statistics of each method. Use this file for complete tables and supplementary data. |
+| **All differential genes** | **Share → Exports → Export** (CSV or JSON) | Every differential gene of the comparison at the current thresholds, with no row limit: gene ID, symbol, log2 fold change, adjusted p-value and direction. Use this file for complete DEG lists. |
+| **Differential genes, as filtered** | Gene table, export menu (CSV or JSON) | The same columns, with the table's direction filter and selection applied. Up to the first 1,000 genes. For the complete list, use the Share export above. |
+| **Full results, all methods** | **Share → Per-method p-values (.csv)**, or **Download all methods (.csv)** in Method statistics | Every tested gene, significant or not, with the statistics of each method. Use this file for supplementary data. |
+| **A dataset's table** | Dataset page, **Export** (CSV or JSON) | Every row of the dataset that matches your ID search, with the columns chosen in **Columns** (all columns if none is chosen). |
 | **A selection of genes** | Selection card, export menu | The genes you selected. |
 | **Enrichment terms** | Enrichment table, export menu (CSV, JSON or HTML) | Terms, statistics and genes. |
 | **GSEA results** | GSEA table, export menu | Gene sets, NES, FDR and leading edge. |
