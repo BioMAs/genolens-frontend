@@ -70,7 +70,7 @@ describe('low reads per sample', () => {
     const issue = r.issues.find(i => i.id === 'low-reads')!;
     expect(issue.title).toBe('2 samples with fewer than 100,000 reads');
     expect(issue.detail).toContain('S2 (85,000), S4 (99,999)');
-    expect(issue.detail).toContain('Min reads per sample');
+    expect(issue.detail).toContain('"Min reads / sample" (Advanced mode)');
     expect(issue.blocking).toBe(false);
   });
 

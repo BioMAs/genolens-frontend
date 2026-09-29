@@ -107,7 +107,7 @@ function lowSampleIssue(
       detail:
         `${listSamples(names)}. With the default settings the pipeline removes ` +
         `${plural(low.length, 'this sample', 'these samples')} before the analysis. ` +
-        `Check the library, or lower "${setting}" in the next step if this depth is expected.`,
+        `Check the library, or lower "${setting}" (Advanced mode) in the next step if this depth is expected.`,
       blocking: false,
     };
   }
@@ -117,7 +117,7 @@ function lowSampleIssue(
       title: `At least one sample has fewer than ${fmt(threshold)} ${what}`,
       detail:
         `Lowest value: ${fmt(min)}. With the default settings the pipeline removes such samples ` +
-        `before the analysis. Check the library, or lower "${setting}" in the next step.`,
+        `before the analysis. Check the library, or lower "${setting}" (Advanced mode) in the next step.`,
       blocking: false,
     };
   }
@@ -138,13 +138,13 @@ export function buildValidationReport({
   if (matrixMetricsMissing) complete = false;
 
   const lowReads = lowSampleIssue(
-    'low-reads', qc.libSizes, qc.minLibSize, MIN_READS_PER_SAMPLE, 'reads', 'Min reads per sample',
+    'low-reads', qc.libSizes, qc.minLibSize, MIN_READS_PER_SAMPLE, 'reads', 'Min reads / sample',
   );
   if (lowReads) issues.push(lowReads);
 
   const lowGenes = lowSampleIssue(
     'low-genes', qc.detectedGenes, qc.minDetectedGenes, MIN_DETECTED_GENES_PER_SAMPLE,
-    'detected genes', 'Min genes per sample',
+    'detected genes', 'Min genes / sample',
   );
   if (lowGenes) issues.push(lowGenes);
 
