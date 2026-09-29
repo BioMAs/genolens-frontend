@@ -19,7 +19,7 @@ Enrichment runs **automatically at the end of every analysis**, for each compari
 
 Look at the directions separately: up- and down-regulated genes often point to different biology, which is blurred when they are pooled.
 
-Genes enter the enrichment at FDR < 0.05 and **|log2FC| ≥ 1** (2-fold), a stricter fold change than the default DEG threshold. The enrichment works on a clearer signal as a result.
+Genes enter the enrichment at the thresholds set for the analysis: by default **FDR < 0.05** and a **1.5-fold change** (|log2FC| ≥ 0.58). Only terms with an adjusted p-value below 0.05 are kept. The enrichment filters on the Understand screen show the thresholds your analysis used.
 
 If the enrichment step fails, the analysis still succeeds: you keep your differential genes, and the enrichment section says no results are available.
 
@@ -42,9 +42,15 @@ On the comparison's **Understand** screen, choose **Over-representation (ORA)**,
 - **Histogram** and **Radar Chart**: the same terms, drawn differently.
 - **Table**: every term, with its genes. Export it as CSV, JSON or HTML.
 
-Enrichment is computed once, during the analysis. The controls on this screen choose which part of the stored results you see; they do not start a new computation.
+Enrichment is computed once, during the analysis. The **Filter** panel only narrows the stored results. It does not start a new computation:
 
-The project's enrichment page (open the enrichment dataset from the **Datasets** tab) offers the same results with a **Max p-adj** filter (0.01 to 0.25) and a **Radar Plot**. Click **Show genes** to see the genes of a term with their fold changes, or **View in GO browser** to read the definition of a GO term.
+- **Database / Category** and **Regulation** choose which stored enrichment you see;
+- **Show terms with adj. p-value ≤** hides terms above a stricter cut-off than the one used for the analysis;
+- **Min / Max term size** hide terms annotated to too few or too many genes (the second number in the table's **Genes** column). Raising the maximum drops broad, generic terms.
+
+To enrich with other thresholds, run a new analysis with different settings.
+
+The project's enrichment page (open the enrichment dataset from the **Datasets** tab) offers the same results with a **Max p-adj** filter (0.01 to 0.25; values above 0.05 only matter for enrichment files you uploaded, since the analysis keeps terms below 0.05) and a **Radar Plot**. Click **Show genes** to see the genes of a term with their fold changes, or **View in GO browser** to read the definition of a GO term.
 
 ## Interpreting enrichment well
 
