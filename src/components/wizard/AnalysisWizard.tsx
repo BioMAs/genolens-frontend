@@ -182,7 +182,6 @@ export default function AnalysisWizard({ projectId }: AnalysisWizardProps) {
                     analysisId={state.launchedAnalysisId}
                     matrixDatasetId={state.matrixDatasetId}
                     clusteringConfig={state.clusteringConfig}
-                    enrichmentConfig={state.enrichmentConfig}
                     onRunNew={handleRunNew}
                   />
                 )}
