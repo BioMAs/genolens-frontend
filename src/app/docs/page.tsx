@@ -7,14 +7,14 @@ import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
   title: 'Documentation — GenoLens',
-  description: 'Guides for analysing, exploring and sharing transcriptomics results.',
+  description:
+    'How to use GenoLens: preparing your files, running an analysis, reading and sharing the results.',
 };
 
 export default async function DocsPage() {
-  // Même garde que les autres pages de l'application. Ces guides étaient de
-  // la documentation interne : plusieurs détaillent les endpoints de l'API
-  // sous « Backend API », et la page était servie en HTML statique, donc
-  // lisible sans compte.
+  // Même garde que les autres pages de l'application : les guides décrivent
+  // les écrans, les modules payants et leurs limites, et s'adressent aux
+  // utilisateurs connectés.
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,7 +30,7 @@ export default async function DocsPage() {
     <div className="page-container">
       <PageHeader
         title="Documentation"
-        description="Guides for analysing, exploring and sharing your transcriptomics results."
+        description="How to prepare your data, run an analysis, and read and share the results."
         crumbs={[{ label: 'Documentation' }]}
       />
       <DocsIndex docs={docs} />

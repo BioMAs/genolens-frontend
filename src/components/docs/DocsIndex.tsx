@@ -11,6 +11,12 @@ interface DocsIndexProps {
   docs: SearchEntry[];
 }
 
+/**
+ * Parcours d'entrée, dans l'ordre où un nouvel utilisateur en a besoin.
+ * Un slug absent de `docs` (guide renommé) est simplement ignoré.
+ */
+const START_HERE = ['welcome', 'first-analysis', 'preparing-files'];
+
 /** Le filtre porte aussi sur les titres de sections : chercher « volcano »
  *  doit trouver un guide qui ne le mentionne qu'à l'intérieur. */
 function matches(doc: SearchEntry, query: string): boolean {
@@ -28,11 +34,64 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
     return needle ? docs.filter((d) => matches(d, needle)) : docs;
   }, [docs, query]);
 
+  const startHere = START_HERE.map((slug) => docs.find((d) => d.slug === slug)).filter(
+    (d): d is SearchEntry => Boolean(d)
+  );
+
   return (
     <div className="space-y-6">
       <div className="max-w-md">
         <DocsSearch value={query} onChange={setQuery} count={docs.length} />
       </div>
+
+      {/* Masqué pendant une recherche : les résultats filtrés suffisent, et
+          les mêmes guides apparaîtraient deux fois. */}
+      {!query.trim() && startHere.length > 0 && (
+        <section aria-labelledby="docs-start-here">
+          <h2
+            id="docs-start-here"
+            className="mb-1 font-display text-body font-semibold"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            New to GenoLens? Start here
+          </h2>
+          <p className="mb-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
+            Three short guides take you from your files to your first results.
+          </p>
+          <ol className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {startHere.map((doc, i) => (
+              <li key={doc.slug}>
+                <Link
+                  href={`/docs/${doc.slug}`}
+                  className="gl-card flex h-full items-start gap-3 p-4 transition-colors hover:border-[var(--sl-purple)]"
+                >
+                  <span
+                    className="font-display text-body font-semibold"
+                    style={{ color: 'var(--sl-teal)' }}
+                    aria-hidden
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className="block text-body-sm font-semibold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {doc.title}
+                    </span>
+                    <span
+                      className="mt-1 block text-caption"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {doc.description}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {visible.length === 0 ? (
         <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>

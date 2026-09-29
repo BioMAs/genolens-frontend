@@ -242,12 +242,13 @@ describe('listDocs tie-breaks', () => {
     // order-tiebreak-*: meme categorie (enrichment), ordres 5 et 20 ; le
     // titre alphabetique irait dans l'autre sens si l'ordre ne l'emportait
     // pas. title-tiebreak-*: meme categorie (explore) ET meme ordre (10) ;
-    // seul le titre les depage.
+    // seul le titre les depage. Les deux paires restent separees par la
+    // categorie, explore precedant enrichment dans DOC_CATEGORIES.
     expect(listDocs(TIEBREAK_FIXTURES).map((d) => d.slug)).toEqual([
-      'order-tiebreak-low', // enrichment, order 5 — titre "Zzz..." (dernier alphabetiquement)
-      'order-tiebreak-high', // enrichment, order 20 — titre "Aaa..." (premier alphabetiquement)
       'title-tiebreak-a', // explore, order 10, titre "Alpha tie"
       'title-tiebreak-b', // explore, order 10, titre "Bravo tie"
+      'order-tiebreak-low', // enrichment, order 5 — titre "Zzz..." (dernier alphabetiquement)
+      'order-tiebreak-high', // enrichment, order 20 — titre "Aaa..." (premier alphabetiquement)
     ]);
   });
 });
@@ -290,13 +291,40 @@ describe('buildSearchIndex', () => {
 // ── garde-fou sur le contenu réel ──────────────────────────────────────────
 
 describe('shipped documentation', () => {
-  it('exposes exactly ten guides, all with a valid frontmatter', () => {
+  it('exposes every shipped guide, all with a valid frontmatter', () => {
+    // Un guide dont le frontmatter casse disparaît de l'index sans erreur de
+    // build : le nombre attendu est le seul signal qu'il manque.
     const docs = listDocs();
-    expect(docs).toHaveLength(10);
+    expect(docs).toHaveLength(23);
     for (const doc of docs) {
       expect(doc.title).not.toBe('');
       expect(doc.description).not.toBe('');
       expect(DOC_CATEGORIES).toContain(doc.category);
+    }
+  });
+
+  it('links only to guides that exist', () => {
+    // Les guides se renvoient les uns aux autres par `/docs/<slug>` : renommer
+    // un fichier casserait ces liens en silence.
+    const slugs = new Set(listDocs().map((d) => d.slug));
+    for (const meta of listDocs()) {
+      const targets = [...getDoc(meta.slug)!.content.matchAll(/\]\(\/docs\/([^)#\s]+)/g)];
+      for (const [, target] of targets) {
+        expect(`${meta.slug} -> ${target}: ${slugs.has(target)}`).toBe(
+          `${meta.slug} -> ${target}: true`
+        );
+      }
+    }
+  });
+
+  it('keeps developer internals out of the user guides', () => {
+    // Ces guides sont lus par les utilisateurs de l'application : chemins de
+    // code, endpoints et noms de tables n'y ont pas leur place.
+    for (const meta of listDocs()) {
+      const content = getDoc(meta.slug)!.content;
+      expect(`${meta.slug}: ${/backend\/app|src\/components|\/api\/v1|localStorage|SELECT /.test(content)}`).toBe(
+        `${meta.slug}: false`
+      );
     }
   });
 
@@ -306,9 +334,9 @@ describe('shipped documentation', () => {
   });
 
   it('gives every section of every guide a unique anchor', () => {
-    // gsea.md répète « Overview » et « Troubleshooting », gene-search.md
-    // « Backend » et « Frontend », multi-comparison.md « Backend API ».
-    // Deux ancres égales renvoient le lecteur au mauvais paragraphe.
+    // Deux ancres égales renvoient le lecteur au mauvais paragraphe : les
+    // anciens guides répétaient « Overview » ou « Backend API » d'une section
+    // à l'autre, et un guide futur peut le refaire.
     for (const meta of listDocs()) {
       const ids = getDoc(meta.slug)!.headings.map((h) => h.id);
       expect(new Set(ids).size).toBe(ids.length);
