@@ -200,7 +200,7 @@ export default function StepAnalysisSettings({
                   <SpeciesSelect value={species} onChange={onChangeSpecies} />
                 </li>
                 <li className="text-caption text-secondary">
-                  {`Databases: ${enrichmentConfig.databases === null ? 'All (anno.db)' : enrichmentConfig.databases.length === 0 ? 'None' : enrichmentConfig.databases.join(', ')}`}
+                  {`Databases: ${enrichmentConfig.databases === null ? 'All (anno.db)' : enrichmentConfig.databases.length === 0 ? 'None (enrichment skipped)' : enrichmentConfig.databases.join(', ')}`}
                 </li>
                 <li className="text-caption text-secondary">{`FDR: ${enrichmentConfig.fdr}`}</li>
               </ul>
@@ -334,7 +334,9 @@ export default function StepAnalysisSettings({
                   <p className="text-caption font-medium text-secondary">
                     {enrichmentConfig.databases === null
                       ? 'All available databases (anno.db)'
-                      : `${enrichmentConfig.databases.length} databases selected`}
+                      : enrichmentConfig.databases.length === 0
+                        ? 'No database selected — enrichment will be skipped'
+                        : `${enrichmentConfig.databases.length} databases selected`}
                   </p>
                   <div className="flex gap-2">
                     <button type="button" onClick={selectAllDbs}
