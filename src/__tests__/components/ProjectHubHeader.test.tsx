@@ -27,11 +27,12 @@ jest.mock('@/hooks/useCurrentUser', () => ({
 }));
 
 let comparisons: { name: string; dataset_id: string }[] = [];
+let ownerId = 'u1';
 jest.mock('@/hooks/useProjectData', () => ({
   useProjectSummary: () => ({
     data: {
       // owner_id = u1 : l'utilisateur est proprietaire, donc « Members » existe.
-      project: { id: 'p1', name: 'Skin Study', owner_id: 'u1' },
+      project: { id: 'p1', name: 'Skin Study', owner_id: ownerId },
       stats: { total_datasets: 2, original_files_count: 1 },
       comparisons,
     },
@@ -56,6 +57,7 @@ import ProjectHub from '@/components/ProjectHub';
 beforeEach(() => {
   scienceUnlocked = true;
   comparisons = [];
+  ownerId = 'u1';
 });
 
 /**
@@ -76,6 +78,14 @@ describe("hiérarchie d'action de l'en-tête", () => {
 
     const cta = within(header()).getByRole('link', { name: /new analysis/i });
     expect(cta).toHaveAttribute('href', '/projects/p1/setup');
+  });
+
+  it('masque « New analysis » à un membre sans accès ADMIN', () => {
+    // Pas propriétaire, et absent de la liste des membres : lecture seule.
+    ownerId = 'someone-else';
+    render(<ProjectHub projectId="p1" />);
+
+    expect(within(header()).queryByRole('link', { name: /new analysis/i })).not.toBeInTheDocument();
   });
 
   it("garde l'en-tête à deux actions visibles au plus", () => {

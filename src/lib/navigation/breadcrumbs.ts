@@ -97,14 +97,6 @@ const ROUTES: Route[] = [
     ],
   },
   {
-    pattern: '/projects/:id/analyses/new',
-    crumbs: [
-      { label: 'Projects', href: '/projects' },
-      { label: 'Project', href: '/projects/$1' },
-      { label: 'New analysis' },
-    ],
-  },
-  {
     pattern: '/projects/:id/analyses',
     crumbs: [
       { label: 'Projects', href: '/projects' },
