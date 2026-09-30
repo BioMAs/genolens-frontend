@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dataset } from '@/types';
 import api from '@/utils/api';
-import { Play, Settings, X } from 'lucide-react';
+import { Play, Settings } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
 import GSEATable from './GSEATable';
 import GSEAEnrichmentPlot from './GSEAEnrichmentPlot';
 
@@ -391,22 +392,16 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
 
       {/* Enrichment Plot Modal */}
       {selectedGeneSet && enrichmentPlotData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-control max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-surface border-b border-line p-4 flex items-center justify-between">
-              <h3 className="text-title">Enrichment Plot: {selectedGeneSet}</h3>
-              <button
-                onClick={() => {
-                  setSelectedGeneSet(null);
-                  setEnrichmentPlotData(null);
-                }}
-                className="text-secondary hover:text-primary"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="p-6">
+        <Dialog
+          open
+          onClose={() => {
+            setSelectedGeneSet(null);
+            setEnrichmentPlotData(null);
+          }}
+          title={`Enrichment Plot: ${selectedGeneSet}`}
+          size="xl"
+        >
+            <div>
               {loadingPlot ? (
                 <div className="text-center py-12">Loading plot...</div>
               ) : (
@@ -421,8 +416,7 @@ export default function GSEAAnalysis({ dataset, comparisonName }: GSEAAnalysisPr
                 />
               )}
             </div>
-          </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Initial State */}

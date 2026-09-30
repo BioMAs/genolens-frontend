@@ -95,7 +95,7 @@ export const CHART_VARS: Readonly<ChartTheme> = Object.freeze({
  */
 const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
   light: {
-    ink: '#131629', inkMuted: '#8b93a0', inkSubtle: '#5b6472',
+    ink: '#131629', inkMuted: '#646d7b', inkSubtle: '#5b6472',
     grid: '#edeff2', axis: '#edeff2',
     surface: '#ffffff', surfaceRaised: '#ffffff', hover: '#f4f5f8',
     accent: '#4f46e5',
@@ -104,7 +104,7 @@ const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
     fontFamily: 'Geist, system-ui, sans-serif',
   },
   dark: {
-    ink: '#dde4ee', inkMuted: '#5a6a82', inkSubtle: '#8898ae',
+    ink: '#dde4ee', inkMuted: '#7d8ca3', inkSubtle: '#8898ae',
     grid: '#171e30', axis: '#1f2840',
     surface: '#131720', surfaceRaised: '#1c2438', hover: '#1c2438',
     accent: '#4f46e5',

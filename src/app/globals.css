@@ -210,7 +210,12 @@
   --foreground:          var(--n-800);
   --text-primary:        var(--n-800);
   --text-secondary:      var(--n-500);
-  --text-muted:          var(--n-400);
+  /* Pas --n-400 (#8b93a0) : 3,10:1 sur blanc, 2,84:1 sur --app-bg, sous le
+     seuil AA de 4,5:1 — et ce jeton porte le texte secondaire de 350 endroits.
+     #646d7b tient 5,23:1 sur blanc et 4,54:1 sur la surface la plus sombre
+     (--n-100), tout en restant sous --text-secondary (5,98:1) : la hierarchie
+     survit, elle se lit juste. --n-400 reste la teinte des filets et barres. */
+  --text-muted:          #646d7b;
   --border:              var(--n-100);
   --border-subtle:       var(--n-100);
   --border-strong:       var(--n-200);
@@ -285,7 +290,10 @@
   --foreground:          #dde4ee;
   --text-primary:        #dde4ee;
   --text-secondary:      #8898ae;
-  --text-muted:          #5a6a82;
+  /* #5a6a82 ne tenait que 2,81:1 sur --surface-raised. #7d8ca3 : 4,53:1 sur
+     la surface la plus claire du theme, 5,58:1 sur le fond ; --text-secondary
+     reste au-dessus (5,26:1). */
+  --text-muted:          #7d8ca3;
   --border:              #1f2840;
   --border-subtle:       #171e30;
   --border-strong:       #2d3550;
@@ -1086,7 +1094,7 @@ body {
 
   --auth-text:         #161c2a;
   --auth-text-2:       #5a6a82;
-  --auth-muted:        #92a0b4;
+  --auth-muted:        #646d7b; /* = --text-muted ; #92a0b4 ne tenait que 2,6:1 */
 
   --auth-danger:       #e23b3b;
   --auth-danger-bg:    rgba(226, 59, 59, 0.07);
@@ -1113,7 +1121,7 @@ body {
 
   --auth-text:         #dde4ee;
   --auth-text-2:       #8898ae;
-  --auth-muted:        #5a6a82;
+  --auth-muted:        #7d8ca3; /* = --text-muted sombre */
 
   --auth-danger:       #ff5f5f;
   --auth-danger-bg:    rgba(255, 95, 95, 0.08);

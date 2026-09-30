@@ -22,6 +22,7 @@ import { useAutoTour } from '@/hooks/useAutoTour';
 import { StatChip } from '@/components/ui/stat-chip';
 import { Dot } from '@/components/ui/dot';
 import { Chip } from '@/components/ui/chip';
+import { Dialog } from '@/components/ui/dialog';
 import { EmptyStateHelix } from '@/components/ui/empty-state-helix';
 import {
   Plus,
@@ -360,69 +361,21 @@ export default function ProjectHub({ projectId }: ProjectHubProps) {
       ) : null}
 
       {isBookmarkModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
-            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title text-primary">My Bookmarks</h2>
-              <button
-                onClick={() => setBookmarkModalOpen(false)}
-                className="rounded-pill p-1 text-muted hover:bg-hover"
-              >
-                <span className="sr-only">Close</span>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <BookmarkManager projectId={projectId} />
-            </div>
-          </div>
-        </div>
+        <Dialog open onClose={() => setBookmarkModalOpen(false)} title="My Bookmarks" size="xl" className="h-[80dvh]">
+          <BookmarkManager projectId={projectId} />
+        </Dialog>
       ) : null}
 
       {isGeneListModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
-            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title text-primary">My Gene Lists</h2>
-              <button
-                onClick={() => setGeneListModalOpen(false)}
-                className="rounded-pill p-1 text-muted hover:bg-hover"
-              >
-                <span className="sr-only">Close</span>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <GeneListManager projectId={projectId} />
-            </div>
-          </div>
-        </div>
+        <Dialog open onClose={() => setGeneListModalOpen(false)} title="My Gene Lists" size="xl" className="h-[80dvh]">
+          <GeneListManager projectId={projectId} />
+        </Dialog>
       ) : null}
 
       {isGeneSetModalOpen && scienceUnlocked ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-4xl flex-col rounded-card bg-surface shadow-2xl">
-            <div className="flex items-center justify-between border-b border-subtle px-6 py-4">
-              <h2 className="text-title text-primary">Custom gene sets</h2>
-              <button
-                onClick={() => setGeneSetModalOpen(false)}
-                className="rounded-pill p-1 text-muted hover:bg-hover"
-              >
-                <span className="sr-only">Close</span>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <CustomGeneSetManager projectId={projectId} />
-            </div>
-          </div>
-        </div>
+        <Dialog open onClose={() => setGeneSetModalOpen(false)} title="Custom gene sets" size="xl" className="h-[80dvh]">
+          <CustomGeneSetManager projectId={projectId} />
+        </Dialog>
       ) : null}
 
       {isMembersModalOpen && project && currentUser ? (
