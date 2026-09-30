@@ -1,10 +1,14 @@
 import {
   buildCommands,
+  buildGeneCommands,
   filterCommands,
   flattenCommands,
+  geneDirection,
+  geneHref,
   scoreCommand,
   type CommandActions,
 } from '@/lib/commands';
+import type { GeneSearchResult } from '@/types/gene-search';
 
 /**
  * Le catalogue de la palette.
@@ -117,5 +121,59 @@ describe('filtrage', () => {
 
   it('ne rend rien plutot qu’un groupe vide', () => {
     expect(filterCommands(groups(), 'zzzzz')).toEqual([]);
+  });
+});
+
+describe('genes', () => {
+  const hit: GeneSearchResult = {
+    gene_id: 'ENSG00000141510',
+    gene_symbol: 'TP53',
+    project_id: 'p1',
+    project_name: 'Skin',
+    dataset_id: 'd1',
+    analysis_id: 'a1',
+    analysis_name: 'Run',
+    comparison_name: 'KO/WT #2',
+    log_fc: -0.5,
+    padj: 0.0123,
+    regulation: 'DOWN',
+    exact: true,
+  };
+
+  it('lie la comparaison de l’analyse, nom encode, fiche ouverte par identifiant', () => {
+    expect(geneHref(hit)).toBe(
+      '/projects/p1/analyses/a1/comparisons/KO%2FWT%20%232?gene=ENSG00000141510',
+    );
+  });
+
+  it('lie la route de projet sans analyse', () => {
+    expect(geneHref({ ...hit, analysis_id: null })).toBe(
+      '/projects/p1/comparisons/KO%2FWT%20%232?gene=ENSG00000141510',
+    );
+  });
+
+  it('classe le sens de variation, et tout ce qui n’est ni UP ni DOWN en NS', () => {
+    expect(geneDirection('UP')).toBe('up');
+    expect(geneDirection('down')).toBe('down');
+    expect(geneDirection('NS')).toBe('ns');
+    expect(geneDirection(null)).toBe('ns');
+  });
+
+  it('libelle « GENE · comparaison · projet » et met les chiffres en precision', () => {
+    const [command] = buildGeneCommands([hit]);
+    expect(command.label).toBe('TP53 · KO/WT #2 · Skin');
+    expect(command.hint).toBe('log2FC -0.50 · padj 0.012');
+    expect(command.direction).toBe('down');
+    expect(command.kind).toBe('gene');
+  });
+
+  it('omet les chiffres absents plutot que d’afficher « null »', () => {
+    const [command] = buildGeneCommands([{ ...hit, log_fc: null, padj: null }]);
+    expect(command.hint).toBeUndefined();
+  });
+
+  it('distingue le meme gene dans deux comparaisons', () => {
+    const ids = buildGeneCommands([hit, { ...hit, comparison_name: 'Other' }]).map((c) => c.id);
+    expect(new Set(ids).size).toBe(2);
   });
 });
