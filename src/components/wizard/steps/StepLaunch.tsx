@@ -134,6 +134,9 @@ export default function StepLaunch({
               <SummaryRow label="Design"    value={deseq2Params.design} />
               <SummaryRow label="FDR"       value={String(deseq2Params.fdr)} />
               <SummaryRow label="Fold-change" value={`${(2 ** deseq2Params.min_log2fc).toFixed(2)}×`} />
+              {deseq2Params.enrichment_fdr != null && (
+                <SummaryRow label="Enrichment FDR" value={String(deseq2Params.enrichment_fdr)} />
+              )}
             </div>
           </div>
           <div className="px-4 py-3">

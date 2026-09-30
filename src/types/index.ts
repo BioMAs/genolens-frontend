@@ -207,6 +207,8 @@ export interface AnalysisParams {
   min_reps: number;
   threads: number;
   enrichment_databases?: string[] | null;
+  /** Adjusted p-value under which an enriched term is kept. Distinct from `fdr` (DEG selection). */
+  enrichment_fdr?: number;
   species?: string;
   de_method?: 'deseq2' | 'limma' | 'edger' | 'all';
   /** Sample-sheet column the comparisons were built on (wizard contrast builder).

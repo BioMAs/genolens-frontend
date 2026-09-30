@@ -6,7 +6,9 @@ import { useAnalysis } from '@/hooks/useAnalyses';
 import { useProjectDatasets } from '@/hooks/useProjectData';
 import { useProjectSummary } from '@/hooks/useProjectData';
 import { CheckCircle, BarChart2, Grid, FlaskConical, ArrowLeft, RotateCcw } from 'lucide-react';
-import { ClusteringConfig, EnrichmentConfig } from './StepAnalysisSettings';
+import { ClusteringConfig } from './StepAnalysisSettings';
+import { buildViewHref } from '@/components/comparison/comparisonRoutes';
+import { DatasetType } from '@/types';
 import { cn } from '@/lib/cn';
 
 interface StepResultsProps {
@@ -14,7 +16,6 @@ interface StepResultsProps {
   analysisId: string;
   matrixDatasetId: string;
   clusteringConfig: ClusteringConfig;
-  enrichmentConfig: EnrichmentConfig;
   onRunNew: () => void;
 }
 
@@ -23,7 +24,6 @@ export default function StepResults({
   analysisId,
   matrixDatasetId,
   clusteringConfig,
-  enrichmentConfig,
   onRunNew,
 }: StepResultsProps) {
   const { data: analysis } = useAnalysis(analysisId);
@@ -42,15 +42,23 @@ export default function StepResults({
     cluster_cols:  String(clusteringConfig.cluster_cols),
   }).toString();
 
-  const enrichmentParams = new URLSearchParams({
-    databases: enrichmentConfig.databases === null ? 'all' : enrichmentConfig.databases.join(','),
-    fdr:       String(enrichmentConfig.fdr),
-  }).toString();
-
-  // Find the first DEG result dataset for enrichment link
-  const firstResultDs = resultDatasetIds.length > 0
-    ? datasets.find(d => d.id === resultDatasetIds[0])
-    : undefined;
+  /**
+   * Where the enrichment can actually be read.
+   *
+   * The card used to open `/datasets/<result_dataset_ids[0]>/enrichment?databases=…&fdr=…`.
+   * That id is the first comparison's DEG dataset — the ids alternate DEG, ENRICHMENT — while
+   * the pathways are stored under the ENRICHMENT dataset, so the page found none; and it never
+   * read the query string either. Each comparison's Understand screen does the DEG → enrichment
+   * lookup itself, so the card links there, one entry per comparison that has enrichment.
+   */
+  const enrichedComparisons = resultDatasetIds
+    .map(id => datasets.find(d => d.id === id))
+    .filter(d => d?.type === DatasetType.ENRICHMENT)
+    .map(d => d!.dataset_metadata?.comparison_name)
+    .filter((name): name is string => typeof name === 'string' && name.length > 0);
+  // What the analysis ran with, not the wizard's local state. Absent before the field was sent:
+  // the R script's 0.05 applied.
+  const termFdr = analysis?.params?.enrichment_fdr ?? 0.05;
 
   return (
     <div className="space-y-6">
@@ -126,20 +134,40 @@ export default function StepResults({
           title="Pathway Enrichment"
           description="GO, KEGG & Reactome analysis"
         >
-          {firstResultDs ? (
+          {enrichedComparisons.length > 0 ? (
             <>
-              <Link
-                href={`/projects/${projectId}/datasets/${firstResultDs.id}/enrichment?${enrichmentParams}`}
-                className="mt-3 block w-full rounded-control bg-accent px-3 py-2 text-center text-caption font-semibold text-on-accent hover:bg-accent-hover"
-              >
-                Explore Enrichment →
-              </Link>
+              <div className="mt-3 space-y-2">
+                {enrichedComparisons.slice(0, 4).map(name => (
+                  <Link
+                    key={name}
+                    href={buildViewHref(
+                      `/projects/${projectId}/comparisons/${encodeURIComponent(name)}`,
+                      'comprendre',
+                      'enrichment',
+                    )}
+                    className="flex items-center justify-between rounded-sm bg-accent-soft px-3 py-1.5 text-caption hover:bg-accent-soft"
+                  >
+                    <span className="font-medium text-accent-ink truncate">{name}</span>
+                    <span className="ml-2 shrink-0 text-accent-ink">Explore Enrichment →</span>
+                  </Link>
+                ))}
+                {enrichedComparisons.length > 4 && (
+                  <Link
+                    href={`/projects/${projectId}`}
+                    className="block text-center text-caption text-accent-ink hover:underline"
+                  >
+                    + {enrichedComparisons.length - 4} more — View all
+                  </Link>
+                )}
+              </div>
               <p className="mt-2 text-micro text-muted text-center">
-                {enrichmentConfig.databases === null ? 'All databases (anno.db)' : enrichmentConfig.databases.join(', ')} · FDR {enrichmentConfig.fdr}
+                Terms kept at adj. p-value &lt; {termFdr}
               </p>
             </>
           ) : (
-            <p className="mt-2 text-caption text-muted">Results are being indexed…</p>
+            <p className="mt-2 text-caption text-muted">
+              No enrichment results yet. Once indexed, they appear on each comparison&apos;s Understand screen.
+            </p>
           )}
         </ResultCard>
       </div>
