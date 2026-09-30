@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Dataset, DatasetType } from '@/types';
 import api from '@/utils/api';
-import { X, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
 
 interface EditDatasetModalProps {
   dataset: Dataset;
@@ -98,19 +99,12 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-title text-primary">Edit Dataset</h2>
-          <button onClick={onClose} className="text-muted hover:text-secondary">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
+    <Dialog open onClose={onClose} title="Edit Dataset" dismissible={!loading && !deleting}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-body-sm font-medium text-primary">Name</label>
+            <label htmlFor="edit_dataset_name" className="block text-body-sm font-medium text-primary">Name</label>
             <input
+              id="edit_dataset_name"
               type="text"
               required
               className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
@@ -120,8 +114,9 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
           </div>
 
           <div>
-            <label className="block text-body-sm font-medium text-primary">Type</label>
+            <label htmlFor="edit_dataset_type" className="block text-body-sm font-medium text-primary">Type</label>
             <select
+              id="edit_dataset_type"
               className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
               value={type}
               onChange={(e) => setType(e.target.value as DatasetType)}
@@ -135,8 +130,9 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
           </div>
 
           <div>
-            <label className="block text-body-sm font-medium text-primary">Description</label>
+            <label htmlFor="edit_dataset_description" className="block text-body-sm font-medium text-primary">Description</label>
             <textarea
+              id="edit_dataset_description"
               className="mt-1 block w-full rounded-sm border border-strong p-2 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-body-sm"
               rows={3}
               value={description}
@@ -173,7 +169,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
             </div>
           )}
 
-          {error && <div className="text-body-sm text-danger-ink">{error}</div>}
+          {error && <div role="alert" className="text-body-sm text-danger-ink">{error}</div>}
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
@@ -243,7 +239,6 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }
