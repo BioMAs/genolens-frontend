@@ -98,6 +98,50 @@ export function useDeleteAnalysis(projectId: string) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// useCancelAnalysis — POST /analyses/{id}/cancel mutation
+// ---------------------------------------------------------------------------
+
+/**
+ * Annule une analyse PENDING/RUNNING. Le backend révoque la tâche Celery et
+ * passe le statut à CANCELLED sans supprimer l'enregistrement ; une analyse
+ * annulée ne consomme pas d'unité de quota.
+ *
+ * Seul chemin d'annulation du front : le wizard appelait auparavant
+ * `fetch('/api/v2/…', { method: 'DELETE' })` — mauvais préfixe, sans jeton,
+ * erreurs avalées — et la liste supprimait l'analyse au lieu de l'annuler.
+ */
+export function useCancelAnalysis() {
+  const qc = useQueryClient();
+  return useMutation<SelfServiceAnalysis, Error, string>({
+    mutationFn: async (analysisId) => {
+      const res = await api.post<SelfServiceAnalysis>(`/analyses/${analysisId}/cancel`);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      // La réponse porte déjà le statut CANCELLED : on l'écrit tout de suite,
+      // ce qui arrête aussi le polling de useAnalysis.
+      qc.setQueryData(['analysis', data.id], data);
+      qc.invalidateQueries({ queryKey: ['analysis', data.id] });
+      qc.invalidateQueries({ queryKey: ['analyses', data.project_id] });
+      // L'analyse annulée libère sa réservation dans le reste affiché.
+      qc.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+    onError: (_err, analysisId) => {
+      // 409 : le worker a fini entre-temps. On relit le vrai statut.
+      qc.invalidateQueries({ queryKey: ['analysis', analysisId] });
+    },
+  });
+}
+
+/** Message lisible pour un échec d'annulation (détail FastAPI si présent). */
+export function cancelAnalysisErrorMessage(err: unknown): string {
+  const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+  return typeof detail === 'string' && detail
+    ? detail
+    : 'Could not cancel the analysis. Please try again.';
+}
+
 export function useAnnoDbCategories(species: string, enabled = true) {
   return useQuery<{ species: string; categories: string[] }>({
     queryKey: ['anno-db-categories', species],

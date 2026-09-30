@@ -38,6 +38,12 @@ export type ExportFormat = "csv" | "json" | "pdf" | "html";
 interface ExportMenuProps {
   /** Data to export (for CSV/JSON/HTML) */
   data?: Record<string, unknown>[];
+
+  /**
+   * Fetches the rows at click time, for exports too large to keep in memory (a comparison's
+   * every DEG, a whole dataset). Takes precedence over `data` for CSV/JSON.
+   */
+  fetchData?: () => Promise<Record<string, unknown>[]>;
   
   /** Base filename (without extension) */
   filename: string;
@@ -80,6 +86,7 @@ interface ExportMenuProps {
 
 export default function ExportMenu({
   data,
+  fetchData,
   filename,
   formats = ["csv", "json", "pdf"],
   onExport,
@@ -124,20 +131,17 @@ export default function ExportMenu({
     try {
       switch (format) {
         case "csv":
-          if (!data || data.length === 0) {
-            alert("No data available to export");
+        case "json": {
+          const rows = fetchData ? await fetchData() : (data ?? []);
+          if (rows.length === 0) {
+            // Rows fetched at click time can turn out empty; a static empty `data` disables the button.
+            alert("Nothing to export: no rows match the current filters.");
             return;
           }
-          exportToCSV(data, filename, csvColumns);
+          if (format === "csv") exportToCSV(rows, filename, csvColumns);
+          else exportToJSON(rows, filename);
           break;
-
-        case "json":
-          if (!data || data.length === 0) {
-            alert("No data available to export");
-            return;
-          }
-          exportToJSON(data, filename);
-          break;
+        }
 
         case "pdf":
           if (!pdfElementId) {
@@ -184,8 +188,20 @@ export default function ExportMenu({
     lg: "px-5 py-2.5 text-title",
   };
 
+  // A format the caller did not wire up is hidden rather than offered: clicking it could only
+  // raise an alert. A menu left with nothing to offer does not render at all.
+  const availableFormats = formats.filter((format) => {
+    if (format === "csv" || format === "json") return !!fetchData || data !== undefined;
+    if (format === "pdf") return !!pdfElementId;
+    return !!htmlConfig;
+  });
+  // Rows that are known, and known to be empty: say so on the button instead of in an alert.
+  const isEmpty = !fetchData && data !== undefined && data.length === 0
+    && availableFormats.every((format) => format === "csv" || format === "json");
+  const isDisabled = disabled || isEmpty;
+
   const buttonClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className} ${
-    disabled ? "opacity-50 cursor-not-allowed" : ""
+    isDisabled ? "opacity-50 cursor-not-allowed" : ""
   }`;
 
   // Format metadata
@@ -212,15 +228,20 @@ export default function ExportMenu({
     },
   };
 
+  if (availableFormats.length === 0) return null;
+
   return (
     <div className="relative inline-block">
       {/* Export Button */}
       <button
         ref={buttonRef}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled || isExporting}
+        type="button"
+        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        disabled={isDisabled || isExporting}
         className={buttonClasses}
-        title="Export data"
+        title={isEmpty ? "No rows to export" : "Export data"}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         {isExporting ? (
           <>
@@ -242,7 +263,7 @@ export default function ExportMenu({
           className="absolute right-0 mt-2 w-56 bg-raised rounded-sm shadow-elev-2 z-50"
         >
           <div className="py-1">
-            {formats.map((format) => {
+            {availableFormats.map((format) => {
               const meta = formatMeta[format];
               const Icon = meta.icon;
               const isFormatExporting = exportingFormat === format;
@@ -250,6 +271,7 @@ export default function ExportMenu({
               return (
                 <button
                   key={format}
+                  type="button"
                   onClick={() => handleExport(format)}
                   disabled={isFormatExporting}
                   className="w-full px-4 py-3 text-left hover:bg-hover transition-colors flex items-start gap-3 disabled:opacity-50"

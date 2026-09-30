@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Lock } from 'lucide-react';
 import api from '@/utils/api';
@@ -10,7 +11,7 @@ import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparison
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
 import { PageHeader } from '@/components/ui/page-header';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { canUseMultiComparison } from '@/utils/plan';
+import { canUseMultiComparison, PAID_PLANS_LABEL, UPGRADE_HREF } from '@/utils/plan';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -75,10 +76,16 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
             <Lock className="mx-auto mb-4 h-8 w-8 text-muted" />
             <h1 className="mb-2 text-title text-primary">Multi-comparison</h1>
             <p className="mx-auto max-w-md text-body-sm text-secondary">
-              Comparing several contrasts against each other is part of the Pro plan.
+              Comparing several contrasts against each other requires a {PAID_PLANS_LABEL} plan.
               Upgrade your subscription to unlock Venn analysis and intersection
               enrichment.
             </p>
+            <Link
+              href={UPGRADE_HREF}
+              className="mt-4 inline-flex items-center rounded-sm bg-accent px-3 py-1.5 text-caption font-semibold text-on-accent hover:bg-accent-hover"
+            >
+              View plans
+            </Link>
           </div>
         </div>
       </div>

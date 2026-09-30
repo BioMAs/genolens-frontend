@@ -244,7 +244,7 @@ export default function StepAnalysisSettings({
                 value={Math.round(2 ** deseq2Params.min_log2fc * 100) / 100}
                 min={1} max={10} step={0.1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_log2fc: Math.log2(v) })}
-                hint="1.5 = seuil 1,5× (log2FC ≈ 0.585), identique pipe_scilicium."
+                hint="1.5 = 1.5-fold change (|log2FC| ≈ 0.585)"
               />
               <NumberField
                 label="Min reads / sample"

@@ -6,6 +6,7 @@ import { Ban, Clock, ShieldOff, ArrowRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import AuthShell from "@/components/auth/AuthShell";
 import AuthCard from "@/components/auth/AuthCard";
+import { SUPPORT_EMAIL } from "@/lib/contact";
 
 type AccountStatus = "suspended" | "cancelled" | "pending" | null;
 
@@ -38,7 +39,7 @@ const CONTENT: Record<NonNullable<AccountStatus>, Entry> = {
     badge: "Account suspended",
     title: "Your account has been suspended",
     description: "Contact our support team and we'll get this sorted out.",
-    cta: { label: "Contact support", href: "mailto:support@genolens.com" },
+    cta: { label: "Contact support", href: `mailto:${SUPPORT_EMAIL}` },
     icon: Ban,
     tone: "danger",
   },

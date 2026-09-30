@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCreateAnalysis, useAnalysis } from '@/hooks/useAnalyses';
+import CancelAnalysisButton from '@/components/analyses/CancelAnalysisButton';
 import AnalysisQuotaNotice, {
   useAnalysisQuotaBlocked,
 } from '@/components/analyses/AnalysisQuotaNotice';
@@ -15,6 +16,7 @@ import {
   Play, X, CheckCircle, AlertCircle, ChevronRight, Loader,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { analysisStepLabel } from '@/utils/analysisSteps';
 
 interface StepLaunchProps {
   projectId: string;
@@ -23,6 +25,8 @@ interface StepLaunchProps {
   matrixDatasetId: string;
   samplesDatasetId: string;
   contrastsDatasetId: string;
+  /** Sample-sheet column the comparisons were built on; null lets the pipeline auto-detect. */
+  conditionColumn?: string | null;
   deseq2Params: AP;
   /** ID of an already-launched analysis (e.g. when resuming) */
   analysisId: string | null;
@@ -31,16 +35,6 @@ interface StepLaunchProps {
   onBack: () => void;
 }
 
-const STEP_LABELS: Record<string, string> = {
-  loading_data:       'Loading data',
-  validating:         'Validating inputs',
-  normalizing:        'Normalizing counts',
-  running_deseq2:     'Running analysis',
-  filtering_results:  'Filtering results',
-  saving_results:     'Saving results',
-  done:               'Completed',
-};
-
 export default function StepLaunch({
   projectId,
   analysisName,
@@ -48,6 +42,7 @@ export default function StepLaunch({
   matrixDatasetId,
   samplesDatasetId,
   contrastsDatasetId,
+  conditionColumn = null,
   deseq2Params,
   analysisId: initialAnalysisId,
   onLaunched,
@@ -88,7 +83,7 @@ export default function StepLaunch({
         matrix_dataset_id:       matrixDatasetId,
         samples_dataset_id:      samplesDatasetId,
         comparisons_dataset_id:  contrastsDatasetId,
-        params:                  deseq2Params,
+        params:                  { ...deseq2Params, condition_column: conditionColumn },
       });
       setAnalysisId(result.id);
       onLaunched(result.id);
@@ -100,21 +95,12 @@ export default function StepLaunch({
     }
   };
 
-  const handleCancel = async () => {
-    if (!analysisId || !confirm('Cancel this analysis?')) return;
-    try {
-      // The delete endpoint acts as cancel for running jobs
-      await fetch(`/api/v2/analyses/${analysisId}`, { method: 'DELETE' });
-    } catch {
-      // Ignore cancel errors
-    }
-  };
-
   const isRunning =
     analysis?.status === SelfServiceAnalysisStatus.PENDING ||
     analysis?.status === SelfServiceAnalysisStatus.RUNNING;
   const isFailed  = analysis?.status === SelfServiceAnalysisStatus.FAILED;
   const isDone    = analysis?.status === SelfServiceAnalysisStatus.DONE;
+  const isCancelled = analysis?.status === SelfServiceAnalysisStatus.CANCELLED;
 
   const progressLog = analysis?.progress_log ?? [];
   const currentStep = analysis?.current_step;
@@ -177,34 +163,42 @@ export default function StepLaunch({
           {/* Status header */}
           <div className={cn(
                  'px-4 py-3 flex items-center gap-3',
-                 isDone ? 'bg-success-soft border-b border-success/30' : isFailed ? 'bg-danger-soft border-b border-danger/30' : 'bg-info-soft border-b border-info/30',
+                 isDone ? 'bg-success-soft border-b border-success/30'
+                 : isFailed ? 'bg-danger-soft border-b border-danger/30'
+                 : isCancelled ? 'bg-surface-2 border-b border-subtle'
+                 : 'bg-info-soft border-b border-info/30',
                )}>
             {isDone   && <CheckCircle className="h-5 w-5 text-success-ink" />}
             {isFailed && <AlertCircle className="h-5 w-5 text-danger-ink" />}
+            {isCancelled && <X className="h-5 w-5 text-secondary" />}
             {isRunning && <Loader className="h-5 w-5 text-info-ink animate-spin" />}
             <div>
               <p className={cn(
                    'text-body-sm font-semibold',
-                   isDone ? 'text-success-ink' : isFailed ? 'text-danger-ink' : 'text-info-ink',
+                   isDone ? 'text-success-ink'
+                   : isFailed ? 'text-danger-ink'
+                   : isCancelled ? 'text-secondary'
+                   : 'text-info-ink',
                  )}>
                 {isDone   ? 'Analysis complete!'
                 : isFailed ? 'Analysis failed'
+                : isCancelled ? 'Analysis cancelled — no quota was used'
                 : currentStep
-                  ? (STEP_LABELS[currentStep] ?? currentStep.replace(/_/g, ' '))
+                  ? analysisStepLabel(currentStep)
                   : 'Analysis queued…'}
               </p>
-              {analysis?.error_message && (
+              {isFailed && analysis?.error_message && (
                 <p className="text-caption text-danger-ink mt-1">{analysis.error_message}</p>
               )}
             </div>
-            {isRunning && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="ml-auto flex items-center gap-1 rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
-              >
-                <X className="h-3 w-3" /> Cancel
-              </button>
+            {isRunning && analysisId && (
+              <div className="ml-auto">
+                <CancelAnalysisButton
+                  analysisId={analysisId}
+                  showIcon
+                  className="rounded-sm border border-danger/30 px-2 py-1 text-caption text-danger-ink hover:bg-danger-soft"
+                />
+              </div>
             )}
           </div>
 
@@ -221,7 +215,7 @@ export default function StepLaunch({
                     <span className={cn(
                             i === progressLog.length - 1 && isRunning ? 'text-info-ink font-medium' : 'text-secondary',
                           )}>
-                      {entry.step.replace(/_/g, ' ')}
+                      {analysisStepLabel(entry.step)}
                       {entry.message ? ` — ${entry.message}` : ''}
                     </span>
                   </li>

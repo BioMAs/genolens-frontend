@@ -211,6 +211,9 @@ export interface AnalysisParams {
   enrichment_fdr?: number;
   species?: string;
   de_method?: 'deseq2' | 'limma' | 'edger' | 'all';
+  /** Sample-sheet column the comparisons were built on (wizard contrast builder).
+   *  Omitted/null → the R pipeline auto-detects condition/group/groupe/treatment/genotype. */
+  condition_column?: string | null;
 }
 
 export interface ProgressLogEntry {

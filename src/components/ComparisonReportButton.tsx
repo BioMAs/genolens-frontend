@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, X, Lock } from "lucide-react";
-import { canExportAdvanced } from "@/utils/plan";
+import { canExportAdvanced, PLAN_GATE_COPY } from "@/utils/plan";
 import {
   useComparisonReportStatus,
   useTriggerComparisonReport,
@@ -204,7 +204,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
         <button
           type="button"
           disabled
-          title="PDF reports require a Pro or Enterprise plan"
+          title={PLAN_GATE_COPY.pdfReport}
           className="inline-flex cursor-not-allowed items-center gap-2 rounded-control
  bg-accent px-4 py-2 text-body-sm font-medium text-on-accent opacity-50"
         >

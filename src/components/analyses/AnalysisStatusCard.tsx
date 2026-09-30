@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Database } from 'lucide-react';
 import { SelfServiceAnalysis, SelfServiceAnalysisStatus } from '@/types';
 import { useDeleteAnalysis } from '@/hooks/useAnalyses';
+import CancelAnalysisButton from '@/components/analyses/CancelAnalysisButton';
 import { cn } from '@/lib/cn';
+import { analysisStepLabel } from '@/utils/analysisSteps';
 
 interface Props {
   analysis: SelfServiceAnalysis;
@@ -36,10 +38,9 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
     analysis.status === SelfServiceAnalysisStatus.PENDING ||
     analysis.status === SelfServiceAnalysisStatus.RUNNING;
 
-  const handleDelete = async () => {
-    const label = isActive ? 'Cancel' : 'Delete';
-    if (!confirm(`${label} analysis "${analysis.name}"?`)) return;
-    await deleteAnalysis.mutateAsync(analysis.id);
+  const handleDelete = () => {
+    if (!confirm(`Delete analysis "${analysis.name}"?`)) return;
+    deleteAnalysis.mutate(analysis.id);
   };
 
   return (
@@ -80,7 +81,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
       {/* Current step */}
       {analysis.current_step && isActive && (
         <p className="mt-2 text-caption text-secondary italic">
-          Step: {analysis.current_step.replace(/_/g, ' ')}
+          Step: {analysisStepLabel(analysis.current_step)}
         </p>
       )}
 
@@ -108,7 +109,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
                 <span className="text-muted shrink-0">
                   {new Date(entry.timestamp).toLocaleTimeString('en-US')}
                 </span>
-                <span>{entry.step}{entry.message ? ` — ${entry.message}` : ''}</span>
+                <span>{analysisStepLabel(entry.step)}{entry.message ? ` — ${entry.message}` : ''}</span>
               </li>
             ))}
           </ul>
@@ -128,14 +129,32 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
       )}
 
       {/* Actions */}
+      {/* Une analyse en cours s'annule (statut CANCELLED, tâche révoquée) ;
+          elle ne se supprime qu'une fois terminée. */}
       <div className="mt-3 flex justify-end">
-        <button
-          onClick={handleDelete}
-          disabled={deleteAnalysis.isPending}
-          className="text-caption text-muted hover:text-danger-ink-hover disabled:opacity-50"
-        >
-          {isActive ? 'Cancel' : 'Delete'}
-        </button>
+        {isActive ? (
+          <CancelAnalysisButton
+            analysisId={analysis.id}
+            analysisName={analysis.name}
+            className="text-caption text-muted hover:text-danger-ink-hover"
+          />
+        ) : (
+          <div className="flex flex-col items-end gap-1">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteAnalysis.isPending}
+              className="text-caption text-muted hover:text-danger-ink-hover disabled:opacity-50"
+            >
+              {deleteAnalysis.isPending ? 'Deleting…' : 'Delete'}
+            </button>
+            {deleteAnalysis.isError && (
+              <p role="alert" className="text-caption text-danger-ink">
+                Could not delete the analysis. Please try again.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
