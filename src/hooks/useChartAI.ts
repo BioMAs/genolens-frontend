@@ -125,7 +125,7 @@ export function useChartAI({
         if (event.done) break;
       }
     } catch (err) {
-      setInterpretError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      setInterpretError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsInterpreting(false);
     }

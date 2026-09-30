@@ -83,6 +83,87 @@ function regulationParam(filter: DegRegulationFilter | undefined): 'UP' | 'DOWN'
   return undefined;
 }
 
+function degGenesUrl(datasetId: string, comparisonName: string): string {
+  return `/datasets/${datasetId}/deg-genes/${encodeURIComponent(comparisonName)}`;
+}
+
+function degGenesParams(
+  thresholds: VolcanoThresholds,
+  q: {
+    page: number;
+    pageSize: number;
+    sortBy: DegSortField;
+    sortOrder: 'asc' | 'desc';
+    regulation?: 'UP' | 'DOWN';
+  }
+) {
+  return {
+    page: q.page,
+    page_size: q.pageSize,
+    padj_max: thresholds.padj,
+    logfc_min: thresholds.logfc,
+    sort_by: q.sortBy,
+    sort_order: q.sortOrder,
+    ...(q.regulation ? { regulation: q.regulation } : {}),
+  };
+}
+
+/**
+ * Every DEG row of a comparison at the given thresholds, walked page by page.
+ *
+ * For exports, called at click time: the endpoint caps a page at `DEG_MAX_PAGE_SIZE`, so a single
+ * request would silently stop at the thousandth gene. Sorted by padj so the file reads like the
+ * table. `deg_genes` only holds genes that were significant at ingestion, so this is every DEG
+ * at the current thresholds, not every measured gene.
+ */
+export async function fetchAllDegGenes(
+  datasetId: string,
+  comparisonName: string,
+  thresholds: VolcanoThresholds
+): Promise<DegGeneRow[]> {
+  const rows: DegGeneRow[] = [];
+  for (let page = 1; ; page += 1) {
+    const response = await api.get<DegGenesApiResponse>(degGenesUrl(datasetId, comparisonName), {
+      params: degGenesParams(thresholds, {
+        page,
+        pageSize: DEG_MAX_PAGE_SIZE,
+        sortBy: 'padj',
+        sortOrder: 'asc',
+      }),
+    });
+    const genes = response.data.genes ?? [];
+    rows.push(...genes);
+    const totalPages =
+      response.data.pagination?.total_pages ??
+      Math.ceil((response.data.pagination?.total ?? 0) / DEG_MAX_PAGE_SIZE);
+    // Stop on the last page, and on an empty one: a count that drifts while paging must not
+    // loop forever.
+    if (page >= totalPages || genes.length === 0) return rows;
+  }
+}
+
+/**
+ * The export shape of a DEG row: the columns a reader expects, with the source's names.
+ * Numbers stay numbers so JSON consumers need not parse them back.
+ */
+export function toDegExportRow(row: DegGeneRow) {
+  return {
+    gene_id: row.gene_id,
+    gene_symbol: row.gene_name ?? '',
+    log2_fold_change: row.log_fc,
+    adjusted_p_value: row.padj,
+    regulation: row.regulation,
+  };
+}
+
+export const DEG_EXPORT_COLUMNS = [
+  'gene_id',
+  'gene_symbol',
+  'log2_fold_change',
+  'adjusted_p_value',
+  'regulation',
+];
+
 export function useDegGenes(
   datasetId: string | undefined,
   comparisonName: string | undefined,
@@ -111,17 +192,9 @@ export function useDegGenes(
     ],
     queryFn: async () => {
       const response = await api.get<DegGenesApiResponse>(
-        `/datasets/${datasetId}/deg-genes/${encodeURIComponent(comparisonName as string)}`,
+        degGenesUrl(datasetId as string, comparisonName as string),
         {
-          params: {
-            page,
-            page_size: pageSize,
-            padj_max: thresholds.padj,
-            logfc_min: thresholds.logfc,
-            sort_by: sortBy,
-            sort_order: sortOrder,
-            ...(regulation ? { regulation } : {}),
-          },
+          params: degGenesParams(thresholds, { page, pageSize, sortBy, sortOrder, regulation }),
         }
       );
 

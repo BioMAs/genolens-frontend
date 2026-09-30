@@ -91,3 +91,44 @@ export function canUseMultiComparison(profile: PlanBearer): boolean {
   const plan = normalizePlan(profile.subscription_plan);
   return plan === 'TEAM' || plan === 'ON_PREMISE';
 }
+
+/**
+ * Display names for the live plans, matching `name_en` in
+ * backend/app/config/pricing.json. The internal ids are not the names users see:
+ * TEAM is sold as "Pro" and ON_PREMISE as "Enterprise".
+ */
+export const PLAN_LABELS: Record<PlanKey, string> = {
+  STARTER: 'Starter',
+  TEAM: 'Pro',
+  ON_PREMISE: 'Enterprise',
+};
+
+/** Display name for any plan value, legacy ones included. */
+export function planLabel(plan: string | null | undefined): string {
+  return PLAN_LABELS[normalizePlan(plan)];
+}
+
+/** Where every upgrade call to action points. */
+export const UPGRADE_HREF = '/pricing';
+
+/**
+ * The plans that unlock the TEAM/ON_PREMISE entitlements (AI interpretation,
+ * PDF reports, multi-comparison), in the form the gate messages use.
+ */
+export const PAID_PLANS_LABEL = `${PLAN_LABELS.TEAM} or ${PLAN_LABELS.ON_PREMISE}`;
+
+/** Gate copy, shared so every surface names the plans the same way. */
+export const PLAN_GATE_COPY = {
+  ai: `AI interpretation requires a ${PAID_PLANS_LABEL} plan.`,
+  aiAvailableWith: `Available with the ${PLAN_LABELS.TEAM} and ${PLAN_LABELS.ON_PREMISE} plans`,
+  /**
+   * The Report customization add-on only brands the PDF (logo, colours, default
+   * text); it does not unlock generation, which stays on the plan
+   * (`advanced_export`). The tooltip names both so the add-on is not mistaken
+   * for the way in.
+   */
+  pdfReport:
+    `PDF reports require a ${PAID_PLANS_LABEL} plan. ` +
+    'Custom branding comes with the Report customization add-on.',
+  multiComparison: `Multi-comparison requires a ${PAID_PLANS_LABEL} plan`,
+} as const;

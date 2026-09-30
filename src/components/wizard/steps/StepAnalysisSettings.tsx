@@ -200,7 +200,7 @@ export default function StepAnalysisSettings({
                   <SpeciesSelect value={species} onChange={onChangeSpecies} />
                 </li>
                 <li className="text-caption text-secondary">
-                  {`Databases: ${enrichmentConfig.databases === null ? 'All (anno.db)' : enrichmentConfig.databases.length === 0 ? 'None' : enrichmentConfig.databases.join(', ')}`}
+                  {`Databases: ${enrichmentConfig.databases === null ? 'All (anno.db)' : enrichmentConfig.databases.length === 0 ? 'None (enrichment skipped)' : enrichmentConfig.databases.join(', ')}`}
                 </li>
                 <li className="text-caption text-secondary">{`FDR: ${enrichmentConfig.fdr}`}</li>
               </ul>
@@ -244,7 +244,7 @@ export default function StepAnalysisSettings({
                 value={Math.round(2 ** deseq2Params.min_log2fc * 100) / 100}
                 min={1} max={10} step={0.1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_log2fc: Math.log2(v) })}
-                hint="1.5 = seuil 1,5× (log2FC ≈ 0.585), identique pipe_scilicium."
+                hint="1.5 = 1.5-fold change (|log2FC| ≈ 0.585)"
               />
               <NumberField
                 label="Min reads / sample"
@@ -334,7 +334,9 @@ export default function StepAnalysisSettings({
                   <p className="text-caption font-medium text-secondary">
                     {enrichmentConfig.databases === null
                       ? 'All available databases (anno.db)'
-                      : `${enrichmentConfig.databases.length} databases selected`}
+                      : enrichmentConfig.databases.length === 0
+                        ? 'No database selected — enrichment will be skipped'
+                        : `${enrichmentConfig.databases.length} databases selected`}
                   </p>
                   <div className="flex gap-2">
                     <button type="button" onClick={selectAllDbs}

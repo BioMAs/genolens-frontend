@@ -7,7 +7,7 @@ import { getDoc, listDocs } from '@/lib/docs';
 import DocArticle from '@/components/docs/DocArticle';
 
 // Pas de `generateStaticParams` : la page lit la session pour sa garde
-// d'authentification, elle est donc rendue à la demande. Pré-générer les dix
+// d'authentification, elle est donc rendue à la demande. Pré-générer les
 // slugs ne ferait qu'annoncer un rendu statique que la lecture des cookies
 // abandonne aussitôt.
 

@@ -7,7 +7,7 @@ import api from '@/utils/api';
 import { useChartAI, ChartType } from '@/hooks/useChartAI';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
-import { canUseAI } from '@/utils/plan';
+import { canUseAI, PLAN_GATE_COPY, UPGRADE_HREF } from '@/utils/plan';
 import { cn } from '@/lib/cn';
 
 interface AIChartAssistantProps {
@@ -110,18 +110,17 @@ export default function AIChartAssistant({
             <div className="flex-1">
               <h3 className="mb-1 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Chart Assistant</h3>
               <p className="mb-3 text-caption" style={{ color: 'var(--text-secondary)' }}>
-                Get AI-powered insights for this chart. Available with PREMIUM or ADVANCED plans.
+                Get AI-powered insights for this chart. {PLAN_GATE_COPY.aiAvailableWith}.
               </p>
               <div className="flex items-center gap-2">
                 <Link
-                  href="/pricing"
+                  href={UPGRADE_HREF}
                   className="inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-semibold text-on-accent shadow-sm transition-colors"
                   style={{ background: 'var(--sl-purple)' }}
                 >
                   <Sparkles className="h-3 w-3" />
                   View Plans →
                 </Link>
-                <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Starting at $29/month</span>
               </div>
             </div>
           </div>

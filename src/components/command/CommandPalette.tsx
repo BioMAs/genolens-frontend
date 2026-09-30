@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, CornerDownLeft, Dna, FolderKanban, Search, Settings2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  CornerDownLeft,
+  Dna,
+  FolderKanban,
+  Minus,
+  Search,
+  Settings2,
+} from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useGeneSearch } from '@/hooks/useGeneSearch';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -10,10 +20,12 @@ import { useChartPrefs, toggleColorblind } from '@/contexts/chartPrefs';
 import { useTour } from '@/contexts/TourContext';
 import {
   buildCommands,
+  buildGeneCommands,
   filterCommands,
   flattenCommands,
   type Command,
   type CommandGroup,
+  type GeneDirection,
 } from '@/lib/commands';
 import { closeCommandPalette, useCommandPaletteOpen, toggleCommandPalette } from './commandPaletteStore';
 import { cn } from '@/lib/cn';
@@ -73,10 +85,31 @@ function CommandPaletteDialog() {
   const { data: projectsData } = useProjects({}, true);
 
   const trimmed = query.trim();
-  const { data: geneData } = useGeneSearch({
-    query: trimmed,
-    enabled: trimmed.length >= 2,
+  const geneSearchActive = trimmed.length >= GENE_QUERY_MIN_LENGTH;
+  // Une requete par PAUSE de frappe, pas par touche : « ENSG00000141510 » tape
+  // d'un trait en coutait quinze, dont les premieres (« EN », « ENS ») sont les
+  // plus cheres puisqu'elles correspondent a presque toute la table.
+  const geneQuery = useDebouncedValue(trimmed, GENE_SEARCH_DEBOUNCE_MS);
+  const {
+    data: geneData,
+    isError: geneError,
+  } = useGeneSearch({
+    query: geneQuery,
+    limit: GENE_RESULT_LIMIT,
+    enabled: geneSearchActive && geneQuery.length >= GENE_QUERY_MIN_LENGTH,
   });
+  // Des resultats ne s'affichent que pour la requete a l'ecran : ceux de « TP5 »
+  // sous « TP53X » presenteraient des genes qui ne correspondent pas.
+  const geneHits = geneSearchActive && geneData?.query === trimmed ? geneData.results : null;
+  const geneStatus: GeneStatus = !geneSearchActive
+    ? 'idle'
+    : geneHits
+      ? geneHits.length
+        ? 'results'
+        : 'empty'
+      : geneError && geneQuery === trimmed
+        ? 'error'
+        : 'searching';
 
   const groups = useMemo<CommandGroup[]>(() => {
     const base = buildCommands({
@@ -91,27 +124,14 @@ function CommandPaletteDialog() {
     });
     const filtered = filterCommands(base, query);
 
-    const genes = geneData?.results ?? [];
-    if (!genes.length) return filtered;
+    if (!geneHits?.length) return filtered;
 
     // Les genes passent EN TETE quand il y en a : taper un symbole est le seul
     // cas ou l'utilisateur sait deja exactement ce qu'il veut.
-    return [
-      {
-        heading: 'Genes',
-        items: genes.slice(0, 6).map<Command>((g, i) => ({
-          id: `gene:${g.project_id}:${g.dataset_id}:${g.gene_symbol}:${i}`,
-          label: g.gene_symbol,
-          hint: `${g.project_name} · ${g.dataset_name}`,
-          kind: 'gene',
-          href: `/projects/${g.project_id}/datasets/${g.dataset_id}?gene=${encodeURIComponent(g.gene_symbol)}`,
-        })),
-      },
-      ...filtered,
-    ];
+    return [{ heading: 'Genes', items: buildGeneCommands(geneHits) }, ...filtered];
   }, [
     projectsData, theme, toggleTheme, colorblind, currentTourId, restartCurrentTour,
-    query, geneData,
+    query, geneHits,
   ]);
 
   const flat = useMemo(() => flattenCommands(groups), [groups]);
@@ -237,10 +257,26 @@ function CommandPaletteDialog() {
           role="listbox"
           className="max-h-[52vh] overflow-y-auto border-t border-subtle py-2"
         >
+          {geneStatus !== 'idle' && geneStatus !== 'results' && (
+            // Hors de la liste parcourue au clavier : un message n'est pas une
+            // commande, Entree ne doit pas pouvoir l'« executer ».
+            <div className="mb-2">
+              <p className="eyebrow px-4 py-1">Genes</p>
+              <p role="status" className="px-4 py-2 text-body-sm text-muted">
+                {geneStatus === 'searching' && 'Searching genes…'}
+                {geneStatus === 'empty' && <>No gene matches “{trimmed}”.</>}
+                {geneStatus === 'error' && 'Gene search is unavailable right now.'}
+              </p>
+            </div>
+          )}
           {flat.length === 0 ? (
-            <p className="px-4 py-8 text-center text-body-sm text-muted">
-              Nothing matches “{trimmed}”.
-            </p>
+            // Le message des genes suffit quand il est la : « Nothing matches »
+            // en dessous le repeterait.
+            geneStatus === 'idle' && (
+              <p className="px-4 py-8 text-center text-body-sm text-muted">
+                Nothing matches “{trimmed}”.
+              </p>
+            )
           ) : (
             groups.map((group) => (
               <div key={group.heading} className="mb-2 last:mb-0">
@@ -266,6 +302,7 @@ function CommandPaletteDialog() {
                         {ICONS[item.kind]}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-body-sm">{item.label}</span>
+                      {item.direction && <Direction direction={item.direction} />}
                       {item.hint && (
                         <span className="shrink-0 truncate text-caption text-muted">{item.hint}</span>
                       )}
@@ -279,5 +316,45 @@ function CommandPaletteDialog() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Le backend refuse une requete d'un seul caractere ; inutile de la lui envoyer. */
+const GENE_QUERY_MIN_LENGTH = 2;
+/** Autant de lignes que la palette en montre sans defiler. */
+const GENE_RESULT_LIMIT = 6;
+const GENE_SEARCH_DEBOUNCE_MS = 200;
+
+type GeneStatus = 'idle' | 'searching' | 'results' | 'empty' | 'error';
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+const DIRECTIONS: Record<GeneDirection, { label: string; icon: React.ReactNode; tone: string }> = {
+  up: { label: 'Up', icon: <ArrowUp className="h-3 w-3" aria-hidden />, tone: 'text-up' },
+  down: { label: 'Down', icon: <ArrowDown className="h-3 w-3" aria-hidden />, tone: 'text-down' },
+  ns: { label: 'NS', icon: <Minus className="h-3 w-3" aria-hidden />, tone: 'text-muted' },
+};
+
+/**
+ * Le sens de variation, en MOT et en fleche : la couleur seule ne se lit ni par
+ * un daltonien ni par un lecteur d'ecran.
+ */
+function Direction({ direction }: { direction: GeneDirection }) {
+  const { label, icon, tone } = DIRECTIONS[direction];
+  return (
+    <span
+      data-direction={direction}
+      className={cn('inline-flex shrink-0 items-center gap-1 text-caption font-semibold', tone)}
+    >
+      {icon}
+      {label}
+    </span>
   );
 }

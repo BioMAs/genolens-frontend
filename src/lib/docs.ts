@@ -70,13 +70,12 @@ function stripInline(text: string): string {
 /**
  * Titres de niveau 2 et 3 du corps.
  *
- * Le suivi des clôtures de blocs de code est nécessaire : les guides
- * contiennent des blocs shell et YAML où « ## » ouvre un commentaire, et le
+ * Le suivi des clôtures de blocs de code est nécessaire : un guide peut
+ * contenir un bloc shell ou YAML où « ## » ouvre un commentaire, et le
  * sommaire se remplirait de bruit sans ça.
  *
- * Les ancres sont uniques : plusieurs guides répètent un titre de section
- * (`## Overview` puis `### Overview` dans gsea.md, `### Backend API` deux
- * fois dans multi-comparison.md). Deux `id` égaux renvoient toujours le
+ * Les ancres sont uniques : un guide peut répéter un titre de section
+ * (`## Overview` puis `### Overview`). Deux `id` égaux renvoient toujours le
  * lecteur au premier des deux, et donnent deux clés React identiques dans le
  * sommaire. Le suffixe suit l'ordre d'apparition ; c'est aussi celui dans
  * lequel `DocArticle` consomme cette liste pour étiqueter les titres rendus.
@@ -121,7 +120,7 @@ export function extractHeadings(markdown: string): Heading[] {
  * être confondue avec le titre. Le contenu de la ligne est vidé plutôt que la
  * ligne supprimée, pour rester identique au comportement de l'ancien
  * `content.replace(/^\s*#\s+.*$/m, '')` quand le h1 est la première ligne du
- * corps (cas des dix guides livrés) : l'appelant applique ensuite
+ * corps (cas de tous les guides livrés) : l'appelant applique ensuite
  * `trimStart()`.
  */
 function stripLeadingH1(markdown: string): string {

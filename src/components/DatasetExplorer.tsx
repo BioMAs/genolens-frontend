@@ -2,8 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Download, Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
-import { useDataset, useDatasetColumns, useDatasetData } from '@/hooks/useDatasets';
+import { Filter, ChevronLeft, ChevronRight, BarChart2, Table as TableIcon, GitMerge, Grid } from 'lucide-react';
+import {
+  fetchAllDatasetRows,
+  useDataset,
+  useDatasetColumns,
+  useDatasetData,
+} from '@/hooks/useDatasets';
+import ExportMenu from './ExportMenu';
 import DatasetVisualizer from './DatasetVisualizer';
 import { PageHeader } from '@/components/ui/page-header';
 import { cn } from '@/lib/cn';
@@ -18,6 +24,11 @@ interface DatasetQueryFilters {
   offset: number;
   columns?: string[];
   gene_ids?: string[];
+}
+
+/** A dataset name is user-typed: keep it recognisable, but safe as a file name. */
+function exportFilename(name: string): string {
+  return name.trim().replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '') || 'dataset';
 }
 
 export default function DatasetExplorer({ projectId, datasetId }: DatasetExplorerProps) {
@@ -179,10 +190,22 @@ export default function DatasetExplorer({ projectId, datasetId }: DatasetExplore
               )}
             </div>
 
-            <button className="inline-flex items-center px-3 py-2 border border-strong shadow-sm text-body-sm leading-4 font-medium rounded-sm text-primary bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </button>
+            {/* Every row matching the search, with the columns on screen — not the 50-row page.
+                Fetched on click: a whole matrix does not belong in the query cache. */}
+            <ExportMenu
+              fetchData={() =>
+                fetchAllDatasetRows(datasetId, {
+                  columns: filters.columns,
+                  gene_ids: filters.gene_ids,
+                })
+              }
+              filename={exportFilename(dataset?.name ?? datasetId)}
+              formats={['csv', 'json']}
+              csvColumns={data?.columns}
+              disabled={!data || data.total_rows === 0}
+              variant="outline"
+              size="md"
+            />
         </div>
 
         {/* View Mode Switcher */}
