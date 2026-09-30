@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, X, Lock } from "lucide-react";
+import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { canExportAdvanced, PLAN_GATE_COPY } from "@/utils/plan";
 import {
   useComparisonReportStatus,
@@ -97,19 +99,22 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
     <>
       {renderButton()}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-card p-6 shadow-xl"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-title" style={{ color: "var(--text-primary)" }}>
-                Customize report
-              </h2>
-              <button onClick={() => setShowModal(false)} aria-label="Close">
-                <X className="h-5 w-5" style={{ color: "var(--text-muted)" }} />
-              </button>
-            </div>
+        <Dialog
+          open
+          onClose={() => setShowModal(false)}
+          title="Customize report"
+          size="lg"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleGenerateWithCustomization}>
+                <FileText className="h-4 w-4" aria-hidden /> Generate
+              </Button>
+            </>
+          }
+        >
             <p className="mb-4 text-caption" style={{ color: "var(--text-muted)" }}>
               Your saved logo and colours are applied automatically. Page models, project
               information, Material &amp; Methods and conclusion are pre-filled from your
@@ -135,10 +140,11 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               <CoverInfoFields value={cover} onChange={setCover} />
             </div>
 
-            <label className="mb-1 block text-body-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            <label htmlFor="report-materials-methods" className="mb-1 block text-body-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               Material &amp; Methods
             </label>
             <textarea
+              id="report-materials-methods"
               value={materialsMethods}
               onChange={(e) => setMaterialsMethods(e.target.value)}
               rows={6}
@@ -147,35 +153,20 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)" }}
             />
 
-            <label className="mb-1 block text-body-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            <label htmlFor="report-conclusion" className="mb-1 block text-body-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               Conclusion
             </label>
             <textarea
+              id="report-conclusion"
               value={conclusion}
               onChange={(e) => setConclusion(e.target.value)}
               rows={4}
               placeholder="Optional conclusion section."
-              className="mb-6 w-full rounded-control p-3 text-body-sm"
+              className="w-full rounded-control p-3 text-body-sm"
               style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)" }}
             />
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="rounded-control px-4 py-2 text-body-sm font-medium"
-                style={{ border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleGenerateWithCustomization}
-                className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-body-sm font-medium text-on-accent hover:bg-accent-hover"
-              >
-                <FileText className="h-4 w-4" /> Generate
-              </button>
-            </div>
-          </div>
-        </div>
+        </Dialog>
       )}
     </>
   );

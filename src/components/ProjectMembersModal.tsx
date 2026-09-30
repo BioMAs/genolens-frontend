@@ -22,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 interface ProjectMembersModalProps {
   projectId: string;
@@ -92,16 +93,8 @@ export default function ProjectMembersModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Project Members</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
+    <Dialog open onClose={onClose} title="Project Members" size="lg">
+        <div className="space-y-6">
           {/* Invite Section - Project Admins Only */}
           {isProjectAdmin && (
             <div className="border-b pb-4">
@@ -141,8 +134,9 @@ export default function ProjectMembersModal({
               </form>
 
               {/* Note about email invitation */}
-              <p className="text-body-sm text-secondary mt-2">
-                ⚠️ Note: Email-based invitation is not yet fully implemented.
+              <p className="mt-2 flex items-start gap-2 text-body-sm text-secondary">
+                <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-warning-ink" aria-hidden />
+                Note: Email-based invitation is not yet fully implemented.
                 The user must already have an account in the system.
               </p>
             </div>
@@ -171,9 +165,8 @@ export default function ProjectMembersModal({
               <p className="text-secondary">No members yet. Invite someone to collaborate!</p>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+    </Dialog>
   );
 }
 

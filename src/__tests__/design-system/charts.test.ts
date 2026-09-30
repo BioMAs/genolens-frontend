@@ -132,7 +132,7 @@ describe('utilitaires morts', () => {
 
   /**
    * Le pendant du fantome : une classe qui EXISTE et qui peint la mauvaise
-   * chose. `--color-muted` resout sur `--text-muted`, une ENCRE a 4,83:1 sur
+   * chose. `--color-muted` resout sur `--text-muted`, une ENCRE a 5,23:1 sur
    * blanc. `bg-muted` rendait donc un bandeau gris moyen la ou une surface
    * discrete etait voulue — meme contresens shadcn que `text-muted-foreground`,
    * mais visible celui-la, et pourtant reste huit fois dans le code.
