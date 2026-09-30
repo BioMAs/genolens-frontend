@@ -1,6 +1,7 @@
 'use client';
 
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { SUPPORT_EMAIL } from '@/lib/contact';
 
 /**
  * Persistent notice for an account whose access period has ended.
@@ -26,7 +27,7 @@ export default function SubscriptionExpiredBanner() {
   if (isLoading || !profile?.subscription_expired) return null;
 
   const endedOn = profile.subscription_ends_at
-    ? new Date(profile.subscription_ends_at).toLocaleDateString('fr-FR', {
+    ? new Date(profile.subscription_ends_at).toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -51,10 +52,10 @@ export default function SubscriptionExpiredBanner() {
       You can still browse your existing projects and results, but creating
       projects, uploading datasets and launching analyses are disabled. Contact{' '}
       <a
-        href="mailto:support@scilicium.com"
+        href={`mailto:${SUPPORT_EMAIL}`}
         className="underline hover:text-warning-ink-hover transition-colors"
       >
-        support@scilicium.com
+        {SUPPORT_EMAIL}
       </a>{' '}
       to renew.
     </div>

@@ -5,7 +5,7 @@ import { FileText, Loader2, Download, AlertCircle, RefreshCw, Lock } from "lucid
 import { useReportStatus, useTriggerReport } from "@/hooks/useReportGeneration";
 import api from "@/utils/api";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { canExportAdvanced } from "@/utils/plan";
+import { canExportAdvanced, PLAN_GATE_COPY } from "@/utils/plan";
 
 interface Props {
   analysisId: string;
@@ -76,7 +76,7 @@ export default function GenerateReportButton({ analysisId }: Props) {
       <button
         type="button"
         disabled
-        title="PDF reports require a Pro or Enterprise plan"
+        title={PLAN_GATE_COPY.pdfReport}
         className="inline-flex cursor-not-allowed items-center gap-2 rounded-control
  bg-accent px-4 py-2 text-body-sm font-medium text-on-accent opacity-50"
       >

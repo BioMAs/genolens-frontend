@@ -7,6 +7,7 @@ import { SelfServiceAnalysis, SelfServiceAnalysisStatus } from '@/types';
 import { useDeleteAnalysis } from '@/hooks/useAnalyses';
 import CancelAnalysisButton from '@/components/analyses/CancelAnalysisButton';
 import { cn } from '@/lib/cn';
+import { analysisStepLabel } from '@/utils/analysisSteps';
 
 interface Props {
   analysis: SelfServiceAnalysis;
@@ -80,7 +81,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
       {/* Current step */}
       {analysis.current_step && isActive && (
         <p className="mt-2 text-caption text-secondary italic">
-          Step: {analysis.current_step.replace(/_/g, ' ')}
+          Step: {analysisStepLabel(analysis.current_step)}
         </p>
       )}
 
@@ -108,7 +109,7 @@ export default function AnalysisStatusCard({ analysis, projectId, geoAccession }
                 <span className="text-muted shrink-0">
                   {new Date(entry.timestamp).toLocaleTimeString('en-US')}
                 </span>
-                <span>{entry.step}{entry.message ? ` — ${entry.message}` : ''}</span>
+                <span>{analysisStepLabel(entry.step)}{entry.message ? ` — ${entry.message}` : ''}</span>
               </li>
             ))}
           </ul>

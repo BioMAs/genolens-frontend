@@ -408,7 +408,7 @@ export default function PowerAnalysis() {
                 </div>
                 <div>
                   <label className="text-caption text-secondary block mb-1">
-                    Coefficient de variation (CV)
+                    Coefficient of variation (CV)
                   </label>
                   <input
                     type="number"

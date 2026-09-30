@@ -22,7 +22,7 @@ import ProjectSwitcher from './sidebar/ProjectSwitcher';
 import UserMenu from './sidebar/UserMenu';
 import { useScientificModule } from '@/hooks/useAddOnModules';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { canUseMultiComparison } from '@/utils/plan';
+import { canUseMultiComparison, PLAN_GATE_COPY } from '@/utils/plan';
 import { cn } from '@/lib/cn';
 
 interface SidebarProps {
@@ -137,7 +137,7 @@ export default function Sidebar({ user, userRole }: SidebarProps) {
                 const lockedByPlan = requiresTeamPlan === true && !multiComparisonUnlocked;
                 const locked = lockedByAddOn || lockedByPlan;
                 const lockReason = lockedByPlan
-                  ? 'Multi-comparison requires a Pro plan'
+                  ? PLAN_GATE_COPY.multiComparison
                   : 'Scientific tools add-on — ask an admin to enable it';
                 return (
                   <div key={key}>

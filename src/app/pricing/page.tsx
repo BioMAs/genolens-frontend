@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { SALES_EMAIL } from '@/lib/contact';
 
 // ---------------------------------------------------------------------------
 // Plans, prices and card copy all come from GET /pricing — the single source
@@ -21,8 +22,6 @@ import { cn } from '@/lib/cn';
 // ---------------------------------------------------------------------------
 
 type BillingCycle = 'monthly' | 'annual';
-
-const SALES_EMAIL = 'contact@scilicium.com';
 
 /** Enterprise-style plan: quoted per deal rather than listed. */
 const isQuoted = (plan: Plan) => plan.price_monthly == null && plan.price_annual == null;
