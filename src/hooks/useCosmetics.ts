@@ -1,9 +1,10 @@
 /**
  * React Query hooks for the Cosmetics module.
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
+import { invalidateUserProfile } from '@/hooks/useUserProfile';
 
 export interface CosmeticEvidencePathway {
   term_id: string;
@@ -113,6 +114,7 @@ export function useCosmeticsInterpretation(
   datasetId: string | undefined,
   comparisonName: string | undefined,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<CosmeticsInterpretation, unknown, boolean>({
     mutationFn: async (forceRegenerate: boolean) => {
       const res = await api.post<CosmeticsInterpretation>(
@@ -122,5 +124,7 @@ export function useCosmeticsInterpretation(
       );
       return res.data;
     },
+    // A generated interpretation consumed one AI request on a capped account.
+    onSuccess: () => invalidateUserProfile(queryClient),
   });
 }

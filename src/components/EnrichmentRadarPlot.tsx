@@ -2,11 +2,20 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
 import { UserProfile } from '@/types';
-import { canUseAI, PAID_PLANS_LABEL } from '@/utils/plan';
+import {
+  AI_QUOTA_COPY,
+  aiQuotaMessage,
+  apiErrorMessage,
+  canUseAI,
+  isAiQuotaExhausted,
+  PAID_PLANS_LABEL,
+} from '@/utils/plan';
+import { invalidateUserProfile } from '@/hooks/useUserProfile';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 import { cn } from '@/lib/cn';
@@ -64,6 +73,10 @@ export default function EnrichmentRadarPlot({
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [termSearchQuery, setTermSearchQuery] = useState('');
+  // Set when `error` is the AI-cap refusal: it must not be dressed as a plan
+  // gate (an upgrade cannot help an account that already has the plan).
+  const [aiQuotaHit, setAiQuotaHit] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch user profile to check subscription
   useEffect(() => {
@@ -233,6 +246,7 @@ export default function EnrichmentRadarPlot({
   }, [fetchRadarData]);
 
   const handleAiSelection = async () => {
+    setAiQuotaHit(false);
     if (!aiPrompt.trim()) {
       setError('Please enter AI instructions before running term selection.');
       return;
@@ -259,14 +273,18 @@ export default function EnrichmentRadarPlot({
       const selectedTerms = response.data.selected_terms || [];
       transformAndSetData(selectedTerms);
       setShowAiPrompt(false);
+      invalidateUserProfile(queryClient);
       
     } catch (err: unknown) {
       console.error('AI selection failed:', err);
-      const apiError = err as { response?: { status?: number; data?: { detail?: string } } };
-      if (apiError.response?.status === 403) {
+      const apiError = err as { response?: { status?: number } };
+      if (isAiQuotaExhausted(err)) {
+        setAiQuotaHit(true);
+        setError(`${AI_QUOTA_COPY.title}. ${aiQuotaMessage(err)}`);
+      } else if (apiError.response?.status === 403) {
         setError(`AI features require a ${PAID_PLANS_LABEL} plan.`);
       } else {
-        setError(apiError.response?.data?.detail || 'AI selection failed');
+        setError(apiErrorMessage(err) || 'AI selection failed');
       }
     } finally {
       setAiLoading(false);
@@ -390,7 +408,9 @@ export default function EnrichmentRadarPlot({
   }
 
   if (error) {
-    const isPlanError = error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription');
+    const isPlanError =
+      !aiQuotaHit &&
+      (error.includes('TEAM') || error.includes('ON_PREMISE') || error.includes('subscription'));
     return (
       <div className={cn(
              'border rounded-control p-4',

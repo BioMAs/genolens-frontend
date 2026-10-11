@@ -8,6 +8,7 @@ import { useChatAgent } from '@/hooks/useChatAgent';
 import PlotlyFigure from '@/components/chat/PlotlyFigure';
 import HelpPanel from '@/components/chat/HelpPanel';
 import { cn } from '@/lib/cn';
+import { AI_QUOTA_COPY } from '@/utils/plan';
 
 /**
  * Full-screen assistant. Rendered by AppFrame when chat mode is on. Entry is always
@@ -80,7 +81,7 @@ function ChatConversation({
   datasetId: string;
   comparisonName: string;
 }) {
-  const { messages, isStreaming, error, send } = useChatAgent({
+  const { messages, isStreaming, error, quotaExhausted, send } = useChatAgent({
     projectId,
     datasetId,
     comparisonName,
@@ -137,7 +138,21 @@ function ChatConversation({
             </div>
           ),
         )}
-        {error && (
+        {error && quotaExhausted && (
+          // The AI request cap is not a failure: a warning tone rather than the
+          // error red, and a title that says what happened.
+          <div
+            role="status"
+            className="rounded-control border px-3 py-2 text-caption text-[var(--text-primary)]"
+            style={{
+              background: 'color-mix(in srgb, var(--dc-amber) 10%, var(--surface-raised))',
+              borderColor: 'color-mix(in srgb, var(--dc-amber) 35%, transparent)',
+            }}
+          >
+            <span className="font-semibold">{AI_QUOTA_COPY.title}.</span> {error}
+          </div>
+        )}
+        {error && !quotaExhausted && (
           <div className="rounded-control border border-[var(--sl-red)] bg-[var(--surface)] px-3 py-2 text-caption text-[var(--sl-red)]">
             {error}
           </div>

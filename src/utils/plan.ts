@@ -11,6 +11,8 @@
  * `User.can_use_ai` in backend/app/models/models.py.
  */
 
+import { SUPPORT_EMAIL } from '@/lib/contact';
+
 /** Live plan values, matching the backend `SubscriptionPlan` enum. */
 export type PlanKey = 'STARTER' | 'TEAM' | 'ON_PREMISE';
 
@@ -132,3 +134,81 @@ export const PLAN_GATE_COPY = {
     'Custom branding comes with the Report customization add-on.',
   multiComparison: `Multi-comparison requires a ${PAID_PLANS_LABEL} plan`,
 } as const;
+
+/**
+ * Copy for an account that has used up its AI request cap (demo accounts).
+ *
+ * Kept apart from `PLAN_GATE_COPY` on purpose: that one sends to an upgrade,
+ * while a demo account already has the plan — what ran out is the demo's own
+ * allowance, and only we can extend it.
+ */
+export const AI_QUOTA_COPY = {
+  title: 'AI request limit reached',
+  body:
+    'This demo account has used all of its AI requests. ' +
+    `Contact ${SUPPORT_EMAIL} to extend it.`,
+} as const;
+
+/**
+ * Body of the 429 every AI endpoint returns once a capped account has no AI
+ * request left (`reserve_ai_request`, backend/app/api/deps/subscription.py).
+ * A structured `detail`, like `account_inactive`, so the UI branches on
+ * `detail.error` rather than on a status code shared with other limits.
+ */
+export interface AiQuotaExhaustedDetail {
+  error: 'ai_quota_exhausted';
+  limit?: number;
+  used?: number;
+  message?: string;
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null;
+
+/**
+ * Status and `detail` of an API error, from either shape the app produces: an
+ * axios error (`response.status`, `response.data.detail`) or the plain
+ * `{ status, detail }` a fetch-based caller builds from a non-OK response.
+ */
+function readError(err: unknown): { status?: unknown; detail?: unknown } {
+  if (!isRecord(err)) return {};
+  if (isRecord(err.response)) {
+    const data = err.response.data;
+    return { status: err.response.status, detail: isRecord(data) ? data.detail : undefined };
+  }
+  return { status: err.status, detail: err.detail };
+}
+
+/** The quota detail when `err` is the AI-cap 429, `null` otherwise. */
+function aiQuotaDetail(err: unknown): AiQuotaExhaustedDetail | null {
+  const { status, detail } = readError(err);
+  if (status !== 429 || !isRecord(detail) || detail.error !== 'ai_quota_exhausted') return null;
+  return detail as unknown as AiQuotaExhaustedDetail;
+}
+
+/** True when `err` is the 429 an AI endpoint returns once the AI cap is used up. */
+export function isAiQuotaExhausted(err: unknown): boolean {
+  return aiQuotaDetail(err) !== null;
+}
+
+/**
+ * Message to show for an AI-cap 429: the backend's own wording when it sent
+ * one, our copy otherwise.
+ */
+export function aiQuotaMessage(err: unknown): string {
+  const message = aiQuotaDetail(err)?.message;
+  return typeof message === 'string' && message.trim() ? message : AI_QUOTA_COPY.body;
+}
+
+/**
+ * Readable message of an API error, whether `detail` is a string (most
+ * endpoints) or a structured object carrying a `message` (the AI-cap and
+ * account-state errors). Rendering the object as-is would print
+ * "[object Object]".
+ */
+export function apiErrorMessage(err: unknown): string | undefined {
+  const { detail } = readError(err);
+  if (typeof detail === 'string') return detail || undefined;
+  if (isRecord(detail) && typeof detail.message === 'string') return detail.message || undefined;
+  return undefined;
+}

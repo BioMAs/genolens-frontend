@@ -23,7 +23,7 @@ import { GitCompare, AlertCircle } from 'lucide-react';
 import { useQuotas } from '@/hooks/useQuotas';
 
 export default function AnalysisQuotaNotice() {
-  const { analyses, resetsOn, tone, isLoading, hasProfile } = useQuotas();
+  const { analyses, resetsOn, tone, isLoading, hasProfile, isDemo } = useQuotas();
 
   // Rien à dire tant que le profil est inconnu, et rien à dire sur un plan
   // sans plafond.
@@ -59,15 +59,24 @@ export default function AnalysisQuotaNotice() {
       )}
 
       <span className="min-w-0 flex-1">
+        {/* Un compte démo n'est jamais remis à zéro : son plafond court sur
+            toute la démo, donc aucune date de remise n'est promise. */}
         {exhausted ? (
-          <>
-            <b>No analysis left</b> this month. Your quota resets {resetLabel}.
-          </>
+          isDemo ? (
+            <>
+              <b>No analysis left</b> on this demo account.
+            </>
+          ) : (
+            <>
+              <b>No analysis left</b> this month. Your quota resets {resetLabel}.
+            </>
+          )
         ) : (
           <>
             <b>{remaining}</b> of {analyses.max}{' '}
-            {remaining === 1 ? 'analysis left' : 'analyses left'} this month — resets{' '}
-            {resetLabel}. This run counts as one, whatever its number of contrasts.
+            {remaining === 1 ? 'analysis left' : 'analyses left'}
+            {isDemo ? '' : <> this month — resets {resetLabel}</>}. This run counts as one,
+            whatever its number of contrasts.
           </>
         )}
       </span>

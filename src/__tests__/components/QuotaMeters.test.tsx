@@ -6,7 +6,7 @@
  * que se pose l'utilisateur, et l'ancienne carte y répondait en « utilisé /
  * quota » sous le libellé « Analyses / month ».
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import QuotaMeters from '@/components/QuotaMeters';
 import type { QuotaState } from '@/hooks/useQuotas';
 
@@ -25,6 +25,7 @@ function state(overrides: Partial<QuotaState> = {}): QuotaState {
     ai: { credits: 18, unlimited: false },
     maxDatasetsPerProject: 5,
     resetsOn: new Date(2026, 9, 1),
+    isDemo: false,
     tone: 'ok',
     isLoading: false,
     hasProfile: true,
@@ -166,4 +167,41 @@ it('lays them out in a column when asked', () => {
   useQuotas.mockReturnValue(state());
   const { container } = render(<QuotaMeters layout="column" />);
   expect(container.querySelector('[data-layout="column"]')).toBeInTheDocument();
+});
+
+// ── compte démo ────────────────────────────────────────────────────────────
+
+it('shows a capped AI allowance as "x of y AI requests left", with a meter', () => {
+  useQuotas.mockReturnValue(state({ ai: { credits: 5, max: 20, unlimited: false } }));
+  render(<QuotaMeters />);
+
+  const cell = screen.getByTestId('quota-ai');
+  expect(cell).toHaveTextContent('5');
+  expect(cell).toHaveTextContent(/of 20/);
+  expect(cell).toHaveTextContent(/AI requests left/);
+  // Une jauge, comme la cellule Analyses : 15 requêtes consommées sur 20.
+  expect(within(cell).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '75');
+});
+
+it('says no AI request is left once the cap is used up', () => {
+  useQuotas.mockReturnValue(state({ ai: { credits: 0, max: 20, unlimited: false } }));
+  render(<QuotaMeters />);
+  expect(screen.getByTestId('quota-ai')).toHaveTextContent(/no AI request left/i);
+});
+
+it('keeps the historical AI credits cell when there is no cap', () => {
+  useQuotas.mockReturnValue(state());
+  render(<QuotaMeters />);
+  expect(screen.getByTestId('quota-ai')).toHaveTextContent(/AI credits/i);
+  expect(screen.getByTestId('quota-ai')).not.toHaveTextContent(/AI requests left/);
+});
+
+it('promises no monthly reset on a demo account', () => {
+  // Le plafond d'un compte démo court sur toute la démo.
+  useQuotas.mockReturnValue(state({ isDemo: true }));
+  render(<QuotaMeters />);
+  const cell = screen.getByTestId('quota-analyses');
+  expect(cell).toHaveTextContent(/analyses left/i);
+  expect(cell).not.toHaveTextContent(/this month/i);
+  expect(cell).not.toHaveTextContent(/resets/i);
 });

@@ -459,3 +459,77 @@ describe('lecture des champs de quota', () => {
     expect(result.current.analyses.max).toBe(0);
   });
 });
+
+// ── compte démo : plafond de requêtes IA ───────────────────────────────────
+
+describe('plafond de requêtes IA (compte démo)', () => {
+  /**
+   * Un compte démo garde son plan (TEAM, donc IA « illimitée » par le plan)
+   * mais reçoit un plafond de requêtes IA. Seul un NOMBRE dans
+   * `ai_requests_limit` l'active : `null` dit « pas de plafond », et un champ
+   * absent vient d'un backend antérieur — ni l'un ni l'autre ne plafonne.
+   */
+  const DEMO = {
+    ...PROFILE,
+    subscription_plan: 'TEAM',
+    is_demo: true,
+    ai_requests_limit: 20,
+    ai_requests_used: 15,
+    ai_requests_remaining: 5,
+  };
+
+  it('remplace le calcul des crédits par le reste du plafond', async () => {
+    mockEndpoints(DEMO);
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: 5, max: 20, unlimited: false });
+    expect(result.current.isDemo).toBe(true);
+  });
+
+  it('plafonne même un plan dont l’IA est illimitée', async () => {
+    // TEAM seul donnerait `unlimited: true` ; le plafond l'emporte.
+    mockEndpoints(DEMO);
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai.unlimited).toBe(false);
+  });
+
+  it('déduit le reste du compteur quand le backend ne le sert pas', async () => {
+    const { ai_requests_remaining: _omit, ...withoutRemaining } = DEMO;
+    void _omit;
+    mockEndpoints(withoutRemaining);
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: 5, max: 20, unlimited: false });
+  });
+
+  it('ne plafonne pas quand la limite vaut null', async () => {
+    mockEndpoints({ ...DEMO, ai_requests_limit: null, ai_requests_remaining: null });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: null, unlimited: true });
+    expect(result.current.ai.max).toBeUndefined();
+  });
+
+  it('ne plafonne pas quand le backend ignore encore le champ', async () => {
+    // Frontend déployé avant le backend : comportement historique, intact.
+    mockEndpoints({ ...PROFILE, subscription_plan: 'TEAM' });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: null, unlimited: true });
+    expect(result.current.isDemo).toBe(false);
+  });
+
+  it('ignore le plafond pour un rôle privilégié, que le backend laisse passer', async () => {
+    mockEndpoints({ ...DEMO, role: 'ADMIN' });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: null, unlimited: true });
+  });
+});

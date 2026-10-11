@@ -25,6 +25,7 @@ const STATE: QuotaState = {
   ai: { credits: 18, unlimited: false },
   maxDatasetsPerProject: 5,
   resetsOn: new Date(2026, 9, 1),
+  isDemo: false,
   tone: 'ok',
   isLoading: false,
   hasProfile: true,

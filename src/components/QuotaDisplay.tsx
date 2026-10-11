@@ -16,7 +16,8 @@
  */
 import { Sparkles, AlertCircle } from 'lucide-react';
 
-import { useQuotas } from '@/hooks/useQuotas';
+import { quotaTone, useQuotas } from '@/hooks/useQuotas';
+import { AI_QUOTA_COPY } from '@/utils/plan';
 
 /** En dessous de ce solde, on prévient. */
 const LOW_CREDITS = 3;
@@ -43,6 +44,10 @@ export default function QuotaDisplay() {
   }
 
   const credits = ai.credits ?? 0;
+  // Plafond de requêtes IA (compte démo) : le badge montre le reste ET le
+  // plafond, et son ton suit la même règle que les jauges de quotas.
+  const capped = ai.max !== undefined;
+  const label = capped ? `${credits}/${ai.max} AI` : `${credits} AI`;
 
   if (credits <= 0) {
     return (
@@ -53,15 +58,15 @@ export default function QuotaDisplay() {
           borderColor: 'var(--sl-red-muted)',
           color: 'var(--sl-red-dark)',
         }}
-        title="Quota exceeded"
+        title={capped ? AI_QUOTA_COPY.title : 'Quota exceeded'}
       >
         <AlertCircle className="h-3.5 w-3.5" />
-        <span>0 AI</span>
+        <span>{label}</span>
       </div>
     );
   }
 
-  const isLow = credits <= LOW_CREDITS;
+  const isLow = capped ? quotaTone(credits, ai.max ?? null) === 'low' : credits <= LOW_CREDITS;
 
   return (
     <div
@@ -79,10 +84,14 @@ export default function QuotaDisplay() {
               color: 'var(--sl-teal-dark)',
             }
       }
-      title={`${credits} AI interpretations available`}
+      title={
+        capped
+          ? `${credits} of ${ai.max} AI requests left`
+          : `${credits} AI interpretations available`
+      }
     >
       <Sparkles className="h-3.5 w-3.5" />
-      <span>{credits} AI</span>
+      <span>{label}</span>
     </div>
   );
 }

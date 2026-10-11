@@ -17,7 +17,7 @@
 import Link from 'next/link';
 import { Sparkles, FolderOpen, GitCompare } from 'lucide-react';
 
-import { useQuotas, type QuotaTone } from '@/hooks/useQuotas';
+import { quotaTone, useQuotas, type QuotaTone } from '@/hooks/useQuotas';
 import { Meter } from '@/components/ui/meter';
 
 const PLACEHOLDER = '—';
@@ -76,11 +76,16 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
   const known = quotas.hasProfile && !quotas.isLoading;
   const tone: QuotaTone = known ? quotas.tone : 'ok';
 
-  const { analyses, projects, ai } = quotas;
+  const { analyses, projects, ai, isDemo } = quotas;
   const resetLabel = quotas.resetsOn.toLocaleDateString('en-GB', {
     month: 'long',
     day: 'numeric',
   });
+
+  // Plafond de requêtes IA (compte démo) : `max` n'existe que dans ce cas. Le
+  // ton se calcule comme celui des analyses, sur le reste rapporté au plafond.
+  const aiCapped = ai.max !== undefined;
+  const aiTone: QuotaTone = aiCapped ? quotaTone(ai.credits, ai.max ?? null) : 'ok';
 
   return (
     <div
@@ -120,10 +125,12 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
                 of {analyses.max}
               </span>
             </p>
+            {/* Un compte démo n'est jamais remis à zéro : ni « ce mois-ci »,
+                ni date de remise. */}
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               {analyses.remaining === 0
-                ? 'No analysis left this month'
-                : 'analyses left this month'}
+                ? `No analysis left${isDemo ? '' : ' this month'}`
+                : `analyses left${isDemo ? '' : ' this month'}`}
             </p>
             <div className="mt-2">
               <Meter
@@ -132,9 +139,11 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
                 height={8}
               />
             </div>
-            <p className="mt-2 text-micro" style={{ color: 'var(--text-muted)' }}>
-              Resets {resetLabel}
-            </p>
+            {!isDemo && (
+              <p className="mt-2 text-micro" style={{ color: 'var(--text-muted)' }}>
+                Resets {resetLabel}
+              </p>
+            )}
           </>
         )}
       </Cell>
@@ -182,7 +191,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
       <Cell
         testId="quota-ai"
         icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
-        label="AI credits"
+        label={aiCapped ? 'AI requests' : 'AI credits'}
       >
         {!known ? (
           <p className="mt-1 font-display text-heading" style={{ color: 'var(--text-muted)' }}>
@@ -196,6 +205,28 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Unlimited on this plan
             </p>
+          </>
+        ) : aiCapped ? (
+          <>
+            <p
+              className="mt-1 font-display text-heading tabular-nums"
+              style={{ color: VALUE_COLOR[aiTone] }}
+            >
+              {ai.credits}{' '}
+              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+                of {ai.max}
+              </span>
+            </p>
+            <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
+              {ai.credits === 0 ? 'No AI request left' : 'AI requests left'}
+            </p>
+            <div className="mt-2">
+              <Meter
+                value={ai.max ? (ai.max - (ai.credits ?? 0)) / ai.max : 0}
+                tone={METER_TONE[aiTone]}
+                height={8}
+              />
+            </div>
           </>
         ) : (
           <>

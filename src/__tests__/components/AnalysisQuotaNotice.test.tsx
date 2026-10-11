@@ -33,6 +33,7 @@ function state(overrides: Partial<QuotaState> = {}): QuotaState {
     ai: { credits: 18, unlimited: false },
     maxDatasetsPerProject: 5,
     resetsOn: new Date(2026, 9, 1),
+    isDemo: false,
     tone: 'ok',
     isLoading: false,
     hasProfile: true,
@@ -164,4 +165,27 @@ it('does not block a run when a single unit remains', () => {
   );
   const { result } = renderHook(() => useAnalysisQuotaBlocked());
   expect(result.current).toBe(false);
+});
+
+// ── compte démo : pas de remise à zéro mensuelle ──────────────────────────
+
+it('promises no reset date on a demo account', () => {
+  useQuotas.mockReturnValue(state({ isDemo: true }));
+  render(<AnalysisQuotaNotice />);
+  expect(screen.getByText(/analyses? left/i)).toBeInTheDocument();
+  expect(screen.queryByText(/resets/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/this month/i)).not.toBeInTheDocument();
+});
+
+it('says a demo account has no analysis left, without a reset date', () => {
+  useQuotas.mockReturnValue(
+    state({
+      isDemo: true,
+      analyses: { used: 3, max: 3, remaining: 0, unlimited: false },
+      tone: 'exhausted',
+    })
+  );
+  render(<AnalysisQuotaNotice />);
+  expect(screen.getByText(/demo account/i)).toBeInTheDocument();
+  expect(screen.queryByText(/resets/i)).not.toBeInTheDocument();
 });

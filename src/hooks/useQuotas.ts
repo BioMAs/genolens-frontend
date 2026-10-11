@@ -47,9 +47,19 @@ export interface QuotaState {
   /** Unité facturable : une analyse, quel que soit son nombre de contrastes. */
   analyses: QuotaSlice;
   projects: QuotaSlice;
-  ai: { credits: number | null; unlimited: boolean };
+  /**
+   * `max` n'est présent que sur un compte au plafond de requêtes IA (compte
+   * démo) : `credits` est alors le reste de ce plafond. Sans plafond, le calcul
+   * historique des crédits s'applique, sans `max`.
+   */
+  ai: { credits: number | null; unlimited: boolean; max?: number };
   maxDatasetsPerProject: number | null;
   resetsOn: Date;
+  /**
+   * Compte de démonstration. Son quota d'analyses n'est JAMAIS remis à zéro
+   * (le plafond court sur toute la démo) : les surfaces taisent alors `resetsOn`.
+   */
+  isDemo: boolean;
   /** Ton du quota d'analyses : celui mis en avant sur le dashboard. */
   tone: QuotaTone;
   isLoading: boolean;
@@ -132,6 +142,15 @@ export function useQuotas(): QuotaState {
   const paidRemaining = (profile?.ai_tokens_purchased ?? 0) - (profile?.ai_tokens_used ?? 0);
   const freeRemaining = Math.max(0, FREE_AI_ALLOWANCE - (profile?.ai_interpretations_used ?? 0));
 
+  // Plafond de requêtes IA (compte démo). Seul un NOMBRE l'active : `null` dit
+  // « pas de plafond » et un champ absent vient d'un backend qui ne le connaît
+  // pas — aucun des deux ne doit plafonner. Les rôles privilégiés passent le
+  // plafond côté backend, donc ils ne l'affichent pas non plus.
+  const aiLimit =
+    !privileged && typeof profile?.ai_requests_limit === 'number'
+      ? profile.ai_requests_limit
+      : null;
+
   const hasProfile = !!profile;
 
   return {
@@ -147,15 +166,27 @@ export function useQuotas(): QuotaState {
       remaining: projectsRemaining,
       unlimited: projectsMax === null,
     },
-    ai: {
-      // Le solde payé peut être négatif (jetons consommés au-delà de l'achat) ;
-      // il compense alors le gratuit, mais le total affiché ne descend pas
-      // sous zéro. Report exact du calcul de QuotaDisplay.
-      credits: aiUnlimited ? null : Math.max(0, paidRemaining + freeRemaining),
-      unlimited: aiUnlimited,
-    },
+    ai:
+      aiLimit !== null
+        ? {
+            // Le reste est servi par le backend ; à défaut, il se déduit du
+            // compteur, comme le reste d'analyses plus haut.
+            credits:
+              profile?.ai_requests_remaining ??
+              Math.max(0, aiLimit - (profile?.ai_requests_used ?? 0)),
+            max: aiLimit,
+            unlimited: false,
+          }
+        : {
+            // Le solde payé peut être négatif (jetons consommés au-delà de l'achat) ;
+            // il compense alors le gratuit, mais le total affiché ne descend pas
+            // sous zéro. Report exact du calcul de QuotaDisplay.
+            credits: aiUnlimited ? null : Math.max(0, paidRemaining + freeRemaining),
+            unlimited: aiUnlimited,
+          },
     maxDatasetsPerProject: profile?.max_datasets_per_project ?? null,
     resetsOn: nextMonthlyReset(),
+    isDemo: profile?.is_demo === true,
     // Pendant le chargement on reste neutre : le ton dérivé d'un profil absent
     // vaudrait « exhausted » (max 0, reste 0), donc un placeholder rouge et un
     // CTA « Upgrade » à chaque chargement du dashboard.

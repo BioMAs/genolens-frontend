@@ -1,8 +1,11 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { createClient } from '@/utils/supabase/client';
+import { invalidateUserProfile } from '@/hooks/useUserProfile';
+import { aiQuotaMessage, isAiQuotaExhausted } from '@/utils/plan';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +43,23 @@ interface SessionContext {
   comparisonName?: string | null;
 }
 
+/**
+ * Non-OK answer to the message POST, with its parsed JSON `detail` when the body
+ * was JSON. Carries the plain `{ status, detail }` shape `isAiQuotaExhausted`
+ * reads, so the AI-cap 429 — refused before the stream opens — is recognised
+ * instead of surfacing as `Chat request failed: 429 – {raw body}`.
+ */
+class ChatRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly detail: unknown,
+    raw: string,
+  ) {
+    super(`Chat request failed: ${status}${raw ? ` – ${raw}` : ''}`);
+    this.name = 'ChatRequestError';
+  }
+}
+
 /** Named-SSE reader: yields {event, data} frames (extends the readSSE pattern). */
 async function* readNamedSSE(
   url: string,
@@ -51,8 +71,14 @@ async function* readNamedSSE(
 
   const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
   if (!response.ok || !response.body) {
-    const detail = await response.text().catch(() => '');
-    throw new Error(`Chat request failed: ${response.status}${detail ? ` – ${detail}` : ''}`);
+    const raw = await response.text().catch(() => '');
+    let detail: unknown;
+    try {
+      detail = (JSON.parse(raw) as { detail?: unknown })?.detail;
+    } catch {
+      // Not JSON: the raw text stays in the message.
+    }
+    throw new ChatRequestError(response.status, detail, raw);
   }
 
   const reader = response.body.getReader();
@@ -97,7 +123,10 @@ export function useChatAgent(ctx: SessionContext) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** True when `error` is the AI-cap refusal, so the shell can present it as such. */
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
   const ensureSession = useCallback(async (): Promise<string> => {
     if (sessionIdRef.current) return sessionIdRef.current;
@@ -114,6 +143,7 @@ export function useChatAgent(ctx: SessionContext) {
     sessionIdRef.current = null;
     setMessages([]);
     setError(null);
+    setQuotaExhausted(false);
   }, []);
 
   const send = useCallback(
@@ -121,6 +151,7 @@ export function useChatAgent(ctx: SessionContext) {
       const trimmed = text.trim();
       if (!trimmed || isStreaming) return;
       setError(null);
+      setQuotaExhausted(false);
       setIsStreaming(true);
 
       setMessages((prev) => [
@@ -165,15 +196,22 @@ export function useChatAgent(ctx: SessionContext) {
             patchAssistant((m) => ({ ...m, pending: false, status: null }));
           }
         }
+        // One message consumed one AI request on a capped account.
+        invalidateUserProfile(queryClient);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Chat failed');
+        if (isAiQuotaExhausted(err)) {
+          setQuotaExhausted(true);
+          setError(aiQuotaMessage(err));
+        } else {
+          setError(err instanceof Error ? err.message : 'Chat failed');
+        }
         patchAssistant((m) => ({ ...m, pending: false, status: null }));
       } finally {
         setIsStreaming(false);
       }
     },
-    [ensureSession, isStreaming],
+    [ensureSession, isStreaming, queryClient],
   );
 
-  return { messages, isStreaming, error, send, reset };
+  return { messages, isStreaming, error, quotaExhausted, send, reset };
 }
