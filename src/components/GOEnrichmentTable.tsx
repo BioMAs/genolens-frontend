@@ -10,6 +10,7 @@ import BookmarkButton from './BookmarkButton';
 import { useSelection } from '@/contexts/ComparisonSelectionContext';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import ExportMenu from '@/components/ExportMenu';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { useChartPalette, useChartScales } from '@/utils/chartTheme';
 import { cn } from '@/lib/cn';
 
@@ -69,6 +70,8 @@ function directionTone(color: string) {
 export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degGeneMap }: GOEnrichmentTableProps) {
   const palette = useChartPalette();
   const scales = useChartScales();
+  // A demo account's HTML export carries the "DEMO" watermark.
+  const isDemo = useIsDemoAccount();
   // Passive cross-filter: a selection made in Explorer becomes legible here without anyone
   // navigating anywhere. Reads the context directly rather than being drilled a prop, since
   // this table sits several levels down.
@@ -311,6 +314,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
                 'Generated': new Date().toLocaleString()
               }
             }}
+            demo={isDemo}
             variant="outline"
             size="sm"
           />

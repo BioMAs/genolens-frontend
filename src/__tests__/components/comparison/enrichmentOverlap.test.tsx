@@ -26,6 +26,10 @@ jest.mock('@/components/ExportMenu', () => {
   return { __esModule: true, default: Stub };
 });
 
+// The table reads the demo flag (for its HTML export's watermark) from the
+// profile query; this tree has no QueryClient and the export menu is stubbed.
+jest.mock('@/hooks/useIsDemoAccount', () => ({ useIsDemoAccount: () => false }));
+
 const term = (go_id: string, go_name: string, study_genes: string[]) => ({
   go_id,
   go_name,

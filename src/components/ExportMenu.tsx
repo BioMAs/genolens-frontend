@@ -82,6 +82,9 @@ interface ExportMenuProps {
   
   /** Disabled state */
   disabled?: boolean;
+
+  /** Demo account: the HTML export carries the "DEMO" watermark. */
+  demo?: boolean;
 }
 
 export default function ExportMenu({
@@ -98,6 +101,7 @@ export default function ExportMenu({
   size = "sm",
   className = "",
   disabled = false,
+  demo = false,
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -159,7 +163,7 @@ export default function ExportMenu({
             alert("HTML export not configured for this component");
             return;
           }
-          exportToHTML(htmlConfig, filename);
+          exportToHTML(htmlConfig, filename, { demo });
           break;
       }
 

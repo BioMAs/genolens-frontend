@@ -6,7 +6,8 @@ import api from '@/utils/api';
 import { Dataset } from '@/types';
 import { Layout, PlotData } from 'plotly.js';
 import { useChartTheme } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 import { cn } from '@/lib/cn';
 
@@ -30,6 +31,7 @@ type QueryRow = Record<string, unknown>;
 
 export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProps) {
   const chartTheme = useChartTheme();
+  const isDemo = useIsDemoAccount();
   const [topN, setTopN] = useState<TopN>(10);
   const [genes, setGenes] = useState<DEGGene[]>([]);
   const [loading, setLoading] = useState(true);
@@ -255,17 +257,21 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
             },
           ],
         }) as Partial<Layout>}
-        config={{
-          displayModeBar: true,
-          displaylogo: false,
-          modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-          toImageButtonOptions: {
-            format: 'png',
-            filename: `top${topN}_DEGs_${comparisonName}`,
-            height: chartHeight + 100,
-            width: 900,
+        config={withDemoImageExport(
+          {
+            displayModeBar: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            toImageButtonOptions: {
+              format: 'png',
+              filename: `top${topN}_DEGs_${comparisonName}`,
+              height: chartHeight + 100,
+              width: 900,
+            },
           },
-        }}
+          isDemo,
+          `top${topN}_DEGs_${comparisonName}`,
+        )}
         style={{ width: '100%' }}
         useResizeHandler
       />

@@ -1,4 +1,10 @@
-import { buildPlotlyLayout, mergePlotlyLayout } from '@/utils/plotlyLayout';
+import {
+  buildPlotlyConfig,
+  buildPlotlyLayout,
+  mergePlotlyLayout,
+  withDemoImageExport,
+} from '@/utils/plotlyLayout';
+import type { ModeBarButton } from 'plotly.js';
 import type { ChartTheme } from '@/utils/chartTheme';
 
 /**
@@ -162,5 +168,45 @@ describe('fonds des SOUS-GRAPHIQUES', () => {
   it('applique la chrome aussi sur le chemin de l’agent', () => {
     const l = mergePlotlyLayout(THEME, { polar: { radialaxis: { range: [0, 3] } } });
     expect((l.polar as Record<string, unknown>)?.bgcolor).toBe('rgba(0,0,0,0)');
+  });
+});
+
+describe('withDemoImageExport — export image d’un compte demo', () => {
+  /**
+   * Le bouton natif `toImage` telecharge sans point d'accroche : pour un compte
+   * demo il est remplace par un bouton maison qui filigrane le PNG. Le rendu
+   * canvas passe par `Plotly.toImage`, que jsdom ne peut pas executer ; ce qui
+   * se verifie ici est la configuration produite.
+   */
+  const base = buildPlotlyConfig({ filename: 'volcano_A_vs_B' });
+
+  it('rend la configuration INCHANGEE hors compte demo — meme reference', () => {
+    expect(withDemoImageExport(base, false, 'volcano')).toBe(base);
+  });
+
+  it('retire le bouton natif et conserve les retraits de l’appelant', () => {
+    const config = withDemoImageExport(base, true, 'volcano');
+    expect(config.modeBarButtonsToRemove).toEqual(['select2d', 'lasso2d', 'toImage']);
+  });
+
+  it('ajoute un bouton maison qui garde l’icone appareil photo', () => {
+    const config = withDemoImageExport(base, true, 'volcano');
+    const buttons = config.modeBarButtonsToAdd as ModeBarButton[];
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].name).toBe('demoToImage');
+    expect(typeof buttons[0].click).toBe('function');
+    expect(buttons[0].icon).toEqual(expect.objectContaining({ width: 1000, height: 1000 }));
+  });
+
+  it('ne modifie pas la configuration recue', () => {
+    const before = JSON.stringify(base);
+    withDemoImageExport(base, true, 'volcano');
+    expect(JSON.stringify(base)).toBe(before);
+  });
+
+  it('s’applique aussi a une configuration vide', () => {
+    const config = withDemoImageExport({}, true, 'radar');
+    expect(config.modeBarButtonsToRemove).toEqual(['toImage']);
+    expect(config.modeBarButtonsToAdd).toHaveLength(1);
   });
 });

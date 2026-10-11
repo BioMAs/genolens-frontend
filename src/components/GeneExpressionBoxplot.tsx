@@ -19,7 +19,8 @@ import dynamic from 'next/dynamic';
 import type { Layout, PlotData } from 'plotly.js';
 import type { GeneExpression } from '@/hooks/useGeneExpressionByCondition';
 import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -44,6 +45,7 @@ export default function GeneExpressionBoxplot({
   // memes valeurs. useChartTheme le remplace.
   const chartTheme = useChartTheme();
   const palette = useChartPalette();
+  const isDemo = useIsDemoAccount();
 
   const traces = useMemo<Partial<PlotData>[]>(() => {
     if (!data) return [];
@@ -107,12 +109,16 @@ export default function GeneExpressionBoxplot({
         layout={layout}
         useResizeHandler
         style={{ width: '100%', height: '100%' }}
-        config={{
-          displayModeBar: showModeBar,
-          displaylogo: false,
-          responsive: true,
-          modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
-        }}
+        config={withDemoImageExport(
+          {
+            displayModeBar: showModeBar,
+            displaylogo: false,
+            responsive: true,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+          },
+          isDemo,
+          `${data?.gene ?? 'gene'}_expression`,
+        )}
       />
     </div>
   );
