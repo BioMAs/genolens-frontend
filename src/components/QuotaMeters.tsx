@@ -19,6 +19,7 @@ import { Sparkles, FolderOpen, GitCompare } from 'lucide-react';
 
 import { quotaTone, useQuotas, type QuotaTone } from '@/hooks/useQuotas';
 import { Meter } from '@/components/ui/meter';
+import { UPGRADE_HREF } from '@/utils/plan';
 
 const PLACEHOLDER = '—';
 
@@ -72,7 +73,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
   // Tant que le profil n'est pas là — chargement comme erreur — on n'affiche
   // aucun chiffre. Un profil absent donnerait un quota à zéro, donc du rouge,
   // un « no comparison left » et un CTA « Upgrade » à un utilisateur qui n'a
-  // rien épuisé ; et pour l'IA, le seul quota gratuit de 15.
+  // rien épuisé ; et pour l'IA, un zéro « pas d'IA » qu'il n'a peut-être pas.
   const known = quotas.hasProfile && !quotas.isLoading;
   const tone: QuotaTone = known ? quotas.tone : 'ok';
 
@@ -229,13 +230,27 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
             </div>
           </>
         ) : (
+          // Ni plafond ni IA par le plan : pas d'IA du tout. On le dit, avec le
+          // chemin pour l'obtenir, plutôt qu'un solde qui n'a jamais existé —
+          // ce cas affichait « 15 interpretations available » à un STARTER
+          // dont chaque appel IA recevait un 403.
           <>
-            <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {ai.credits}
+            <p
+              className="mt-1 font-display text-heading tabular-nums"
+              style={{ color: VALUE_COLOR.exhausted }}
+            >
+              {ai.credits ?? 0}
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
-              interpretations available
+              AI is not included in your plan
             </p>
+            <Link
+              href={UPGRADE_HREF}
+              className="mt-2 inline-block text-micro font-semibold hover:underline"
+              style={{ color: 'var(--sl-purple)' }}
+            >
+              View plans
+            </Link>
           </>
         )}
       </Cell>

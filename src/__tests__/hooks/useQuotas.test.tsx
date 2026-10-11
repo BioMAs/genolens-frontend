@@ -161,28 +161,44 @@ describe('useQuotas', () => {
     });
   });
 
-  it('computes AI credits as paid remainder plus free allowance', async () => {
-    // (10 - 3) + max(0, 15 - 4) = 18
+  it('reports no AI at all for a STARTER without granted requests', async () => {
+    // L'ancien calcul donnait ici (10 - 3) + max(0, 15 - 4) = 18 : quinze
+    // interprétations « gratuites » plus des jetons achetés, que le backend n'a
+    // jamais appliqués — chaque appel IA de ce STARTER recevait un 403.
     mockEndpoints(PROFILE);
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.ai).toEqual({ credits: 18, unlimited: false });
+    expect(result.current.ai).toEqual({ credits: 0, unlimited: false });
   });
 
-  it('never reports negative AI credits when paid tokens are overdrawn', async () => {
-    // Report exact du calcul de QuotaDisplay : (2 - 9) + max(0, 15 - 15) = -7,
-    // ramené à 0. Un badge « −7 AI » n'aurait aucun sens.
+  it('ignores purchased and used tokens entirely', async () => {
+    // Plus aucun solde dérivé des jetons : ni positif, ni négatif.
     mockEndpoints({
       ...PROFILE,
-      ai_tokens_purchased: 2,
-      ai_tokens_used: 9,
-      ai_interpretations_used: 15,
+      ai_tokens_purchased: 500,
+      ai_tokens_used: 0,
+      ai_interpretations_used: 0,
     });
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.ai).toEqual({ credits: 0, unlimited: false });
+  });
+
+  it('caps a STARTER to the AI requests an admin granted', async () => {
+    // Crédits accordés à un STARTER : l'IA s'ouvre, jusqu'au plafond.
+    mockEndpoints({
+      ...PROFILE,
+      ai_requests_limit: 10,
+      ai_requests_used: 3,
+      ai_requests_remaining: 7,
+    });
+    const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.ai).toEqual({ credits: 7, max: 10, unlimited: false });
+    expect(result.current.isDemo).toBe(false);
   });
 
   it('reports AI as unlimited on a TEAM plan', async () => {

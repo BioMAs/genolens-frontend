@@ -20,7 +20,11 @@ import {
   normalizePlan,
 } from '@/utils/plan';
 
-type Profile = { subscription_plan?: string | null; role?: string | null };
+type Profile = {
+  subscription_plan?: string | null;
+  role?: string | null;
+  ai_requests_limit?: number | null;
+};
 
 const starter: Profile = { subscription_plan: 'STARTER', role: 'USER' };
 const team: Profile = { subscription_plan: 'TEAM', role: 'USER' };
@@ -62,5 +66,11 @@ describe.each([
 
   it('treats an unknown plan as the lowest tier', () => {
     expect(gate({ subscription_plan: 'WHATEVER', role: 'USER' })).toBe(false);
+  });
+
+  it('is not opened by AI requests granted to a STARTER', () => {
+    // Granted AI requests unlock AI (`canUseAI`) and nothing else: PDF reports
+    // and multi-comparison stay on the plan.
+    expect(gate({ ...starter, ai_requests_limit: 10 })).toBe(false);
   });
 });

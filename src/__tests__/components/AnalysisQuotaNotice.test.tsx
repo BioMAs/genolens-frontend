@@ -30,7 +30,7 @@ function state(overrides: Partial<QuotaState> = {}): QuotaState {
   return {
     analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
     projects: { used: 4, max: 15, remaining: 11, unlimited: false },
-    ai: { credits: 18, unlimited: false },
+    ai: { credits: 18, max: 30, unlimited: false },
     maxDatasetsPerProject: 5,
     resetsOn: new Date(2026, 9, 1),
     isDemo: false,

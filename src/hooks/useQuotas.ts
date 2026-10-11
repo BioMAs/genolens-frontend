@@ -48,9 +48,10 @@ export interface QuotaState {
   analyses: QuotaSlice;
   projects: QuotaSlice;
   /**
-   * `max` n'est présent que sur un compte au plafond de requêtes IA (compte
-   * démo) : `credits` est alors le reste de ce plafond. Sans plafond, le calcul
-   * historique des crédits s'applique, sans `max`.
+   * Trois cas, dans l'ordre : plafond de requêtes IA (`ai_requests_limit` est
+   * un nombre, compte démo ou crédits accordés par un admin) → `credits` est le
+   * reste et `max` le plafond ; IA illimitée (plan ou rôle) → `credits: null` ;
+   * sinon pas d'IA du tout → `credits: 0`. `max` n'existe que dans le 1er cas.
    */
   ai: { credits: number | null; unlimited: boolean; max?: number };
   maxDatasetsPerProject: number | null;
@@ -67,15 +68,6 @@ export interface QuotaState {
   hasProfile: boolean;
   isError: boolean;
 }
-
-/**
- * Interprétations IA offertes hors abonnement payant.
- *
- * Valeur reprise telle quelle de `QuotaDisplay`, où elle était en dur. Elle
- * n'est pas servie par l'API : la déplacer ici ne la rend pas plus vraie, mais
- * il n'y a plus qu'un seul endroit à corriger quand le backend l'exposera.
- */
-const FREE_AI_ALLOWANCE = 15;
 
 /** En dessous de ce reste, on prévient. */
 const LOW_RATIO = 0.2;
@@ -139,13 +131,12 @@ export function useQuotas(): QuotaState {
   const projectsRemaining = projectsMax === null ? null : Math.max(0, projectsMax - projectsUsed);
 
   const aiUnlimited = hasUnlimitedAI(profile ?? null);
-  const paidRemaining = (profile?.ai_tokens_purchased ?? 0) - (profile?.ai_tokens_used ?? 0);
-  const freeRemaining = Math.max(0, FREE_AI_ALLOWANCE - (profile?.ai_interpretations_used ?? 0));
 
-  // Plafond de requêtes IA (compte démo). Seul un NOMBRE l'active : `null` dit
-  // « pas de plafond » et un champ absent vient d'un backend qui ne le connaît
-  // pas — aucun des deux ne doit plafonner. Les rôles privilégiés passent le
-  // plafond côté backend, donc ils ne l'affichent pas non plus.
+  // Plafond de requêtes IA (compte démo, ou crédits accordés par un admin à
+  // n'importe quel plan). Seul un NOMBRE l'active : `null` dit « pas de
+  // plafond » et un champ absent vient d'un backend qui ne le connaît pas —
+  // aucun des deux ne doit plafonner. Les rôles privilégiés passent le plafond
+  // côté backend, donc ils ne l'affichent pas non plus.
   const aiLimit =
     !privileged && typeof profile?.ai_requests_limit === 'number'
       ? profile.ai_requests_limit
@@ -178,10 +169,12 @@ export function useQuotas(): QuotaState {
             unlimited: false,
           }
         : {
-            // Le solde payé peut être négatif (jetons consommés au-delà de l'achat) ;
-            // il compense alors le gratuit, mais le total affiché ne descend pas
-            // sous zéro. Report exact du calcul de QuotaDisplay.
-            credits: aiUnlimited ? null : Math.max(0, paidRemaining + freeRemaining),
+            // Sans plafond ni IA par le plan : ZÉRO. L'ancien calcul — 15
+            // interprétations « gratuites » plus les jetons achetés moins les
+            // jetons consommés — n'a jamais été appliqué par le backend : un
+            // STARTER lisait « 15 interpretations available » pendant que chaque
+            // appel IA lui répondait 403.
+            credits: aiUnlimited ? null : 0,
             unlimited: aiUnlimited,
           },
     maxDatasetsPerProject: profile?.max_datasets_per_project ?? null,

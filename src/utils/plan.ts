@@ -19,7 +19,18 @@ export type PlanKey = 'STARTER' | 'TEAM' | 'ON_PREMISE';
 /** Roles that bypass plan gating, matching `UserRole` on the backend. */
 const PRIVILEGED_ROLES = ['ADMIN', 'SCILICIUM_ADMIN'];
 
-type PlanBearer = { subscription_plan?: string | null; role?: string | null } | null | undefined;
+type PlanBearer =
+  | {
+      subscription_plan?: string | null;
+      role?: string | null;
+      /**
+       * AI requests granted by an admin, from `/users/me`. A number caps AI
+       * (and, above 0, grants it on any plan); `null` or absent means no cap.
+       */
+      ai_requests_limit?: number | null;
+    }
+  | null
+  | undefined;
 
 /**
  * Normalize any plan string to a live plan value.
@@ -43,23 +54,46 @@ export function isPrivilegedRole(role: string | null | undefined): boolean {
   return PRIVILEGED_ROLES.includes((role ?? '').toUpperCase());
 }
 
+/** A positive AI request allowance granted by an admin. */
+function hasGrantedAIRequests(profile: NonNullable<PlanBearer>): boolean {
+  return typeof profile.ai_requests_limit === 'number' && profile.ai_requests_limit > 0;
+}
+
+/** True when the account carries an AI request cap (`ai_requests_limit` is a number). */
+function hasAICap(profile: NonNullable<PlanBearer>): boolean {
+  return typeof profile.ai_requests_limit === 'number';
+}
+
 /**
- * Mirrors `User.can_use_ai`: TEAM and ON_PREMISE have AI access, STARTER does
- * not, and admin roles always do. Fails closed on a missing profile.
+ * Mirrors `User.can_use_ai`: admin roles always have AI, TEAM and ON_PREMISE
+ * have it by plan, and ANY plan has it once an admin has granted AI requests
+ * (`ai_requests_limit` > 0) — a STARTER with granted requests uses AI up to
+ * that limit. Fails closed on a missing profile.
+ *
+ * Access is not the same as having requests left: a capped account that has
+ * used them all still passes here, and the backend answers its next AI call
+ * with the 429 `isAiQuotaExhausted` recognises.
  */
 export function canUseAI(profile: PlanBearer): boolean {
   if (!profile) return false;
   if (isPrivilegedRole(profile.role)) return true;
   const plan = normalizePlan(profile.subscription_plan);
-  return plan === 'TEAM' || plan === 'ON_PREMISE';
+  return plan === 'TEAM' || plan === 'ON_PREMISE' || hasGrantedAIRequests(profile);
 }
 
 /**
- * Mirrors `User.ai_interpretations_remaining` returning None: TEAM, ON_PREMISE
- * and admin roles have no AI interpretation cap.
+ * True when AI has no cap at all: admin roles, or a TEAM / ON_PREMISE plan
+ * WITHOUT an AI request cap. Any number in `ai_requests_limit` caps the account,
+ * whatever its plan — a demo account stays TEAM yet is capped.
+ *
+ * Not an alias of `canUseAI` any more: a STARTER with granted requests can use
+ * AI but is capped, so the two answers now differ.
  */
 export function hasUnlimitedAI(profile: PlanBearer): boolean {
-  return canUseAI(profile);
+  if (!profile) return false;
+  if (isPrivilegedRole(profile.role)) return true;
+  const plan = normalizePlan(profile.subscription_plan);
+  return (plan === 'TEAM' || plan === 'ON_PREMISE') && !hasAICap(profile);
 }
 
 /**
