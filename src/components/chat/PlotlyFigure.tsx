@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic';
 import type { Data, Layout } from 'plotly.js';
 import type { ChatFigureData } from '@/hooks/useChatAgent';
 import { useChartTheme } from '@/utils/chartTheme';
-import { buildPlotlyConfig, mergePlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyConfig, mergePlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -23,6 +24,7 @@ export default function PlotlyFigure({
 }) {
   const spec = figure.spec;
   const chartTheme = useChartTheme();
+  const isDemo = useIsDemoAccount();
   const data = (spec?.data ?? []) as Data[];
   const layout = (spec?.layout ?? {}) as Partial<Layout>;
 
@@ -48,7 +50,7 @@ export default function PlotlyFigure({
         // cles et reapplique la chrome en dernier, de sorte qu'une cle emise
         // par une version future de l'agent ne puisse pas la casser.
         layout={mergePlotlyLayout(chartTheme, { height: 360, ...(layout ?? {}) })}
-        config={buildPlotlyConfig({ filename })}
+        config={withDemoImageExport(buildPlotlyConfig({ filename }), isDemo, filename)}
         style={{ width: '100%' }}
         useResizeHandler
       />

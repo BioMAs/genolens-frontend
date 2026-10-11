@@ -6,20 +6,19 @@
  * Il appelait `/users/me` lui-même, en `useEffect` sans cache — le troisième
  * lecteur non caché du même endpoint — et portait sa propre règle de calcul,
  * avec un quota gratuit de 15 codé en dur. Le calcul vit maintenant dans
- * `useQuotas`, reporté à l'identique : ce qui change est la source, pas le
- * chiffre.
+ * `useQuotas`, et ce quota gratuit — que le backend n'a jamais appliqué — en a
+ * disparu : sans plafond ni IA par le plan, le solde est 0.
  *
  * Il ne rend RIEN sans profil. L'implémentation d'origine vérifiait la session
- * Supabase avant d'appeler l'API ; sans cette garde, un 401 laisse un profil
- * vide, dont le calcul tire `max(0, 0 + 15) = 15` — le badge annoncerait
- * « 15 AI » à un utilisateur déconnecté, sur toutes les pages.
+ * Supabase avant d'appeler l'API ; sans cette garde, un 401 laissait un profil
+ * vide, dont l'ancien calcul tirait `max(0, 0 + 15) = 15` — le badge annonçait
+ * « 15 AI » à un utilisateur déconnecté, sur toutes les pages. Il annoncerait
+ * aujourd'hui « 0 AI » en rouge : pas plus vrai.
  */
 import { Sparkles, AlertCircle } from 'lucide-react';
 
-import { useQuotas } from '@/hooks/useQuotas';
-
-/** En dessous de ce solde, on prévient. */
-const LOW_CREDITS = 3;
+import { quotaTone, useQuotas } from '@/hooks/useQuotas';
+import { AI_QUOTA_COPY, PLAN_GATE_COPY } from '@/utils/plan';
 
 export default function QuotaDisplay() {
   const { ai, isLoading, hasProfile } = useQuotas();
@@ -43,6 +42,10 @@ export default function QuotaDisplay() {
   }
 
   const credits = ai.credits ?? 0;
+  // Plafond de requêtes IA (compte démo) : le badge montre le reste ET le
+  // plafond, et son ton suit la même règle que les jauges de quotas.
+  const capped = ai.max !== undefined;
+  const label = capped ? `${credits}/${ai.max} AI` : `${credits} AI`;
 
   if (credits <= 0) {
     return (
@@ -53,15 +56,19 @@ export default function QuotaDisplay() {
           borderColor: 'var(--sl-red-muted)',
           color: 'var(--sl-red-dark)',
         }}
-        title="Quota exceeded"
+        // Sans plafond, zéro veut dire « pas d'IA sur ce plan », pas un quota
+        // dépassé : il n'y a jamais rien eu à dépasser.
+        title={capped ? AI_QUOTA_COPY.title : PLAN_GATE_COPY.ai}
       >
         <AlertCircle className="h-3.5 w-3.5" />
-        <span>0 AI</span>
+        <span>{label}</span>
       </div>
     );
   }
 
-  const isLow = credits <= LOW_CREDITS;
+  // Un solde positif n'existe que sous plafond (sans plafond : illimité ou 0),
+  // donc le ton se lit sur le plafond, comme les jauges de quotas.
+  const isLow = quotaTone(credits, ai.max ?? null) === 'low';
 
   return (
     <div
@@ -79,10 +86,14 @@ export default function QuotaDisplay() {
               color: 'var(--sl-teal-dark)',
             }
       }
-      title={`${credits} AI interpretations available`}
+      title={
+        capped
+          ? `${credits} of ${ai.max} AI requests left`
+          : `${credits} AI interpretations available`
+      }
     >
       <Sparkles className="h-3.5 w-3.5" />
-      <span>{credits} AI</span>
+      <span>{label}</span>
     </div>
   );
 }

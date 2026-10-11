@@ -1,6 +1,8 @@
 import {
   buildStandaloneSvg,
   collectFontDemand,
+  exportChartPng,
+  exportChartSvg,
   inlineComputedStyles,
   parseUnicodeRange,
   parseWeightRange,
@@ -217,6 +219,139 @@ describe('selection des polices a embarquer', () => {
       // sans raison.
       const demand = collectFontDemand(svgWith('<rect width="4" height="4"/>'));
       expect(demand.codePoints.size).toBe(0);
+    });
+  });
+});
+
+// ── filigrane DEMO ─────────────────────────────────────────────────────────
+
+describe('filigrane DEMO des comptes de demonstration', () => {
+  const base = { inner: '<circle r="5"/>', width: 640, height: 480, background: '#131720' };
+
+  it('pose « DEMO » dans le SVG autonome, APRES le trace', () => {
+    // En SVG, l'ordre du document est l'ordre de peinture : place avant le
+    // trace, le filigrane serait recouvert par lui.
+    const svg = buildStandaloneSvg({ ...base, demo: true });
+    expect(svg).toContain('>DEMO</text>');
+    expect(svg.indexOf('>DEMO<')).toBeGreaterThan(svg.indexOf('<circle'));
+    expect(svg.indexOf('>DEMO<')).toBeLessThan(svg.lastIndexOf('</svg>'));
+  });
+
+  it('le centre et le tourne sur la diagonale', () => {
+    const svg = buildStandaloneSvg({ ...base, demo: true });
+    expect(svg).toMatch(/<text x="320" y="240" transform="rotate\(-36\.87 320 240\)"/);
+    expect(svg).toContain('fill-opacity="0.18"');
+  });
+
+  it("n'en pose aucun hors compte demo", () => {
+    expect(buildStandaloneSvg(base)).not.toContain('DEMO');
+    expect(buildStandaloneSvg({ ...base, demo: false })).not.toContain('DEMO');
+  });
+
+  describe('exports telecharges', () => {
+    /**
+     * jsdom n'implemente ni le canvas, ni le chargement d'une image, ni les
+     * URL de blob : on les remplace par des doublures qui ENREGISTRENT, pour
+     * verifier ce qui est peint et ce qui est telecharge.
+     */
+    const ctx = {
+      save: jest.fn(),
+      restore: jest.fn(),
+      translate: jest.fn(),
+      rotate: jest.fn(),
+      fillRect: jest.fn(),
+      drawImage: jest.fn(),
+      fillText: jest.fn(),
+      fillStyle: '',
+      font: '',
+      globalAlpha: 1,
+      textAlign: '',
+      textBaseline: '',
+    };
+    const blobs: Blob[] = [];
+    let imageSrc = '';
+    const originalImage = window.Image;
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+
+    class FakeImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      decoding = '';
+      set src(value: string) {
+        imageSrc = value;
+        setTimeout(() => this.onload?.(), 0);
+      }
+    }
+
+    function chart(): SVGSVGElement {
+      const host = document.createElement('div');
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="10" height="10"/></svg>';
+      document.body.appendChild(host);
+      return host.querySelector('svg')!;
+    }
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      blobs.length = 0;
+      imageSrc = '';
+      jest
+        .spyOn(HTMLCanvasElement.prototype, 'getContext')
+        .mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+      HTMLCanvasElement.prototype.toBlob = function toBlob(cb: BlobCallback) {
+        cb(new Blob(['png'], { type: 'image/png' }));
+      };
+      jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+      window.Image = FakeImage as unknown as typeof Image;
+      URL.createObjectURL = jest.fn((blob: Blob) => {
+        blobs.push(blob);
+        return 'blob:chart';
+      });
+      URL.revokeObjectURL = jest.fn();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      window.Image = originalImage;
+      URL.createObjectURL = originalCreate;
+      URL.revokeObjectURL = originalRevoke;
+      document.body.innerHTML = '';
+    });
+
+    it('tamponne le PNG demo sur le canvas, a la resolution finale', async () => {
+      await exportChartPng(chart(), { filename: 'volcano', background: '#fff', demo: true });
+
+      expect(ctx.fillText).toHaveBeenCalledTimes(1);
+      expect(ctx.fillText).toHaveBeenCalledWith('DEMO', 0, 0);
+      // Le centre du canvas suresechantillonne (x2), pas celui du graphique.
+      expect(ctx.translate).toHaveBeenCalledWith(300, 200);
+      // Peint APRES le graphique.
+      expect(ctx.drawImage.mock.invocationCallOrder[0]).toBeLessThan(
+        ctx.fillText.mock.invocationCallOrder[0],
+      );
+      expect(blobs).toHaveLength(1);
+    });
+
+    it('ne double pas le filigrane : le SVG intermediaire du PNG en est exempt', async () => {
+      await exportChartPng(chart(), { filename: 'volcano', background: '#fff', demo: true });
+      expect(decodeURIComponent(imageSrc)).not.toContain('DEMO');
+    });
+
+    it('ne tamponne pas le PNG hors compte demo', async () => {
+      await exportChartPng(chart(), { filename: 'volcano', background: '#fff' });
+      expect(ctx.fillText).not.toHaveBeenCalled();
+      expect(blobs).toHaveLength(1);
+    });
+
+    it('telecharge un SVG demo qui porte le filigrane', async () => {
+      await exportChartSvg(chart(), { filename: 'volcano', background: '#fff', demo: true });
+      expect(blobs).toHaveLength(1);
+      const text = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blobs[0]);
+      });
+      expect(text).toContain('>DEMO</text>');
     });
   });
 });

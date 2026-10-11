@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell';
 import ChatModeShell from '@/components/chat/ChatModeShell';
 import LicenseExpiredBanner from '@/components/LicenseExpiredBanner';
 import SubscriptionExpiredBanner from '@/components/SubscriptionExpiredBanner';
+import DemoAccountBanner from '@/components/DemoAccountBanner';
 import { BreadcrumbProvider } from '@/contexts/BreadcrumbContext';
 import CommandPalette from '@/components/command/CommandPalette';
 
@@ -40,6 +41,7 @@ export default function AppFrame({
           <AppShell user={user} userRole={userRole}>
             <LicenseExpiredBanner />
             <SubscriptionExpiredBanner />
+            <DemoAccountBanner />
             {children}
           </AppShell>
         )}

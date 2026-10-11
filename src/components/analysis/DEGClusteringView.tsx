@@ -9,7 +9,8 @@ import { Loader2, Download } from 'lucide-react';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import { useChartTheme, useChartPalette, useChartScales } from '@/utils/chartTheme';
 import { discreteScale } from '@/utils/chartScales';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { Layout, PlotData } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -45,6 +46,7 @@ export default function DEGClusteringView({
 }: DEGClusteringViewProps) {
   const chartTheme = useChartTheme();
   const palette = useChartPalette();
+  const isDemo = useIsDemoAccount();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('expression');
   const scales = useChartScales();
 
@@ -375,16 +377,20 @@ export default function DEGClusteringView({
           }) as Partial<Layout>}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%' }}
-          config={{
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false,
-            toImageButtonOptions: {
-              format: 'png',
-              filename: `deg_heatmap_${comparisonName}`,
-              scale: 2,
+          config={withDemoImageExport(
+            {
+              displayModeBar: true,
+              modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+              displaylogo: false,
+              toImageButtonOptions: {
+                format: 'png',
+                filename: `deg_heatmap_${comparisonName}`,
+                scale: 2,
+              },
             },
-          }}
+            isDemo,
+            `deg_heatmap_${comparisonName}`,
+          )}
         />
       </div>
 

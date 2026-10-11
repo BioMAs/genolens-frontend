@@ -238,3 +238,31 @@ describe('ExportMenu — PDF export', () => {
     expect(mockExportToPDF).not.toHaveBeenCalled();
   });
 });
+
+describe('ExportMenu — HTML export', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const HTML_CONFIG = { title: 'GO Enrichment Results', metadata: { 'Total Terms': 2 } };
+
+  it('passes the demo flag through, so a demo export is watermarked', async () => {
+    const { default: ExportMenu } = require('@/components/ExportMenu');
+    render(<ExportMenu {...DEFAULT_PROPS} formats={['html']} htmlConfig={HTML_CONFIG} demo />);
+
+    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByText('Export HTML'));
+
+    await waitFor(() => expect(mockExportToHTML).toHaveBeenCalledTimes(1));
+    expect(mockExportToHTML).toHaveBeenCalledWith(HTML_CONFIG, 'test_export', { demo: true });
+  });
+
+  it('exports without a watermark by default', async () => {
+    const { default: ExportMenu } = require('@/components/ExportMenu');
+    render(<ExportMenu {...DEFAULT_PROPS} formats={['html']} htmlConfig={HTML_CONFIG} />);
+
+    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByText('Export HTML'));
+
+    await waitFor(() => expect(mockExportToHTML).toHaveBeenCalledTimes(1));
+    expect(mockExportToHTML).toHaveBeenCalledWith(HTML_CONFIG, 'test_export', { demo: false });
+  });
+});

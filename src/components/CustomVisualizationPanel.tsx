@@ -3,7 +3,8 @@ import dynamic from 'next/dynamic';
 import api from '@/utils/api';
 import type { Data, Layout } from 'plotly.js';
 import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { cn } from '@/lib/cn';
 
 /*
@@ -90,7 +91,15 @@ export default function CustomVisualizationPanel({
     // NOMINALE. Une palette categorielle encode du nominal uniquement : reprendre
     // une couleur de direction y fait lire « down » a un groupe d'echantillons.
     const palette = useChartPalette();
+    const isDemo = useIsDemoAccount();
     const [vizType, setVizType] = useState<VisualizationType>('pca');
+    // Shared by the five plots below. A demo account's PNG export carries the
+    // "DEMO" watermark; otherwise this is the config they each declared.
+    const plotConfig = withDemoImageExport(
+        { responsive: true, displayModeBar: true },
+        isDemo,
+        `${vizType}_${comparisonName}`,
+    );
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
@@ -240,7 +249,7 @@ export default function CustomVisualizationPanel({
                 <Plot
                     data={traces}
                     layout={layout}
-                    config={{ responsive: true, displayModeBar: true }}
+                    config={plotConfig}
                     style={{ width: '100%' }}
                 />
             );
@@ -273,7 +282,7 @@ export default function CustomVisualizationPanel({
                 <Plot
                     data={traces}
                     layout={layout}
-                    config={{ responsive: true, displayModeBar: true }}
+                    config={plotConfig}
                     style={{ width: '100%' }}
                 />
             );
@@ -312,7 +321,7 @@ export default function CustomVisualizationPanel({
                 <Plot
                     data={traces}
                     layout={layout}
-                    config={{ responsive: true, displayModeBar: true }}
+                    config={plotConfig}
                     style={{ width: '100%' }}
                 />
             );
@@ -345,7 +354,7 @@ export default function CustomVisualizationPanel({
                 <Plot
                     data={traces}
                     layout={layout}
-                    config={{ responsive: true, displayModeBar: true }}
+                    config={plotConfig}
                     style={{ width: '100%' }}
                 />
             );
@@ -385,7 +394,7 @@ export default function CustomVisualizationPanel({
             <Plot
                 data={traces}
                 layout={layout}
-                config={{ responsive: true, displayModeBar: true }}
+                config={plotConfig}
                 style={{ width: '100%' }}
             />
         );

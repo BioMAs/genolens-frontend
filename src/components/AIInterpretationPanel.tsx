@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     Sparkles,
     MessageCircle,
@@ -14,7 +15,16 @@ import {
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
-import { canUseAI, PLAN_GATE_COPY, UPGRADE_HREF } from '@/utils/plan';
+import {
+    AI_QUOTA_COPY,
+    aiQuotaMessage,
+    apiErrorMessage,
+    canUseAI,
+    isAiQuotaExhausted,
+    PLAN_GATE_COPY,
+    UPGRADE_HREF,
+} from '@/utils/plan';
+import { invalidateUserProfile } from '@/hooks/useUserProfile';
 import { cn } from '@/lib/cn';
 import { SUPPORT_EMAIL } from '@/lib/contact';
 
@@ -53,24 +63,22 @@ interface ConversationItem {
     created_at: string;
 }
 
+// `detail` is no longer read through this type: it is a string on most errors
+// but a structured object on some (the AI-cap 429, account-state errors), and
+// `apiErrorMessage` reads both where a cast printed "[object Object]".
 interface ApiError {
     response?: {
         status?: number;
-        data?: {
-            detail?: string;
-        };
     };
 }
 
-function getApiErrorDetail(error: unknown): string | undefined {
-    return (error as ApiError).response?.data?.detail;
-}
 
 export default function AIInterpretationPanel({ datasetId, comparisonName }: AIInterpretationPanelProps) {
     const [data, setData] = useState<InterpretationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [errorType, setErrorType] = useState<'plan' | 'generic' | null>(null);
+    const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
+    const queryClient = useQueryClient();
     const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -183,16 +191,24 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             );
 
             setData(response.data);
+            // A real LLM call consumed one AI request: refresh the counters.
+            invalidateUserProfile(queryClient);
         } catch (err: unknown) {
             console.error('AI interpretation error:', err);
             const status = (err as ApiError).response?.status;
 
-            if (status === 403) {
+            // Checked before the 403 branch: the AI cap is a 429 of its own, and
+            // the plan copy would send a demo account — which has the plan — to
+            // an upgrade that cannot help.
+            if (isAiQuotaExhausted(err)) {
+                setError(aiQuotaMessage(err));
+                setErrorType('quota');
+            } else if (status === 403) {
                 setError(PLAN_GATE_COPY.ai);
                 setErrorType('plan');
             } else {
                 setError(
-                    getApiErrorDetail(err) ||
+                    apiErrorMessage(err) ||
                     "Error generating interpretation. The AI service may be starting up — please try again."
                 );
                 setErrorType('generic');
@@ -231,16 +247,19 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             };
 
             setChatMessages(prev => [...prev, assistantMessage]);
+            invalidateUserProfile(queryClient);
         } catch (err: unknown) {
             console.error('AI chat error:', err);
             const status = (err as ApiError).response?.status;
 
             let errorMsg = "Sorry, I couldn't answer your question. The AI service may be starting up — please try again.";
 
-            if (status === 403) {
+            if (isAiQuotaExhausted(err)) {
+                errorMsg = `**${AI_QUOTA_COPY.title}.** ${aiQuotaMessage(err)}`;
+            } else if (status === 403) {
                 errorMsg = `${PLAN_GATE_COPY.ai} Visit ${UPGRADE_HREF} to upgrade.`;
-            } else if (getApiErrorDetail(err)) {
-                errorMsg = getApiErrorDetail(err) as string;
+            } else if (apiErrorMessage(err)) {
+                errorMsg = apiErrorMessage(err) as string;
             }
 
             const errorMessage: ChatMessage = {
@@ -416,6 +435,25 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                                     View Plans →
                                 </Link>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {error && errorType === 'quota' && (
+                <div
+                    className="border-t p-4"
+                    style={{
+                        background: 'color-mix(in srgb, var(--dc-amber) 10%, var(--surface-raised))',
+                        borderColor: 'color-mix(in srgb, var(--dc-amber) 35%, transparent)',
+                    }}
+                >
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: 'var(--dc-amber)' }} />
+                        <div className="flex-1">
+                            <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                {AI_QUOTA_COPY.title}
+                            </p>
+                            <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sparkles, Loader2, ShieldCheck } from 'lucide-react';
 import { useCosmeticsInterpretation } from '@/hooks/useCosmetics';
 import AIMarkdown from '@/components/ui/AIMarkdown';
+import { AI_QUOTA_COPY, aiQuotaMessage, apiErrorMessage, isAiQuotaExhausted } from '@/utils/plan';
 import PanelInfo from './PanelInfo';
 
 interface Props {
@@ -24,11 +25,14 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
     });
   };
 
-  const errMsg =
-    mutation.error && typeof mutation.error === 'object' && 'response' in mutation.error
-      ? // @ts-expect-error axios error shape
-        mutation.error.response?.data?.detail
-      : null;
+  // The AI-cap 429 carries a structured `detail`: printed as-is it read
+  // "[object Object]". `apiErrorMessage` reads a string or an object's message.
+  const quotaExhausted = isAiQuotaExhausted(mutation.error);
+  const errMsg = mutation.error
+    ? quotaExhausted
+      ? aiQuotaMessage(mutation.error)
+      : apiErrorMessage(mutation.error)
+    : null;
 
   return (
     <div className="gl-card p-4">
@@ -80,8 +84,13 @@ export default function CosmeticsAIPanel({ datasetId, comparisonName, demoText, 
         </p>
       )}
 
-      {errMsg && (
-        <p className="text-body-sm text-danger-ink">{String(errMsg)}</p>
+      {errMsg && quotaExhausted && (
+        <p className="text-body-sm text-warning-ink">
+          <span className="font-semibold">{AI_QUOTA_COPY.title}.</span> {errMsg}
+        </p>
+      )}
+      {errMsg && !quotaExhausted && (
+        <p className="text-body-sm text-danger-ink">{errMsg}</p>
       )}
 
       {text ? (

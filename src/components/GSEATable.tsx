@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronUp, ChevronDown, Eye, TrendingUp, TrendingDown } from 'lucide-react';
 import ExportMenu from './ExportMenu';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { cn } from '@/lib/cn';
 import { useChartScales } from '@/utils/chartTheme';
 
@@ -25,6 +26,8 @@ interface GSEATableProps {
 
 export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GSEATableProps) {
   const scales = useChartScales();
+  // A demo account's HTML export carries the "DEMO" watermark.
+  const isDemo = useIsDemoAccount();
   const [sortField, setSortField] = useState<keyof GSEAResult>('fdr_q_value');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterEnrichment, setFilterEnrichment] = useState<'all' | 'positive' | 'negative'>('all');
@@ -194,6 +197,7 @@ export default function GSEATable({ results, onViewEnrichmentPlot, loading }: GS
                 'Generated': new Date().toLocaleString(),
               }
             }}
+            demo={isDemo}
             variant="outline"
             size="sm"
           />
