@@ -1,6 +1,8 @@
-import type { Config } from 'plotly.js';
+import type { Config, Icon, ModeBarButton } from 'plotly.js';
 import type { ChartTheme } from '@/utils/chartTheme';
 import { getPalette } from '@/utils/chartPalettes';
+import { downloadBlob, safeFilename } from '@/utils/chartExport';
+import { stampCanvas } from '@/utils/demoWatermark';
 
 /**
  * Fabrique de mise en page Plotly.
@@ -176,6 +178,102 @@ export function buildPlotlyConfig(opts: {
       scale: 2,
     },
   };
+}
+
+/**
+ * Icone appareil photo de Plotly (`Plotly.Icons.camera`), recopiee telle
+ * quelle : l'importer chargerait Plotly au niveau du module, donc dans le rendu
+ * serveur et dans chaque page, pour un trace SVG.
+ */
+const CAMERA_ICON: Icon = {
+  width: 1000,
+  height: 1000,
+  path:
+    'm500 450c-83 0-150-67-150-150 0-83 67-150 150-150 83 0 150 67 150 150 0 83-67 150-150 150z ' +
+    'm400 150h-120c-16 0-34 13-39 29l-31 93c-6 15-23 28-40 28h-340c-16 0-34-13-39-28l-31-94c-6-15-23-28-40-28h-120' +
+    'c-55 0-100-45-100-100v-450c0-55 45-100 100-100h800c55 0 100 45 100 100v450c0 55-45 100-100 100z ' +
+    'm-400-550c-138 0-250 112-250 250 0 138 112 250 250 250 138 0 250-112 250-250 0-138-112-250-250-250z ' +
+    'm365 380c-19 0-35 16-35 35 0 19 16 35 35 35 19 0 35-16 35-35 0-19-16-35-35-35z',
+  transform: 'matrix(1 0 0 -1 0 850)',
+};
+
+/**
+ * Export image d'un graphique Plotly pour un compte demo : le PNG porte le
+ * filigrane « DEMO ».
+ *
+ * Le bouton natif `toImage` telecharge directement, sans point d'accroche pour
+ * peindre quoi que ce soit : il est donc RETIRE et remplace par un bouton
+ * maison, meme icone, qui passe par `Plotly.toImage`, peint le resultat sur un
+ * canvas, pose le filigrane (`stampCanvas`, la source unique) et telecharge.
+ *
+ * Hors compte demo, la configuration est rendue TELLE QUELLE — meme reference —
+ * pour que l'export natif et le rendu restent strictement inchanges.
+ *
+ * L'export maison sort toujours en PNG, y compris la ou l'appelant demandait un
+ * SVG : le filigrane est peint sur un canvas.
+ */
+export function withDemoImageExport(
+  config: Partial<Config>,
+  isDemo: boolean,
+  filename: string,
+): Partial<Config> {
+  if (!isDemo) return config;
+  const imageOptions = config.toImageButtonOptions ?? {};
+  const name = imageOptions.filename || filename;
+  const button: ModeBarButton = {
+    name: 'demoToImage',
+    title: 'Download plot as a png',
+    icon: CAMERA_ICON,
+    click: (gd) => {
+      exportDemoPlotlyPng(gd, imageOptions, name).catch((error) => {
+        console.error('Demo image export failed:', error);
+      });
+    },
+  };
+  return {
+    ...config,
+    modeBarButtonsToRemove: [...(config.modeBarButtonsToRemove ?? []), 'toImage'],
+    modeBarButtonsToAdd: [...(config.modeBarButtonsToAdd ?? []), button],
+  };
+}
+
+async function exportDemoPlotlyPng(
+  gd: HTMLElement,
+  size: { width?: number; height?: number; scale?: number },
+  filename: string,
+): Promise<void> {
+  // Import DYNAMIQUE, et le meme module que celui de react-plotly.js
+  // (next.config aliase `plotly.js/dist/plotly` sur `plotly.js-dist-min`) :
+  // rien n'est charge cote serveur, et le module est deja en cache au clic.
+  const mod = await import('plotly.js-dist-min');
+  // Bundle UMD : selon l'interop, l'API est sur `default` ou a la racine.
+  const Plotly = mod.default ?? mod;
+  const dataUrl = await Plotly.toImage(gd, {
+    format: 'png',
+    // `null` : Plotly reprend la taille du graphique, comme l'export natif.
+    width: size.width ?? null,
+    height: size.height ?? null,
+    ...(size.scale !== undefined ? { scale: size.scale } : {}),
+  });
+
+  const image = new Image();
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('The plot could not be rendered as an image.'));
+    image.src = dataUrl;
+  });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas is not available in this browser.');
+  context.drawImage(image, 0, 0);
+  stampCanvas(context, canvas.width, canvas.height);
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) throw new Error('The image could not be encoded.');
+  downloadBlob(blob, `${safeFilename(filename)}.png`);
 }
 
 /**

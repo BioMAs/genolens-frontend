@@ -20,7 +20,13 @@
  * export en theme sombre donnerait donc du texte clair sur fond transparent,
  * que tout visualiseur affiche sur blanc — illisible. Le fond est peint deux
  * fois, dans le SVG et sur le canvas, pour couvrir les deux sorties.
+ *
+ * Un compte demo recoit un filigrane « DEMO » (`demo: true`) : en balisage dans
+ * le SVG, peint sur le canvas pour le PNG — jamais les deux, ce qui doublerait
+ * le filigrane du PNG. Les deux viennent de `utils/demoWatermark`.
  */
+
+import { stampCanvas, svgWatermarkMarkup } from '@/utils/demoWatermark';
 
 /**
  * Proprietes figees sur chaque noeud.
@@ -54,6 +60,8 @@ export interface ExportOptions {
   background: string;
   /** Facteur de suréchantillonnage du PNG. 2 par defaut. */
   scale?: number;
+  /** Compte demo : l'export porte le filigrane « DEMO ». */
+  demo?: boolean;
 }
 
 /** Rend un nom de fichier sur tous les systemes, et jamais vide. */
@@ -79,12 +87,16 @@ export function buildStandaloneSvg(opts: {
   height: number;
   background: string;
   fontCss?: string;
+  demo?: boolean;
 }): string {
-  const { inner, width, height, background, fontCss } = opts;
+  const { inner, width, height, background, fontCss, demo } = opts;
   const style = fontCss ? `<style type="text/css">${fontCss}</style>` : '';
   // Le fond est un rect plutot qu'un attribut : il suit ainsi le graphique dans
   // un SVG autonome comme dans le PNG, sans dependre du visualiseur.
   const bg = `<rect x="0" y="0" width="${width}" height="${height}" fill="${background}"/>`;
+  // Le filigrane vient APRES le trace : en SVG, l'ordre du document est
+  // l'ordre de peinture, donc il passe au-dessus.
+  const watermark = demo ? svgWatermarkMarkup(width, height) : '';
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ` +
@@ -92,6 +104,7 @@ export function buildStandaloneSvg(opts: {
     style +
     bg +
     inner +
+    watermark +
     '</svg>'
   );
 }
@@ -389,6 +402,7 @@ export async function chartToSvgString(
     height,
     background: opts.background,
     fontCss,
+    demo: opts.demo,
   });
 }
 
@@ -400,7 +414,9 @@ export async function exportChartSvg(svg: SVGSVGElement, opts: Omit<ExportOption
 export async function exportChartPng(svg: SVGSVGElement, opts: ExportOptions) {
   const { width, height } = measure(svg);
   const scale = opts.scale ?? 2;
-  const markup = await chartToSvgString(svg, opts);
+  // Le SVG intermediaire part SANS filigrane : celui du PNG est peint sur le
+  // canvas, a la resolution finale, plus bas.
+  const markup = await chartToSvgString(svg, { ...opts, demo: false });
 
   const image = new Image();
   image.decoding = 'sync';
@@ -420,6 +436,7 @@ export async function exportChartPng(svg: SVGSVGElement, opts: ExportOptions) {
   context.fillStyle = opts.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  if (opts.demo) stampCanvas(context, canvas.width, canvas.height);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('The image could not be encoded.');

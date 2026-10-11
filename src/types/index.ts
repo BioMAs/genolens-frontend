@@ -126,6 +126,21 @@ export interface UserProfile {
   has_scientific_module?: boolean;
   /** Drug Discovery add-on module, unlocked per-user by an admin (from /users/me). */
   has_drug_discovery_module?: boolean;
+  /**
+   * Demo account, set by an admin. Orthogonal to the plan: a demo account keeps
+   * its plan (usually TEAM), with an end date, an AI request cap and a dataset
+   * cap (served through `analyses_quota`, never reset monthly for a demo).
+   *
+   * All four fields are optional so this frontend can ship before the backend.
+   * An absent field never blocks anything: absent `is_demo` reads as false and
+   * absent `ai_requests_limit` as "no cap". The backend is the authority.
+   */
+  is_demo?: boolean;
+  /** `null` = no AI cap. */
+  ai_requests_limit?: number | null;
+  ai_requests_used?: number;
+  /** `null` = no AI cap. */
+  ai_requests_remaining?: number | null;
 }
 
 export interface EnrichmentResult {

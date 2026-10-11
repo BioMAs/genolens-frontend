@@ -25,9 +25,10 @@ function state(overrides: Partial<QuotaState> = {}): QuotaState {
   return {
     analyses: { used: 6, max: 30, remaining: 24, unlimited: false },
     projects: { used: 4, max: 15, remaining: 11, unlimited: false },
-    ai: { credits: 18, unlimited: false },
+    ai: { credits: 18, max: 30, unlimited: false },
     maxDatasetsPerProject: 5,
     resetsOn: new Date(2026, 9, 1),
+    isDemo: false,
     tone: 'ok',
     isLoading: false,
     hasProfile: true,
@@ -41,13 +42,15 @@ beforeEach(() => jest.clearAllMocks());
 it('shows the available credits', () => {
   useQuotas.mockReturnValue(state());
   render(<QuotaDisplay />);
-  expect(screen.getByText('18 AI')).toBeInTheDocument();
+  expect(screen.getByText('18/30 AI')).toBeInTheDocument();
 });
 
 it('shows zero when nothing is left', () => {
   useQuotas.mockReturnValue(state({ ai: { credits: 0, unlimited: false } }));
   render(<QuotaDisplay />);
   expect(screen.getByText('0 AI')).toBeInTheDocument();
+  // Sans plafond, zéro veut dire « pas d'IA sur ce plan », pas « quota dépassé ».
+  expect(screen.getByTitle(/requires a Pro or Enterprise plan/i)).toBeInTheDocument();
 });
 
 it('shows unlimited on a plan without an AI cap', () => {
@@ -94,7 +97,24 @@ it('renders nothing when there is no profile and no error either', () => {
 });
 
 it('warns when credits run low', () => {
-  useQuotas.mockReturnValue(state({ ai: { credits: 2, unlimited: false } }));
+  // Un solde positif n'existe plus que sous plafond : le ton suit quotaTone.
+  useQuotas.mockReturnValue(state({ ai: { credits: 2, max: 20, unlimited: false } }));
   render(<QuotaDisplay />);
-  expect(screen.getByText('2 AI')).toBeInTheDocument();
+  expect(screen.getByText('2/20 AI').closest('div')).toHaveStyle({ color: 'var(--dc-amber)' });
+});
+
+// ── compte démo : plafond de requêtes IA ───────────────────────────────────
+
+it('shows what is left of a capped AI allowance against its cap', () => {
+  useQuotas.mockReturnValue(state({ ai: { credits: 5, max: 20, unlimited: false } }));
+  render(<QuotaDisplay />);
+  expect(screen.getByText('5/20 AI')).toBeInTheDocument();
+  expect(screen.getByTitle('5 of 20 AI requests left')).toBeInTheDocument();
+});
+
+it('names the AI request limit once the cap is used up', () => {
+  useQuotas.mockReturnValue(state({ ai: { credits: 0, max: 20, unlimited: false } }));
+  render(<QuotaDisplay />);
+  expect(screen.getByText('0/20 AI')).toBeInTheDocument();
+  expect(screen.getByTitle('AI request limit reached')).toBeInTheDocument();
 });

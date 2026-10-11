@@ -94,11 +94,58 @@ describe('canUseAI', () => {
   });
 });
 
+describe('canUseAI — AI requests granted by an admin', () => {
+  /**
+   * An admin can grant AI requests to ANY account. Mirrors the backend rule:
+   * privileged role OR TEAM/ON_PREMISE OR `ai_requests_limit` > 0.
+   */
+  it('grants AI to a STARTER with granted requests', () => {
+    expect(canUseAI({ subscription_plan: 'STARTER', role: 'USER', ai_requests_limit: 10 })).toBe(true);
+  });
+
+  it('still denies a STARTER whose grant is zero, null or absent', () => {
+    expect(canUseAI({ subscription_plan: 'STARTER', role: 'USER', ai_requests_limit: 0 })).toBe(false);
+    expect(canUseAI({ subscription_plan: 'STARTER', role: 'USER', ai_requests_limit: null })).toBe(false);
+    expect(canUseAI({ subscription_plan: 'STARTER', role: 'USER' })).toBe(false);
+  });
+
+  it('keeps AI open on TEAM even when its cap is zero', () => {
+    // Access comes from the plan; running out is the backend's 429, not a lock.
+    expect(canUseAI({ subscription_plan: 'TEAM', role: 'USER', ai_requests_limit: 0 })).toBe(true);
+  });
+});
+
 describe('hasUnlimitedAI', () => {
   it('matches the backend: TEAM, ON_PREMISE and admins have no cap', () => {
     expect(hasUnlimitedAI({ subscription_plan: 'TEAM', role: 'USER' })).toBe(true);
     expect(hasUnlimitedAI({ subscription_plan: 'ON_PREMISE', role: 'USER' })).toBe(true);
     expect(hasUnlimitedAI({ subscription_plan: 'STARTER', role: 'ADMIN' })).toBe(true);
     expect(hasUnlimitedAI({ subscription_plan: 'STARTER', role: 'USER' })).toBe(false);
+  });
+
+  it('is capped by any number in ai_requests_limit, whatever the plan', () => {
+    // A demo account stays TEAM yet is capped.
+    expect(hasUnlimitedAI({ subscription_plan: 'TEAM', role: 'USER', ai_requests_limit: 20 })).toBe(false);
+    expect(hasUnlimitedAI({ subscription_plan: 'TEAM', role: 'USER', ai_requests_limit: 0 })).toBe(false);
+    expect(hasUnlimitedAI({ subscription_plan: 'ON_PREMISE', role: 'USER', ai_requests_limit: 5 })).toBe(false);
+  });
+
+  it('treats a null limit as no cap', () => {
+    expect(hasUnlimitedAI({ subscription_plan: 'TEAM', role: 'USER', ai_requests_limit: null })).toBe(true);
+  });
+
+  it('is no longer an alias of canUseAI: granted requests open AI but cap it', () => {
+    const starterWithCredits = { subscription_plan: 'STARTER', role: 'USER', ai_requests_limit: 10 };
+    expect(canUseAI(starterWithCredits)).toBe(true);
+    expect(hasUnlimitedAI(starterWithCredits)).toBe(false);
+  });
+
+  it('leaves admins uncapped, as the backend lets them through', () => {
+    expect(hasUnlimitedAI({ subscription_plan: 'STARTER', role: 'ADMIN', ai_requests_limit: 3 })).toBe(true);
+  });
+
+  it('fails closed on a missing profile', () => {
+    expect(hasUnlimitedAI(null)).toBe(false);
+    expect(hasUnlimitedAI(undefined)).toBe(false);
   });
 });

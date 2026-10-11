@@ -33,7 +33,8 @@ import { normalizeGeneKey } from '@/utils/geneKeys';
 import ColorblindToggle from '@/components/ui/ColorblindToggle';
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { useChartTheme, useChartPalette } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
@@ -93,6 +94,7 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
   // PLOT_THEME etait defini independamment dans TROIS fichiers, avec les
   // memes valeurs. useChartTheme le remplace.
   const chartTheme = useChartTheme();
+  const isDemo = useIsDemoAccount();
 
   const { data, isLoading, error, isFetching } = useVolcanoPoints(dataset.id, comparisonName);
   const points = data?.points;
@@ -346,18 +348,22 @@ export default function VolcanoPanel({ dataset, comparisonName }: Props) {
           onDeselect={clearSelection}
           useResizeHandler
           style={{ width: '100%', height: '100%' }}
-          config={{
-            displaylogo: false,
-            responsive: true,
-            // select2d and lasso2d are kept — they are the feature here, where every other
-            // Plotly component in the app removes them.
-            modeBarButtonsToRemove: [
-              'autoScale2d',
-              'toggleSpikelines',
-              'hoverClosestCartesian',
-              'hoverCompareCartesian',
-            ],
-          }}
+          config={withDemoImageExport(
+            {
+              displaylogo: false,
+              responsive: true,
+              // select2d and lasso2d are kept — they are the feature here, where every other
+              // Plotly component in the app removes them.
+              modeBarButtonsToRemove: [
+                'autoScale2d',
+                'toggleSpikelines',
+                'hoverClosestCartesian',
+                'hoverCompareCartesian',
+              ],
+            },
+            isDemo,
+            `volcano_${comparisonName}`,
+          )}
         />
       </div>
 

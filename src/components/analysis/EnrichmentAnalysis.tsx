@@ -9,7 +9,8 @@ import { ExternalLink, TableIcon, Activity, Loader2, ChevronDown, ChevronUp } fr
 import AIChartAssistant from '@/components/AIChartAssistant';
 import { PlotData, Layout } from 'plotly.js';
 import { useChartTheme, useChartScales, useChartPalette } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { cn } from '@/lib/cn';
 
 // Dynamically import Plotly (SSR not supported)
@@ -47,6 +48,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
    */
   const scales = useChartScales();
   const palette = useChartPalette();
+  const isDemo = useIsDemoAccount();
     const [comparisons, setComparisons] = useState<string[]>([]);
     const [selectedComparison, setSelectedComparison] = useState<string>("");
     const [loadingComparisons, setLoadingComparisons] = useState(true);
@@ -286,6 +288,13 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
 
     }, [allResults, viewMode, categoryFilter, chartTheme, scales, palette]);
 
+    // A demo account's PNG export carries the "DEMO" watermark. Memoised: Plotly
+    // re-plots whenever the config's identity changes, and this one had none.
+    const radarConfig = useMemo(
+        () => withDemoImageExport({}, isDemo, `enrichment_radar_${selectedComparison || 'all'}`),
+        [isDemo, selectedComparison],
+    );
+
     const categories = Array.from(new Set(allResults.map(r => r.category))).sort();
 
     /**
@@ -510,6 +519,7 @@ export default function EnrichmentAnalysis({ datasetId }: EnrichmentAnalysisProp
                     <Plot
                         data={radarPlotData.data}
                         layout={radarPlotData.layout}
+                        config={radarConfig}
                         useResizeHandler={true}
                         style={{ width: '100%', height: '100%', minHeight: '500px' }}
                     />

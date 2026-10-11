@@ -5,6 +5,7 @@ import { Download, FileImage, FileCode2 } from 'lucide-react';
 import { OverflowMenu } from '@/components/ui/menu';
 import { exportChartPng, exportChartSvg } from '@/utils/chartExport';
 import { useChartTheme } from '@/utils/chartTheme';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 
 /**
  * Export d'un graphique en PNG ou en SVG.
@@ -16,10 +17,14 @@ import { useChartTheme } from '@/utils/chartTheme';
  *
  * Les graphiques Plotly ne passent PAS par ici : leur barre d'outils expose
  * deja un export natif, qui connait leur rendu WebGL — un `<svg>` serialise
- * n'en contiendrait pas les marques.
+ * n'en contiendrait pas les marques. Pour un compte demo, c'est
+ * `withDemoImageExport` (`utils/plotlyLayout`) qui filigrane cet export.
  */
 export default function ChartExportButton({ filename }: { filename: string }) {
   const theme = useChartTheme();
+  // Un compte demo exporte avec le filigrane « DEMO ». Faux tant que le profil
+  // n'est pas la : le filigrane ne se pose que sur un compte qui en est un.
+  const demo = useIsDemoAccount();
   const [busy, setBusy] = useState(false);
   // Ancre deterministe : remonter par `document.activeElement` echouerait
   // des que le menu rend le focus en se fermant.
@@ -35,7 +40,7 @@ export default function ChartExportButton({ filename }: { filename: string }) {
     try {
       // `theme.surface` est deja un LITTERAL : `useChartTheme` a resolu les
       // jetons. Un `var()` peint sur un canvas ne donnerait rien du tout.
-      const opts = { filename, background: theme.surface };
+      const opts = { filename, background: theme.surface, demo };
       if (kind === 'png') await exportChartPng(svg, opts);
       else await exportChartSvg(svg, opts);
     } finally {

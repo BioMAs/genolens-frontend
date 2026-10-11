@@ -14,7 +14,8 @@ import {
 } from 'recharts';
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/components/charts/rechartsDefaults';
 import {CHART_VARS, useChartPalette, useChartTheme } from '@/utils/chartTheme';
-import { buildPlotlyLayout } from '@/utils/plotlyLayout';
+import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
+import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 
 // Dynamically import Plotly (SSR not supported)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -78,6 +79,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 export default function ClusteringAnalysis({ projectId, datasetId, datasetName }: ClusteringAnalysisProps) {
   const palette = useChartPalette();
   const chartTheme = useChartTheme();
+  const isDemo = useIsDemoAccount();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ClusteringResult | null>(null);
@@ -429,14 +431,18 @@ export default function ClusteringAnalysis({ projectId, datasetId, datasetName }
                         })}
                         style={{ width: '100%', height: '100%' }}
                         useResizeHandler={true}
-                        config={{ 
-                            responsive: true,
-                            displayModeBar: true,
-                            toImageButtonOptions: {
-                                format: 'svg',
-                                filename: 'heatmap_clustering'
-                            }
-                        }}
+                        config={withDemoImageExport(
+                            {
+                                responsive: true,
+                                displayModeBar: true,
+                                toImageButtonOptions: {
+                                    format: 'svg',
+                                    filename: 'heatmap_clustering'
+                                }
+                            },
+                            isDemo,
+                            'heatmap_clustering',
+                        )}
                    />
               </div>
           )}
