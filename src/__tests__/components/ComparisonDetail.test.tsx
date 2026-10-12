@@ -151,9 +151,9 @@ jest.mock('@/components/analysis/ClusteringAnalysis', () => {
   return { __esModule: true, default: Stub };
 });
 
-jest.mock('@/components/cosmetics/CosmeticsTab', () => {
-  const Stub = () => <div data-testid="CosmeticsTab">CosmeticsTab</div>;
-  Stub.displayName = 'CosmeticsTab';
+jest.mock('@/components/cosmomics/CosmOmicsPanel', () => {
+  const Stub = () => <div data-testid="CosmOmicsPanel">CosmOmicsPanel</div>;
+  Stub.displayName = 'CosmOmicsPanel';
   return { __esModule: true, default: Stub };
 });
 
@@ -317,7 +317,17 @@ describe('which screen renders', () => {
   it('renders Apply from ?view=appliquer', () => {
     renderDetail({ search: 'view=appliquer' });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmetics']);
+    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+  });
+
+  // Skin claims became CosmOmics. Old bookmarks (`?tab=cosmetics`, `#cosmetics`) must land on
+  // the nova.
+  it('lands old Skin claims links on CosmOmics', () => {
+    renderDetail({ search: 'tab=cosmetics' });
+
+    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(document.getElementById('cosmetics')?.closest('section')?.id).toBe('cosmomics');
+    expect(screen.getByTestId('CosmOmicsPanel')).toBeInTheDocument();
   });
 
   it('renders Understand and Share from their own parameter', () => {
@@ -368,7 +378,7 @@ describe('legacy links', () => {
   it('lands the retired ?view=outils on Apply', () => {
     renderDetail({ search: 'view=outils' });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmetics']);
+    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
   });
 
   it('rewrites a legacy query out of the address bar', async () => {
@@ -405,7 +415,7 @@ describe('add-on gating', () => {
       },
     });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmetics']);
+    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
   });
 
   // A locked module must stay visible as a capability, which is the disclosure's job — the old
@@ -429,7 +439,7 @@ describe('the hub', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open Apply' }));
 
     expect(window.location.search).toBe('?view=appliquer');
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmetics']);
+    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
   });
 
   it('writes the default screen bare', async () => {

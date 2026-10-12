@@ -140,8 +140,8 @@ describe('modules that cannot open', () => {
     mockSearch = 'view=outils';
     renderNav();
 
-    expect(screen.queryByRole('link', { name: 'Skin claims' })).toBeNull();
-    expect(screen.getByText('Skin claims')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'CosmOmics' })).toBeNull();
+    expect(screen.getByText('CosmOmics')).toBeInTheDocument();
   });
 
   it('says what is missing rather than promising a view that cannot open', () => {

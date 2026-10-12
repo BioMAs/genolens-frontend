@@ -26,7 +26,7 @@ import StringEnrichmentPanel from './integrations/StringEnrichmentPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
-import CosmeticsTab from './cosmetics/CosmeticsTab';
+import CosmOmicsPanel from './cosmomics/CosmOmicsPanel';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleDisclosure from './comparison/ComparisonModuleDisclosure';
@@ -792,11 +792,10 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
         )}
 
         {activeView === 'appliquer' && cosmeticsUnlocked && (
-          <section id="cosmetics" className="scroll-mt-24">
-            <CosmeticsTab
-              datasetId={degDataset?.id}
-              comparisonName={actualComparisonName}
-            />
+          <section id="cosmomics" className="scroll-mt-24">
+            {/* Skin claims became CosmOmics: bookmarks to `#cosmetics` land here. */}
+            <span id="cosmetics" aria-hidden className="block scroll-mt-24" />
+            <CosmOmicsPanel datasetId={degDataset?.id} comparisonName={actualComparisonName} />
           </section>
         )}
 

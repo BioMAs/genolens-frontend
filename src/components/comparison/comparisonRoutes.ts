@@ -40,6 +40,7 @@ export type ComparisonPanel =
   | 'report'
   | 'exports'
   | 'drug-discovery'
+  | 'cosmomics'
   | 'cosmetics'
   | 'custom-viz'
   | 'external-lookup';
@@ -151,7 +152,8 @@ export const LEGACY_TAB_ROUTES: Record<string, LegacyTabTarget> = {
   enrichment: { view: 'comprendre', panel: 'enrichment' },
   integrations: { view: 'comprendre', panel: 'network' },
   signature: { view: 'appliquer', panel: 'signature' },
-  cosmetics: { view: 'appliquer', panel: 'cosmetics' },
+  // Skin claims became CosmOmics: old `?tab=cosmetics` links land on the pathway nova.
+  cosmetics: { view: 'appliquer', panel: 'cosmomics' },
   'drug-discovery': { view: 'appliquer', panel: 'drug-discovery' },
   report: { view: 'partager', panel: 'report' },
 };
