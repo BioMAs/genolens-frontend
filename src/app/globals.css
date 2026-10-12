@@ -76,6 +76,13 @@
   /* App shell dimensions */
   --sidebar-width:   248px;
   --topbar-height:   56px;
+  /* Ou colle un element `sticky`, mesure DANS son conteneur de defilement.
+     Au-dela de 768px c'est `.app-content` qui defile, et il commence deja sous
+     la barre du haut : y rajouter --topbar-height decollait les elements
+     colles de 56px, et le contenu defilait dans l'interstice — le « header
+     des modules qui descend ». Sous 768px c'est le document qui defile, avec
+     la barre collee en haut : la, il faut bien la compter. */
+  --sticky-top:      0px;
 
   /* Rayons — quatre valeurs, DERIVEES et non choisies.
      L'ensemble est concentrique : exterieur − retrait = interieur. Un controle
@@ -878,6 +885,7 @@ body {
     --page-gutter: 1rem;
     --page-top: 1.25rem;
     --page-bottom: 5rem;
+    --sticky-top: var(--topbar-height);
   }
 }
 

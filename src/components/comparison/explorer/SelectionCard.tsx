@@ -40,7 +40,7 @@ export default function SelectionCard({
       style={{
         borderRadius: 'var(--radius-card)',
         position: 'sticky',
-        top: 'calc(var(--topbar-height) + 1rem)',
+        top: 'calc(var(--sticky-top) + 1rem)',
       }}
       aria-label="Selected genes"
       data-testid="selection-card"

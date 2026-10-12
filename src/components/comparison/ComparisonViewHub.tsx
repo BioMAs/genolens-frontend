@@ -20,7 +20,8 @@
  * veut comprendre, pas parce qu'il annonce trois sections.
  *
  * Delibirement un commutateur et non un menu de sections : a l'interieur d'un
- * ecran, SectionRail liste deja les sections et marque ou l'on est.
+ * ecran, les onglets de modules (ModuleTabs) listent deja les modules et
+ * marquent celui qui est ouvert.
  */
 
 import { SegmentedControl, type SegmentItem } from '@/components/ui/tabs';
@@ -73,6 +74,9 @@ export default function ComparisonViewHub({ groups, activeView, onSelect }: Prop
   return (
     <SegmentedControl
       stretch
+      // Deux par ligne sur un telephone : a 375px, quatre segments egaux laissaient
+      // ~85px chacun, et chaque libelle tombait a une lettre (« E… U… A… S… »).
+      className="max-sm:grid max-sm:grid-cols-2"
       label="Screens of this comparison"
       items={items}
       value={activeView}
