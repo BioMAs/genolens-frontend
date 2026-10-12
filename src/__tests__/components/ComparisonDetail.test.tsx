@@ -151,12 +151,6 @@ jest.mock('@/components/analysis/ClusteringAnalysis', () => {
   return { __esModule: true, default: Stub };
 });
 
-jest.mock('@/components/cosmetics/CosmeticsTab', () => {
-  const Stub = () => <div data-testid="CosmeticsTab">CosmeticsTab</div>;
-  Stub.displayName = 'CosmeticsTab';
-  return { __esModule: true, default: Stub };
-});
-
 jest.mock('@/components/cosmomics/CosmOmicsPanel', () => {
   const Stub = () => <div data-testid="CosmOmicsPanel">CosmOmicsPanel</div>;
   Stub.displayName = 'CosmOmicsPanel';
@@ -327,14 +321,13 @@ describe('which screen renders', () => {
   });
 
   // Skin claims became CosmOmics. Old bookmarks (`?tab=cosmetics`, `#cosmetics`) must land on
-  // the nova, and the legacy module stays out of the page unless legacy_skin_claim is on.
-  it('lands old Skin claims links on CosmOmics, without the legacy module', () => {
+  // the nova.
+  it('lands old Skin claims links on CosmOmics', () => {
     renderDetail({ search: 'tab=cosmetics' });
 
     expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
     expect(document.getElementById('cosmetics')?.closest('section')?.id).toBe('cosmomics');
     expect(screen.getByTestId('CosmOmicsPanel')).toBeInTheDocument();
-    expect(screen.queryByTestId('CosmeticsTab')).toBeNull();
   });
 
   it('renders Understand and Share from their own parameter', () => {

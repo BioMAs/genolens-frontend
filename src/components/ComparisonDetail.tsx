@@ -26,9 +26,7 @@ import StringEnrichmentPanel from './integrations/StringEnrichmentPanel';
 import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
-import CosmeticsTab from './cosmetics/CosmeticsTab';
 import CosmOmicsPanel from './cosmomics/CosmOmicsPanel';
-import { LEGACY_SKIN_CLAIM } from '@/utils/legacySkinClaim';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleDisclosure from './comparison/ComparisonModuleDisclosure';
@@ -798,17 +796,6 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
             {/* Skin claims became CosmOmics: bookmarks to `#cosmetics` land here. */}
             <span id="cosmetics" aria-hidden className="block scroll-mt-24" />
             <CosmOmicsPanel datasetId={degDataset?.id} comparisonName={actualComparisonName} />
-          </section>
-        )}
-
-        {/* legacy_skin_claim: the former Skin claims module, kept while the nova is validated. */}
-        {activeView === 'appliquer' && cosmeticsUnlocked && LEGACY_SKIN_CLAIM && (
-          <section id="cosmetics-legacy" className="scroll-mt-24 space-y-3">
-            <p className="text-caption text-muted">Legacy Skin claims — shown for validation only.</p>
-            <CosmeticsTab
-              datasetId={degDataset?.id}
-              comparisonName={actualComparisonName}
-            />
           </section>
         )}
 
