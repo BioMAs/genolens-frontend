@@ -48,6 +48,15 @@ describe('useUserProfile', () => {
     expect(mockedApi.get).toHaveBeenCalledTimes(1);
   });
 
+  it("n'interroge pas /users/me tant que enabled vaut false (page publique, visiteur anonyme)", async () => {
+    mockedApi.get.mockClear();
+    const { result } = renderHook(() => useUserProfile({ enabled: false }), { wrapper });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.isLoading).toBe(false);
+    expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+
   it('invalidateUserProfile fait relire le profil', async () => {
     mockedApi.get.mockClear();
     mockedApi.get
