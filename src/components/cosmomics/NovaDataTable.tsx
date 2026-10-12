@@ -29,7 +29,7 @@ function Row({ claim, sub }: { claim: string; sub: NovaSubgroup }) {
 /** Every number behind the picture, reachable without a mouse. */
 export default function NovaDataTable({ data }: { data: CosmOmicsNovaData }) {
   return (
-    <details className="group rounded-lg border border-[#E6EEF2] bg-white px-4 py-3 text-[#3A4150]">
+    <details className="group rounded-card border border-[#E6EEF2] bg-white px-4 py-3 text-[#3A4150]">
       <summary className="cursor-pointer text-[13px] font-semibold text-[#0B2A3E]">
         Data table — sub-groups behind each claim
       </summary>

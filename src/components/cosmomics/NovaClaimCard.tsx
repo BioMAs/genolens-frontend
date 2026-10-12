@@ -28,7 +28,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
       </h3>
       <div className="mt-2 flex items-center gap-3">
         <div
-          className="h-[5px] w-[120px] overflow-hidden rounded-full bg-[#E6EEF2]"
+          className="h-[5px] w-[120px] overflow-hidden rounded-pill bg-[#E6EEF2]"
           role="meter"
           aria-label="Coherence"
           aria-valuemin={0}
@@ -36,7 +36,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
           aria-valuenow={coherence}
         >
           <div
-            className="h-full rounded-full"
+            className="h-full rounded-pill"
             style={{ width: `${coherence}%`, background: good ? NOVA_INK.green : NOVA_INK.against }}
           />
         </div>
@@ -50,7 +50,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
           const supports = sub.delta > 0;
           const arrowColor = supports ? (sub.obs === 'up' ? NOVA_INK.green : NOVA_INK.coral) : NOVA_INK.againstText;
           return (
-            <li key={sub.name} className="flex items-baseline gap-1.5 text-[12px]">
+            <li key={sub.name} className="flex items-baseline gap-2 text-[12px]">
               <span
                 className="font-semibold"
                 style={{ color: arrowColor }}
@@ -79,7 +79,7 @@ export function NovaClaimList({
   onSelect: (name: string) => void;
 }) {
   return (
-    <ul className="flex flex-wrap gap-1.5" aria-label="Claims">
+    <ul className="flex flex-wrap gap-2" aria-label="Claims">
       {claims.map((claim) => {
         const color = claimColor(claim.name);
         const active = claim.name === selected;
@@ -89,7 +89,7 @@ export function NovaClaimList({
               type="button"
               onClick={() => onSelect(claim.name)}
               aria-pressed={active}
-              className="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
+              className="rounded-pill border px-2.5 py-1 text-[12px] transition-colors"
               style={{
                 fontFamily: NOVA_FONT,
                 color: color.text,

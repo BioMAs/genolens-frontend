@@ -51,7 +51,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
           {unlinked} pathway{unlinked === 1 ? '' : 's'} not linked to a claim
         </p>
         <div className="flex items-center gap-3">
-          <label className="flex cursor-pointer items-center gap-1.5 text-caption text-secondary">
+          <label className="flex cursor-pointer items-center gap-2 text-caption text-secondary">
             <input
               type="checkbox"
               checked={showDust}
@@ -86,7 +86,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <figure className="m-0 min-w-0 rounded-xl border border-[#E2E8EE] bg-white p-2 sm:p-4">
+        <figure className="m-0 min-w-0 rounded-card border border-[#E2E8EE] bg-white p-2 sm:p-4">
           <CosmOmicsNova
             data={data}
             seed={seed}
@@ -101,7 +101,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
         </figure>
 
         <aside
-          className="space-y-4 rounded-xl border border-[#E2E8EE] bg-white p-4"
+          className="space-y-4 rounded-card border border-[#E2E8EE] bg-white p-4"
           aria-live="polite"
           aria-label="Claim details"
         >
@@ -122,7 +122,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
         </aside>
       </div>
 
-      <div className="rounded-xl border border-[#E2E8EE] bg-white px-4 py-3">
+      <div className="rounded-card border border-[#E2E8EE] bg-white px-4 py-3">
         <NovaLegend hatchId={hatchId} />
       </div>
 

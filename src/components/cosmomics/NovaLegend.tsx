@@ -55,7 +55,7 @@ function Swatch({ children, width = 44 }: { children: React.ReactNode; width?: n
 export default function NovaLegend({ hatchId }: { hatchId: string }) {
   return (
     <ul
-      className="flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-[#3A4150]"
+      className="flex flex-wrap gap-x-6 gap-y-2 text-[12.5px] text-[#3A4150]"
       aria-label="Legend"
       style={{ fontFamily: NOVA_FONT }}
     >

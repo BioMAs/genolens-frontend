@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
+import { cn } from '@/lib/cn';
 import {
   NOVA,
   arcPath,
@@ -245,7 +246,7 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
   return (
     <div
       role="tooltip"
-      className="pointer-events-none absolute z-10 w-72 max-w-[80vw] rounded-lg border border-[#E2E8EE] bg-white p-3 text-left text-[12px] leading-snug text-[#3A4150] shadow-lg"
+      className="pointer-events-none absolute z-10 w-72 max-w-[80vw] rounded-card border border-[#E2E8EE] bg-white p-3 text-left text-[12px] leading-snug text-[#3A4150] shadow-lg"
       style={{
         left: `${left}%`,
         top: `${top}%`,
@@ -253,7 +254,7 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
       }}
     >
       <p className="text-[13px] font-semibold text-[#0B2A3E]">{sub.name}</p>
-      <p className="mt-0.5 text-[#384C65]">
+      <p className="mt-1 text-[#384C65]">
         {formatP(sub.nl)}
         {bubble.claimName && (
           <>
@@ -263,7 +264,7 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
       </p>
       <ul className="mt-2 max-h-48 space-y-1 overflow-hidden">
         {sub.terms.map((term, i) => (
-          <li key={`${term.id}-${term.obs}-${i}`} className="flex gap-1.5">
+          <li key={`${term.id}-${term.obs}-${i}`} className="flex gap-2">
             <span
               className="font-semibold"
               style={{
@@ -312,7 +313,7 @@ export default function CosmOmicsNova({
   const { bounds } = layout;
 
   return (
-    <div className={`relative ${className ?? ''}`} data-cosmomics-nova>
+    <div className={cn('relative', className)} data-cosmomics-nova>
       <svg
         viewBox={`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`}
         width="100%"
