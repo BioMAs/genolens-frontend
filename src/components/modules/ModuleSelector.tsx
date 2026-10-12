@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 
 /**
  * ModuleSelector — animated add-on module picker (redesign).
- * Four modules: "Claim" (cosmetics / skin-claim scoring), "Reporting"
+ * Four modules: "Claim" (CosmOmics — cosmetic claims, ex Skin claims), "Reporting"
  * (report customization), "Science" (advanced scientific tools) and
  * "Drug discovery" (target ranking).
  * Used interactively by admins (toggles call the API) and read-only on a
@@ -31,7 +31,7 @@ interface ModuleMeta {
 }
 
 export const MODULE_LABELS: Record<ModuleId, string> = {
-  claim: 'Skin claims',
+  claim: 'CosmOmics',
   reporting: 'Reporting',
   science: 'Scientific tools',
   drugdiscovery: 'Drug discovery',
@@ -40,15 +40,15 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
 const MODULES: ModuleMeta[] = [
   {
     id: 'claim',
-    name: 'Skin claims',
-    tagline: 'Turn differential expression into scored cosmetic claims',
+    name: 'CosmOmics',
+    tagline: 'See which pathways support or contradict each cosmetic claim',
     icon: Sparkles,
     color: 'var(--sl-violet)',
     capabilities: [
-      'Cosmetic claim scoring (0–100)',
-      'Skin-compartment activity — the Skin Stack',
-      'AI cosmetic verdict & marketing summary',
-      'Skin read surfaced on the dashboard',
+      'Pathway nova: claims weighed by their supporting pathways',
+      'Evidence for and against each claim, term by term',
+      'AI cosmetic reading & regulatory note',
+      'SVG / PNG export of the nova',
     ],
   },
   {

@@ -35,7 +35,7 @@ describe('ComparisonModuleDisclosure', () => {
   it('lists the open screen and nothing from the others', () => {
     renderDisclosure(groupFor('appliquer'));
 
-    for (const title of ['Drug targets', 'Signature score', 'Skin claims']) {
+    for (const title of ['Drug targets', 'Signature score', 'CosmOmics']) {
       expect(screen.getByText(title)).toBeInTheDocument();
     }
     // Explore's and Share's modules stay on their own screens
