@@ -1,14 +1,24 @@
 /**
  * React Query hooks for Project Members (Collaboration).
+ *
+ * All calls go through the shared `api` client, which attaches the Supabase
+ * access token. These hooks used to call `fetch` with
+ * `localStorage.getItem("token")` — a key nothing ever writes — so every request
+ * went out as `Bearer null` and the backend answered 401.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "@/utils/api";
 import {
   ProjectMemberCreate,
   ProjectMemberUpdate,
   ProjectMemberListResponse,
 } from "@/types/project-member";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v2").replace(/\/$/, "");
+/** Same error message the callers already display: the backend `detail`. */
+function toError(err: unknown, fallback: string): Error {
+  const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+  return new Error(typeof detail === "string" ? detail : fallback);
+}
 
 /**
  * Fetch all members of a project.
@@ -17,19 +27,14 @@ export function useProjectMembers(projectId: string) {
   return useQuery<ProjectMemberListResponse>({
     queryKey: ["projects", projectId, "members"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/projects/${projectId}/members`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch project members");
+      try {
+        const response = await api.get<ProjectMemberListResponse>(
+          `/projects/${projectId}/members`
+        );
+        return response.data;
+      } catch (err) {
+        throw toError(err, "Failed to fetch project members");
       }
-
-      return response.json();
     },
     enabled: !!projectId,
     staleTime: 60000, // 1 minute
@@ -44,22 +49,12 @@ export function useInviteProjectMember(projectId: string) {
 
   return useMutation({
     mutationFn: async (data: ProjectMemberCreate) => {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/projects/${projectId}/members`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to invite member");
+      try {
+        const response = await api.post(`/projects/${projectId}/members`, data);
+        return response.data;
+      } catch (err) {
+        throw toError(err, "Failed to invite member");
       }
-
-      return response.json();
     },
     onSuccess: () => {
       // Invalidate project members list
@@ -78,25 +73,12 @@ export function useUpdateProjectMember(projectId: string, userId: string) {
 
   return useMutation({
     mutationFn: async (data: ProjectMemberUpdate) => {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_BASE}/projects/${projectId}/members/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to update member");
+      try {
+        const response = await api.patch(`/projects/${projectId}/members/${userId}`, data);
+        return response.data;
+      } catch (err) {
+        throw toError(err, "Failed to update member");
       }
-
-      return response.json();
     },
     onSuccess: () => {
       // Invalidate project members list
@@ -115,20 +97,10 @@ export function useRemoveProjectMember(projectId: string) {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_BASE}/projects/${projectId}/members/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to remove member");
+      try {
+        await api.delete(`/projects/${projectId}/members/${userId}`);
+      } catch (err) {
+        throw toError(err, "Failed to remove member");
       }
     },
     onSuccess: () => {

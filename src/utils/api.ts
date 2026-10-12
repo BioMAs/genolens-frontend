@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Session } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
 
 // Sanitize baseURL to prevent double slashes or path duplication issues
@@ -20,10 +21,28 @@ const api = axios.create({
   },
 });
 
+// Requests fired together (a page mounting a dozen queries) share ONE
+// getSession(). Each call takes supabase-js's navigator lock; a burst of them
+// starved its auto-refresh tick, which logged "Acquiring an exclusive Navigator
+// LockManager lock ... immediately failed". Nothing is cached once it settles:
+// the next request asks again, so a refreshed token is picked up.
+let inflightSession: Promise<Session | null> | null = null;
+
+export function currentSession(): Promise<Session | null> {
+  if (!inflightSession) {
+    inflightSession = createClient()
+      .auth.getSession()
+      .then(({ data }) => data.session)
+      .finally(() => {
+        inflightSession = null;
+      });
+  }
+  return inflightSession;
+}
+
 api.interceptors.request.use(async (config) => {
   try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await currentSession();
 
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
