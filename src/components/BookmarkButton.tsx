@@ -6,7 +6,7 @@
 
 import { Star } from 'lucide-react';
 import { useState } from 'react';
-import { useCreateBookmark, useDeleteBookmark, useIsBookmarked, useBookmarks } from '@/hooks/useBookmarks';
+import { useCreateBookmark, useDeleteBookmark, useBookmarks } from '@/hooks/useBookmarks';
 import { cn } from '@/lib/cn';
 
 interface BookmarkButtonProps {
@@ -26,8 +26,17 @@ export default function BookmarkButton({
   variant = 'icon',
   className = '',
 }: BookmarkButtonProps) {
-  const { data: isBookmarked, isLoading: checkLoading } = useIsBookmarked(projectId, geneSymbol);
-  const { data: bookmarks } = useBookmarks(projectId, geneSymbol);
+  // One query for the whole project, shared by every button on the page (same
+  // React Query key). The per-gene check + per-gene list it replaces fired two
+  // requests per table row — 50 for one DEG page — and exhausted the API's
+  // database pool.
+  const { data: bookmarks, isLoading: checkLoading } = useBookmarks(projectId);
+  // Guarded: a star must never take its host panel (volcano, DEG table) down
+  // with it if the list comes back in an unexpected shape.
+  const bookmark = Array.isArray(bookmarks)
+    ? bookmarks.find((b) => b.gene_symbol === geneSymbol)
+    : undefined;
+  const isBookmarked = !!bookmark;
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
@@ -48,11 +57,10 @@ export default function BookmarkButton({
   const handleToggleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (isBookmarked && bookmarks && bookmarks.length > 0) {
+    if (bookmark) {
       // Remove bookmark
       try {
-        await deleteBookmark.mutateAsync(bookmarks[0].id);
-        console.log(`Bookmark removed: ${geneSymbol}`);
+        await deleteBookmark.mutateAsync(bookmark.id);
       } catch (error) {
         console.error('Failed to remove bookmark:', error);
       }
@@ -67,7 +75,6 @@ export default function BookmarkButton({
             is_favorite: true,
           },
         });
-        console.log(`Bookmark added: ${geneSymbol}`);
       } catch (error) {
         console.error('Failed to add bookmark:', error);
       }

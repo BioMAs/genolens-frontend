@@ -8,6 +8,7 @@
  * - Calls createBookmark on click when not bookmarked
  * - Calls deleteBookmark on click when already bookmarked
  * - Disabled during loading states
+ * - Reads the project-wide bookmark list (one shared query), never a per-gene one
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
@@ -19,7 +20,6 @@ const mockCreateBookmark = jest.fn().mockResolvedValue({});
 const mockDeleteBookmark = jest.fn().mockResolvedValue({});
 
 jest.mock('@/hooks/useBookmarks', () => ({
-  useIsBookmarked: jest.fn(),
   useBookmarks: jest.fn(),
   useCreateBookmark: jest.fn(() => ({
     mutateAsync: mockCreateBookmark,
@@ -31,22 +31,14 @@ jest.mock('@/hooks/useBookmarks', () => ({
   })),
 }));
 
-import {
-  useIsBookmarked,
-  useBookmarks,
-  useCreateBookmark,
-} from '@/hooks/useBookmarks';
+import { useBookmarks, useCreateBookmark } from '@/hooks/useBookmarks';
 
-const mockUseIsBookmarked = useIsBookmarked as jest.Mock;
 const mockUseBookmarks = useBookmarks as jest.Mock;
 
-// Helper to set bookmark state before rendering
+// Helper to set the project's bookmark list before rendering
 function setupBookmarkState(isBookmarked: boolean, bookmark?: object) {
-  mockUseIsBookmarked.mockReturnValue({ data: isBookmarked, isLoading: false });
-  mockUseBookmarks.mockReturnValue({
-    data: bookmark ? [bookmark] : [],
-    isLoading: false,
-  });
+  const bookmarks = isBookmarked ? [{ gene_symbol: 'TP53', ...bookmark }] : [];
+  mockUseBookmarks.mockReturnValue({ data: bookmarks, isLoading: false });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,8 +72,7 @@ describe('BookmarkButton — icon variant (default)', () => {
   });
 
   it('is disabled while isLoading=true', () => {
-    mockUseIsBookmarked.mockReturnValue({ data: undefined, isLoading: true });
-    mockUseBookmarks.mockReturnValue({ data: [], isLoading: false });
+    mockUseBookmarks.mockReturnValue({ data: undefined, isLoading: true });
     const { default: BookmarkButton } = require('@/components/BookmarkButton');
     render(<BookmarkButton {...DEFAULT_PROPS} />);
 
@@ -114,6 +105,31 @@ describe('BookmarkButton — icon variant (default)', () => {
     fireEvent.click(screen.getByRole('button'));
     await waitFor(() => expect(mockDeleteBookmark).toHaveBeenCalledTimes(1));
     expect(mockDeleteBookmark).toHaveBeenCalledWith('bm-42');
+  });
+});
+
+describe('BookmarkButton — data source', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('asks for the whole project list, not a per-gene query', () => {
+    setupBookmarkState(false);
+    const { default: BookmarkButton } = require('@/components/BookmarkButton');
+    render(<BookmarkButton {...DEFAULT_PROPS} />);
+
+    // No gene argument: every button on the page shares one React Query key,
+    // hence one request (two per row exhausted the API's DB pool).
+    expect(mockUseBookmarks).toHaveBeenCalledWith(DEFAULT_PROPS.projectId);
+  });
+
+  it("is not marked by another gene's bookmark", () => {
+    mockUseBookmarks.mockReturnValue({
+      data: [{ id: 'bm-9', gene_symbol: 'BRCA1' }],
+      isLoading: false,
+    });
+    const { default: BookmarkButton } = require('@/components/BookmarkButton');
+    render(<BookmarkButton {...DEFAULT_PROPS} />);
+
+    expect(screen.getByRole('button')).toHaveAttribute('title', 'Add bookmark');
   });
 });
 
