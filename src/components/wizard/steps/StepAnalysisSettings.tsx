@@ -275,11 +275,11 @@ export default function StepAnalysisSettings({
                 label="Samples reaching min count"
                 value={String(deseq2Params.min_reps)}
                 options={[
-                  { value: 'auto', label: 'Auto: smallest compared group (recommended)' },
+                  { value: 'auto', label: 'Auto (recommended)' },
                   ...[2, 3, 4, 5, 6].map(n => ({ value: String(n), label: `${n} samples` })),
                 ]}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_reps: v === 'auto' ? 'auto' : Number(v) })}
-                hint="Auto keeps a gene expressed in a single condition, and drops genes seen in fewer samples than any group holds."
+                hint="Auto: as many samples as the smallest compared group. Keeps a gene expressed in a single condition, drops genes seen in fewer samples than any group holds."
               />
               <SelectField
                 label="DEA method"

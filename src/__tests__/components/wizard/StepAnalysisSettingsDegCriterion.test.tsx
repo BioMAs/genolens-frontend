@@ -57,7 +57,7 @@ describe('wizard defaults', () => {
 describe('advanced settings', () => {
   it('lets the user switch the sample requirement between auto and a fixed number', () => {
     const onChange = renderAdvanced();
-    const select = screen.getByDisplayValue(/smallest compared group/i);
+    const select = screen.getByDisplayValue('Auto (recommended)');
 
     fireEvent.change(select, { target: { value: '3' } });
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ min_reps: 3 }));
