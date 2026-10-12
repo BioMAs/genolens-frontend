@@ -689,6 +689,46 @@ body {
    the element's own width as the end value, so the class carries no geometry. */
 @keyframes gl-bar-grow { from { width: 0; } }
 .gl-bar-grow { animation: gl-bar-grow .7s cubic-bezier(.22,.61,.36,1) both; }
+
+/* ── Helice de donnees (dashboard) ──────────────────────────────────────────
+   La geometrie vit dans helixGeometry.ts et la boucle dans DataHelix.tsx ; ici
+   ne restent que les couleurs et l'epaisseur, pour que les deux themes se
+   reglent sans toucher au JavaScript.
+
+   Brin A = la marque (emerald), cote des genes up ; brin B = l'encre, cote des
+   genes down. L'indigo n'y figure pas : il reste reserve a ce qui se clique. */
+:root {
+  --helix-a:     var(--sl-teal);
+  --helix-b:     var(--n-700);
+  --helix-ghost: var(--n-300);
+}
+.dark {
+  --helix-b:     #a9b6c9;
+  --helix-ghost: var(--n-200);
+}
+.helix-strand { stroke-linecap: round; stroke-linejoin: round; }
+.helix-strand-a { stroke: var(--helix-a); }
+.helix-strand-b { stroke: var(--helix-b); }
+.helix-strand[data-depth='front'] { stroke-width: 2.25; }
+.helix-strand[data-depth='back']  { stroke-width: 1.4; opacity: .26; }
+/* Une place libre : des points, pas un trait. */
+.helix-ghost line { stroke-dasharray: 0.1 5; }
+.helix-pair line { transition: stroke .45s var(--ease-out); }
+/* Le front de synthese : la prochaine paire s'ecrira ici. */
+@keyframes helix-frontier { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+.helix-frontier { animation: helix-frontier 1.8s var(--ease-in-out) infinite; }
+.helix-frontier line { stroke: var(--helix-a) !important; }
+
+/* Barre divergente (derniers resultats) : chaque cote pousse depuis l'axe.
+   scaleX, pas width — l'animation reste sur le compositeur. */
+@keyframes gl-grow-x { from { transform: scaleX(0); } }
+.gl-grow-x { animation: gl-grow-x .8s cubic-bezier(.16,1,.3,1) both; animation-delay: 120ms; }
+/* Dans une liste `data-enter`, la barre pousse juste apres l'arrivee de sa
+   ligne : meme cascade bornee a cinq crans, decalee de 120ms. */
+[data-enter] > :nth-child(2) .gl-grow-x    { animation-delay: 160ms; }
+[data-enter] > :nth-child(3) .gl-grow-x    { animation-delay: 200ms; }
+[data-enter] > :nth-child(4) .gl-grow-x    { animation-delay: 240ms; }
+[data-enter] > :nth-child(n+5) .gl-grow-x  { animation-delay: 280ms; }
 .gl-gene-token {
   border-bottom: 1px solid transparent;
   transition: border-color .15s;

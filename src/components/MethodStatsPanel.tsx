@@ -8,8 +8,9 @@
  *   1. A per-method summary (up / down / total DEGs) with the active method
  *      highlighted.
  *   2. A per-gene table listing the p-value and adjusted p-value of every
- *      tested method (Stouffer, DESeq2, edgeR, limma, Fisher, …), Stouffer
- *      first.
+ *      tested method (DESeq2, edgeR, limma, Stouffer, Fisher, …). The
+ *      Stouffer combination comes after the methods it combines: in a
+ *      GenoLens analysis it is concordance only, DESeq2 decides.
  *
  * Data comes from `GET /datasets/{id}/deg-stats?comparison=...`. A CSV export
  * (all methods) is available through the existing `/deg-stats/export` endpoint.
@@ -28,7 +29,7 @@ interface MethodStatsPanelProps {
 }
 
 // Preferred display order; any extra method is appended after these.
-const METHOD_ORDER = ['Stouffer', 'DESeq2', 'edgeR', 'limma', 'Fisher'];
+const METHOD_ORDER = ['DESeq2', 'edgeR', 'limma', 'Stouffer', 'Fisher'];
 
 const PAGE_SIZE = 25;
 

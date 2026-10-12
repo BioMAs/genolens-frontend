@@ -20,7 +20,8 @@ export interface MethodCounts {
 export type DegStatsRow = Record<string, string | number | boolean | null>;
 
 export interface DegStatsResponse {
-  /** Active-method per-comparison summary (Stouffer-first). */
+  /** Active-method per-comparison summary (the method that decided the DEGs; Stouffer-first for
+   *  imported tables that do not say). */
   stats: Record<string, unknown>;
   /** { comparison: { method: { up, down, total } } } */
   general: Record<string, Record<string, MethodCounts>>;

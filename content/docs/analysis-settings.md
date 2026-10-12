@@ -24,10 +24,10 @@ A gene is a DEG when it passes **both** thresholds. Genes passing these threshol
 
 **DEA method** chooses how differential expression is tested:
 
-- **All + Stouffer (recommended)**, the default. GenoLens runs **DESeq2**, **edgeR** and **limma-voom** on each comparison, then combines their p-values with Stouffer's method. A gene that all three methods agree on gets the strongest combined evidence. A gene that only one method calls significant ends up weaker.
-- **DESeq2 only**, **limma-voom only** or **edgeR only**: runs one method. Choose this to match a published analysis, or when a reviewer asks for a specific tool.
+- **All three, DESeq2 decides (recommended)**, the default. GenoLens runs **DESeq2**, **edgeR** and **limma-voom** on each comparison. **DESeq2** decides which genes are DEGs: its adjusted p-value and its log2 fold change are the ones compared with the thresholds. edgeR and limma do not change the list. They show, gene by gene, how many methods agree.
+- **DESeq2 only**, **limma-voom only** or **edgeR only**: runs one method, which then decides alone. Choose this to match a published analysis, or when a reviewer asks for a specific tool.
 
-With the combined method, the p-value of each method stays available on the comparison page (**Method statistics**) and as a download.
+With all three methods, the p-value of each method stays available on the comparison page (**Method statistics**) and as a download, along with a Stouffer combination of the three. That combination is shown for information only and never decides. Stouffer's method assumes independent tests, but the three methods analyse the same counts, so their p-values move together and the combination overstates the evidence: three p-values of 0.05 combine to about 0.002.
 
 ## Design formula
 
@@ -47,7 +47,8 @@ Filtering removes samples and genes that carry too little information. It runs b
 |---|---|---|
 | **Min reads / sample** | 100,000 | Samples with fewer reads in total are dropped. |
 | **Min genes / sample** | 500 | Samples with fewer detected genes are dropped. |
-| **Min count (per gene)** | 10 | A gene is kept if it has at least this many reads in at least two samples. |
+| **Min count (per gene)** | 10 | Reads a gene needs in enough samples (next setting) to be kept. |
+| **Samples reaching min count** | Auto | **Auto** asks for as many samples as the smallest compared condition holds, the rule of edgeR's `filterByExpr`. With three replicates per condition, a gene needs 10 reads in at least three samples: a gene expressed in a single condition is kept, a gene seen in only two samples is not. Above ten samples per condition the requirement is relaxed (17 samples for groups of 20). You can also set a fixed number from 2 to 6. |
 
 At least two samples are always kept. The **Samples kept** and **Genes retained** tiles of the analysis page show the effect of the filters.
 

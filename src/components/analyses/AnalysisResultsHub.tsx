@@ -19,6 +19,7 @@ import DEGPatternsView from '@/components/DEGPatternsView';
 import { useSampleConditionMap } from '@/hooks/useSampleConditionMap';
 import { useScientificModule } from '@/hooks/useAddOnModules';
 import { scrollToId } from '@/utils/scrollToId';
+import { formatMinReps } from '@/utils/formatters';
 import { PageHeader } from '@/components/ui/page-header';
 import { cn } from '@/lib/cn';
 
@@ -531,7 +532,7 @@ function AnalysisParams({ analysis }: { analysis: ReturnType<typeof useAnalysis>
     { label: 'Min reads / sample',   value: Number(params.min_reads ?? 100000).toLocaleString() },
     { label: 'Min genes / sample',   value: Number(params.min_genes ?? 500).toLocaleString() },
     { label: 'Min count / gene',     value: String(params.min_count ?? 10) },
-    { label: 'Min replicates',       value: String(params.min_reps ?? 2) },
+    { label: 'Samples ≥ min count',  value: formatMinReps(params.min_reps) },
     { label: 'Threads',              value: String(params.threads ?? 1) },
   ];
 

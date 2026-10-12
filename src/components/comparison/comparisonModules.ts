@@ -162,7 +162,7 @@ export function buildComparisonModules({
       panel: 'methods',
       tab: 'metrics',
       title: 'Method statistics',
-      description: 'Per-method p-values and the Stouffer consensus',
+      description: 'Per-method p-values and how many methods agree',
       icon: Sigma,
       state: 'ready',
       metric: 'DESeq2 · edgeR · limma',
