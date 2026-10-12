@@ -99,7 +99,8 @@ describe('resolveLegacyTab', () => {
   // Strictly better than the old behaviour, which bounced a locked add-on link to a blank
   // overview: Apply is where the locked card and its Request access action actually live.
   it('retargets a locked add-on to Apply rather than nowhere', () => {
-    expect(resolveLegacyTab('cosmetics')).toEqual({ view: 'appliquer', panel: 'cosmetics' });
+    // Skin claims became CosmOmics: the old tab lands on the pathway nova.
+    expect(resolveLegacyTab('cosmetics')).toEqual({ view: 'appliquer', panel: 'cosmomics' });
     expect(resolveLegacyTab('drug-discovery')).toEqual({
       view: 'appliquer',
       panel: 'drug-discovery',

@@ -239,14 +239,15 @@ export function buildComparisonModules({
     {
       id: 'claim',
       view: 'appliquer',
-      panel: 'cosmetics',
+      panel: 'cosmomics',
+      // Legacy key of the former Skin claims tab, still honoured by `LEGACY_TAB_ROUTES`.
       tab: cosmeticsUnlocked ? 'cosmetics' : null,
-      title: 'Skin claims',
-      description: 'Turn this comparison into scored cosmetic claims',
+      title: 'CosmOmics',
+      description: 'See which pathways support or contradict each cosmetic claim',
       icon: Sparkles,
       state: cosmeticsUnlocked ? 'ready' : 'locked',
       addOnId: 'claim',
-      ...(cosmeticsUnlocked ? { metric: 'Claim scores · Skin Stack' } : { hint: ADD_ON }),
+      ...(cosmeticsUnlocked ? { metric: 'Pathway nova · claims for / against' } : { hint: ADD_ON }),
     },
     {
       id: 'external-lookup',

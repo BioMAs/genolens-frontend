@@ -239,7 +239,7 @@ describe('view assignment', () => {
 
     expect(claim.state).toBe('locked');
     expect(claim.view).toBe('appliquer');
-    expect(claim.panel).toBe('cosmetics');
+    expect(claim.panel).toBe('cosmomics');
     // the tab is withheld because no pane renders it, but the add-on stays requestable
     expect(claim.tab).toBeNull();
     expect(claim.addOnId).toBe('claim');

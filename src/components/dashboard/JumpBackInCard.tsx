@@ -3,28 +3,31 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useProjectSummary, ComparisonSummary } from '@/hooks/useProjectData';
-import { useCosmeticsData, CosmeticsResult } from '@/hooks/useCosmetics';
+import { useCosmOmicsNova } from '@/hooks/useCosmOmicsNova';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { claimColor } from '@/components/cosmomics/novaPalette';
+import type { CosmOmicsNovaData } from '@/types/cosmomics';
 
 /**
  * JumpBackInCard — dashboard "Jump back in" panel from the redesign (2a/4b).
- * Surfaces the most recent comparison with a mini Skin Stack, a plain-language
- * verdict and top claim pills. Falls back to DEG counts when the cosmetics
- * module is locked or no skin data is available.
+ * Surfaces the most recent comparison with its CosmOmics read: the strongest
+ * claims and how coherent their pathway evidence is, a plain-language verdict
+ * and claim pills. Falls back to DEG counts when the add-on is locked or the
+ * nova has no claim.
  */
 
-const LAYERS = [
-  { slug: 'stratum_corneum', label: 'Barrier', color: 'var(--dc-skin-barrier)', fill: 'var(--dc-skin-barrier-fill)' },
-  { slug: 'epidermis', label: 'Epidermis', color: 'var(--dc-skin-epidermis)', fill: 'var(--dc-green)' },
-  { slug: 'dermis', label: 'Dermis', color: 'var(--dc-skin-dermis)', fill: 'var(--dc-pink)' },
-];
+/** Claims whose evidence is mostly for them, strongest first (the nova's sector order). */
+function supportedClaims(nova: CosmOmicsNovaData) {
+  return nova.claims.filter((c) => c.n_for > 0 && c.coherence >= 0.5);
+}
 
-function buildVerdict(cos: CosmeticsResult): string {
-  const fav = cos.claims.filter((c) => c.direction === 'favorable' && c.score > 0).sort((a, b) => b.score - a.score);
-  if (!fav.length) return 'Mixed transcriptional signal across skin claims';
-  const labels = fav.slice(0, 3).map((c) => c.label.toLowerCase());
-  if (labels.length === 1) return `${labels[0][0].toUpperCase()}${labels[0].slice(1)}`;
-  return `${labels.slice(0, -1).join(', ')} & ${labels[labels.length - 1]}`.replace(/^./, (m) => m.toUpperCase());
+function buildVerdict(nova: CosmOmicsNovaData): string {
+  const names = supportedClaims(nova)
+    .slice(0, 3)
+    .map((c) => c.name.toLowerCase());
+  if (!names.length) return 'Mixed pathway evidence across cosmetic claims';
+  if (names.length === 1) return `${names[0][0].toUpperCase()}${names[0].slice(1)}`;
+  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`.replace(/^./, (m) => m.toUpperCase());
 }
 
 function pickComparison(comps: ComparisonSummary[]): ComparisonSummary | undefined {
@@ -33,20 +36,19 @@ function pickComparison(comps: ComparisonSummary[]): ComparisonSummary | undefin
 
 export default function JumpBackInCard({ projectId }: { projectId: string }) {
   const { data: profile } = useUserProfile();
-  // Skin read is shown ONLY when the skin/cosmetics module is active for the user.
+  // The CosmOmics read is shown ONLY when the Skin claims add-on is active for the user.
   const skinActive = profile?.has_cosmetics_module === true;
 
   const { data: summary } = useProjectSummary(projectId);
   const comp = pickComparison(summary?.comparisons ?? []);
 
-  const { data: cos } = useCosmeticsData(comp?.dataset_id, comp?.name, skinActive && !!comp);
+  const { data: nova } = useCosmOmicsNova(comp?.dataset_id, comp?.name, skinActive && !!comp);
 
   if (!comp) return null;
 
   const href = `/projects/${projectId}/comparisons/${encodeURIComponent(comp.name)}`;
-  const zonesById = Object.fromEntries((cos?.skin_zones ?? []).map((z) => [z.slug, z]));
-  const hasSkin = skinActive && !!cos && cos.skin_zones.length > 0;
-  const topClaims = [...(cos?.claims ?? [])].filter((c) => c.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+  const hasNova = skinActive && !!nova && nova.claims.length > 0;
+  const topClaims = (nova?.claims ?? []).slice(0, 3);
   const title = comp.name.replace(/_?vs_?/i, ' vs ');
 
   return (
@@ -60,7 +62,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         className="grid grid-cols-1 items-center gap-6 rounded-card border p-6 lg:grid-cols-[1.15fr_1px_1fr_auto]"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 1px 2px rgba(19,22,41,.04)' }}
       >
-        {/* Left — identity + mini skin stack (or DEG bars) */}
+        {/* Left — identity + claim coherence (or DEG bars) */}
         <div>
           <div className="mb-2 flex items-center gap-2">
             <span
@@ -78,16 +80,20 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
           </div>
 
           <div className="mt-4 flex flex-col gap-2">
-            {hasSkin ? (
-              LAYERS.map((l) => {
-                const act = Math.max(0, Math.min(100, zonesById[l.slug]?.activity ?? 0));
+            {hasNova ? (
+              topClaims.map((claim) => {
+                const color = claimColor(claim.name);
+                const coherence = Math.round(100 * claim.coherence);
                 return (
-                  <div key={l.slug} className="flex items-center gap-3">
-                    <span className="w-20 text-micro" style={{ color: l.color }}>{l.label}</span>
+                  <div key={claim.name} className="flex items-center gap-3">
+                    <span className="w-24 truncate text-micro" style={{ color: color.text }}>{claim.name}</span>
                     <div className="h-[7px] flex-1 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
-                      <div className="h-full rounded-sm" style={{ width: `${act}%`, background: l.fill }} />
+                      <div
+                        className="h-full rounded-sm"
+                        style={{ width: `${coherence}%`, background: coherence >= 50 ? '#34B596' : '#9AA8B6' }}
+                      />
                     </div>
-                    <span className="w-8 text-right text-micro" style={{ color: 'var(--text-muted)' }}>{act.toFixed(1)}</span>
+                    <span className="w-10 text-right text-micro" style={{ color: 'var(--text-muted)' }}>{coherence}%</span>
                   </div>
                 );
               })
@@ -112,28 +118,31 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         {/* Middle — verdict + claim pills */}
         <div>
           <div className="mb-2 text-micro uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
-            {hasSkin ? 'Verdict' : 'Results'}
+            {hasNova ? 'CosmOmics verdict' : 'Results'}
           </div>
-          {hasSkin ? (
+          {hasNova ? (
             <>
               <div className="mb-3 font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
-                {buildVerdict(cos!)}
+                {buildVerdict(nova!)}
               </div>
               <div className="flex flex-wrap gap-2">
-                {topClaims.map((c) => (
-                  <span
-                    key={c.slug}
-                    className="flex items-center gap-2 rounded-pill border px-2.5 py-1 text-micro"
-                    style={{
-                      background: `color-mix(in oklab, ${c.color} 8%, var(--surface))`,
-                      borderColor: `color-mix(in oklab, ${c.color} 22%, var(--surface))`,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <span className="h-2 w-2 rounded-pill" style={{ background: c.color }} />
-                    {c.label} {Math.round(c.score)}
-                  </span>
-                ))}
+                {topClaims.map((claim) => {
+                  const color = claimColor(claim.name).fill;
+                  return (
+                    <span
+                      key={claim.name}
+                      className="flex items-center gap-2 rounded-pill border px-2.5 py-1 text-micro"
+                      style={{
+                        background: `color-mix(in oklab, ${color} 8%, var(--surface))`,
+                        borderColor: `color-mix(in oklab, ${color} 22%, var(--surface))`,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <span className="h-2 w-2 rounded-pill" style={{ background: color }} />
+                      {claim.name} · {claim.n_for} for · {claim.n_against} against
+                    </span>
+                  );
+                })}
               </div>
             </>
           ) : (

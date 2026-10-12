@@ -1,11 +1,11 @@
 ---
-title: Signature score, drug targets and skin claims
+title: Signature score, drug targets and CosmOmics
 description: The Apply screen turns a comparison into scores, therapeutic targets and cosmetic claims.
 category: enrichment
 order: 50
 ---
 
-# Signature score, drug targets and skin claims
+# Signature score, drug targets and CosmOmics
 
 The **Apply** screen of a comparison holds modules that turn a result into something actionable. Each belongs to an **add-on** that an administrator enables on your account. When an add-on is not enabled, the module shows what it does and a button to request access.
 
@@ -38,8 +38,8 @@ This module matches the genes of your comparison against a ranking of therapeuti
 
 The full ranking can also be browsed on its own, by indication and weighting profile (*Oncology*, *First-in-class*, *Fast-follower*, *Safety first*), from the [Drug Discovery page](/tools/drug-discovery).
 
-## Skin claims
+## CosmOmics
 
 > Requires the **Skin claims** (cosmetics) add-on.
 
-For skin studies, this module translates the comparison into cosmetic claims (barrier, epidermis, dermis) supported by the genes that changed. Without the add-on, the tab shows a locked demonstration.
+For skin studies, the CosmOmics **pathway nova** shows which pathways support or contradict each cosmetic claim. Each sector is a claim, as wide as the evidence behind it; each bubble is a group of related ontology terms (a pathway), further out when more significant, green when its terms move in the direction the claim expects, coral when they move against it. Hatching marks the evidence against a claim. Click a sector for the claim card; hover a bubble for its terms. The nova exports as SVG or PNG. Without the add-on, the module appears as a locked card with a request-access action.

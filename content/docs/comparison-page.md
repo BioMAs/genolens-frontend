@@ -27,7 +27,7 @@ The screens follow the questions you ask about a result, in order.
 |---|---|---|
 | **Explore** | *Which genes moved, and what does each one do?* | Top regulated genes and pathways, the threshold control, the volcano plot, the gene table, method statistics, the heatmap, a database lookup and free-form charts. |
 | **Understand** | *What do those genes mean together?* | The AI reading, functional enrichment (over-representation and GSEA) and the interaction network. |
-| **Apply** | *What can I do with this comparison?* | Drug targets, signature score and skin claims. These are add-on modules. |
+| **Apply** | *What can I do with this comparison?* | Drug targets, signature score and CosmOmics (cosmetic claims). These are add-on modules. |
 | **Share** | *How do I take the results out of the app?* | Downloads and report branding. |
 
 ## Modules you cannot open yet
