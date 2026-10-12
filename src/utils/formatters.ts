@@ -38,6 +38,19 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
+ * The low-count filter's sample requirement (`min_reps`), as shown to the user.
+ *
+ * `value` is either the stored analysis param (a number, or 'auto' before the run resolved it) or
+ * the pipeline's QC report value (always a number); `mode` is the report's `min_reps_mode`.
+ * Analyses created before the field defaulted to 2.
+ */
+export function formatMinReps(value: unknown, mode?: unknown): string {
+  if (value === 'auto') return 'Auto (smallest compared group)';
+  const shown = String(value ?? 2);
+  return mode === 'auto' ? `${shown} (auto: smallest compared group)` : shown;
+}
+
+/**
  * Format date to readable string
  */
 export function formatDate(dateString: string): string {

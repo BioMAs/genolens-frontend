@@ -15,7 +15,7 @@ export const DEFAULT_DESEQ2_PARAMS: AnalysisParams = {
   min_reads:  100_000,
   min_genes:  500,
   min_count:  10,
-  min_reps:   2,
+  min_reps:   'auto',
   threads:    1,
   de_method:  'all',
 };
@@ -182,6 +182,11 @@ export default function StepAnalysisSettings({
                 `FDR threshold: ${deseq2Params.fdr}`,
                 `Fold-change: ${(2 ** deseq2Params.min_log2fc).toFixed(2)}×`,
                 `Design: ${deseq2Params.design}`,
+                `Gene filter: ≥ ${deseq2Params.min_count} counts in ${
+                  deseq2Params.min_reps === 'auto'
+                    ? 'as many samples as the smallest group'
+                    : `${deseq2Params.min_reps} samples`
+                }`,
               ]}
             />
             <SummaryCard
@@ -264,19 +269,29 @@ export default function StepAnalysisSettings({
                 value={deseq2Params.min_count}
                 min={0} max={100} step={1}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, min_count: v })}
-                hint="Genes with lower mean count are filtered."
+                hint="Count a gene must reach in enough samples (next setting) to be kept."
+              />
+              <SelectField
+                label="Samples reaching min count"
+                value={String(deseq2Params.min_reps)}
+                options={[
+                  { value: 'auto', label: 'Auto (recommended)' },
+                  ...[2, 3, 4, 5, 6].map(n => ({ value: String(n), label: `${n} samples` })),
+                ]}
+                onChange={v => onChangeDeseq2({ ...deseq2Params, min_reps: v === 'auto' ? 'auto' : Number(v) })}
+                hint="Auto: as many samples as the smallest compared group. Keeps a gene expressed in a single condition, drops genes seen in fewer samples than any group holds."
               />
               <SelectField
                 label="DEA method"
                 value={deseq2Params.de_method ?? 'all'}
                 options={[
-                  { value: 'all',    label: 'All + Stouffer (recommended)' },
+                  { value: 'all',    label: 'All three, DESeq2 decides (recommended)' },
                   { value: 'deseq2', label: 'DESeq2 only' },
                   { value: 'limma',  label: 'limma-voom only' },
                   { value: 'edger',  label: 'edgeR only' },
                 ]}
                 onChange={v => onChangeDeseq2({ ...deseq2Params, de_method: v as AnalysisParams['de_method'] })}
-                hint='"All" combines DESeq2 + edgeR + limma via Stouffer for added robustness.'
+                hint='"All three" calls DEGs with DESeq2; edgeR and limma show how many methods agree on each gene.'
               />
             </div>
           </details>
