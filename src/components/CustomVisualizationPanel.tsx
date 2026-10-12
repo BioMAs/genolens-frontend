@@ -251,6 +251,7 @@ export default function CustomVisualizationPanel({
                     layout={layout}
                     config={plotConfig}
                     style={{ width: '100%' }}
+                    useResizeHandler
                 />
             );
         } else {
@@ -284,6 +285,7 @@ export default function CustomVisualizationPanel({
                     layout={layout}
                     config={plotConfig}
                     style={{ width: '100%' }}
+                    useResizeHandler
                 />
             );
         }
@@ -323,6 +325,7 @@ export default function CustomVisualizationPanel({
                     layout={layout}
                     config={plotConfig}
                     style={{ width: '100%' }}
+                    useResizeHandler
                 />
             );
         } else {
@@ -356,6 +359,7 @@ export default function CustomVisualizationPanel({
                     layout={layout}
                     config={plotConfig}
                     style={{ width: '100%' }}
+                    useResizeHandler
                 />
             );
         }
@@ -396,6 +400,7 @@ export default function CustomVisualizationPanel({
                 layout={layout}
                 config={plotConfig}
                 style={{ width: '100%' }}
+                useResizeHandler
             />
         );
     };

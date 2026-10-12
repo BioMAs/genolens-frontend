@@ -337,7 +337,7 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
                 style={{ background: 'var(--sl-amber-light, rgba(245,158,11,0.10))', borderColor: 'rgba(245,158,11,0.35)' }}
             >
                 <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                    <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0 text-warning" aria-hidden />
                     <div className="flex-1">
                         <h3 className="mb-2 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                             AI interpretation temporarily unavailable

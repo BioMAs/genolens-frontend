@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { GOTreeNode, GOHierarchyResponse } from '@/types';
 import api from '@/utils/api';
 import { useChartPalette } from '@/utils/chartTheme';
+import { significanceRamp } from '@/utils/chartScales';
+import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/cn';
 
 const GOForceGraph = dynamic(() => import('./GOForceGraph'), { ssr: false });
@@ -52,13 +54,20 @@ const NS_SLOT: Record<NamespaceKey, number> = {
 
 // ─── FDR colour helper ────────────────────────────────────────────────────────
 
-function fdrDotColor(fdr: number | null | undefined): string {
-  if (!fdr) return '#e5e7eb';
-  if (fdr <= 1e-6) return '#4338ca';
-  if (fdr <= 1e-4) return '#6366f1';
-  if (fdr <= 0.01) return '#818cf8';
-  if (fdr <= 0.05) return '#a5b4fc';
-  return '#e5e7eb';
+/** −log10 cut-offs of the shared significance ramp: 0.05 · 0.01 · 1e-3 · 1e-5 · 1e-10. */
+const SIGNIFICANCE_CUTS = [1.3, 2, 3, 5, 10];
+
+/**
+ * A term's dot, on the app's significance ramp.
+ *
+ * It was a private indigo ramp, light-theme only, whose "not significant" grey was the brightest
+ * mark on a dark panel — and `!fdr` sent an FDR of exactly 0, the strongest result, to that grey.
+ */
+function fdrDotColor(fdr: number | null | undefined, ramp: readonly string[]): string {
+  if (fdr == null || !Number.isFinite(fdr) || fdr < 0) return ramp[0];
+  const score = fdr === 0 ? Infinity : -Math.log10(fdr);
+  const tier = SIGNIFICANCE_CUTS.filter((cut) => score >= cut).length;
+  return ramp[tier] ?? ramp[ramp.length - 1];
 }
 
 // ─── Tree Node ────────────────────────────────────────────────────────────────
@@ -76,13 +85,16 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
   const isExpanded = expandedIds.has(node.go_id);
   const isSelected = selectedId === node.go_id;
   const hasChildren = node.children.length > 0;
+  const ramp = significanceRamp(useTheme().theme);
 
   return (
     <div>
       <div
         className={cn(
           'flex items-center gap-1 px-2 py-1 rounded-sm cursor-pointer text-body-sm transition-colors',
-          isSelected ? 'bg-accent-soft border-l-2 border-accent' : 'hover:bg-hover',
+          // Selection reads from the tint and a hairline all round — not from a 2px stripe on
+          // the left edge, which is decoration, and shifted the row's text by two pixels.
+          isSelected ? 'bg-accent-soft ring-1 ring-inset ring-accent-ring' : 'hover:bg-hover',
           !node.is_enriched ? 'opacity-50' : '',
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
@@ -99,7 +111,7 @@ function TreeNode({ node, expandedIds, toggleExpand, selectedId, onSelect, depth
 
         <span
           className="w-2.5 h-2.5 rounded-pill flex-shrink-0"
-          style={{ backgroundColor: fdrDotColor(node.fdr) }}
+          style={{ backgroundColor: fdrDotColor(node.fdr, ramp) }}
         />
 
         <span className={cn(

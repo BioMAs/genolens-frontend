@@ -19,7 +19,7 @@ import { NOVA_INK } from './novaPalette';
 /** Same stack as the reference figure: the label widths are estimated for it. */
 export const NOVA_FONT = "Inter, 'Helvetica Neue', Arial, sans-serif";
 
-const HALO = { paintOrder: 'stroke', stroke: '#FFFFFF', strokeWidth: 4, strokeLinejoin: 'round' } as const;
+const HALO = { paintOrder: 'stroke', stroke: NOVA_INK.background, strokeWidth: 4, strokeLinejoin: 'round' } as const;
 
 function sectorLabel(band: NovaBand): string {
   if (band.kind === 'other') return `${band.name}: significant pathways attached to no claim`;
@@ -154,7 +154,7 @@ export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHo
           r={bubble.r}
           fill={bubble.fill}
           opacity={0.95}
-          stroke="#FFFFFF"
+          stroke={NOVA_INK.background}
           strokeWidth={1.5}
           role="img"
           aria-label={bubbleLabel(bubble)}
@@ -201,7 +201,7 @@ export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHo
           ),
         )}
         <circle cx={cx} cy={cy} r={NOVA.coreRadius} fill={NOVA_INK.core} />
-        <text x={cx} y={cy + 5} fontSize={13} fill="#FFFFFF" textAnchor="middle" fontWeight={600}>
+        <text x={cx} y={cy + 5} fontSize={13} fill={NOVA_INK.background} textAnchor="middle" fontWeight={600}>
           {layout.condition}
         </text>
       </g>
@@ -246,15 +246,15 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
   return (
     <div
       role="tooltip"
-      className="pointer-events-none absolute z-10 w-72 max-w-[80vw] rounded-card border border-[#E2E8EE] bg-white p-3 text-left text-[12px] leading-snug text-[#3A4150] shadow-lg"
+      className="pointer-events-none absolute z-10 w-72 max-w-[80vw] rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] p-3 text-left text-[12px] leading-snug text-[var(--nova-ink)] shadow-lg"
       style={{
         left: `${left}%`,
         top: `${top}%`,
         transform: `translate(${flip ? 'calc(-100% - 14px)' : '14px'}, -50%)`,
       }}
     >
-      <p className="text-[13px] font-semibold text-[#0B2A3E]">{sub.name}</p>
-      <p className="mt-1 text-[#384C65]">
+      <p className="text-[13px] font-semibold text-[var(--nova-ink-strong)]">{sub.name}</p>
+      <p className="mt-1 text-[var(--nova-ink-muted)]">
         {formatP(sub.nl)}
         {bubble.claimName && (
           <>
@@ -274,8 +274,8 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
               {term.obs === 'up' ? '↑' : '↓'}
             </span>
             <span className="min-w-0">
-              <span className="text-[#7D8B9C]">{term.id}</span> {term.label}
-              <span className="whitespace-nowrap text-[#7D8B9C]">
+              <span className="text-[var(--nova-ink-subtle)]">{term.id}</span> {term.label}
+              <span className="whitespace-nowrap text-[var(--nova-ink-subtle)]">
                 {' · '}
                 {formatP(term.nl)}
                 {term.effect !== 0 && ` · ${term.effect > 0 ? 'pro' : 'anti'}`}

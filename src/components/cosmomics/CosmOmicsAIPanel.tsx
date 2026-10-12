@@ -5,6 +5,7 @@ import { Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import { useCosmOmicsInterpretation } from '@/hooks/useCosmOmicsNova';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import { AI_QUOTA_COPY, aiQuotaMessage, apiErrorMessage, isAiQuotaExhausted } from '@/utils/plan';
+import { NOVA_INK } from './novaPalette';
 
 interface Props {
   datasetId?: string;
@@ -36,7 +37,7 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, disabled }
     <div className="gl-card p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="flex items-center gap-2 text-body-sm font-semibold text-primary">
-          <Sparkles className="h-4 w-4" style={{ color: '#34B596' }} />
+          <Sparkles className="h-4 w-4" style={{ color: NOVA_INK.green }} aria-hidden />
           AI cosmetic reading
         </h3>
         <button
@@ -44,7 +45,7 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, disabled }
           onClick={() => generate(!!text)}
           disabled={disabled || mutation.isPending}
           className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium text-on-accent disabled:opacity-50"
-          style={{ background: 'var(--sl-teal-dark, #0f766e)' }}
+          style={{ background: 'var(--sl-teal-dark)' }}
         >
           {mutation.isPending ? (
             <>
