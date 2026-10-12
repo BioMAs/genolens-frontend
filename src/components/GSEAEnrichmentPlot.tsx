@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useChartTheme } from '@/utils/chartTheme';
 
 interface GSEAEnrichmentPlotProps {
   geneSetName: string;
@@ -12,6 +13,26 @@ interface GSEAEnrichmentPlotProps {
   geneSetSize: number;
 }
 
+/** Height follows the width — a wide plot stays legible, a phone plot is not 500px of strip. */
+const MIN_HEIGHT = 300;
+const MAX_HEIGHT = 500;
+const ASPECT = 0.62;
+
+/** Narrow plots give the axis less room: at 340px, a 60px left margin is a fifth of the plot. */
+function marginsFor(width: number) {
+  return width < 480
+    ? { top: 32, right: 16, bottom: 64, left: 44 }
+    : { top: 40, right: 40, bottom: 80, left: 60 };
+}
+
+/**
+ * The running enrichment score of one gene set.
+ *
+ * A canvas that was 800×500 device pixels whatever its container: it overflowed every phone and
+ * half a tablet, drew blurry on a Retina screen, and painted black text on a light-grey plate —
+ * unreadable once the app was in its dark theme. It now measures its container, draws at the
+ * device pixel ratio, and takes its inks from the resolved chart theme.
+ */
 export default function GSEAEnrichmentPlot({
   geneSetName,
   enrichmentScore,
@@ -21,43 +42,56 @@ export default function GSEAEnrichmentPlot({
   metrics,
   geneSetSize
 }: GSEAEnrichmentPlotProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const theme = useChartTheme();
+  const [width, setWidth] = useState(800);
   const [hoveredGene, setHoveredGene] = useState<{ gene: string; metric: number } | null>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
+  const height = Math.round(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, width * ASPECT)));
 
+  // Track the container's width. Rounded, so sub-pixel jitter does not redraw in a loop.
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = Math.round(entry.contentRect.width);
+      if (next > 0) setWidth(next);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Clear canvas
+    // Back the canvas at device resolution, then draw in CSS pixels.
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
-    // Calculate plot dimensions
-    const margin = { top: 40, right: 40, bottom: 80, left: 60 };
+    const margin = marginsFor(width);
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
+    const compact = width < 480;
+    const font = (size: number, weight = 400) => `${weight} ${size}px ${theme.fontFamily}`;
 
     // Find min/max for scaling
-    const minES = Math.min(...runningEnrichmentScores);
-    const maxES = Math.max(...runningEnrichmentScores);
-    const esRange = maxES - minES;
+    const minES = Math.min(...runningEnrichmentScores, 0);
+    const maxES = Math.max(...runningEnrichmentScores, 0);
+    const esRange = maxES - minES || 1;
 
     // Scale functions
-    const xScale = (i: number) => margin.left + (i / rankedGenes.length) * plotWidth;
+    const xScale = (i: number) => margin.left + (i / Math.max(1, rankedGenes.length)) * plotWidth;
     const yScale = (es: number) => margin.top + plotHeight - ((es - minES) / esRange) * plotHeight;
 
-    // Draw background
-    ctx.fillStyle = '#f9fafb';
-    ctx.fillRect(margin.left, margin.top, plotWidth, plotHeight);
-
-    // Draw grid lines
-    ctx.strokeStyle = '#e5e7eb';
+    // Grid lines
+    ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = margin.top + (plotHeight * i) / 5;
@@ -67,10 +101,10 @@ export default function GSEAEnrichmentPlot({
       ctx.stroke();
     }
 
-    // Draw zero line
+    // Zero line
     const zeroY = yScale(0);
-    ctx.strokeStyle = '#6b7280';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = theme.zero;
+    ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.moveTo(margin.left, zeroY);
@@ -78,25 +112,22 @@ export default function GSEAEnrichmentPlot({
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw running enrichment score line
-    ctx.strokeStyle = enrichmentScore > 0 ? '#dc2626' : '#2563eb';
-    ctx.lineWidth = 3;
+    // Running enrichment score: the regulation direction it reports, in the app's own colours.
+    ctx.strokeStyle = enrichmentScore > 0 ? theme.up : theme.down;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     runningEnrichmentScores.forEach((es, i) => {
       const x = xScale(i);
       const y = yScale(es);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
     ctx.stroke();
 
-    // Draw gene position ticks
-    ctx.strokeStyle = '#374151';
+    // Gene set hits
+    ctx.strokeStyle = theme.inkMuted;
     ctx.lineWidth = 1;
-    genePositions.forEach(pos => {
+    genePositions.forEach((pos) => {
       const x = xScale(pos);
       ctx.beginPath();
       ctx.moveTo(x, margin.top + plotHeight);
@@ -104,101 +135,99 @@ export default function GSEAEnrichmentPlot({
       ctx.stroke();
     });
 
-    // Draw axes
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    // Y-axis
+    // Axes
+    ctx.strokeStyle = theme.axis;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margin.left, margin.top);
     ctx.lineTo(margin.left, margin.top + plotHeight);
-    ctx.stroke();
-    // X-axis
-    ctx.beginPath();
-    ctx.moveTo(margin.left, margin.top + plotHeight);
     ctx.lineTo(margin.left + plotWidth, margin.top + plotHeight);
     ctx.stroke();
 
-    // Draw Y-axis labels
-    ctx.fillStyle = '#000';
-    ctx.font = '12px sans-serif';
+    // Y-axis labels
+    ctx.fillStyle = theme.inkMuted;
+    ctx.font = font(compact ? 10 : 11);
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     for (let i = 0; i <= 5; i++) {
       const value = minES + (esRange * i) / 5;
       const y = margin.top + plotHeight - (plotHeight * i) / 5;
-      ctx.fillText(value.toFixed(2), margin.left - 10, y);
+      ctx.fillText(value.toFixed(2), margin.left - 8, y);
     }
 
-    // Draw Y-axis title
+    // Y-axis title
     ctx.save();
-    ctx.translate(20, margin.top + plotHeight / 2);
+    ctx.translate(compact ? 10 : 16, margin.top + plotHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('Enrichment Score (ES)', 0, 0);
+    ctx.fillStyle = theme.ink;
+    ctx.font = font(compact ? 11 : 12, 600);
+    ctx.fillText(compact ? 'ES' : 'Enrichment Score (ES)', 0, 0);
     ctx.restore();
 
-    // Draw X-axis title
+    // X-axis tick labels and title
     ctx.textAlign = 'center';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('Rank in Ordered Dataset', margin.left + plotWidth / 2, height - 30);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = theme.inkMuted;
+    ctx.font = font(compact ? 10 : 11);
+    const tickY = margin.top + plotHeight + 26;
+    ctx.fillText('0', margin.left, tickY);
+    ctx.fillText((rankedGenes.length / 2).toFixed(0), margin.left + plotWidth / 2, tickY);
+    ctx.fillText(rankedGenes.length.toString(), margin.left + plotWidth, tickY);
 
-    // Draw X-axis tick labels
-    ctx.font = '12px sans-serif';
-    ctx.fillText('0', margin.left, height - 50);
-    ctx.fillText(rankedGenes.length.toString(), margin.left + plotWidth, height - 50);
-    ctx.fillText((rankedGenes.length / 2).toFixed(0), margin.left + plotWidth / 2, height - 50);
+    ctx.fillStyle = theme.ink;
+    ctx.font = font(compact ? 11 : 12, 600);
+    ctx.fillText('Rank in ordered dataset', margin.left + plotWidth / 2, tickY + 20);
 
-    // Draw title
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText(geneSetName, width / 2, 20);
+    // Title, cut to the plot width rather than spilling past the canvas edge
+    ctx.font = font(compact ? 12 : 14, 600);
+    let title = geneSetName;
+    while (title.length > 4 && ctx.measureText(title).width > width - 16) {
+      title = `${title.slice(0, -2)}…`;
+    }
+    ctx.fillText(title, width / 2, compact ? 18 : 22);
 
-    // Draw ES value
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`ES = ${enrichmentScore.toFixed(3)}`, width / 2, height - 10);
-
-  }, [geneSetName, enrichmentScore, runningEnrichmentScores, genePositions, rankedGenes, metrics, geneSetSize]);
+    // ES value
+    ctx.fillStyle = theme.inkMuted;
+    ctx.font = font(compact ? 10 : 11);
+    ctx.fillText(`ES = ${enrichmentScore.toFixed(3)}`, width / 2, height - 6);
+  }, [width, height, theme, geneSetName, enrichmentScore, runningEnrichmentScores, genePositions, rankedGenes]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // CSS pixels on both sides — the backing store is `width × dpr`, which the old code compared
+    // against the pointer and so picked the wrong gene on any scaled canvas.
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
+    const margin = marginsFor(width);
+    const plotWidth = width - margin.left - margin.right;
 
-    // Calculate margins (must match drawing logic)
-    const margin = { top: 40, right: 40, bottom: 80, left: 60 };
-    const plotWidth = canvas.width - margin.left - margin.right;
-
-    // Check if mouse is in plot area
     if (x < margin.left || x > margin.left + plotWidth) {
       setHoveredGene(null);
       return;
     }
 
-    // Find closest gene position
-    const relativeX = x - margin.left;
-    const geneIndex = Math.round((relativeX / plotWidth) * rankedGenes.length);
-
+    const geneIndex = Math.round(((x - margin.left) / plotWidth) * rankedGenes.length);
     if (geneIndex >= 0 && geneIndex < rankedGenes.length) {
-      setHoveredGene({
-        gene: rankedGenes[geneIndex],
-        metric: metrics[geneIndex]
-      });
+      setHoveredGene({ gene: rankedGenes[geneIndex], metric: metrics[geneIndex] });
     }
   };
 
   return (
     <div className="relative">
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={500}
-        className="rounded-control bg-surface cursor-crosshair"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHoveredGene(null)}
-      />
+      <div ref={containerRef} className="w-full">
+        <canvas
+          ref={canvasRef}
+          role="img"
+          aria-label={`Running enrichment score for ${geneSetName}: ES ${enrichmentScore.toFixed(3)}, ${geneSetSize} genes in the set across ${rankedGenes.length} ranked genes.`}
+          style={{ width: '100%', height }}
+          className="block cursor-crosshair rounded-control bg-surface"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoveredGene(null)}
+        />
+      </div>
 
       {/* Tooltip */}
       {hoveredGene && (
@@ -208,23 +237,23 @@ export default function GSEAEnrichmentPlot({
         </div>
       )}
 
-      {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-body-sm">
+      {/* Legend — wraps on a phone instead of running off the card */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-body-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-danger"></div>
-          <span>Positive Enrichment</span>
+          <div className="h-1 w-4 bg-up"></div>
+          <span>Positive enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-info"></div>
-          <span>Negative Enrichment</span>
+          <div className="h-1 w-4 bg-down"></div>
+          <span>Negative enrichment</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-raised" style={{ borderTop: '2px dashed' }}></div>
-          <span>Zero Line</span>
+          <div className="w-4 border-t-2 border-dashed border-strong"></div>
+          <span>Zero line</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-3 border-b-2 border-strong"></div>
-          <span>Gene Set Hits ({geneSetSize})</span>
+          <div className="h-3 w-4 border-b-2 border-strong"></div>
+          <span>Gene set hits ({geneSetSize})</span>
         </div>
       </div>
 

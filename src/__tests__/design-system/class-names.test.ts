@@ -53,3 +53,21 @@ describe('interpolation dans une liste de classes', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('bandes laterales', () => {
+  /**
+   * Une bordure gauche ou droite de 2px et plus, posee comme accent sur une
+   * ligne, une carte ou un encart : le tic decoratif le plus repandu des
+   * interfaces de tableau de bord. La derniere (selection de l'arbre GO) a ete
+   * remplacee par une teinte et un filet complet ; cette garde empeche la
+   * suivante. Un filet de 1px reste permis : c'est une separation, pas un accent.
+   */
+  const STRIPE = /\bborder-[lrse]-(?:[2-9]|\[[2-9]px\])\b|border(?:Left|Right|InlineStart|InlineEnd)\s*:\s*['"`]?[2-9]px/;
+
+  it('aucune bordure laterale epaisse en guise d’accent', () => {
+    const offenders = SOURCES.filter((file) => !file.includes('/auth/')).filter((file) =>
+      STRIPE.test(read(file))
+    );
+    expect(offenders).toEqual([]);
+  });
+});

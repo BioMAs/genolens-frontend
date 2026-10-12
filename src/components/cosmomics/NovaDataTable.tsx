@@ -4,7 +4,7 @@ import { formatP } from './novaLayout';
 function Row({ claim, sub }: { claim: string; sub: NovaSubgroup }) {
   const linked = claim !== 'Not linked';
   return (
-    <tr className="border-t border-[#E6EEF2] align-top">
+    <tr className="border-t border-[var(--nova-line-soft)] align-top">
       <td className="py-1.5 pr-3 font-medium">{claim}</td>
       <th scope="row" className="py-1.5 pr-3 text-left font-normal">
         {sub.name}
@@ -29,8 +29,8 @@ function Row({ claim, sub }: { claim: string; sub: NovaSubgroup }) {
 /** Every number behind the picture, reachable without a mouse. */
 export default function NovaDataTable({ data }: { data: CosmOmicsNovaData }) {
   return (
-    <details className="group rounded-card border border-[#E6EEF2] bg-white px-4 py-3 text-[#3A4150]">
-      <summary className="cursor-pointer text-[13px] font-semibold text-[#0B2A3E]">
+    <details className="nova-paper group rounded-card border border-[var(--nova-line-soft)] bg-[var(--nova-paper)] px-4 py-3 text-[var(--nova-ink)]">
+      <summary className="cursor-pointer text-[13px] font-semibold text-[var(--nova-ink-strong)]">
         Data table — sub-groups behind each claim
       </summary>
       <div className="mt-3 overflow-x-auto">
@@ -40,7 +40,7 @@ export default function NovaDataTable({ data }: { data: CosmOmicsNovaData }) {
             (Stouffer).
           </caption>
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wide text-[#7D8B9C]">
+            <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--nova-ink-subtle)]">
               <th scope="col" className="pb-1 pr-3">Claim</th>
               <th scope="col" className="pb-1 pr-3">Sub-group</th>
               <th scope="col" className="pb-1 pr-3">p</th>

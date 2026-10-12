@@ -18,6 +18,16 @@ import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_CURSOR, ChartTooltip } from '@/co
 import { useChartPalette } from '@/utils/chartTheme';
 import ChartCard from '@/components/charts/ChartCard';
 
+/**
+ * Plot height, in pixels — never `"100%"`.
+ *
+ * ChartCard's body sets only a `min-height`, so a percentage height inside it finds no definite
+ * height to resolve against, becomes `auto`, and ResponsiveContainer measures 0 and draws nothing.
+ * All four charts of this page rendered as titles over empty boxes from the ChartCard adoption
+ * until this constant. Equal to the `minHeight` the cards reserve for their body.
+ */
+const CHART_HEIGHT = 440;
+
 interface DatasetVisualizerProps {
   dataset: Dataset;
   data: DatasetQueryResponse;
@@ -82,7 +92,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
         subtitle={`X: ${volcanoX} · Y: −log10(${volcanoY})`}
         minHeight={440}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
             <CartesianGrid {...CHART_GRID} />
             <XAxis type="number" dataKey="x" name="Log2 Fold Change" />
@@ -110,7 +120,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
         title="Enrichment overview"
         minHeight={440}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <BarChart
             layout="vertical"
             data={chartData.slice(0, 20)} // Top 20
@@ -145,7 +155,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
         subtitle="First 5 samples"
         minHeight={440}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <BarChart data={chartData.slice(0, 50)}>
             <CartesianGrid {...CHART_GRID} />
             <XAxis dataKey={categoryColumn || 'gene_id'} />
@@ -168,7 +178,7 @@ export default function DatasetVisualizer({ dataset, data }: DatasetVisualizerPr
       title="Data overview"
       minHeight={440}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
         <BarChart data={chartData.slice(0, 20)}>
           <CartesianGrid {...CHART_GRID} />
           <XAxis dataKey={categoryColumn} />

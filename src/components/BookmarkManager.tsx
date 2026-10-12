@@ -8,30 +8,12 @@ import { Star, Trash2, Edit2, X, Save, Tag, Palette } from 'lucide-react';
 import { useBookmarks, useUpdateBookmark, useDeleteBookmark } from '@/hooks/useBookmarks';
 import { GeneBookmark } from '@/types/bookmark';
 import ExportMenu from './ExportMenu';
+import { LABEL_SWATCHES } from '@/utils/labelSwatches';
 
 interface BookmarkManagerProps {
   projectId: string;
   onClose?: () => void;
 }
-
-const PRESET_COLORS = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#f59e0b', // amber
-  '#eab308', // yellow
-  '#84cc16', // lime
-  '#22c55e', // green
-  '#10b981', // emerald
-  '#14b8a6', // teal
-  '#06b6d4', // cyan
-  '#0ea5e9', // sky
-  '#3b82f6', // blue
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#a855f7', // purple
-  '#d946ef', // fuchsia
-  '#ec4899', // pink
-];
 
 export default function BookmarkManager({ projectId, onClose }: BookmarkManagerProps) {
   const { data: bookmarks, isLoading } = useBookmarks(projectId);
@@ -286,7 +268,7 @@ export default function BookmarkManager({ projectId, onClose }: BookmarkManagerP
                       </div>
                       {showColorPicker && (
                         <div className="mt-2 grid grid-cols-8 gap-1">
-                          {PRESET_COLORS.map((color) => (
+                          {LABEL_SWATCHES.map((color) => (
                             <button
                               key={color}
                               onClick={() => {

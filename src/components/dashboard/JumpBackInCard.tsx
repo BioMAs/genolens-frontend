@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { useProjectSummary, ComparisonSummary } from '@/hooks/useProjectData';
 import { useCosmOmicsNova } from '@/hooks/useCosmOmicsNova';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { claimColor } from '@/components/cosmomics/novaPalette';
+import { claimColor, NOVA_INK } from '@/components/cosmomics/novaPalette';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
 
 /**
@@ -90,7 +90,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                     <div className="h-[7px] flex-1 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
                       <div
                         className="h-full rounded-sm"
-                        style={{ width: `${coherence}%`, background: coherence >= 50 ? '#34B596' : '#9AA8B6' }}
+                        style={{ width: `${coherence}%`, background: coherence >= 50 ? NOVA_INK.green : NOVA_INK.against }}
                       />
                     </div>
                     <span className="w-10 text-right text-micro" style={{ color: 'var(--text-muted)' }}>{coherence}%</span>

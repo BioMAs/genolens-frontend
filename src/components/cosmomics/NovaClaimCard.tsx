@@ -28,7 +28,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
       </h3>
       <div className="mt-2 flex items-center gap-3">
         <div
-          className="h-[5px] w-[120px] overflow-hidden rounded-pill bg-[#E6EEF2]"
+          className="h-[5px] w-[120px] overflow-hidden rounded-pill bg-[var(--nova-line-soft)]"
           role="meter"
           aria-label="Coherence"
           aria-valuemin={0}
@@ -40,7 +40,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
             style={{ width: `${coherence}%`, background: good ? NOVA_INK.green : NOVA_INK.against }}
           />
         </div>
-        <span className="text-[13px] text-[#384C65]">coherence {coherence}%</span>
+        <span className="text-[13px] text-[var(--nova-ink-muted)]">coherence {coherence}%</span>
       </div>
       <p className="mt-2 text-[12.5px]" style={{ color: good ? NOVA_INK.ink : NOVA_INK.againstText }}>
         {claim.n_for} pathway{claim.n_for === 1 ? '' : 's'} for · {claim.n_against} against
@@ -59,7 +59,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
                 {sub.obs === 'up' ? '↑' : '↓'}
               </span>
               <span style={{ color: supports ? NOVA_INK.ink : NOVA_INK.againstText }}>{sub.name}</span>
-              <span className="ml-auto whitespace-nowrap text-[11px] text-[#7D8B9C]">{formatP(sub.nl)}</span>
+              <span className="ml-auto whitespace-nowrap text-[11px] text-[var(--nova-ink-subtle)]">{formatP(sub.nl)}</span>
             </li>
           );
         })}

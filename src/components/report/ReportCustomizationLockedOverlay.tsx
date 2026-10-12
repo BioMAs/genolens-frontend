@@ -14,15 +14,13 @@ export default function ReportCustomizationLockedOverlay({ children }: { childre
 
       {/* Upsell overlay */}
       <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div
-          className="max-w-md rounded-card border bg-surface/95 p-6 text-center shadow-xl backdrop-blur"
-          style={{ borderColor: "var(--border-subtle, #e5e7eb)" }}
-        >
-          <div
-            className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-pill"
-            style={{ background: "linear-gradient(135deg,#4f46e5,#0ea5e9)" }}
-          >
-            <Lock className="h-6 w-6 text-on-accent" />
+        {/* La pastille et le bandeau etaient peints d'un degrade indigo -> ciel,
+            le tic decoratif par excellence ; et le bandeau avait l'allure d'un
+            bouton sans en etre un. L'accent plein reste sur le cadenas, le
+            bandeau devient ce qu'il est : une indication. */}
+        <div className="max-w-md rounded-card border border-subtle bg-surface/95 p-6 text-center shadow-xl backdrop-blur">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-pill bg-accent-soft">
+            <Lock className="h-6 w-6 text-accent-ink" aria-hidden />
           </div>
           <h3 className="text-title" style={{ color: "var(--text-primary)" }}>
             Report customization
@@ -38,12 +36,9 @@ export default function ReportCustomizationLockedOverlay({ children }: { childre
             <span className="rounded-pill bg-info-soft px-2.5 py-1 text-info-ink">Brand colours</span>
             <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-secondary">M&amp;M / conclusion</span>
           </div>
-          <div
-            className="mt-6 rounded-control px-4 py-2.5 text-body-sm font-medium text-on-accent"
-            style={{ background: "linear-gradient(135deg,#4f46e5,#0ea5e9)" }}
-          >
+          <p className="mt-6 rounded-control bg-surface-2 px-4 py-2.5 text-body-sm font-medium text-primary">
             Unlock this module — contact your administrator
-          </div>
+          </p>
           <p className="mt-2 text-micro" style={{ color: "var(--text-secondary)" }}>
             Preview shown with sample data.
           </p>

@@ -64,8 +64,8 @@ beforeEach(() => {
 it('links each enriched comparison to its Understand screen, at the enrichment panel', () => {
   renderStep();
   expect(enrichmentLinks().map((a) => a.getAttribute('href'))).toEqual([
-    '/projects/p-1/comparisons/A_vs_B?view=comprendre#enrichment',
-    '/projects/p-1/comparisons/A_vs_C?view=comprendre#enrichment',
+    '/projects/p-1/comparisons/A_vs_B?view=comprendre&panel=enrichment',
+    '/projects/p-1/comparisons/A_vs_C?view=comprendre&panel=enrichment',
   ]);
 });
 
@@ -82,7 +82,7 @@ it('encodes comparison names', () => {
   mockAnalysis.mockReturnValue({ id: 'an-1', result_dataset_ids: ['enr-x'], params: {} });
   renderStep();
   expect(enrichmentLinks()[0].getAttribute('href')).toBe(
-    '/projects/p-1/comparisons/KO%201%2FWT?view=comprendre#enrichment'
+    '/projects/p-1/comparisons/KO%201%2FWT?view=comprendre&panel=enrichment'
   );
 });
 

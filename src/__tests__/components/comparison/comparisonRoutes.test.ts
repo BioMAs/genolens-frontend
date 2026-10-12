@@ -11,6 +11,7 @@ import {
   isComparisonView,
   LEGACY_TAB_ROUTES,
   resolveLegacyTab,
+  resolveRequestedPanel,
   resolveView,
   resolveViewAlias,
   upgradeLegacyQuery,
@@ -174,9 +175,19 @@ describe('buildViewHref', () => {
     expect(buildViewHref(base, 'comprendre')).toBe(`${base}?view=comprendre`);
   });
 
-  it('anchors at a panel', () => {
-    expect(buildViewHref(base, 'comprendre', 'network')).toBe(`${base}?view=comprendre#network`);
-    expect(buildViewHref(base, 'explorer', 'genes')).toBe(`${base}#genes`);
+  // The module is a tab now, and a tab must re-render the page: a fragment would not (Next's
+  // <Link> changes it without a hashchange or a new useSearchParams value).
+  it('opens a view on one of its modules through ?panel=', () => {
+    expect(buildViewHref(base, 'comprendre', 'network')).toBe(
+      `${base}?view=comprendre&panel=network`
+    );
+    expect(buildViewHref(base, 'explorer', 'genes')).toBe(`${base}?panel=genes`);
+  });
+
+  it('writes the current name of a renamed module', () => {
+    expect(buildViewHref(base, 'appliquer', 'cosmetics')).toBe(
+      `${base}?view=appliquer&panel=cosmomics`
+    );
   });
 
   it('treats a null panel as no anchor', () => {
@@ -217,15 +228,24 @@ describe('upgradeLegacyQuery', () => {
     expect(resolveView(params(upgraded!))).toBe('partager');
   });
 
-  it('replaces tab with view and leaves no residue', () => {
+  it('replaces tab with view and the module it named, and leaves no residue', () => {
     const upgraded = upgradeLegacyQuery(params('tab=enrichment'));
-    expect(upgraded).toBe('view=comprendre');
-    expect(upgraded).not.toContain('tab');
+    expect(upgraded).toBe('view=comprendre&panel=enrichment');
+    expect(upgraded).not.toContain('tab=');
   });
 
-  it('writes nothing at all when the target is the default view', () => {
-    expect(upgradeLegacyQuery(params('tab=deg'))).toBe('');
-    expect(upgradeLegacyQuery(params('tab=overview'))).toBe('');
+  // The default view is still written bare; only the module survives, since it is a tab now.
+  it('keeps only the module when the target is the default view', () => {
+    expect(upgradeLegacyQuery(params('tab=deg'))).toBe('panel=genes');
+    expect(upgradeLegacyQuery(params('tab=overview'))).toBe('panel=summary');
+  });
+
+  it('never carries a legacy module onto a screen a current view overrode', () => {
+    expect(upgradeLegacyQuery(params('tab=deg&view=partager'))).toBe('view=partager');
+  });
+
+  it('does not overwrite a module the URL already names', () => {
+    expect(upgradeLegacyQuery(params('tab=deg&panel=methods'))).toBe('panel=methods');
   });
 
   it('drops an unknown tab rather than honouring it', () => {
@@ -252,5 +272,33 @@ describe('upgradeLegacyQuery', () => {
       const upgraded = upgradeLegacyQuery(params(`tab=${tab}`));
       expect(resolveView(params(upgraded ?? ''))).toBe(resolveLegacyTab(tab)!.view);
     }
+  });
+});
+
+describe('resolveRequestedPanel', () => {
+  it('reads ?panel= first', () => {
+    expect(resolveRequestedPanel(params('view=comprendre&panel=network'), '#ai')).toBe('network');
+  });
+
+  it('falls back to the module a legacy ?tab= opened', () => {
+    expect(resolveRequestedPanel(params('tab=signature'))).toBe('signature');
+  });
+
+  // Bookmarks from the scrolling layout carry the module as an anchor.
+  it('falls back to a fragment, with or without its #', () => {
+    expect(resolveRequestedPanel(params(''), '#methods')).toBe('methods');
+    expect(resolveRequestedPanel(null, 'heatmap')).toBe('heatmap');
+  });
+
+  it('maps a renamed module and the GSEA sub-state onto their tabs', () => {
+    expect(resolveRequestedPanel(null, '#cosmetics')).toBe('cosmomics');
+    expect(resolveRequestedPanel(null, '#gsea')).toBe('enrichment');
+    expect(resolveRequestedPanel(params('panel=cosmetics'))).toBe('cosmomics');
+  });
+
+  it('returns null when nothing names a module', () => {
+    expect(resolveRequestedPanel(params('view=partager'), '')).toBeNull();
+    expect(resolveRequestedPanel(params('panel=nonsense'), '#elsewhere')).toBeNull();
+    expect(resolveRequestedPanel(null)).toBeNull();
   });
 });

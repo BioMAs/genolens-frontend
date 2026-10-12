@@ -118,8 +118,9 @@ function EditorForm({ demo, settings }: { demo: boolean; settings?: ReportSettin
 
       {/* Live preview of the report header */}
       <div>
-        <label className="mb-1 block text-body-sm font-medium text-primary">Preview</label>
-        <div className="overflow-hidden rounded-card border shadow-sm" style={{ borderColor: "#e5e7eb" }}>
+        {/* A caption, not a `<label>`: there is no control here for it to name. */}
+        <p className="mb-1 block text-body-sm font-medium text-primary">Preview</p>
+        <div className="overflow-hidden rounded-card border border-line shadow-sm">
           <div className="flex items-center justify-between p-4" style={{ background: form.primary_color }}>
             {logoPreviewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

@@ -4,9 +4,9 @@
  * This component had no tests, and that is how three broken "open this module" buttons shipped
  * unnoticed: every piece around them was covered — the catalogue, the URL contract, the hub, the
  * disclosure — while the thing that *composes* them was not. So what is exercised here is
- * strictly the composition: which sections a screen renders, what an add-on gate hides, whether
- * the hub and the disclosure agree with the open screen, and whether opening a module moves the
- * page.
+ * strictly the composition: which tabs a screen offers and which one is open, what an add-on
+ * gate hides, whether the hub and the disclosure agree with the open screen, and whether opening
+ * a module moves the page.
  *
  * The panels themselves are stubbed to a marker. They have their own tests, they drag in Plotly,
  * cytoscape and a dozen queries, and none of that is what a wiring test is for.
@@ -61,12 +61,6 @@ jest.mock('@/hooks/useUserProfile', () => ({
 
 jest.mock('@/contexts/ChatModeContext', () => ({
   useChatMode: () => ({ openChatWith: jest.fn() }),
-}));
-
-// Lazily mounted sections resolve immediately: jsdom has no IntersectionObserver, and a test
-// asserting on a placeholder would assert on the harness rather than the screen.
-jest.mock('@/hooks/useMountOnIntersection', () => ({
-  useMountOnIntersection: () => ({ attach: jest.fn(), visible: true, reveal: jest.fn() }),
 }));
 
 // ── panels, stubbed to a marker ─────────────────────────────────────────────────────
@@ -300,24 +294,49 @@ beforeEach(() => {
   window.matchMedia = jest.fn().mockReturnValue({ matches: true }) as unknown as typeof matchMedia;
 });
 
+/** Names of the module tabs, in order — what the screen offers. */
+const tabNames = () =>
+  screen.queryAllByRole('tab').map((tab) => tab.textContent?.trim() ?? '');
+
+/** The tab currently open. */
+const selectedTab = () =>
+  screen.queryAllByRole('tab').find((tab) => tab.getAttribute('aria-selected') === 'true');
+
+const EXPLORE_TABS = [
+  'Overview',
+  'DEG table',
+  'Method statistics',
+  'Heatmap & clustering',
+  'Database lookup',
+  'Free-form charts',
+];
+
+/** Render from a URL that carries a fragment, which `renderDetail` cannot express. */
+function renderAt(url: string) {
+  window.history.replaceState(null, '', url);
+  mockContext.mockReturnValue(FULL_CONTEXT);
+  mockProfile.mockReturnValue({ data: ALL_ADD_ONS });
+  return render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <ComparisonDetail projectId="p1" comparisonName="KO_vs_WT" />
+    </QueryClientProvider>
+  );
+}
+
 describe('which screen renders', () => {
-  it('opens on Explore, with its six sections and nothing from elsewhere', () => {
+  it('opens on Explore, on its first module, with every module of it as a tab', () => {
     renderDetail();
 
-    expect(renderedSections()).toEqual([
-      'summary',
-      'genes',
-      'methods',
-      'heatmap',
-      'external-lookup',
-      'custom-viz',
-    ]);
+    expect(tabNames()).toEqual(EXPLORE_TABS);
+    expect(selectedTab()).toHaveTextContent('Overview');
+    expect(renderedSections()).toEqual(['summary']);
   });
 
   it('renders Apply from ?view=appliquer', () => {
     renderDetail({ search: 'view=appliquer' });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(tabNames()).toEqual(['Drug targets', 'Signature score', 'CosmOmics']);
+    expect(renderedSections()).toEqual(['drug-discovery']);
   });
 
   // Skin claims became CosmOmics. Old bookmarks (`?tab=cosmetics`, `#cosmetics`) must land on
@@ -325,97 +344,171 @@ describe('which screen renders', () => {
   it('lands old Skin claims links on CosmOmics', () => {
     renderDetail({ search: 'tab=cosmetics' });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(renderedSections()).toEqual(['cosmomics']);
     expect(document.getElementById('cosmetics')?.closest('section')?.id).toBe('cosmomics');
     expect(screen.getByTestId('CosmOmicsPanel')).toBeInTheDocument();
   });
 
   it('renders Understand and Share from their own parameter', () => {
     const { unmount } = renderDetail({ search: 'view=comprendre' });
-    expect(renderedSections()).toEqual(['ai', 'enrichment', 'network']);
+    expect(tabNames()).toEqual(['AI reading', 'Enrichment', 'Interaction network']);
+    expect(renderedSections()).toEqual(['ai']);
     unmount();
 
     renderDetail({ search: 'view=partager' });
-    expect(renderedSections()).toEqual(['exports', 'report']);
+    expect(tabNames()).toEqual(['Exports', 'Reporting']);
+    expect(renderedSections()).toEqual(['exports']);
   });
 
   /**
    * The drift this closes, for all four screens at once.
    *
-   * A module's screen is data (`comparisonModules`), while the section it anchors is a hardcoded
-   * `activeView === …` in the JSX. Nothing makes the two agree: reassign a module and its
-   * section stays where it was, so the rail advertises an anchor the screen does not hold, or
-   * misses one it does. The order matters for the same reason — the rail names it, and the
-   * heatmap used to be rendered after the Share sections.
-   *
-   * Under full access every module is ready, so the two lists must match exactly.
+   * A module's screen is data (`comparisonModules`), while the section it renders is a hardcoded
+   * `activePanel === …` in the JSX. Nothing makes the two agree: reassign a module and its tab
+   * would open onto nothing. So every tab of every screen is opened, and must show exactly its
+   * own section, labelled by it.
    */
   it.each([
     ['explorer', ''],
     ['comprendre', 'view=comprendre'],
     ['appliquer', 'view=appliquer'],
     ['partager', 'view=partager'],
-  ])('has %s announce exactly the sections it renders, in order', (_view, search) => {
+  ])('has every tab of %s open exactly its own panel', async (_view, search) => {
     const { unmount } = renderDetail({ search });
 
-    const rail = screen.getByTestId('section-rail');
-    const announced = Array.from(rail.querySelectorAll('a')).map((a) =>
-      a.getAttribute('href')?.slice(1)
-    );
-    expect(announced).toEqual(renderedSections());
+    for (const tab of screen.getAllByRole('tab')) {
+      await userEvent.click(tab);
+      const sections = Array.from(document.querySelectorAll('section[id]'));
+      expect(sections).toHaveLength(1);
+      expect(tab).toHaveAttribute('aria-selected', 'true');
+      expect(tab).toHaveAttribute('aria-controls', sections[0].id);
+      expect(sections[0]).toHaveAttribute('role', 'tabpanel');
+      expect(sections[0]).toHaveAttribute('aria-labelledby', tab.id);
+    }
 
     unmount();
   });
 });
 
+describe('the module tabs', () => {
+  it('opens a module in place and writes it to the URL, without moving the page', async () => {
+    renderDetail();
+    (Element.prototype.scrollIntoView as jest.Mock).mockClear();
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Method statistics' }));
+
+    expect(window.location.search).toBe('?panel=methods');
+    expect(renderedSections()).toEqual(['methods']);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('opens the module ?panel= names', () => {
+    renderDetail({ search: 'view=comprendre&panel=network' });
+
+    expect(selectedTab()).toHaveTextContent('Interaction network');
+    expect(screen.getByTestId('PPINetworkSection')).toBeInTheDocument();
+  });
+
+  // A module this user cannot open must not paint a tab that does not exist.
+  it('falls back to the first module when the one asked for is not open here', () => {
+    renderDetail({
+      search: 'view=appliquer&panel=signature',
+      profile: { has_scientific_module: false },
+    });
+
+    expect(tabNames()).toEqual(['Drug targets', 'CosmOmics']);
+    expect(renderedSections()).toEqual(['drug-discovery']);
+  });
+
+  // Roving focus: one tab stop for the whole list, arrows to move within it, and no module
+  // mounted on the way past — opening the interaction network is not a side effect of an arrow.
+  it('moves focus with the arrow keys and opens only on Enter', async () => {
+    renderDetail({ search: 'view=comprendre' });
+    const [ai, enrichment, network] = screen.getAllByRole('tab');
+    expect(ai).toHaveAttribute('tabindex', '0');
+    expect(enrichment).toHaveAttribute('tabindex', '-1');
+
+    ai.focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    expect(network).toHaveFocus();
+    expect(renderedSections()).toEqual(['ai']);
+
+    await userEvent.keyboard('{Enter}');
+    expect(renderedSections()).toEqual(['network']);
+
+    await userEvent.keyboard('{ArrowRight}');
+    expect(ai).toHaveFocus();
+  });
+});
+
 describe('legacy links', () => {
-  it('lands a legacy ?tab= on the screen that inherited it', () => {
+  it('lands a legacy ?tab= on the screen and the module that inherited it', () => {
     renderDetail({ search: 'tab=signature' });
 
-    expect(renderedSections()).toContain('signature');
+    expect(renderedSections()).toEqual(['signature']);
   });
 
   it('lands the retired ?view=outils on Apply', () => {
     renderDetail({ search: 'view=outils' });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(renderedSections()).toEqual(['drug-discovery']);
   });
 
-  it('rewrites a legacy query out of the address bar', async () => {
+  it('rewrites a legacy query out of the address bar, keeping its module', async () => {
     renderDetail({ search: 'tab=enrichment' });
 
     // Cosmetic cleanup only — the screen already painted Understand from the derivation
-    expect(window.location.search).toBe('?view=comprendre');
+    expect(window.location.search).toBe('?view=comprendre&panel=enrichment');
+  });
+
+  // Bookmarks from the scrolling layout named their module with an anchor.
+  it('opens the module an old #anchor named, and moves it into ?panel=', () => {
+    renderAt('/projects/p1/comparisons/KO_vs_WT?view=comprendre#network');
+
+    expect(renderedSections()).toEqual(['network']);
+    expect(window.location.search).toBe('?view=comprendre&panel=network');
+    expect(window.location.hash).toBe('');
+  });
+
+  // `#gsea` is not a module but the ranked half of one: it opens Enrichment and stays.
+  it('opens Enrichment from #gsea and keeps the fragment its mode lives in', () => {
+    renderAt('/projects/p1/comparisons/KO_vs_WT?view=comprendre#gsea');
+
+    expect(renderedSections()).toEqual(['enrichment']);
+    expect(screen.getByTestId('GSEAAnalysis')).toBeInTheDocument();
+    expect(window.location.search).toBe('?view=comprendre&panel=enrichment');
+    expect(window.location.hash).toBe('#gsea');
   });
 });
 
 describe('add-on gating', () => {
-  it('renders no section for a locked add-on', () => {
-    renderDetail({
-      search: 'view=appliquer',
-      profile: {
-        has_drug_discovery_module: false,
-        has_scientific_module: false,
-        has_cosmetics_module: false,
-      },
-    });
+  const NO_ADD_ON = {
+    has_drug_discovery_module: false,
+    has_scientific_module: false,
+    has_cosmetics_module: false,
+  };
+
+  it('renders no tab and no section for a locked add-on', () => {
+    renderDetail({ search: 'view=appliquer', profile: NO_ADD_ON });
 
     expect(renderedSections()).toEqual([]);
-    expect(screen.queryByTestId('section-rail')).toBeNull();
+    expect(screen.queryByTestId('module-tabs')).toBeNull();
+  });
+
+  // Apply without any add-on used to be a hub over a folded one-line disclosure: a blank screen.
+  it('unfolds the module list on a screen with nothing to open, and says why', () => {
+    renderDetail({ search: 'view=appliquer', profile: NO_ADD_ON });
+
+    expect(document.querySelector('details')).toHaveAttribute('open');
+    expect(
+      screen.getByText(/Nothing on this screen is open for this comparison yet/)
+    ).toBeInTheDocument();
   });
 
   it('keeps admin access without the per-user flags', () => {
-    renderDetail({
-      search: 'view=appliquer',
-      profile: {
-        role: 'ADMIN',
-        has_drug_discovery_module: false,
-        has_scientific_module: false,
-        has_cosmetics_module: false,
-      },
-    });
+    renderDetail({ search: 'view=appliquer', profile: { role: 'ADMIN', ...NO_ADD_ON } });
 
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(tabNames()).toEqual(['Drug targets', 'Signature score', 'CosmOmics']);
   });
 
   // A locked module must stay visible as a capability, which is the disclosure's job — the old
@@ -423,7 +516,8 @@ describe('add-on gating', () => {
   it('still lists a locked add-on, with a way to ask for it', () => {
     renderDetail({ search: 'view=appliquer', profile: { has_drug_discovery_module: false } });
 
-    expect(screen.getByText('Drug targets')).toBeInTheDocument();
+    const disclosure = document.querySelector('details') as HTMLElement;
+    expect(within(disclosure).getByText('Drug targets')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Request access/ })).toBeInTheDocument();
   });
 });
@@ -439,7 +533,7 @@ describe('the hub', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open Apply' }));
 
     expect(window.location.search).toBe('?view=appliquer');
-    expect(renderedSections()).toEqual(['drug-discovery', 'signature', 'cosmomics']);
+    expect(renderedSections()).toEqual(['drug-discovery']);
   });
 
   it('writes the default screen bare', async () => {
@@ -448,6 +542,16 @@ describe('the hub', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open Explore' }));
 
     expect(window.location.search).toBe('');
+  });
+
+  // The open module belongs to the screen it was opened on.
+  it('drops the open module when switching screen', async () => {
+    renderDetail({ search: 'panel=methods' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open Understand' }));
+
+    expect(window.location.search).toBe('?view=comprendre');
+    expect(renderedSections()).toEqual(['ai']);
   });
 });
 
@@ -472,31 +576,30 @@ describe('the module disclosure', () => {
   });
 });
 
-// The defect that shipped three times: replaceState writes a hash and never scrolls, so a card
-// changed the address bar and left the page where it was.
+// The defect that shipped three times: replaceState never scrolls, so a card changed the address
+// bar and left the page where it was. Opening a module from elsewhere brings its tab into view.
 describe('opening a module', () => {
-  it('scrolls to the section of a card on the open screen', async () => {
+  it('opens the module of a card on the open screen, and scrolls to the tabs', async () => {
     renderDetail();
 
     await userEvent.click(screen.getByRole('button', { name: 'Open Method statistics' }));
 
-    expect(window.location.hash).toBe('#methods');
+    expect(window.location.search).toBe('?panel=methods');
+    expect(renderedSections()).toEqual(['methods']);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 
-  // The harder half: at click time the target belongs to a screen that is not rendered, so a
-  // scroll fired on the spot would find nothing. The Explore summary's jump into Understand is
-  // the one place that happens.
-  it('scrolls after crossing to another screen, once the section exists', async () => {
+  // The Explore summary's jump into Understand is the one place a module opens another screen.
+  it('crosses to another screen on the module asked for', async () => {
     renderDetail();
     expect(document.getElementById('enrichment')).toBeNull();
     (Element.prototype.scrollIntoView as jest.Mock).mockClear();
 
     await userEvent.click(screen.getByRole('button', { name: 'open enrichment' }));
 
-    expect(window.location.search).toBe('?view=comprendre');
-    expect(window.location.hash).toBe('#enrichment');
-    expect(document.getElementById('enrichment')).not.toBeNull();
+    expect(window.location.search).toBe('?view=comprendre&panel=enrichment');
+    expect(window.location.hash).toBe('');
+    expect(renderedSections()).toEqual(['enrichment']);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 });

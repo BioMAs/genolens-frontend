@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Dataset } from '@/types';
 import { ChevronUp, ChevronDown, Settings } from 'lucide-react';
 import BookmarkButton from './BookmarkButton';
@@ -152,9 +152,15 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
     setPage(1);
   };
 
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Back to the top of the TABLE, not of the window: above 768px the window does not scroll —
+  // `.app-content` does — so `window.scrollTo` did nothing there, and on a phone it threw the
+  // reader to the top of the page, a volcano and a synthesis away from the rows.
   const goToPage = (next: number) => {
     setPage(Math.min(Math.max(1, next), Math.max(1, totalPages)));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    rootRef.current?.scrollIntoView?.({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
 
   const pageNumbers = (): number[] => {
@@ -187,7 +193,14 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
   };
 
   return (
-    <div className="mt-6" style={{ opacity: isPlaceholderData ? 0.6 : 1 }}>
+    <div
+      ref={rootRef}
+      className="mt-6"
+      style={{
+        opacity: isPlaceholderData ? 0.6 : 1,
+        scrollMarginTop: 'calc(var(--sticky-top) + 1rem)',
+      }}
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <select
