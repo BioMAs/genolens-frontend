@@ -1,7 +1,8 @@
 'use client';
 
 import { Loader2, Database, Info } from 'lucide-react'; // Info kept for hasSignal block below
-import { useCosmeticsData, useUserProfile } from '@/hooks/useCosmetics';
+import { useCosmeticsData } from '@/hooks/useCosmetics';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import SkinSchematic from './SkinSchematic';
 import CosmeticsLockedOverlay from './CosmeticsLockedOverlay';
 import { DEMO_COSMETICS } from './demoData';

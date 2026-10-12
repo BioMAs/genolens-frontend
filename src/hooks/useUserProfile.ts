@@ -1,14 +1,16 @@
 /**
  * Profil de l'utilisateur courant, plan et rôle compris.
  *
- * Lecteur canonique de `/users/me`, sur la clé `['userProfile']`. `useQuotas`
- * le compose plutôt que de refaire la requête.
+ * SEUL lecteur de `/users/me`, sur la clé `['userProfile']` : tout composant
+ * qui a besoin du profil passe par ce hook, et React Query ne fait qu'un appel
+ * quel que soit le nombre de lecteurs sur la page. Le 12/10/2026, la page de
+ * comparaison l'appelait encore cinq fois au montage — un `useEffect` par
+ * panneau IA et un second `useUserProfile` dans `useCosmetics.ts`, sur la clé
+ * `['user','me']`. Ne pas en recréer un : un lecteur sur une autre clé coûte
+ * une requête de plus sans la moindre erreur de type.
  *
- * Six lecteurs l'appellent encore à la main, hors périmètre du lot quotas :
- * `useCosmetics.ts` (qui exporte un SECOND `useUserProfile`, sur la clé
- * `['user','me']`, importé par `useAddOnModules`), `app/profile/MyModules.tsx`,
- * `app/pricing/page.tsx`, `AIChartAssistant.tsx`, `EnrichmentRadarPlot.tsx` et
- * `AIInterpretationPanel.tsx`. Le dashboard et `QuotaDisplay` ont migré ici.
+ * Reste à migrer : `app/pricing/page.tsx`, qui appelle encore `/users/me` à
+ * la main.
  */
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
@@ -27,12 +29,7 @@ export function useUserProfile() {
 /**
  * Fait relire `/users/me` après une action qui change ses compteurs — chaque
  * appel réel au LLM consomme une requête IA sur un compte plafonné.
- *
- * Les DEUX clés sont invalidées : ce hook (`['userProfile']`) et le second
- * `useUserProfile` de `useCosmetics.ts` (`['user','me']`). N'en invalider
- * qu'une laisserait l'autre lecteur afficher l'ancien compteur.
  */
 export function invalidateUserProfile(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-  void queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
 }

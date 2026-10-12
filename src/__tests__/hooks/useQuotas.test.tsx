@@ -129,11 +129,9 @@ describe('useQuotas', () => {
   });
 
   it('reads /users/me exactly once', async () => {
-    // `useCosmetics.ts` exporte un SECOND `useUserProfile`, sur la clé
-    // ['user','me'], que `useAddOnModules` importe. Les deux renvoient
-    // `UseQueryResult<UserProfile>` : importer le mauvais coûterait une
-    // requête de plus sans la moindre erreur de type. Cette assertion est le
-    // seul garde-fou contre cette confusion.
+    // Un lecteur de `/users/me` sur une autre clé que ['userProfile'] (comme
+    // l'ancien `useUserProfile` de `useCosmetics.ts`, sur ['user','me'])
+    // coûterait une requête de plus sans la moindre erreur de type.
     mockEndpoints(PROFILE);
     const { result } = renderHook(() => useQuotas(), { wrapper: createWrapper() });
 

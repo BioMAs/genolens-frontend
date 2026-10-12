@@ -27,7 +27,7 @@ import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
 import CosmeticsTab from './cosmetics/CosmeticsTab';
-import { useUserProfile } from '@/hooks/useCosmetics';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import ComparisonSynthesis from './comparison/ComparisonSynthesis';
 import ComparisonModuleDisclosure from './comparison/ComparisonModuleDisclosure';
 import ComparisonViewHub from './comparison/ComparisonViewHub';

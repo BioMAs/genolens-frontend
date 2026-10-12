@@ -25,7 +25,7 @@ jest.mock('@/hooks/useProjectData', () => ({
 }));
 
 let mockProfile: Record<string, unknown> | undefined;
-jest.mock('@/hooks/useCosmetics', () => ({
+jest.mock('@/hooks/useUserProfile', () => ({
   useUserProfile: () => ({ data: mockProfile }),
 }));
 

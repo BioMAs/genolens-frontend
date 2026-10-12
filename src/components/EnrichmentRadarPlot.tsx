@@ -6,7 +6,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '@/utils/api';
 import { Loader2, Sparkles, ChevronDown, Send, Lock } from 'lucide-react';
-import { UserProfile } from '@/types';
 import {
   AI_QUOTA_COPY,
   aiQuotaMessage,
@@ -15,7 +14,7 @@ import {
   isAiQuotaExhausted,
   PAID_PLANS_LABEL,
 } from '@/utils/plan';
-import { invalidateUserProfile } from '@/hooks/useUserProfile';
+import { invalidateUserProfile, useUserProfile } from '@/hooks/useUserProfile';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 import { CHART_VARS, useChartPalette } from '@/utils/chartTheme';
 import { cn } from '@/lib/cn';
@@ -68,7 +67,8 @@ export default function EnrichmentRadarPlot({
   const [availableTerms, setAvailableTerms] = useState<Array<{ term: string; category: string; pValue: number }>>([]);
   const [customSelected, setCustomSelected] = useState<string[]>([]);
   const [showTermSelector, setShowTermSelector] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // Shared query: the page's other profile readers reuse this one request.
+  const { data: userProfile } = useUserProfile();
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiPrompt, setShowAiPrompt] = useState(false);
@@ -77,19 +77,6 @@ export default function EnrichmentRadarPlot({
   // gate (an upgrade cannot help an account that already has the plan).
   const [aiQuotaHit, setAiQuotaHit] = useState(false);
   const queryClient = useQueryClient();
-
-  // Fetch user profile to check subscription
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.get('/users/me');
-        setUserProfile(response.data);
-      } catch (err) {
-        console.error('Failed to fetch user profile:', err);
-      }
-    };
-    fetchProfile();
-  }, []);
 
   const fetchRadarData = useCallback(async () => {
     try {

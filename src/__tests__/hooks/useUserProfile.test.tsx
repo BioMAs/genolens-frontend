@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { invalidateUserProfile, useUserProfile } from '@/hooks/useUserProfile';
+import { useDrugDiscoveryModule, useScientificModule } from '@/hooks/useAddOnModules';
 
 jest.mock('@/utils/api', () => ({
   __esModule: true,
@@ -26,5 +27,41 @@ describe('useUserProfile', () => {
     const { result } = renderHook(() => useUserProfile(), { wrapper });
     await waitFor(() => expect(result.current.data?.subscription_plan).toBe('TEAM'));
     expect(mockedApi.get).toHaveBeenCalledWith('/users/me');
+  });
+
+  it("partage sa requête avec les modules add-on, qui lisaient l'ancienne clé ['user','me']", async () => {
+    mockedApi.get.mockClear();
+    mockedApi.get.mockResolvedValue({
+      data: { id: 'u1', role: 'USER', subscription_plan: 'TEAM', has_scientific_module: true },
+    });
+    const { result } = renderHook(
+      () => ({
+        profile: useUserProfile(),
+        scientific: useScientificModule(),
+        drugDiscovery: useDrugDiscoveryModule(),
+      }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.scientific.loaded).toBe(true));
+    expect(result.current.scientific.unlocked).toBe(true);
+    expect(result.current.drugDiscovery.unlocked).toBe(false);
+    expect(mockedApi.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('invalidateUserProfile fait relire le profil', async () => {
+    mockedApi.get.mockClear();
+    mockedApi.get
+      .mockResolvedValueOnce({ data: { id: 'u1', ai_requests_used: 3 } })
+      .mockResolvedValueOnce({ data: { id: 'u1', ai_requests_used: 4 } });
+    const { result } = renderHook(
+      () => ({ profile: useUserProfile(), queryClient: useQueryClient() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.profile.data?.ai_requests_used).toBe(3));
+
+    act(() => invalidateUserProfile(result.current.queryClient));
+
+    await waitFor(() => expect(result.current.profile.data?.ai_requests_used).toBe(4));
+    expect(mockedApi.get).toHaveBeenCalledTimes(2);
   });
 });
