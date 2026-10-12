@@ -24,8 +24,6 @@ export default function SampleStatsTable({ dataset }: SampleStatsTableProps) {
       try {
         setLoading(true);
         const resp = await api.get(`/datasets/${dataset.id}/library_size`);
-        console.log('[SampleStatsTable] API Response:', resp.data);
-        console.log('[SampleStatsTable] First sample:', resp.data[0]);
         setData(resp.data);
         setError(null);
       } catch (err) {
