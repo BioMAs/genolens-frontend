@@ -219,7 +219,9 @@ export interface AnalysisParams {
   min_reads: number;
   min_genes: number;
   min_count: number;
-  min_reps: number;
+  /** Samples that must reach `min_count` for a gene to be kept. 'auto' = the smallest compared
+   *  group (edgeR::filterByExpr), so a gene expressed in a single condition survives. */
+  min_reps: number | 'auto';
   threads: number;
   enrichment_databases?: string[] | null;
   /** Adjusted p-value under which an enriched term is kept. Distinct from `fdr` (DEG selection). */

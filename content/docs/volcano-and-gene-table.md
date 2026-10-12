@@ -82,7 +82,7 @@ Selecting several genes opens a summary card instead. It shows the **Strongest f
 
 ## Method statistics
 
-When the analysis combined several methods, **Method statistics** shows the p-values of **Stouffer**, **DESeq2**, **edgeR** and **limma** side by side for each gene. **Download all methods (.csv)** exports them for every gene. Genes on which the methods disagree deserve a second look.
+When the analysis ran several methods, **Method statistics** shows the p-values of **DESeq2**, **edgeR**, **limma** and their **Stouffer** combination side by side for each gene. The highlighted method is the one that decided the DEGs: DESeq2 for an analysis run in GenoLens, the Stouffer combination for most imported multi-method tables. The others are there to check concordance. **Download all methods (.csv)** exports them for every gene. Genes on which the methods disagree deserve a second look.
 
 ## Other tools on this screen
 

@@ -3,6 +3,7 @@
 import React from 'react';
 import { CheckCircle, XCircle, AlertCircle, Users, Dna } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { formatMinReps } from '@/utils/formatters';
 
 export interface QCReport {
   total_input_samples: number;
@@ -16,6 +17,9 @@ export interface QCReport {
   min_genes_threshold: number;
   min_count_threshold: number;
   min_reps_threshold: number;
+  /** 'auto' when min_reps_threshold was resolved from the smallest compared group. Absent on
+   *  runs that predate the auto mode. */
+  min_reps_mode?: 'auto' | 'fixed';
   design_formula: string;
   has_batch_correction: boolean;
 }
@@ -43,7 +47,7 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
         minReads: qcReport.min_reads_threshold.toLocaleString(),
         minGenes: qcReport.min_genes_threshold.toLocaleString(),
         minCount: qcReport.min_count_threshold.toString(),
-        minReps: qcReport.min_reps_threshold.toString(),
+        minReps: formatMinReps(qcReport.min_reps_threshold, qcReport.min_reps_mode),
         design: qcReport.design_formula,
         batch: qcReport.has_batch_correction as boolean | undefined,
       }
@@ -52,7 +56,7 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
           minReads: Number(params.min_reads ?? 10).toLocaleString(),
           minGenes: Number(params.min_genes ?? 200).toLocaleString(),
           minCount: String(params.min_count ?? 5),
-          minReps: String(params.min_reps ?? 2),
+          minReps: formatMinReps(params.min_reps),
           design: String(params.design ?? 'auto'),
           batch: undefined as boolean | undefined,
         }
@@ -107,7 +111,7 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
             <ThresholdRow label="Min reads / sample" value={thresholds.minReads} />
             <ThresholdRow label="Min genes detected / sample" value={thresholds.minGenes} />
             <ThresholdRow label="Min count / gene" value={thresholds.minCount} />
-            <ThresholdRow label="Min replicates with min count" value={thresholds.minReps} />
+            <ThresholdRow label="Samples reaching min count" value={thresholds.minReps} />
             <ThresholdRow label="DESeq2 design formula" value={thresholds.design} mono />
             {thresholds.batch !== undefined && (
               <ThresholdRow label="Batch correction" value={thresholds.batch ? 'Enabled' : 'Disabled'} highlight={thresholds.batch ? 'green' : 'gray'} />
