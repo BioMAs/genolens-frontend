@@ -37,6 +37,30 @@ export interface StringNetworkParams {
   enabled?: boolean;
 }
 
+/**
+ * A STRING failure the backend reported inside a 200.
+ *
+ * The endpoint never fails as HTTP for an upstream problem: it answers `{nodes: [], edges: [],
+ * error}`. Read as data, that empty network painted "no interaction at this confidence" over a
+ * genuine failure — most often STRING's 404 for identifiers it does not know. Thrown instead, so
+ * the panel can say what actually happened.
+ */
+export class StringNetworkError extends Error {
+  constructor(
+    /** `not-found`: STRING recognised none of the genes. `unreachable`: anything else. */
+    readonly kind: 'not-found' | 'unreachable',
+    message: string
+  ) {
+    super(message);
+    this.name = 'StringNetworkError';
+  }
+}
+
+function toStringError(error: string): StringNetworkError {
+  const notFound = error === 'not_found' || /\b404\b/.test(error);
+  return new StringNetworkError(notFound ? 'not-found' : 'unreachable', error);
+}
+
 export interface StringNetworkResult extends PPINetwork {
   /** Symbols actually sent, after the server's hundred-gene cap. */
   requested: string[];
@@ -61,15 +85,21 @@ export function useStringNetwork({
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
-    retry: 1,
+    // Asking again for genes STRING does not know returns the same 404.
+    retry: (failures, error) =>
+      !(error instanceof StringNetworkError && error.kind === 'not-found') && failures < 1,
     queryFn: async () => {
-      const response = await api.post<PPINetwork>('/integrations/string/network', {
-        gene_symbols: requested,
-        species,
-        required_score: requiredScore,
-        limit,
-      });
+      const response = await api.post<PPINetwork & { error?: string }>(
+        '/integrations/string/network',
+        {
+          gene_symbols: requested,
+          species,
+          required_score: requiredScore,
+          limit,
+        }
+      );
       const data = response.data ?? { nodes: [], edges: [] };
+      if (data.error) throw toStringError(data.error);
       return {
         nodes: data.nodes ?? [],
         edges: data.edges ?? [],
