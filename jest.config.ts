@@ -24,6 +24,7 @@ const config: Config = {
     '<rootDir>/e2e/',
     // Playwright specs, like e2e/ above — Jest cannot load @playwright/test.
     '<rootDir>/e2e-capture/',
+    '<rootDir>/e2e-local/',
   ],
   modulePathIgnorePatterns: [
     '<rootDir>/.next/',

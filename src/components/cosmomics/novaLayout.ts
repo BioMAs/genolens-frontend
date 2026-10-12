@@ -27,6 +27,15 @@ export const NOVA = {
 
 const DEG = Math.PI / 180;
 
+/**
+ * The "not linked" sector is a fixed 36° slice. On real data it can receive hundreds of
+ * significant pathways, some grouping dozens of terms: draw the strongest few, keep their
+ * bubbles below the largest claim bubble of the reference, and their dots readable.
+ */
+const UNLINKED_DRAWN = 12;
+const UNLINKED_TERMS_DRAWN = 8;
+const UNLINKED_MAX_BUBBLE = 9;
+
 // ── Seeded randomness ───────────────────────────────────────────────────────
 
 /** mulberry32: small, fast, good enough for jitter. Returns floats in [0, 1). */
@@ -315,7 +324,8 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   for (const band of bands) {
     let items: Array<[NovaSubgroup, number]>;
     if (band.kind === 'other') {
-      items = place(unlinked, band.start, band.end);
+      const strongest = [...unlinked].sort((a, b) => b.nl - a.nl).slice(0, UNLINKED_DRAWN);
+      items = place(strongest, band.start, band.end);
     } else {
       const subs = band.claim!.subgroups;
       const against = subs.filter((s) => s.delta <= 0);
@@ -329,7 +339,10 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
       const [x, y] = polar(radius, angle);
       const isClaim = band.kind === 'claim';
       const key = `${band.key}|${sub.name}`;
-      const terms: NovaTermDot[] = sub.terms.map((term, i) => {
+      const drawnTerms = isClaim
+        ? sub.terms
+        : [...sub.terms].sort((a, b) => b.nl - a.nl).slice(0, UNLINKED_TERMS_DRAWN);
+      const terms: NovaTermDot[] = drawnTerms.map((term, i) => {
         const [px, py] = polar(rad(term.nl) + rng.normal(0, 1.5), angle + rng.normal(0, 0.9));
         const fill = term.effect === 0 ? NOVA_INK.against : term.effect > 0 ? NOVA_INK.green : NOVA_INK.coral;
         return {
@@ -353,7 +366,7 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
         y,
         r: isClaim
           ? bubbleSize(sub.delta)
-          : bubbleSize(sub.terms.reduce((sum, t) => sum + t.nl, 0)) * 0.7,
+          : Math.min(bubbleSize(sub.terms.reduce((sum, t) => sum + t.nl, 0)) * 0.7, UNLINKED_MAX_BUBBLE),
         fill: isClaim ? balanceColor(sub.balance) : NOVA_INK.against,
         terms,
       });
