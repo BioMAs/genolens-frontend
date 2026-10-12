@@ -1,6 +1,6 @@
 'use client';
 
-import { useUserProfile } from '@/hooks/useCosmetics';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import type { UserProfile } from '@/types';
 
 interface AddOnAccess {

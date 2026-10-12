@@ -3,9 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Send, Loader2, X } from 'lucide-react';
-import api from '@/utils/api';
 import { useChartAI, ChartType } from '@/hooks/useChartAI';
-import { UserProfile } from '@/types';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import { canUseAI, PLAN_GATE_COPY, UPGRADE_HREF } from '@/utils/plan';
 import { cn } from '@/lib/cn';
@@ -41,8 +40,9 @@ export default function AIChartAssistant({
 }: AIChartAssistantProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [profileLoaded, setProfileLoaded] = useState(false);
+  // Shared query: every chart's assistant (volcano, PCA, UMAP, clustering...)
+  // and the page's other profile readers reuse this one request.
+  const { data: userProfile, isPending: profilePending } = useUserProfile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { interpretation, messages, isInterpreting, isAsking, interpret, ask } = useChartAI({
@@ -52,21 +52,6 @@ export default function AIChartAssistant({
     context,
     enabled: open,
   });
-
-  // Fetch user profile to check subscription plan (same pattern as AIInterpretationPanel)
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.get('/users/me');
-        setUserProfile(response.data);
-      } catch (err) {
-        console.error('Failed to fetch user profile:', err);
-      } finally {
-        setProfileLoaded(true);
-      }
-    };
-    fetchProfile();
-  }, []);
 
   // No auto-interpretation: generation must be triggered explicitly by the user
   // (button below) so opening the panel never launches an AI call on its own.
@@ -90,8 +75,8 @@ export default function AIChartAssistant({
     }
   };
 
-  // Don't render until profile is loaded
-  if (!profileLoaded) {
+  // Don't render until the profile request has settled (success or failure)
+  if (profilePending) {
     return null;
   }
 

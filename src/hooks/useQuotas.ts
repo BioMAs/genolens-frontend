@@ -24,9 +24,7 @@
  *
  * Ce hook compose `useUserProfile` plutôt que de refaire sa requête : même
  * clé, même `staleTime`, donc React Query dédoublonne et deux lecteurs ne font
- * qu'un appel. Attention : `useCosmetics.ts` exporte un SECOND
- * `useUserProfile` sur la clé `['user','me']` ; importer celui-là ajouterait
- * une requête sans provoquer la moindre erreur de type.
+ * qu'un appel.
  */
 import { useUserProfile } from '@/hooks/useUserProfile';
 import type { UserProfile } from '@/types';

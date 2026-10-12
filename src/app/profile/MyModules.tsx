@@ -1,22 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
-import api from '@/utils/api';
-import { UserProfile } from '@/types';
 import ModuleSelector from '@/components/modules/ModuleSelector';
 import { useModuleAccessRequest } from '@/hooks/useModuleAccessRequest';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 /** Read-only view of the current user's active add-on modules, with a
  *  "request access" action for locked ones (emails the team, then confirms). */
 export default function MyModules() {
   const { request: requestAccess, pending, notice } = useModuleAccessRequest();
 
-  const { data } = useQuery({
-    queryKey: ['user', 'me'],
-    queryFn: async () => (await api.get<UserProfile>('/users/me')).data,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data } = useUserProfile();
 
   return (
     <div className="space-y-3">
