@@ -9,20 +9,22 @@
  * `['user','me']`. Ne pas en recréer un : un lecteur sur une autre clé coûte
  * une requête de plus sans la moindre erreur de type.
  *
- * Reste à migrer : `app/pricing/page.tsx`, qui appelle encore `/users/me` à
- * la main.
+ * `enabled: false` pour une page publique qui ne doit interroger `/users/me`
+ * qu'une fois la session confirmée (la page pricing : un visiteur anonyme
+ * recevrait un 401).
  */
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
 import api from '@/utils/api';
 import { UserProfile } from '@/types';
 
-export function useUserProfile() {
+export function useUserProfile(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => (await api.get<UserProfile>('/users/me')).data,
     staleTime: 5 * 60_000,
     retry: 1,
+    enabled: options.enabled ?? true,
   });
 }
 

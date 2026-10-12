@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import api from '@/utils/api';
-import { UserProfile } from '@/types';
 import { usePricing } from '@/hooks/usePricing';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { annualDiscountPct, plansOrdered, type Plan } from '@/types/pricing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,33 +38,35 @@ const money = (amount: number, currency: string) =>
 // ---------------------------------------------------------------------------
 
 export default function PricingPage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [billing, setBilling] = useState<BillingCycle>('monthly');
   const [submitting, setSubmitting] = useState<string | null>(null);
   const { data: grid, isLoading: gridLoading, isError: gridError } = usePricing();
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
-  // Fetch authenticated user profile (for the current-plan badge + email)
+  // The page is public: only a signed-in visitor has a profile to read, and
+  // /users/me answers 401 to an anonymous one. `null` while the check runs.
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
   useEffect(() => {
-    const init = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setAuthLoading(false);
-          return;
-        }
-        const res = await api.get<UserProfile>('/users/me');
-        setProfile(res.data);
-      } catch {
-        setProfile(null);
-      } finally {
-        setAuthLoading(false);
-      }
+    let cancelled = false;
+    createClient()
+      .auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!cancelled) setHasSession(!!session);
+      })
+      .catch(() => {
+        if (!cancelled) setHasSession(false);
+      });
+    return () => {
+      cancelled = true;
     };
-    init();
   }, []);
+
+  // Current-plan badge: the shared profile query, so arriving from the app
+  // reuses the cached profile instead of fetching /users/me again.
+  const { data: profile, isLoading: profileLoading } = useUserProfile({
+    enabled: hasSession === true,
+  });
+  const authLoading = hasSession === null || profileLoading;
 
   const isLoggedIn = !!profile;
   const currentPlan = (profile?.subscription_plan as string | undefined)?.toUpperCase();
