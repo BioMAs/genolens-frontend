@@ -13,7 +13,6 @@ import {
     Check,
 } from 'lucide-react';
 import api from '@/utils/api';
-import { UserProfile } from '@/types';
 import AIMarkdown from '@/components/ui/AIMarkdown';
 import {
     AI_QUOTA_COPY,
@@ -24,7 +23,7 @@ import {
     PLAN_GATE_COPY,
     UPGRADE_HREF,
 } from '@/utils/plan';
-import { invalidateUserProfile } from '@/hooks/useUserProfile';
+import { invalidateUserProfile, useUserProfile } from '@/hooks/useUserProfile';
 import { cn } from '@/lib/cn';
 import { SUPPORT_EMAIL } from '@/lib/contact';
 
@@ -80,7 +79,8 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
     const [errorType, setErrorType] = useState<'plan' | 'quota' | 'generic' | null>(null);
     const queryClient = useQueryClient();
     const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    // Shared query: the page's other profile readers reuse this one request.
+    const { data: userProfile } = useUserProfile();
 
     // Chat Q&A states
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -99,19 +99,6 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             }
         };
         checkStatus();
-    }, []);
-
-    // Fetch user profile to check subscription plan
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await api.get('/users/me');
-                setUserProfile(response.data);
-            } catch (err) {
-                console.error('Failed to fetch user profile:', err);
-            }
-        };
-        fetchProfile();
     }, []);
 
     // Load conversation history on mount

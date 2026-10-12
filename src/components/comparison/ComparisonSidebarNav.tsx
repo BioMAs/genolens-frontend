@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { useProjectDatasets } from '@/hooks/useProjectData';
-import { useUserProfile } from '@/hooks/useCosmetics';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { DatasetType, DatasetStatus } from '@/types';
 import { buildComparisonModules, groupModulesByView } from './comparisonModules';
 import { buildViewHref, resolveView, type ComparisonView } from './comparisonRoutes';

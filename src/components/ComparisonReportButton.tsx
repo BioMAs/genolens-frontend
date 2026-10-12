@@ -10,7 +10,7 @@ import {
   useTriggerComparisonReport,
 } from "@/hooks/useReportGeneration";
 import { useReportSettings } from "@/hooks/useReportSettings";
-import { useUserProfile } from "@/hooks/useCosmetics";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import type { CoverInfo, FirstPageType, LastPageType } from "@/types/report";
 import PageModelSelector from "./report/PageModelSelector";
 import CoverInfoFields from "./report/CoverInfoFields";

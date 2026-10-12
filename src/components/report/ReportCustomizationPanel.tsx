@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useUserProfile } from "@/hooks/useCosmetics";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import ReportBrandingEditor from "./ReportBrandingEditor";
 import ReportCustomizationLockedOverlay from "./ReportCustomizationLockedOverlay";
 

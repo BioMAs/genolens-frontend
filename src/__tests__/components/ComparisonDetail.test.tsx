@@ -55,7 +55,7 @@ jest.mock('@/components/comparison/useComparisonContext', () => ({
 }));
 
 const mockProfile = jest.fn();
-jest.mock('@/hooks/useCosmetics', () => ({
+jest.mock('@/hooks/useUserProfile', () => ({
   useUserProfile: () => mockProfile(),
 }));
 

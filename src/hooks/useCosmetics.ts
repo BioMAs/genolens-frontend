@@ -3,7 +3,6 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { UserProfile } from '@/types';
 import { invalidateUserProfile } from '@/hooks/useUserProfile';
 
 export interface CosmeticEvidencePathway {
@@ -74,19 +73,6 @@ export interface CosmeticsInterpretation {
   model: string;
   claims_count: number;
   generated_at: string | null;
-}
-
-/** Current user profile (includes has_cosmetics_module). */
-export function useUserProfile() {
-  return useQuery({
-    queryKey: ['user', 'me'],
-    queryFn: async () => {
-      const res = await api.get<UserProfile>('/users/me');
-      return res.data;
-    },
-    staleTime: 1000 * 60 * 5,
-    retry: 1,
-  });
 }
 
 /** Claim scores for a comparison. Only fetched when `enabled` (module unlocked). */
