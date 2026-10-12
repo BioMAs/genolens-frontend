@@ -11,6 +11,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e-local',
+  // `.pw.ts`, not `.spec.ts`: CI runs Jest with its own --testPathIgnorePatterns, which
+  // replaces the config's list, and Jest picks up every *.spec.ts it can reach.
+  testMatch: '**/*.pw.ts',
   fullyParallel: false,
   workers: 1,
   retries: 0,
