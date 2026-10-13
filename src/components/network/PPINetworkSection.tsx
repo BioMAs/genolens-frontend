@@ -63,6 +63,7 @@ const ORGANISM_LABEL: Record<number, string> = {
   10116: 'rat',
   7955: 'zebrafish',
   9823: 'pig',
+  8090: 'medaka',
 };
 
 interface Props {
@@ -148,19 +149,28 @@ export default function PPINetworkSection({
     typeof dataset.dataset_metadata?.species === 'string'
       ? dataset.dataset_metadata.species
       : projectSpecies;
-  const species = useMemo(
+  // Only the fallback: the server asks STRING about the species the analysis was launched with
+  // whenever the dataset records one, and this guess only for a dataset that records none.
+  const guessedSpecies = useMemo(
     () => stringTaxon(declaredSpecies, rawSeeds),
     [declaredSpecies, rawSeeds]
   );
-  const organism = ORGANISM_LABEL[species] ?? `taxon ${species}`;
 
   const { data, isLoading, isError, error } = useStringNetwork({
     symbols: seeds,
-    species,
+    species: guessedSpecies,
+    datasetId: dataset.id,
     limit: partnersPerSeed,
     enabled: seeds.length > 0,
   });
-  const notFound = error instanceof StringNetworkError && error.kind === 'not-found';
+  const stringError = error instanceof StringNetworkError ? error : null;
+  const notFound = stringError?.kind === 'not-found';
+  // The organism STRING was actually asked about — unknown until it answers, since the analysis
+  // may overrule the guess. Naming the guess meanwhile would flash "mouse" over a rat project.
+  const askedSpecies = data?.species ?? stringError?.species;
+  const speciesSource = data?.species_source ?? stringError?.speciesSource;
+  const organism =
+    askedSpecies !== undefined ? (ORGANISM_LABEL[askedSpecies] ?? `taxon ${askedSpecies}`) : null;
 
   const trimmed = useMemo(() => {
     if (!data) return null;
@@ -255,7 +265,10 @@ export default function PPINetworkSection({
               genes in the volcano, or a pathway, to change this
             </>
           )}
-          <span style={{ color: 'var(--text-muted)' }}> · STRING, {organism}</span>
+          <span style={{ color: 'var(--text-muted)' }}>
+            {' '}
+            · STRING{organism ? `, ${organism}` : ''}
+          </span>
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -343,8 +356,10 @@ export default function PPINetworkSection({
         ) : notFound ? (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             STRING recognised none of these {seeds.length.toLocaleString('en-US')} genes as{' '}
-            {organism} proteins — the organism is inferred from the analysis and the gene
-            identifiers.
+            {organism ?? 'this organism’s'} proteins —{' '}
+            {speciesSource === 'dataset'
+              ? 'the species this analysis was launched with.'
+              : 'the organism is inferred from the gene identifiers.'}
           </p>
         ) : isError ? (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
