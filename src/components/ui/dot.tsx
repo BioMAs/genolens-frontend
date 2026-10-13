@@ -9,13 +9,21 @@ interface DotProps {
   className?: string;
 }
 
+/**
+ * Status inks from the theme, so a dot follows light and dark like the text beside it.
+ *
+ * They were Tailwind hexes, light-theme values on both themes — and `failed` was violet, a hue
+ * the app gives no meaning to, where every other failure on the page is the danger red.
+ */
 const variantColors: Record<DotVariant, string> = {
-  ready:      '#14b8a6',
-  failed:     '#a855f7',
-  pending:    '#9ca3af',
-  warning:    '#f59e0b',
-  processing: '#3b82f6',
-  default:    '#9ca3af',
+  // The `-ink` tokens, not `--color-success`: that one is `--sl-teal-dark` in both themes, a dark
+  // teal that all but disappeared on the dark surface.
+  ready:      'var(--color-success-ink)',
+  failed:     'var(--color-danger-ink)',
+  pending:    'var(--text-muted)',
+  warning:    'var(--color-warning)',
+  processing: 'var(--color-info)',
+  default:    'var(--text-muted)',
 };
 
 export function Dot({ variant = 'pending', size = 8, className = '' }: DotProps) {

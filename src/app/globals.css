@@ -76,6 +76,13 @@
   /* App shell dimensions */
   --sidebar-width:   248px;
   --topbar-height:   56px;
+  /* Ou colle un element `sticky`, mesure DANS son conteneur de defilement.
+     Au-dela de 768px c'est `.app-content` qui defile, et il commence deja sous
+     la barre du haut : y rajouter --topbar-height decollait les elements
+     colles de 56px, et le contenu defilait dans l'interstice — le « header
+     des modules qui descend ». Sous 768px c'est le document qui defile, avec
+     la barre collee en haut : la, il faut bien la compter. */
+  --sticky-top:      0px;
 
   /* Rayons — quatre valeurs, DERIVEES et non choisies.
      L'ensemble est concentrique : exterieur − retrait = interieur. Un controle
@@ -878,6 +885,7 @@ body {
     --page-gutter: 1rem;
     --page-top: 1.25rem;
     --page-bottom: 5rem;
+    --sticky-top: var(--topbar-height);
   }
 }
 
@@ -959,6 +967,28 @@ body {
 
 .dark .gl-teal-text {
   color: #34d39e;
+}
+
+/* ── CosmOmics Nova : une figure sur papier ─────────────────────────────────
+   La Pathway Nova est une figure de publication : elle s'exporte en SVG/PNG
+   avec des couleurs CONCRETES (novaPalette.ts, NOVA_INK), calees sur fond
+   blanc — ses encres de texte par claim (#364B44, #30415F…) sombreraient sur
+   la surface sombre. Elle reste donc sur papier blanc dans les deux themes,
+   comme le ferait une figure imprimee, et cette portee nomme ce papier au lieu
+   de laisser des hex disperses dans six composants.
+   Les valeurs doublent NOVA_INK : en changer une, c'est changer l'autre.
+   `--nova-ink-subtle` est assombri par rapport a NOVA_INK.againstText
+   (#7D8B9C, 3,47:1 sur blanc) : #66768A tient 4,64:1, le seuil AA du texte
+   courant, pour les legendes et les p-values en 11-12px. */
+.nova-paper {
+  --nova-paper:       #ffffff;
+  --nova-line:        #e2e8ee;
+  --nova-line-soft:   #e6eef2;
+  --nova-ink-strong:  #0b2a3e;
+  --nova-ink:         #3a4150;
+  --nova-ink-muted:   #384c65;
+  --nova-ink-subtle:  #66768a;
+  color-scheme: light;
 }
 
 .nav-icon {

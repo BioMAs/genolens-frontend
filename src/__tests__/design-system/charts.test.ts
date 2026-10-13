@@ -214,3 +214,26 @@ describe('palette Tailwind brute', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('hauteur des graphiques Recharts', () => {
+  /**
+   * `<ResponsiveContainer height="100%">` ne trace rien sous un parent qui n'a
+   * qu'un `min-height` : le pourcentage ne trouve aucune hauteur definie, se
+   * resout en `auto`, le conteneur mesure 0 et Recharts ne rend rien. Le corps
+   * de ChartCard est exactement ce parent depuis son adoption — le graphique
+   * des reads (Library Size) et les quatre graphiques de la page dataset
+   * affichaient leur titre au-dessus d'un vide.
+   *
+   * jsdom ne calcule aucune mise en page : aucun test de rendu ne pouvait le
+   * voir. D'ou cette garde statique. Une hauteur en pixels, toujours.
+   */
+  const PERCENT_HEIGHT = /<ResponsiveContainer\b[^>]*\bheight=["']100%["']/;
+
+  it('aucun ResponsiveContainer en height="100%" dans un fichier qui utilise ChartCard', () => {
+    const offenders = SOURCES.filter((f) => f.endsWith('.tsx'))
+      .map((file) => ({ file, source: read(file) }))
+      .filter(({ source }) => /<ChartCard\b/.test(source) && PERCENT_HEIGHT.test(source))
+      .map(({ file }) => file);
+    expect(offenders).toEqual([]);
+  });
+});

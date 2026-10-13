@@ -23,7 +23,6 @@ import ExportMenu from './ExportMenu';
 import ReportCustomizationPanel from './report/ReportCustomizationPanel';
 import PPINetworkSection from './network/PPINetworkSection';
 import StringEnrichmentPanel from './integrations/StringEnrichmentPanel';
-import ClusteringAnalysis from './analysis/ClusteringAnalysis';
 import GOEnrichmentAnalysis from './GOEnrichmentAnalysis';
 import GSEAAnalysis from './GSEAAnalysis';
 import CosmOmicsPanel from './cosmomics/CosmOmicsPanel';
@@ -37,14 +36,17 @@ import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
 import { SegmentedControl } from '@/components/ui/tabs';
 import { buttonClasses } from '@/components/ui/button';
-import SectionRail, { type RailEntry } from './comparison/SectionRail';
+import ModuleTabs, { MODULE_TABS_ID, moduleTabId } from './comparison/ModuleTabs';
 import PathwayFocusBar from './comparison/comprendre/PathwayFocusBar';
 import { useEnrichmentMode, GSEA_HASH } from './comparison/useEnrichmentMode';
-import { useMountOnIntersection } from '@/hooks/useMountOnIntersection';
 import { useDeferredAnchorScroll } from '@/hooks/useDeferredAnchorScroll';
+import { useLocationHash } from '@/hooks/useLocationHash';
 import { useSignificanceSummary } from '@/hooks/useSignificanceSummary';
 import { DEG_EXPORT_COLUMNS, fetchAllDegGenes, toDegExportRow } from '@/hooks/useDegGenes';
 import {
+  PANEL_PARAM,
+  VIEW_LABELS,
+  resolveRequestedPanel,
   resolveView,
   upgradeLegacyQuery,
   type ComparisonPanel,
@@ -65,28 +67,19 @@ interface ComparisonDetailProps {
 }
 
 /**
- * Stands in for a section that has not been mounted yet.
+ * What every module's `<section>` carries: it is the panel of its tab.
  *
- * Not a spinner: nothing is loading. It reserves the height so the rail's anchors do not jump
- * as sections arrive, names what will appear, and offers to build it now for anyone who would
- * rather not scroll.
+ * Spread after a literal `id="…"` on purpose — `ComparisonSidebarNav.test` reads this file and
+ * matches `<section id="…"` to prove that every catalogue module has a panel here.
  */
-function SectionPlaceholder({ label, onReveal }: { label: string; onReveal: () => void }) {
-  return (
-    <div
-      className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line text-center text-muted"
-    >
-      <p className="text-body-sm">{label}</p>
-      <button
-        type="button"
-        onClick={onReveal}
-        className="cursor-pointer text-caption text-accent-ink underline"
-      >
-        Load this section
-      </button>
-    </div>
-  );
-}
+const tabPanel = (panel: ComparisonPanel) => ({
+  role: 'tabpanel' as const,
+  'aria-labelledby': moduleTabId(panel),
+  tabIndex: 0,
+});
+
+/** The fragment of a URL, kept only when it is the GSEA sub-state of the enrichment module. */
+const modeHash = (hash: string) => (hash === `#${GSEA_HASH}` ? hash : '');
 
 /**
  * Thresholds and, later, the gene selection are shared by every pane of this screen, so the
@@ -112,40 +105,74 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   // frame, where an effect-based redirect would flash Explore first.
   const activeView: ComparisonView = resolveView(searchParams);
 
+  // The module the URL asks for — `?panel=`, else an old `?tab=` or `#anchor`. Whether it is a
+  // tab of this screen is settled below, once the catalogue is known.
+  const hash = useLocationHash();
+  const requestedPanel = resolveRequestedPanel(searchParams, hash);
+
   /** Switches screen through the URL, without a server round-trip. */
   const { selectGenes, focusTerm } = useComparisonActions();
   const focusedTerm = useFocusedTerm();
 
-  // Without this, `selectView` wrote the hash and the page stayed where it was: `replaceState`
-  // does not honour anchors. Retried against `activeView` so a cross-screen jump waits for its
-  // section to mount. See the hook for the whole story.
+  // "Open this module" from a card or a link inside another module brings the tabs into view —
+  // the request comes from wherever the reader was, often far below. Retried against
+  // `activeView` because crossing screens re-renders the tab list one pass later.
   const requestScroll = useDeferredAnchorScroll(activeView);
 
-  const selectView = useCallback((view: ComparisonView, panel?: ComparisonPanel) => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete('tab');
-    if (view === 'explorer') url.searchParams.delete('view');
-    else url.searchParams.set('view', view);
-    url.hash = panel ? `#${panel}` : '';
-    // Native history update: useSearchParams reflects it (Next.js ≥ 14.1), so this re-renders
-    // the page without refetching it. replaceState, not push: switching screens shouldn't
-    // pile up history entries.
-    window.history.replaceState(null, '', url.toString());
-    if (panel) requestScroll(panel);
-  }, [requestScroll]);
+  /**
+   * Opens a screen, on one of its modules or on its first one.
+   *
+   * Native history update: useSearchParams reflects it (Next.js ≥ 14.1), so this re-renders the
+   * page without refetching it. replaceState, not push: switching screens or tabs shouldn't pile
+   * up history entries. Any fragment goes, except `#gsea`, the enrichment module's sub-state.
+   */
+  const navigate = useCallback(
+    (view: ComparisonView, panel: ComparisonPanel | null, { scroll }: { scroll: boolean }) => {
+      if (typeof window === 'undefined') return;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      if (view === 'explorer') url.searchParams.delete('view');
+      else url.searchParams.set('view', view);
+      if (panel) url.searchParams.set(PANEL_PARAM, panel);
+      else url.searchParams.delete(PANEL_PARAM);
+      url.hash = panel ? modeHash(url.hash) : '';
+      window.history.replaceState(null, '', url.toString());
+      if (scroll) requestScroll(MODULE_TABS_ID);
+    },
+    [requestScroll]
+  );
 
-  // Cosmetic only: the right screen is already rendering, thanks to the derivation above. This
-  // just rewrites an old link to the current contract so the address bar stops advertising a
-  // parameter that no longer exists.
+  /** From the hub, or from a module pointing at another one. */
+  const selectView = useCallback(
+    (view: ComparisonView, panel?: ComparisonPanel) =>
+      navigate(view, panel ?? null, { scroll: !!panel }),
+    [navigate]
+  );
+
+  // Cosmetic only: the right screen and tab already render, thanks to the derivations above.
+  // This rewrites an old link to the current contract — `?tab=` and `?view=outils` become
+  // `?view=`, an `#anchor` from the scrolling layout becomes `?panel=` — so the address bar stops
+  // advertising what no longer exists, and toggling ORA/GSEA (which rewrites the fragment) cannot
+  // lose the open tab.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const current = new URLSearchParams(window.location.search);
     const upgraded = upgradeLegacyQuery(current);
-    if (upgraded === null) return;
-    const url = `${window.location.pathname}${upgraded ? `?${upgraded}` : ''}${window.location.hash}`;
-    window.history.replaceState(null, '', url);
-  }, [searchParams]);
+    const next = new URLSearchParams(upgraded ?? current.toString());
+    const { hash: currentHash } = window.location;
+    const fromHash = resolveRequestedPanel(null, currentHash);
+    if (fromHash && !next.has(PANEL_PARAM)) next.set(PANEL_PARAM, fromHash);
+    const nextHash = fromHash ? modeHash(currentHash) : currentHash;
+    if (upgraded === null && next.toString() === current.toString() && nextHash === currentHash) {
+      return;
+    }
+    const query = next.toString();
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${query ? `?${query}` : ''}${nextHash}`
+    );
+  }, [searchParams, hash]);
 
 
   // Add-on module gating: render a module's section only when it is unlocked (admins keep
@@ -336,23 +363,26 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
   );
   const statsLoading = significanceLoading;
 
-  // What this comparison offers, and why a module is out of reach.
-  // The two heavy panels of Understand: one builds a hand-rolled SVG over a STRING round-trip,
-  // the other asks for a per-sample scoring. Behind a tab they mounted on click; on a merged
-  // screen they would mount on arrival, so they wait until they are scrolled near.
-  // Destructured, not held as an object: the React compiler rule reads a member access on a
-  // hook result that feeds a `ref` prop as a ref access during render.
-  const {
-    attach: attachNetwork,
-    visible: networkVisible,
-    reveal: revealNetwork,
-  } = useMountOnIntersection<HTMLDivElement>();
-  const {
-    attach: attachSignature,
-    visible: signatureVisible,
-    reveal: revealSignature,
-  } = useMountOnIntersection<HTMLDivElement>();
+  /** Per-method p-values as CSV — offered beside the DEG table and again under Share. */
+  const downloadDegStats = async () => {
+    if (!degDataset) return;
+    try {
+      const response = await api.get(`/datasets/${degDataset.id}/deg-stats/export`, {
+        params: { comparison: actualComparisonName },
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `deg_stats_${actualComparisonName}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('DEG stats download failed', e);
+    }
+  };
 
+  // What this comparison offers, and why a module is out of reach.
   const comparisonModules = useMemo(
     () =>
       buildComparisonModules({
@@ -384,14 +414,27 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
     [viewGroups, activeView]
   );
 
-  /** Sections of the open screen, for the rail. Only what actually renders. */
-  const railEntries = useMemo<RailEntry[]>(
+  /**
+   * The open screen's tabs: its modules that can be opened now, in catalogue order. A module
+   * waiting on data or locked behind an add-on is not a tab — the disclosure above says why, and
+   * offers to request access.
+   */
+  const viewTabs = useMemo(
     () =>
       comparisonModules
         .filter((m) => m.view === activeView && m.state === 'ready')
-        .map((m) => ({ panel: m.panel, label: m.title })),
+        .map((m) => ({ panel: m.panel, label: m.title, icon: m.icon })),
     [comparisonModules, activeView]
   );
+
+  /**
+   * The open tab: the one asked for when this screen has it, else the screen's first.
+   *
+   * Derived, never written back: while the profile loads every add-on reads as locked, and a
+   * fallback stored in the URL would outlive that moment and lose the module the link named.
+   */
+  const activePanel: ComparisonPanel | null =
+    viewTabs.find((tab) => tab.panel === requestedPanel)?.panel ?? viewTabs[0]?.panel ?? null;
 
 
   if (loading) {
@@ -486,209 +529,200 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
       </div>
 
       <ComparisonModuleDisclosure
+        // Re-keyed per screen, so a screen with nothing to open arrives with its list unfolded
+        // instead of inheriting the previous screen's folded state.
+        key={activeView}
         group={activeGroup}
+        defaultOpen={viewTabs.length === 0}
         onOpen={(view, panel) => selectView(view, panel)}
       />
 
-      {/* One screen at a time; within it, anchored sections rather than exclusive panes. */}
-      {/* Cette section etait enveloppee dans `<div className="mt-4 gl-card
-          overflow-hidden"><div className="p-5 space-y-8">` : tout l'ecran vivait
-          donc DANS une carte, et chaque carte interieure etait une carte dans une
-          carte. Retirer cette enveloppe supprime une bordure et un niveau de
-          padding pour l'ecran entier — c'est le rendement le plus eleve de la
-          regle « grouper par le vide, pas par la bordure ». */}
-      <div className="mt-8 space-y-8">
-        <SectionRail entries={railEntries} viewKey={activeView} />
+      {/* Un module a la fois, en onglets.
 
-        {/* ── Explore ───────────────────────────────────────────────── */}
-        {activeView === 'explorer' && (
-          <section id="summary" className="scroll-mt-24">
-            {/* The two arrival questions, kept adjacent as the overview had them:
-                which genes moved, and what they do. */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
-              <OverviewTopPathways
-                enrichmentDataset={enrichmentDataset}
-                comparisonName={actualComparisonName}
-                onOpenEnrichment={() => selectView('comprendre', 'enrichment')}
-              />
-            </div>
-          </section>
+          L'ecran empilait tous ses modules sur un seul defilement, sous un rail
+          d'ancres colle en haut. Ce rail etait le « header des modules qui
+          descend » : colle 64px sous le haut d'un conteneur qui commence deja
+          sous la barre du haut, il laissait defiler le contenu au-dessus de
+          lui ; et chaque section montee en retard poussait la cible du saut plus
+          bas. Un seul onglet ouvert : plus rien ne change de hauteur au-dessus
+          du module lu, et rien n'a besoin de coller.
+
+          Les sections gardent leur `<section id>` : c'est le panneau de leur
+          onglet, et l'ancre que les anciens favoris visent encore. */}
+      <div className="mt-6">
+        {viewTabs.length > 0 ? (
+          <ModuleTabs
+            label={`${VIEW_LABELS[activeView]} modules`}
+            tabs={viewTabs}
+            value={activePanel}
+            onValueChange={(panel) => navigate(activeView, panel, { scroll: false })}
+          />
+        ) : (
+          <p className="text-body-sm text-secondary">
+            Nothing on this screen is open for this comparison yet. The list above says what each
+            module needs, and lets you request the add-ons.
+          </p>
         )}
 
-        {activeView === 'explorer' && (
-          <section id="genes" className="scroll-mt-24 space-y-6">
-            {/* One significance control for the whole pane, with the counts it produces. */}
-            <SynthesisStrip
-              datasetId={degDataset.id}
-              comparisonName={actualComparisonName}
+        {activeView === 'comprendre' && (
+          <div className="mt-4 empty:hidden">
+            <PathwayFocusBar
+              onShowInExplorer={(genes, label) => {
+                // Explicit and user-initiated. The only crossing between screens in the
+                // whole cross-filter; everything else happens in place.
+                selectGenes(genes, 'pathway', label);
+                focusTerm(null);
+                selectView('explorer', 'genes');
+              }}
             />
+          </div>
+        )}
 
-            {/* Volcano plot — the whole comparison at a glance, next to the
-                table it filters down to. */}
-            <div className="gl-card p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-body font-semibold text-primary">
-                  Volcano plot
-                </h2>
-                <Link
-                  href={`/projects/${projectId}/datasets/${degDataset.id}`}
-                  className="text-caption font-semibold text-accent-ink"
-                >
-                  View dataset
-                </Link>
-              </div>
-
-              {/* The plot takes the room; the card stays beside it and fills from
-                  whatever is selected. The legend lives in the panel itself now, so the
-                  dot row that used to duplicate it is gone. */}
-              {/* Resolves a ?geneList= link into the shared selection. Renders nothing. */}
-              <GeneListDeepLink projectId={projectId} />
-
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-                <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
-                <SelectionCard
-                  dataset={degDataset}
-                  comparisonName={actualComparisonName}
-                  matrixDataset={matrixDataset}
+        <div className="mt-6">
+          {/* ── Explore ───────────────────────────────────────────────── */}
+          {activePanel === 'summary' && (
+            <section id="summary" {...tabPanel('summary')}>
+              {/* The two arrival questions, kept adjacent as the overview had them:
+                  which genes moved, and what they do. */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <DEGBarChart dataset={degDataset} comparisonName={actualComparisonName} />
+                <OverviewTopPathways
                   enrichmentDataset={enrichmentDataset}
-                  sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                  conditionBySample={
-                    Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
-                  }
-                  geneNameMap={geneMap.nameByGene}
+                  comparisonName={actualComparisonName}
+                  onOpenEnrichment={() => selectView('comprendre', 'enrichment')}
                 />
               </div>
-            </div>
-
-            {/* DEG Table */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-heading text-primary">Differentially Expressed Genes</h2>
-                <button
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-body-sm border border-strong rounded-sm bg-surface hover:bg-hover text-primary"
-                  onClick={async () => {
-                    try {
-                      const response = await api.get(
-                        `/datasets/${degDataset.id}/deg-stats/export`,
-                        {
-                          params: { comparison: actualComparisonName },
-                          responseType: 'blob',
-                        }
-                      );
-                      const url = URL.createObjectURL(new Blob([response.data]));
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = `deg_stats_${actualComparisonName}.csv`;
-                      link.click();
-                      URL.revokeObjectURL(url);
-                    } catch (e) {
-                      console.error('DEG stats download failed', e);
-                    }
-                  }}
-                >
-                  <Download className="w-4 h-4" />
-                  Download DEG — per-method p-values (.csv)
-                </button>
-              </div>
-              <p className="text-body-sm text-secondary mb-4">Browse all differentially expressed genes with filtering and sorting capabilities.</p>
-              <div className="bg-surface rounded-control overflow-hidden">
-                <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {activeView === 'explorer' && (
-          <section id="methods" className="scroll-mt-24">
-            <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-          </section>
-        )}
-
-        {activeView === 'explorer' && (
-          <section id="heatmap" className="scroll-mt-24">
-          {matrixDataset && degDataset ? (
-              <HeatmapSection
-                degDataset={degDataset}
-                matrixDataset={matrixDataset}
-                comparisonName={actualComparisonName}
-                sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
-                sampleConditionMap={
-                  Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
-                }
-              />
-          ) : matrixDataset ? (
-            <ClusteringAnalysis
-              projectId={projectId}
-              datasetId={matrixDataset.id}
-              datasetName={matrixDataset.name}
-            />
-          ) : (
-            <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
-              <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
-              <p className="text-body-sm text-secondary max-w-sm mx-auto">
-                Clustering requires an expression matrix (count matrix).
-                Upload a matrix of type &quot;Expression Matrix&quot; to enable this view.
-              </p>
-            </div>
+            </section>
           )}
-          </section>
-        )}
 
-        {activeView === 'explorer' && (
-          <section id="external-lookup" className="scroll-mt-24">
-            <StringEnrichmentPanel />
-          </section>
-        )}
+          {activePanel === 'genes' && (
+            <section id="genes" {...tabPanel('genes')} className="space-y-6">
+              {/* One significance control for the whole pane, with the counts it produces. */}
+              <SynthesisStrip
+                datasetId={degDataset.id}
+                comparisonName={actualComparisonName}
+              />
 
-        {activeView === 'explorer' && (
-          <section id="custom-viz" className="scroll-mt-24">
-            <CustomVisualizationPanel
-              datasetId={degDataset.id}
-              comparisonName={actualComparisonName}
-              allGenes={allMatrixGenes}
-            />
-          </section>
-        )}
+              {/* Volcano plot — the whole comparison at a glance, next to the
+                  table it filters down to. */}
+              <div className="gl-card p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-display text-body font-semibold text-primary">
+                    Volcano plot
+                  </h2>
+                  <Link
+                    href={`/projects/${projectId}/datasets/${degDataset.id}`}
+                    className="text-caption font-semibold text-accent-ink"
+                  >
+                    View dataset
+                  </Link>
+                </div>
 
-        {/* ── Understand ────────────────────────────────────────────── */}
-        {activeView === 'comprendre' && (
-          <PathwayFocusBar
-            onShowInExplorer={(genes, label) => {
-              // Explicit and user-initiated. The only crossing between screens in the
-              // whole cross-filter; everything else happens in place.
-              selectGenes(genes, 'pathway', label);
-              focusTerm(null);
-              selectView('explorer', 'genes');
-            }}
-          />
-        )}
+                {/* Resolves a ?geneList= link into the shared selection. Renders nothing. */}
+                <GeneListDeepLink projectId={projectId} />
 
-        {activeView === 'comprendre' && (
-          <section id="ai" className="scroll-mt-24">
-            {/* The AI reading opens the screen: the synthesis above gives the numbers,
-                this says what they mean, and the sections below are the evidence. */}
-            <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-          </section>
-        )}
+                {/* `items-start` : sans lui la carte de selection, element de grille
+                    etire a la hauteur de la ligne, ne pouvait jamais coller. */}
+                <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                  <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
+                  <SelectionCard
+                    dataset={degDataset}
+                    comparisonName={actualComparisonName}
+                    matrixDataset={matrixDataset}
+                    enrichmentDataset={enrichmentDataset}
+                    sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                    conditionBySample={
+                      Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                    }
+                    geneNameMap={geneMap.nameByGene}
+                  />
+                </div>
+              </div>
 
-        {activeView === 'comprendre' && (
-          <section id="enrichment" className="scroll-mt-24">
-          {degDataset ? (
-            <div className="space-y-4">
+              {/* DEG Table */}
+              <div>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-heading text-primary">Differentially Expressed Genes</h2>
+                  <button
+                    type="button"
+                    className={buttonClasses({ variant: 'outline', size: 'sm' })}
+                    onClick={downloadDegStats}
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Per-method p-values (.csv)
+                  </button>
+                </div>
+                <p className="mb-4 text-body-sm text-secondary">
+                  Browse all differentially expressed genes with filtering and sorting capabilities.
+                </p>
+                {/* Plus de `overflow-hidden` ici : il rognait le menu « Columns » et
+                    l'export du tableau, deux popovers en position absolue, des que la
+                    liste etait courte (vide, en chargement ou tres filtree). Le
+                    tableau defile deja dans son propre conteneur. */}
+                <div className="rounded-control bg-surface">
+                  <DEGTable dataset={degDataset} comparisonName={actualComparisonName} />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {activePanel === 'methods' && (
+            <section id="methods" {...tabPanel('methods')}>
+              <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            </section>
+          )}
+
+          {activePanel === 'heatmap' && (
+            <section id="heatmap" {...tabPanel('heatmap')}>
+              {matrixDataset ? (
+                <HeatmapSection
+                  degDataset={degDataset}
+                  matrixDataset={matrixDataset}
+                  comparisonName={actualComparisonName}
+                  sampleIds={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  sampleConditionMap={
+                    Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
+                  }
+                />
+              ) : (
+                <NoMatrix purpose="Clustering" />
+              )}
+            </section>
+          )}
+
+          {activePanel === 'external-lookup' && (
+            <section id="external-lookup" {...tabPanel('external-lookup')}>
+              <StringEnrichmentPanel />
+            </section>
+          )}
+
+          {activePanel === 'custom-viz' && (
+            <section id="custom-viz" {...tabPanel('custom-viz')}>
+              <CustomVisualizationPanel
+                datasetId={degDataset.id}
+                comparisonName={actualComparisonName}
+                allGenes={allMatrixGenes}
+              />
+            </section>
+          )}
+
+          {/* ── Understand ────────────────────────────────────────────── */}
+          {activePanel === 'ai' && (
+            <section id="ai" {...tabPanel('ai')}>
+              {/* The AI reading opens the screen: the synthesis above gives the numbers,
+                  this says what they mean, and the other tabs are the evidence. */}
+              <AIInterpretationPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            </section>
+          )}
+
+          {activePanel === 'enrichment' && (
+            <section id="enrichment" {...tabPanel('enrichment')} className="space-y-4">
               {/* Bascule ORA / GSEA rankee.
-
-                  L'etat ACTIF etait `bg-white text-primary` : sur
-                  --surface #131720, un bouton blanc a texte quasi noir —
-                  l'onglet selectionne etait le seul illisible en theme
-                  sombre. Troisieme segmente fait main du code, desormais
-                  sur la primitive comme les deux autres.
 
                   L'ancre #gsea vivait sur le conteneur de la bascule ; la
                   primitive ne prend pas d'id, elle passe donc sur un point
                   d'ancrage dedie, pour que le fragment garde ou atterrir. */}
-              <span id={GSEA_HASH} className="block scroll-mt-32" aria-hidden />
+              <span id={GSEA_HASH} className="block" aria-hidden />
               <SegmentedControl
                 label="Enrichment method"
                 items={[
@@ -717,148 +751,118 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
                   comparisonName={actualComparisonName}
                 />
               ) : null}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
-              <h3 className="text-title font-medium text-primary mb-2">No DEG data</h3>
-              <p className="text-body-sm text-secondary max-w-sm mx-auto">
-                Enrichment requires a DEG dataset associated with this comparison.
-              </p>
-            </div>
+            </section>
           )}
-          </section>
-        )}
 
-        {activeView === 'comprendre' && (
-          <section id="network" className="scroll-mt-24" ref={attachNetwork}>
-            {networkVisible ? (
+          {activePanel === 'network' && (
+            <section id="network" {...tabPanel('network')}>
               <PPINetworkSection
                 dataset={degDataset}
                 comparisonName={actualComparisonName}
+                geneNameMap={geneMap.nameByGene}
+                projectSpecies={project.species}
               />
-            ) : (
-              <SectionPlaceholder label="Interaction network" onReveal={revealNetwork} />
-            )}
-          </section>
-        )}
-
-        {/* ── Apply ─────────────────────────────────────────────────── */}
-        {activeView === 'appliquer' && drugDiscoveryUnlocked && (
-          <section id="drug-discovery" className="scroll-mt-24">
-          {degDataset ? (
-            /* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
-               que porte `deg_genes.comparison_name` côté base. */
-            <DrugDiscoveryComparisonPanel
-              datasetId={degDataset.id}
-              comparisonName={actualComparisonName}
-            />
-          ) : (
-            <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
-              <h3 className="text-title font-medium text-primary mb-2">No DEG results</h3>
-              <p className="text-body-sm text-secondary max-w-sm mx-auto">
-                Drug target scoring is built from the differentially expressed genes of this
-                comparison, so it needs the DEG results to be available.
-              </p>
-            </div>
+            </section>
           )}
-          </section>
-        )}
 
-        {activeView === 'appliquer' && scientificUnlocked && (
-          <section id="signature" className="scroll-mt-24" ref={attachSignature}>
-          {!signatureVisible ? (
-            <SectionPlaceholder label="Signature score" onReveal={revealSignature} />
-          ) : matrixDataset ? (
-            <SignatureScorePanel
-              projectId={projectId}
-              matrixDatasetId={matrixDataset.id}
-              samples={relevantSamples.length > 0 ? relevantSamples : undefined}
-              sampleConditionMap={Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined}
-              initialGenes={focusedTerm?.genes}
-              initialLabel={focusedTerm?.name}
-            />
-          ) : (
-            <div className="text-center py-16">
-              <Database className="mx-auto h-12 w-12 text-muted mb-4" />
-              <h3 className="text-title font-medium text-primary mb-2">No expression matrix</h3>
-              <p className="text-body-sm text-secondary max-w-sm mx-auto">
-                Signature scoring requires an expression matrix (count matrix) for this project.
-              </p>
-            </div>
-          )}
-          </section>
-        )}
-
-        {activeView === 'appliquer' && cosmeticsUnlocked && (
-          <section id="cosmomics" className="scroll-mt-24">
-            {/* Skin claims became CosmOmics: bookmarks to `#cosmetics` land here. */}
-            <span id="cosmetics" aria-hidden className="block scroll-mt-24" />
-            <CosmOmicsPanel datasetId={degDataset?.id} comparisonName={actualComparisonName} />
-          </section>
-        )}
-
-        {/* ── Share ─────────────────────────────────────────────────── */}
-        {activeView === 'partager' && (
-          <section id="exports" className="scroll-mt-24 space-y-3">
-            <div>
-              <h3 className="text-body-sm font-semibold text-primary">
-                Exports
-              </h3>
-              <p className="text-caption text-muted">
-                Every differentially expressed gene of this comparison at the current thresholds
-                (padj ≤ {thresholds.padj}, |log2FC| ≥ {thresholds.logfc}), and its per-method
-                p-values.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ExportMenu
-                fetchData={async () =>
-                  (await fetchAllDegGenes(degDataset.id, actualComparisonName, thresholds)).map(
-                    toDegExportRow
-                  )
-                }
-                filename={`${actualComparisonName}_all_DEGs`}
-                formats={['csv', 'json']}
-                csvColumns={DEG_EXPORT_COLUMNS}
-                variant="outline"
-                size="sm"
+          {/* ── Apply ─────────────────────────────────────────────────── */}
+          {activePanel === 'drug-discovery' && (
+            <section id="drug-discovery" {...tabPanel('drug-discovery')}>
+              {/* `actualComparisonName` et non `decodedName` : c'est la clé stockée, et celle
+                  que porte `deg_genes.comparison_name` côté base. */}
+              <DrugDiscoveryComparisonPanel
+                datasetId={degDataset.id}
+                comparisonName={actualComparisonName}
               />
-              <button
-                type="button"
-                className={buttonClasses({ variant: 'outline', size: 'sm' })}
-                onClick={async () => {
-                  try {
-                    const response = await api.get(
-                      `/datasets/${degDataset.id}/deg-stats/export`,
-                      { params: { comparison: actualComparisonName }, responseType: 'blob' }
-                    );
-                    const url = URL.createObjectURL(new Blob([response.data]));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `deg_stats_${actualComparisonName}.csv`;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                  } catch (e) {
-                    console.error('DEG stats download failed', e);
+            </section>
+          )}
+
+          {activePanel === 'signature' && (
+            <section id="signature" {...tabPanel('signature')}>
+              {matrixDataset ? (
+                <SignatureScorePanel
+                  projectId={projectId}
+                  matrixDatasetId={matrixDataset.id}
+                  samples={relevantSamples.length > 0 ? relevantSamples : undefined}
+                  sampleConditionMap={
+                    Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined
                   }
-                }}
-              >
-                <Download className="h-4 w-4" />
-                Per-method p-values (.csv)
-              </button>
-            </div>
-          </section>
-        )}
+                  initialGenes={focusedTerm?.genes}
+                  initialLabel={focusedTerm?.name}
+                />
+              ) : (
+                <NoMatrix purpose="Signature scoring" />
+              )}
+            </section>
+          )}
 
-        {activeView === 'partager' && reportCustomizationUnlocked && (
-          <section id="report" className="scroll-mt-24">
-            <ReportCustomizationPanel />
-          </section>
-        )}
+          {activePanel === 'cosmomics' && (
+            <section id="cosmomics" {...tabPanel('cosmomics')}>
+              {/* Skin claims became CosmOmics: bookmarks to `#cosmetics` land here. */}
+              <span id="cosmetics" aria-hidden className="block" />
+              <CosmOmicsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+            </section>
+          )}
+
+          {/* ── Share ─────────────────────────────────────────────────── */}
+          {activePanel === 'exports' && (
+            <section id="exports" {...tabPanel('exports')} className="space-y-3">
+              <div>
+                <h3 className="text-body-sm font-semibold text-primary">
+                  Exports
+                </h3>
+                <p className="text-caption text-muted">
+                  Every differentially expressed gene of this comparison at the current thresholds
+                  (padj ≤ {thresholds.padj}, |log2FC| ≥ {thresholds.logfc}), and its per-method
+                  p-values.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <ExportMenu
+                  fetchData={async () =>
+                    (await fetchAllDegGenes(degDataset.id, actualComparisonName, thresholds)).map(
+                      toDegExportRow
+                    )
+                  }
+                  filename={`${actualComparisonName}_all_DEGs`}
+                  formats={['csv', 'json']}
+                  csvColumns={DEG_EXPORT_COLUMNS}
+                  variant="outline"
+                  size="sm"
+                />
+                <button
+                  type="button"
+                  className={buttonClasses({ variant: 'outline', size: 'sm' })}
+                  onClick={downloadDegStats}
+                >
+                  <Download className="h-4 w-4" aria-hidden />
+                  Per-method p-values (.csv)
+                </button>
+              </div>
+            </section>
+          )}
+
+          {activePanel === 'report' && (
+            <section id="report" {...tabPanel('report')}>
+              <ReportCustomizationPanel />
+            </section>
+          )}
+        </div>
       </div>
     </div>
-    );
-    }
+  );
+}
 
+/** A module that needs the expression matrix, on a project without one. */
+function NoMatrix({ purpose }: { purpose: string }) {
+  return (
+    <div className="py-16 text-center">
+      <Database className="mx-auto mb-4 h-12 w-12 text-muted" aria-hidden />
+      <h3 className="mb-2 text-title font-medium text-primary">No expression matrix</h3>
+      <p className="mx-auto max-w-sm text-body-sm text-secondary">
+        {purpose} requires an expression matrix (count matrix). Upload a dataset of type
+        &quot;Expression Matrix&quot; to enable it.
+      </p>
+    </div>
+  );
+}

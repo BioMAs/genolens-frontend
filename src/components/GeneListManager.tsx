@@ -14,18 +14,12 @@ import {
 import { GeneList } from '@/types/bookmark';
 import ExportMenu from '@/components/ExportMenu';
 import { cn } from '@/lib/cn';
+import { LABEL_SWATCHES } from '@/utils/labelSwatches';
 
 interface GeneListManagerProps {
   projectId: string;
   onClose?: () => void;
 }
-
-const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#eab308',
-  '#84cc16', '#22c55e', '#10b981', '#14b8a6',
-  '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
-  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
-];
 
 export default function GeneListManager({ projectId, onClose }: GeneListManagerProps) {
   const { data: geneLists, isLoading } = useGeneLists(projectId, true);
@@ -235,7 +229,7 @@ export default function GeneListManager({ projectId, onClose }: GeneListManagerP
                 <div className="flex items-center gap-2">
                   <label className="text-body-sm font-medium text-primary">Color</label>
                   <div className="flex gap-1">
-                    {PRESET_COLORS.slice(0, 8).map((color) => (
+                    {LABEL_SWATCHES.slice(0, 8).map((color) => (
                       <button
                         key={color}
                         onClick={() => setNewColor(color)}

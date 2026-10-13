@@ -26,9 +26,10 @@ import {
   useThresholds,
 } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
-import { useStringNetwork } from '@/hooks/useStringNetwork';
+import { StringNetworkError, useStringNetwork } from '@/hooks/useStringNetwork';
 import { isSignificant, UNKNOWN_GENE } from '@/utils/volcano';
 import { normalizeGeneKey } from '@/utils/geneKeys';
+import { stringTaxon, symbolLookup, toStringSymbol, toStringSymbols } from './stringSeeds';
 import type { NodeFacts } from '@/types/network';
 import {
   DEFAULT_NODE_CAP,
@@ -55,12 +56,30 @@ const FALLBACK_SEEDS = 60;
 
 const NODE_CAPS = [50, 100, DEFAULT_NODE_CAP, 0] as const;
 
+/** How the organism STRING was asked about reads in the caption. */
+const ORGANISM_LABEL: Record<number, string> = {
+  9606: 'human',
+  10090: 'mouse',
+  10116: 'rat',
+  7955: 'zebrafish',
+  9823: 'pig',
+};
+
 interface Props {
   dataset: Dataset;
   comparisonName: string;
+  /** `gene_id → gene_name` from the matrix, to ask STRING for symbols rather than raw ids. */
+  geneNameMap?: Record<string, string>;
+  /** The project's declared species, when it has one. */
+  projectSpecies?: string | null;
 }
 
-export default function PPINetworkSection({ dataset, comparisonName }: Props) {
+export default function PPINetworkSection({
+  dataset,
+  comparisonName,
+  geneNameMap,
+  projectSpecies,
+}: Props) {
   const selection = useSelection();
   const focusedTerm = useFocusedTerm();
   const thresholds = useThresholds();
@@ -77,19 +96,32 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [partnersPerSeed, setPartnersPerSeed] = useState(10);
 
-  const { data: cloud } = useVolcanoPoints(dataset.id, comparisonName);
+  const {
+    data: cloud,
+    isLoading: cloudLoading,
+    isError: cloudFailed,
+  } = useVolcanoPoints(dataset.id, comparisonName);
 
-  /** What each gene did in this comparison — the join that colours the nodes. */
+  const symbols = useMemo(() => symbolLookup(geneNameMap), [geneNameMap]);
+
+  /**
+   * What each gene did in this comparison — the join that colours the nodes.
+   *
+   * Keyed by the raw id AND by the symbol STRING will name the node with: a volcano keyed by
+   * Ensembl id otherwise left every node grey.
+   */
   const factsByGene = useMemo(() => {
     const map = new Map<string, NodeFacts>();
     for (const point of cloud?.points ?? []) {
-      const key = normalizeGeneKey(point.gene);
-      if (!key || map.has(key)) continue;
       if (!isSignificant(point, thresholds)) continue;
-      map.set(key, { regulation: point.x > 0 ? 'up' : 'down', logFc: point.x });
+      const facts: NodeFacts = { regulation: point.x > 0 ? 'up' : 'down', logFc: point.x };
+      for (const name of [point.gene, toStringSymbol(point.gene ?? '', symbols)]) {
+        const key = normalizeGeneKey(name);
+        if (key && !map.has(key)) map.set(key, facts);
+      }
     }
     return map;
-  }, [cloud?.points, thresholds]);
+  }, [cloud?.points, thresholds, symbols]);
 
   /** Strongest DEGs first, so trimming to the server's cap drops the least interesting. */
   const topDegs = useMemo(() => {
@@ -108,14 +140,27 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
       : selection.genes.length > 0
         ? 'selection'
         : 'top';
-  const seeds =
+  const rawSeeds =
     source === 'pathway' ? focusedTerm!.genes : source === 'selection' ? selection.genes : topDegs;
+  // Symbols, unversioned: what STRING resolves. See `stringSeeds` for what the raw ids did.
+  const seeds = useMemo(() => toStringSymbols(rawSeeds, symbols), [rawSeeds, symbols]);
+  const declaredSpecies =
+    typeof dataset.dataset_metadata?.species === 'string'
+      ? dataset.dataset_metadata.species
+      : projectSpecies;
+  const species = useMemo(
+    () => stringTaxon(declaredSpecies, rawSeeds),
+    [declaredSpecies, rawSeeds]
+  );
+  const organism = ORGANISM_LABEL[species] ?? `taxon ${species}`;
 
-  const { data, isLoading, isError } = useStringNetwork({
+  const { data, isLoading, isError, error } = useStringNetwork({
     symbols: seeds,
+    species,
     limit: partnersPerSeed,
     enabled: seeds.length > 0,
   });
+  const notFound = error instanceof StringNetworkError && error.kind === 'not-found';
 
   const trimmed = useMemo(() => {
     if (!data) return null;
@@ -161,6 +206,24 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
     else setExpanded((value) => !value);
   };
 
+  // The fallback seeds come from the volcano cloud. While it loads, or when it failed, the list
+  // is empty for a reason that is not "no significant gene" — and saying so sent people
+  // loosening thresholds on a comparison that had thousands of DEGs.
+  if (seeds.length === 0 && source === 'top' && cloudLoading) {
+    return (
+      <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        Loading this comparison&apos;s genes…
+      </p>
+    );
+  }
+  if (seeds.length === 0 && source === 'top' && cloudFailed) {
+    return (
+      <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        This comparison&apos;s genes could not be loaded, so there is nothing to build a network
+        from yet. Reload the page to try again.
+      </p>
+    );
+  }
   if (seeds.length === 0) {
     return (
       <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -192,6 +255,7 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
               genes in the volcano, or a pathway, to change this
             </>
           )}
+          <span style={{ color: 'var(--text-muted)' }}> · STRING, {organism}</span>
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -245,12 +309,8 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
 
       {data && data.dropped > 0 ? (
         <p
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs"
-          style={{
-            background: 'rgba(245,158,11,0.12)',
-            borderRadius: 'var(--radius-control)',
-            color: '#b45309',
-          }}
+          className="inline-flex items-center gap-1.5 bg-warning-soft px-2.5 py-1.5 text-xs text-warning-ink"
+          style={{ borderRadius: 'var(--radius-control)' }}
         >
           <AlertTriangle className="h-3.5 w-3.5" />
           {data.dropped.toLocaleString('en-US')} gene{data.dropped === 1 ? '' : 's'} left out —
@@ -260,12 +320,8 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
 
       {trimmed && trimmed.hidden > 0 ? (
         <p
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs"
-          style={{
-            background: 'rgba(245,158,11,0.12)',
-            borderRadius: 'var(--radius-control)',
-            color: '#b45309',
-          }}
+          className="inline-flex items-center gap-1.5 bg-warning-soft px-2.5 py-1.5 text-xs text-warning-ink"
+          style={{ borderRadius: 'var(--radius-control)' }}
         >
           <AlertTriangle className="h-3.5 w-3.5" />
           Showing the {nodeCap.toLocaleString('en-US')} best-connected of{' '}
@@ -284,9 +340,15 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
           >
             Asking STRING for interactions…
           </div>
+        ) : notFound ? (
+          <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            STRING recognised none of these {seeds.length.toLocaleString('en-US')} genes as{' '}
+            {organism} proteins — the organism is inferred from the analysis and the gene
+            identifiers.
+          </p>
         ) : isError ? (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            STRING could not be reached.
+            STRING could not be reached. Try again in a moment.
           </p>
         ) : rows.length === 0 ? (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -313,7 +375,7 @@ export default function PPINetworkSection({ dataset, comparisonName }: Props) {
           {/* Canvas is opaque to assistive technology, so the same data as rows — which is
               also the fastest way for anyone to read off the hubs. */}
           <details>
-            <summary className="cursor-pointer text-xs" style={{ color: 'var(--sl-teal-dark)' }}>
+            <summary className="cursor-pointer text-xs text-accent-ink">
               Network as a table
             </summary>
             <div className="mt-2 max-h-80 overflow-auto">

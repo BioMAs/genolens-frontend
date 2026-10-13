@@ -16,9 +16,14 @@
  * `ComparisonDetail` into a shared layout, or refetching per view — a much larger change with a
  * real regression surface. Worth revisiting once that component is decomposed.
  *
- * Position *within* a view is an anchor rather than a second parameter: anchors already are
- * scroll targets, the browser restores them on reload for free, and changing one does not
- * re-render through `useSearchParams` — so moving around a long screen costs nothing.
+ * **The open module is a second parameter, `?panel=`.** Each screen used to stack all its modules
+ * on one long scroll, with a sticky rail of anchors on top; the modules are now tabs, one open at
+ * a time. A tab is state the page must re-render on, which an anchor is not: Next's `<Link>`
+ * changes a fragment without a `hashchange` event or a new `useSearchParams` value, so a sidebar
+ * link to `#network` would have moved the address bar and left the wrong tab open.
+ *
+ * Fragments still resolve, as input only — bookmarks from the scrolling layout (`#genes`,
+ * `#cosmetics`) and the `#gsea` sub-state of the enrichment module. See `resolveRequestedPanel`.
  */
 
 import { Compass, Lightbulb, Share2, Target } from 'lucide-react';
@@ -49,6 +54,70 @@ export type ComparisonPanel =
 export const DEFAULT_VIEW: ComparisonView = 'explorer';
 
 export const VIEW_PARAM = 'view';
+
+/** The open module of a screen — its tab. */
+export const PANEL_PARAM = 'panel';
+
+const PANELS: readonly ComparisonPanel[] = [
+  'summary',
+  'genes',
+  'heatmap',
+  'methods',
+  'ai',
+  'enrichment',
+  'network',
+  'signature',
+  'report',
+  'exports',
+  'drug-discovery',
+  'cosmomics',
+  'cosmetics',
+  'custom-viz',
+  'external-lookup',
+];
+
+/**
+ * Names that resolve to another module's tab.
+ *
+ * `cosmetics` is the Skin claims module CosmOmics replaced; `gsea` is not a module at all but
+ * the ranked half of the enrichment one, which keeps it in the fragment (`useEnrichmentMode`).
+ */
+const PANEL_ALIASES: Partial<Record<string, ComparisonPanel>> = {
+  cosmetics: 'cosmomics',
+  gsea: 'enrichment',
+};
+
+export function isComparisonPanel(value: unknown): value is ComparisonPanel {
+  return typeof value === 'string' && (PANELS as readonly string[]).includes(value);
+}
+
+function toPanel(value: string | null | undefined): ComparisonPanel | null {
+  if (!value) return null;
+  const aliased = PANEL_ALIASES[value];
+  if (aliased) return aliased;
+  return isComparisonPanel(value) ? value : null;
+}
+
+/**
+ * The module a URL asks for, or null when it asks for none.
+ *
+ * `?panel=` wins, then the panel a legacy `?tab=` used to open, then the fragment — the anchor a
+ * bookmark from the scrolling layout carries. Whether that module is open on this screen, for
+ * this user, is the caller's call: it holds the catalogue, and falls back to the screen's first
+ * module rather than painting a tab that does not exist.
+ */
+export function resolveRequestedPanel(
+  params: URLSearchParams | null | undefined,
+  hash?: string | null
+): ComparisonPanel | null {
+  const fromParam = toPanel(params?.get(PANEL_PARAM));
+  if (fromParam) return fromParam;
+
+  const fromTab = resolveLegacyTab(params?.get('tab'))?.panel ?? null;
+  if (fromTab) return fromTab;
+
+  return toPanel(hash?.replace(/^#/, ''));
+}
 
 /**
  * Fixed order, so the nav, the hub and the module grid always agree on it.
@@ -195,7 +264,7 @@ export function resolveView(params: URLSearchParams | null | undefined): Compari
 }
 
 /**
- * Build the canonical link to a view, optionally anchored at a panel.
+ * Build the canonical link to a view, optionally opened on one of its modules.
  *
  * `basePath` must carry no query string — it is the comparison's path, the same value
  * `ComparisonSidebarNav` already passes around. The default view is written bare, mirroring how
@@ -206,9 +275,11 @@ export function buildViewHref(
   view: ComparisonView,
   panel?: ComparisonPanel | null
 ): string {
-  const query = view === DEFAULT_VIEW ? '' : `?${VIEW_PARAM}=${view}`;
-  const anchor = panel ? `#${panel}` : '';
-  return `${basePath}${query}${anchor}`;
+  const params = new URLSearchParams();
+  if (view !== DEFAULT_VIEW) params.set(VIEW_PARAM, view);
+  if (panel) params.set(PANEL_PARAM, toPanel(panel) ?? panel);
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
 }
 
 /**
@@ -246,6 +317,13 @@ export function upgradeLegacyQuery(params: URLSearchParams | null | undefined): 
     next.delete(VIEW_PARAM);
   } else {
     next.set(VIEW_PARAM, view);
+  }
+
+  // A `?tab=` named a module as well as a screen. Dropping it must not drop the module, now that
+  // the module is a tab of its own — unless a current `?view=` overrode its screen.
+  const legacy = resolveLegacyTab(tab);
+  if (legacy?.panel && legacy.view === view && !next.has(PANEL_PARAM)) {
+    next.set(PANEL_PARAM, legacy.panel);
   }
 
   return next.toString();

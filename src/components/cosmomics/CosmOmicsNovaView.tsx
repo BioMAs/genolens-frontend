@@ -86,7 +86,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <figure className="m-0 min-w-0 rounded-card border border-[#E2E8EE] bg-white p-2 sm:p-4">
+        <figure className="nova-paper m-0 min-w-0 rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] p-2 sm:p-4">
           <CosmOmicsNova
             data={data}
             seed={seed}
@@ -101,28 +101,28 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
         </figure>
 
         <aside
-          className="space-y-4 rounded-card border border-[#E2E8EE] bg-white p-4"
+          className="nova-paper space-y-4 rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] p-4"
           aria-live="polite"
           aria-label="Claim details"
         >
           {selected ? (
             <NovaClaimCard claim={selected} />
           ) : (
-            <p className="text-[13px] text-[#384C65]">No claim has a significant pathway in this comparison.</p>
+            <p className="text-[13px] text-[var(--nova-ink-muted)]">No claim has a significant pathway in this comparison.</p>
           )}
           {data.claims.length > 1 && (
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7D8B9C]">All claims</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--nova-ink-subtle)]">All claims</p>
               <NovaClaimList claims={data.claims} selected={selected?.name ?? null} onSelect={setPicked} />
             </div>
           )}
-          <p className="text-[11.5px] leading-snug text-[#7D8B9C]">
+          <p className="text-[11.5px] leading-snug text-[var(--nova-ink-subtle)]">
             Click a sector or a claim to read its card. Hover a bubble for the ontology terms behind it.
           </p>
         </aside>
       </div>
 
-      <div className="rounded-card border border-[#E2E8EE] bg-white px-4 py-3">
+      <div className="nova-paper rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] px-4 py-3">
         <NovaLegend hatchId={hatchId} />
       </div>
 

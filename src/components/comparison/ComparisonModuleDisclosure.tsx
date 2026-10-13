@@ -23,14 +23,19 @@ interface Props {
   /** The open screen. Undefined, or holding nothing, renders nothing. */
   group: ComparisonViewGroup | undefined;
   onOpen: (view: ComparisonView, panel: ComparisonPanel) => void;
+  /**
+   * Unfolded on arrival. For a screen with no module to open — Apply without any add-on — this
+   * list is the whole screen, and folding it left nothing but the switcher above.
+   */
+  defaultOpen?: boolean;
 }
 
-export default function ComparisonModuleDisclosure({ group, onOpen }: Props) {
+export default function ComparisonModuleDisclosure({ group, onOpen, defaultOpen = false }: Props) {
   // An empty disclosure is a row of furniture with nothing behind it.
   if (!group || group.modules.length === 0) return null;
 
   return (
-    <details className="mt-3 gl-card px-4 py-3">
+    <details className="mt-3 gl-card px-4 py-3" open={defaultOpen || undefined}>
       <summary
         className="cursor-pointer list-none text-caption font-semibold"
         style={{ color: 'var(--text-secondary)' }}
