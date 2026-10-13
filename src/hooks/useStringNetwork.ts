@@ -16,7 +16,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
-import type { PPINetwork } from '@/types/network';
+import type { PPINetwork, SpeciesSource } from '@/types/network';
 import { clampSymbols, MAX_SEED_GENES } from '@/components/network/cytoscapeAdapters';
 
 /** Human, 9606. Kept as the default the endpoint itself uses. */
@@ -24,7 +24,13 @@ export const DEFAULT_SPECIES = 9606;
 
 export interface StringNetworkParams {
   symbols: string[];
+  /** NCBI taxon. With `datasetId`, only the fallback for a dataset that records no species. */
   species?: number;
+  /**
+   * The dataset the genes come from. The server then asks STRING about the species its analysis
+   * was launched with — which lives in the analysis parameters, out of the client's reach.
+   */
+  datasetId?: string;
   /** STRING confidence floor, 0–1000. */
   requiredScore?: number;
   /**
@@ -49,16 +55,25 @@ export class StringNetworkError extends Error {
   constructor(
     /** `not-found`: STRING recognised none of the genes. `unreachable`: anything else. */
     readonly kind: 'not-found' | 'unreachable',
-    message: string
+    message: string,
+    /** The taxon STRING was asked about, so "none recognised" can name the organism. */
+    readonly species?: number,
+    readonly speciesSource?: SpeciesSource
   ) {
     super(message);
     this.name = 'StringNetworkError';
   }
 }
 
-function toStringError(error: string): StringNetworkError {
+function toStringError(data: PPINetwork & { error: string }): StringNetworkError {
+  const { error } = data;
   const notFound = error === 'not_found' || /\b404\b/.test(error);
-  return new StringNetworkError(notFound ? 'not-found' : 'unreachable', error);
+  return new StringNetworkError(
+    notFound ? 'not-found' : 'unreachable',
+    error,
+    data.species,
+    data.species_source
+  );
 }
 
 export interface StringNetworkResult extends PPINetwork {
@@ -71,6 +86,7 @@ export interface StringNetworkResult extends PPINetwork {
 export function useStringNetwork({
   symbols,
   species = DEFAULT_SPECIES,
+  datasetId,
   requiredScore = 700,
   limit = 10,
   enabled = true,
@@ -79,7 +95,7 @@ export function useStringNetwork({
   const dropped = Math.max(0, symbols.length - requested.length);
 
   return useQuery<StringNetworkResult>({
-    queryKey: ['string-network', requested, species, requiredScore, limit],
+    queryKey: ['string-network', requested, species, datasetId ?? null, requiredScore, limit],
     enabled: enabled && requested.length > 0,
     // STRING is a third-party database; it does not move while a comparison is being read.
     staleTime: 1000 * 60 * 30,
@@ -94,16 +110,18 @@ export function useStringNetwork({
         {
           gene_symbols: requested,
           species,
+          ...(datasetId ? { dataset_id: datasetId } : {}),
           required_score: requiredScore,
           limit,
         }
       );
       const data = response.data ?? { nodes: [], edges: [] };
-      if (data.error) throw toStringError(data.error);
+      if (data.error) throw toStringError({ ...data, error: data.error });
       return {
         nodes: data.nodes ?? [],
         edges: data.edges ?? [],
         species: data.species,
+        species_source: data.species_source,
         count: data.count,
         requested,
         dropped,

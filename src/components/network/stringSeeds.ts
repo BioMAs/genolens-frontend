@@ -62,8 +62,11 @@ const MOUSE_TAXON = 10090;
  *    (rat writes them the same way, but mouse is by far the likelier);
  * 4. human.
  *
- * Nothing on the client knows the species an analysis was launched with — it lives in the
- * analysis parameters on the server — hence the inference.
+ * Only a fallback now. Nothing on the client knows the species an analysis was launched with —
+ * it lives in the analysis parameters on the server — so the panel also sends its dataset id,
+ * and the server asks STRING about that species instead whenever the dataset records one. Step 3
+ * is why: a rat project keyed by symbols reads as mouse here. The guess still decides for a DEG
+ * file uploaded without an analysis behind it.
  */
 export function stringTaxon(
   declaredSpecies: string | null | undefined,

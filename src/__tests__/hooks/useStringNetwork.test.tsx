@@ -39,6 +39,44 @@ it('returns the network when STRING answered', async () => {
     '/integrations/string/network',
     expect.objectContaining({ gene_symbols: ['TP53'], species: 10090 })
   );
+  expect(mockApi.post.mock.calls[0][1]).not.toHaveProperty('dataset_id');
+});
+
+// The species an analysis was launched with lives on the server: given the dataset, the server
+// asks STRING about it, and says so.
+it('sends the dataset, and reports the species the server actually used', async () => {
+  mockApi.post.mockResolvedValue({
+    data: { nodes: [], edges: [], species: 10116, species_source: 'dataset', count: 0 },
+  });
+
+  const { result } = renderHook(
+    () => useStringNetwork({ symbols: ['Trp53'], species: 10090, datasetId: 'deg-1' }),
+    { wrapper }
+  );
+
+  await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  expect(mockApi.post).toHaveBeenCalledWith(
+    '/integrations/string/network',
+    expect.objectContaining({ gene_symbols: ['Trp53'], species: 10090, dataset_id: 'deg-1' })
+  );
+  expect(result.current.data?.species).toBe(10116);
+  expect(result.current.data?.species_source).toBe('dataset');
+});
+
+it('carries the species STRING was asked about on a failure too', async () => {
+  mockApi.post.mockResolvedValue({
+    data: { nodes: [], edges: [], species: 7955, species_source: 'dataset', error: 'not_found' },
+  });
+
+  const { result } = renderHook(
+    () => useStringNetwork({ symbols: ['tp53a'], datasetId: 'deg-1' }),
+    { wrapper }
+  );
+
+  await waitFor(() => expect(result.current.isError).toBe(true));
+  const error = result.current.error as StringNetworkError;
+  expect(error.species).toBe(7955);
+  expect(error.speciesSource).toBe('dataset');
 });
 
 it('fails as not-found, without retrying, when STRING knew none of the genes', async () => {
