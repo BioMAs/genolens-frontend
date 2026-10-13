@@ -22,10 +22,18 @@ export interface NetworkEdge {
   evidence?: string;
 }
 
+/**
+ * Where the organism STRING was asked about came from. `dataset`: the species the analysis was
+ * launched with. `request`: the caller's own guess, for a dataset that records none.
+ */
+export type SpeciesSource = 'dataset' | 'request';
+
 export interface PPINetwork {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
+  /** NCBI taxon STRING was asked about. */
   species?: number;
+  species_source?: SpeciesSource;
   count?: number;
 }
 
