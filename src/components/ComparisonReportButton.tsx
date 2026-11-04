@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileText, Loader2, Download, AlertCircle, RefreshCw, Settings2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { SegmentedControl } from "@/components/ui/tabs";
 import { canExportAdvanced, PLAN_GATE_COPY } from "@/utils/plan";
 import {
   useComparisonReportStatus,
@@ -11,7 +12,7 @@ import {
 } from "@/hooks/useReportGeneration";
 import { useReportSettings } from "@/hooks/useReportSettings";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import type { CoverInfo, FirstPageType, LastPageType } from "@/types/report";
+import type { CoverInfo, FirstPageType, LastPageType, ReportTemplate } from "@/types/report";
 import PageModelSelector from "./report/PageModelSelector";
 import CoverInfoFields from "./report/CoverInfoFields";
 import api from "@/utils/api";
@@ -21,6 +22,18 @@ interface Props {
   comparisonName: string;
 }
 
+const FORMAT_ITEMS: { value: ReportTemplate; label: string }[] = [
+  { value: "latex", label: "Classic report" },
+  { value: "editorial", label: "OmicSkin editorial" },
+];
+
+const FORMAT_HELP: Record<ReportTemplate, string> = {
+  latex: "The branded scientific report: quality control, differential expression and enrichment.",
+  editorial:
+    "Claim substantiation dossier built on the CosmOmics nova: one OmicSkin score per claim, " +
+    "pathways and genes behind it, then the scientific results.",
+};
+
 export default function ComparisonReportButton({ datasetId, comparisonName }: Props) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -29,9 +42,13 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
   const [firstPageType, setFirstPageType] = useState<FirstPageType>("detailed");
   const [lastPageType, setLastPageType] = useState<LastPageType>("color");
   const [cover, setCover] = useState<CoverInfo>({});
+  const [template, setTemplate] = useState<ReportTemplate>("latex");
+  const [showFormatModal, setShowFormatModal] = useState(false);
 
   const { data: profile } = useUserProfile();
   const hasModule = profile?.has_report_customization === true;
+  // The OmicSkin editorial format reads the CosmOmics nova: cosmetics add-on only.
+  const hasCosmetics = profile?.has_cosmetics_module === true;
   const canExport = canExportAdvanced(profile);
 
   // Defaults pre-fill the editor (only fetched when the module is unlocked).
@@ -50,12 +67,16 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
     setFirstPageType(settings?.first_page_type ?? "detailed");
     setLastPageType(settings?.last_page_type ?? "color");
     setCover(settings?.cover_info ?? {});
+    setTemplate(job?.template ?? "latex");
     setShowModal(true);
   };
 
   const handleGenerate = () => {
     if (hasModule) {
       openCustomizeModal();
+    } else if (hasCosmetics) {
+      setTemplate(job?.template ?? "latex");
+      setShowFormatModal(true);
     } else {
       trigger.mutate();
     }
@@ -63,27 +84,59 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
 
   const handleGenerateWithCustomization = () => {
     trigger.mutate({
-      conclusion: conclusion || undefined,
-      materials_methods: materialsMethods || undefined,
-      first_page_type: firstPageType,
-      last_page_type: lastPageType,
-      cover_info: cover,
+      payload: {
+        conclusion: conclusion || undefined,
+        materials_methods: materialsMethods || undefined,
+        first_page_type: firstPageType,
+        last_page_type: lastPageType,
+        cover_info: cover,
+      },
+      template: hasCosmetics ? template : undefined,
     });
     setShowModal(false);
   };
+
+  const handleGenerateFormat = () => {
+    trigger.mutate({ template });
+    setShowFormatModal(false);
+  };
+
+  const formatSelector = (
+    <div className="mb-6">
+      <h3 className="mb-2 text-body-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+        Report format
+      </h3>
+      <SegmentedControl<ReportTemplate>
+        items={FORMAT_ITEMS}
+        value={template}
+        onValueChange={setTemplate}
+        label="Report format"
+        stretch
+      />
+      <p className="mt-2 text-caption" style={{ color: "var(--text-muted)" }}>
+        {FORMAT_HELP[template]}
+      </p>
+    </div>
+  );
+  const isEditorial = hasCosmetics && template === "editorial";
+  const downloadLabel = job?.template === "editorial" ? "Download OmicSkin Report" : "Download Report";
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
       const res = await api.get(`/datasets/${datasetId}/report/download`, {
         // _ts busts any HTTP cache so a freshly regenerated PDF is always fetched.
-        params: { comparison_name: comparisonName, _ts: Date.now() },
+        params: {
+          comparison_name: comparisonName,
+          ...(job?.template ? { template: job.template } : {}),
+          _ts: Date.now(),
+        },
         responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `report_${comparisonName}.pdf`;
+      a.download = `report_${comparisonName}_${job?.template ?? "latex"}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -98,6 +151,25 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
   return (
     <>
       {renderButton()}
+      {showFormatModal && (
+        <Dialog
+          open
+          onClose={() => setShowFormatModal(false)}
+          title="Generate report"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowFormatModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleGenerateFormat}>
+                <FileText className="h-4 w-4" aria-hidden /> Generate
+              </Button>
+            </>
+          }
+        >
+          {formatSelector}
+        </Dialog>
+      )}
       {showModal && (
         <Dialog
           open
@@ -121,6 +193,10 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               defaults and can be overridden for this report.
             </p>
 
+            {hasCosmetics && formatSelector}
+
+            {!isEditorial && (
+            <>
             <h3 className="mb-2 text-body-sm font-semibold" style={{ color: "var(--text-primary)" }}>Page layout</h3>
             <div className="mb-6">
               <PageModelSelector
@@ -134,12 +210,22 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
                 secondaryColor={settings?.secondary_color}
               />
             </div>
+            </>
+            )}
 
             <h3 className="mb-2 text-body-sm font-semibold" style={{ color: "var(--text-primary)" }}>Project information</h3>
             <div className="mb-6">
               <CoverInfoFields value={cover} onChange={setCover} />
             </div>
 
+            {isEditorial ? (
+              <p className="text-caption" style={{ color: "var(--text-muted)" }}>
+                The editorial report uses the project information above (study reference,
+                sponsor, sign-off). &ldquo;Checked by&rdquo; marks its AI-generated texts as
+                reviewed; Material &amp; Methods and conclusion apply to the classic report only.
+              </p>
+            ) : (
+            <>
             <label htmlFor="report-materials-methods" className="mb-1 block text-body-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               Material &amp; Methods
             </label>
@@ -165,6 +251,8 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
               className="w-full rounded-control p-3 text-body-sm"
               style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)" }}
             />
+            </>
+            )}
 
         </Dialog>
       )}
@@ -187,7 +275,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
  disabled:opacity-50"
           >
             {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {isDownloading ? "Downloading…" : "Download Report"}
+            {isDownloading ? "Downloading…" : downloadLabel}
           </button>
         );
       }
@@ -216,7 +304,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
  disabled:opacity-50"
           >
             {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {isDownloading ? "Downloading…" : "Download Report"}
+            {isDownloading ? "Downloading…" : downloadLabel}
           </button>
           <button
             onClick={handleGenerate}

@@ -4,6 +4,7 @@ import api from "@/utils/api";
 import type {
   ComparisonReportTriggerPayload,
   ReportJob,
+  ReportTemplate,
   ReportTriggerResponse,
 } from "@/types/report";
 
@@ -72,14 +73,25 @@ export function useComparisonReportStatus(
   });
 }
 
+export interface TriggerComparisonReportVars {
+  payload?: ComparisonReportTriggerPayload;
+  /** Report format; the backend defaults to the classic LaTeX report. */
+  template?: ReportTemplate;
+}
+
 export function useTriggerComparisonReport(datasetId: string, comparisonName: string) {
   const queryClient = useQueryClient();
-  return useMutation<ReportTriggerResponse, Error, ComparisonReportTriggerPayload | void>({
-    mutationFn: async (payload) => {
+  return useMutation<ReportTriggerResponse, Error, TriggerComparisonReportVars | void>({
+    mutationFn: async (vars) => {
       const res = await api.post<ReportTriggerResponse>(
         `/datasets/${datasetId}/report`,
-        payload ?? {},
-        { params: { comparison_name: comparisonName } },
+        vars?.payload ?? {},
+        {
+          params: {
+            comparison_name: comparisonName,
+            ...(vars?.template ? { template: vars.template } : {}),
+          },
+        },
       );
       return res.data;
     },

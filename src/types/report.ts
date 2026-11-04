@@ -1,11 +1,15 @@
 export type ReportJobStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
 
+/** Comparison report format: the classic LaTeX report or the OmicSkin editorial PDF. */
+export type ReportTemplate = "latex" | "editorial";
+
 export interface ReportJob {
   id: string;
   project_id: string;
   analysis_id: string | null;
   dataset_id: string | null;
   comparison_name: string | null;
+  template?: ReportTemplate;
   celery_task_id: string | null;
   status: ReportJobStatus;
   pdf_path: string | null;
