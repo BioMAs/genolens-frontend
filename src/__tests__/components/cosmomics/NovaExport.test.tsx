@@ -2,7 +2,7 @@
  * The exported figure says what it was computed from, draws only data, and is
  * marked DEMO when the dataset is a demonstration one.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import mock from '@/components/cosmomics/cosmomicsNovaMock.json';
 import { NovaExportFigure, useNovaExport } from '@/components/cosmomics/NovaExport';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
@@ -92,6 +92,19 @@ describe('exported figure', () => {
     // R-T6-1: what n.e. means, without a claim about what is stored.
     expect(text).toContain('n.e. — no significant term for this claim in the enrichment results');
     expect(text).not.toContain('not stored');
+  });
+
+  it('the exported figure counts sub-groups as sub-groups, never as pathways', () => {
+    for (const nova of [honestData, data]) {
+      const text = figureText({ data: nova });
+      expect(text).not.toMatch(/\b\d+ pathways?\b/i);
+      expect(text).toMatch(/\b\d+ sub-groups? for\b/);
+      cleanup();
+    }
+    // The sector label and the legend note agree on the unit: "40 sub-groups · 3 drawn".
+    const text = figureText();
+    expect(text).toMatch(/40 sub-groups(?: ·)? 3 drawn/);
+    expect(text).toContain('3 of 40 not-linked sub-groups drawn');
   });
 
   it('wraps its notes inside the frame: no line is longer than the figure is wide', () => {

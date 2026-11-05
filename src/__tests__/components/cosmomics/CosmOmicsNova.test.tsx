@@ -51,8 +51,8 @@ describe('CosmOmicsNova', () => {
 
   it('labels every sector and bubble for assistive technology', () => {
     render(<CosmOmicsNova data={data} seed="mock-dataset" />);
-    expect(screen.getByRole('button', { name: /^Firming: 5 pathways for, coherence 91%$/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Antioxidant: 3 pathways for, 1 against/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Firming: 5 sub-groups for, coherence 91%$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Antioxidant: 3 sub-groups for, 1 against/ })).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
         name: /^Mitochondrial respiration, combined p = .*, contradicts — Antioxidant$/,
@@ -89,7 +89,7 @@ describe('CosmOmicsNovaView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Antioxidant: / }).querySelector('path')!);
     const card = screen.getByRole('region', { name: 'Antioxidant claim card' });
-    expect(within(card).getByText('3 pathways for · 1 against')).toBeInTheDocument();
+    expect(within(card).getByText('3 sub-groups for · 1 against')).toBeInTheDocument();
     expect(within(card).getByText('coherence 63%')).toBeInTheDocument();
     const items = within(card).getAllByRole('listitem').map((li) => li.textContent);
     expect(items).toHaveLength(3);
@@ -140,7 +140,7 @@ describe('CosmOmicsNovaView', () => {
 
   it('says how many not-linked sub-groups exist and how many are drawn', () => {
     render(<CosmOmicsNovaView data={honestData} seed="honest" filename="nova" />);
-    expect(screen.getByText(/40 pathways not linked to a claim \(3 drawn\)/)).toBeInTheDocument();
+    expect(screen.getByText(/40 sub-groups not linked to a claim \(3 drawn\)/)).toBeInTheDocument();
   });
 
   it('tells what the nova was computed from, and what it left out', () => {
@@ -150,6 +150,26 @@ describe('CosmOmicsNovaView', () => {
     expect(how).toHaveTextContent('referential v3');
     expect(how).toHaveTextContent('4 not significant at α, still counted');
     expect(how).toHaveTextContent('2 without an adjusted p, left out');
+  });
+});
+
+describe('unit words', () => {
+  it('counts sub-groups as sub-groups, never as pathways', () => {
+    for (const nova of [honestData, data]) {
+      const { container, unmount } = render(<CosmOmicsNovaView data={nova} seed="units" filename="nova" />);
+      // Everything a reader or a screen reader gets: visible text and accessible names.
+      const labels = Array.from(container.querySelectorAll('[aria-label]')).map((el) => el.getAttribute('aria-label'));
+      const everything = [container.textContent, ...labels].join(' | ');
+      expect(everything).not.toMatch(/\b\d+ pathways?\b/i);
+      expect(everything).toMatch(/\b\d+ sub-groups? for\b/);
+      expect(everything).toMatch(/\b\d+ sub-groups? not linked to a claim/);
+      unmount();
+    }
+    // The same words on the card of a claim, and on the aria label of its sector.
+    render(<CosmOmicsNovaView data={honestData} seed="units" filename="nova" />);
+    expect(screen.getByRole('button', { name: /^Claim A: 2 sub-groups for, coherence 100%$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Claim B: 1 sub-group for, 1 against, 1 balanced, coherence 55%$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /: significant sub-groups attached to no claim$/ })).toBeInTheDocument();
   });
 });
 
@@ -174,7 +194,7 @@ describe('NovaClaimCard', () => {
   it('NovaClaimCard says 0 against without confirming', () => {
     render(<NovaClaimCard claim={honestData.claims[0]} />);
     const card = screen.getByRole('region', { name: 'Claim A claim card' });
-    expect(within(card).getByText('2 pathways for · 0 against')).toBeInTheDocument();
+    expect(within(card).getByText('2 sub-groups for · 0 against')).toBeInTheDocument();
     expect(card).toHaveTextContent('0 against');
     expect(card).toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
     // R-T6-1: the note says it is not a confirmation, and nothing on the card says "confirmed".
@@ -187,9 +207,43 @@ describe('NovaClaimCard', () => {
   it('says nothing about "0 against" when something is against, and counts the balanced ones', () => {
     render(<NovaClaimCard claim={claimB} />);
     const card = screen.getByRole('region', { name: 'Claim B claim card' });
-    expect(within(card).getByText('1 pathway for · 1 against · 1 balanced')).toBeInTheDocument();
+    expect(within(card).getByText('1 sub-group for · 1 against · 1 balanced')).toBeInTheDocument();
     expect(card).not.toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
     expect(card).toHaveTextContent('evidence both for and against');
+  });
+
+  it('keeps the "no contrary term" note for a claim that has no contrary term, and only for it', () => {
+    const firming = data.claims.find((c) => c.name === 'Firming')!;
+    // Firming has no sub-group against (n_against 0) but contrary terms inside sub-groups that
+    // go for it: "both ways". A note saying there is no contrary term would be false.
+    expect(firming.n_against).toBe(0);
+    expect(firming.s_anti).toBeGreaterThan(0);
+    render(<NovaClaimCard claim={firming} />);
+    let card = screen.getByRole('region', { name: 'Firming claim card' });
+    expect(within(card).getByText('5 sub-groups for · 0 against')).toBeInTheDocument();
+    expect(card).toHaveTextContent('evidence both for and against');
+    expect(card).not.toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
+    cleanup();
+
+    // The same when its only contrary term sits in a balanced sub-group (payload with a state).
+    const balancedOnly = {
+      ...claimB,
+      state: 'both_ways' as const,
+      n_for: 1,
+      n_against: 0,
+      n_balanced: 1,
+      subgroups: [claimB.subgroups[0], claimB.subgroups[2]],
+      s_anti: 3,
+    };
+    render(<NovaClaimCard claim={balancedOnly} />);
+    card = screen.getByRole('region', { name: 'Claim B claim card' });
+    expect(card).toHaveTextContent('1 sub-group for · 0 against · 1 balanced');
+    expect(card).not.toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
+    cleanup();
+
+    // Without any contrary term the note is there, for a payload with or without a state.
+    render(<NovaClaimCard claim={{ ...firming, s_anti: 0 }} />);
+    expect(screen.getByRole('region', { name: 'Firming claim card' })).toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
   });
 
   it('derives the state when the payload does not carry it (reference fixture)', () => {

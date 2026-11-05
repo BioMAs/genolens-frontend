@@ -49,7 +49,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
           {data.claims.length} claim{data.claims.length === 1 ? '' : 's'} with a significant pathway
           {notEvaluated > 0 && <>{' · '}{notEvaluated} not evaluated</>}
           {' · '}
-          {unlinked} pathway{unlinked === 1 ? '' : 's'} not linked to a claim
+          {unlinked} sub-group{unlinked === 1 ? '' : 's'} not linked to a claim
           {unlinkedDrawn < unlinked && ` (${unlinkedDrawn} drawn)`}
         </p>
         <div className="flex items-center gap-3">

@@ -87,6 +87,46 @@ describe('CosmOmicsAIPanel', () => {
     expect(screen.queryByRole('region', { name: 'Before the AI is called' })).toBeNull();
   });
 
+  it('AI panel consent takes focus, Escape and Cancel back out, and focus returns to the trigger', async () => {
+    get.mockImplementation(notFound);
+    post.mockResolvedValue({ data: { ...reading, cached: false } });
+    renderPanel();
+    const trigger = await screen.findByRole('button', { name: 'Generate interpretation' });
+    await waitFor(() => expect(trigger).toBeEnabled());
+    const open = () => {
+      fireEvent.click(trigger);
+      return screen.getByRole('region', { name: 'Before the AI is called' });
+    };
+
+    // Opening the consent moves focus to it, and what is sent is its description (read on focus).
+    let consent = open();
+    expect(consent).toHaveFocus();
+    expect(consent).toHaveAccessibleDescription(/names of the claims[\s\S]*Not sent: the comparison name/);
+
+    // Escape cancels, from the region or from a button inside it; focus is back on the trigger.
+    fireEvent.keyDown(consent, { key: 'Escape' });
+    expect(screen.queryByRole('region', { name: 'Before the AI is called' })).toBeNull();
+    expect(trigger).toHaveFocus();
+    consent = open();
+    fireEvent.keyDown(within(consent).getByRole('button', { name: 'Agree and generate' }), { key: 'Escape' });
+    expect(trigger).toHaveFocus();
+
+    // Cancel returns focus too.
+    consent = open();
+    fireEvent.click(within(consent).getByRole('button', { name: 'Cancel' }));
+    expect(trigger).toHaveFocus();
+    expect(post).not.toHaveBeenCalled();
+
+    // Agree: the request goes out, and focus is on the trigger (still focusable while it generates).
+    consent = open();
+    fireEvent.click(within(consent).getByRole('button', { name: 'Agree and generate' }));
+    expect(screen.getByRole('button', { name: 'Generating…' })).toHaveFocus();
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+    // A click on the busy trigger does not start a second call.
+    fireEvent.click(screen.getByRole('button', { name: /Generating…|Regenerate/ }));
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
   it('lets the user back out of the consent without any call', async () => {
     get.mockImplementation(notFound);
     renderPanel();

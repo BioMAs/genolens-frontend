@@ -16,7 +16,7 @@ import {
   NOVA,
   formatP,
   layoutNova,
-  pathwaysFor,
+  subgroupsFor,
   seededRandom,
   subgroupSide,
   wedgePath,
@@ -129,9 +129,9 @@ describe('nova layout vs reference SVG', () => {
       expect(title.y).toBeCloseTo(refTitles[i].y, 0);
       expect(title.anchor).toBe(refTitles[i].anchor);
     });
-    // Antioxidant's second line would spill over the disc: two lines, like the reference.
+    // Antioxidant's second line would spill over the disc: two lines, like the reference (only the unit word differs: sub-groups).
     const antioxidant = layout.labels.find((l) => l.bandKey === 'claim:Antioxidant')!;
-    expect(antioxidant.lines.map((l) => l.text)).toEqual(['Antioxidant', '3 pathways for', '1 against']);
+    expect(antioxidant.lines.map((l) => l.text)).toEqual(['Antioxidant', '3 sub-groups for', '1 against']);
   });
 });
 
@@ -309,7 +309,7 @@ describe('what the nova draws says what the payload says', () => {
     const l = layoutNova(honestData, { seed: 'honest' });
     expect(l.unlinked).toEqual({ total: 40, drawn: 3, termsCapped: false });
     const label = l.labels.find((x) => x.bandKey === 'other')!;
-    expect(label.lines.map((line) => line.text).join(' ')).toMatch(/40 pathways/);
+    expect(label.lines.map((line) => line.text).join(' ')).toMatch(/40 sub-groups/);
     expect(label.lines.map((line) => line.text).join(' ')).toMatch(/3 drawn/);
 
     const many: CosmOmicsNovaData = {
@@ -355,10 +355,10 @@ describe('formatting and colours', () => {
   });
 
   it('pluralises the label, omits "· 0 against" and counts balanced sub-groups', () => {
-    expect(pathwaysFor({ n_for: 5, n_against: 0 })).toBe('5 pathways for');
-    expect(pathwaysFor({ n_for: 1, n_against: 2 })).toBe('1 pathway for · 2 against');
-    expect(pathwaysFor({ n_for: 1, n_against: 1, n_balanced: 1 })).toBe('1 pathway for · 1 against · 1 balanced');
-    expect(pathwaysFor({ n_for: 2, n_against: 0, n_balanced: 3 })).toBe('2 pathways for · 3 balanced');
+    expect(subgroupsFor({ n_for: 5, n_against: 0 })).toBe('5 sub-groups for');
+    expect(subgroupsFor({ n_for: 1, n_against: 2 })).toBe('1 sub-group for · 2 against');
+    expect(subgroupsFor({ n_for: 1, n_against: 1, n_balanced: 1 })).toBe('1 sub-group for · 1 against · 1 balanced');
+    expect(subgroupsFor({ n_for: 2, n_against: 0, n_balanced: 3 })).toBe('2 sub-groups for · 3 balanced');
   });
 
   it('runs the balance ramp coral → grey → green', () => {

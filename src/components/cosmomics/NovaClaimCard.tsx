@@ -1,5 +1,5 @@
 import type { NovaClaim, NovaSide } from '@/types/cosmomics';
-import { formatP, pathwaysFor, subgroupSide } from './novaLayout';
+import { formatP, subgroupSide, subgroupsFor } from './novaLayout';
 import { NOVA_INK, claimColor } from './novaPalette';
 import { CLAIM_STATE_TEXT, claimStateOf } from './novaText';
 import { NOVA_FONT } from './CosmOmicsNova';
@@ -12,14 +12,16 @@ const SIDE: Record<NovaSide, { text: string; ink: string }> = {
 };
 
 /**
- * Claim card of the reference poster (`blocks()`): coherence bar, pathways for / against,
+ * Claim card of the reference poster (`blocks()`): coherence bar, sub-groups for / against,
  * and the three most significant sub-groups. The arrow gives the observed direction (up or
  * down) and is never coloured: direction is a fact about the data, not a verdict. Whether a
  * sub-group goes for the claim, against it or is balanced is said in words, next to its
  * combined p.
  *
- * "0 against" is not a confirmation: only terms present in the enrichment results can count
- * against a claim, and the card says what that count can and cannot show.
+ * "0 against" counts sub-groups. When the claim has no contrary term at all (state "for only"),
+ * the card says that this is not a confirmation: only terms present in the enrichment results can
+ * count against a claim. A claim with contrary terms inside sub-groups that go for it is "both
+ * ways" and gets no such note, as in the backend.
  */
 export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
   const color = claimColor(claim.name);
@@ -56,10 +58,10 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
         <span className="text-[13px] text-[var(--nova-ink-muted)]">coherence {coherence}%</span>
       </div>
       <p className="mt-2 text-[12.5px]" style={{ color: good ? NOVA_INK.ink : NOVA_INK.againstText }}>
-        {pathwaysFor(claim, { zeroAgainst: true })}
+        {subgroupsFor(claim, { zeroAgainst: true })}
       </p>
       <p className="mt-1 text-[11.5px] text-[var(--nova-ink-muted)]">{CLAIM_STATE_TEXT[claimStateOf(claim)]}</p>
-      {claim.n_against === 0 && (
+      {claimStateOf(claim) === 'for_only' && (
         <p className="mt-1 text-[11.5px] leading-snug text-[var(--nova-ink-subtle)]">
           0 against — only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation.
         </p>

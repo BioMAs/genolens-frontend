@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import {
@@ -32,6 +32,10 @@ interface Props {
 /**
  * What leaves for the model, said before the first call. It mirrors what the backend's
  * prompt carries: claim and sub-group names, their direction and side, counts, p-values.
+ *
+ * It takes focus when it opens, and what is sent is its accessible description, so a screen
+ * reader announces it and a keyboard user lands on it; Escape cancels. The caller gives
+ * focus back to the trigger on Cancel, Escape and Agree.
  */
 function Consent({
   model,
@@ -42,19 +46,32 @@ function Consent({
   onAgree: () => void;
   onCancel: () => void;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  const sentId = useId();
+  const notSentId = useId();
+  useEffect(() => ref.current?.focus(), []);
   return (
     <section
+      ref={ref}
+      tabIndex={-1}
       aria-label="Before the AI is called"
-      className="mb-3 space-y-2 rounded-card border border-subtle bg-surface-2 p-3 text-body-sm text-primary"
+      aria-describedby={`${sentId} ${notSentId}`}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation();
+          onCancel();
+        }
+      }}
+      className="mb-3 space-y-2 rounded-card border border-subtle bg-surface-2 p-3 text-body-sm text-primary outline-none focus-visible:ring-2 focus-visible:ring-[var(--sl-teal-dark)]"
     >
       <p className="font-semibold">Before the AI is called</p>
-      <p>
+      <p id={sentId}>
         This reading is written by a hosted language model. What is sent: the names of the claims and of their
         pathway sub-groups, the direction of each sub-group (up or down) and its side (for, against or balanced),
         the counts of sub-groups per side, and their p-values. Only the strongest claims and sub-groups fit in the
         request.
       </p>
-      <p>Not sent: the comparison name, any gene list, any identifier or setting, your raw data.</p>
+      <p id={notSentId}>Not sent: the comparison name, any gene list, any identifier or setting, your raw data.</p>
       <p>
         {model
           ? `Model: ${model}, the one that wrote the saved text. `
@@ -96,6 +113,7 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, alpha = DE
   const mutation = useCosmOmicsInterpretation(datasetId, comparisonName, alpha);
   const [agreed, setAgreed] = useState(false);
   const [asking, setAsking] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const reading = allowed ? (saved.data ?? null) : null;
   const stale = reading?.stale === true;
@@ -103,7 +121,14 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, alpha = DE
   // A text is saved: the user asked for a new one, so the server must not serve the old one.
   const generate = () => mutation.mutate(!!reading);
   const request = () => (agreed ? generate() : setAsking(true));
+  // The consent unmounts on Agree, Cancel and Escape: focus goes back to the trigger first, so it is
+  // never left on a button that is about to disappear.
+  const cancel = () => {
+    triggerRef.current?.focus();
+    setAsking(false);
+  };
   const agree = () => {
+    triggerRef.current?.focus();
     setAgreed(true);
     setAsking(false);
     generate();
@@ -124,10 +149,13 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, alpha = DE
           AI cosmetic reading
         </h3>
         <button
+          ref={triggerRef}
           type="button"
-          onClick={request}
-          disabled={disabled || !allowed || busy || saved.isLoading || asking}
-          className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium text-on-accent disabled:opacity-50"
+          // Busy and asking are transient: `aria-disabled` keeps the trigger focusable, so focus can come back to it.
+          onClick={() => !busy && !asking && request()}
+          disabled={disabled || !allowed || saved.isLoading}
+          aria-disabled={busy || asking || undefined}
+          className="flex items-center gap-2 rounded-control px-3 py-1.5 text-caption font-medium text-on-accent disabled:opacity-50 aria-disabled:opacity-50"
           style={{ background: 'var(--sl-teal-dark)' }}
         >
           {busy ? (
@@ -151,7 +179,7 @@ export default function CosmOmicsAIPanel({ datasetId, comparisonName, alpha = DE
         </p>
       )}
 
-      {asking && <Consent model={reading?.model} onAgree={agree} onCancel={() => setAsking(false)} />}
+      {asking && <Consent model={reading?.model} onAgree={agree} onCancel={cancel} />}
 
       {busy && (
         <p className="text-caption text-secondary">

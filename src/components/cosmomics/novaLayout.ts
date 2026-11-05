@@ -116,16 +116,17 @@ export function subgroupSide(subgroup: Pick<NovaSubgroup, 'delta'>): NovaSide {
 }
 
 /**
- * "5 pathways for · 1 against · 2 balanced". The figure's labels leave out "· 0 against", as
+ * "5 sub-groups for · 1 against · 2 balanced" (the counts are of sub-groups, groups of terms, not of
+ * pathways). The figure's labels leave out "· 0 against", as
  * the reference does; the claim card passes `zeroAgainst` and writes it, because "0 against"
  * is something to read with care, not something to leave unsaid.
  */
-export function pathwaysFor(
+export function subgroupsFor(
   claim: Pick<NovaClaim, 'n_for' | 'n_against' | 'n_balanced'>,
   { zeroAgainst = false }: { zeroAgainst?: boolean } = {},
 ): string {
   const n = claim.n_for;
-  let label = `${n} pathway${n === 1 ? '' : 's'} for`;
+  let label = `${n} sub-group${n === 1 ? '' : 's'} for`;
   if (claim.n_against || zeroAgainst) label += ` · ${claim.n_against} against`;
   if (claim.n_balanced) label += ` · ${claim.n_balanced} balanced`;
   return label;
@@ -476,10 +477,10 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   };
   for (const band of bands) {
     if (band.kind === 'claim') {
-      makeLabel(band, band.name, pathwaysFor(band.claim!), band.color.text, NOVA_INK.muted);
+      makeLabel(band, band.name, subgroupsFor(band.claim!), band.color.text, NOVA_INK.muted);
     } else {
       const n = unlinkedTotal;
-      const count = `${n} pathway${n === 1 ? '' : 's'}`;
+      const count = `${n} sub-group${n === 1 ? '' : 's'}`;
       // Only the strongest few are drawn: the label says how many.
       const sub = unlinkedDrawn < n ? `${count} · ${unlinkedDrawn} drawn` : count;
       makeLabel(band, band.name, sub, NOVA_INK.againstText, NOVA_INK.againstText);

@@ -47,9 +47,9 @@ For skin studies, the CosmOmics **pathway nova** shows which pathways go for or 
 ### Reading the nova
 
 - Each **sector** is a claim, as wide as the evidence behind it. Each **bubble** is a group of related ontology terms (a pathway sub-group), further out when more significant. Green means its terms move in the direction the claim expects, coral against it, grey that the evidence for and against **cancels** (a *balanced* sub-group, counted neither for nor against and never hatched). **Hatching** marks the evidence against a claim.
-- The arrow on a pathway (↑ or ↓) is the direction in which it is observed. It is never coloured: up or down is not good or bad.
+- The arrow on a sub-group (↑ or ↓) is the direction in which it is observed. It is never coloured: up or down is not good or bad.
 - Click a sector for the **claim card**: its counts (for, against, balanced), whether its evidence is for only, against only or both, and its **coherence**, the share of the evidence weight that goes for the claim. Coherence is not a probability. Hover a bubble for the terms behind it.
-- A claim with **0 against** is not confirmed: only terms present in the enrichment results can count against a claim, and no contrary term is not a confirmation.
+- A claim whose evidence is **for only** (no contrary term at all) is not thereby confirmed: only terms present in the enrichment results can count against a claim, and no contrary term is not a confirmation. A claim can show **0 against** (no sub-group against it) and still carry contrary terms inside sub-groups that go for it: its state then reads "evidence both for and against".
 - Claims of the referential with no significant term in the comparison are listed as **not evaluated** (n.e.): there is no significant term for them in the enrichment results, so nothing was evaluated.
 
 ### What the p-values are
@@ -60,7 +60,7 @@ The decorative dots of the background are not data: they are off by default, and
 
 ### Export
 
-The nova exports as SVG or PNG with its legend, the claims not evaluated, how many of the not-linked pathways are drawn (the strongest twelve), and what it was computed from. The export of a demonstration dataset is marked DEMO.
+The nova exports as SVG or PNG with its legend, the claims not evaluated, how many of the not-linked sub-groups are drawn (the strongest twelve), and what it was computed from. The export of a demonstration dataset is marked DEMO.
 
 ### AI reading
 

@@ -8,7 +8,7 @@ import {
   arcPath,
   formatP,
   layoutNova,
-  pathwaysFor,
+  subgroupsFor,
   subgroupSide,
   wedgePath,
   type NovaBand,
@@ -23,9 +23,9 @@ export const NOVA_FONT = "Inter, 'Helvetica Neue', Arial, sans-serif";
 const HALO = { paintOrder: 'stroke', stroke: NOVA_INK.background, strokeWidth: 4, strokeLinejoin: 'round' } as const;
 
 function sectorLabel(band: NovaBand): string {
-  if (band.kind === 'other') return `${band.name}: significant pathways attached to no claim`;
+  if (band.kind === 'other') return `${band.name}: significant sub-groups attached to no claim`;
   const claim = band.claim!;
-  return `${claim.name}: ${pathwaysFor(claim).replace(' · ', ', ')}, coherence ${Math.round(100 * claim.coherence)}%`;
+  return `${claim.name}: ${subgroupsFor(claim).replaceAll(' · ', ', ')}, coherence ${Math.round(100 * claim.coherence)}%`;
 }
 
 const STANCE = { for: 'supports', against: 'contradicts', balanced: 'is balanced for' } as const;
