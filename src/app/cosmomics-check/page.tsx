@@ -9,6 +9,9 @@
  *   /cosmomics-check?perf=1     15 claims · 300 sub-groups · 2 000 terms, render time shown
  * A real payload can be injected before load (Playwright `addInitScript`) as
  * `window.__COSMOMICS_DATA__`; it is never fetched nor stored by the page.
+ *
+ * Whatever the source — fixture, synthetic or injected — the figure it exports
+ * carries a line saying it is not a study result (`benchMarking`).
  */
 
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -16,7 +19,7 @@ import { notFound, useSearchParams } from 'next/navigation';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
 import CosmOmicsNovaView from '@/components/cosmomics/CosmOmicsNovaView';
 import mock from '@/components/cosmomics/cosmomicsNovaMock.json';
-import { syntheticNova } from '@/components/cosmomics/novaSynthetic';
+import { benchMarking, syntheticNova, type BenchSource } from '@/components/cosmomics/novaSynthetic';
 
 declare global {
   interface Window {
@@ -28,7 +31,7 @@ declare global {
 function Bench() {
   const params = useSearchParams();
   const perf = params.get('perf') === '1';
-  const [bench, setBench] = useState<{ data: CosmOmicsNovaData; source: string } | null>(null);
+  const [bench, setBench] = useState<{ data: CosmOmicsNovaData; source: BenchSource } | null>(null);
   const [renderMs, setRenderMs] = useState<number | null>(null);
   const started = useRef(0);
 
@@ -36,10 +39,10 @@ function Bench() {
   // React render and DOM commit of the nova, not the synthetic generator.
   useEffect(() => {
     const next = perf
-      ? { data: syntheticNova(15, 300, 2000), source: 'synthetic' }
+      ? { data: syntheticNova(15, 300, 2000), source: 'synthetic' as const }
       : window.__COSMOMICS_DATA__
-        ? { data: window.__COSMOMICS_DATA__, source: 'injected' }
-        : { data: mock as unknown as CosmOmicsNovaData, source: 'reference fixture' };
+        ? { data: window.__COSMOMICS_DATA__, source: 'injected' as const }
+        : { data: mock as unknown as CosmOmicsNovaData, source: 'reference fixture' as const };
     started.current = performance.now();
     // Deliberate: the injected payload only exists in the browser, and the clock
     // must start right before the commit it measures.
@@ -70,7 +73,7 @@ function Bench() {
         data={data}
         seed={`bench|${source}`}
         filename={`CosmOmics_nova_${source.replace(/\s+/g, '_')}`}
-        footer={source === 'reference fixture' ? 'Illustrative data · not study results' : undefined}
+        footer={benchMarking(source)}
       />
     </div>
   );

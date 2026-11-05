@@ -8,7 +8,10 @@ import CosmOmicsNova from './CosmOmicsNova';
 import NovaClaimCard, { NovaClaimList } from './NovaClaimCard';
 import NovaDataTable from './NovaDataTable';
 import NovaLegend from './NovaLegend';
+import NovaNotEvaluated from './NovaNotEvaluated';
+import NovaProvenance from './NovaProvenance';
 import { useNovaExport } from './NovaExport';
+import { UNLINKED_DRAWN } from './novaLayout';
 
 interface Props {
   data: CosmOmicsNovaData;
@@ -16,7 +19,7 @@ interface Props {
   seed: string;
   /** Exported file name, without extension. */
   filename: string;
-  /** Bottom-right line of the exported figure. */
+  /** An extra last line of the exported figure, under what the nova was computed from. */
   footer?: string;
 }
 
@@ -26,19 +29,16 @@ interface Props {
  * check page).
  */
 export default function CosmOmicsNovaView({ data, seed, filename, footer }: Props) {
-  const [showDust, setShowDust] = useState(true);
+  // Decorative dots are not data: off until the user asks.
+  const [showDust, setShowDust] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const hatchId = `nova-legend-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   // The strongest claim is open until the user picks another one.
   const selected = data.claims.find((c) => c.name === picked) ?? data.claims[0] ?? null;
-  const exporter = useNovaExport({
-    data,
-    seed,
-    showDust,
-    filename,
-    footer: footer ?? `${data.contrast} · adjusted p (Benjamini–Hochberg) · GenoLens`,
-  });
+  const exporter = useNovaExport({ data, seed, filename, footer });
   const unlinked = data.unlinked_total ?? data.unlinked.length;
+  const unlinkedDrawn = Math.min(data.unlinked.length, UNLINKED_DRAWN);
+  const notEvaluated = data.not_evaluated?.length ?? 0;
 
   return (
     <div className="space-y-4" data-cosmomics-view>
@@ -47,8 +47,10 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
           <span className="font-semibold text-primary">{data.contrast}</span>
           {' · '}
           {data.claims.length} claim{data.claims.length === 1 ? '' : 's'} with a significant pathway
+          {notEvaluated > 0 && <>{' · '}{notEvaluated} not evaluated</>}
           {' · '}
           {unlinked} pathway{unlinked === 1 ? '' : 's'} not linked to a claim
+          {unlinkedDrawn < unlinked && ` (${unlinkedDrawn} drawn)`}
         </p>
         <div className="flex items-center gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-caption text-secondary">
@@ -58,7 +60,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
               onChange={(e) => setShowDust(e.target.checked)}
               className="h-3.5 w-3.5"
             />
-            Background dust
+            Decorative background dots (not data)
           </label>
           {exporter.busy ? (
             <span className="inline-flex h-8 w-8 items-center justify-center" aria-label="Exporting">
@@ -116,6 +118,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
               <NovaClaimList claims={data.claims} selected={selected?.name ?? null} onSelect={setPicked} />
             </div>
           )}
+          <NovaNotEvaluated names={data.not_evaluated} />
           <p className="text-[11.5px] leading-snug text-[var(--nova-ink-subtle)]">
             Click a sector or a claim to read its card. Hover a bubble for the ontology terms behind it.
           </p>
@@ -126,6 +129,7 @@ export default function CosmOmicsNovaView({ data, seed, filename, footer }: Prop
         <NovaLegend hatchId={hatchId} />
       </div>
 
+      <NovaProvenance data={data} />
       <NovaDataTable data={data} />
       {exporter.figure}
     </div>

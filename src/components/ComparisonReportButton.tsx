@@ -30,8 +30,8 @@ const FORMAT_ITEMS: { value: ReportTemplate; label: string }[] = [
 const FORMAT_HELP: Record<ReportTemplate, string> = {
   latex: "The branded scientific report: quality control, differential expression and enrichment.",
   editorial:
-    "Claim substantiation dossier built on the CosmOmics nova: one OmicSkin score per claim, " +
-    "pathways and genes behind it, then the scientific results.",
+    "Transcriptomic evidence review built on the CosmOmics nova: pathway evidence by claim, " +
+    "with one OmicSkin score per claim, the pathways and genes behind it, then the scientific results.",
 };
 
 export default function ComparisonReportButton({ datasetId, comparisonName }: Props) {

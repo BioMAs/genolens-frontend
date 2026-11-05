@@ -5,9 +5,10 @@ import type { CosmOmicsNovaData } from '@/types/cosmomics';
 import { exportChartPng, exportChartSvg } from '@/utils/chartExport';
 import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import { HatchPattern, NOVA_FONT, NovaGraphic } from './CosmOmicsNova';
-import { NovaLegendSvg } from './NovaLegend';
-import { layoutNova } from './novaLayout';
+import { LEGEND_NOTES, NovaLegendSvg, legendHeight } from './NovaLegend';
+import { UNLINKED_TERMS_DRAWN, layoutNova, type NovaLayout } from './novaLayout';
 import { NOVA_INK } from './novaPalette';
+import { provenanceLines, wrapNote } from './novaText';
 
 /** Width of the exported figure, as the reference flyer (1000 × 1030). */
 export const EXPORT_WIDTH = 1000;
@@ -42,24 +43,48 @@ export function loadLogoDataUrl(): Promise<string> {
 export interface NovaExportFigureProps {
   data: CosmOmicsNovaData;
   seed: string;
-  showDust: boolean;
   /** Logo as a data URI; the "SciLicium" wordmark is written instead when absent. */
   logoHref?: string;
-  footer: string;
+  /** An extra last line: what the figure is not (bench marking), or a note of the caller's. */
+  footer?: string;
+}
+
+/**
+ * What the figure says under the legend, one string per sentence: what the numbers
+ * mean, which claims were not evaluated, how much of the not-linked sector is drawn,
+ * what the nova was computed from, and the caller's own line.
+ */
+function exportNotes(data: CosmOmicsNovaData, layout: NovaLayout, footer?: string): string[] {
+  const { total, drawn, termsCapped } = layout.unlinked;
+  return [
+    ...LEGEND_NOTES,
+    ...(data.not_evaluated?.length ? [`Not evaluated: ${data.not_evaluated.join(', ')}`] : []),
+    ...(total
+      ? [
+          `${drawn} of ${total} not-linked sub-groups drawn, strongest first` +
+            (termsCapped ? ` · each shows its ${UNLINKED_TERMS_DRAWN} strongest terms at most` : ''),
+        ]
+      : []),
+    ...provenanceLines(data),
+    ...(footer ? [footer] : []),
+  ].flatMap((note) => wrapNote(note));
 }
 
 /**
  * The exported figure: "CosmOmics by SciLicium" header with the contrast, the
- * nova in the reference frame, the reference legend at the bottom.
+ * nova in the reference frame, the reference legend and what the nova was
+ * computed from at the bottom. Only data is drawn: no decorative dots.
  */
 export const NovaExportFigure = forwardRef<SVGSVGElement, NovaExportFigureProps>(function NovaExportFigure(
-  { data, seed, showDust, logoHref, footer },
+  { data, seed, logoHref, footer },
   ref,
 ) {
-  const layout = useMemo(() => layoutNova(data, { seed, showDust }), [data, seed, showDust]);
+  const layout = useMemo(() => layoutNova(data, { seed, showDust: false }), [data, seed]);
+  const notes = useMemo(() => exportNotes(data, layout, footer), [data, layout, footer]);
   // Labels pushed upwards by many narrow sectors must not run into the header.
   const shift = Math.max(0, HEADER_BOTTOM - layout.bounds.y);
-  const height = Math.max(1030, Math.ceil(layout.bounds.y + layout.bounds.height + shift) + 90);
+  const legendY = Math.ceil(layout.bounds.y + layout.bounds.height + shift) + 40;
+  const height = Math.max(1030, legendY + legendHeight(notes.length) + 24);
   const hatchId = 'cosmomics-export-hatch';
   const logoW = 170;
   const logoH = (logoW * 190) / 1024;
@@ -100,7 +125,7 @@ export const NovaExportFigure = forwardRef<SVGSVGElement, NovaExportFigureProps>
         <g transform={shift ? `translate(0, ${shift})` : undefined}>
           <NovaGraphic layout={layout} hatchId={hatchId} />
         </g>
-        <NovaLegendSvg y={height - 46} footer={footer} hatchId={hatchId} />
+        <NovaLegendSvg y={legendY} hatchId={hatchId} notes={notes} />
       </g>
     </svg>
   );
@@ -109,21 +134,23 @@ export const NovaExportFigure = forwardRef<SVGSVGElement, NovaExportFigureProps>
 interface UseNovaExport {
   data: CosmOmicsNovaData;
   seed: string;
-  showDust: boolean;
   filename: string;
-  footer: string;
+  footer?: string;
 }
 
 /**
  * Export in two steps: mount the figure off-screen, then hand its `<svg>` to the
- * shared chart exporter (fonts embedded, demo watermark, PNG at ×3).
+ * shared chart exporter (fonts embedded, demo watermark, PNG at ×3). The export is
+ * marked DEMO when the viewing account is a demo one, or when the dataset itself is a
+ * demonstration dataset (`provenance.demo`): the mark follows the data, not only the viewer.
  */
-export function useNovaExport({ data, seed, showDust, filename, footer }: UseNovaExport): {
+export function useNovaExport({ data, seed, filename, footer }: UseNovaExport): {
   run: (kind: 'svg' | 'png') => Promise<void>;
   busy: boolean;
   figure: ReactNode;
 } {
-  const demo = useIsDemoAccount();
+  const demoAccount = useIsDemoAccount();
+  const demo = demoAccount || data.provenance?.demo === true;
   const ref = useRef<SVGSVGElement>(null);
   const [job, setJob] = useState<{ kind: 'svg' | 'png'; logo?: string } | null>(null);
 
@@ -147,7 +174,7 @@ export function useNovaExport({ data, seed, showDust, filename, footer }: UseNov
 
   const figure = job ? (
     <div aria-hidden style={{ position: 'fixed', left: -20000, top: 0, width: EXPORT_WIDTH, pointerEvents: 'none' }}>
-      <NovaExportFigure ref={ref} data={data} seed={seed} showDust={showDust} logoHref={job.logo} footer={footer} />
+      <NovaExportFigure ref={ref} data={data} seed={seed} logoHref={job.logo} footer={footer} />
     </div>
   ) : null;
 

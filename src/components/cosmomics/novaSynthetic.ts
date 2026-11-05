@@ -1,6 +1,24 @@
 import type { CosmOmicsNovaData, NovaClaim, NovaSubgroup, NovaTerm } from '@/types/cosmomics';
 import { seededRandom } from './novaLayout';
 
+/** Where the bench's payload comes from: none of them is a GenoLens result. */
+export type BenchSource = 'reference fixture' | 'synthetic' | 'injected';
+
+/**
+ * The line the bench prints on whatever it exports, so a figure drawn from a fixture, a
+ * generator or a payload pushed in by a test is never mistaken for a study result.
+ */
+export function benchMarking(source: BenchSource): string {
+  switch (source) {
+    case 'reference fixture':
+      return 'Illustrative data · not study results';
+    case 'synthetic':
+      return 'Synthetic data · not study results';
+    case 'injected':
+      return 'Injected payload · development bench, not a GenoLens export';
+  }
+}
+
 /**
  * A synthetic nova of a given size, built with the backend definitions
  * (S_pro / S_anti / balance / coherence) — for the performance bench only.

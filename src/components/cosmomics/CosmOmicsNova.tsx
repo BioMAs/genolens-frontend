@@ -9,6 +9,7 @@ import {
   formatP,
   layoutNova,
   pathwaysFor,
+  subgroupSide,
   wedgePath,
   type NovaBand,
   type NovaBubble,
@@ -27,11 +28,13 @@ function sectorLabel(band: NovaBand): string {
   return `${claim.name}: ${pathwaysFor(claim).replace(' · ', ', ')}, coherence ${Math.round(100 * claim.coherence)}%`;
 }
 
+const STANCE = { for: 'supports', against: 'contradicts', balanced: 'is balanced for' } as const;
+
 function bubbleLabel(bubble: NovaBubble): string {
   const sub = bubble.subgroup;
   const owner = bubble.claimName ?? 'not linked to a claim';
-  const stance = bubble.claimName ? (sub.delta > 0 ? 'supports' : 'contradicts') : 'pathway';
-  return `${sub.name}, ${formatP(sub.nl)}, ${stance} — ${owner}`;
+  const stance = bubble.claimName ? STANCE[subgroupSide(sub)] : 'pathway';
+  return `${sub.name}, ${formatP(sub.nl, 'combined')}, ${stance} — ${owner}`;
 }
 
 export function HatchPattern({ id }: { id: string }) {
@@ -53,8 +56,8 @@ interface GraphicProps {
 
 /**
  * The nova itself, as SVG children in the reference frame (centre 500,555).
- * Drawn in the reference order: sectors, dust, rings, terms, bubbles, rims,
- * core, claim labels. No halo, no glow, no line to the centre, no pathway name.
+ * Drawn in the reference order: sectors, dust (when asked), rings, terms, bubbles,
+ * rims, core, claim labels. No halo, no glow, no line to the centre, no pathway name.
  */
 export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHoverBubble }: GraphicProps) {
   const interactive = !!onSelectBand;
@@ -255,7 +258,7 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
     >
       <p className="text-[13px] font-semibold text-[var(--nova-ink-strong)]">{sub.name}</p>
       <p className="mt-1 text-[var(--nova-ink-muted)]">
-        {formatP(sub.nl)}
+        {formatP(sub.nl, 'combined')}
         {bubble.claimName && (
           <>
             {' · '}S<sub>pro</sub> {sub.s_pro.toFixed(1)} · S<sub>anti</sub> {sub.s_anti.toFixed(1)}
@@ -265,11 +268,12 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
       <ul className="mt-2 max-h-48 space-y-1 overflow-hidden">
         {sub.terms.map((term, i) => (
           <li key={`${term.id}-${term.obs}-${i}`} className="flex gap-2">
+            {/* Direction is a fact about the data, not a verdict: the arrow is never coloured. */}
             <span
               className="font-semibold"
-              style={{
-                color: term.effect > 0 ? NOVA_INK.green : term.effect < 0 ? NOVA_INK.coral : NOVA_INK.againstText,
-              }}
+              data-direction={term.obs}
+              aria-label={`${term.obs}-regulated`}
+              style={{ color: NOVA_INK.ink }}
             >
               {term.obs === 'up' ? '↑' : '↓'}
             </span>
@@ -277,8 +281,10 @@ function BubbleTooltip({ bubble, layout }: { bubble: NovaBubble; layout: NovaLay
               <span className="text-[var(--nova-ink-subtle)]">{term.id}</span> {term.label}
               <span className="whitespace-nowrap text-[var(--nova-ink-subtle)]">
                 {' · '}
-                {formatP(term.nl)}
+                {formatP(term.nl, 'adjusted')}
                 {term.effect !== 0 && ` · ${term.effect > 0 ? 'pro' : 'anti'}`}
+                {term.significant === false && ' · not significant'}
+                {term.both_directions && ' · both directions'}
               </span>
             </span>
           </li>
@@ -292,6 +298,7 @@ export interface CosmOmicsNovaProps {
   data: CosmOmicsNovaData;
   /** Seed of the decorative jitter: the dataset id (plus comparison). */
   seed: string;
+  /** Decorative dots: not data, off unless asked for. */
   showDust?: boolean;
   selectedClaim?: string | null;
   onSelectClaim?: (name: string) => void;
@@ -302,7 +309,7 @@ export interface CosmOmicsNovaProps {
 export default function CosmOmicsNova({
   data,
   seed,
-  showDust = true,
+  showDust = false,
   selectedClaim = null,
   onSelectClaim,
   className,
