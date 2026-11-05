@@ -89,6 +89,9 @@ describe('exported figure', () => {
     expect(text).toContain('Terms not significant at α still contribute with their weight.');
     expect(text).toContain('Coherence = S pro / (S pro + S anti)');
     expect(text).toContain('Not evaluated: Claim C, Claim D');
+    // R-T6-1: what n.e. means, without a claim about what is stored.
+    expect(text).toContain('n.e. — no significant term for this claim in the enrichment results');
+    expect(text).not.toContain('not stored');
   });
 
   it('wraps its notes inside the frame: no line is longer than the figure is wide', () => {

@@ -49,8 +49,8 @@ For skin studies, the CosmOmics **pathway nova** shows which pathways go for or 
 - Each **sector** is a claim, as wide as the evidence behind it. Each **bubble** is a group of related ontology terms (a pathway sub-group), further out when more significant. Green means its terms move in the direction the claim expects, coral against it, grey that the evidence for and against **cancels** (a *balanced* sub-group, counted neither for nor against and never hatched). **Hatching** marks the evidence against a claim.
 - The arrow on a pathway (↑ or ↓) is the direction in which it is observed. It is never coloured: up or down is not good or bad.
 - Click a sector for the **claim card**: its counts (for, against, balanced), whether its evidence is for only, against only or both, and its **coherence**, the share of the evidence weight that goes for the claim. Coherence is not a probability. Hover a bubble for the terms behind it.
-- A claim with **0 against** is not confirmed. Only significant terms are stored, so the count does not show that nothing contradicts the claim.
-- Claims of the referential with no significant term in the comparison are listed as **not evaluated** (n.e.): nothing was evaluated for them.
+- A claim with **0 against** is not confirmed: only terms present in the enrichment results can count against a claim, and no contrary term is not a confirmation.
+- Claims of the referential with no significant term in the comparison are listed as **not evaluated** (n.e.): there is no significant term for them in the enrichment results, so nothing was evaluated.
 
 ### What the p-values are
 

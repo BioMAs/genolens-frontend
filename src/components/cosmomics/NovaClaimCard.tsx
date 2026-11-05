@@ -18,8 +18,8 @@ const SIDE: Record<NovaSide, { text: string; ink: string }> = {
  * sub-group goes for the claim, against it or is balanced is said in words, next to its
  * combined p.
  *
- * "0 against" is not a confirmation: only significant terms are stored, and the card says
- * what that count can and cannot show.
+ * "0 against" is not a confirmation: only terms present in the enrichment results can count
+ * against a claim, and the card says what that count can and cannot show.
  */
 export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
   const color = claimColor(claim.name);
@@ -61,7 +61,7 @@ export default function NovaClaimCard({ claim }: { claim: NovaClaim }) {
       <p className="mt-1 text-[11.5px] text-[var(--nova-ink-muted)]">{CLAIM_STATE_TEXT[claimStateOf(claim)]}</p>
       {claim.n_against === 0 && (
         <p className="mt-1 text-[11.5px] leading-snug text-[var(--nova-ink-subtle)]">
-          0 against — only significant terms are stored, so this does not show that nothing contradicts the claim.
+          0 against — only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation.
         </p>
       )}
       <ul className="mt-2 space-y-1">

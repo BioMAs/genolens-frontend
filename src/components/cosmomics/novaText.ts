@@ -24,7 +24,7 @@ export const CLAIM_STATE_COUNT_TEXT: Record<NovaClaimState, string> = {
 };
 
 /** Shown for a claim of the referential that has no significant term in this comparison. */
-export const NOT_EVALUATED_TEXT = 'n.e. — no significant term (non-significant terms are not stored)';
+export const NOT_EVALUATED_TEXT = 'n.e. — no significant term for this claim in the enrichment results';
 
 /** R-P1: a stored term that is not significant is drawn faded, and still counted. */
 export const STILL_COUNTED_TEXT = 'Terms not significant at α still contribute with their weight.';

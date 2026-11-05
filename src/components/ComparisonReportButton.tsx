@@ -221,8 +221,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
             {isEditorial ? (
               <p className="text-caption" style={{ color: "var(--text-muted)" }}>
                 The editorial report uses the project information above (study reference,
-                sponsor, sign-off). &ldquo;Checked by&rdquo; marks its AI-generated texts as
-                reviewed; Material &amp; Methods and conclusion apply to the classic report only.
+                sponsor, sign-off). &ldquo;Checked by&rdquo; is printed as the report&apos;s sign-off only; it
+                does not mark AI-generated texts as reviewed. Material &amp; Methods and conclusion
+                apply to the classic report only.
               </p>
             ) : (
             <>

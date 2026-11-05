@@ -135,7 +135,7 @@ describe('CosmOmicsNovaView', () => {
     const section = screen.getByRole('region', { name: 'Claims not evaluated' });
     expect(within(section).getByText('Claim C')).toBeInTheDocument();
     expect(within(section).getByText('Claim D')).toBeInTheDocument();
-    expect(section).toHaveTextContent('n.e. — no significant term (non-significant terms are not stored)');
+    expect(section).toHaveTextContent('n.e. — no significant term for this claim in the enrichment results');
   });
 
   it('says how many not-linked sub-groups exist and how many are drawn', () => {
@@ -160,7 +160,7 @@ describe('legend', () => {
     expect(legend).toHaveTextContent(
       'Balanced: evidence for and against cancels (Δ = 0), counted neither for nor against',
     );
-    expect(legend).toHaveTextContent('n.e. — no significant term (non-significant terms are not stored)');
+    expect(legend).toHaveTextContent('n.e. — no significant term for this claim in the enrichment results');
     expect(legend).toHaveTextContent(
       'Coherence = S pro / (S pro + S anti): the share of the evidence weight that goes for the claim, not a probability',
     );
@@ -176,8 +176,10 @@ describe('NovaClaimCard', () => {
     const card = screen.getByRole('region', { name: 'Claim A claim card' });
     expect(within(card).getByText('2 pathways for · 0 against')).toBeInTheDocument();
     expect(card).toHaveTextContent('0 against');
-    expect(card).toHaveTextContent('only significant terms are stored');
-    expect(card.textContent).not.toMatch(/confirm/i);
+    expect(card).toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
+    // R-T6-1: the note says it is not a confirmation, and nothing on the card says "confirmed".
+    expect(card.textContent).not.toMatch(/confirmed/i);
+    expect(card.textContent).not.toMatch(/only significant terms are stored/i);
     // The state is named, in words.
     expect(card).toHaveTextContent('evidence for only, none against');
   });
@@ -186,7 +188,7 @@ describe('NovaClaimCard', () => {
     render(<NovaClaimCard claim={claimB} />);
     const card = screen.getByRole('region', { name: 'Claim B claim card' });
     expect(within(card).getByText('1 pathway for · 1 against · 1 balanced')).toBeInTheDocument();
-    expect(card).not.toHaveTextContent('only significant terms are stored');
+    expect(card).not.toHaveTextContent('only terms present in the enrichment results can count against a claim; no contrary term is not a confirmation');
     expect(card).toHaveTextContent('evidence both for and against');
   });
 
