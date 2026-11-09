@@ -47,8 +47,8 @@ const MODULES: ModuleMeta[] = [
     capabilities: [
       'Pathway nova: claims weighed by their supporting pathways',
       'Evidence for and against each claim, term by term',
-      'AI cosmetic reading & regulatory note',
-      'SVG / PNG export of the nova',
+      'AI reading of the nova, only after you agree to what is sent',
+      'SVG / PNG export of the nova, with what it was computed from',
     ],
   },
   {

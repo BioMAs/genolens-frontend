@@ -1,5 +1,6 @@
 import { scaleSqrt } from 'd3';
-import type { CosmOmicsNovaData, NovaClaim, NovaSubgroup, NovaTerm } from '@/types/cosmomics';
+import type { CosmOmicsNovaData, NovaClaim, NovaSide, NovaSubgroup, NovaTerm } from '@/types/cosmomics';
+import { DEFAULT_ALPHA } from './novaText';
 import { NOVA_INK, balanceColor, claimColor, hashString, type ClaimColor } from './novaPalette';
 
 /**
@@ -9,8 +10,10 @@ import { NOVA_INK, balanceColor, claimColor, hashString, type ClaimColor } from 
  * (docs/reference/cosmomics/cosmomics_pathway_nova.py, `nova()`), same constants
  * and same coordinate frame (centre 500,555, radius 330), so the reference SVG
  * can be compared to this layout number for number. The only difference is the
- * random stream: angular jitter and decorative dust come from a generator seeded
- * with the dataset id, so a given dataset always renders the same picture.
+ * random stream: the angular jitter of a sub-group and of its term dots (the angle
+ * carries no data) comes from a generator seeded with the dataset id, so a given
+ * dataset always renders the same picture. A radius is never jittered: it is the
+ * term's or the sub-group's own −log10 p. Decorative dust is off unless asked for.
  */
 
 export const NOVA = {
@@ -30,11 +33,15 @@ const DEG = Math.PI / 180;
 /**
  * The "not linked" sector is a fixed 36° slice. On real data it can receive hundreds of
  * significant pathways, some grouping dozens of terms: draw the strongest few, keep their
- * bubbles below the largest claim bubble of the reference, and their dots readable.
+ * bubbles below the largest claim bubble of the reference, and their dots readable. What is
+ * not drawn is said (`NovaLayout.unlinked`, the sector label and the export legend).
  */
-const UNLINKED_DRAWN = 12;
-const UNLINKED_TERMS_DRAWN = 8;
+export const UNLINKED_DRAWN = 12;
+export const UNLINKED_TERMS_DRAWN = 8;
 const UNLINKED_MAX_BUBBLE = 9;
+
+/** Same tolerance as the backend's `_TIE_EPS`: a delta this close to 0 is a tie. */
+const TIE_EPS = 1e-9;
 
 // ── Seeded randomness ───────────────────────────────────────────────────────
 
@@ -76,9 +83,16 @@ const SUPERSCRIPT: Record<string, string> = {
   '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
 };
 
-/** "p = 0.012" below 10⁻³, "p = 5×10⁻¹⁶" beyond — as in the reference. */
-export function formatP(nl: number): string {
-  if (nl < 3) return `p = ${(10 ** -nl).toFixed(3)}`;
+export type PKind = 'adjusted' | 'combined';
+
+/**
+ * "p = 0.012" below 10⁻³, "p = 5×10⁻¹⁶" beyond — as in the reference. With a kind, the
+ * label says which p it is: "adj. p" for a term (its adjusted p), "combined p" for a
+ * sub-group (the Stouffer combination of its terms, not an adjusted p).
+ */
+export function formatP(nl: number, kind?: PKind): string {
+  const prefix = kind === 'adjusted' ? 'adj. p' : kind === 'combined' ? 'combined p' : 'p';
+  if (nl < 3) return `${prefix} = ${(10 ** -nl).toFixed(3)}`;
   let e = Math.ceil(nl);
   let m = Math.round(10 ** (e - nl));
   if (m >= 10) {
@@ -86,13 +100,36 @@ export function formatP(nl: number): string {
     e -= 1;
   }
   const exp = `-${e}`.split('').map((ch) => SUPERSCRIPT[ch] ?? ch).join('');
-  return `p = ${m}×10${exp}`;
+  return `${prefix} = ${m}×10${exp}`;
 }
 
-export function pathwaysFor(claim: Pick<NovaClaim, 'n_for' | 'n_against'>): string {
+/**
+ * Which side of its claim a sub-group stands on: "for" when delta > 0, "against" when
+ * delta < 0, "balanced" when the evidence cancels (counted neither for nor against, and
+ * never drawn as contrary). The backend's rule, so the page and the payload's
+ * `n_for` / `n_against` / `n_balanced` agree.
+ */
+export function subgroupSide(subgroup: Pick<NovaSubgroup, 'delta'>): NovaSide {
+  if (subgroup.delta > TIE_EPS) return 'for';
+  if (subgroup.delta < -TIE_EPS) return 'against';
+  return 'balanced';
+}
+
+/**
+ * "5 sub-groups for · 1 against · 2 balanced" (the counts are of sub-groups, groups of terms, not of
+ * pathways). The figure's labels leave out "· 0 against", as
+ * the reference does; the claim card passes `zeroAgainst` and writes it, because "0 against"
+ * is something to read with care, not something to leave unsaid.
+ */
+export function subgroupsFor(
+  claim: Pick<NovaClaim, 'n_for' | 'n_against' | 'n_balanced'>,
+  { zeroAgainst = false }: { zeroAgainst?: boolean } = {},
+): string {
   const n = claim.n_for;
-  const base = `${n} pathway${n === 1 ? '' : 's'} for`;
-  return claim.n_against ? `${base} · ${claim.n_against} against` : base;
+  let label = `${n} sub-group${n === 1 ? '' : 's'} for`;
+  if (claim.n_against || zeroAgainst) label += ` · ${claim.n_against} against`;
+  if (claim.n_balanced) label += ` · ${claim.n_balanced} balanced`;
+  return label;
 }
 
 // ── Layout types ────────────────────────────────────────────────────────────
@@ -178,14 +215,25 @@ export interface NovaLayout {
   /** Tight frame around the circle and every label. */
   bounds: { x: number; y: number; width: number; height: number };
   condition: string;
+  /**
+   * The not-linked sector shows the strongest few: how many exist, how many are drawn, and
+   * whether some drawn sub-group shows only its strongest terms.
+   */
+  unlinked: { total: number; drawn: number; termsCapped: boolean };
 }
 
 export interface NovaLayoutOptions {
   /** Seed of every random position: the dataset id (plus comparison). */
   seed: string;
+  /** Decorative dots below the significance ring: not data, off unless asked for. */
   showDust?: boolean;
-  /** Terms at p < alpha are drawn opaque. */
+  /** Significance threshold: the ring is drawn there. Defaults to the payload's own. */
   alpha?: number;
+}
+
+/** The numerator of "A_vs_B", like the backend's `condition_label` — the name in the central disc. */
+export function conditionOf(contrast: string | undefined): string {
+  return (contrast ?? '').split(/[_\s]+vs[_\s]+/i)[0].trim();
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -225,7 +273,7 @@ function overlaps(a: [number, number, number, number], b: [number, number, numbe
 
 export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions): NovaLayout {
   const { cx, cy, R, gap, otherWidth } = NOVA;
-  const alpha = options.alpha ?? data.alpha ?? 0.05;
+  const alpha = options.alpha ?? data.alpha ?? DEFAULT_ALPHA;
   const sigNl = -Math.log10(alpha);
   const claims = [...data.claims].sort((a, b) => b.s_pro - a.s_pro);
   const unlinked = data.unlinked ?? [];
@@ -270,11 +318,11 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   };
   bands.push(other);
 
-  // Decorative dust below the p = 0.05 ring, in each claim's colour.
+  // Decorative dust below the significance ring, in each claim's colour. Not data: off by default.
   const dust: NovaDustLayer[] = [];
-  if (options.showDust ?? true) {
+  if (options.showDust ?? false) {
     const rng = seededRandom(`${options.seed}:dust`);
-    const inner = rad(1.3);
+    const inner = rad(sigNl);
     for (const band of bands) {
       const n = Math.floor(9 * (band.end - band.start));
       const parts: string[] = [];
@@ -293,9 +341,9 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
 
   // Significance rings, labelled inside the "not linked" sector.
   const rings: NovaRing[] = [];
-  const threshold = rad(-Math.log10(0.05));
+  const threshold = rad(sigNl);
   const [tx, ty] = polar(threshold, other.mid);
-  rings.push({ key: 'p05', r: threshold, kind: 'threshold', label: 'p = 0.05', labelX: tx, labelY: ty + 4 });
+  rings.push({ key: 'p05', r: threshold, kind: 'threshold', label: `p = ${alpha}`, labelX: tx, labelY: ty + 4 });
   for (const e of [5, 10]) {
     if (e >= cap * 0.97) continue;
     const r = rad(e);
@@ -321,6 +369,7 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   };
 
   const bubbles: NovaBubble[] = [];
+  let termsCapped = false;
   for (const band of bands) {
     let items: Array<[NovaSubgroup, number]>;
     if (band.kind === 'other') {
@@ -328,8 +377,10 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
       items = place(strongest, band.start, band.end);
     } else {
       const subs = band.claim!.subgroups;
-      const against = subs.filter((s) => s.delta <= 0);
-      items = place(subs.filter((s) => s.delta > 0), band.start, band.split);
+      // Only a sub-group that goes against the claim sits in the hatched part: a balanced one
+      // (delta 0) stands with those for it, in grey, and is never drawn as contrary.
+      const against = subs.filter((s) => subgroupSide(s) === 'against');
+      items = place(subs.filter((s) => subgroupSide(s) !== 'against'), band.start, band.split);
       items = items.concat(
         band.end - band.split > 3 ? place(against, band.split, band.end) : place(against, band.start, band.end),
       );
@@ -342,8 +393,10 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
       const drawnTerms = isClaim
         ? sub.terms
         : [...sub.terms].sort((a, b) => b.nl - a.nl).slice(0, UNLINKED_TERMS_DRAWN);
+      if (!isClaim && sub.terms.length > drawnTerms.length) termsCapped = true;
       const terms: NovaTermDot[] = drawnTerms.map((term, i) => {
-        const [px, py] = polar(rad(term.nl) + rng.normal(0, 1.5), angle + rng.normal(0, 0.9));
+        // The radius is the term's own −log10 p; only its angle is scattered, to keep dots apart.
+        const [px, py] = polar(rad(term.nl), angle + rng.normal(0, 0.9));
         const fill = term.effect === 0 ? NOVA_INK.against : term.effect > 0 ? NOVA_INK.green : NOVA_INK.coral;
         return {
           key: `${key}|${term.id}|${term.obs}|${i}`,
@@ -351,7 +404,8 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
           y: py,
           r: termDotSize(term.nl),
           fill,
-          opacity: term.nl > sigNl ? 0.85 : 0.4,
+          // A stored term that is not significant at alpha still counts; it is drawn faded.
+          opacity: (term.significant ?? term.nl > sigNl) ? 0.85 : 0.4,
           term,
         };
       });
@@ -372,6 +426,9 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
       });
     }
   }
+
+  const unlinkedTotal = Math.max(data.unlinked_total ?? 0, unlinked.length);
+  const unlinkedDrawn = Math.min(unlinked.length, UNLINKED_DRAWN);
 
   // Claim labels outside the circle (reference `lab()`), then de-overlapped.
   const labels: NovaLabel[] = [];
@@ -420,10 +477,13 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   };
   for (const band of bands) {
     if (band.kind === 'claim') {
-      makeLabel(band, band.name, pathwaysFor(band.claim!), band.color.text, NOVA_INK.muted);
+      makeLabel(band, band.name, subgroupsFor(band.claim!), band.color.text, NOVA_INK.muted);
     } else {
-      const n = data.unlinked_total ?? unlinked.length;
-      makeLabel(band, band.name, `${n} pathway${n === 1 ? '' : 's'}`, NOVA_INK.againstText, NOVA_INK.againstText);
+      const n = unlinkedTotal;
+      const count = `${n} sub-group${n === 1 ? '' : 's'}`;
+      // Only the strongest few are drawn: the label says how many.
+      const sub = unlinkedDrawn < n ? `${count} · ${unlinkedDrawn} drawn` : count;
+      makeLabel(band, band.name, sub, NOVA_INK.againstText, NOVA_INK.againstText);
     }
   }
   resolveLabelOverlaps(labels);
@@ -453,7 +513,8 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
     bubbles,
     labels,
     bounds,
-    condition: data.condition || 'Active',
+    condition: data.condition || conditionOf(data.contrast),
+    unlinked: { total: unlinkedTotal, drawn: unlinkedDrawn, termsCapped },
   };
 }
 

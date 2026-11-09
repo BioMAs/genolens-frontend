@@ -30,8 +30,8 @@ const FORMAT_ITEMS: { value: ReportTemplate; label: string }[] = [
 const FORMAT_HELP: Record<ReportTemplate, string> = {
   latex: "The branded scientific report: quality control, differential expression and enrichment.",
   editorial:
-    "Claim substantiation dossier built on the CosmOmics nova: one OmicSkin score per claim, " +
-    "pathways and genes behind it, then the scientific results.",
+    "Transcriptomic evidence review built on the CosmOmics nova: pathway evidence by claim, " +
+    "with one OmicSkin score per claim, the pathways and genes behind it, then the scientific results.",
 };
 
 export default function ComparisonReportButton({ datasetId, comparisonName }: Props) {
@@ -221,8 +221,9 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
             {isEditorial ? (
               <p className="text-caption" style={{ color: "var(--text-muted)" }}>
                 The editorial report uses the project information above (study reference,
-                sponsor, sign-off). &ldquo;Checked by&rdquo; marks its AI-generated texts as
-                reviewed; Material &amp; Methods and conclusion apply to the classic report only.
+                sponsor, sign-off). &ldquo;Checked by&rdquo; is printed as the report&apos;s sign-off only; it
+                does not mark AI-generated texts as reviewed. Material &amp; Methods and conclusion
+                apply to the classic report only.
               </p>
             ) : (
             <>

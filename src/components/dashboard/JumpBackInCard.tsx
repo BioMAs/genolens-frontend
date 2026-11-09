@@ -6,28 +6,37 @@ import { useProjectSummary, ComparisonSummary } from '@/hooks/useProjectData';
 import { useCosmOmicsNova } from '@/hooks/useCosmOmicsNova';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { claimColor, NOVA_INK } from '@/components/cosmomics/novaPalette';
-import type { CosmOmicsNovaData } from '@/types/cosmomics';
+import { CLAIM_STATE_COUNT_TEXT, claimStateOf } from '@/components/cosmomics/novaText';
+import type { CosmOmicsNovaData, NovaClaim, NovaClaimState } from '@/types/cosmomics';
 
 /**
  * JumpBackInCard — dashboard "Jump back in" panel from the redesign (2a/4b).
  * Surfaces the most recent comparison with its CosmOmics read: the strongest
- * claims and how coherent their pathway evidence is, a plain-language verdict
- * and claim pills. Falls back to DEG counts when the add-on is locked or the
- * nova has no claim.
+ * claims and how coherent their pathway evidence is, how many claims are in
+ * each state, and claim pills with their counts. It rules on nothing: states
+ * and counts, no verdict. Falls back to DEG counts when the add-on is locked
+ * or the nova has no claim.
  */
 
-/** Claims whose evidence is mostly for them, strongest first (the nova's sector order). */
-function supportedClaims(nova: CosmOmicsNovaData) {
-  return nova.claims.filter((c) => c.n_for > 0 && c.coherence >= 0.5);
+const STATE_ORDER: NovaClaimState[] = ['for_only', 'both_ways', 'against_only'];
+
+/** "2 claims with a significant pathway", then "1 for only · 1 for and against · 2 not evaluated". */
+function evidenceSummary(nova: CosmOmicsNovaData): { headline: string; detail: string } {
+  const n = nova.claims.length;
+  const counts = STATE_ORDER.map((state) => ({
+    state,
+    n: nova.claims.filter((c) => claimStateOf(c) === state).length,
+  }))
+    .filter((c) => c.n > 0)
+    .map((c) => `${c.n} ${CLAIM_STATE_COUNT_TEXT[c.state]}`);
+  const notEvaluated = nova.not_evaluated?.length ?? 0;
+  if (notEvaluated) counts.push(`${notEvaluated} not evaluated`);
+  return { headline: `${n} claim${n === 1 ? '' : 's'} with a significant pathway`, detail: counts.join(' · ') };
 }
 
-function buildVerdict(nova: CosmOmicsNovaData): string {
-  const names = supportedClaims(nova)
-    .slice(0, 3)
-    .map((c) => c.name.toLowerCase());
-  if (!names.length) return 'Mixed pathway evidence across cosmetic claims';
-  if (names.length === 1) return `${names[0][0].toUpperCase()}${names[0].slice(1)}`;
-  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`.replace(/^./, (m) => m.toUpperCase());
+/** "7 for · 1 against", and "· 2 balanced" when some sub-group's evidence cancels. */
+function claimCounts(claim: NovaClaim): string {
+  return `${claim.n_for} for · ${claim.n_against} against${claim.n_balanced ? ` · ${claim.n_balanced} balanced` : ''}`;
 }
 
 function pickComparison(comps: ComparisonSummary[]): ComparisonSummary | undefined {
@@ -50,6 +59,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
   const hasNova = skinActive && !!nova && nova.claims.length > 0;
   const topClaims = (nova?.claims ?? []).slice(0, 3);
   const title = comp.name.replace(/_?vs_?/i, ' vs ');
+  const evidence = hasNova && nova ? evidenceSummary(nova) : null;
 
   return (
     <section>
@@ -87,7 +97,11 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                 return (
                   <div key={claim.name} className="flex items-center gap-3">
                     <span className="w-24 truncate text-micro" style={{ color: color.text }}>{claim.name}</span>
-                    <div className="h-[7px] flex-1 overflow-hidden rounded-sm" style={{ background: 'var(--n-100)' }}>
+                    <div
+                      className="h-[7px] flex-1 overflow-hidden rounded-sm"
+                      style={{ background: 'var(--n-100)' }}
+                      title="Coherence: the share of the evidence weight that goes for the claim"
+                    >
                       <div
                         className="h-full rounded-sm"
                         style={{ width: `${coherence}%`, background: coherence >= 50 ? NOVA_INK.green : NOVA_INK.against }}
@@ -115,16 +129,19 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
         {/* Divider (lg only) */}
         <div className="hidden h-full w-px lg:block" style={{ background: 'var(--border-subtle)' }} />
 
-        {/* Middle — verdict + claim pills */}
+        {/* Middle — claim states and counts + claim pills */}
         <div>
           <div className="mb-2 text-micro uppercase tracking-[0.5px]" style={{ color: 'var(--sl-teal)' }}>
-            {hasNova ? 'CosmOmics verdict' : 'Results'}
+            {hasNova ? 'Pathway evidence by claim' : 'Results'}
           </div>
           {hasNova ? (
             <>
-              <div className="mb-3 font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
-                {buildVerdict(nova!)}
+              <div className="font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+                {evidence!.headline}
               </div>
+              {evidence!.detail && (
+                <div className="mb-3 text-micro" style={{ color: 'var(--text-muted)' }}>{evidence!.detail}</div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {topClaims.map((claim) => {
                   const color = claimColor(claim.name).fill;
@@ -139,7 +156,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
                       }}
                     >
                       <span className="h-2 w-2 rounded-pill" style={{ background: color }} />
-                      {claim.name} · {claim.n_for} for · {claim.n_against} against
+                      {claim.name} · {claimCounts(claim)}
                     </span>
                   );
                 })}

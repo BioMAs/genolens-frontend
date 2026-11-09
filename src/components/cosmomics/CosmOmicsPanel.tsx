@@ -69,6 +69,15 @@ export default function CosmOmicsPanel({ datasetId, comparisonName }: Props) {
     );
   }
 
+  if (data.status === 'no_enrichment') {
+    return (
+      <Message icon={<Database className="h-10 w-10" />} title="No enrichment results for this comparison">
+        No enrichment of the up- or down-regulated genes is stored for it, so there is nothing to map onto the
+        claims. Run functional enrichment for this comparison first.
+      </Message>
+    );
+  }
+
   if (!data.claims.length) {
     const n = data.coverage?.n_terms_significant ?? 0;
     return (
@@ -86,7 +95,7 @@ export default function CosmOmicsPanel({ datasetId, comparisonName }: Props) {
         seed={`${datasetId}|${comparisonName}`}
         filename={`CosmOmics_nova_${comparisonName}`}
       />
-      <CosmOmicsAIPanel datasetId={datasetId} comparisonName={comparisonName} />
+      <CosmOmicsAIPanel datasetId={datasetId} comparisonName={comparisonName} alpha={data.alpha} />
     </div>
   );
 }

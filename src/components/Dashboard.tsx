@@ -46,7 +46,7 @@ import { useAutoTour } from '@/hooks/useAutoTour';
  * survoler une paire surligne sa ligne.
  *
  * La carte « Jump back in » ne reste que pour les comptes dotes du module
- * peau : elle y apporte une lecture (couches cutanees, verdict) que la liste
+ * peau : elle y apporte une lecture (couches cutanees, etats des allegations) que la liste
  * n'a pas. Sans ce module, elle repetait la premiere ligne des resultats.
  */
 

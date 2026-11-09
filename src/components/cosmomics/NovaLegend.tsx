@@ -1,20 +1,43 @@
 import { NOVA_FONT, HatchPattern } from './CosmOmicsNova';
 import { NOVA_INK, claimColor } from './novaPalette';
+import { NOT_EVALUATED_TEXT, STILL_COUNTED_TEXT } from './novaText';
 
-/** The five legend entries of the reference figure, in its order and wording. */
+/** The legend entries: the reference figure's five, then what the honest nova adds. */
 export const LEGEND_TEXT = {
   subgroup: 'Sub-group: terms for → against the claim',
   term: 'Individual ontology term',
   hatch: 'Evidence against the claim (hatched)',
   size: 'Size = |Δ pro − anti|',
-  width: 'Sector width = claim importance (Σ −log10 p of its terms)',
+  width: 'Sector width = claim importance (Σ −log10 adj. p of its terms)',
+  balanced: 'Balanced: evidence for and against cancels (Δ = 0), counted neither for nor against',
+  faded: 'Faded dot: term not significant at α',
+  coherence:
+    'Coherence = S pro / (S pro + S anti): the share of the evidence weight that goes for the claim, not a probability',
+  notEvaluated: NOT_EVALUATED_TEXT,
+  stillCounted: STILL_COUNTED_TEXT,
 } as const;
+
+/** Lines of the exported legend that say what a number means rather than what a mark is. */
+export const LEGEND_NOTES = [LEGEND_TEXT.coherence, LEGEND_TEXT.notEvaluated, LEGEND_TEXT.stillCounted] as const;
 
 const SECTOR_SWATCH = claimColor('Firming').fill;
 
-/** Reference legend as SVG, for the exported figure (reference `legend(y)`). */
-export function NovaLegendSvg({ y, footer, hatchId }: { y: number; footer: string; hatchId: string }) {
-  const y2 = y + 22;
+const ROW = 22;
+const NOTE = 16;
+
+/** Height of the exported legend: three rows of marks, then `noteLines` lines of notes. */
+export function legendHeight(noteLines: number): number {
+  return 2 * ROW + 28 + noteLines * NOTE;
+}
+
+/**
+ * Reference legend as SVG, for the exported figure (reference `legend(y)`), with its
+ * added entries and one line per note: what the numbers mean, what is not drawn, what
+ * the nova was computed from. `notes` are already wrapped to the width of the figure.
+ */
+export function NovaLegendSvg({ y, hatchId, notes }: { y: number; hatchId: string; notes: string[] }) {
+  const y2 = y + ROW;
+  const y3 = y + 2 * ROW;
   const text = (x: number, ty: number, s: string) => (
     <text x={x} y={ty} fontSize={13} fill={NOVA_INK.ink}>
       {s}
@@ -36,9 +59,22 @@ export function NovaLegendSvg({ y, footer, hatchId }: { y: number; footer: strin
       {text(84, y2, LEGEND_TEXT.size)}
       <path d={`M262,${y2} L280,${y2 - 14} A22,22 0 0 1 284,${y2 - 1} Z`} fill={SECTOR_SWATCH} opacity={0.5} />
       {text(288, y2, LEGEND_TEXT.width)}
-      <text x={950} y={y2} fontSize={11} fill={NOVA_INK.againstText} textAnchor="end">
-        {footer}
-      </text>
+      <circle cx={56} cy={y3 - 5} r={3.5} fill={NOVA_INK.neutral} />
+      {text(70, y3, LEGEND_TEXT.balanced)}
+      <circle cx={662} cy={y3 - 5} r={3} fill={NOVA_INK.green} opacity={0.4} />
+      {text(674, y3, LEGEND_TEXT.faded)}
+      {notes.map((line, i) => (
+        <text
+          key={i}
+          data-note
+          x={50}
+          y={y3 + 28 + i * NOTE}
+          fontSize={12}
+          fill={NOVA_INK.againstText}
+        >
+          {line}
+        </text>
+      ))}
     </g>
   );
 }
@@ -96,6 +132,21 @@ export default function NovaLegend({ hatchId }: { hatchId: string }) {
         </Swatch>
         {LEGEND_TEXT.width}
       </li>
+      <li className="flex items-center gap-2">
+        <Swatch width={12}>
+          <circle cx={6} cy={7} r={3.5} fill={NOVA_INK.neutral} />
+        </Swatch>
+        {LEGEND_TEXT.balanced}
+      </li>
+      <li className="flex items-center gap-2">
+        <Swatch width={12}>
+          <circle cx={6} cy={7} r={3} fill={NOVA_INK.green} opacity={0.4} />
+        </Swatch>
+        {LEGEND_TEXT.faded}
+      </li>
+      <li className="basis-full">{LEGEND_TEXT.coherence}</li>
+      <li className="basis-full">{LEGEND_TEXT.notEvaluated}</li>
+      <li className="basis-full">{LEGEND_TEXT.stillCounted}</li>
     </ul>
   );
 }

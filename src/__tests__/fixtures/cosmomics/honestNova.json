@@ -1,0 +1,176 @@
+{
+  "status": "ok",
+  "contrast": "Group X vs Group Y",
+  "condition": "Group X",
+  "alpha": 0.05,
+  "p_source": "padj (Benjamini–Hochberg, GenoLens enrichment)",
+  "claims": [
+    {
+      "name": "Claim A",
+      "state": "for_only",
+      "importance": 11,
+      "s_pro": 11,
+      "s_anti": 0,
+      "coherence": 1,
+      "n_for": 2,
+      "n_against": 0,
+      "n_balanced": 0,
+      "best_subgroup": "Sub-group A1",
+      "best_nl": 6.2,
+      "best_for_subgroup": "Sub-group A1",
+      "best_for_nl": 6.2,
+      "subgroups": [
+        {
+          "name": "Sub-group A1",
+          "nl": 6.2,
+          "s_pro": 9,
+          "s_anti": 0,
+          "delta": 9,
+          "balance": 1,
+          "obs": "up",
+          "n_terms_both_directions": 0,
+          "terms": [
+            { "id": "TERM:0001", "label": "Term A1a", "nl": 6, "effect": 1, "obs": "up", "both_directions": false, "significant": true },
+            { "id": "TERM:0002", "label": "Term A1b", "nl": 3, "effect": 1, "obs": "up", "both_directions": false, "significant": true }
+          ]
+        },
+        {
+          "name": "Sub-group A2",
+          "nl": 3.1,
+          "s_pro": 2,
+          "s_anti": 0,
+          "delta": 2,
+          "balance": 1,
+          "obs": "down",
+          "n_terms_both_directions": 0,
+          "terms": [
+            { "id": "TERM:0003", "label": "Term A2a", "nl": 2, "effect": 1, "obs": "down", "both_directions": false, "significant": true }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Claim B",
+      "state": "both_ways",
+      "importance": 16.5,
+      "s_pro": 9,
+      "s_anti": 7.5,
+      "coherence": 0.545,
+      "n_for": 1,
+      "n_against": 1,
+      "n_balanced": 1,
+      "best_subgroup": "Sub-group B1",
+      "best_nl": 5,
+      "best_for_subgroup": "Sub-group B1",
+      "best_for_nl": 5,
+      "subgroups": [
+        {
+          "name": "Sub-group B1",
+          "nl": 5,
+          "s_pro": 6,
+          "s_anti": 0,
+          "delta": 6,
+          "balance": 1,
+          "obs": "up",
+          "n_terms_both_directions": 0,
+          "terms": [
+            { "id": "TERM:0004", "label": "Term B1a", "nl": 6, "effect": 1, "obs": "up", "both_directions": false, "significant": true }
+          ]
+        },
+        {
+          "name": "Sub-group B2",
+          "nl": 4,
+          "s_pro": 0,
+          "s_anti": 4.5,
+          "delta": -4.5,
+          "balance": -1,
+          "obs": "down",
+          "n_terms_both_directions": 0,
+          "terms": [
+            { "id": "TERM:0005", "label": "Term B2a", "nl": 3.5, "effect": -1, "obs": "down", "both_directions": false, "significant": true },
+            { "id": "TERM:0006", "label": "Term B2b", "nl": 1, "effect": -1, "obs": "down", "both_directions": false, "significant": false }
+          ]
+        },
+        {
+          "name": "Sub-group B3",
+          "nl": 2.2,
+          "s_pro": 3,
+          "s_anti": 3,
+          "delta": 0,
+          "balance": 0,
+          "obs": "up",
+          "n_terms_both_directions": 1,
+          "terms": [
+            { "id": "TERM:0007", "label": "Term B3a", "nl": 3, "effect": 1, "obs": "up", "both_directions": true, "significant": true },
+            { "id": "TERM:0007", "label": "Term B3a", "nl": 3, "effect": -1, "obs": "down", "both_directions": true, "significant": true }
+          ]
+        }
+      ]
+    }
+  ],
+  "not_evaluated": ["Claim C", "Claim D"],
+  "unlinked": [
+    {
+      "name": "Other sub-group 1",
+      "nl": 3.4,
+      "s_pro": 0,
+      "s_anti": 0,
+      "delta": 0,
+      "balance": 0,
+      "obs": "up",
+      "n_terms_both_directions": 0,
+      "terms": [
+        { "id": "TERM:0101", "label": "Term O1a", "nl": 3.4, "effect": 0, "obs": "up", "both_directions": false, "significant": true }
+      ]
+    },
+    {
+      "name": "Other sub-group 2",
+      "nl": 2.6,
+      "s_pro": 0,
+      "s_anti": 0,
+      "delta": 0,
+      "balance": 0,
+      "obs": "down",
+      "n_terms_both_directions": 0,
+      "terms": [
+        { "id": "TERM:0102", "label": "Term O2a", "nl": 2.6, "effect": 0, "obs": "down", "both_directions": false, "significant": true }
+      ]
+    },
+    {
+      "name": "Other sub-group 3",
+      "nl": 1.9,
+      "s_pro": 0,
+      "s_anti": 0,
+      "delta": 0,
+      "balance": 0,
+      "obs": "up",
+      "n_terms_both_directions": 0,
+      "terms": [
+        { "id": "TERM:0103", "label": "Term O3a", "nl": 1.9, "effect": 0, "obs": "up", "both_directions": false, "significant": true }
+      ]
+    }
+  ],
+  "unlinked_total": 40,
+  "coverage": {
+    "n_terms": 30,
+    "n_terms_significant": 24,
+    "n_terms_not_significant": 4,
+    "n_terms_without_padj": 2,
+    "n_terms_matched": 18
+  },
+  "provenance": {
+    "dataset_id": "3f2a9c1e-0000-4000-8000-000000000001",
+    "comparison": "Group X vs Group Y",
+    "enrichment_dataset_ids": ["3f2a9c1e-0000-4000-8000-0000000000e1"],
+    "analysis_id": "a1b2c3d4-0000-4000-8000-0000000000a1",
+    "enrichment_fdr": 0.05,
+    "enrichment_databases": ["Database A"],
+    "padj_columns": [],
+    "source_versions": ["Source X 2025-01"],
+    "referential_version": 3,
+    "alpha": 0.05,
+    "app_version": "2.9.1",
+    "generated_at": "2026-11-05T10:00:00+00:00",
+    "demo": false
+  }
+}

@@ -10,20 +10,24 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { scaleSqrt } from 'd3';
 import mock from '@/components/cosmomics/cosmomicsNovaMock.json';
 import {
   NOVA,
   formatP,
   layoutNova,
-  pathwaysFor,
+  subgroupsFor,
   seededRandom,
+  subgroupSide,
   wedgePath,
   type NovaLabel,
 } from '@/components/cosmomics/novaLayout';
 import { balanceColor, claimColor } from '@/components/cosmomics/novaPalette';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
+import honest from '../../fixtures/cosmomics/honestNova.json';
 
 const data = mock as unknown as CosmOmicsNovaData;
+const honestData = honest as unknown as CosmOmicsNovaData;
 const reference = fs.readFileSync(
   path.join(__dirname, '../../fixtures/cosmomics/CosmOmics_pathway_nova_flyer.svg'),
   'utf8',
@@ -125,9 +129,9 @@ describe('nova layout vs reference SVG', () => {
       expect(title.y).toBeCloseTo(refTitles[i].y, 0);
       expect(title.anchor).toBe(refTitles[i].anchor);
     });
-    // Antioxidant's second line would spill over the disc: two lines, like the reference.
+    // Antioxidant's second line would spill over the disc: two lines, like the reference (only the unit word differs: sub-groups).
     const antioxidant = layout.labels.find((l) => l.bandKey === 'claim:Antioxidant')!;
-    expect(antioxidant.lines.map((l) => l.text)).toEqual(['Antioxidant', '3 pathways for', '1 against']);
+    expect(antioxidant.lines.map((l) => l.text)).toEqual(['Antioxidant', '3 sub-groups for', '1 against']);
   });
 });
 
@@ -143,8 +147,8 @@ describe('nova layout rules', () => {
     for (const band of layout.bands.filter((b) => b.kind === 'claim')) {
       const hatchedIsWide = band.end - band.split > 3;
       for (const bubble of layout.bubbles.filter((b) => b.bandKey === band.key)) {
-        const { delta } = bubble.subgroup;
-        if (delta > 0) {
+        const side = subgroupSide(bubble.subgroup);
+        if (side === 'for') {
           expect(bubble.angle).toBeGreaterThan(band.start - 1);
           expect(bubble.angle).toBeLessThan(band.split + 1);
         } else if (hatchedIsWide) {
@@ -155,10 +159,24 @@ describe('nova layout rules', () => {
     }
   });
 
-  it('drops the dust when asked, without moving anything else', () => {
-    const bare = layoutNova(data, { seed: 'mock-dataset', showDust: false });
-    expect(bare.dust).toEqual([]);
-    expect(bare.bubbles.map((b) => [b.x, b.y])).toEqual(layout.bubbles.map((b) => [b.x, b.y]));
+  it('puts a balanced sub-group in the solid part, never in the hatched one', () => {
+    const honestLayout = layoutNova(honestData, { seed: 'honest' });
+    const band = honestLayout.bands.find((b) => b.name === 'Claim B')!;
+    const balanced = honestLayout.bubbles.find((b) => b.subgroup.name === 'Sub-group B3')!;
+    const against = honestLayout.bubbles.find((b) => b.subgroup.name === 'Sub-group B2')!;
+    expect(band.end).toBeGreaterThan(band.split);
+    expect(balanced.angle).toBeGreaterThan(band.start - 1);
+    expect(balanced.angle).toBeLessThan(band.split + 1);
+    expect(against.angle).toBeGreaterThan(band.split - 1);
+    // Grey, not coral: the balance ramp reads 0 as neutral.
+    expect(balanced.fill.toUpperCase()).toBe('#C9D1D9');
+  });
+
+  it('draws no decorative dust unless asked, and asking moves nothing else', () => {
+    expect(layout.dust).toEqual([]);
+    const dusty = layoutNova(data, { seed: 'mock-dataset', showDust: true });
+    expect(dusty.dust.length).toBeGreaterThan(0);
+    expect(dusty.bubbles.map((b) => [b.x, b.y])).toEqual(layout.bubbles.map((b) => [b.x, b.y]));
   });
 
   it('caps the radial scale at 1.04 × the best claim sub-group, recomputed per dataset', () => {
@@ -238,6 +256,91 @@ describe('nova layout rules', () => {
   });
 });
 
+describe('what the nova draws says what the payload says', () => {
+  const radiusOf = (cap: number, nl: number) => scaleSqrt().domain([0, cap]).range([30, NOVA.R - 10]).clamp(true)(nl);
+
+  it('the significance ring follows data.alpha', () => {
+    const ring = (alpha?: number) =>
+      layoutNova({ ...honestData, alpha }, { seed: 'honest' }).rings.find((r) => r.kind === 'threshold')!;
+    const strict = layoutNova({ ...honestData, alpha: 0.01 }, { seed: 'honest' });
+    const at = (a: number) => radiusOf(strict.cap, -Math.log10(a));
+    expect(ring(0.01).r).toBeCloseTo(at(0.01), 6);
+    expect(ring(0.1).r).toBeCloseTo(at(0.1), 6);
+    expect(ring(0.01).r).toBeGreaterThan(ring(0.1).r);
+    expect(ring(0.01).label).toBe('p = 0.01');
+    expect(ring(0.1).label).toBe('p = 0.1');
+    // No alpha in the payload: the default of the whole module.
+    expect(ring(undefined).label).toBe('p = 0.05');
+    // An explicit option still wins over the payload.
+    const forced = layoutNova({ ...honestData, alpha: 0.01 }, { seed: 'honest', alpha: 0.1 });
+    expect(forced.rings.find((r) => r.kind === 'threshold')!.label).toBe('p = 0.1');
+  });
+
+  it('draws a term that is not significant faded, a significant one opaque', () => {
+    const { bubbles } = layoutNova(honestData, { seed: 'honest' });
+    const dots = bubbles.find((b) => b.subgroup.name === 'Sub-group B2')!.terms;
+    const significant = dots.find((d) => d.term.id === 'TERM:0005')!;
+    const faded = dots.find((d) => d.term.id === 'TERM:0006')!;
+    expect(significant.opacity).toBeGreaterThan(faded.opacity);
+    expect(faded.opacity).toBeLessThan(0.5);
+
+    // The backend's flag decides, not a guess from the p: here p is small but the flag is off.
+    const flagged: CosmOmicsNovaData = JSON.parse(JSON.stringify(honestData));
+    flagged.claims[0].subgroups[0].terms[0].significant = false;
+    const [dot] = layoutNova(flagged, { seed: 'honest' }).bubbles.find(
+      (b) => b.subgroup.name === 'Sub-group A1',
+    )!.terms;
+    expect(dot.term.nl).toBe(6);
+    expect(dot.opacity).toBeLessThan(0.5);
+  });
+
+  it('places each term dot at the radius of its own p, with no radial jitter', () => {
+    const l = layoutNova(honestData, { seed: 'honest' });
+    for (const bubble of l.bubbles) {
+      for (const dot of bubble.terms) {
+        const dist = Math.hypot(dot.x - NOVA.cx, dot.y - NOVA.cy);
+        // Angular jitter moves a dot along its circle, never in or out.
+        expect(dist).toBeCloseTo(radiusOf(l.cap, dot.term.nl), 6);
+      }
+    }
+  });
+
+  it('counts the not-linked sub-groups drawn out of the total, and says so in the sector label', () => {
+    const l = layoutNova(honestData, { seed: 'honest' });
+    expect(l.unlinked).toEqual({ total: 40, drawn: 3, termsCapped: false });
+    const label = l.labels.find((x) => x.bandKey === 'other')!;
+    expect(label.lines.map((line) => line.text).join(' ')).toMatch(/40 sub-groups/);
+    expect(label.lines.map((line) => line.text).join(' ')).toMatch(/3 drawn/);
+
+    const many: CosmOmicsNovaData = {
+      ...honestData,
+      unlinked: Array.from({ length: 15 }, (_, i) => ({
+        ...honestData.unlinked[0],
+        name: `Other ${i}`,
+        terms: Array.from({ length: 10 }, (_, t) => ({ ...honestData.unlinked[0].terms[0], id: `T:${i}.${t}` })),
+      })),
+      unlinked_total: 15,
+    };
+    const capped = layoutNova(many, { seed: 'honest' });
+    expect(capped.unlinked).toEqual({ total: 15, drawn: 12, termsCapped: true });
+    expect(capped.bubbles.filter((b) => b.claimName === null)).toHaveLength(12);
+  });
+
+  it('writes the numerator of the contrast in the centre, never a made-up "Active"', () => {
+    expect(layout.condition).toBe('Mock active');
+    expect(layoutNova({ ...honestData, condition: undefined }, { seed: 'x' }).condition).toBe('Group X');
+    expect(layoutNova({ ...honestData, condition: undefined, contrast: '' }, { seed: 'x' }).condition).toBe('');
+    expect(layoutNova(honestData, { seed: 'x' }).condition).toBe('Group X');
+  });
+
+  it('derives the side of a sub-group from its delta, balanced within the backend tolerance', () => {
+    expect(subgroupSide({ delta: 2 })).toBe('for');
+    expect(subgroupSide({ delta: -0.5 })).toBe('against');
+    expect(subgroupSide({ delta: 0 })).toBe('balanced');
+    expect(subgroupSide({ delta: 1e-12 })).toBe('balanced');
+  });
+});
+
 describe('formatting and colours', () => {
   it('formats p like the reference', () => {
     expect(formatP(1.30103)).toBe('p = 0.050');
@@ -245,9 +348,17 @@ describe('formatting and colours', () => {
     expect(formatP(4)).toBe('p = 1×10⁻⁴');
   });
 
-  it('pluralises the label and omits "· 0 against"', () => {
-    expect(pathwaysFor({ n_for: 5, n_against: 0 })).toBe('5 pathways for');
-    expect(pathwaysFor({ n_for: 1, n_against: 2 })).toBe('1 pathway for · 2 against');
+  it('labels p as adjusted for a term and combined for a sub-group', () => {
+    expect(formatP(2, 'adjusted')).toBe('adj. p = 0.010');
+    expect(formatP(2, 'combined')).toBe('combined p = 0.010');
+    expect(formatP(15.2649, 'combined')).toBe('combined p = 5×10⁻¹⁶');
+  });
+
+  it('pluralises the label, omits "· 0 against" and counts balanced sub-groups', () => {
+    expect(subgroupsFor({ n_for: 5, n_against: 0 })).toBe('5 sub-groups for');
+    expect(subgroupsFor({ n_for: 1, n_against: 2 })).toBe('1 sub-group for · 2 against');
+    expect(subgroupsFor({ n_for: 1, n_against: 1, n_balanced: 1 })).toBe('1 sub-group for · 1 against · 1 balanced');
+    expect(subgroupsFor({ n_for: 2, n_against: 0, n_balanced: 3 })).toBe('2 sub-groups for · 3 balanced');
   });
 
   it('runs the balance ramp coral → grey → green', () => {
