@@ -7,6 +7,7 @@ import CosmOmicsNova from '@/components/cosmomics/CosmOmicsNova';
 import CosmOmicsNovaView from '@/components/cosmomics/CosmOmicsNovaView';
 import NovaClaimCard from '@/components/cosmomics/NovaClaimCard';
 import NovaLegend from '@/components/cosmomics/NovaLegend';
+import { NOVA } from '@/components/cosmomics/novaLayout';
 import { NOVA_INK } from '@/components/cosmomics/novaPalette';
 import type { CosmOmicsNovaData } from '@/types/cosmomics';
 import honest from '../../fixtures/cosmomics/honestNova.json';
@@ -38,15 +39,58 @@ describe('CosmOmicsNova', () => {
     const bubbles = container.querySelectorAll('circle[data-subgroup]');
     const nSub = data.claims.reduce((n, c) => n + c.subgroups.length, 0) + data.unlinked.length;
     expect(bubbles).toHaveLength(nSub);
-    // The only <line> is the hatch stroke, inside the pattern definition.
-    expect(container.querySelectorAll('line')).toHaveLength(1);
-    expect(container.querySelector('line')!.closest('pattern')).not.toBeNull();
+    // The only <line> that is not a label's leader is the hatch stroke, inside the pattern definition.
+    expect(container.querySelectorAll('line:not([data-leader])')).toHaveLength(1);
+    expect(container.querySelector('line:not([data-leader])')!.closest('pattern')).not.toBeNull();
     const texts = Array.from(container.querySelectorAll('svg text')).map((t) => t.textContent);
     expect(texts).not.toContain('Collagen biosynthesis');
     expect(texts).toContain('Regeneration');
-    // The centre carries the numerator of the contrast, not a made-up "Active".
-    expect(texts).toContain('Mock active');
+    // The centre carries the numerator of the contrast, not a made-up "Active": 8 characters at most
+    // fit in the disc, so a longer name is cut and its full form is the tooltip.
+    expect(texts).toContain('Mock ac…');
     expect(texts).not.toContain('Active');
+    expect(container.querySelector('svg title')!.textContent).toBe('Mock active');
+  });
+
+  it('ties a label that was pushed off its place to its sector, under the labels', () => {
+    const { container } = render(<CosmOmicsNova data={data} seed="mock-dataset" />);
+    // On the reference fixture only "Not linked to a claim" is pushed (off the wheel): one leader.
+    const leaders = container.querySelectorAll('line[data-leader]');
+    expect(leaders).toHaveLength(1);
+    const leader = leaders[0];
+    expect(leader.getAttribute('data-leader')).toBe('other');
+    const [x1, y1] = ['x1', 'y1'].map((a) => Number(leader.getAttribute(a)));
+    expect(Math.hypot(x1 - NOVA.cx, y1 - NOVA.cy)).toBeCloseTo(NOVA.R + 6, 6);
+    expect(leader.getAttribute('stroke')).toBe(NOVA_INK.againstText); // the label's title colour
+    expect(leader.getAttribute('stroke-width')).toBe('0.8');
+    expect(leader.getAttribute('opacity')).toBe('0.6');
+    expect(leader.closest('g[aria-hidden]')).not.toBeNull();
+    // Drawn before every label, so under their text.
+    const firstLabel = container.querySelector('[data-claim-label]')!;
+    expect(leader.compareDocumentPosition(firstLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('prints the centre name at the size the disc can hold, with the full name in a title', () => {
+    const centreOf = (condition: string) => {
+      const { container } = render(<CosmOmicsNova data={{ ...data, condition, contrast: '' }} seed="mock-dataset" />);
+      const title = container.querySelector('svg title');
+      const text = title?.parentElement?.querySelector('text') ?? null;
+      const nTexts = container.querySelectorAll('svg text').length;
+      cleanup();
+      return {
+        title: title?.textContent ?? null,
+        text: text?.textContent ?? null,
+        size: text?.getAttribute('font-size'),
+        nTexts,
+      };
+    };
+    expect(centreOf('A')).toMatchObject({ title: 'A', text: 'A', size: '13' });
+    expect(centreOf('Control')).toMatchObject({ title: 'Control', text: 'Control', size: '11' });
+    expect(centreOf('Treatment_C')).toMatchObject({ title: 'Treatment_C', text: 'Treatme…', size: '11' });
+    // No name: no text and no title, the disc stays.
+    const empty = centreOf('');
+    expect(empty).toMatchObject({ title: null, text: null });
+    expect(empty.nTexts).toBe(centreOf('A').nTexts - 1);
   });
 
   it('labels every sector and bubble for assistive technology', () => {
