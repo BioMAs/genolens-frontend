@@ -206,8 +206,10 @@ export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHo
           ),
         )}
         <circle cx={cx} cy={cy} r={NOVA.coreRadius} fill={NOVA_INK.core} />
-        {centre.text && (
-          // The disc holds 8 characters at most: the full name is the tooltip, so this text takes the pointer back.
+        {Boolean(centre.text) && (
+          // The enclosing group ignores the pointer (the sectors under it take the clicks), and a
+          // <title> shows as a tooltip only on something that hears the pointer: so this one small
+          // group does, over the name's own glyphs. The rest of the disc still lets clicks through.
           <g pointerEvents="auto">
             <title>{centre.title}</title>
             <text
@@ -223,6 +225,28 @@ export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHo
           </g>
         )}
       </g>
+
+      {layout.labels.some((label) => label.leader) && (
+        // A label pushed far from its sector says whose it is with a thin line, under the labels.
+        <g pointerEvents="none" aria-hidden>
+          {layout.labels.map(
+            (label) =>
+              label.leader && (
+                <line
+                  key={`${label.bandKey}-leader`}
+                  data-leader={label.bandKey}
+                  x1={label.leader.x1}
+                  y1={label.leader.y1}
+                  x2={label.leader.x2}
+                  y2={label.leader.y2}
+                  stroke={label.lines[0].fill}
+                  strokeWidth={0.8}
+                  opacity={0.6}
+                />
+              ),
+          )}
+        </g>
+      )}
 
       {layout.labels.map((label) => {
         const band = layout.bands.find((b) => b.key === label.bandKey)!;

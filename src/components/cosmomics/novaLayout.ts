@@ -191,11 +191,21 @@ export interface NovaLabelLine {
   fill: string;
 }
 
+/** A thin line from a sector's rim to its label, for a label that was pushed far from its place. */
+export interface NovaLabelLeader {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
 export interface NovaLabel {
   bandKey: string;
   anchor: 'start' | 'middle' | 'end';
   lines: NovaLabelLine[];
   box: [number, number, number, number];
+  /** Set when the label ended more than `LEADER_MIN_SHIFT` px from its reference place. */
+  leader?: NovaLabelLeader;
 }
 
 export interface NovaDustLayer {
@@ -239,6 +249,9 @@ export function conditionOf(contrast: string | undefined): string {
 /** The longest condition printed whole in the centre disc, and the longest one printed at full size. */
 const CENTRE_MAX_CHARS = 8;
 const CENTRE_FULL_SIZE_CHARS = 6;
+/** Font sizes (px) of the centre name: up to `CENTRE_FULL_SIZE_CHARS` characters, and above. */
+const CENTRE_FONT = 13;
+const CENTRE_SMALL_FONT = 11;
 
 /**
  * What the central disc (radius `NOVA.coreRadius`) prints for a condition: the name up to 8
@@ -250,7 +263,7 @@ export function centreLabel(condition: string): { text: string; fontSize: number
   const chars = Array.from(condition);
   return {
     text: chars.length <= CENTRE_MAX_CHARS ? condition : `${chars.slice(0, CENTRE_MAX_CHARS - 1).join('')}…`,
-    fontSize: chars.length <= CENTRE_FULL_SIZE_CHARS ? 13 : 11,
+    fontSize: chars.length <= CENTRE_FULL_SIZE_CHARS ? CENTRE_FONT : CENTRE_SMALL_FONT,
     title: condition,
   };
 }
@@ -505,7 +518,12 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
       makeLabel(band, band.name, sub, NOVA_INK.againstText, NOVA_INK.againstText);
     }
   }
+  const referenceTops = labels.map((label) => label.box[1]);
   resolveLabelOverlaps(labels);
+  labels.forEach((label, i) => {
+    if (Math.abs(label.box[1] - referenceTops[i]) <= LEADER_MIN_SHIFT) return;
+    label.leader = leaderTo(bands.find((band) => band.key === label.bandKey)!.mid, label.box);
+  });
 
   // Frame: the circle plus every label, with a small margin.
   let [minX, minY, maxX, maxY] = [cx - R - 6, cy - R - 6, cx + R + 6, cy + R + 6];
@@ -539,6 +557,23 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
 
 /** Labels keep this far from the wheel and from each other. */
 const LABEL_CLEARANCE = 4;
+
+/**
+ * A label that ended more than this many px (vertically) from its reference place is tied to its
+ * sector by a leader line: from the point at radius R + 6 on the sector's mid angle to the nearest
+ * point of the label's box. A label that moved less, or not at all, has none.
+ */
+const LEADER_MIN_SHIFT = 12;
+
+function leaderTo(mid: number, box: [number, number, number, number]): NovaLabelLeader {
+  const [x1, y1] = polar(NOVA.R + 6, mid);
+  return {
+    x1,
+    y1,
+    x2: Math.min(Math.max(x1, box[0]), box[2]),
+    y2: Math.min(Math.max(y1, box[1]), box[3]),
+  };
+}
 
 /**
  * Half the height of the disc of radius R + 4 over the column of a box that is nearest to the
@@ -577,5 +612,7 @@ export function resolveLabelOverlaps(labels: NovaLabel[]): void {
       label.box = [label.box[0], label.box[1] + shift, label.box[2], label.box[3] + shift];
       label.lines = label.lines.map((line) => ({ ...line, y: line.y + shift }));
     }
+    // If all 40 turns were used, the label stays where the last turn put it: pushed as far as
+    // those turns reached, and possibly still touching something. Nothing else is tried.
   }
 }
