@@ -44,9 +44,34 @@ describe('CosmOmicsNova', () => {
     const texts = Array.from(container.querySelectorAll('svg text')).map((t) => t.textContent);
     expect(texts).not.toContain('Collagen biosynthesis');
     expect(texts).toContain('Regeneration');
-    // The centre carries the numerator of the contrast, not a made-up "Active".
-    expect(texts).toContain('Mock active');
+    // The centre carries the numerator of the contrast, not a made-up "Active": 8 characters at most
+    // fit in the disc, so a longer name is cut and its full form is the tooltip.
+    expect(texts).toContain('Mock ac…');
     expect(texts).not.toContain('Active');
+    expect(container.querySelector('svg title')!.textContent).toBe('Mock active');
+  });
+
+  it('prints the centre name at the size the disc can hold, with the full name in a title', () => {
+    const centreOf = (condition: string) => {
+      const { container } = render(<CosmOmicsNova data={{ ...data, condition, contrast: '' }} seed="mock-dataset" />);
+      const title = container.querySelector('svg title');
+      const text = title?.parentElement?.querySelector('text') ?? null;
+      const nTexts = container.querySelectorAll('svg text').length;
+      cleanup();
+      return {
+        title: title?.textContent ?? null,
+        text: text?.textContent ?? null,
+        size: text?.getAttribute('font-size'),
+        nTexts,
+      };
+    };
+    expect(centreOf('A')).toMatchObject({ title: 'A', text: 'A', size: '13' });
+    expect(centreOf('Control')).toMatchObject({ title: 'Control', text: 'Control', size: '11' });
+    expect(centreOf('Treatment_C')).toMatchObject({ title: 'Treatment_C', text: 'Treatme…', size: '11' });
+    // No name: no text and no title, the disc stays.
+    const empty = centreOf('');
+    expect(empty).toMatchObject({ title: null, text: null });
+    expect(empty.nTexts).toBe(centreOf('A').nTexts - 1);
   });
 
   it('labels every sector and bubble for assistive technology', () => {

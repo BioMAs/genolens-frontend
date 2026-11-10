@@ -236,6 +236,25 @@ export function conditionOf(contrast: string | undefined): string {
   return (contrast ?? '').split(/[_\s]+vs[_\s]+/i)[0].trim();
 }
 
+/** The longest condition printed whole in the centre disc, and the longest one printed at full size. */
+const CENTRE_MAX_CHARS = 8;
+const CENTRE_FULL_SIZE_CHARS = 6;
+
+/**
+ * What the central disc (radius `NOVA.coreRadius`) prints for a condition: the name up to 8
+ * characters, else its first 7 and "…"; 13 px up to 6 characters, 11 px above; the full name
+ * goes in `title` (a tooltip, and the only place where a long name is whole). Same rule as the
+ * backend's wheel, which counts characters, not UTF-16 units.
+ */
+export function centreLabel(condition: string): { text: string; fontSize: number; title: string } {
+  const chars = Array.from(condition);
+  return {
+    text: chars.length <= CENTRE_MAX_CHARS ? condition : `${chars.slice(0, CENTRE_MAX_CHARS - 1).join('')}…`,
+    fontSize: chars.length <= CENTRE_FULL_SIZE_CHARS ? 13 : 11,
+    title: condition,
+  };
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 export function polar(r: number, angle: number): [number, number] {
@@ -518,10 +537,25 @@ export function layoutNova(data: CosmOmicsNovaData, options: NovaLayoutOptions):
   };
 }
 
+/** Labels keep this far from the wheel and from each other. */
+const LABEL_CLEARANCE = 4;
+
 /**
- * Many narrow sectors can stack their labels on one another. Push each label that
- * hits an earlier one vertically away from the centre until it is clear; labels
- * that already stand free (the reference case) keep their reference position.
+ * Half the height of the disc of radius R + 4 over the column of a box that is nearest to the
+ * centre: the disc spans `cy ± half` there. 0 when the box lies wholly beyond the disc's width.
+ */
+function discHalfHeight(box: [number, number, number, number]): number {
+  const radius = NOVA.R + LABEL_CLEARANCE;
+  const dx = Math.max(box[0] - NOVA.cx, 0, NOVA.cx - box[2]);
+  return dx < radius ? Math.sqrt(radius * radius - dx * dx) : 0;
+}
+
+/**
+ * Many narrow sectors can stack their labels on one another, and a long name can be squeezed
+ * back over the wheel by the frame's edge. Push each label that hits an earlier one, or the
+ * disc of radius R + 4 around the centre, vertically away from the centre by the height of the
+ * overlap + 4 px, until it is clear (40 turns at most); an earlier label is dealt with before the
+ * disc. A label that touches nothing (tangent to the disc included) keeps its reference position.
  */
 export function resolveLabelOverlaps(labels: NovaLabel[]): void {
   for (let i = 0; i < labels.length; i += 1) {
@@ -529,9 +563,17 @@ export function resolveLabelOverlaps(labels: NovaLabel[]): void {
     const centreY = (label.box[1] + label.box[3]) / 2;
     const dir = centreY >= NOVA.cy ? 1 : -1;
     for (let guard = 0; guard < 40; guard += 1) {
+      // Where the obstacle ends, on the side the label is pushed to.
+      let edge: number;
       const hit = labels.slice(0, i).find((other) => overlaps(label.box, other.box));
-      if (!hit) break;
-      const shift = dir > 0 ? hit.box[3] - label.box[1] + 4 : hit.box[1] - label.box[3] - 4;
+      if (hit) {
+        edge = dir > 0 ? hit.box[3] : hit.box[1];
+      } else {
+        const half = discHalfHeight(label.box);
+        if (half === 0 || label.box[3] <= NOVA.cy - half || label.box[1] >= NOVA.cy + half) break;
+        edge = NOVA.cy + dir * half;
+      }
+      const shift = dir > 0 ? edge - label.box[1] + LABEL_CLEARANCE : edge - label.box[3] - LABEL_CLEARANCE;
       label.box = [label.box[0], label.box[1] + shift, label.box[2], label.box[3] + shift];
       label.lines = label.lines.map((line) => ({ ...line, y: line.y + shift }));
     }

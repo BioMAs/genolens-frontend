@@ -14,8 +14,10 @@ import { scaleSqrt } from 'd3';
 import mock from '@/components/cosmomics/cosmomicsNovaMock.json';
 import {
   NOVA,
+  centreLabel,
   formatP,
   layoutNova,
+  resolveLabelOverlaps,
   subgroupsFor,
   seededRandom,
   subgroupSide,
@@ -23,7 +25,7 @@ import {
   type NovaLabel,
 } from '@/components/cosmomics/novaLayout';
 import { balanceColor, claimColor } from '@/components/cosmomics/novaPalette';
-import type { CosmOmicsNovaData } from '@/types/cosmomics';
+import type { CosmOmicsNovaData, NovaClaim, NovaSubgroup } from '@/types/cosmomics';
 import honest from '../../fixtures/cosmomics/honestNova.json';
 
 const data = mock as unknown as CosmOmicsNovaData;
@@ -45,6 +47,12 @@ function numbers(d: string): number[] {
 }
 
 const layout = layoutNova(data, { seed: 'mock-dataset' });
+
+// Where a label box stands against the disc the labels must keep out of: radius R + 4 around the centre.
+const discRadius = NOVA.R + 4;
+const distanceToCentre = ([x0, y0, x1, y1]: NovaLabel['box']) =>
+  Math.hypot(Math.max(x0 - NOVA.cx, 0, NOVA.cx - x1), Math.max(y0 - NOVA.cy, 0, NOVA.cy - y1));
+const apart = (a: NovaLabel['box'], b: NovaLabel['box']) => a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3];
 
 describe('nova layout vs reference SVG', () => {
   it('draws the sectors in S_pro order, first one centred at 12 o’clock', () => {
@@ -126,9 +134,16 @@ describe('nova layout vs reference SVG', () => {
     expect(titles.map((t) => t.text)).toEqual(refTitles.map((t) => t.text));
     titles.forEach((title, i) => {
       expect(title.x).toBeCloseTo(refTitles[i].x, 0);
-      expect(title.y).toBeCloseTo(refTitles[i].y, 0);
       expect(title.anchor).toBe(refTitles[i].anchor);
+      // The reference sets "Not linked to a claim" over the wheel (its box reaches the grey bubbles
+      // and the 10⁻⁵ tick): that one label is pushed off the disc, tested below. Every label that
+      // touches nothing stands where the reference puts it.
+      if (title.text !== 'Not linked to a claim') expect(title.y).toBeCloseTo(refTitles[i].y, 0);
     });
+    const notLinkedRef = refTitles.find((t) => t.text === 'Not linked to a claim')!;
+    const notLinked = layout.labels.find((l) => l.bandKey === 'other')!;
+    expect(distanceToCentre(notLinked.box)).toBeGreaterThanOrEqual(discRadius);
+    expect(notLinked.lines[0].y).toBeLessThan(notLinkedRef.y); // it stood above the centre: pushed up
     // Antioxidant's second line would spill over the disc: two lines, like the reference (only the unit word differs: sub-groups).
     const antioxidant = layout.labels.find((l) => l.bandKey === 'claim:Antioxidant')!;
     expect(antioxidant.lines.map((l) => l.text)).toEqual(['Antioxidant', '3 sub-groups for', '1 against']);
@@ -338,6 +353,113 @@ describe('what the nova draws says what the payload says', () => {
     expect(subgroupSide({ delta: -0.5 })).toBe('against');
     expect(subgroupSide({ delta: 0 })).toBe('balanced');
     expect(subgroupSide({ delta: 1e-12 })).toBe('balanced');
+  });
+});
+
+describe('the centre name and the labels around the wheel', () => {
+  it('fits the condition in the centre disc and keeps the full name in the title', () => {
+    expect(centreLabel('')).toEqual({ text: '', fontSize: 13, title: '' });
+    expect(centreLabel('A')).toEqual({ text: 'A', fontSize: 13, title: 'A' });
+    // 6 characters is the last one printed at 13 px, 8 the last one printed whole.
+    expect(centreLabel('Sample')).toEqual({ text: 'Sample', fontSize: 13, title: 'Sample' });
+    expect(centreLabel('Control')).toEqual({ text: 'Control', fontSize: 11, title: 'Control' });
+    expect(centreLabel('Sample_1')).toEqual({ text: 'Sample_1', fontSize: 11, title: 'Sample_1' });
+    expect(centreLabel('Treatment')).toEqual({ text: 'Treatme…', fontSize: 11, title: 'Treatment' });
+    expect(centreLabel('Treatment_C')).toEqual({ text: 'Treatme…', fontSize: 11, title: 'Treatment_C' });
+  });
+
+  it('counts characters, not UTF-16 units, as the backend does', () => {
+    const nine = '😀'.repeat(9);
+    expect(centreLabel(nine)).toEqual({ text: `${'😀'.repeat(7)}…`, fontSize: 11, title: nine });
+  });
+
+  const subgroup = (name: string, nl: number, sPro: number, sAnti: number): NovaSubgroup => ({
+    name,
+    nl,
+    s_pro: sPro,
+    s_anti: sAnti,
+    delta: sPro - sAnti,
+    balance: (sPro - sAnti) / (sPro + sAnti),
+    obs: 'up',
+    terms: [{ id: `GO:${name}`, label: `Term of ${name}`, nl, effect: 1, obs: 'up' }],
+  });
+  const claimOf = (n: number, weight: number): NovaClaim => {
+    const sPro = 0.8 * weight;
+    const sAnti = weight - sPro;
+    return {
+      name: `Claim ${n} long name xx`,
+      importance: weight,
+      s_pro: sPro,
+      s_anti: sAnti,
+      coherence: 0.8,
+      n_for: 1,
+      n_against: 0,
+      subgroups: [subgroup(`Pathway ${n}`, 3 + (n % 3), sPro, sAnti)],
+    };
+  };
+  // Three broad claims, then six narrow neighbours of under 4 % of the weight each: their labels
+  // (20 characters) are far wider than their sectors and crowd the left of the wheel.
+  const nineWeights = [30, 25, 20, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4];
+  const nine: CosmOmicsNovaData = {
+    contrast: 'Group_A vs Group_B',
+    claims: nineWeights.map((weight, i) => claimOf(i + 1, weight)),
+    unlinked: [subgroup('Unlinked 1', 4, 5, 1), subgroup('Unlinked 2', 3, 4, 1), subgroup('Unlinked 3', 2.5, 3, 1)],
+  };
+
+  it('keeps every label clear of the other labels and of the wheel, and inside the frame', () => {
+    const total = nineWeights.reduce((sum, w) => sum + w, 0);
+    expect(nineWeights.filter((w) => w / total < 0.04)).toHaveLength(6);
+    expect(nine.claims.every((c) => c.name.length === 20)).toBe(true);
+
+    const { labels, bounds } = layoutNova(nine, { seed: 'nine' });
+    expect(labels).toHaveLength(10); // nine claims and the "not linked" sector
+    const boxes = labels.map((l) => l.box);
+    for (let i = 0; i < boxes.length; i += 1) {
+      expect(distanceToCentre(boxes[i])).toBeGreaterThanOrEqual(discRadius);
+      for (let j = i + 1; j < boxes.length; j += 1) expect(apart(boxes[i], boxes[j])).toBe(true);
+    }
+    // The frame is computed after the labels have moved: it holds every box.
+    for (const [x0, y0, x1, y1] of boxes) {
+      expect(x0).toBeGreaterThanOrEqual(bounds.x);
+      expect(x1).toBeLessThanOrEqual(bounds.x + bounds.width);
+      expect(y0).toBeGreaterThanOrEqual(bounds.y);
+      expect(y1).toBeLessThanOrEqual(bounds.y + bounds.height);
+    }
+    // ... and it grew to hold the labels that were pushed past the circle's own frame.
+    expect(bounds.y + bounds.height).toBeGreaterThan(NOVA.cy + NOVA.R + 6);
+    // The text moved with its box.
+    for (const label of labels) {
+      expect(label.lines[0].y).toBeGreaterThan(label.box[1]);
+      expect(label.lines[label.lines.length - 1].y).toBeLessThan(label.box[3]);
+    }
+  });
+
+  const labelAt = (box: NovaLabel['box']): NovaLabel => ({
+    bandKey: 'x',
+    anchor: 'middle',
+    lines: [{ text: 'x', x: (box[0] + box[2]) / 2, y: box[1] + 20, size: 21, weight: 600, fill: '#000' }],
+    box,
+  });
+
+  it('pushes a label off the disc by the overlap height + 4 px, away from the centre', () => {
+    const half = Math.sqrt(discRadius ** 2 - 50 ** 2); // the disc's half-height over the box's nearest column
+    const below = labelAt([NOVA.cx + 50, NOVA.cy + 10, NOVA.cx + 150, NOVA.cy + 50]);
+    const above = labelAt([NOVA.cx + 50, NOVA.cy - 50, NOVA.cx + 150, NOVA.cy - 10]);
+    resolveLabelOverlaps([below, above]);
+    expect(below.box[1]).toBeCloseTo(NOVA.cy + half + 4, 6);
+    expect(below.box[3] - below.box[1]).toBe(40);
+    expect(below.lines[0].y).toBeCloseTo(below.box[1] + 20, 6);
+    expect(above.box[3]).toBeCloseTo(NOVA.cy - half - 4, 6);
+    expect(distanceToCentre(below.box)).toBeGreaterThanOrEqual(discRadius);
+    expect(distanceToCentre(above.box)).toBeGreaterThanOrEqual(discRadius);
+  });
+
+  it('leaves a label that touches nothing where it is, tangent to the disc included', () => {
+    const tangent = labelAt([NOVA.cx - 60, NOVA.cy - discRadius - 42, NOVA.cx + 60, NOVA.cy - discRadius]);
+    const far = labelAt([NOVA.cx + discRadius + 10, NOVA.cy - 20, NOVA.cx + discRadius + 130, NOVA.cy + 20]);
+    const before = [tangent.box, far.box].map((b) => [...b]);
+    resolveLabelOverlaps([tangent, far]);
+    expect([tangent.box, far.box]).toEqual(before);
   });
 });
 

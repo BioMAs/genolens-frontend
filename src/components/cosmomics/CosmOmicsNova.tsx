@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import {
   NOVA,
   arcPath,
+  centreLabel,
   formatP,
   layoutNova,
   subgroupsFor,
@@ -62,6 +63,7 @@ interface GraphicProps {
 export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHoverBubble }: GraphicProps) {
   const interactive = !!onSelectBand;
   const { R, cx, cy } = NOVA;
+  const centre = centreLabel(layout.condition);
 
   const keyHandler = (band: NovaBand) => (event: KeyboardEvent<SVGGElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -204,9 +206,22 @@ export function NovaGraphic({ layout, hatchId, selectedClaim, onSelectBand, onHo
           ),
         )}
         <circle cx={cx} cy={cy} r={NOVA.coreRadius} fill={NOVA_INK.core} />
-        <text x={cx} y={cy + 5} fontSize={13} fill={NOVA_INK.background} textAnchor="middle" fontWeight={600}>
-          {layout.condition}
-        </text>
+        {centre.text && (
+          // The disc holds 8 characters at most: the full name is the tooltip, so this text takes the pointer back.
+          <g pointerEvents="auto">
+            <title>{centre.title}</title>
+            <text
+              x={cx}
+              y={cy + 5}
+              fontSize={centre.fontSize}
+              fill={NOVA_INK.background}
+              textAnchor="middle"
+              fontWeight={600}
+            >
+              {centre.text}
+            </text>
+          </g>
+        )}
       </g>
 
       {layout.labels.map((label) => {
