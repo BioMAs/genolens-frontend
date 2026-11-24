@@ -1,19 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
-import { NextResponse } from 'next/server'
-
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
-
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
-  }
-
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+/**
+ * Supabase used to send users back here with a `code` to exchange for a
+ * session. Those links are dead: the session is now opened by the API, so
+ * whoever still holds one simply lands on the sign-in page.
+ *
+ * 303 with a relative `Location`: it forces a `GET`, and does not depend on
+ * rebuilding the origin behind a proxy.
+ */
+export async function GET() {
+  return new Response(null, { status: 303, headers: { Location: '/' } })
 }

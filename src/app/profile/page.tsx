@@ -1,37 +1,26 @@
-import { createClient } from '@/utils/supabase/server'
+import { getServerUser } from '@/utils/auth/server'
 import { redirect } from 'next/navigation'
-import { Mail, Calendar, Shield, Clock, Blocks } from 'lucide-react'
+import { Mail, Shield, Blocks } from 'lucide-react'
+import SignOutButton from '@/components/auth/SignOutButton'
 import BillingSection from './BillingSection'
 import UsageSection from './UsageSection'
 import MyModules from './MyModules'
 import { PageHeader } from '@/components/ui/page-header'
 import { cn } from '@/lib/cn';
 
-function fmt(date?: string | null) {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString(undefined, {
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
-}
-
 export default async function ProfilePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getServerUser()
 
   if (!user) {
     redirect('/')
   }
 
-  const name = (user.user_metadata?.full_name as string) || user.email?.split('@')[0] || 'User'
+  const name = user.full_name || user.email.split('@')[0] || 'User'
   const initials = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'U'
 
   const details = [
-    { icon: Mail, label: 'Email address', value: user.email ?? '—' },
+    { icon: Mail, label: 'Email address', value: user.email },
     { icon: Shield, label: 'User ID', value: user.id, mono: true },
-    { icon: Calendar, label: 'Account created', value: fmt(user.created_at) },
-    { icon: Clock, label: 'Last sign in', value: fmt(user.last_sign_in_at) },
   ]
 
   return (
@@ -59,14 +48,9 @@ export default async function ProfilePage() {
         actions={[
           {
             node: (
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="h-9 rounded-control border border-strong bg-surface px-4 text-body-sm font-semibold text-danger-ink transition-colors hover:bg-hover"
-                >
-                  Sign out
-                </button>
-              </form>
+              <SignOutButton className="h-9 rounded-control border border-strong bg-surface px-4 text-body-sm font-semibold text-danger-ink transition-colors hover:bg-hover">
+                Sign out
+              </SignOutButton>
             ),
           },
         ]}
