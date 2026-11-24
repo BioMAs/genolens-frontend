@@ -1,0 +1,99 @@
+/**
+ * The parts of the auth client that touch the document: the readable session
+ * hint cookie and sign-out. jsdom has no `fetch` and cannot be navigated, so
+ * both are faked (`navigate` is the seam over `window.location.assign`).
+ */
+import { hasSessionHint, signOut } from '@/utils/auth/client';
+import { navigate } from '@/utils/auth/navigation';
+
+jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
+
+const API = 'http://api.example.test/api/v1';
+const initialApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const initialFetch = globalThis.fetch;
+const fetchMock = jest.fn();
+
+function clearCookies() {
+  for (const name of ['gl_session', 'account_status', 'unrelated']) {
+    document.cookie = `${name}=; path=/; max-age=0`;
+  }
+}
+
+/** The one thing `authPost` reads from a response, without `Response` (absent in jsdom). */
+function reply(status: number, body: unknown = null) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => (body === null ? Promise.reject(new SyntaxError('no body')) : Promise.resolve(body)),
+  } as unknown as Response;
+}
+
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_API_URL = API;
+  fetchMock.mockReset();
+  (navigate as jest.Mock).mockReset();
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  clearCookies();
+});
+
+afterAll(() => {
+  clearCookies();
+  globalThis.fetch = initialFetch;
+  if (initialApiUrl === undefined) delete process.env.NEXT_PUBLIC_API_URL;
+  else process.env.NEXT_PUBLIC_API_URL = initialApiUrl;
+});
+
+describe('hasSessionHint', () => {
+  it('is false without the cookie', () => {
+    expect(hasSessionHint()).toBe(false);
+  });
+
+  it('is true once gl_session=1 is set, among other cookies', () => {
+    document.cookie = 'unrelated=x; path=/';
+    document.cookie = 'gl_session=1; path=/';
+
+    expect(hasSessionHint()).toBe(true);
+  });
+
+  it('ignores another value and a look-alike name', () => {
+    document.cookie = 'gl_session=0; path=/';
+    expect(hasSessionHint()).toBe(false);
+
+    document.cookie = 'gl_session=; path=/; max-age=0';
+    document.cookie = 'not_gl_session=1; path=/';
+    expect(hasSessionHint()).toBe(false);
+  });
+});
+
+describe('signOut', () => {
+  it('posts to /auth/logout, clears account_status, then reloads on the sign-in page', async () => {
+    document.cookie = 'account_status=suspended; path=/';
+    fetchMock.mockResolvedValueOnce(reply(204));
+
+    await signOut();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${API}/auth/logout`);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: 'POST',
+      credentials: 'include',
+      headers: expect.objectContaining({ 'X-GenoLens-Client': 'web' }),
+    });
+    expect(document.cookie).not.toContain('account_status');
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('/');
+  });
+
+  it.each([
+    ['an unreachable API', () => fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))],
+    ['a refused logout', () => fetchMock.mockResolvedValueOnce(reply(403, { detail: 'csrf_header_missing' }))],
+  ])('still signs the user out of the page after %s', async (_name, arrange) => {
+    document.cookie = 'account_status=suspended; path=/';
+    arrange();
+
+    await signOut();
+
+    expect(document.cookie).not.toContain('account_status');
+    expect(navigate).toHaveBeenCalledWith('/');
+  });
+});
