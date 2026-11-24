@@ -357,6 +357,14 @@ Décisions, dans l'ordre :
 
 Le jeton d'accès dure 15 minutes. `/auth/refresh` appelle `POST /auth/refresh` (`refreshSession`) puis renvoie le visiteur vers sa destination par navigation complète. Si le renouvellement échoue, le visiteur arrive sur `/?reauth=1` : ce paramètre indique au middleware de montrer le formulaire au lieu de renvoyer `/` vers `/auth/refresh`, ce qui évite une boucle quand l'API est injoignable alors que l'indice est encore là. Un renouvellement qui vient de réussir sans que le nouveau jeton soit vérifiable ici (mauvais `AUTH_ISSUER` ou `AUTH_JWKS_URL`, domaine de cookie qui ne couvre pas cet hôte) laisse le cookie `gl_renewed` pendant 30 secondes : ni le middleware ni la page `/auth/refresh` ne renouvellent une seconde fois, et le visiteur retrouve le formulaire de connexion (le serveur journalise de quoi vérifier ces deux variables).
 
+Trois garde-fous complètent ce mécanisme.
+
+- **Délai** : l'appel à `POST /auth/refresh` est interrompu au bout de 10 secondes (`REFRESH_TIMEOUT_MS`) et compte comme un échec, comme une API injoignable ; sans cela, une API qui ne répond jamais laisserait « Restoring your session… » tourner indéfiniment.
+- **Échec passager** : un 5xx, un 429 ou une coupure réseau renvoie vers `/?next=…&reauth=1` alors que la session est peut-être intacte. Si l'indice `gl_session` est encore là, la page de connexion affiche « We couldn't restore your session. » avec un lien « Try again » vers `/auth/refresh`, au lieu d'un simple formulaire qui resterait affiché après un rechargement.
+- **Application et admin** : quand seule l'application d'administration ne parvient pas à vérifier le jeton, elle renvoie le visiteur vers `/auth/refresh`, qui revient sur `/?next=<admin>&reauth=1`. Un visiteur dont la session est valide ici n'est alors **pas** renvoyé vers l'admin (ce serait une boucle) : le middleware journalise une fois qu'il faut vérifier `AUTH_ISSUER` et `AUTH_JWKS_URL` du déploiement admin, et l'envoie vers `/dashboard`.
+
+Une déconnexion que l'API n'a pas pu enregistrer (injoignable, ou erreur 5xx) laisse les cookies en place : `signOut` envoie alors vers `/?reauth=1` sans `next`, et le middleware montre le formulaire de connexion, y compris à un visiteur dont la session est encore valide, au lieu de le renvoyer vers le tableau de bord.
+
 ### Destination après connexion
 
 `next` ne passe que par `safeNext` (`src/utils/auth/paths.ts`) : un chemin relatif, ou une URL absolue dont l'origine est exactement `NEXT_PUBLIC_ADMIN_APP_URL`. Tout le reste (`//hôte`, `https://hôte`, `\hôte`, `javascript:`, caractères de contrôle) est ignoré au profit de `/dashboard`.
