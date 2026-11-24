@@ -82,6 +82,17 @@ export interface GeoImportResponse {
   message: string;
 }
 
+/** A signed-in session of the account, as `GET /auth/sessions` lists it. */
+export interface AuthSessionInfo {
+  id: string;
+  created_at: string;
+  last_used_at: string;
+  ip: string | null;
+  user_agent: string | null;
+  /** The session this very request belongs to. */
+  current: boolean;
+}
+
 export interface UserProfile {
   id: string;
   email: string;

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Mail, Shield, Blocks } from 'lucide-react'
 import SignOutButton from '@/components/auth/SignOutButton'
 import BillingSection from './BillingSection'
+import SecuritySection from './SecuritySection'
 import UsageSection from './UsageSection'
 import MyModules from './MyModules'
 import { PageHeader } from '@/components/ui/page-header'
@@ -70,6 +71,10 @@ export default async function ProfilePage() {
           ))}
         </div>
       </section>
+
+      {/* Mot de passe, 2FA, sessions : ce qui protege le compte, juste apres
+          l'identite du compte. */}
+      <SecuritySection />
 
       {/* Add-on modules */}
       <section>

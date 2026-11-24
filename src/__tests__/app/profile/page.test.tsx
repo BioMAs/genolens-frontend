@@ -5,8 +5,8 @@
  * `/users/me` ne sert ni la date de creation du compte ni la derniere
  * connexion : ces deux lignes ont disparu (les sessions actives montrent la
  * derniere activite). Les sections du bas de page (modules, usage,
- * facturation) sont simulees : elles lisent l'API par des hooks et n'ont rien a
- * voir avec ce que ce test verifie.
+ * facturation) et la section Securite sont simulees : elles lisent l'API par
+ * des hooks et n'ont rien a voir avec ce que ce test verifie.
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -26,6 +26,10 @@ jest.mock('@/utils/auth/client', () => ({ signOut: jest.fn() }));
 jest.mock('@/app/profile/BillingSection', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/app/profile/UsageSection', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/app/profile/MyModules', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/app/profile/SecuritySection', () => ({
+  __esModule: true,
+  default: () => <div data-testid="security-section" />,
+}));
 
 import { redirect } from 'next/navigation';
 
@@ -82,4 +86,12 @@ it('signs out through the API', async () => {
   await user.click(screen.getByRole('button', { name: /sign out/i }));
 
   expect(signOut).toHaveBeenCalledTimes(1);
+});
+
+it('shows the account security section', async () => {
+  profile.mockResolvedValue({ id: 'u1', email: 'lea@example.test', full_name: null, role: 'USER' });
+
+  render(await ProfilePage());
+
+  expect(screen.getByTestId('security-section')).toBeInTheDocument();
 });
