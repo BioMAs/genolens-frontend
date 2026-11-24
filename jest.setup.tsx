@@ -31,8 +31,10 @@ jest.mock('next/link', () => {
  * preference systeme quand rien n'est stocke, donc tout test qui monte un
  * arbre theme tombait ici. Le defaut est `light` : c'est ce que rend le
  * serveur, et un test ne doit pas dependre du reglage de la machine.
+ * Le garde `typeof window` laisse passer les fichiers `@jest-environment node`
+ * (la verification de jeton, qui n'a pas de DOM).
  */
-if (!window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
