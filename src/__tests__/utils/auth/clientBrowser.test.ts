@@ -84,16 +84,31 @@ describe('signOut', () => {
     expect(navigate).toHaveBeenCalledWith('/');
   });
 
+  // The API could not take the sign-out, so the cookies are still in place and the
+  // middleware would send `/` on to the dashboard: the user would never see that
+  // they are not signed out. `/?reauth=1` (no `next`) is served as the form.
   it.each([
     ['an unreachable API', () => fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))],
-    ['a refused logout', () => fetchMock.mockResolvedValueOnce(reply(403, { detail: 'csrf_header_missing' }))],
-  ])('still signs the user out of the page after %s', async (_name, arrange) => {
+    ['an API error', () => fetchMock.mockResolvedValueOnce(reply(503, { detail: 'unavailable' }))],
+  ])('lands on the sign-in form, marked reauth, after %s', async (_name, arrange) => {
     document.cookie = 'account_status=suspended; path=/';
     arrange();
 
     await signOut();
 
     expect(document.cookie).not.toContain('account_status');
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('/?reauth=1');
+  });
+
+  it.each([
+    ['a refused logout', () => fetchMock.mockResolvedValueOnce(reply(403, { detail: 'csrf_header_missing' }))],
+    ['a session that was already over', () => fetchMock.mockResolvedValueOnce(reply(401, { detail: 'invalid_token' }))],
+  ])('still goes to the plain sign-in page after %s', async (_name, arrange) => {
+    arrange();
+
+    await signOut();
+
     expect(navigate).toHaveBeenCalledWith('/');
   });
 });

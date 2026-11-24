@@ -187,12 +187,18 @@ export function hasSessionHint(): boolean {
 }
 
 /**
- * Ends the session. The API clears its cookies whatever happens, and a failed
- * call must not trap the user in a session they asked to leave, so the outcome
- * is ignored. The full reload also empties the React Query cache.
+ * Ends the session. A failed call must not trap the user in a session they
+ * asked to leave: the page is left either way, and the full reload empties the
+ * React Query cache.
+ *
+ * Normally the API has cleared its cookies by then. When it could not be
+ * reached or failed (status 0 or 5xx) it may not have, and `/` would send the
+ * still-verified visitor straight on to the dashboard as if nothing happened:
+ * `reauth=1` (with no `next`) makes the middleware serve the sign-in form.
  */
 export async function signOut(): Promise<void> {
-  await authPost('/logout');
+  const result = await authPost('/logout');
   document.cookie = 'account_status=; path=/; max-age=0';
-  navigate('/');
+  const unconfirmed = !result.ok && (result.status === 0 || result.status >= 500);
+  navigate(unconfirmed ? '/?reauth=1' : '/');
 }
