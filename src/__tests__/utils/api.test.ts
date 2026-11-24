@@ -34,6 +34,12 @@ function fail(status: number, detail: unknown): AxiosError {
   return new AxiosError(`Request failed with status code ${status}`, 'ERR_BAD_REQUEST', undefined, undefined, response);
 }
 
+/** The same refusal on a `responseType: 'blob'` call: the body arrives as a Blob, not parsed JSON. */
+function failBlob(status: number, body: string): AxiosError {
+  const response = { data: new Blob([body]), status, statusText: '', headers: {} } as AxiosResponse;
+  return new AxiosError(`Request failed with status code ${status}`, 'ERR_BAD_REQUEST', undefined, undefined, response);
+}
+
 function setLocation(path: string) {
   window.history.pushState({}, '', path);
 }
@@ -113,6 +119,69 @@ it('treats the pre-launch 403 "Not authenticated" as signed out', async () => {
   await api.get('/users/me');
 
   expect(mockRefresh).toHaveBeenCalledTimes(1);
+});
+
+// Report and export downloads ask for a Blob: the refusal's JSON body is then a Blob
+// too, and its `detail` has to be read out of it before the renewal can be decided.
+describe('a refused download (responseType blob)', () => {
+  it('treats the pre-launch 403 "Not authenticated" as signed out, renews and replays', async () => {
+    adapter
+      .mockRejectedValueOnce(failBlob(403, JSON.stringify({ detail: 'Not authenticated' })))
+      .mockResolvedValueOnce(ok('the-file'));
+    mockRefresh.mockResolvedValue(true);
+
+    const res = await api.get('/reports/r1/export', { responseType: 'blob' });
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(adapter).toHaveBeenCalledTimes(2);
+    expect(adapter.mock.calls[1][0]).toMatchObject({ responseType: 'blob', _authRetried: true });
+    expect(res.data).toBe('the-file');
+  });
+
+  it('ends the session like any other call when the renewal is refused', async () => {
+    setLocation('/projects/p1');
+    adapter.mockRejectedValue(failBlob(403, JSON.stringify({ detail: 'Not authenticated' })));
+    mockRefresh.mockResolvedValue(false);
+
+    await expect(api.get('/reports/r1/export', { responseType: 'blob' })).rejects.toBeDefined();
+
+    expect(mockNavigate).toHaveBeenCalledWith('/?next=%2Fprojects%2Fp1');
+  });
+
+  it('does not renew for another 403, a body that is not JSON, nor a body without detail', async () => {
+    adapter.mockRejectedValueOnce(failBlob(403, JSON.stringify({ detail: 'csrf_header_missing' })));
+    await expect(api.get('/a', { responseType: 'blob' })).rejects.toBeDefined();
+
+    adapter.mockRejectedValueOnce(failBlob(403, '<html>Forbidden</html>'));
+    await expect(api.get('/b', { responseType: 'blob' })).rejects.toBeDefined();
+
+    adapter.mockRejectedValueOnce(failBlob(403, JSON.stringify({ message: 'nope' })));
+    await expect(api.get('/c', { responseType: 'blob' })).rejects.toBeDefined();
+
+    adapter.mockRejectedValueOnce(failBlob(403, 'null'));
+    await expect(api.get('/d', { responseType: 'blob' })).rejects.toBeDefined();
+
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it('still recognises a suspended account', async () => {
+    adapter.mockRejectedValueOnce(
+      failBlob(403, JSON.stringify({ detail: { error: 'account_inactive', status: 'suspended' } })),
+    );
+
+    await expect(api.get('/a', { responseType: 'blob' })).rejects.toBeDefined();
+
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/suspended');
+  });
+
+  it('hands the original Blob to the caller when the refusal is not a sign-out', async () => {
+    adapter.mockRejectedValueOnce(failBlob(500, 'boom'));
+
+    await expect(api.get('/a', { responseType: 'blob' })).rejects.toMatchObject({
+      response: { status: 500, data: expect.any(Blob) },
+    });
+  });
 });
 
 it('never refreshes on csrf_header_missing nor account_inactive', async () => {

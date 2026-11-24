@@ -25,6 +25,35 @@ const api = axios.create({
   },
 });
 
+/** A Blob's text. `FileReader` rather than `Blob.text()`, which jsdom (the tests) lacks. */
+function readText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
+}
+
+/**
+ * The `detail` of a refusal's body. On a `responseType: 'blob'` call (report and
+ * export downloads) the body arrives as a Blob even for an error, so a 403 is
+ * read out of it: without that the pre-launch "Not authenticated" would go
+ * unrecognised and the session never renewed. A body that is not JSON, or has
+ * no `detail`, yields `undefined`.
+ */
+async function refusalDetail(status: number, data: unknown): Promise<unknown> {
+  let body = data;
+  if (status === 403 && typeof Blob !== 'undefined' && data instanceof Blob) {
+    try {
+      body = JSON.parse(await readText(data));
+    } catch {
+      return undefined;
+    }
+  }
+  return (body as { detail?: unknown } | null | undefined)?.detail;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -37,7 +66,11 @@ api.interceptors.response.use(
     // session (one refresh shared by every request that failed together) and is
     // replayed once. A refused renewal, or a replay refused again, ends the
     // session: back to the sign-in page, remembering where the user was.
-    if (error.response && isSignedOut(error.response.status, error.response.data?.detail)) {
+    const detail = error.response
+      ? await refusalDetail(error.response.status, error.response.data)
+      : undefined;
+
+    if (error.response && isSignedOut(error.response.status, detail)) {
       const config = error.config;
       if (config && !config._authRetried && (await refreshSession())) {
         return api.request({ ...config, _authRetried: true });
@@ -48,11 +81,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (
-      error.response?.status === 403 &&
-      error.response?.data?.detail?.error === 'account_inactive'
-    ) {
-      const accountStatus = error.response.data.detail.status as string;
+    if (error.response?.status === 403 && (detail as { error?: unknown } | undefined)?.error === 'account_inactive') {
+      const accountStatus = (detail as { status: string }).status;
       if (typeof document !== 'undefined') {
         document.cookie = `account_status=${accountStatus}; path=/; max-age=3600`;
         navigate('/suspended');
