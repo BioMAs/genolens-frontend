@@ -96,21 +96,31 @@ const DIVERGING: Record<PaletteMode, Record<ThemeMode, ColorStops>> = {
  * Divergente du log2FC — distincte de la precedente a dessein : un ecran qui
  * montre expression ET log2FC cote a cote doit pouvoir dire lequel il regarde.
  *
- * ⚠️ En mode standard, magenta/vert mesure dE 0,068 en deutéranopie : les deux
- * bouts sont pratiquement confondus. C'est le defaut que la bascule daltonisme
- * existe pour corriger, et c'est pourquoi elle est desormais globale et
- * persistee plutot que privee a chaque graphique.
+ * C'est l'echelle de DIRECTION continue : le negatif est `down`, le positif est
+ * `up`, les deux bouts de la palette standard (terre cuite en haut, bleu acier
+ * en bas, spec § 2.1 — « jamais rouge contre vert »). Elle etait magenta/vert,
+ * soit du vert pour le sur-exprime, et mesurait dE 0,068 en deuteranopie.
+ *
+ * Les paliers intermediaires sont des fondus lineaires du bout vers le neutre,
+ * donc la clarte s'eloigne du milieu de facon monotone. Le neutre est le gris
+ * quasi-blanc en clair et, en sombre, la surface du panneau (`--gl-surface`,
+ * oklch(20% 0.013 285)) : le zero y disparait au lieu d'y faire un trou.
  */
+const LOGFC_DARK_NEUTRAL = '#15151c';
+
+function logFCStandard(theme: ThemeMode, neutral: string): ColorStops {
+  const { down, up } = getPalette('standard', theme);
+  return [
+    [0.0, down], [0.25, mixColors(down, neutral, 0.5)], [0.4, mixColors(down, neutral, 0.8)],
+    [0.5, neutral],
+    [0.6, mixColors(up, neutral, 0.8)], [0.75, mixColors(up, neutral, 0.5)], [1.0, up],
+  ];
+}
+
 const LOGFC: Record<PaletteMode, Record<ThemeMode, ColorStops>> = {
   standard: {
-    light: [
-      [0.0, '#c51b7d'], [0.25, '#e9a3c9'], [0.4, '#fde0ef'], [0.5, ZERO.light],
-      [0.6, '#e6f5d0'], [0.75, '#a1d76a'], [1.0, '#4d9221'],
-    ],
-    dark: [
-      [0.0, '#e074b4'], [0.25, '#a83e84'], [0.4, '#6b2a55'], [0.5, ZERO.dark],
-      [0.6, '#2f5a2a'], [0.75, '#5a9a3f'], [1.0, '#9ed669'],
-    ],
+    light: logFCStandard('light', ZERO.light),
+    dark: logFCStandard('dark', LOGFC_DARK_NEUTRAL),
   },
   colorblind: DIVERGING.colorblind,
 };

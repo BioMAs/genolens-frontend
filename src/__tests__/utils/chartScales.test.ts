@@ -115,6 +115,68 @@ describe('point median', () => {
   });
 });
 
+describe('echelle log2FC — terre cuite en haut, bleu acier en bas', () => {
+  /**
+   * C'est l'echelle de DIRECTION continue : positif = up, negatif = down. Elle disait magenta/vert,
+   * c'est-a-dire du vert pour le sur-exprime, ce que la spec § 2.1 interdit (« jamais rouge contre
+   * vert » ; up est chaud, down est froid). Ses deux bouts sont ceux de la palette standard.
+   */
+  const THEMES = ['light', 'dark'] as const;
+  // --gl-surface sombre, oklch(20% 0.013 285), en hex : le neutre y recule jusqu'a disparaitre.
+  const DARK_PANEL = '#15151c';
+
+  it.each(THEMES)('ses bouts sont down (bas) et up (haut) de la palette standard (%s)', (theme) => {
+    const stops = logFCScale('standard', theme);
+    const { down, up } = getPalette('standard', theme);
+    expect(stops[0]).toEqual([0, down]);
+    expect(stops[stops.length - 1]).toEqual([1, up]);
+  });
+
+  it.each(THEMES)('le bout haut est chaud, le bout bas froid, aucun palier vert (%s)', (theme) => {
+    const stops = logFCScale('standard', theme);
+    const [hi, lo] = [stops[stops.length - 1][1], stops[0][1]];
+    expect(srgb(hi)[0]).toBeGreaterThan(srgb(hi)[2]);
+    expect(srgb(lo)[2]).toBeGreaterThan(srgb(lo)[0]);
+    for (const [, c] of stops) {
+      const [r, g, b] = srgb(c);
+      expect(g > r && g > b).toBe(false);
+    }
+  });
+
+  it('garde son neutre clair en theme clair', () => {
+    const mid = logFCScale('standard', 'light').find(([p]) => p === 0.5);
+    expect(mid![1]).toBe('#f7f7f7');
+  });
+
+  it('prend la surface sombre pour neutre en theme sombre', () => {
+    const mid = logFCScale('standard', 'dark').find(([p]) => p === 0.5);
+    expect(mid![1]).toBe(DARK_PANEL);
+    expect(contrast(mid![1], DARK_PANEL)).toBeLessThan(1.05);
+  });
+
+  it.each(THEMES)('va du neutre vers chaque bout sans le depasser (%s)', (theme) => {
+    // Plus on s'eloigne du milieu, plus on se rapproche du bout : la clarte s'eloigne du neutre.
+    const stops = logFCScale('standard', theme);
+    const mid = okLightness(stops.find(([p]) => p === 0.5)![1]);
+    const dist = (c: string) => Math.abs(okLightness(c) - mid);
+    const lower = stops.filter(([p]) => p <= 0.5).map(([, c]) => dist(c));
+    const upper = stops.filter(([p]) => p >= 0.5).map(([, c]) => dist(c));
+    for (let i = 1; i < lower.length; i += 1) expect(lower[i]).toBeLessThanOrEqual(lower[i - 1]);
+    for (let i = 1; i < upper.length; i += 1) expect(upper[i]).toBeGreaterThanOrEqual(upper[i - 1]);
+  });
+
+  it('laisse la variante daltonisme telle quelle, octet pour octet', () => {
+    expect(logFCScale('colorblind', 'light')).toEqual([
+      [0.0, '#0072B2'], [0.3, '#88c4e8'], [0.5, '#f7f7f7'],
+      [0.7, '#f0a882'], [1.0, '#D55E00'],
+    ]);
+    expect(logFCScale('colorblind', 'dark')).toEqual([
+      [0.0, '#5fb4e8'], [0.3, '#2c6f9c'], [0.5, '#1c2438'],
+      [0.7, '#a3512a'], [1.0, '#f09460'],
+    ]);
+  });
+});
+
 describe('direction', () => {
   it('suit la convention de la Lentille : chaud en haut, froid en bas, jamais rouge/vert', () => {
     // Le violet/vert d'origine contredisait tous les autres ecrans ; le vert/rouge qui l'a
