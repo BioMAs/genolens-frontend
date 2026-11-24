@@ -9,8 +9,8 @@ jest.mock('@/contexts/TourContext', () => ({
 
 function Harness() {
   useAutoTour('dashboard');
-  // The dashboard tour's first element-anchored step targets sidebar-workspace.
-  return <div data-tour="sidebar-workspace" />;
+  // The dashboard tour's first element-anchored step targets nav-workspace.
+  return <div data-tour="nav-workspace" />;
 }
 
 describe('useAutoTour', () => {

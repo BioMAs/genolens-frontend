@@ -23,12 +23,12 @@ export const TOURS: Record<TourId, TourDefinition> = {
         },
       },
       {
-        element: anchor('sidebar-workspace'),
+        element: anchor('nav-workspace'),
         popover: {
           title: 'Navigation',
           description:
-            'Reach your dashboard, projects, comparisons and tools from this side menu.',
-          side: 'right',
+            'Reach your home page, your projects and the tools from this bar at the top.',
+          side: 'bottom',
           align: 'start',
         },
       },

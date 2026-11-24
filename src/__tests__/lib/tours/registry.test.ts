@@ -18,6 +18,18 @@ describe('tour registry', () => {
     }
   });
 
+  it('anchors the dashboard navigation step on the top bar, not the removed sidebar', () => {
+    const elements = TOURS.dashboard.steps.map((s) => s.element);
+    expect(elements).toContain('[data-tour="nav-workspace"]');
+    expect(elements).not.toContain('[data-tour="sidebar-workspace"]');
+    const navStep = TOURS.dashboard.steps.find(
+      (s) => s.element === '[data-tour="nav-workspace"]',
+    );
+    // La barre est en haut : une bulle a droite serait hors de l'ecran.
+    expect(navStep?.popover?.side).toBe('bottom');
+    expect(navStep?.popover?.description).not.toMatch(/side menu/i);
+  });
+
   it('getTour returns the matching definition', () => {
     expect(getTour('dashboard').id).toBe('dashboard');
   });
