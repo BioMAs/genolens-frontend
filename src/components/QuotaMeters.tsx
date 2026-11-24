@@ -122,7 +122,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
               style={{ color: VALUE_COLOR[tone] }}
             >
               {analyses.remaining}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {analyses.max}
               </span>
             </p>
@@ -171,7 +171,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
           <>
             <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {projects.used}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {projects.max}
               </span>
             </p>
@@ -214,7 +214,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
               style={{ color: VALUE_COLOR[aiTone] }}
             >
               {ai.credits}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {ai.max}
               </span>
             </p>

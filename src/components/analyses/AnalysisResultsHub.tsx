@@ -414,7 +414,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
           open={paramsOpen}
           onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <summary className="cursor-pointer text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Analysis parameters
           </summary>
           <div className="mt-4">
@@ -480,7 +480,7 @@ function ModuleCard({
           <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
         )}
       </div>
-      <h3 className="mt-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <h3 className="mt-3 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       <p className="mt-1 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       {(disabled ? disabledHint : metric) && (
         <div

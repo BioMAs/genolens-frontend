@@ -133,7 +133,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             <Icon className="h-[22px] w-[22px]" />
           </span>
           <div>
-            <div className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
+            <div className="text-body font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</div>
             <div className="mt-1 text-micro" style={{ color: 'var(--text-secondary)' }}>{tagline}</div>
           </div>
         </div>

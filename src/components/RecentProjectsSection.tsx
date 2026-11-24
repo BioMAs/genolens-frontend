@@ -86,7 +86,7 @@ export default function RecentProjectsSection({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p
-                className="font-display text-body-sm font-semibold truncate"
+                className="text-body-sm font-semibold truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {project.name}

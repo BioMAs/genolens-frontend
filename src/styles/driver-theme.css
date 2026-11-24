@@ -6,10 +6,10 @@
   color: var(--text-primary, #111827);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-family: var(--font-instrument), system-ui, sans-serif;
 }
 .driver-popover.genolens-tour .driver-popover-title {
-  font-family: var(--font-syne), system-ui, sans-serif;
+  font-family: var(--font-newsreader), Georgia, serif;
   font-weight: 600;
   color: var(--text-primary, #111827);
 }

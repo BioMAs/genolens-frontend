@@ -69,7 +69,7 @@ export default function ToolsIndexPage() {
                         </div>
 
                         <h3
-                            className="font-display text-body-sm font-semibold leading-snug mb-2"
+                            className="text-body-sm font-semibold leading-snug mb-2"
                             style={{ color: 'var(--text-primary)' }}
                         >
                             {tool.name}

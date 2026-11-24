@@ -93,7 +93,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
           <Folder className="h-7 w-7" style={{ color: 'var(--sl-teal-dark)' }} />
         </div>
         <h3
-          className="font-display text-body font-semibold mb-1"
+          className="text-body font-semibold mb-1"
           style={{ color: 'var(--text-primary)' }}
         >
           No projects yet
@@ -142,7 +142,7 @@ export default function ProjectList({ onCreateClick, filters, emptyState }: Proj
                 <Folder className="h-4.5 w-4.5" style={{ color: 'var(--sl-teal-dark)' }} />
               </div>
               <h3
-                className="font-display text-body-sm font-semibold leading-snug truncate"
+                className="text-body-sm font-semibold leading-snug truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {project.name}

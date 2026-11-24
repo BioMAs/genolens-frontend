@@ -48,7 +48,7 @@ const PAINTED = [
 
 /**
  * Pile de repli, appliquee APRES la famille resolue. Un SVG ouvert sur une
- * machine qui n'a pas Geist doit rester lisible plutot que de tomber sur la
+ * machine qui n'a pas Instrument Sans doit rester lisible plutot que de tomber sur la
  * police par defaut du visualiseur.
  */
 const FALLBACK_STACK = 'system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif';

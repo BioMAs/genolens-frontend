@@ -66,7 +66,7 @@ export default function DocsIndex({ docs }: DocsIndexProps) {
                   className="gl-card flex h-full items-start gap-3 p-4 transition-colors hover:border-[var(--sl-purple)]"
                 >
                   <span
-                    className="font-display text-body font-semibold"
+                    className="text-body font-semibold"
                     style={{ color: 'var(--sl-teal)' }}
                     aria-hidden
                   >

@@ -77,7 +77,7 @@ export const CHART_VARS: Readonly<ChartTheme> = Object.freeze({
   down: 'var(--chart-down)',
   ns: 'var(--chart-ns)',
   zero: 'var(--chart-zero)',
-  fontFamily: 'var(--font-dm-sans)',
+  fontFamily: 'var(--font-instrument)',
 });
 
 /**
@@ -102,7 +102,7 @@ const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
     accent: '#4f46e5',
     accentSoft: '#eef0ff',
     up: '#16a34a', down: '#dc2626', ns: '#c7ccd4', zero: '#f7f7f7',
-    fontFamily: 'Geist, system-ui, sans-serif',
+    fontFamily: "'Instrument Sans', system-ui, sans-serif",
   },
   dark: {
     ink: '#dde4ee', inkMuted: '#7d8ca3', inkSubtle: '#8898ae',
@@ -111,7 +111,7 @@ const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
     accent: '#4f46e5',
     accentSoft: 'rgba(79, 70, 229, 0.16)',
     up: '#22c55e', down: '#ef4444', ns: '#4a5568', zero: '#1c2438',
-    fontFamily: 'Geist, system-ui, sans-serif',
+    fontFamily: "'Instrument Sans', system-ui, sans-serif",
   },
 };
 
@@ -130,7 +130,7 @@ const VAR_NAMES: Record<keyof ChartTheme, string> = {
   down: '--chart-down',
   ns: '--chart-ns',
   zero: '--chart-zero',
-  fontFamily: '--font-dm-sans',
+  fontFamily: '--font-instrument',
 };
 
 /**

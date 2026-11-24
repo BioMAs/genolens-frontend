@@ -7,7 +7,8 @@ import Image from 'next/image';
  * is why the old login wrapped it in a white pill: the pill was hiding the
  * matte, not styling it. So on any coloured ground we compose the lockup
  * ourselves from genolensLoupe.png (genuinely transparent, 1080×1080) plus
- * typeset text in the app's display face.
+ * typeset text in the app's UI face (Instrument Sans). Newsreader is kept for
+ * titles and big figures, so the wordmark does not use it.
  */
 
 type Tone = 'onBrand' | 'onSurface';
@@ -42,7 +43,7 @@ export default function BrandLockup({
       />
       <span className="flex flex-col leading-none">
         <span
-          className={`font-display font-semibold ${s.word}`}
+          className={`font-semibold ${s.word}`}
           style={{ color: word, letterSpacing: '-0.02em' }}
         >
           GenoLens

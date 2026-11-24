@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Instrument_Sans, Newsreader } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -10,24 +10,36 @@ import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/utils/getUserRole";
 import { cn } from '@/lib/cn';
 
-// Une seule famille : Geist porte le corps ET le titrage. Poppins, une
-// geometrique arrondie, lisait « startup » plutot que « premium sobre » ; la
-// hierarchie vient desormais du poids, de la taille et du tracking (cf.
-// l'echelle typographique dans globals.css).
+// Trois familles, trois emplois (spec Lentille § 2.2) :
+//   - Newsreader (400, 500)         : titres de page, titres de section, grands
+//                                     chiffres. Jamais sur un libelle, un bouton,
+//                                     une cellule de tableau ni une donnee.
+//   - Instrument Sans (400, 500, 600) : toute l'interface.
+//   - IBM Plex Mono (400, 500)      : symboles de genes, log2FC, padj, ids, raccourcis.
 //
-// Le slot --font-syne (« display ») n'est plus charge ici : globals.css le fait
-// resoudre sur --font-dm-sans. Cela evite de toucher les ~100 references a
-// font-display / var(--font-syne) et retire une police du chemin critique.
-const bodyFont = Geist({
-  variable: "--font-dm-sans",
+// Les variables sont posees sur <body> par next/font. globals.css les relie aux
+// utilitaires Tailwind (font-sans / font-display / font-mono) et garde les
+// anciens noms (--font-dm-sans, --font-syne, --font-geist-mono) comme alias, au
+// meme endroit : il doit etre sur body, pas sur :root, la ou les variables
+// next/font sont definies.
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -87,7 +99,12 @@ export default async function RootLayout({
     // l'attribut `class` comme un écart.
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={cn(bodyFont.variable, geistMono.variable, 'antialiased')}
+        className={cn(
+          newsreader.variable,
+          instrumentSans.variable,
+          plexMono.variable,
+          'antialiased'
+        )}
       >
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <ErrorBoundary>

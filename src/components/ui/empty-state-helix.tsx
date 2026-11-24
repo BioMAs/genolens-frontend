@@ -79,7 +79,7 @@ function EmptyStateHelix({
     >
       <HelixGlyph />
       <h4
-        className="font-display font-semibold"
+        className="font-semibold"
         style={{ fontSize: 15, color: 'var(--text-primary)' }}
       >
         {title}

@@ -374,11 +374,17 @@
    Tailwind v4 Theme Registration
    ============================================================ */
 @theme inline {
-  /* Fonts — slots keep historical names (see layout.tsx):
-     --font-sans et --font-display resolvent tous deux sur Geist. */
-  --font-sans:    var(--font-dm-sans);
-  --font-display: var(--font-dm-sans);
-  --font-mono:    var(--font-geist-mono);
+  /* Polices — spec Lentille § 2.2, variables posees sur <body> par layout.tsx :
+       font-sans     Instrument Sans  toute l'interface
+       font-display  Newsreader       titres de page et de section, grands chiffres
+       font-mono     IBM Plex Mono    symboles de genes, log2FC, padj, ids, raccourcis
+     `font-display` n'est donc PLUS la police du corps : ne le poser que sur un
+     h1 / h2 ou sur un cran >= `title` (garde dans class-names.test.ts).
+     Les replis suivent la variable : si next/font ne l'a pas posee (labo, test),
+     l'interface reste lisible au lieu de tomber sur la police du navigateur. */
+  --font-sans:    var(--font-instrument), system-ui, sans-serif;
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-mono:    var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Lentille — les jetons --gl-* eux-memes, ecrits comme utilitaires :
      bg-plum, text-plum, bg-plum-soft, text-on-plum, bg-lagoon-soft,
@@ -532,7 +538,7 @@
      arbitraires, 18 valeurs distinctes, grappe 10-15px).
 
      Le tracking negatif croissant avec la taille est ce qui fait lire
-     « Apple » : Geist a 30px au tracking par defaut paraît lache. A
+     « Apple » : une sans a 30px au tracking par defaut paraît lache. A
      l'inverse `micro` passe en tracking positif, 11px a besoin d'air.
 
      `body` reste a 15px, identique a l'actuel body{font-size:.9375rem},
@@ -598,15 +604,34 @@ html {
 }
 
 body {
-  /* Alias legacy : ~100 references a var(--font-syne) subsistent dans le code.
-     Il doit vivre ici et non dans :root, car next/font pose --font-dm-sans sur
-     <body>. Une seule famille desormais : Geist porte corps et titrage. */
-  --font-syne: var(--font-dm-sans);
+  /* Alias herites. Les anciens noms (Geist sous --font-dm-sans, la police de
+     titrage sous --font-syne, Geist Mono sous --font-geist-mono) sont encore lus
+     par du CSS et du JS (driver.js, graphiques, formulaires d'authentification).
+     Ils pointent maintenant sur les nouvelles familles :
+       --font-dm-sans    -> Instrument Sans
+       --font-syne       -> Newsreader  (titres uniquement : ne PAS l'utiliser
+                                         sur un libelle, cf. class-names.test.ts)
+       --font-geist-mono -> IBM Plex Mono
+     Ils doivent vivre ici et non dans :root, car next/font pose les variables
+     --font-instrument / --font-newsreader / --font-plex-mono sur <body>. */
+  --font-dm-sans:    var(--font-instrument);
+  --font-syne:       var(--font-newsreader);
+  --font-geist-mono: var(--font-plex-mono);
 
   height: 100%;
   background: var(--background);
   color: var(--text-primary);
-  font-family: var(--font-dm-sans, 'Geist', system-ui, sans-serif);
+  font-family: var(--font-instrument, 'Instrument Sans', system-ui, sans-serif);
+  /* Newsreader et IBM Plex Mono ne sont chargees qu'en 400/500, Instrument Sans
+     qu'en 400/500/600. Sans cette ligne, `font-semibold` sur un titre ou un
+     symbole de gene ferait EPAISSIR le trait artificiellement (gras synthetique)
+     au lieu de prendre la graisse la plus proche. La graisse se herite. */
+  font-synthesis-weight: none;
+  /* Chiffres tabulaires partout (spec § 2.2) : Instrument Sans a des chiffres
+     proportionnels par defaut, et une colonne de nombres, un compteur ou un
+     quota qui change doivent garder la meme largeur. Tout le texte en herite ;
+     les graphiques ont leur propre regle plus bas. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
   line-height: 1.6;
   transition: background-color 0.2s ease, color 0.15s ease;
@@ -625,9 +650,10 @@ body {
    `scattergl` (le nuage de volcan) rend ses MARQUES en WebGL, mais ses axes,
    graduations, legende et libelles de survol restent du SVG : il est couvert.
 
-   A verifier : que la police Geist embarque bien la fonction `tnum`. C'est un
-   emplacement next/font, et le sous-ensemble compte — sinon la regle est un
-   no-op silencieux.
+   Verifie sur le build : les sous-ensembles latin d'Instrument Sans et de
+   Newsreader embarquent bien la fonction `tnum` (table GSUB lue avec fontTools).
+   IBM Plex Mono n'en a pas besoin, ses chiffres sont deja de largeur fixe.
+   Sans `tnum`, la regle serait un no-op silencieux.
    ============================================================ */
 .recharts-wrapper text,
 .js-plotly-plot .plotly text {
@@ -668,9 +694,10 @@ body {
   color: var(--text-muted);
 }
 
-/* Display font utility (Tailwind also registers font-display via @theme) */
+/* Display font utility (Tailwind also registers font-display via @theme).
+   Newsreader : titres de page et de section, grands chiffres. Jamais un libelle. */
 .font-display {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
+  font-family: var(--font-newsreader, 'Newsreader', Georgia, serif);
 }
 
 /* ============================================================
@@ -1160,7 +1187,8 @@ body {
 /* Data tables */
 .data-table            { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
 .data-table th {
-  font-family: var(--font-syne, 'Geist', system-ui, sans-serif);
+  /* Un en-tete de colonne est un libelle : Instrument Sans, pas la police de titrage. */
+  font-family: var(--font-instrument, 'Instrument Sans', system-ui, sans-serif);
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -1372,7 +1400,7 @@ body {
 .auth-scope .auth-label {
   display: block;
   margin-bottom: 6px;
-  font-family: var(--font-syne);
+  font-family: var(--font-instrument);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -1436,7 +1464,7 @@ body {
   scroll-margin-top: calc(var(--topbar-height) + 1rem);
 }
 .doc-prose h3 {
-  font-family: var(--font-syne);
+  font-family: var(--font-instrument);
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
