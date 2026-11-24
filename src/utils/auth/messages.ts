@@ -34,6 +34,12 @@ export const PASSWORDS_DIFFER = 'Both passwords must match.';
 export const RESEND_SENT = "If this address needs confirming, we've sent a new link.";
 
 /**
+ * What the visitor reads where a streamed call (the chat, the chart assistant)
+ * met a session that could not be renewed: in words, not as the raw refusal.
+ */
+export const SESSION_EXPIRED = 'Your session has expired. Sign in again to continue.';
+
+/**
  * What the visitor reads on the sign-in page after a renewal of their session
  * failed while the session itself may still be valid (the API answered 5xx or
  * 429, or could not be reached): the failure is shown with a way to retry,

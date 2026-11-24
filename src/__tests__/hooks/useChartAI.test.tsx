@@ -11,7 +11,10 @@ import React from 'react';
 
 import { useChartAI } from '@/hooks/useChartAI';
 import { installFakeFetch, refreshed, refusal, sseResponse } from '@/test-utils/fetchDoubles';
+import { SESSION_EXPIRED } from '@/utils/auth/messages';
+import { navigate } from '@/utils/auth/navigation';
 
+jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
 jest.mock('@/utils/api', () => ({
   __esModule: true,
   default: { get: jest.fn(() => Promise.resolve({ data: { messages: [] } })) },
@@ -20,6 +23,12 @@ jest.mock('@/utils/api', () => ({
 const API = 'http://api.example.test/api/v1';
 
 const fetchMock = installFakeFetch(API);
+const mockNavigate = navigate as jest.Mock;
+
+beforeEach(() => {
+  mockNavigate.mockReset();
+  window.history.pushState({}, '', '/projects/p1?tab=2');
+});
 
 /** A 200 answer streaming the given events as `data:` lines, one chunk each. */
 function stream(events: Record<string, unknown>[]): Response {
@@ -107,7 +116,9 @@ it('renews an expired session before a follow-up question', async () => {
   expect(answer).toEqual({ answer: 'Because of p53' });
 });
 
-it('surfaces the refusal, once, when the session cannot be renewed', async () => {
+// The renewal was refused: the session is over. The panel gets the sentence, not the
+// raw refusal, and the visitor is sent to sign in again, back to this page afterwards.
+it('says the session has expired, once, and offers the sign-in, when it cannot be renewed', async () => {
   fetchMock
     .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
     .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_refresh' })));
@@ -118,8 +129,37 @@ it('surfaces the refusal, once, when the session cannot be renewed', async () =>
   });
 
   expect(fetchMock).toHaveBeenCalledTimes(2); // no replay, no loop
-  expect(result.current.interpretError).toBe(
-    'AI request failed: 401 – {"detail":"invalid_token"}',
-  );
+  expect(result.current.interpretError).toBe(SESSION_EXPIRED);
+  expect(result.current.interpretError).not.toMatch(/401|invalid_token/);
   expect(result.current.isInterpreting).toBe(false);
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+  expect(mockNavigate).toHaveBeenCalledWith('/?next=%2Fprojects%2Fp1%3Ftab%3D2');
+});
+
+it('says so too when a follow-up question cannot be answered for the same reason', async () => {
+  fetchMock
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_refresh' })));
+  const { result } = renderPanel();
+
+  let failure: unknown;
+  await act(async () => {
+    failure = await result.current.ask('Why?').catch((err: unknown) => err);
+  });
+
+  expect(failure).toBeInstanceOf(Error);
+  expect((failure as Error).message).toBe(SESSION_EXPIRED);
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+});
+
+it('does not send anyone to sign in for a refusal that is not a sign-out', async () => {
+  fetchMock.mockResolvedValueOnce(refusal(500, 'Internal Server Error'));
+  const { result } = renderPanel();
+
+  await act(async () => {
+    await result.current.interpret();
+  });
+
+  expect(result.current.interpretError).toBe('AI request failed: 500 – Internal Server Error');
+  expect(mockNavigate).not.toHaveBeenCalled();
 });

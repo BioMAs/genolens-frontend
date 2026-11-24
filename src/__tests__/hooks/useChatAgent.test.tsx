@@ -17,7 +17,10 @@ import React from 'react';
 
 import { useChatAgent } from '@/hooks/useChatAgent';
 import { installFakeFetch, refreshed, refusal, sseResponse } from '@/test-utils/fetchDoubles';
+import { SESSION_EXPIRED } from '@/utils/auth/messages';
+import { navigate } from '@/utils/auth/navigation';
 
+jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
 jest.mock('@/utils/api', () => ({
   __esModule: true,
   default: { post: jest.fn(() => Promise.resolve({ data: { id: 'session-1' } })) },
@@ -27,6 +30,12 @@ const API = 'http://api.example.test/api/v1';
 const QUOTA_MESSAGE = 'You have used all 20 AI requests of this demo account.';
 
 const fetchMock = installFakeFetch(API);
+const mockNavigate = navigate as jest.Mock;
+
+beforeEach(() => {
+  mockNavigate.mockReset();
+  window.history.pushState({}, '', '/projects/p1?tab=2');
+});
 
 function renderChat() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -87,10 +96,11 @@ it('renews an expired session before streaming', async () => {
   expect(result.current.messages.at(-1)).toMatchObject({ content: 'Back', pending: false });
 });
 
-it('surfaces the original refusal, once, when the session cannot be renewed', async () => {
-  const unauthorised = JSON.stringify({ detail: 'invalid_token' });
+// The renewal was refused: the session is over. The visitor reads that in words, not
+// as the raw refusal, and is sent to sign in again, back to this page afterwards.
+it('says the session has expired, once, and offers the sign-in, when it cannot be renewed', async () => {
   fetchMock
-    .mockResolvedValueOnce(refusal(401, unauthorised))
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
     .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_refresh' })));
   const { result } = renderChat();
 
@@ -99,9 +109,40 @@ it('surfaces the original refusal, once, when the session cannot be renewed', as
   });
 
   expect(fetchMock).toHaveBeenCalledTimes(2); // no replay, no loop
-  expect(result.current.error).toBe(`Chat request failed: 401 – ${unauthorised}`);
+  expect(result.current.error).toBe(SESSION_EXPIRED);
+  expect(result.current.error).not.toMatch(/401|invalid_token/);
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+  expect(mockNavigate).toHaveBeenCalledWith('/?next=%2Fprojects%2Fp1%3Ftab%3D2');
   expect(result.current.isStreaming).toBe(false);
   expect(result.current.messages.at(-1)?.pending).toBe(false);
+});
+
+it('treats the pre-launch 403 "Not authenticated" the same way', async () => {
+  fetchMock
+    .mockResolvedValueOnce(refusal(403, JSON.stringify({ detail: 'Not authenticated' })))
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_refresh' })));
+  const { result } = renderChat();
+
+  await act(async () => {
+    await result.current.send('hi');
+  });
+
+  expect(result.current.error).toBe(SESSION_EXPIRED);
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+});
+
+it('does not send anyone to sign in for a refusal that is not a sign-out', async () => {
+  fetchMock.mockResolvedValueOnce(
+    refusal(403, JSON.stringify({ detail: 'csrf_header_missing' })),
+  );
+  const { result } = renderChat();
+
+  await act(async () => {
+    await result.current.send('hi');
+  });
+
+  expect(result.current.error).toMatch(/^Chat request failed: 403/);
+  expect(mockNavigate).not.toHaveBeenCalled();
 });
 
 it('surfaces the quota message on the AI-cap 429', async () => {

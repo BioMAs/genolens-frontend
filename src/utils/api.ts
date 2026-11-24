@@ -1,8 +1,7 @@
 import axios from 'axios';
-import { apiBaseUrl, isSignedOut, refreshSession } from '@/utils/auth/client';
+import { apiBaseUrl, isSignedOut, redirectToSignIn, refreshSession } from '@/utils/auth/client';
 import { CLIENT_HEADER, CLIENT_NAME } from '@/utils/auth/constants';
 import { navigate } from '@/utils/auth/navigation';
-import { isPublicPath, loginPath } from '@/utils/auth/paths';
 
 declare module 'axios' {
   // The type parameter must match axios's own declaration, used or not.
@@ -75,9 +74,7 @@ api.interceptors.response.use(
       if (config && !config._authRetried && (await refreshSession())) {
         return api.request({ ...config, _authRetried: true });
       }
-      if (typeof window !== 'undefined' && !isPublicPath(window.location.pathname)) {
-        navigate(loginPath(window.location.pathname + window.location.search));
-      }
+      redirectToSignIn();
       return Promise.reject(error);
     }
 

@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { authedFetch } from '@/utils/auth/client';
+import {
+  SessionExpiredError,
+  authedFetch,
+  isSignedOutResponse,
+  redirectToSignIn,
+} from '@/utils/auth/client';
 
 export type ChartType = 'volcano' | 'pca' | 'umap' | 'heatmap' | 'enrichment';
 
@@ -37,6 +42,12 @@ async function* readSSE(
   });
 
   if (!response.ok || !response.body) {
+    // Still signed out after `authedFetch` renewed and replayed (or failed to renew):
+    // the session is over. Say so in words and offer the sign-in, instead of the raw refusal.
+    if (await isSignedOutResponse(response)) {
+      redirectToSignIn();
+      throw new SessionExpiredError();
+    }
     let detail = '';
     try {
       const errBody = await response.text();

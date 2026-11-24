@@ -1,5 +1,7 @@
 import { CLIENT_HEADER, CLIENT_NAME, REFRESH_TIMEOUT_MS, SESSION_HINT_COOKIE } from './constants';
+import { SESSION_EXPIRED } from './messages';
 import { navigate } from './navigation';
+import { isPublicPath, loginPath } from './paths';
 
 /**
  * Browser transport for the self-hosted auth API: calls made before a session
@@ -154,11 +156,36 @@ export function isSignedOut(status: number, detail: unknown): boolean {
   return status === 401 || (status === 403 && detail === 'Not authenticated');
 }
 
-async function refusedAsSignedOut(response: Response): Promise<boolean> {
+/** `isSignedOut` for a `fetch` answer. A 403 is read from a clone: the caller can still read the body. */
+export async function isSignedOutResponse(response: Response): Promise<boolean> {
   if (response.status === 401) return true;
   if (response.status !== 403) return false;
   const body = (await readJson(response.clone())) as { detail?: unknown } | null;
   return isSignedOut(response.status, body?.detail);
+}
+
+/**
+ * Sends a visitor whose session is over to the sign-in page, remembering where
+ * they were (they come back to it afterwards). A public page has nothing to be
+ * sent back from, so it stays put. The axios instance does the same for its own
+ * calls; this is for the callers of `authedFetch`.
+ */
+export function redirectToSignIn(): void {
+  if (typeof window === 'undefined' || isPublicPath(window.location.pathname)) return;
+  navigate(loginPath(window.location.pathname + window.location.search));
+}
+
+/**
+ * What a call made with `authedFetch` fails with when its answer is still
+ * "signed out": the renewal was refused (or the replay refused again), so the
+ * session is over. The message is a sentence for the visitor, not the raw
+ * refusal; the caller pairs it with `redirectToSignIn()`.
+ */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super(SESSION_EXPIRED);
+    this.name = 'SessionExpiredError';
+  }
 }
 
 /**
@@ -175,7 +202,7 @@ export async function authedFetch(url: string, init?: RequestInit): Promise<Resp
   };
 
   const response = await send();
-  if (!(await refusedAsSignedOut(response))) return response;
+  if (!(await isSignedOutResponse(response))) return response;
   if (!(await refreshSession())) return response;
   return send();
 }

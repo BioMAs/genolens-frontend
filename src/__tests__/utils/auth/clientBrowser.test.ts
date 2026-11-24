@@ -3,7 +3,14 @@
  * hint cookie and sign-out. jsdom has no `fetch` and cannot be navigated, so
  * both are faked (`navigate` is the seam over `window.location.assign`).
  */
-import { hasSessionHint, signOut } from '@/utils/auth/client';
+import {
+  SessionExpiredError,
+  hasSessionHint,
+  isSignedOutResponse,
+  redirectToSignIn,
+  signOut,
+} from '@/utils/auth/client';
+import { SESSION_EXPIRED } from '@/utils/auth/messages';
 import { navigate } from '@/utils/auth/navigation';
 
 jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
@@ -110,5 +117,51 @@ describe('signOut', () => {
     await signOut();
 
     expect(navigate).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('redirectToSignIn', () => {
+  afterEach(() => window.history.pushState({}, '', '/'));
+
+  it('sends the visitor to sign in, remembering the page', () => {
+    window.history.pushState({}, '', '/projects/p1?tab=2');
+
+    redirectToSignIn();
+
+    expect(navigate).toHaveBeenCalledWith('/?next=%2Fprojects%2Fp1%3Ftab%3D2');
+  });
+
+  it('stays put on a public page, where there is nothing to be sent back from', () => {
+    window.history.pushState({}, '', '/pricing');
+
+    redirectToSignIn();
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('SessionExpiredError', () => {
+  it('carries the sentence the visitor reads', () => {
+    const error = new SessionExpiredError();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe(SESSION_EXPIRED);
+    expect(error.message).toBe('Your session has expired. Sign in again to continue.');
+  });
+});
+
+describe('isSignedOutResponse', () => {
+  const answer = (status: number, body: string) =>
+    ({ status, clone: () => ({ json: () => Promise.resolve(JSON.parse(body)) }) }) as unknown as Response;
+
+  it('recognises a 401, and the pre-launch 403 "Not authenticated"', async () => {
+    expect(await isSignedOutResponse(answer(401, '{}'))).toBe(true);
+    expect(await isSignedOutResponse(answer(403, '{"detail":"Not authenticated"}'))).toBe(true);
+  });
+
+  it('does not take any other refusal for a sign-out', async () => {
+    expect(await isSignedOutResponse(answer(403, '{"detail":"csrf_header_missing"}'))).toBe(false);
+    expect(await isSignedOutResponse(answer(403, 'not json'))).toBe(false);
+    expect(await isSignedOutResponse(answer(500, '{}'))).toBe(false);
   });
 });
