@@ -1,51 +1,94 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import CommandPaletteTrigger from '@/components/command/CommandPaletteTrigger';
-import HelpTourButton from '@/components/onboarding/HelpTourButton';
+import MobileNavToggle from '@/components/MobileNavToggle';
 import QuotaDisplay from '@/components/QuotaDisplay';
 import UserMenu from '@/components/sidebar/UserMenu';
+import DrawerNav from '@/components/shell/DrawerNav';
+import HelpMenu from '@/components/shell/HelpMenu';
 import { DESTINATIONS, resolveActiveDestination } from '@/lib/navigation/destinations';
 import { cn } from '@/lib/cn';
 
 interface TopNavProps {
   /** Le menu du compte en a besoin : AppShell, composant serveur, le lui passe. */
   user: User;
+  /** Role renvoye par le serveur : le menu du compte n'offre « Admin » qu'a un admin. */
+  userRole?: string | null;
 }
 
+/** Defilement de la fenetre au-dela duquel le filet se renforce. */
+const SCROLL_THRESHOLD = 4;
+
 /**
- * La barre du haut : la marque, trois destinations, la recherche, puis l'aide,
- * le quota IA et le compte.
+ * La barre du haut : la marque, trois destinations, la recherche, puis l'aide, le
+ * quota IA et le compte.
  *
- * Elle remplace la sidebar de gauche. Surface blanche, un filet dessous, 64px :
- * elle sert de repere a chaque ecran et ne doit pas peser plus que la page.
+ * Elle remplace la sidebar de gauche. Surface blanche, un filet dessous, 64px
+ * (`--topbar-height`) : elle sert de repere a chaque ecran et ne doit pas peser
+ * plus que la page. Elle est COLLEE en haut (`sticky`) et c'est le document qui
+ * defile dessous ; le contenu qui se colle a son tour — la carte de selection, un
+ * onglet — se cale sur `--sticky-top`, qui vaut cette hauteur.
  *
  * Le contenu est centre dans 1360px comme la page, pour que la marque et le
- * titre partagent la meme marge gauche. Sous 720px l'ensemble passe a la ligne
- * (`flex-wrap`) au lieu de deborder : la recherche descend sous la navigation,
- * et le conteneur garde `min-h-16` plutot qu'une hauteur fixe.
+ * titre partagent la meme marge gauche. La barre tient sur UNE ligne a toutes les
+ * largeurs, hauteur fixe : c'est la condition pour que `--sticky-top` dise vrai.
+ * Sous 60rem les destinations et l'aide quittent la barre pour le tiroir de
+ * `MobileNavToggle` ; la recherche reste, et le solde IA passe dans le tiroir
+ * sous 40rem.
  *
  * Le lien courant est prune sur fond prune doux ET porte `aria-current` : la
  * couleur seule ne dit rien a un lecteur d'ecran.
  *
+ * Le filet est present au repos et se renforce une fois la page defilee, pour
+ * separer la barre de ce qui glisse dessous.
+ *
  * L'image de marque est genolensLoupe.png, transparente. Jamais logo.png, dont
  * le fond blanc opaque dessinerait un carre sur cette surface — et sur
  * n'importe quelle autre en theme sombre.
+ *
+ * Empilement : z-40, au-dessus du contenu et de ses bandeaux collés (z-30), sous
+ * la palette de commandes et les dialogues (z-[10000]). Les menus (aide, compte,
+ * tiroir) sont poses DANS la barre, donc dans son contexte d'empilement.
  */
-export default function TopNav({ user }: TopNavProps) {
+export default function TopNav({ user, userRole = null }: TopNavProps) {
   const pathname = usePathname();
   const active = resolveActiveDestination(pathname);
+  const [scrolled, setScrolled] = useState(false);
+
+  // C'est le document qui defile, pas un conteneur : la fenetre est l'ecouteur.
+  // On lit aussi la position au montage — un retour arriere restaure la page a
+  // mi-hauteur avant que la barre n'existe, et aucun evenement ne suivra.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className="border-b border-subtle bg-surface">
-      <div className="mx-auto flex min-h-16 w-full max-w-[1360px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 md:gap-x-8 md:px-10">
+    <header
+      className={cn(
+        // La hauteur est portee par la barre, bordure comprise (border-box) :
+        // posee sur la ligne interieure, la barre ferait 65px et le contenu
+        // colle sous elle (`--sticky-top`) mordrait d'un pixel sous son filet.
+        'sticky top-0 z-40 h-[var(--topbar-height)] border-b bg-surface transition-colors motion-reduce:transition-none',
+        scrolled ? 'border-strong' : 'border-subtle',
+      )}
+    >
+      <div className="mx-auto flex h-full w-full max-w-[1360px] items-center gap-4 px-4 min-[60rem]:gap-8 md:px-10">
+        <MobileNavToggle>
+          <DrawerNav active={active} />
+        </MobileNavToggle>
+
         <Link
           href="/dashboard"
           aria-label="GenoLens home"
-          className="flex items-center gap-2 rounded-control text-[1.125rem] font-semibold tracking-[-0.01em] text-primary"
+          className="flex shrink-0 items-center gap-2 rounded-control text-primary"
         >
           <Image
             src="/genolensLoupe.png"
@@ -55,10 +98,15 @@ export default function TopNav({ user }: TopNavProps) {
             priority
             className="h-[30px] w-[30px] shrink-0"
           />
-          <span>GenoLens</span>
+          {/* Sous 30rem la loupe seule : le nom ne tient pas a cote de la recherche. */}
+          <span className="hidden text-title min-[30rem]:inline">GenoLens</span>
         </Link>
 
-        <nav aria-label="Main" data-tour="nav-workspace" className="flex gap-1">
+        <nav
+          aria-label="Main"
+          data-tour="nav-workspace"
+          className="hidden gap-1 min-[60rem]:flex"
+        >
           {DESTINATIONS.map(({ key, label, href }) => {
             const current = key === active;
             return (
@@ -66,11 +114,11 @@ export default function TopNav({ user }: TopNavProps) {
                 key={key}
                 href={href}
                 aria-current={current ? 'page' : undefined}
-                // Le pseudo-element porte la zone de clic de 40 a 44px sans
-                // grossir la pastille.
+                // Pastille de 36px, sur l'echelle des hauteurs de controle ; le
+                // pseudo-element porte la zone de clic a 44px sans la grossir.
                 className={cn(
-                  'relative inline-flex min-h-10 items-center rounded-control px-3 text-body font-medium transition-colors motion-reduce:transition-none',
-                  'after:absolute after:inset-x-0 after:-inset-y-0.5',
+                  'relative inline-flex min-h-9 items-center rounded-control px-3 text-body font-medium transition-colors motion-reduce:transition-none',
+                  'after:absolute after:inset-x-0 after:-inset-y-1',
                   current
                     ? 'bg-plum-soft text-plum'
                     : 'text-secondary hover:bg-surface-2 hover:text-primary',
@@ -89,11 +137,11 @@ export default function TopNav({ user }: TopNavProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {/* Le menu d'aide (guide, documentation) prendra cette place ; en
-              attendant, le bouton qui rejoue le guide de la page. */}
-          <HelpTourButton />
-          <QuotaDisplay />
-          <UserMenu user={user} />
+          <HelpMenu className="hidden min-[60rem]:block" />
+          <div className="hidden sm:block">
+            <QuotaDisplay />
+          </div>
+          <UserMenu user={user} userRole={userRole} />
         </div>
       </div>
     </header>

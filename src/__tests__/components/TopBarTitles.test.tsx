@@ -1,10 +1,13 @@
 /**
- * La barre de contexte.
+ * Le fil d'Ariane, en tête du contenu de la page.
  *
- * Elle affichait UN mot, dérivé de 19 `if` successifs — sur sept routes la même
- * chaîne que le `<h1>` de la page, sur les autres un nom générique. Elle porte
- * désormais un fil d'Ariane : la seule information que la page ne donne pas
- * elle-même, à savoir où l'on se situe et comment remonter.
+ * Il vivait dans la barre de contexte, qui affichait UN mot dérivé de 19 `if`
+ * successifs — sur sept routes la même chaîne que le `<h1>` de la page, sur les
+ * autres un nom générique. La barre du haut n'a plus de contexte à porter (elle
+ * porte la marque, les destinations, la recherche et le compte) : le fil
+ * d'Ariane est la première ligne de `main`, juste au-dessus du titre de page. Il
+ * donne la seule information que la page ne donne pas elle-même, à savoir où l'on
+ * se situe et comment remonter.
  *
  * La garde de régression du `/docs/<slug>` est conservée : les règles `/docs`
  * avaient été ajoutées APRÈS un bloc de `includes()`, si bien qu'un slug de
@@ -13,25 +16,7 @@
  * routes doit rester à l'abri de cette classe d'erreur.
  */
 import { render, screen, within } from '@testing-library/react';
-import TopBar from '@/components/TopBar';
-
-// La recherche de la barre est devenue une pastille qui ouvre la palette de
-// commandes. Elle est simulee pour la meme raison que l'ancienne zone de
-// saisie : ces tests portent sur le fil d'Ariane et le filet de defilement.
-jest.mock('@/components/command/CommandPaletteTrigger', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-
-jest.mock('@/components/onboarding/HelpTourButton', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-
-jest.mock('@/components/MobileNavToggle', () => ({
-  __esModule: true,
-  default: () => null,
-}));
+import PageBreadcrumb from '@/components/shell/PageBreadcrumb';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
@@ -53,32 +38,32 @@ function trail(): string[] {
 
 it('situe la documentation', () => {
   usePathname.mockReturnValue('/docs');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   expect(trail()).toEqual(['Documentation']);
 });
 
 it('situe un guide sous la documentation, avec son nom', () => {
   // L'ancienne barre affichait « Guide » — un mot qui n'apprenait rien.
   usePathname.mockReturnValue('/docs/gsea');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   expect(trail()).toEqual(['Documentation', 'Gsea']);
 });
 
 it("ne capte pas un slug de guide contenant un mot-clé d'analyse", () => {
   usePathname.mockReturnValue('/docs/multi-comparison');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   expect(trail()).toEqual(['Documentation', 'Multi comparison']);
 });
 
 it("situe la page d'analyse elle-même sous son projet", () => {
   usePathname.mockReturnValue('/projects/p1/multi-comparison');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   expect(trail()).toEqual(['Projects', 'Project', 'Multi-comparison']);
 });
 
 it('ne lie pas la page courante', () => {
   usePathname.mockReturnValue('/docs/gsea');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   const nav = screen.getByRole('navigation', { name: /breadcrumb/i });
   expect(within(nav).queryByRole('link', { name: 'Gsea' })).not.toBeInTheDocument();
   expect(within(nav).getByRole('link', { name: 'Documentation' })).toHaveAttribute('href', '/docs');
@@ -89,9 +74,50 @@ it('replie les miettes du milieu au-delà de trois niveaux', () => {
   // l'information. Sans repliement, un nom de comparaison long pousse la barre
   // hors de l'écran.
   usePathname.mockReturnValue('/projects/p1/analyses/a1/comparisons/KO_vs_WT');
-  render(<TopBar />);
+  render(<PageBreadcrumb />);
   const labels = trail();
   expect(labels[0]).toBe('Projects');
   expect(labels).toContain('…');
   expect(labels[labels.length - 1]).toBe('KO vs WT');
+});
+
+describe('la ligne du fil d’Ariane', () => {
+  it('prend la piste que la page déclare, avec le vrai nom de l’objet', () => {
+    const { BreadcrumbProvider, useSetBreadcrumb } = jest.requireActual('@/contexts/BreadcrumbContext');
+    function Page() {
+      useSetBreadcrumb([{ label: 'Projects', href: '/projects' }, { label: 'Skin Study' }]);
+      return null;
+    }
+    usePathname.mockReturnValue('/projects/p1');
+    render(
+      <BreadcrumbProvider>
+        <PageBreadcrumb />
+        <Page />
+      </BreadcrumbProvider>,
+    );
+    expect(trail()).toEqual(['Projects', 'Skin Study']);
+  });
+
+  it('ne rend rien, pas même une ligne vide, quand la page déclare une piste vide', () => {
+    const { BreadcrumbProvider, useSetBreadcrumb } = jest.requireActual('@/contexts/BreadcrumbContext');
+    function Page() {
+      useSetBreadcrumb([]);
+      return null;
+    }
+    usePathname.mockReturnValue('/projects/p1');
+    const { container } = render(
+      <BreadcrumbProvider>
+        <PageBreadcrumb />
+        <Page />
+      </BreadcrumbProvider>,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('s’aligne sur la barre du haut : 1360px centrés, marges de 16px puis 40px', () => {
+    usePathname.mockReturnValue('/docs');
+    render(<PageBreadcrumb />);
+    const row = screen.getByRole('navigation', { name: /breadcrumb/i }).parentElement as HTMLElement;
+    expect(row).toHaveClass('mx-auto', 'max-w-[1360px]', 'px-4', 'md:px-10');
+  });
 });

@@ -4,7 +4,7 @@
    ThemeContext + le script anti-FOUC de layout.tsx, PAS prefers-color-scheme.
    Sans cette ligne les utilitaires dark: suivent le reglage OS et sont donc
    decouples du toggle de l'application. Le :where() maintient la specificite
-   a 0 pour ne pas prendre le pas sur les regles `.dark .nav-item.active`. */
+   a 0 pour ne pas prendre le pas sur les regles `.dark …` ecrites a la main. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
@@ -124,15 +124,14 @@
   --n-900: oklch(19% 0.04 292);
 
   /* App shell dimensions */
-  --sidebar-width:   248px;
-  --topbar-height:   56px;
-  /* Ou colle un element `sticky`, mesure DANS son conteneur de defilement.
-     Au-dela de 768px c'est `.app-content` qui defile, et il commence deja sous
-     la barre du haut : y rajouter --topbar-height decollait les elements
-     colles de 56px, et le contenu defilait dans l'interstice — le « header
-     des modules qui descend ». Sous 768px c'est le document qui defile, avec
-     la barre collee en haut : la, il faut bien la compter. */
-  --sticky-top:      0px;
+  --topbar-height:   64px;
+  /* Ou colle un element `sticky` : SOUS la barre du haut, donc sa hauteur — a
+     toutes les largeurs. La barre est elle-meme `sticky` et c'est le document
+     qui defile. Quand `.app-content` defilait au-dela de 768px, l'offset valait
+     0 la-haut et la hauteur de la barre en dessous ; la valeur a deux regimes
+     etait la source du « header des modules qui descend ». Une seule valeur,
+     donc : surtout pas de surcharge dans une media query. */
+  --sticky-top:      var(--topbar-height);
 
   /* Rayons — trois valeurs de forme (6 / 10 / 14) plus la pilule, DERIVEES et
      non choisies. L'ensemble est concentrique : exterieur − retrait = interieur.
@@ -916,189 +915,88 @@ body {
 
 /* ============================================================
    App Shell Layout
+   ------------------------------------------------------------
+   Une colonne : la barre du haut (`TopNav`, sticky, 64px), puis `main`. Le
+   DOCUMENT defile, a toutes les largeurs — il n'y a plus de conteneur de
+   defilement interne. Une hauteur fixee a 100dvh avec `overflow: hidden`, ou un
+   `overflow-y: auto` sur `.app-content`, ferait de celui-ci le « scroller » le
+   plus proche de tout element colle (la carte de selection, un onglet) : il ne
+   defile pas, donc rien ne collerait plus. shell.test.ts garde cet invariant.
    ============================================================ */
 .app-shell {
   display: flex;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--app-bg);
-}
-
-.app-sidebar {
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-  display: flex;
   flex-direction: column;
-  overflow: hidden;
-  /* Le `box-shadow: 1px 0 0` qui doublait la bordure-droite a ete retire : deux
-     filets superposes au meme endroit, donc un trait de 2px la ou on en voulait
-     un. */
-}
-
-.app-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* La barre de contexte partage le fond de l'application et ne porte PAS de
-   filet au repos : c'est le composant qui l'ajoute une fois le contenu defile.
-   La bordure ne peut donc pas vivre ici — une regle CSS non calquee l'emporte
-   sur l'utilitaire Tailwind du composant, et l'etat « au repos » ne se
-   verrait jamais. */
-.app-topbar {
-  height: var(--topbar-height);
-  flex-shrink: 0;
+  min-height: 100dvh;
   background: var(--app-bg);
-  display: flex;
-  align-items: center;
-  padding: 0 1.5rem;
-  gap: 1rem;
 }
 
 .app-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-width: 0;
+  /* `clip` et non `hidden` : hidden force overflow-y a `auto` et cree un
+     conteneur de defilement ; clip recadre sans en creer un. Un contenu trop
+     large est recadre au lieu de donner un defilement horizontal a la page. */
+  overflow-x: clip;
 }
 
-/* ── Adaptation aux petits ecrans ────────────────────────────────────────
-   Le shell n'avait AUCUNE media query : .app-sidebar occupait 236px fixes,
-   donc a 375px il restait 139px de contenu. Le bouton d'ouverture vit dans
-   MobileNavToggle, monte dans la TopBar. */
+/* ── Tiroir de navigation sous 60rem ─────────────────────────────────────
+   La barre du haut n'a plus la place des trois destinations ni de l'aide : elles
+   passent dans ce tiroir, que MobileNavToggle ouvre (data-state) et ferme.
 
-/* Palier intermediaire : c'est entre 1024 et 1280px que la sidebar mange la
-   plus grande part utile du contenu. */
+   Ferme, il est hors ecran ET `visibility: hidden` : un simple translateX le
+   laissait dans l'ordre de tabulation et dans l'arbre d'accessibilite, donc un
+   utilisateur au clavier tabulait dans des liens qu'il ne voyait pas. La
+   visibilite change APRES la glissade a la fermeture (delai = duree), et tout de
+   suite a l'ouverture. Le mouvement reduit est traite par la regle globale. */
+.app-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(17rem, 82vw);
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--elev-2);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--duration-base) var(--ease-out),
+              visibility 0s linear var(--duration-base);
+}
+
+.app-drawer[data-state='open'] {
+  transform: translateX(0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.mobile-nav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.5);
+}
+
+/* A partir de 60rem la barre porte elle-meme les destinations et l'aide : le
+   bouton, son voile et le tiroir n'ont plus d'objet. */
+@media (min-width: 60rem) {
+  .mobile-nav-toggle,
+  .mobile-nav-scrim,
+  .app-drawer { display: none; }
+}
+
+/* Palier intermediaire : gouttieres de page resserrees. */
 @media (max-width: 1024px) {
-  :root {
-    --sidebar-width: 200px;
-    --page-gutter: 1.5rem;
-  }
-  .app-topbar { padding: 0 1.25rem; }
+  :root { --page-gutter: 1.5rem; }
 }
 
 @media (max-width: 767px) {
-  /* Le shell rend la hauteur au document : en flex + 100dvh + overflow hidden,
-     le tiroir en position fixe se battrait avec le conteneur de defilement. */
-  .app-shell {
-    display: block;
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .app-sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 60;
-    width: min(17rem, 82vw);
-    transform: translateX(-100%);
-    transition: transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
-    box-shadow: var(--elev-2);
-    overflow-y: auto;
-  }
-
-  /* Identite explicite plutot que `none` : les deux fonctionnent ici, mais
-     une valeur interpolable evite de dependre du traitement de `none` par le
-     moteur au moment de l'animation. */
-  .app-shell[data-nav='open'] .app-sidebar { transform: translateX(0); }
-
-  .mobile-nav-scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgb(0 0 0 / 0.5);
-  }
-
-  .app-main { overflow: visible; }
-
-  .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    padding: 0 1rem;
-  }
-
-  .app-content { overflow: visible; }
-
   :root {
     --page-gutter: 1rem;
     --page-top: 1.25rem;
     --page-bottom: 5rem;
-    --sticky-top: var(--topbar-height);
   }
-}
-
-/* Au-dela du palier mobile la sidebar est permanente : le bouton et le voile
-   n'ont plus d'objet. */
-@media (min-width: 768px) {
-  .mobile-nav-toggle,
-  .mobile-nav-scrim { display: none; }
-}
-
-/* ============================================================
-   Sidebar Navigation
-   ============================================================ */
-/* Alias de .eyebrow, conserve parce que la classe est citee dans des tests et
-   des visites guidees. Un seul idiome de sur-titre desormais : meme casse de
-   phrase, meme couleur. */
-.nav-section-label {
-  display: block;
-  padding: 0 0.75rem;
-  font-size: var(--text-micro);
-  font-weight: 600;
-  text-transform: none;
-  color: var(--gl-muted);
-}
-
-/* Rangee de navigation : 36px, 13px, rejoint l'echelle typographique.
-   Le `border: 1px solid transparent` a disparu — il n'existait que pour
-   empecher la bordure de l'etat actif de decaler la mise en page, donc il
-   part avec elle. */
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  height: 36px;
-  padding: 0 0.75rem;
-  margin: 0 0.5rem;
-  border-radius: var(--radius-control-px);
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color var(--duration-instant) var(--ease-out),
-              color var(--duration-instant) var(--ease-out);
-}
-
-/* Survol : la couleur seulement. Une bordure au survol fait sautiller la
-   rangee et ajoute un second signal la ou un seul suffit. */
-.nav-item:hover {
-  background: var(--hover-overlay);
-  color: var(--text-primary);
-}
-
-/* Etat courant : UN SEUL canal. Il en cumulait trois — fond, bordure ET
-   graisse 600 — soit trois signaux pour un seul bit d'information. Le fond
-   d'accent suffit a dire « vous etes ici ». */
-.nav-item.active {
-  background: var(--sl-purple-light);
-  color: var(--accent-ink);
-}
-
-/* Administration : rouge au repos, mais jamais en style inline. */
-.nav-item--danger:not(.active) {
-  color: var(--sl-red);
-}
-.nav-item--danger:not(.active):hover {
-  color: var(--sl-red-dark);
-  background: var(--sl-red-light);
 }
 
 /* Teal text that stays readable on a dark surface. `--sl-teal-dark` USED to be a light-theme
@@ -1130,16 +1028,6 @@ body {
   --nova-ink-muted:   #384c65;
   --nova-ink-subtle:  #66768a;
   color-scheme: light;
-}
-
-.nav-icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.nav-item.active .nav-icon {
-  color: var(--accent-ink);
 }
 
 /* ============================================================

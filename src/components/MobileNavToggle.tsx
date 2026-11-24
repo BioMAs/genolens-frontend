@@ -1,29 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 /**
- * Ouverture du tiroir de navigation sous 768px.
+ * Le tiroir de navigation sous 60rem, et le bouton qui l'ouvre.
  *
- * `.app-sidebar` faisait 236px sans aucune media query : a 375px il restait
- * 139px de contenu. La sidebar devient un tiroir hors ecran, que ce bouton
- * fait glisser en basculant `data-nav` sur `.app-shell`.
+ * Sous 60rem la barre du haut n'a plus la place des trois destinations ni de
+ * l'aide : elles passent dans ce tiroir, qui glisse depuis la gauche. Le bouton
+ * POSSEDE l'etat et rend le tiroir (son contenu lui est passe en enfants) : il
+ * n'y a qu'un endroit ou se decide s'il est ouvert, et le CSS ne lit que
+ * `data-state` sur le tiroir lui-meme. L'ancienne sidebar-tiroir etait un frere
+ * eloigne dans l'arbre, ce qui obligeait a passer par un attribut pose sur
+ * `.app-shell` ; ce detour n'a plus d'objet.
  *
- * L'etat vit sur le DOM plutot que dans un contexte React parce que
- * AppShell est un composant serveur : y introduire un provider client
- * obligerait a repasser tout le shell cote client pour un booleen.
+ * Quatre manieres de le fermer : le bouton, le voile, Echap, et naviguer. Une
+ * cinquieme s'ajoute avec le contenu : activer un lien ou un bouton DU tiroir —
+ * y compris vers la page deja ouverte, qui ne change pas d'URL, ou « Take the
+ * tour », qui demarrerait la visite sous un tiroir resté ouvert.
+ *
+ * Il est masque par le CSS a partir de 60rem (`.mobile-nav-toggle`,
+ * `.mobile-nav-scrim`, `.app-drawer`).
  */
-export default function MobileNavToggle() {
+export default function MobileNavToggle({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const shell = document.querySelector('.app-shell');
-    if (!shell) return;
-    shell.setAttribute('data-nav', open ? 'open' : 'closed');
-  }, [open]);
+  const drawerId = useId();
 
   // Naviguer ferme le tiroir : sans cela il masquerait la page qu'on vient
   // d'ouvrir, et l'utilisateur devrait le refermer a la main a chaque lien.
@@ -53,11 +56,14 @@ export default function MobileNavToggle() {
         type="button"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
+        aria-controls={drawerId}
         onClick={() => setOpen((v) => !v)}
-        // 44x44 : c'est le minimum tactile, et ce bouton n'existe que sur mobile.
-        className="mobile-nav-toggle inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-control border border-line bg-surface text-secondary transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        // 44x44 : c'est le minimum tactile, et ce bouton n'existe que sous 60rem.
+        // Fantome, comme les autres boutons d'icone de la barre : la bordure
+        // appartenait a l'ancienne barre de contexte, qui n'avait pas de fond.
+        className="mobile-nav-toggle inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-secondary transition-colors hover:bg-surface-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        {open ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}
       </button>
 
       {/* Voile : ferme au clic, et isole visuellement le tiroir du contenu. */}
@@ -68,6 +74,21 @@ export default function MobileNavToggle() {
           aria-hidden
         />
       )}
+
+      {/* Delegation : un seul ecouteur pour tous les liens et boutons du contenu.
+          Le gestionnaire du bouton s'execute d'abord (phase cible), la fermeture
+          ensuite (phase de remontee) : « Take the tour » agit, puis le tiroir se
+          retire. */}
+      <div
+        id={drawerId}
+        className="app-drawer"
+        data-state={open ? 'open' : 'closed'}
+        onClick={(e) => {
+          if ((e.target as Element).closest('a, button')) setOpen(false);
+        }}
+      >
+        {children}
+      </div>
     </>
   );
 }

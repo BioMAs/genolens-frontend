@@ -53,7 +53,7 @@ export default function TopBar() {
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {/* Sous 768px la sidebar est un tiroir : c'est son unique ouverture. */}
-        <MobileNavToggle />
+        <MobileNavToggle>{null}</MobileNavToggle>
         <Breadcrumb crumbs={crumbs} />
       </div>
 

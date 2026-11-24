@@ -24,7 +24,9 @@ export default function CommandPaletteTrigger() {
     >
       <Search className="h-3.5 w-3.5 shrink-0" aria-hidden />
       <span className="flex-1 truncate text-left">Search…</span>
-      <KbdHint>⌘K</KbdHint>
+      {/* Un raccourci clavier n'a pas de sens sur ecran tactile, et il prendrait
+          la place du texte de la pastille sous 40rem. */}
+      <KbdHint className="hidden sm:inline-block">⌘K</KbdHint>
     </button>
   );
 }

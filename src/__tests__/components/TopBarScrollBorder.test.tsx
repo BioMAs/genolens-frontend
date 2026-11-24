@@ -1,104 +1,99 @@
 /**
- * Le filet de la barre de contexte.
+ * Le filet de la barre du haut.
  *
- * La barre partage le fond de l'application et ne porte AUCUN filet au repos —
- * c'est ce qui la fait disparaître dans la page plutôt que de la poser dessus.
- * Le filet n'apparaît qu'une fois le contenu défilé, pour séparer la barre de
- * ce qui glisse dessous.
+ * La barre est collee en haut (`sticky`) et le CONTENU defile dessous : c'est le
+ * document qui defile, pas un conteneur `.app-content`. L'ancienne barre de
+ * contexte ecoutait ce conteneur ; elle ecoute maintenant la fenetre.
  *
- * Verrouillé par un test et non par une capture : le comportement dépend d'un
- * événement de défilement, et le conteneur qui défile est `.app-content`, pas
- * la fenêtre — une erreur facile à commettre et invisible à l'œil tant qu'on
- * ne fait pas défiler la bonne boîte.
+ * Le filet est present au repos — la barre blanche est bordee d'un trait d'un
+ * pixel, comme dans la maquette — et il se RENFORCE une fois la page defilee,
+ * pour separer la barre de ce qui glisse dessous. Verrouille par un test et non
+ * par une capture : le comportement depend d'un evenement de defilement.
  */
 import { render, screen, act } from '@testing-library/react';
 
-// La recherche de la barre est devenue une pastille qui ouvre la palette de
-// commandes. Elle est simulee pour la meme raison que l'ancienne zone de
-// saisie : ces tests portent sur le fil d'Ariane et le filet de defilement.
 jest.mock('@/components/command/CommandPaletteTrigger', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/components/onboarding/HelpTourButton', () => ({
+jest.mock('@/components/QuotaDisplay', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/components/MobileNavToggle', () => ({
-  __esModule: true,
-  default: () => null,
+jest.mock('@/contexts/TourContext', () => ({
+  useTour: () => ({ restartCurrentTour: jest.fn(), currentTourId: 'dashboard' }),
+}));
+jest.mock('@/contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: jest.fn() }),
 }));
 jest.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
 }));
 
-import TopBar from '@/components/TopBar';
+import TopNav from '@/components/shell/TopNav';
 
-/** La coquille réelle : la barre lit le défilement de `.app-content`. */
-function mountShell() {
-  const content = document.createElement('main');
-  content.className = 'app-content';
-  document.body.appendChild(content);
-  return content;
-}
-
-afterEach(() => {
-  document.querySelectorAll('.app-content').forEach((el) => el.remove());
-});
+const USER = { email: 'lea@scilicium.com' } as never;
 
 const bar = () => screen.getByRole('banner');
 
-it('ne porte pas de filet au repos', () => {
-  mountShell();
-  render(<TopBar />);
-  expect(bar()).toHaveClass('border-transparent');
+/** Fait defiler la fenetre et notifie les ecouteurs. */
+function scrollWindowTo(y: number) {
+  act(() => {
+    Object.defineProperty(window, 'scrollY', { value: y, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+  });
+}
+
+beforeEach(() => {
+  Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
 });
 
-it('fait apparaître le filet une fois le contenu défilé', () => {
-  const content = mountShell();
-  render(<TopBar />);
-
-  act(() => {
-    Object.defineProperty(content, 'scrollTop', { value: 120, configurable: true });
-    content.dispatchEvent(new Event('scroll'));
-  });
-
-  expect(bar()).toHaveClass('border-line');
-  expect(bar()).not.toHaveClass('border-transparent');
+it('porte un filet discret au repos', () => {
+  render(<TopNav user={USER} />);
+  expect(bar()).toHaveClass('border-b', 'border-subtle');
+  expect(bar()).not.toHaveClass('border-strong');
 });
 
-it('retire le filet quand on revient en haut', () => {
-  const content = mountShell();
-  render(<TopBar />);
+it('renforce le filet une fois la page défilée', () => {
+  render(<TopNav user={USER} />);
+  scrollWindowTo(120);
 
-  act(() => {
-    Object.defineProperty(content, 'scrollTop', { value: 120, configurable: true });
-    content.dispatchEvent(new Event('scroll'));
-  });
-  act(() => {
-    Object.defineProperty(content, 'scrollTop', { value: 0, configurable: true });
-    content.dispatchEvent(new Event('scroll'));
-  });
+  expect(bar()).toHaveClass('border-strong');
+  expect(bar()).not.toHaveClass('border-subtle');
+});
 
-  expect(bar()).toHaveClass('border-transparent');
+it('revient au filet discret quand on remonte', () => {
+  render(<TopNav user={USER} />);
+  scrollWindowTo(120);
+  scrollWindowTo(0);
+
+  expect(bar()).toHaveClass('border-subtle');
+  expect(bar()).not.toHaveClass('border-strong');
 });
 
 it("ne se déclenche pas sur un défilement d'un pixel", () => {
   // Un seuil est nécessaire : le rebond élastique de macOS produit des valeurs
   // de 1 ou 2px au repos, et le filet clignoterait.
-  const content = mountShell();
-  render(<TopBar />);
+  render(<TopNav user={USER} />);
+  scrollWindowTo(2);
 
-  act(() => {
-    Object.defineProperty(content, 'scrollTop', { value: 2, configurable: true });
-    content.dispatchEvent(new Event('scroll'));
-  });
-
-  expect(bar()).toHaveClass('border-transparent');
+  expect(bar()).toHaveClass('border-subtle');
 });
 
-it('ne plante pas si la coquille est absente', () => {
-  // La barre est aussi rendue par des tests et des outils qui ne montent pas
-  // `.app-content` : l'absence du conteneur ne doit pas lever.
-  expect(() => render(<TopBar />)).not.toThrow();
+it('lit la position au montage, pour une page ouverte déjà défilée', () => {
+  // Retour arriere du navigateur : la page est restauree a mi-hauteur avant
+  // que la barre n'existe, donc aucun evenement `scroll` ne viendra.
+  Object.defineProperty(window, 'scrollY', { value: 300, configurable: true });
+  render(<TopNav user={USER} />);
+
+  expect(bar()).toHaveClass('border-strong');
+});
+
+it("cesse d'écouter au démontage", () => {
+  const remove = jest.spyOn(window, 'removeEventListener');
+  const { unmount } = render(<TopNav user={USER} />);
+  unmount();
+
+  expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function));
+  remove.mockRestore();
 });

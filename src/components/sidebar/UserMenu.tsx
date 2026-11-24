@@ -3,31 +3,49 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import { ChevronsUpDown, LogOut, Moon, Sun, UserIcon } from 'lucide-react';
+import { LogOut, Moon, Shield, Sun, UserIcon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/cn';
 
 /**
- * Menu utilisateur du pied de sidebar.
+ * Menu du compte de la barre du haut.
  *
- * Le pied comptait trois bandes empilees (~120px) : quotas, profil, puis une
- * rangee « Theme / Sign out » faite de deux `.nav-item` qui devaient neutraliser
- * leur propre marge avec `!m-0`. Deux boutons permanents pour des actions
- * consultees quelques fois par mois.
+ * Il fermait le pied de la sidebar : une rangee de 56px (avatar, nom, courriel,
+ * chevrons) qui s'ouvrait vers le haut. Dans la barre du haut il devient une
+ * pastille d'initiales de 36px — prune pleine, texte `on-accent`, qui s'inverse
+ * avec elle en theme sombre — et il s'ouvre VERS LE BAS : un menu pose en haut de
+ * la page qui s'ouvrirait vers le haut sortirait de l'ecran.
  *
- * L'avatar en degrade violet->teal disparait au passage. C'etait le dernier
- * degrade de l'application authentifiee, et exactement l'« artefact marketing
- * pose sur une interface de donnees » que le commentaire de
+ * Le nom et le courriel ne sont plus affiches en permanence : le declencheur les
+ * porte dans son nom accessible, et le menu les rappelle en tete, ce qui est le
+ * moment ou l'on en a besoin (« suis-je sur le bon compte ? »).
+ *
+ * L'entree Admin n'existe que pour un administrateur. Le role se lit comme la
+ * sidebar le lisait (`userRole?.toLowerCase() === 'admin'`) : l'API garde la
+ * decision, ce menu ne fait que ne pas proposer un lien qui renverrait un 403.
+ *
+ * L'avatar en degrade violet->teal a disparu avec l'ancienne version : c'etait le
+ * dernier degrade de l'application authentifiee, et exactement l'« artefact
+ * marketing pose sur une interface de donnees » que le commentaire de
  * DashboardWelcomeBanner condamne deja.
  */
-export default function UserMenu({ user }: { user: User }) {
+export default function UserMenu({
+  user,
+  userRole = null,
+}: {
+  user: User;
+  /** Role renvoye par le serveur. Absent : pas d'entree Admin. */
+  userRole?: string | null;
+}) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
   const signOutForm = React.useRef<HTMLFormElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   const userName = user.email?.split('@')[0] || 'User';
   const initials = userName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'U';
+  const isAdmin = userRole?.toLowerCase() === 'admin';
 
   React.useEffect(() => {
     if (!open) return;
@@ -35,7 +53,11 @@ export default function UserMenu({ user }: { user: User }) {
       if (!root.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      // Le menu s'ouvre depuis le declencheur : Echap doit y ramener le focus,
+      // sinon un utilisateur au clavier le perd avec le menu qui disparait.
+      trigger.current?.focus();
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -49,34 +71,36 @@ export default function UserMenu({ user }: { user: User }) {
     'flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-body-sm text-primary transition-colors hover:bg-hover';
 
   return (
-    <div ref={root} className="relative mx-2">
+    <div ref={root} className="relative">
       <button
+        ref={trigger}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={`Account menu, ${user.email ?? userName}`}
         onClick={() => setOpen((v) => !v)}
+        // Le pseudo-element porte la zone de clic de 36 a 44px (4px de chaque
+        // cote) sans grossir la pastille.
         className={cn(
-          'flex h-14 w-full cursor-pointer items-center gap-3 rounded-control px-2.5 text-left',
-          'transition-colors hover:bg-hover',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+          'relative grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-pill',
+          'bg-plum text-caption font-semibold text-on-accent transition-colors hover:bg-plum-hover',
+          'after:absolute after:-inset-1',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
         )}
       >
-        {/* Cercle plat : le degrade etait le dernier de l'app authentifiee. */}
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-pill bg-surface-2 text-micro text-secondary">
-          {initials}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-caption font-medium text-primary">{userName}</span>
-          <span className="block truncate text-micro text-muted">{user.email}</span>
-        </span>
-        <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
+        {initials}
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-card bg-raised py-1 shadow-elev-2"
+          className="absolute right-0 top-full z-50 mt-2 min-w-[14rem] overflow-hidden rounded-card border border-line bg-raised py-1 shadow-elev-2"
         >
+          <div className="border-b border-subtle px-3 py-2">
+            <p className="truncate text-body-sm font-medium text-primary">{userName}</p>
+            <p className="truncate text-caption text-muted">{user.email}</p>
+          </div>
+
           <Link role="menuitem" href="/profile" onClick={() => setOpen(false)} className={itemClass}>
             <UserIcon className="h-4 w-4 shrink-0" aria-hidden />
             Profile
@@ -90,6 +114,13 @@ export default function UserMenu({ user }: { user: User }) {
             )}
             {theme === 'light' ? 'Dark theme' : 'Light theme'}
           </button>
+
+          {isAdmin && (
+            <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className={itemClass}>
+              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+              Admin
+            </Link>
+          )}
 
           {/* La deconnexion reste un POST vers /auth/signout : un GET
               deconnecterait l'utilisateur sur simple prefetch du navigateur.

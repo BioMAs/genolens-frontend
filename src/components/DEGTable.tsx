@@ -154,9 +154,10 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
 
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Back to the top of the TABLE, not of the window: above 768px the window does not scroll —
-  // `.app-content` does — so `window.scrollTo` did nothing there, and on a phone it threw the
-  // reader to the top of the page, a volcano and a synthesis away from the rows.
+  // Back to the top of the TABLE, not of the window: `window.scrollTo(0, 0)` would throw the
+  // reader to the top of the page, a volcano and a synthesis away from the rows. The table root
+  // carries `scroll-margin-top: var(--sticky-top) + 1rem`, so it lands just under the sticky
+  // top bar rather than behind it.
   const goToPage = (next: number) => {
     setPage(Math.min(Math.max(1, next), Math.max(1, totalPages)));
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

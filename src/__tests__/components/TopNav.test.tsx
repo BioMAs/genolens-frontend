@@ -6,7 +6,7 @@
  * `/docs` ni `/profile` ne doivent allumer de destination — la documentation
  * n'est plus une destination, elle vit dans le menu d'aide.
  */
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 let mockPathname = '/dashboard';
@@ -35,9 +35,9 @@ import TopNav from '@/components/shell/TopNav';
 
 const USER = { email: 'lea@scilicium.com' } as never;
 
-function renderAt(pathname: string) {
+function renderAt(pathname: string, userRole: string | null = null) {
   mockPathname = pathname;
-  return render(<TopNav user={USER} />);
+  return render(<TopNav user={USER} userRole={userRole} />);
 }
 
 /** Les trois liens de la navigation principale, dans l'ordre du DOM. */
@@ -170,19 +170,121 @@ describe('TopNav', () => {
     expect(img?.getAttribute('src') ?? '').not.toContain('logo.png');
   });
 
-  it('mounts the search pill, the guide button, the quota and the account menu', () => {
+  it('mounts the search pill, the help menu, the quota and the account menu', () => {
     renderAt('/dashboard');
     expect(screen.getByRole('button', { name: 'Open the command palette' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Replay the guide' })).toHaveAttribute(
-      'data-tour',
-      'help-button',
-    );
-    expect(screen.getByTestId('quota')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /lea/i })).toHaveAttribute('aria-haspopup', 'menu');
+    // Le menu d'aide a pris la place du bouton qui rejouait la visite : c'est
+    // lui qui porte l'ancre que la visite du tableau de bord vise.
+    expect(screen.getByRole('button', { name: 'Help' })).toHaveAttribute('data-tour', 'help-button');
+    expect(screen.queryByRole('button', { name: 'Replay the guide' })).not.toBeInTheDocument();
+    // Le solde IA est dans la barre (des 40rem) ET dans le tiroir (en dessous) :
+    // le CSS n'en montre qu'un a la fois.
+    const inBar = screen.getAllByTestId('quota').filter((q) => !q.closest('.app-drawer'));
+    expect(inBar).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /account menu/i })).toHaveAttribute('aria-haspopup', 'menu');
+  });
+
+  it('opens the help menu on the tour and the documentation', () => {
+    renderAt('/dashboard');
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    expect(screen.getByRole('menuitem', { name: 'Take the tour' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Documentation' })).toHaveAttribute('href', '/docs');
+  });
+
+  it('gives the account menu the role, so an admin gets the Admin entry', () => {
+    const { unmount } = renderAt('/dashboard', 'admin');
+    fireEvent.click(screen.getByRole('button', { name: /account menu/i }));
+    expect(screen.getByRole('menuitem', { name: 'Admin' })).toHaveAttribute('href', '/admin');
+    unmount();
+
+    renderAt('/dashboard', 'user');
+    fireEvent.click(screen.getByRole('button', { name: /account menu/i }));
+    expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
+  });
+
+  it('puts the destination pills on the 36px control step, with a 44px hit area', () => {
+    renderAt('/dashboard');
+    for (const link of mainLinks()) {
+      expect(link).toHaveClass('min-h-9');
+      expect(link).not.toHaveClass('min-h-10');
+      expect(link.className).toMatch(/after:-inset-y-1\b/);
+    }
+  });
+
+  it('sets the wordmark on the title step of the type scale', () => {
+    renderAt('/dashboard');
+    const wordmark = screen.getByText('GenoLens', { selector: 'span' });
+    expect(wordmark).toHaveClass('text-title');
+  });
+
+  it('is sticky, one row of the bar height, and never wraps onto a second row', () => {
+    renderAt('/dashboard');
+    const bar = screen.getByRole('banner');
+    expect(bar).toHaveClass('sticky', 'top-0', 'z-40');
+    // La hauteur vient du jeton, portee par la barre ET non par sa ligne
+    // interieure (bordure comprise : 64px, pas 65) : `--sticky-top` (ou colle le
+    // contenu) lui est egal, donc une barre qui passerait sur deux lignes ou
+    // gagnerait un pixel decalerait tout.
+    expect(bar).toHaveClass('h-[var(--topbar-height)]');
+    const row = bar.firstElementChild as HTMLElement;
+    expect(row).toHaveClass('h-full');
+    expect(row).not.toHaveClass('flex-wrap');
   });
 
   it('is the page banner landmark', () => {
     renderAt('/dashboard');
     expect(screen.getByRole('banner')).toBeInTheDocument();
+  });
+});
+
+
+/**
+ * Sous 60rem les trois destinations et l'aide quittent la barre pour le tiroir
+ * que `MobileNavToggle` ouvre. jsdom n'applique pas le CSS : les deux versions
+ * sont dans le DOM, et c'est le CSS (`min-[60rem]:` / `.app-drawer`) qui montre
+ * l'une ou l'autre. Ces tests verifient donc le CONTENU du tiroir et son
+ * ouverture, pas sa visibilite.
+ */
+describe('TopNav — the drawer below 60rem', () => {
+  const toggle = () => screen.getByRole('button', { name: /open navigation|close navigation/i });
+  const drawer = () => screen.getByRole('navigation', { name: 'Menu' });
+
+  it('puts the three destinations in the drawer, marking the current one', () => {
+    renderAt('/projects/abc');
+    const links = within(drawer()).getAllByRole('link');
+    expect(links.map((l) => l.textContent)).toEqual(['Home', 'Projects', 'Tools']);
+    expect(links.map((l) => l.getAttribute('aria-current'))).toEqual([null, 'page', null]);
+  });
+
+  it('does not repeat the Main landmark name, so the bar navigation stays unambiguous', () => {
+    renderAt('/dashboard');
+    expect(screen.getAllByRole('navigation', { name: 'Main' })).toHaveLength(1);
+  });
+
+  it('carries the help entries: the tour, then the documentation', () => {
+    renderAt('/dashboard');
+    const panel = drawer().closest('.app-drawer') as HTMLElement;
+    expect(within(panel).getByRole('button', { name: 'Take the tour' })).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: 'Documentation' })).toHaveAttribute('href', '/docs');
+  });
+
+  it('opens and closes through the toggle, which owns the open state', () => {
+    renderAt('/dashboard');
+    const panel = drawer().closest('.app-drawer') as HTMLElement;
+    expect(panel).toHaveAttribute('data-state', 'closed');
+
+    fireEvent.click(toggle());
+    expect(panel).toHaveAttribute('data-state', 'open');
+    expect(toggle()).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(toggle());
+    expect(panel).toHaveAttribute('data-state', 'closed');
+  });
+
+  it('keeps the search pill in the bar, outside the drawer', () => {
+    renderAt('/dashboard');
+    const panel = drawer().closest('.app-drawer') as HTMLElement;
+    const pill = screen.getByRole('button', { name: 'Open the command palette' });
+    expect(panel.contains(pill)).toBe(false);
   });
 });

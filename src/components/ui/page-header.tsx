@@ -60,8 +60,8 @@ export interface PageHeaderProps {
   /** Onglets de section, sous l'en-tete. */
   tabs?: React.ReactNode;
   /**
-   * Enrichit le fil d'Ariane de la barre de contexte avec le vrai nom de
-   * l'objet — « Skin Study » plutot que « Project ». Sans lui, la barre
+   * Enrichit le fil d'Ariane (premiere ligne du contenu) avec le vrai nom de
+   * l'objet — « Skin Study » plutot que « Project ». Sans lui, le fil
    * retombe sur la table de routes, qui reste correcte.
    */
   crumbs?: Crumb[];
@@ -97,11 +97,17 @@ export function PageHeader({
         <div className="min-w-0">
           {eyebrow && <p className="eyebrow mb-2">{eyebrow}</p>}
 
+          {/* `min-w-0 break-words` : un nom de comparaison tient jusqu'a 255
+              caracteres, parfois sans un espace. Sans cela le <h1> garde sa
+              largeur minimale de contenu et pousse la page hors d'un ecran de
+              375px. `break-words` coupe un mot seulement quand il ne tient pas ;
+              l'ancien `break-all` coupait aussi un titre a espaces au milieu d'un
+              mot, en bout de ligne. */}
           <h1
             title={title}
             className={cn(
-              'line-clamp-2 font-display text-primary',
-              titleVariant === 'name' ? 'break-all text-heading' : 'text-display',
+              'line-clamp-2 min-w-0 break-words font-display text-primary',
+              titleVariant === 'name' ? 'text-heading' : 'text-display',
             )}
           >
             {title}
