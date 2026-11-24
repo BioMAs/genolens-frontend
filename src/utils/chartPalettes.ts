@@ -69,20 +69,28 @@ const CATEGORICAL_DARK = ['#8f981f', '#377ee3', '#33dbb7', '#ecb42c', '#de5a8b',
  *   3. `diverging.zero` #f7f7f7 faisait un trou blanc dans chaque carte de
  *      chaleur sombre.
  *
+ * (Ces trois defauts ont ete corriges avant la Lentille ; les valeurs citees
+ * sont celles d'avant. Depuis, `up`, `down` et `ns` du mode STANDARD suivent
+ * les jetons --gl-up / --gl-down / --gl-ns de globals.css : terre cuite et bleu
+ * acier, jamais rouge contre vert, et le meme plancher de 3:1. Le test
+ * `colorblindPalette.test.ts` relit ces jetons et echoue si les hex derivent.)
+ *
  * REGLE, a tenir : les couleurs `categorical` encodent du NOMINAL uniquement
  * (groupes d'echantillons, conditions, espaces GO). Elles ne sont jamais
  * employees dans un graphique qui encode aussi une direction — la distance
  * colorimetrique seule n'empecherait pas un orange categoriel de se lire
- * « sous-exprime ».
+ * « sur-exprime ».
  */
 const PALETTES: Record<PaletteMode, Record<ThemeMode, Palette>> = {
   standard: {
     light: {
-      // 3,30:1 et 4,83:1 sur blanc — au-dessus du plancher de 3:1.
-      up: '#16a34a',
-      down: '#dc2626',
-      // Volontairement bas : le non-significatif doit reculer.
-      ns: '#c7ccd4',
+      // Terre cuite / bleu acier (spec § 2.1, jetons --gl-up / --gl-down) : 4,79:1 et 6,83:1 sur
+      // blanc, au-dessus du plancher de 3:1, et 12 points de clarte OKLCH d'ecart — on les
+      // distingue sans la teinte. Les hex sont l'arrondi, calcule une fois, de l'oklch d'origine.
+      up: '#c24d25', // oklch(57% 0.16 38)
+      down: '#175d9b', // oklch(47% 0.12 250)
+      // Volontairement bas (1,53:1) : le non-significatif doit reculer.
+      ns: '#cdd1d8', // oklch(86% 0.01 260)
       categorical: CATEGORICAL_LIGHT,
       diverging: {
         negative: '#2166ac',
@@ -92,10 +100,12 @@ const PALETTES: Record<PaletteMode, Record<ThemeMode, Palette>> = {
       },
     },
     dark: {
-      // Sur fond sombre les teintes vives redeviennent lisibles : 7,87:1 et 4,77:1.
-      up: '#22c55e',
-      down: '#ef4444',
-      ns: '#4a5568',
+      // Sur fond sombre les memes teintes s'eclaircissent : 7,80:1 et 5,48:1 sur la surface, 11
+      // points de clarte d'ecart. Memes hex-arrondis que ci-dessus, depuis --gl-up / --gl-down.
+      up: '#f68f5f', // oklch(75% 0.14 45)
+      down: '#4493d0', // oklch(64% 0.12 245)
+      // Bas, lui aussi (2,14:1) : le bruit ne doit pas crier plus fort que le signal.
+      ns: '#4c4c55', // oklch(42% 0.015 285)
       categorical: CATEGORICAL_DARK,
       diverging: {
         negative: '#5b9bd5',

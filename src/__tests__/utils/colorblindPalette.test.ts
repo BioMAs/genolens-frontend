@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { getPalette } from '@/utils/chartPalettes';
+import { parseColor } from '@/utils/colorContrast';
 
 /**
  * La palette du mode daltonisme, mesuree a chaque execution.
@@ -142,5 +144,68 @@ describe('palette daltonisme', () => {
     // de la liste doit etre meilleur que l'ensemble, sinon l'ordre ment.
     const colors = getPalette('colorblind', theme).categorical;
     expect(paletteSeparation(colors.slice(0, 4))).toBeGreaterThan(paletteSeparation(colors));
+  });
+});
+
+/**
+ * Les couleurs de direction du mode STANDARD suivent les jetons de la spec § 2.1
+ * (terre cuite / bleu acier), le mode daltonisme ne bouge pas.
+ *
+ * `chartPalettes.ts` est un module pur — il ne peut pas lire `--gl-up` — donc ses valeurs sont des
+ * hex, c'est-a-dire un arrondi de l'oklch d'origine : la comparaison tolere 1/255 par canal.
+ */
+describe('palette standard — up / down / ns = jetons --gl-*', () => {
+  const SPEC = {
+    light: { up: 'oklch(57% 0.16 38)', down: 'oklch(47% 0.12 250)', ns: 'oklch(86% 0.01 260)' },
+    dark: { up: 'oklch(75% 0.14 45)', down: 'oklch(64% 0.12 245)', ns: 'oklch(42% 0.015 285)' },
+  } as const;
+  const KEYS = ['up', 'down', 'ns'] as const;
+
+  function expectSameColor(hex: string, token: string) {
+    const got = channels(hex);
+    const want = parseColor(token);
+    [want.r, want.g, want.b].forEach((w, i) => {
+      expect(Math.abs(got[i] - w)).toBeLessThanOrEqual(1 / 255 + 1e-9);
+    });
+  }
+
+  /** La valeur d'un jeton dans le bloc `:root` ou `.dark` de globals.css. */
+  function cssToken(selector: ':root' | '.dark', name: string): string {
+    const css = readFileSync('src/app/globals.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const [, sel, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      // Le premier bloc suit des `@import …;` : seul ce qui suit le dernier `;` est le selecteur.
+      if (sel.split(';').pop()?.trim() !== selector) continue;
+      const hit = new RegExp(`${name}:\\s*([^;]+);`).exec(body);
+      if (hit) return hit[1].trim();
+    }
+    throw new Error(`${name} introuvable dans ${selector}`);
+  }
+
+  it.each(THEMES)('reprend les valeurs de la spec (%s)', (theme) => {
+    const palette = getPalette('standard', theme);
+    for (const key of KEYS) expectSameColor(palette[key], SPEC[theme][key]);
+  });
+
+  it.each(THEMES)('ne derive pas de globals.css (%s)', (theme) => {
+    const palette = getPalette('standard', theme);
+    const selector = theme === 'light' ? ':root' : '.dark';
+    for (const key of KEYS) expectSameColor(palette[key], cssToken(selector, `--gl-${key}`));
+  });
+
+  it.each(THEMES)('up est chaud et down est froid, jamais rouge contre vert (%s)', (theme) => {
+    const { up, down } = getPalette('standard', theme);
+    const [ur, , ub] = channels(up);
+    const [dr, , db] = channels(down);
+    expect(ur).toBeGreaterThan(ub);
+    expect(db).toBeGreaterThan(dr);
+  });
+
+  it('laisse la palette daltonienne telle quelle (Okabe-Ito, octet pour octet)', () => {
+    const pick = (theme: 'light' | 'dark') => {
+      const { up, down, ns } = getPalette('colorblind', theme);
+      return { up, down, ns };
+    };
+    expect(pick('light')).toEqual({ up: '#D55E00', down: '#0072B2', ns: '#c7ccd4' });
+    expect(pick('dark')).toEqual({ up: '#D55E00', down: '#56B4E9', ns: '#4a5568' });
   });
 });

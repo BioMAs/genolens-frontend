@@ -8,6 +8,7 @@
  */
 
 import type { StylesheetJson } from 'cytoscape';
+import { getPalette } from '@/utils/chartPalettes';
 import { toLegacyColor } from '@/utils/colorContrast';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import type {
@@ -158,10 +159,15 @@ export interface GraphTheme {
   label: string;
 }
 
-/** Valeurs du theme CLAIR, pour le rendu serveur et un DOM indisponible. */
+/**
+ * Valeurs du theme CLAIR, pour le rendu serveur et un DOM indisponible.
+ *
+ * `up` et `down` lisent la palette standard (--gl-up / --gl-down), pour ne pas recopier ses hex : le
+ * repli serveur disait encore vert contre rouge.
+ */
 const FALLBACK_THEME: GraphTheme = {
-  up: '#16a34a',
-  down: '#dc2626',
+  up: getPalette('standard', 'light').up,
+  down: getPalette('standard', 'light').down,
   neutral: '#8b93a0',
   surface: '#ffffff',
   border: '#c7ccd4',

@@ -8,6 +8,7 @@ import {
   discreteScale,
   type ColorStops,
 } from '@/utils/chartScales';
+import { getPalette } from '@/utils/chartPalettes';
 
 /**
  * Les echelles ne se verifient pas a l'oeil : Plotly les rend en canvas, et une
@@ -115,13 +116,21 @@ describe('point median', () => {
 });
 
 describe('direction', () => {
-  it('suit la convention du produit : rouge en bas, vert en haut', () => {
-    // Le violet/vert d'origine contredisait tous les autres ecrans.
+  it('suit la convention de la Lentille : chaud en haut, froid en bas, jamais rouge/vert', () => {
+    // Le violet/vert d'origine contredisait tous les autres ecrans ; le vert/rouge qui l'a
+    // remplace contredisait la spec § 2.1 (« jamais rouge contre vert »).
     const { down, up } = directionColors('standard', 'light');
-    const red = (c: string) => srgb(c)[0] > srgb(c)[1];
-    expect(red(down)).toBe(true);
-    expect(red(up)).toBe(false);
+    expect(srgb(up)[0]).toBeGreaterThan(srgb(up)[2]);
+    expect(srgb(down)[2]).toBeGreaterThan(srgb(down)[0]);
   });
+
+  it.each(['light', 'dark'] as const)(
+    'reprend les couleurs de la palette standard — une seule source (%s)',
+    (theme) => {
+      const palette = getPalette('standard', theme);
+      expect(directionColors('standard', theme)).toEqual({ down: palette.down, up: palette.up });
+    },
+  );
 
   it('saute franchement plutot que de degrader', () => {
     const stops = directionScale('standard', 'light');

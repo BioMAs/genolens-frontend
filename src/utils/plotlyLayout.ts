@@ -47,7 +47,7 @@ export function buildPlotlyLayout(theme: ChartTheme, overrides: PlotlyLayout = {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: theme.fontFamily, size: 12, color: theme.inkSubtle },
-    colorway: CATEGORICAL,
+    colorway: defaultColorway(theme),
     xaxis: axis,
     yaxis: axis,
     hoverlabel: {
@@ -151,13 +151,19 @@ const isPlainObject = (v: unknown): v is Record<string, unknown> =>
  * Palette categorielle de repli, tiree de la source unique plutot que recopiee
  * a la main — c'est une recopie qui avait laisse ici une liste perimee.
  *
+ * Elle SUIT LE MODE clair / sombre du theme (`ChartTheme.mode`) : figee sur la
+ * palette claire, elle sortait en tons concus pour un fond blanc sur un panneau
+ * sombre. Un theme sans mode se lit comme clair.
+ *
  * Elle ne s'applique qu'aux traces qui ne fixent PAS leur propre couleur. Un
  * appelant qui affiche plusieurs series passe `colorway: palette.categorical`
  * (via `useChartPalette`, qui suit le theme et la preference de daltonisme) :
  * la fabrique ne recoit que le theme CSS, elle ne peut pas connaitre la
  * preference de l'utilisateur.
  */
-const CATEGORICAL = getPalette('standard', 'light').categorical;
+function defaultColorway(theme: ChartTheme): string[] {
+  return getPalette('standard', theme.mode ?? 'light').categorical;
+}
 
 export function buildPlotlyConfig(opts: {
   filename: string;

@@ -77,7 +77,7 @@ export default function DashboardHero({
     >
       <div className="animate-fade-up">
         <p className="eyebrow">{today}</p>
-        <h1 className="mt-2 text-display text-primary">
+        <h1 className="mt-2 font-display text-display text-primary">
           {name ? `Welcome back, ${name}` : 'Welcome back'}
         </h1>
         <p className="mt-3 max-w-[46ch] text-body text-secondary">{subtitle}</p>

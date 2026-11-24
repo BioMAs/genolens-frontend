@@ -72,7 +72,7 @@ function offenders(pattern: RegExp, filter: (f: string) => boolean) {
 }
 
 describe('rayons — quatre, concentriques', () => {
-  // sm 6 < control 10 < card 16 < pill. L'ensemble est dérivable : extérieur
+  // sm 6 < control 10 < card 14 < pill. L'ensemble est dérivable : extérieur
   // moins retrait égale intérieur.
   it("n'utilise plus l'échelle de rayons de Tailwind", () => {
     const hits = offenders(

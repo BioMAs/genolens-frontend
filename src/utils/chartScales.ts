@@ -1,4 +1,4 @@
-import type { PaletteMode } from '@/utils/chartPalettes';
+import { getPalette, type PaletteMode } from '@/utils/chartPalettes';
 
 /**
  * Les echelles continues et discretes des graphiques.
@@ -115,9 +115,20 @@ const LOGFC: Record<PaletteMode, Record<ThemeMode, ColorStops>> = {
   colorblind: DIVERGING.colorblind,
 };
 
-/** Direction discrete : deux bandes franches, DOWN puis UP, sans degrade. */
+/**
+ * Direction discrete : deux bandes franches, DOWN puis UP, sans degrade.
+ *
+ * En mode standard elle LIT la palette (terre cuite / bleu acier, spec § 2.1) au lieu de recopier
+ * ses hex : le volcan, les tableaux GO / GSEA et les legendes ne peuvent plus diverger. C'etait deja
+ * une recopie (`#dc2626` / `#16a34a`), et elle disait rouge contre vert.
+ */
+const standardDirection = (theme: ThemeMode): [string, string] => {
+  const { down, up } = getPalette('standard', theme);
+  return [down, up];
+};
+
 const DIRECTION: Record<PaletteMode, Record<ThemeMode, [string, string]>> = {
-  standard: { light: ['#dc2626', '#16a34a'], dark: ['#ef4444', '#22c55e'] },
+  standard: { light: standardDirection('light'), dark: standardDirection('dark') },
   colorblind: { light: ['#0072B2', '#D55E00'], dark: ['#5fb4e8', '#f09460'] },
 };
 

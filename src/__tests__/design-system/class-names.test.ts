@@ -82,7 +82,7 @@ describe('police d’affichage (Newsreader)', () => {
    *
    * La liste blanche est LUE dans `@theme inline` de globals.css, pas recopiee, pour ne pas
    * deriver quand l'echelle bouge. L'echelle actuelle :
-   *   micro 11px · caption 12 · body-sm 13 · body 15 · title 17 · heading 22 · display 30 · hero 48
+   *   micro 11px · caption 12 · body-sm 13 · body 16 · title 17 · heading 22 · display 30 · hero 48
    * Sont admis `text-title` (17px) et au-dela. En dessous, l'element est un libelle, une cellule ou
    * une donnee, et reste en Instrument Sans.
    */
@@ -100,9 +100,8 @@ describe('police d’affichage (Newsreader)', () => {
     );
   });
 
-  /** Chaque `font-display` du source : balise englobante + liste de classes qui le porte. */
-  function displayUses(file: string) {
-    const src = read(file);
+  /** Chaque `font-display` d'un source : balise englobante + liste de classes qui le porte. */
+  function displayUsesIn(src: string) {
     const uses: Array<{ tag: string; classes: string }> = [];
     for (let i = src.indexOf('font-display'); i !== -1; i = src.indexOf('font-display', i + 1)) {
       const open = Math.max(src.lastIndexOf('"', i), src.lastIndexOf("'", i), src.lastIndexOf('`', i));
@@ -112,17 +111,55 @@ describe('police d’affichage (Newsreader)', () => {
     }
     return uses;
   }
+  const displayUses = (file: string) => displayUsesIn(read(file));
+
+  /**
+   * Un emploi est deplace quand il tombe sur un libelle, un bouton, une cellule ou un lien — QUELLE
+   * QUE SOIT SA TAILLE : un `text-title` sur un `<td>` reste une donnee, pas un titre. Sinon il doit
+   * etre un `<h1>` / `<h2>` ou porter un cran >= `title`. `Link` et `Button` sont les composants qui
+   * rendent un `<a>` et un `<button>`.
+   */
+  const NEVER_DISPLAY = new Set(['button', 'td', 'th', 'label', 'a', 'Link', 'Button']);
+  function misplaced({ tag, classes }: { tag: string; classes: string }) {
+    if (NEVER_DISPLAY.has(tag)) return true;
+    const sized = classes.split(/\s+/).some((c) => DISPLAY_SIZES.has(c));
+    return tag !== 'h1' && tag !== 'h2' && !sized;
+  }
 
   it('font-display ne figure que sur un h1, un h2 ou un cran >= title', () => {
     const offenders = SOURCES.flatMap((file) =>
       displayUses(file)
-        .filter(({ tag, classes }) => {
-          const sized = classes.split(/\s+/).some((c) => DISPLAY_SIZES.has(c));
-          return tag !== 'h1' && tag !== 'h2' && !sized;
-        })
+        .filter(misplaced)
         .map(({ tag, classes }) => `${file}: <${tag}> "${classes}"`)
     );
     expect(offenders).toEqual([]);
+  });
+
+  it.each(['button', 'td', 'th', 'label', 'a', 'Link', 'Button'])(
+    'font-display est refuse sur <%s>, meme en taille de titre',
+    (tag) => {
+      const uses = displayUsesIn(`const x = <${tag} className="font-display text-heading">x</${tag}>;`);
+      expect(uses).toHaveLength(1);
+      expect(misplaced(uses[0])).toBe(true);
+    }
+  );
+
+  it('admet toujours un h1, un h2 et un cran >= title sur un paragraphe', () => {
+    for (const html of [
+      '<h1 className="font-display text-sm">t</h1>',
+      '<h2 className="font-display text-sm">t</h2>',
+      '<p className="font-display text-heading">42</p>',
+    ]) {
+      expect(displayUsesIn(html).filter(misplaced)).toEqual([]);
+    }
+    expect(displayUsesIn('<p className="font-display text-body">x</p>').filter(misplaced)).toHaveLength(1);
+  });
+
+  it('temoin positif : le scanner trouve bien les emplois de font-display', () => {
+    // Un `SOURCES` vide, un chemin faux ou une regle de lecture cassee rendraient les gardes ci-dessus
+    // vertes sans rien avoir regarde. Le produit en compte plus de trente.
+    const found = SOURCES.reduce((n, file) => n + displayUses(file).length, 0);
+    expect(found).toBeGreaterThanOrEqual(20);
   });
 
   /**

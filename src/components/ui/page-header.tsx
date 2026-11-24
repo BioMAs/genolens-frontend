@@ -40,7 +40,7 @@ export interface PageHeaderProps {
    * titre, il se lit comme une erreur.
    */
   titleVariant?: 'label' | 'name';
-  /** Sur-titre discret, en capitales. */
+  /** Sur-titre discret, en casse de phrase. */
   eyebrow?: string;
   description?: React.ReactNode;
   /** Ligne de metadonnees sous le titre (dates, compteurs, statut). */
@@ -100,7 +100,7 @@ export function PageHeader({
           <h1
             title={title}
             className={cn(
-              'line-clamp-2 text-primary',
+              'line-clamp-2 font-display text-primary',
               titleVariant === 'name' ? 'break-all text-heading' : 'text-display',
             )}
           >

@@ -189,8 +189,9 @@
      Mesure : --dc-amber (#f59e0b) donne 2,15:1 sur blanc, et il servait
      d'encre via `text-warning` dans six composants — badge, stat-chip,
      PowerAnalysis, QuotaDisplay, AnalysisQuotaNotice, ClaimRings. C'est un
-     echec du plancher TEXTE, pas du plancher graphique. De meme
-     --dc-up-dark (#16a34a) plafonne a 3,30:1.
+     echec du plancher TEXTE, pas du plancher graphique. De meme l'ancien
+     --dc-up-dark (#16a34a) plafonnait a 3,30:1 ; le cran fort de up
+     (oklch(49% 0.16 38), terre cuite) tient 6,75:1 sur blanc.
 
      Les deux encres ci-dessous tiennent 5,02:1 en clair et 7,9-8,4:1 en
      sombre. --dc-amber reste la couleur des aplats et des bordures. */
@@ -541,8 +542,9 @@
      « Apple » : une sans a 30px au tracking par defaut paraît lache. A
      l'inverse `micro` passe en tracking positif, 11px a besoin d'air.
 
-     `body` reste a 15px, identique a l'actuel body{font-size:.9375rem},
-     pour que la taille la plus frequente ne bouge pas.
+     `body` passe a 16px (spec § 2.2) : c'est la taille de lecture courante
+     et la seule qui change. `body-sm` (13px) et `caption` (12px) restent ou
+     ils sont ; la ligne passe de 1,4rem a 1,5rem pour garder le meme rapport.
 
      Ne jamais nommer un cran primary/secondary/muted : ces noms existent
      deja dans :root comme couleurs. */
@@ -559,8 +561,8 @@
   --text-body-sm--line-height:    1.25rem;
   --text-body-sm--letter-spacing: 0em;
 
-  --text-body:                    0.9375rem;
-  --text-body--line-height:       1.4rem;
+  --text-body:                    1rem;
+  --text-body--line-height:       1.5rem;
   --text-body--letter-spacing:    -0.006em;
 
   --text-title:                   1.0625rem;
@@ -632,7 +634,7 @@ body {
      quota qui change doivent garder la meme largeur. Tout le texte en herite ;
      les graphiques ont leur propre regle plus bas. */
   font-variant-numeric: tabular-nums;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.6;
   transition: background-color 0.2s ease, color 0.15s ease;
 }
@@ -683,15 +685,16 @@ body {
   .animate-spin { animation-duration: revert !important; }
 }
 
-/* Sur-titre. Absorbe .section-title (11px/700/.09em, supprimee, zero
-   consommateur) et .nav-section-label (10px/700/.1em) : un seul idiome, aligne
-   sur le cran `micro` de l'echelle plutot que sur deux valeurs inventees. */
+/* Sur-titre et etiquette. Casse de phrase, sans capitales ni crenage : en
+   capitales espacees il criait plus fort que le titre qu'il annonce. Il garde le
+   cran `micro` de l'echelle et la couleur des legendes (--gl-muted : 6,57:1 sur
+   le fond clair, 7,69:1 sur le sombre). Absorbe .section-title (supprimee, zero
+   consommateur) et .nav-section-label (10px/700/.1em) : un seul idiome. */
 .eyebrow {
   font-size: var(--text-micro);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  text-transform: none;
+  color: var(--gl-muted);
 }
 
 /* Display font utility (Tailwind also registers font-display via @theme).
@@ -1007,15 +1010,15 @@ body {
    Sidebar Navigation
    ============================================================ */
 /* Alias de .eyebrow, conserve parce que la classe est citee dans des tests et
-   des visites guidees. Un seul idiome de sur-titre desormais. */
+   des visites guidees. Un seul idiome de sur-titre desormais : meme casse de
+   phrase, meme couleur. */
 .nav-section-label {
   display: block;
   padding: 0 0.75rem;
   font-size: var(--text-micro);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  text-transform: none;
+  color: var(--gl-muted);
 }
 
 /* Rangee de navigation : 36px, 13px, rejoint l'echelle typographique.
@@ -1431,9 +1434,10 @@ body {
 }
 
 /* Focus rings on the auth screens.
-   The global :focus-visible ring is the app emerald (--sl-teal), which is too
-   dark against the ink ground in dark mode, so it is retargeted to the auth
-   accent here. The input needs its own rule: components/ui/input.tsx carries
+   The global :focus-visible ring is --gl-focus (lagoon, dark in light mode and
+   light in dark mode). The auth screens keep their own palette off the app
+   tokens, so the ring is retargeted to the auth accent here. The input needs its
+   own rule: components/ui/input.tsx carries
    `focus-visible:ring-2 ring-brand-teal`, whose specificity (0,2,0) ties with a
    plain `.auth-scope :focus-visible`, so the input selector adds an element
    (0,2,1) to win outright rather than depend on source order.
