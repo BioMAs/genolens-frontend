@@ -292,8 +292,6 @@
   --surface-raised:      var(--gl-surface);
   --hover-overlay:       var(--gl-paper-2);
   --app-bg:              var(--gl-paper);
-  --sidebar-bg:          var(--gl-surface);
-  --sidebar-border:      var(--gl-rule);
   --topbar-bg:           var(--gl-surface);
   --topbar-border:       var(--gl-rule);
 }

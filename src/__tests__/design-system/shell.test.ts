@@ -61,7 +61,7 @@ describe('.app-shell', () => {
 
 describe('la sidebar a disparu de la feuille', () => {
   it('plus de regle de sidebar, de barre de contexte ni de nav-item', () => {
-    for (const gone of ['.app-sidebar', '.app-topbar', '.app-main', '.nav-item', '.nav-section-label', '--sidebar-width']) {
+    for (const gone of ['.app-sidebar', '.app-topbar', '.app-main', '.nav-item', '.nav-section-label', '--sidebar-width', '--sidebar-bg', '--sidebar-border']) {
       expect(CSS).not.toContain(gone);
     }
   });
