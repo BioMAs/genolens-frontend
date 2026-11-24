@@ -29,7 +29,9 @@ export default function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
 
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
-      <ol className="flex min-w-0 items-center gap-1">
+      {/* `-ml-1` : chaque miette a `px-1` (la bague de focus respire), donc sans
+          lui le texte du fil partirait a 4px du bord gauche du titre dessous. */}
+      <ol className="-ml-1 flex min-w-0 items-center gap-1">
         {shown.map((crumb, index) => {
           const isLast = index === shown.length - 1;
 

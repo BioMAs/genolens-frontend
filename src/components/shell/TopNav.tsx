@@ -34,8 +34,9 @@ const SCROLL_THRESHOLD = 4;
  * defile dessous ; le contenu qui se colle a son tour — la carte de selection, un
  * onglet — se cale sur `--sticky-top`, qui vaut cette hauteur.
  *
- * Le contenu est centre dans 1360px comme la page, pour que la marque et le
- * titre partagent la meme marge gauche. La barre tient sur UNE ligne a toutes les
+ * Le contenu est centre dans 1360px (gouttieres de 16px puis 40px), la mesure de
+ * la maquette ; le fil d'Ariane, lui, prend celle de la page qu'il surplombe
+ * (`PageBreadcrumb`). La barre tient sur UNE ligne a toutes les
  * largeurs, hauteur fixe : c'est la condition pour que `--sticky-top` dise vrai.
  * Sous 60rem les destinations et l'aide quittent la barre pour le tiroir de
  * `MobileNavToggle` ; la recherche reste, et le solde IA passe dans le tiroir

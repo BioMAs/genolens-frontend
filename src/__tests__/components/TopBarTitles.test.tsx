@@ -114,10 +114,22 @@ describe('la ligne du fil d’Ariane', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('s’aligne sur la barre du haut : 1360px centrés, marges de 16px puis 40px', () => {
+  it('s’aligne sur la page qu’il surplombe : sa mesure et ses gouttières, pas celles de la barre', () => {
     usePathname.mockReturnValue('/docs');
     render(<PageBreadcrumb />);
     const row = screen.getByRole('navigation', { name: /breadcrumb/i }).parentElement as HTMLElement;
-    expect(row).toHaveClass('mx-auto', 'max-w-[1360px]', 'px-4', 'md:px-10');
+    // Les memes jetons que `.page-container` : le bord gauche du fil est celui du titre.
+    expect(row).toHaveClass('mx-auto', 'w-full', 'max-w-[var(--measure-default)]', 'px-[var(--page-gutter)]');
+    expect(row).not.toHaveClass('max-w-[1360px]');
+    expect(row).not.toHaveClass('md:px-10');
+  });
+
+  it('ramène le TEXTE de la première miette au bord du titre, pas sa boîte', () => {
+    // Chaque miette porte `px-1` (la bague de focus a besoin de respirer) : sans
+    // la marge negative de la liste, le texte du fil serait a 4px de celui du titre.
+    usePathname.mockReturnValue('/docs');
+    render(<PageBreadcrumb />);
+    const list = screen.getByRole('navigation', { name: /breadcrumb/i }).querySelector('ol') as HTMLElement;
+    expect(list).toHaveClass('-ml-1');
   });
 });

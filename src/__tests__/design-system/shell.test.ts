@@ -85,3 +85,40 @@ describe('le tiroir sous 60rem', () => {
     );
   });
 });
+
+describe('le fil d’Ariane et la mesure des pages', () => {
+  /**
+   * Le fil d'Ariane est la premiere ligne de `main`, JUSTE AU-DESSUS de la page :
+   * son bord gauche doit etre celui du titre. Il prenait la mesure de la barre du
+   * haut (1360px, gouttieres de 40px) alors que `.page-container` prend
+   * `--measure-default` et `--page-gutter` : a 1440px, 80px contre 152px.
+   *
+   * Plutot que de recopier 1200px et 2rem dans un composant, on lit les jetons
+   * dans la regle de `.page-container` et on exige que la ligne du fil d'Ariane
+   * cite les memes : changer la mesure d'une page change celle du fil.
+   */
+  // Sans les commentaires : celui du composant cite justement 1360px pour dire qu'il ne le prend pas.
+  const crumbRow = readFileSync('src/components/shell/PageBreadcrumb.tsx', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('.page-container tient sa mesure et ses gouttieres de jetons', () => {
+    const body = rule('.page-container');
+    expect(body).toMatch(/max-width:\s*var\(--measure-default\)/);
+    expect(body).toMatch(/padding:[^;]*var\(--page-gutter\)/);
+  });
+
+  it('la ligne du fil d’Ariane cite la mesure et la gouttiere de .page-container', () => {
+    const body = rule('.page-container');
+    const measure = body.match(/max-width:\s*var\((--[\w-]+)\)/)?.[1];
+    const gutter = body.match(/padding:\s*var\(--[\w-]+\)\s+var\((--[\w-]+)\)/)?.[1];
+    expect(measure).toBeDefined();
+    expect(gutter).toBeDefined();
+
+    expect(crumbRow).toContain(`max-w-[var(${measure})]`);
+    expect(crumbRow).toContain(`px-[var(${gutter})]`);
+  });
+
+  it('la ligne du fil d’Ariane ne retombe pas sur la mesure de la barre du haut', () => {
+    expect(crumbRow).not.toContain('1360');
+    expect(crumbRow).not.toMatch(/\bmd:px-10\b/);
+  });
+});
