@@ -1,6 +1,7 @@
 import {
   buildCommands,
   buildGeneCommands,
+  comparisonCommands,
   filterCommands,
   flattenCommands,
   geneDirection,
@@ -8,6 +9,7 @@ import {
   scoreCommand,
   type CommandActions,
 } from '@/lib/commands';
+import { DESTINATIONS } from '@/lib/navigation/destinations';
 import type { GeneSearchResult } from '@/types/gene-search';
 
 /**
@@ -32,7 +34,7 @@ const build = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) =>
 describe('catalogue', () => {
   it('propose les routes meme sans projet', () => {
     const groups = build();
-    expect(groups.find((g) => g.heading === 'Go to')!.items.length).toBeGreaterThan(4);
+    expect(groups.find((g) => g.heading === 'Go to')!.items).toHaveLength(4);
   });
 
   it('omet le groupe des projets quand il n’y en a aucun', () => {
@@ -175,5 +177,143 @@ describe('genes', () => {
   it('distingue le meme gene dans deux comparaisons', () => {
     const ids = buildGeneCommands([hit, { ...hit, comparison_name: 'Other' }]).map((c) => c.id);
     expect(new Set(ids).size).toBe(2);
+  });
+});
+
+/**
+ * « Go to » est le DOUBLE de la barre du haut : un lieu present dans l'un et
+ * absent de l'autre est un bug, dans un sens (une route que la palette ne sait
+ * pas atteindre) comme dans l'autre (une route que la navigation a retiree et
+ * que la palette propose encore).
+ */
+describe('« Go to » suit la navigation', () => {
+  const goTo = () => build().find((g) => g.heading === 'Go to')!.items;
+
+  it('propose Home, Projects, Tools puis le profil — et rien d’autre', () => {
+    expect(goTo().map((c) => [c.label, c.href])).toEqual([
+      ['Home', '/dashboard'],
+      ['Projects', '/projects'],
+      ['Tools', '/tools'],
+      ['Profile & plan', '/profile'],
+    ]);
+  });
+
+  it('reprend les destinations de la barre du haut telles quelles', () => {
+    expect(goTo().slice(0, DESTINATIONS.length).map((c) => [c.label, c.href])).toEqual(
+      DESTINATIONS.map((d) => [d.label, d.href]),
+    );
+  });
+
+  it('ne propose plus ni Comparisons ni Documentation', () => {
+    // La liste globale a quitte la navigation, et la documentation vit dans le
+    // menu d'aide : les garder ici les ferait reapparaitre par la fenetre.
+    const hrefs = goTo().map((c) => c.href);
+    expect(hrefs).not.toContain('/comparisons');
+    expect(hrefs).not.toContain('/docs');
+    const labels = goTo().map((c) => c.label);
+    expect(labels).not.toContain('Comparisons');
+    expect(labels).not.toContain('Documentation');
+    expect(labels).not.toContain('Dashboard');
+  });
+
+  it('trouve toujours Home par « dashboard » et par « accueil »', () => {
+    for (const q of ['dashboard', 'accueil']) {
+      const hits = flattenCommands(filterCommands(build(), q));
+      expect(hits.map((c) => c.href)).toContain('/dashboard');
+    }
+  });
+});
+
+describe('comparaisons', () => {
+  const comparison = (name: string, over: Partial<Parameters<typeof comparisonCommands>[0][number]> = {}) => ({
+    name,
+    project_id: 'p1',
+    project_name: 'Skin atlas',
+    dataset_id: `d-${name}`,
+    ...over,
+  });
+  const LESIONAL = comparison('Lesional_vs_NonLesional');
+  const RETINOL = comparison('Retinol_vs_Vehicle');
+
+  it('trouve « lesional » parmi deux comparaisons, et seulement elle', () => {
+    const hits = comparisonCommands([RETINOL, LESIONAL], 'lesional');
+    expect(hits).toHaveLength(1);
+    expect(hits[0].label).toBe('Lesional_vs_NonLesional');
+    expect(hits[0].kind).toBe('comparison');
+  });
+
+  it('mene a la meme page que « Latest results » du tableau de bord', () => {
+    // L'adresse que `LatestResults` donne a Retinol_vs_Vehicle (voir
+    // DashboardRows.test) : une palette qui ouvre une AUTRE page pour la meme
+    // comparaison est un bug que personne ne signalerait.
+    const [hit] = comparisonCommands([RETINOL], 'retinol');
+    expect(hit.href).toBe('/projects/p1/comparisons/Retinol_vs_Vehicle');
+  });
+
+  it('encode le nom de la comparaison', () => {
+    const [hit] = comparisonCommands([comparison('KO/WT #2')], 'ko');
+    expect(hit.href).toBe('/projects/p1/comparisons/KO%2FWT%20%232');
+  });
+
+  it('nomme le projet en precision, pour distinguer deux comparaisons homonymes', () => {
+    const [hit] = comparisonCommands([LESIONAL], 'lesional');
+    expect(hit.hint).toBe('Skin atlas');
+    const twins = comparisonCommands(
+      [LESIONAL, comparison('Lesional_vs_NonLesional', { project_id: 'p2', project_name: 'Liver', dataset_id: 'd2' })],
+      'lesional',
+    );
+    expect(twins.map((c) => c.hint)).toEqual(['Skin atlas', 'Liver']);
+    expect(new Set(twins.map((c) => c.id)).size).toBe(2);
+  });
+
+  it('en rend six au plus', () => {
+    const many = Array.from({ length: 20 }, (_, i) => comparison(`Contrast_${i}_vs_Ctrl`));
+    expect(comparisonCommands(many, 'contrast')).toHaveLength(6);
+    expect(comparisonCommands(many, '')).toHaveLength(6);
+  });
+
+  it('garde l’ordre recu quand la requete est vide, comme pour les projets', () => {
+    // Le hook les donne de la plus recente a la plus ancienne : c'est ce que la
+    // palette montre avant toute frappe.
+    const names = ['C_vs_D', 'A_vs_B', 'E_vs_F'];
+    expect(comparisonCommands(names.map((n) => comparison(n)), '  ').map((c) => c.label)).toEqual(names);
+  });
+
+  it('classe un prefixe avant une sous-chaine, comme les projets', () => {
+    // « vs » est PARTOUT dans les noms de comparaison : sans le palier, le
+    // premier resultat dependrait de l'ordre de reception.
+    const hits = comparisonCommands(
+      [comparison('Control_vs_Treated'), comparison('Vehicle_vs_Retinol'), comparison('Retinol_vs_Vehicle')],
+      'retinol',
+    );
+    expect(hits.map((c) => c.label)).toEqual(['Retinol_vs_Vehicle', 'Vehicle_vs_Retinol']);
+  });
+
+  it('trouve par projet, par titre lisible et par le mot « comparison »', () => {
+    expect(comparisonCommands([LESIONAL, RETINOL], 'skin atlas')).toHaveLength(2);
+    expect(comparisonCommands([LESIONAL], 'lesional vs non')).toHaveLength(1);
+    expect(comparisonCommands([LESIONAL, RETINOL], 'comparison')).toHaveLength(2);
+    expect(comparisonCommands([LESIONAL, RETINOL], 'zzzz')).toEqual([]);
+  });
+
+  it('range le groupe « Comparisons » entre les projets et les actions', () => {
+    const items = comparisonCommands([LESIONAL], '');
+    const headings = build({ projects: [{ id: 'p1', name: 'Skin' }], comparisons: items }).map(
+      (g) => g.heading,
+    );
+    expect(headings).toEqual(['Go to', 'Projects', 'Comparisons', 'Actions']);
+  });
+
+  it('omet le groupe quand il n’y a aucune comparaison', () => {
+    expect(build().some((g) => g.heading === 'Comparisons')).toBe(false);
+    expect(build({ comparisons: [] }).some((g) => g.heading === 'Comparisons')).toBe(false);
+  });
+
+  it('survit au filtrage de la palette sans changer d’ordre', () => {
+    const items = comparisonCommands([LESIONAL, RETINOL], 'vs');
+    const groups = filterCommands(build({ comparisons: items }), 'vs');
+    expect(groups.find((g) => g.heading === 'Comparisons')!.items.map((c) => c.id)).toEqual(
+      items.map((c) => c.id),
+    );
   });
 });

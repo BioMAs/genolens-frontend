@@ -11,6 +11,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import CommandPalette from '@/components/command/CommandPalette';
 import { closeCommandPalette, openCommandPalette } from '@/components/command/commandPaletteStore';
 import type { GeneSearchResult } from '@/types/gene-search';
+import type { UserComparisonItem } from '@/hooks/useAllComparisons';
 
 const push = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -22,6 +23,13 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/hooks/useProjects', () => ({
   useProjects: () => ({ data: { items: [] } }),
 }));
+/** Ce que renverrait GET /comparisons : la liste transversale, la plus recente d'abord. */
+let comparisons: UserComparisonItem[] = [];
+const useAllComparisons = jest.fn();
+jest.mock('@/hooks/useAllComparisons', () => ({
+  useAllComparisons: (filters: unknown) => useAllComparisons(filters),
+}));
+
 jest.mock('@/contexts/ThemeContext', () => ({
   useTheme: () => ({ theme: 'light', toggleTheme: jest.fn() }),
 }));
@@ -85,6 +93,9 @@ beforeEach(() => {
   useGeneSearch.mockImplementation(fakeGeneSearch);
   backend = {};
   backendFails = false;
+  comparisons = [];
+  useAllComparisons.mockReset();
+  useAllComparisons.mockImplementation(() => ({ data: { comparisons } }));
   act(() => openCommandPalette());
 });
 
@@ -98,6 +109,31 @@ function type(text: string, { settle = true } = {}) {
     target: { value: text },
   });
   if (settle) act(() => jest.advanceTimersByTime(250));
+}
+
+function comparison(name: string, over: Partial<UserComparisonItem> = {}): UserComparisonItem {
+  return {
+    name,
+    deg_up: 10,
+    deg_down: 5,
+    deg_total: 15,
+    has_enrichment: false,
+    dataset_id: `d-${name}`,
+    dataset_type: 'SINGLE',
+    project_id: 'p-skin',
+    project_name: 'Skin atlas',
+    dataset_name: 'Counts',
+    updated_at: '2026-11-20T10:00:00Z',
+    ...over,
+  };
+}
+
+/** Les lignes du groupe « Comparisons » : elles portent l'icone des comparaisons, pas un gene. */
+function comparisonOptions(): HTMLElement[] {
+  const heading = screen.queryByText('Comparisons', { selector: '.eyebrow' });
+  return heading
+    ? Array.from(heading.parentElement!.querySelectorAll<HTMLElement>('[role="option"]'))
+    : [];
 }
 
 function geneOptions() {
@@ -243,5 +279,86 @@ describe('etats honnetes', () => {
     expect(useGeneSearch).toHaveBeenLastCalledWith(
       expect.objectContaining({ query: 'TP53', enabled: true }),
     );
+  });
+});
+
+describe('comparaisons', () => {
+  beforeEach(() => {
+    comparisons = [
+      comparison('Retinol_vs_Vehicle'),
+      comparison('Lesional_vs_NonLesional', { project_id: 'p-liver', project_name: 'Liver study' }),
+    ];
+  });
+
+  it('trouve une comparaison par son nom', () => {
+    render(<CommandPalette />);
+    type('lesional');
+
+    const options = comparisonOptions();
+    expect(options).toHaveLength(1);
+    expect(options[0]).toHaveTextContent('Lesional_vs_NonLesional');
+    expect(options[0]).toHaveTextContent('Liver study');
+  });
+
+  it('ouvre la page de la comparaison, la meme que « Latest results »', () => {
+    render(<CommandPalette />);
+    type('lesional');
+
+    fireEvent.click(comparisonOptions()[0]);
+    expect(push).toHaveBeenCalledWith('/projects/p-liver/comparisons/Lesional_vs_NonLesional');
+  });
+
+  it('Entree ouvre la comparaison trouvee', () => {
+    render(<CommandPalette />);
+    type('retinol');
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
+    expect(push).toHaveBeenCalledWith('/projects/p-skin/comparisons/Retinol_vs_Vehicle');
+  });
+
+  it('propose les dernieres comparaisons avant toute frappe, six au plus', () => {
+    comparisons = Array.from({ length: 10 }, (_, i) => comparison(`Contrast_${i}_vs_Ctrl`));
+    render(<CommandPalette />);
+    expect(comparisonOptions()).toHaveLength(6);
+  });
+
+  it('range le groupe entre « Go to » et les actions', () => {
+    render(<CommandPalette />);
+    const headings = Array.from(document.querySelectorAll('.eyebrow')).map((h) => h.textContent);
+    expect(headings).toEqual(['Go to', 'Comparisons', 'Actions']);
+  });
+
+  it('laisse les genes en tete quand le meme texte trouve un gene ET une comparaison', () => {
+    comparisons = [comparison('TP53_vs_Control')];
+    backend = { TP53: [TP53_IN_ANALYSIS] };
+    render(<CommandPalette />);
+    type('TP53');
+
+    const options = screen.getAllByRole('option');
+    expect(options[0]).toHaveTextContent('TP53 · KO vs WT · Skin atlas');
+    expect(comparisonOptions()).toHaveLength(1);
+    expect(options.indexOf(comparisonOptions()[0])).toBeGreaterThan(0);
+  });
+
+  it('ne dit pas « Nothing matches » quand une comparaison correspond', () => {
+    render(<CommandPalette />);
+    type('lesional');
+    expect(screen.queryByText(/nothing matches/i)).toBeNull();
+  });
+});
+
+describe('« Go to » dans la palette', () => {
+  it('propose Home, Projects, Tools et Profile & plan — plus Comparisons ni Documentation', () => {
+    render(<CommandPalette />);
+    const goTo = screen.getByText('Go to', { selector: '.eyebrow' }).parentElement!;
+    const labels = Array.from(goTo.querySelectorAll('[role="option"]')).map((o) => o.textContent);
+    expect(labels).toEqual(['Home', 'Projects', 'Tools', 'Profile & plan']);
+    expect(screen.queryByRole('option', { name: /^Comparisons$/ })).toBeNull();
+    expect(screen.queryByRole('option', { name: /documentation/i })).toBeNull();
+  });
+
+  it('Home ouvre le tableau de bord', () => {
+    render(<CommandPalette />);
+    fireEvent.click(screen.getByRole('option', { name: /^Home/ }));
+    expect(push).toHaveBeenCalledWith('/dashboard');
   });
 });

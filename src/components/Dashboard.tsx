@@ -22,6 +22,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useProjectLimit } from '@/hooks/useQuotas';
 import { useAllComparisons } from '@/hooks/useAllComparisons';
+import { comparisonHref } from '@/lib/navigation/comparisonHref';
 import { useWorkspaceActivity } from '@/hooks/useWorkspaceActivity';
 import QuotaMeters from './QuotaMeters';
 import { useAutoTour } from '@/hooks/useAutoTour';
@@ -77,7 +78,7 @@ export default function Dashboard() {
       comparisons.map((c) => ({
         ...c,
         title: comparisonTitle(c.name),
-        href: `/projects/${c.project_id}/comparisons/${encodeURIComponent(c.name)}`,
+        href: comparisonHref(c),
       })),
     [comparisons],
   );

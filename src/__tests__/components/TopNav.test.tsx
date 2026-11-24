@@ -172,7 +172,9 @@ describe('TopNav', () => {
 
   it('mounts the search pill, the help menu, the quota and the account menu', () => {
     renderAt('/dashboard');
-    expect(screen.getByRole('button', { name: 'Open the command palette' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Search genes, projects, comparisons' }),
+    ).toBeInTheDocument();
     // Le menu d'aide a pris la place du bouton qui rejouait la visite : c'est
     // lui qui porte l'ancre que la visite du tableau de bord vise.
     expect(screen.getByRole('button', { name: 'Help' })).toHaveAttribute('data-tour', 'help-button');
@@ -284,7 +286,17 @@ describe('TopNav — the drawer below 60rem', () => {
   it('keeps the search pill in the bar, outside the drawer', () => {
     renderAt('/dashboard');
     const panel = drawer().closest('.app-drawer') as HTMLElement;
-    const pill = screen.getByRole('button', { name: 'Open the command palette' });
+    const pill = screen.getByRole('button', { name: 'Search genes, projects, comparisons' });
     expect(panel.contains(pill)).toBe(false);
+  });
+
+  it('says what the search pill searches, in its visible text as in its accessible name', () => {
+    renderAt('/dashboard');
+    const pill = screen.getByRole('button', { name: 'Search genes, projects, comparisons' });
+    // Le libelle visible est le nom accessible (etiquette dans le nom, WCAG 2.5.3) :
+    // un utilisateur de commande vocale dit ce qu'il lit.
+    expect(pill).toHaveTextContent('Search genes, projects, comparisons');
+    expect(pill).toHaveTextContent('⌘K');
+    expect(pill).toHaveAttribute('aria-keyshortcuts', 'Meta+K Control+K');
   });
 });
