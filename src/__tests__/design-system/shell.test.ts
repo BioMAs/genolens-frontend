@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * La coquille : une barre du haut collee, le document qui defile.
@@ -120,5 +121,73 @@ describe('le fil d’Ariane et la mesure des pages', () => {
   it('la ligne du fil d’Ariane ne retombe pas sur la mesure de la barre du haut', () => {
     expect(crumbRow).not.toContain('1360');
     expect(crumbRow).not.toMatch(/\bmd:px-10\b/);
+  });
+});
+
+describe('les ancres et les elements colles sous la barre du haut', () => {
+  /**
+   * `scrollIntoView({ block: 'start' })` honore `scroll-margin-top`. Quand
+   * `.app-content` defilait, il commencait SOUS une barre non collee : `scroll-mt-6`
+   * (24px) suffisait. Le document defile maintenant SOUS une barre collee de 64px :
+   * une marge litterale laisse la cible 40px derriere la barre, titre cache.
+   *
+   * La marge ne s'ecrit donc plus en dur : elle cite `--sticky-top`, la hauteur de
+   * la barre. Un decalage de 24px ou de 4rem recopie la valeur d'aujourd'hui, et
+   * c'est la qu'elle recommence a deriver le jour ou la barre change.
+   */
+  const SOURCES: string[] = readdirSync('src', { recursive: true, encoding: 'utf8' })
+    .map((f) => join('src', f))
+    .filter((f) => /\.tsx?$/.test(f) && !f.includes('__tests__') && !f.includes('lentille-lab'));
+
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+  /** Un utilitaire de marge de defilement a valeur litterale : scroll-mt-6, scroll-mt-[3rem]… */
+  const LITERAL_SCROLL_MARGIN =
+    /(?<![\w-])scroll-m[tyb]?-(?!\[calc\(var\(--(?:sticky-top|topbar-height)\))[^\s"'`}]+/g;
+
+  it('aucune marge de defilement litterale (scroll-mt-6…) : elle doit citer --sticky-top', () => {
+    const offenders = SOURCES.flatMap((file) =>
+      (stripComments(readFileSync(file, 'utf8')).match(LITERAL_SCROLL_MARGIN) ?? []).map(
+        (hit) => `${file}: ${hit}`,
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('toute scrollMarginTop en ligne cite --sticky-top ou --topbar-height', () => {
+    const offenders = SOURCES.flatMap((file) =>
+      [...stripComments(readFileSync(file, 'utf8')).matchAll(/scrollMarginTop:\s*([^,}\n]+)/g)]
+        .filter(([, value]) => !/var\(--(?:sticky-top|topbar-height)\)/.test(value))
+        .map(([, value]) => `${file}: ${value.trim()}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('chaque cible d’un « Go to … » de la page d’analyse porte la marge sur la barre', () => {
+    const file = 'src/components/analyses/AnalysisResultsHub.tsx';
+    const src = stripComments(readFileSync(file, 'utf8'));
+    const targets = [...src.matchAll(/targetId="([\w-]+)"/g)].map((m) => m[1]);
+    // Garde-fou du garde-fou : sans cible lue, la boucle ne verifierait rien.
+    expect(targets.length).toBeGreaterThanOrEqual(5);
+
+    for (const id of targets) {
+      // La balise ouvrante qui porte `id="<id>"` (sur une ou plusieurs lignes).
+      const tag = src.match(new RegExp(`<\\w+(?:[^<>]|=>)*?\\bid="${id}"(?:[^<>]|=>)*?>`))?.[0];
+      expect(tag).toBeDefined();
+      expect(tag).toContain('scroll-mt-[calc(var(--sticky-top)+1rem)]');
+    }
+  });
+
+  it('temoin positif : le scanner reconnait les marges litterales et laisse passer la bonne', () => {
+    for (const bad of ['scroll-mt-6', 'scroll-mt-[4rem]', 'scroll-mt-24', 'scroll-my-2']) {
+      expect(bad.match(LITERAL_SCROLL_MARGIN)).not.toBeNull();
+    }
+    expect('scroll-mt-[calc(var(--sticky-top)+1rem)]'.match(LITERAL_SCROLL_MARGIN)).toBeNull();
+    expect('scroll-mt-[calc(var(--topbar-height)+1rem)]'.match(LITERAL_SCROLL_MARGIN)).toBeNull();
+  });
+
+  it('temoin positif : les sources sont lues', () => {
+    expect(SOURCES.length).toBeGreaterThan(300);
   });
 });
