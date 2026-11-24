@@ -60,14 +60,30 @@ export default function ProjectNav({ projectId }: { projectId: string }) {
   const active = resolveActiveProjectTab(pathname);
 
   const { unlocked: scienceUnlocked } = useScientificModule();
-  const { data: planProfile } = useUserProfile();
+  const { data: planProfile, isPending: profilePending } = useUserProfile();
   // Le nom n'est demande que la ou la rangee est rendue.
   const { data: project } = useProject(projectId, visible);
   const scroller = useRef<HTMLElement>(null);
 
+  // Tant que `/users/me` n'a pas repondu, les deux verrous ne sont PAS connus : le droit de
+  // plan et l'option valent `false` faute de profil, et les lire tels quels peignait un cadenas
+  // et « ask an admin to enable it » a un utilisateur qui y a droit. Un verrou inconnu n'est donc
+  // pas pose. La rangee se corrige a l'arrivee du profil ; si la requete echoue, `isPending`
+  // retombe et les verrous reviennent (fermes par defaut).
+  const items = buildProjectNav(projectId, {
+    canMulti: profilePending || canUseMultiComparison(planProfile),
+    canScatter: profilePending || scienceUnlocked,
+  });
+  // L'onglet courant, UNIQUEMENT s'il est un lien : verrouille, il n'a pas d'`aria-current`.
+  const currentLink = items.find((item) => item.key === active && item.lockedReason === null)?.key ?? null;
+
   // Arrivee directe sur un onglet hors du champ (Contrast scatter a 375px) :
   // on le ramene au centre. Le defilement est celui de la rangee, jamais celui de
   // la page — `scrollIntoView` ferait aussi bouger le document.
+  //
+  // La dependance est l'onglet courant EN TANT QUE LIEN, pas la route : un onglet de plan ou
+  // d'option est d'abord un span verrouille, sans `aria-current`, puis un lien quand le profil
+  // arrive ou change — la route, elle, n'a pas bouge, et l'effet ne se relancerait jamais.
   useEffect(() => {
     const row = scroller.current;
     const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
@@ -77,14 +93,10 @@ export default function ProjectNav({ projectId }: { projectId: string }) {
     if (left < row.scrollLeft || right > row.scrollLeft + row.clientWidth) {
       row.scrollLeft = left - (row.clientWidth - current.offsetWidth) / 2;
     }
-  }, [active, visible]);
+  }, [currentLink, visible]);
 
   if (!visible) return null;
 
-  const items = buildProjectNav(projectId, {
-    canMulti: canUseMultiComparison(planProfile),
-    canScatter: scienceUnlocked,
-  });
   // Le nom humain du projet ; l'id le temps qu'il charge.
   const projectLabel = project?.name ?? decodeURIComponent(projectId);
 

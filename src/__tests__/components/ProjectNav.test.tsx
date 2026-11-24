@@ -19,14 +19,24 @@ jest.mock('@/hooks/useProjects', () => ({
   useProject: (...args: unknown[]) => mockUseProject(...args),
 }));
 
+// Le profil arrive APRES le premier rendu (requete reseau). Tant qu'il est en vol, les
+// vrais hooks rendent `data` vide et `unlocked: false` : c'est ce que la maquette doit
+// pouvoir simuler, parce que c'est l'etat dans lequel la rangee est peinte la premiere fois.
+let mockPending = false;
 let mockScience = true;
 jest.mock('@/hooks/useAddOnModules', () => ({
-  useScientificModule: () => ({ unlocked: mockScience, loaded: true }),
+  useScientificModule: () => ({
+    unlocked: !mockPending && mockScience,
+    loaded: !mockPending,
+  }),
 }));
 
 let mockPlan = 'TEAM';
 jest.mock('@/hooks/useUserProfile', () => ({
-  useUserProfile: () => ({ data: { subscription_plan: mockPlan, role: 'USER' } }),
+  useUserProfile: () => ({
+    data: mockPending ? undefined : { subscription_plan: mockPlan, role: 'USER' },
+    isPending: mockPending,
+  }),
 }));
 
 // Le selecteur lit la liste des projets a l'ouverture : hors sujet ici.
@@ -55,6 +65,7 @@ beforeEach(() => {
   mockPathname = '/projects/p1';
   mockScience = true;
   mockPlan = 'TEAM';
+  mockPending = false;
   mockUseProject.mockReset();
   mockUseProject.mockReturnValue({ data: { name: 'Skin Study' } });
 });
@@ -195,5 +206,106 @@ describe('ProjectNav on a deep route', () => {
   it('does not fetch the project there', () => {
     renderAt('/projects/p1/analyses/a1');
     expect(mockUseProject).toHaveBeenCalledWith('p1', false);
+  });
+});
+
+describe('while the profile is still loading', () => {
+  // `canUseMultiComparison(undefined)` et `unlocked` valent `false` tant que `/users/me`
+  // n'a pas repondu : lus tels quels, ils peignaient un cadenas et « ask an admin to enable
+  // it » a un utilisateur qui a le droit, le temps d'une requete.
+  it('draws no lock and no reason on the two gated tabs', () => {
+    mockPending = true;
+    renderAt('/projects/p1');
+
+    expect(tabs().querySelector('[aria-disabled]')).toBeNull();
+    expect(tabs().querySelector('svg')).toBeNull();
+    expect(tabs()).not.toHaveTextContent(/ask an admin|plan/i);
+    expect(within(tabs()).getAllByRole('link').map((a) => a.textContent?.trim())).toEqual([
+      'Overview',
+      'Setup',
+      'Analyses',
+      'Multi-comparison',
+      'Contrast scatter',
+    ]);
+  });
+
+  it('locks them once the profile arrives and says the user is not entitled', () => {
+    mockPending = true;
+    mockPlan = 'STARTER';
+    mockScience = false;
+    const { rerender } = renderAt('/projects/p1');
+    expect(tabs().querySelector('[aria-disabled]')).toBeNull();
+
+    mockPending = false;
+    rerender(<ProjectNav projectId="p1" />);
+    const locked = Array.from(tabs().querySelectorAll('[aria-disabled="true"]'));
+    expect(locked.map((el) => el.getAttribute('title'))).toEqual([
+      PLAN_GATE_COPY.multiComparison,
+      SCIENCE_LOCK,
+    ]);
+  });
+});
+
+describe('bringing the current tab into view', () => {
+  // jsdom n'a pas de mise en page : offsetLeft, offsetWidth, clientWidth valent 0. On leur
+  // donne une geometrie — l'onglet courant a 500px dans une rangee de 300px, large de 100 — et
+  // on ecoute les ecritures de `scrollLeft`, qui est le seul effet observable de la rangee.
+  // Centrer l'onglet : 500 - (300 - 100) / 2 = 400.
+  let scrolls: number[];
+
+  beforeEach(() => {
+    scrolls = [];
+    jest.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.getAttribute('aria-current') === 'page' ? 500 : 0;
+    });
+    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
+    jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(300);
+    jest.spyOn(Element.prototype, 'scrollLeft', 'get').mockReturnValue(0);
+    jest.spyOn(Element.prototype, 'scrollLeft', 'set').mockImplementation((value: number) => {
+      scrolls.push(value);
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('scrolls the row to an off-screen current tab on arrival', () => {
+    renderAt('/projects/p1/contrast-scatter');
+    expect(scrolls).toEqual([400]);
+  });
+
+  it('does not scroll when the current tab is already in view', () => {
+    jest.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockReturnValue(20);
+    renderAt('/projects/p1/analyses');
+    expect(scrolls).toEqual([]);
+  });
+
+  it('scrolls to a gated current tab on a direct arrival, before the profile has answered', () => {
+    mockPending = true;
+    renderAt('/projects/p1/multi-comparison');
+    expect(tabs().querySelector('[aria-current="page"]')).not.toBeNull();
+    expect(scrolls).toEqual([400]);
+  });
+
+  it('scrolls when the current tab turns from locked into a link', () => {
+    // Profil deja la, sans le droit : l'onglet est un span verrouille, rien a ramener.
+    mockPlan = 'STARTER';
+    const { rerender } = renderAt('/projects/p1/multi-comparison');
+    expect(tabs().querySelector('[aria-current="page"]')).toBeNull();
+    expect(scrolls).toEqual([]);
+
+    // Le plan monte (le profil est relu) : le meme onglet devient un lien, courant, hors champ.
+    mockPlan = 'TEAM';
+    rerender(<ProjectNav projectId="p1" />);
+    expect(tabs().querySelector('[aria-current="page"]')).not.toBeNull();
+    expect(scrolls).toEqual([400]);
+  });
+
+  it('does not scroll again on an unrelated re-render', () => {
+    const { rerender } = renderAt('/projects/p1/contrast-scatter');
+    rerender(<ProjectNav projectId="p1" />);
+    rerender(<ProjectNav projectId="p1" />);
+    expect(scrolls).toEqual([400]);
   });
 });
