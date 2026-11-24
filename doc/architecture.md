@@ -19,9 +19,9 @@ Le frontend suit l'architecture **App Router** de Next.js avec une séparation c
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
-│  │ TanStack     │  │ Supabase     │  │ Axios     │  │
-│  │ Query        │  │ Auth         │  │ Client    │  │
-│  │ (cache/data) │  │ (session)    │  │ (HTTP)    │  │
+│  │ TanStack     │  │ Session      │  │ Axios     │  │
+│  │ Query        │  │ cookies      │  │ Client    │  │
+│  │ (cache/data) │  │ (httpOnly)   │  │ (HTTP)    │  │
 │  └──────────────┘  └──────────────┘  └───────────┘  │
 └──────────────────────────────────────────────────────┘
                         ↕ HTTPS
@@ -43,16 +43,16 @@ Le frontend suit l'architecture **App Router** de Next.js avec une séparation c
 ```tsx
 // Server Component - fetch data server-side
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  return <Dashboard />; // Client component receives props
+  // Lit le cookie gl_at et le vérifie localement (aucun appel réseau)
+  if (!(await getSessionUser())) redirect('/');
+
+  return <Dashboard />; // Client component
 }
 ```
 
 **Client Components** (`'use client'`) :
 - Composants avec state, effects, event handlers
-- Intégration Supabase client
+- Formulaires d'authentification (appels via `src/utils/auth/client.ts`)
 - Visualisations interactives (Recharts, Plotly)
 
 ```tsx
@@ -167,15 +167,15 @@ ProjectDetail (page)
 
 ```
 1. Server Component (page.tsx)
-   ├─► createClient() → Supabase server auth
+   ├─► getSessionUser() → cookie gl_at vérifié localement
    ├─► redirect si non authentifié
-   └─► Rend le composant client avec user en prop
+   └─► Rend le composant client
 
 2. Client Component (ProjectDetail.tsx)
    ├─► useProjects(id) → React Query fetch
    │   └─► api.get('/projects/{id}')
-   │       └─► axios interceptor ajoute Bearer token
-   │           └─► Backend valide JWT Supabase
+   │       └─► le navigateur joint les cookies de session
+   │           └─► Backend valide le jeton d'accès (gl_at)
    │
    ├─► useDatasets(projectId) → React Query fetch
    │   └─► api.get('/projects/{id}/datasets')
@@ -198,11 +198,11 @@ Client Component (DatasetExplorer.tsx)
 ├─► api.post('/datasets/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-├─► axios interceptor ajoute Bearer token automatiquement
+├─► les cookies de session sont joints automatiquement
 ├─► Backend :
 │   ├─► Validation (taille, extension)
 │   ├─► Parsing CSV/TSV/XLSX → Parquet
-│   ├─► Upload Supabase Storage
+│   ├─► Stockage du fichier (Parquet)
 │   └─► Celery task: ingest_dataset.delay()
 └─► React Query invalidate datasets cache
 ```
@@ -284,7 +284,7 @@ export function useAnalyses(projectId: string) {
 
 | Route | Page | Auth requise | Type |
 |---|---|---|---|
-| `/` | Home / Login | Non (redirect si auth) | Server → Client |
+| `/` | Connexion en deux étapes (mot de passe, puis code) et inscription | Non (redirect si connecté) | Server → Client |
 | `/dashboard` | Dashboard principal | Oui | Server → Client |
 | `/projects` | Liste des projets | Oui | Server → Client |
 | `/projects/[id]` | Détail d'un projet | Oui | Server → Client |
@@ -294,7 +294,12 @@ export function useAnalyses(projectId: string) {
 | `/admin/*` | Panel admin | Admin role | Server → Client |
 | `/pricing` | Page tarifaire | Non | Server |
 | `/profile` | Profil utilisateur | Oui | Server → Client |
-| `/auth/callback` | Callback auth Supabase | Non | Server |
+| `/auth/2fa/setup` | Enrôlement de la double authentification | Étape de connexion en cours | Client |
+| `/auth/forgot`, `/auth/reset` | Demande puis choix d'un nouveau mot de passe | Non | Client |
+| `/auth/invite` | Acceptation d'une invitation | Non | Client |
+| `/auth/verify-email` | Confirmation de l'adresse e-mail | Non | Client |
+| `/auth/refresh` | Renouvellement silencieux de la session | Non | Client |
+| `/auth/callback` | Anciens liens : redirige vers `/` | Non | Route |
 
 ### Dynamic Routes
 
@@ -337,27 +342,44 @@ Toutes les données serveur sont gérées par React Query :
 
 ## 7. Middleware Next.js
 
-Le middleware gère l'authentification au niveau du router :
+Le middleware (`src/middleware.ts`) garde les pages au niveau du router. Une session est le cookie `gl_at`, **vérifié localement** par `verifyAccessToken` (`src/utils/auth/jwt.ts`) avec les clés publiques de l'API (`AUTH_JWKS_URL`) : pas d'appel à l'API à chaque requête, seulement la récupération des clés, mise en cache. Un jeton n'est accepté que s'il est signé en ES256, émis par `AUTH_ISSUER`, destiné à `genolens`, non expiré, et si son `amr` contient `otp` ou `recovery` (une session sans second facteur n'est pas une session).
+
+Décisions, dans l'ordre :
+
+1. Un compte signalé inactif (cookie `account_status`) va sur `/suspended`.
+2. Les pages ouvertes depuis un lien reçu par e-mail (`/auth/reset`, `/auth/invite`, `/auth/verify-email`) reçoivent `Referrer-Policy: no-referrer` et `Cache-Control: no-store`, rien d'autre : le jeton voyage dans l'URL.
+3. Le jeton d'accès est vérifié, ou absent.
+4. `/` est la page de connexion : avec une session, le visiteur est envoyé vers `next` (`/dashboard` par défaut) ; avec le seul indice `gl_session`, la session est d'abord renouvelée ; sinon le formulaire s'affiche.
+5. Toute autre page publique (`isPublicPath`) est servie.
+6. Une page protégée est servie avec une session. Sans jeton valide mais avec l'indice `gl_session`, le visiteur passe par `/auth/refresh?next=…` ; sans rien, il est renvoyé vers `/?next=…`.
+
+### Renouvellement silencieux
+
+Le jeton d'accès dure 15 minutes. `/auth/refresh` appelle `POST /auth/refresh` (`refreshSession`) puis renvoie le visiteur vers sa destination par navigation complète. Si le renouvellement échoue, le visiteur arrive sur `/?reauth=1` : ce paramètre indique au middleware de montrer le formulaire au lieu de renvoyer `/` vers `/auth/refresh`, ce qui évite une boucle quand l'API est injoignable alors que l'indice est encore là. Un renouvellement qui vient de réussir sans que le nouveau jeton soit vérifiable ici (mauvais `AUTH_ISSUER` ou `AUTH_JWKS_URL`, domaine de cookie qui ne couvre pas cet hôte) laisse le cookie `gl_renewed` pendant 30 secondes : ni le middleware ni la page `/auth/refresh` ne renouvellent une seconde fois, et le visiteur retrouve le formulaire de connexion (le serveur journalise de quoi vérifier ces deux variables).
+
+### Destination après connexion
+
+`next` ne passe que par `safeNext` (`src/utils/auth/paths.ts`) : un chemin relatif, ou une URL absolue dont l'origine est exactement `NEXT_PUBLIC_ADMIN_APP_URL`. Tout le reste (`//hôte`, `https://hôte`, `\hôte`, `javascript:`, caractères de contrôle) est ignoré au profit de `/dashboard`.
+
+### Matcher
 
 ```typescript
-// src/middleware.ts
-export async function middleware(request: NextRequest) {
-  const supabase = createServerClient(...);
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  // Redirect authenticated users from home to dashboard
-  if (user && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-  
-  return NextResponse.next();
-}
-
-// Matcher : toutes les routes sauf static files
+// Toutes les routes sauf les assets de build et les fichiers statiques,
+// reconnus par leur extension
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:ico|png|jpe?g|gif|webp|svg|txt|xml|webmanifest|js|css|map|woff2?)$).*)'],
 };
 ```
+
+### Côté serveur
+
+Le layout racine (`src/app/layout.tsx`) appelle `getServerUser()` (`src/utils/auth/server.ts`) pour choisir la coquille de la page : l'application avec sa navigation pour un utilisateur connecté, la coquille nue des pages d'authentification sinon. C'est le seul endroit où le serveur Next envoie `Authorization: Bearer <gl_at>`, vers `/users/me` ; l'appel a un délai de 5 secondes et n'est jamais mis en cache. Le layout n'étant pas re-rendu par une navigation côté client, tout changement de session (connexion, enrôlement, renouvellement, déconnexion) se termine par une navigation complète, via `src/utils/auth/navigation.ts`.
+
+### Pages d'authentification
+
+Les écrans partagés vivent dans `src/components/auth/` (`AuthShell`, `AuthCard`, `AuthField`, `MfaChallengeForm`, `TotpEnrollment`, `RecoveryCodesPanel`, `NewPasswordForm`...). Les appels d'avant session passent par `src/utils/auth/client.ts` ; la section « Sécurité » du profil (mot de passe, double authentification, sessions) passe par les hooks React Query de `src/hooks/useAccountSecurity.ts`. Voir [pages-routes.md](pages-routes.md) et [api-client.md](api-client.md).
+
+---
 
 ## 8. Performance optimizations
 
@@ -404,21 +426,24 @@ export default async function DashboardPage() {
 
 ## 9. Sécurité côté frontend
 
-### Token management
+### Gestion de la session
 
-Le token Supabase JWT est automatiquement ajouté par l'interceptor Axios :
+Le navigateur ne lit et n'envoie jamais de jeton. La session est portée par des cookies httpOnly que l'API pose (`gl_at`, `gl_rt`, `gl_mfa`) et un indice lisible (`gl_session`) ; chaque appel à l'API les joint (`withCredentials: true` pour axios, `credentials: 'include'` pour `fetch`) et porte l'en-tête `X-GenoLens-Client: web`, garde anti-CSRF exigée par l'API :
 
 ```typescript
-api.interceptors.request.use(async (config) => {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
-  }
-  return config;
+const api = axios.create({
+  baseURL: apiBaseUrl(),
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    [CLIENT_HEADER]: CLIENT_NAME, // X-GenoLens-Client: web
+  },
 });
 ```
+
+Une réponse « déconnecté » (`401`) renouvelle la session une fois et rejoue la requête ; voir [api-client.md](api-client.md).
+
+La double authentification (TOTP) est obligatoire : un compte sans second facteur est envoyé vers `/auth/2fa/setup` à sa première connexion, et le middleware refuse tout jeton dont l'`amr` ne contient ni `otp` ni `recovery`.
 
 ### Validation côté client
 

@@ -12,14 +12,16 @@ Le frontend utilise le **Next.js App Router** avec des routes basées sur les do
 
 **Fichier** : `src/app/page.tsx`  
 **Type** : Client Component  
-**Auth** : Non requise (redirige vers `/dashboard` si connecté)
+**Auth** : Non requise (le middleware redirige vers `/dashboard`, ou vers `next`, si une session est valide)
 
-**Description** : Page de login/signup avec formulaire email/password. Affiche le branding GenoLens à gauche et le formulaire d'authentification à droite.
+**Description** : Page de connexion et d'inscription. Affiche le branding GenoLens à gauche et le formulaire d'authentification à droite. La connexion se fait en deux étapes : e-mail et mot de passe, puis un code à 6 chiffres de l'application d'authentification (ou un code de secours). Un compte sans second facteur est envoyé vers `/auth/2fa/setup` après son mot de passe. `?step=mfa` ouvre directement l'étape du code (où atterrit une invitation acceptée) ; `?next=` donne la destination après connexion.
 
 **Composants clés** :
-- Formulaire signin/signup toggle
-- Validation Supabase Auth
-- Redirection automatique vers `/dashboard` après connexion
+- Formulaire signin/signup toggle (appels `login`, `signup`, `resendVerification` de `src/utils/auth/client.ts`)
+- `MfaChallengeForm` — étape du code (authentificateur ou code de secours)
+- Navigation **complète** vers `next` à la fin : le layout racine choisit la coquille côté serveur
+
+L'adresse non confirmée reçoit la même réponse qu'un mauvais mot de passe (`invalid_credentials`) ; la page propose alors de renvoyer le lien de confirmation. La route `/login` redirige vers `/`.
 
 ---
 
@@ -35,13 +37,71 @@ Le frontend utilise le **Next.js App Router** avec des routes basées sur les do
 
 ## Routes d'authentification
 
-### `GET /auth/callback` — Callback Supabase
+Les pages de `/auth/*` sont publiques pour le middleware (il ne les protège pas) ; celles ouvertes depuis un lien e-mail reçoivent en plus `Referrer-Policy: no-referrer` et `Cache-Control: no-store`, et retirent le jeton de la barre d'adresse dès qu'elles l'ont lu (`useLinkToken`). Elles utilisent les écrans partagés de `src/components/auth/` et les appels de `src/utils/auth/client.ts`. Les textes d'interface sont en anglais.
 
-**Fichier** : `src/app/auth/callback/page.tsx`  
+### `GET /auth/2fa/setup` — Enrôlement de la double authentification
+
+**Fichier** : `src/app/auth/2fa/setup/page.tsx`  
+**Type** : Client Component  
+**Auth** : Étape de connexion en cours (cookie `gl_mfa`, posé après un mot de passe valide)
+
+**Description** : Première connexion d'un compte sans second facteur. Affiche le QR code et la clé à saisir (`/mfa/setup/start`), demande un premier code (`/mfa/setup/confirm`) ; la session s'ouvre à cette confirmation. Les 10 codes de secours (`RecoveryCodesPanel`) ne sont montrés qu'une fois : la page reste affichée jusqu'à ce qu'ils soient pris en compte, puis navigue vers `next`. Si l'étape a expiré ou si les essais sont épuisés, la page invite à se reconnecter.
+
+### `GET /auth/forgot` — Mot de passe oublié
+
+**Fichier** : `src/app/auth/forgot/page.tsx`  
+**Type** : Client Component  
+**Auth** : Non requise
+
+**Description** : Demande un lien de réinitialisation par e-mail. La réponse est la même pour tout le monde : elle ne dit pas si une adresse a un compte.
+
+### `GET /auth/reset?token=…` — Nouveau mot de passe
+
+**Fichier** : `src/app/auth/reset/page.tsx`  
+**Type** : Client Component  
+**Auth** : Non requise (lien reçu par e-mail)
+
+**Description** : Choix d'un nouveau mot de passe (12 à 128 caractères, contrôle d'interface : le serveur fait foi). L'API révoque toutes les sessions et n'en ouvre aucune : le visiteur se reconnecte avec son nouveau mot de passe. Un lien expiré ou déjà utilisé affiche un message avec un bouton pour en demander un nouveau (`/auth/forgot`).
+
+### `GET /auth/invite?token=…` — Invitation
+
+**Fichier** : `src/app/auth/invite/page.tsx`  
+**Type** : Client Component  
+**Auth** : Non requise (lien reçu par e-mail)
+
+**Description** : Acceptation d'une invitation : l'invité choisit son mot de passe, puis poursuit vers l'enrôlement de la double authentification ou vers l'étape du code, selon la réponse de l'API.
+
+### `GET /auth/verify-email?token=…` — Confirmation de l'adresse
+
+**Fichier** : `src/app/auth/verify-email/page.tsx`  
+**Type** : Client Component  
+**Auth** : Non requise (lien reçu par e-mail)
+
+**Description** : Confirme l'adresse e-mail du compte avec le jeton du lien. Rien n'est envoyé à l'ouverture de la page : seul le clic sur le bouton de confirmation confirme, pour qu'un scanner de courrier qui suit le lien ne confirme pas à la place du destinataire. Un lien mort propose de recevoir un nouveau lien.
+
+### `GET /auth/refresh?next=…` — Renouvellement silencieux
+
+**Fichier** : `src/app/auth/refresh/page.tsx`  
+**Type** : Client Component  
+**Auth** : Non requise
+
+**Description** : Où le middleware envoie un visiteur dont le jeton d'accès a expiré mais dont l'indice `gl_session` est encore là. Affiche « Restoring your session… », appelle `POST /auth/refresh`, puis renvoie vers `next` par navigation complète. Si le renouvellement échoue, renvoie vers `/?next=…&reauth=1` (le formulaire de connexion) ; `reauth=1` évite que `/` renvoie ici en boucle. Voir [architecture.md](architecture.md), section Middleware.
+
+### `GET /auth/callback` — Anciens liens
+
+**Fichier** : `src/app/auth/callback/route.ts`  
+**Type** : Route Handler  
+**Auth** : Non requise
+
+**Description** : Les anciens liens d'e-mail pointaient ici. Ils ne servent plus : la route répond `303` vers `/` (la session est ouverte par l'API, pas par un échange de code).
+
+### `GET /auth/auth-code-error` — Lien expiré
+
+**Fichier** : `src/app/auth/auth-code-error/page.tsx`  
 **Type** : Server Component  
 **Auth** : Non requise
 
-**Description** : Gère le callback après l'authentification Supabase (confirmation email, OAuth, etc.). Échange le token de session et redirige vers `/dashboard`.
+**Description** : Page « This link has expired » avec un bouton pour demander un nouveau lien (`/auth/forgot`). Plus aucune route n'y renvoie : elle ne s'atteint que par son adresse.
 
 ---
 
@@ -186,6 +246,7 @@ Le frontend utilise le **Next.js App Router** avec des routes basées sur les do
 
 **Sections** :
 - Informations personnelles (nom, email)
+- Sécurité (`SecuritySection`, un bloc chacun, dans `src/app/profile/security/`) : état de la double authentification et alerte quand il reste peu de codes de secours, changement de mot de passe, régénération des codes de secours, changement de téléphone (nouvelle clé TOTP, puis nouveaux codes de secours), appareils connectés (liste des sessions, révocation d'une session ou de toutes les autres). Les appels passent par les hooks de `src/hooks/useAccountSecurity.ts` ; les actions sensibles redemandent le mot de passe ou un code
 - Détails de l'abonnement (`SubscriptionDetails`)
 - Quota AI utilisé/restant (`QuotaDisplay`)
 - Historique des connexions (`useLoginStats`)
@@ -200,7 +261,7 @@ Le frontend utilise le **Next.js App Router** avec des routes basées sur les do
 **Type** : Client Component  
 **Auth** : Requise (optionnel)
 
-**Description** : Outil de diagnostic pour tester les connexions API, Supabase, et les fonctionnalités.
+**Description** : Outil de diagnostic pour tester les connexions API et les fonctionnalités.
 
 ### `GET /diagnostic-simple` — Diagnostic simplifié
 
@@ -299,8 +360,11 @@ La topbar contient :
 
 | Condition | Action |
 |---|---|
-| Utilisateur non auth → `/dashboard` | Redirect vers `/` (login) |
-| Utilisateur auth → `/` | Redirect vers `/dashboard` |
+| Utilisateur non auth → `/dashboard` | Redirect vers `/?next=/dashboard` (login) |
+| Jeton expiré mais indice `gl_session` présent → page protégée | Redirect vers `/auth/refresh?next=…`, puis retour sur la page |
+| Utilisateur auth → `/` | Redirect vers `next` s'il est sûr, sinon `/dashboard` |
+| Renouvellement refusé | `/?next=…&reauth=1` : le formulaire de connexion |
+| Compte inactif | Redirect vers `/suspended` |
 | Non admin → `/admin/*` | Access denied / redirect |
 | Projet inaccessible | Access denied / redirect |
 
