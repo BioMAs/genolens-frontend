@@ -13,6 +13,10 @@ export const SESSION_HINT_COOKIE = 'gl_session';
 export const RENEWED_COOKIE = 'gl_renewed';
 export const RENEWED_COOKIE_MAX_AGE_SECONDS = 30;
 
+/** What to check when a renewal succeeds yet the token still does not verify. */
+export const RENEWAL_LOOP_HINT =
+  'Check AUTH_ISSUER and AUTH_JWKS_URL for this deployment, and that the API cookie domain covers this host.';
+
 /** Header the API requires on cookie-authenticated requests (CSRF guard). */
 export const CLIENT_HEADER = 'X-GenoLens-Client';
 export const CLIENT_NAME = 'web';

@@ -298,14 +298,32 @@ describe('config.matcher', () => {
     }
   });
 
-  it('skips build assets and every file, manifest included', () => {
+  // R's `make.names` and `encodeURIComponent` both keep dots: a contrast name
+  // such as `Treated.1_vs_Ctrl` is a page, and must be guarded like any other.
+  it('guards pages whose path contains a dot', () => {
+    for (const path of [
+      '/projects/p1/comparisons/Treated.1_vs_Ctrl',
+      '/projects/p1/analyses/a1/comparisons/Treated.1_vs_Ctrl',
+      '/projects/p1/comparisons/v1.2',
+    ]) {
+      expect(matches(path)).toBe(true);
+    }
+  });
+
+  it('skips build assets and static files, manifest included', () => {
     for (const path of [
       '/_next/static/chunks/main.js',
       '/_next/image',
       '/favicon.ico',
       '/logo.png',
+      '/photo.jpg',
+      '/icons/logo.svg',
       '/manifest.webmanifest',
       '/robots.txt',
+      '/sitemap.xml',
+      '/fonts/inter.woff2',
+      '/static/app.css',
+      '/static/app.js.map',
     ]) {
       expect(matches(path)).toBe(false);
     }

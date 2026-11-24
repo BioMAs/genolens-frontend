@@ -132,6 +132,67 @@ it('navigates once under StrictMode, which runs the effect twice', async () => {
   expect(replace).toHaveBeenCalledTimes(1);
 });
 
+describe('reached right after a renewal that did not help', () => {
+  let logged: jest.SpyInstance;
+
+  beforeEach(() => {
+    logged = jest.spyOn(console, 'error').mockImplementation(() => {});
+    document.cookie = 'gl_renewed=1; Path=/; Max-Age=30';
+  });
+
+  afterEach(() => {
+    logged.mockRestore();
+  });
+
+  // The admin app sends its visitors here too, and cannot see this marker: the
+  // page itself must refuse to renew a second time.
+  it('does not renew again, and shows the sign-in form instead', async () => {
+    search('?next=https%3A%2F%2Fadmin.example.test%2Fusers');
+    renew.mockResolvedValue(true);
+
+    render(<RefreshPage />);
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith(
+        '/?next=https%3A%2F%2Fadmin.example.test%2Fusers&reauth=1',
+      ),
+    );
+    expect(renew).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it('names the likely cause once', async () => {
+    search('?next=%2Fprojects');
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(logged).toHaveBeenCalledTimes(1);
+    const message = logged.mock.calls[0].map(String).join(' ');
+    expect(message).toMatch(/AUTH_ISSUER/);
+    expect(message).toMatch(/AUTH_JWKS_URL/);
+    expect(message).toMatch(/cookie domain/i);
+  });
+
+  it('does not hand a foreign next on', async () => {
+    search('?next=https%3A%2F%2Fevil.test');
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/?next=%2Fdashboard&reauth=1'));
+  });
+
+  it('is silent, and renews, when the marker is absent', async () => {
+    clearRenewedMarker();
+    renew.mockResolvedValue(true);
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/dashboard'));
+    expect(logged).not.toHaveBeenCalled();
+  });
+});
+
 describe('the marker that stops a renewal loop', () => {
   it('is left behind by a renewal, before navigating', async () => {
     renew.mockResolvedValue(true);

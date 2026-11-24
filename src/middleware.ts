@@ -1,8 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { ACCESS_COOKIE, RENEWED_COOKIE, SESSION_HINT_COOKIE } from '@/utils/auth/constants';
+import {
+  ACCESS_COOKIE,
+  RENEWAL_LOOP_HINT,
+  RENEWED_COOKIE,
+  SESSION_HINT_COOKIE,
+} from '@/utils/auth/constants';
 import { verifyAccessToken } from '@/utils/auth/jwt';
-import { isPublicPath, loginPath, refreshPath, safeNext } from '@/utils/auth/paths';
+import { isPublicPath, loginPath, reauthLoginPath, refreshPath, safeNext } from '@/utils/auth/paths';
 
 /**
  * Pages opened from an e-mailed link: the token rides in the URL, so it must
@@ -42,10 +47,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // No cookie value in the message: the access token is a credential.
     console.error(
       '[auth] A session was just renewed but its access token cannot be verified here; ' +
-        'sending the visitor to sign in. Check AUTH_ISSUER and AUTH_JWKS_URL for this ' +
-        "deployment, and that the API's cookie domain covers this host.",
+        `sending the visitor to sign in. ${RENEWAL_LOOP_HINT}`,
     );
-    return redirect(`${loginPath(next)}&reauth=1`);
+    return redirect(reauthLoginPath(next));
   };
 
   // 1. Guard: redirect inactive accounts to /suspended (cookie set by the API
@@ -102,10 +106,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 export const config = {
   matcher: [
     /*
-     * Every path except build assets (`_next/static`, `_next/image`) and files:
-     * a path with a dot is a file (`favicon.ico`, `logo.png`,
-     * `manifest.webmanifest`...), no page has one.
+     * Every path except build assets (`_next/static`, `_next/image`) and static
+     * files, recognised by their extension. A bare dot is not enough: a contrast
+     * name such as `Treated.1_vs_Ctrl` is a path segment of a protected page.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:ico|png|jpe?g|gif|webp|svg|txt|xml|webmanifest|js|css|map|woff2?)$).*)',
   ],
 }

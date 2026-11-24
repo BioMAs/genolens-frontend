@@ -69,6 +69,19 @@ export function loginPath(next?: string): string {
   return next ? `/?next=${encodeURIComponent(next)}` : '/';
 }
 
+/**
+ * The sign-in page after a renewal that failed or must not be retried. `reauth=1`
+ * tells the middleware to show the form instead of sending `/` back to
+ * `/auth/refresh`. Built with `URLSearchParams` so it stays well-formed
+ * whether or not there is a `next`.
+ */
+export function reauthLoginPath(next: string): string {
+  const params = new URLSearchParams();
+  if (next) params.set('next', next);
+  params.set('reauth', '1');
+  return `/?${params.toString()}`;
+}
+
 /** The route that renews the access token, then returns to `next`. */
 export function refreshPath(next: string): string {
   return `/auth/refresh?next=${encodeURIComponent(next)}`;

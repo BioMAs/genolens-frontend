@@ -1,4 +1,4 @@
-import { isPublicPath, loginPath, refreshPath, safeNext } from '@/utils/auth/paths';
+import { isPublicPath, loginPath, refreshPath, reauthLoginPath, safeNext } from '@/utils/auth/paths';
 
 const ADMIN_URL = 'https://admin.example.test';
 const initialAdminUrl = process.env.NEXT_PUBLIC_ADMIN_APP_URL;
@@ -91,6 +91,33 @@ describe('redirect paths', () => {
     expect(loginPath('/projects/p1?tab=2')).toBe('/?next=%2Fprojects%2Fp1%3Ftab%3D2');
     expect(loginPath()).toBe('/');
     expect(refreshPath('/dashboard')).toBe('/auth/refresh?next=%2Fdashboard');
+  });
+});
+
+describe('reauthLoginPath', () => {
+  it('is the sign-in page remembering next, marked so `/` does not renew again', () => {
+    expect(reauthLoginPath('/dashboard')).toBe('/?next=%2Fdashboard&reauth=1');
+    expect(reauthLoginPath('/projects/p1?tab=2')).toBe('/?next=%2Fprojects%2Fp1%3Ftab%3D2&reauth=1');
+  });
+
+  it('keeps an absolute admin next whole', () => {
+    expect(reauthLoginPath('https://admin.example.test/users?page=2')).toBe(
+      '/?next=https%3A%2F%2Fadmin.example.test%2Fusers%3Fpage%3D2&reauth=1',
+    );
+  });
+
+  it('still carries the mark without a next', () => {
+    expect(reauthLoginPath('')).toBe('/?reauth=1');
+  });
+
+  it('reads back as the same next, whatever it holds', () => {
+    for (const next of ['/projects/a b?x=1&y=2#top', '/c/Treated.1_vs_Ctrl', '/q?a=%2F']) {
+      const url = new URL(reauthLoginPath(next), 'https://app.example.test');
+
+      expect(url.pathname).toBe('/');
+      expect(url.searchParams.get('next')).toBe(next);
+      expect(url.searchParams.get('reauth')).toBe('1');
+    }
   });
 });
 
