@@ -13,6 +13,13 @@ export const SESSION_HINT_COOKIE = 'gl_session';
 export const RENEWED_COOKIE = 'gl_renewed';
 export const RENEWED_COOKIE_MAX_AGE_SECONDS = 30;
 
+/**
+ * How long a renewal may take. A black-holed API would otherwise leave the
+ * "Restoring your session…" page spinning for ever; past this the renewal counts
+ * as failed, like an unreachable API.
+ */
+export const REFRESH_TIMEOUT_MS = 10_000;
+
 /** What to check when a renewal succeeds yet the token still does not verify. */
 export const RENEWAL_LOOP_HINT =
   'Check AUTH_ISSUER and AUTH_JWKS_URL for this deployment, and that the API cookie domain covers this host.';

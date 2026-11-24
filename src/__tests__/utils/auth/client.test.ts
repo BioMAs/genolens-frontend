@@ -23,6 +23,7 @@ import {
   verifyEmail,
   verifyMfa,
 } from '@/utils/auth/client';
+import { REFRESH_TIMEOUT_MS } from '@/utils/auth/constants';
 
 const API = 'http://api.example.test/api/v1';
 const initialApiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -243,6 +244,51 @@ describe('refreshSession', () => {
 
     fetchMock.mockResolvedValueOnce(json({ detail: 'too_many_attempts' }, 429));
     expect(await refreshSession()).toBe(false);
+  });
+
+  // A black-holed API would otherwise leave "Restoring your session..." spinning for ever.
+  describe('when the API never answers', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('gives the call a deadline of REFRESH_TIMEOUT_MS', async () => {
+      const spy = jest.spyOn(AbortSignal, 'timeout');
+      fetchMock.mockImplementation(async () => json({ refreshed: true }));
+
+      await refreshSession();
+
+      expect(REFRESH_TIMEOUT_MS).toBe(10_000);
+      expect(spy).toHaveBeenCalledWith(REFRESH_TIMEOUT_MS);
+      const { signal } = fetchMock.mock.calls[0][1];
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal).toBe(spy.mock.results[0].value);
+    });
+
+    it('reports the call as false once the deadline aborts it', async () => {
+      const deadline = new AbortController();
+      jest.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal);
+      // A fetch that hangs until aborted, like the real one.
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () =>
+              reject(new DOMException('The operation timed out.', 'TimeoutError')),
+            );
+          }),
+      );
+
+      const pending = refreshSession();
+      deadline.abort();
+
+      expect(await pending).toBe(false);
+    });
+
+    it('can refresh again afterwards', async () => {
+      fetchMock.mockRejectedValueOnce(new DOMException('timed out', 'TimeoutError'));
+      expect(await refreshSession()).toBe(false);
+
+      fetchMock.mockResolvedValueOnce(json({ refreshed: true }));
+      expect(await refreshSession()).toBe(true);
+    });
   });
 
   it('recovers after a failed refresh', async () => {

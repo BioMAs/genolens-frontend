@@ -1,4 +1,4 @@
-import { CLIENT_HEADER, CLIENT_NAME, SESSION_HINT_COOKIE } from './constants';
+import { CLIENT_HEADER, CLIENT_NAME, REFRESH_TIMEOUT_MS, SESSION_HINT_COOKIE } from './constants';
 import { navigate } from './navigation';
 
 /**
@@ -39,7 +39,15 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-export async function authPost<T>(path: string, body?: unknown): Promise<AuthResult<T>> {
+/**
+ * A call that is abandoned (its `signal` aborts, as on a deadline) is reported
+ * like an unreachable API: status 0.
+ */
+export async function authPost<T>(
+  path: string,
+  body?: unknown,
+  options?: { signal?: AbortSignal },
+): Promise<AuthResult<T>> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}/auth${path}`, {
@@ -47,6 +55,7 @@ export async function authPost<T>(path: string, body?: unknown): Promise<AuthRes
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', [CLIENT_HEADER]: CLIENT_NAME },
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: options?.signal,
     });
   } catch {
     return { ok: false, status: 0, detail: null, body: null };
@@ -118,10 +127,15 @@ export function acceptInvite(token: string, password: string) {
 // expiry starts a fresh one.
 let inflightRefresh: Promise<boolean> | null = null;
 
-/** Renews the access token. `true` once the API has set fresh cookies. */
+/**
+ * Renews the access token. `true` once the API has set fresh cookies; a refusal,
+ * an unreachable API and a call that outlasts `REFRESH_TIMEOUT_MS` are all `false`.
+ */
 export function refreshSession(): Promise<boolean> {
   if (!inflightRefresh) {
-    inflightRefresh = authPost<unknown>('/refresh')
+    inflightRefresh = authPost<unknown>('/refresh', undefined, {
+      signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
+    })
       .then((result) => result.ok)
       .finally(() => {
         inflightRefresh = null;
