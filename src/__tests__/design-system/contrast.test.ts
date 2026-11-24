@@ -173,6 +173,23 @@ describe.each(MODES)('jetons Lentille — mode %s', (mode) => {
     const onHover = contrastRatio(tokens['--gl-on-plum'], tokens[hover]);
     expect({ rest, hover, onRest: Number(onRest.toFixed(2)), onHover: Number(onHover.toFixed(2)), ok: onHover >= onRest }).toMatchObject({ ok: true });
   });
+
+  /**
+   * Les crans « -dark » de up et down sont leurs crans FORTS, et le code les emploie comme TEXTE
+   * (compteurs up / down, pastilles de comparaison). « Fort » veut dire plus sombre en clair, plus CLAIR
+   * en sombre : un cran plus sombre que la base, sur fond sombre, perd du contraste (down : 3,93:1).
+   */
+  it.each([
+    ['--dc-up-dark', '--gl-up'],
+    ['--dc-down-dark', '--gl-down'],
+  ])('%s est un texte lisible sur les surfaces, et plus fort que %s', (strong, base) => {
+    for (const bg of ['--gl-surface', '--gl-paper', '--surface-raised']) {
+      const ratio = contrastRatio(tokens[strong], tokens[bg]);
+      expect({ strong, bg, ratio: Number(ratio.toFixed(2)), ok: ratio >= 4.5 }).toMatchObject({ ok: true });
+    }
+    const gap = lightness(tokens[strong]) - lightness(tokens[base]);
+    expect(mode === 'dark' ? gap : -gap).toBeGreaterThanOrEqual(8);
+  });
 });
 
 describe('anciens noms — alias des jetons Lentille', () => {

@@ -88,8 +88,10 @@
   --dc-pink:    #ec4899;
   --dc-green:   #10b981;
   --dc-amber:   #f59e0b;
-  /* Direction : terre cuite (up) contre bleu acier (down). Le cran -dark est
-     8 points de clarte plus bas que la couleur de base, dans les deux themes. */
+  /* Direction : terre cuite (up) contre bleu acier (down). Le cran -dark est le cran
+     FORT, a 8 points de clarte de la base : plus SOMBRE en clair, plus CLAIR en sombre
+     (voir .dark). Le code l'emploie comme texte, et un texte fort sur fond sombre
+     est un texte plus clair, pas plus sombre. */
   --dc-up:      var(--gl-up);
   --dc-up-dark: oklch(49% 0.16 38);
   --dc-down:    var(--gl-down);
@@ -345,9 +347,11 @@
   --sl-red-light:    rgba(239, 68, 68, 0.12);
   --sl-red-muted:    rgba(239, 68, 68, 0.18);
 
-  /* Le cran -dark de up/down : 8 points de clarte de moins que la base. */
-  --dc-up-dark:   oklch(67% 0.14 45);
-  --dc-down-dark: oklch(56% 0.12 245);
+  /* Le cran -dark de up/down est employe comme TEXTE : en sombre il est 8 points de
+     clarte PLUS CLAIR que la base (75 -> 83, 64 -> 72), pas plus sombre. Plus sombre,
+     le down tombait a 3,93:1 sur la surface (6,9-7,8:1 maintenant). */
+  --dc-up-dark:   oklch(83% 0.13 45);
+  --dc-down-dark: oklch(72% 0.11 245);
 
   /* Le sombre est un jeu de pas choisi, pas une inversion automatique du clair. */
   --dd-bar-color: #3987e5;
