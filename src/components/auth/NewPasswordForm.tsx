@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import AuthAlert from '@/components/auth/AuthAlert';
 import AuthField from '@/components/auth/AuthField';
 import { MIN_PASSWORD_LENGTH, passwordProblem } from '@/utils/auth/messages';
 
@@ -82,12 +83,7 @@ export default function NewPasswordForm({ submitLabel, onSubmit }: NewPasswordFo
         data-testid="new-password-confirm"
       />
 
-      {error && (
-        <div className="auth-alert auth-alert-error animate-fade-up" role="alert">
-          <AlertTriangle size={16} aria-hidden="true" />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <AuthAlert tone="error">{error}</AuthAlert>}
 
       <button type="submit" className="auth-btn !mt-5" disabled={loading}>
         {loading ? (

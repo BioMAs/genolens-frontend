@@ -9,7 +9,7 @@ import AuthCard from '@/components/auth/AuthCard';
 import AuthField from '@/components/auth/AuthField';
 import MfaChallengeForm from '@/components/auth/MfaChallengeForm';
 import { login, resendVerification, signup } from '@/utils/auth/client';
-import { authErrorMessage, passwordProblem } from '@/utils/auth/messages';
+import { RESEND_SENT, authErrorMessage, passwordProblem } from '@/utils/auth/messages';
 import { navigate } from '@/utils/auth/navigation';
 import { safeNext } from '@/utils/auth/paths';
 
@@ -18,7 +18,6 @@ type AuthMode = 'signin' | 'signup';
 type SignInStep = 'password' | 'mfa';
 
 const SIGNUP_SENT = 'Check your inbox — we sent a link to confirm your account.';
-const RESEND_SENT = "If this address needs confirming, we've sent a new link.";
 
 /**
  * Sign in and sign up. The API sets the session cookies; this screen only moves

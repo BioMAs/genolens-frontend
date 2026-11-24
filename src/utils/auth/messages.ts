@@ -23,6 +23,14 @@ const BY_DETAIL: Record<string, string> = {
 };
 
 /**
+ * What the visitor reads once a new confirmation link was requested. One
+ * sentence for every address: the API accepts them all and says nothing about
+ * which needs a link, so the two screens that offer a resend (sign-in and the
+ * dead confirmation link) must answer in exactly the same words.
+ */
+export const RESEND_SENT = "If this address needs confirming, we've sent a new link.";
+
+/**
  * The message for a refused call. A known code wins; otherwise the status
  * decides: 404 is a route the API keeps closed for now (the pre-launch API
  * serves only the admin sign-in), 0 is an API that could not be reached.

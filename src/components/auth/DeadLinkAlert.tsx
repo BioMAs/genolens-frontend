@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import AuthAlert from '@/components/auth/AuthAlert';
 import { authErrorMessage } from '@/utils/auth/messages';
 
 /**
@@ -7,10 +7,5 @@ import { authErrorMessage } from '@/utils/auth/messages';
  * words are the same either way, and say nothing about which.
  */
 export default function DeadLinkAlert() {
-  return (
-    <div className="auth-alert auth-alert-error" role="alert">
-      <AlertTriangle size={16} aria-hidden="true" />
-      <span>{authErrorMessage(400, 'invalid_token')}</span>
-    </div>
-  );
+  return <AuthAlert tone="error">{authErrorMessage(400, 'invalid_token')}</AuthAlert>;
 }
