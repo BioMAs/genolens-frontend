@@ -28,7 +28,12 @@ const search = (value: string) => {
   query = value;
 };
 
+const clearRenewedMarker = () => {
+  document.cookie = 'gl_renewed=; Path=/; Max-Age=0';
+};
+
 beforeEach(() => {
+  clearRenewedMarker();
   renew.mockReset();
   replace.mockReset();
   search('');
@@ -36,6 +41,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  clearRenewedMarker();
   delete process.env.NEXT_PUBLIC_ADMIN_APP_URL;
 });
 
@@ -124,4 +130,40 @@ it('navigates once under StrictMode, which runs the effect twice', async () => {
   await waitFor(() => expect(replace).toHaveBeenCalledWith('/projects'));
   await Promise.resolve();
   expect(replace).toHaveBeenCalledTimes(1);
+});
+
+describe('the marker that stops a renewal loop', () => {
+  it('is left behind by a renewal, before navigating', async () => {
+    renew.mockResolvedValue(true);
+    let seenAtNavigation = '';
+    replace.mockImplementation(() => {
+      seenAtNavigation = document.cookie;
+    });
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(seenAtNavigation).toContain('gl_renewed=1');
+  });
+
+  it('is a short, page-wide cookie', async () => {
+    renew.mockResolvedValue(true);
+    const written = jest.spyOn(document, 'cookie', 'set');
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    // http here (jsdom's default): no `Secure`, which the browser would refuse.
+    expect(written).toHaveBeenCalledWith('gl_renewed=1; Path=/; Max-Age=30; SameSite=Lax');
+    written.mockRestore();
+  });
+
+  it('is not left behind by a refused renewal', async () => {
+    renew.mockResolvedValue(false);
+
+    render(<RefreshPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(document.cookie).not.toContain('gl_renewed');
+  });
 });

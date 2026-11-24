@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { ACCESS_COOKIE, SESSION_HINT_COOKIE } from '@/utils/auth/constants';
+import { ACCESS_COOKIE, RENEWED_COOKIE, SESSION_HINT_COOKIE } from '@/utils/auth/constants';
 import { verifyAccessToken } from '@/utils/auth/jwt';
 import { isPublicPath, loginPath, refreshPath, safeNext } from '@/utils/auth/paths';
 
@@ -23,10 +23,30 @@ const LINK_TOKEN_PAGES = new Set(['/auth/reset', '/auth/invite', '/auth/verify-e
  * 5. any other public page is served;
  * 6. a protected page is served with a session, renewed if the hint survives,
  *    and otherwise replaced by the sign-in page.
+ *
+ * Wherever a renewal is due, one that has just succeeded (`gl_renewed`) and
+ * still left no verifiable token is not repeated: see `renewOrSignIn`.
  */
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname, search, searchParams } = request.nextUrl;
   const redirect = (to: string) => NextResponse.redirect(new URL(to, request.url));
+
+  // Sends the visitor to renew, unless a renewal has just succeeded: the API
+  // then issued a token this middleware cannot verify, and renewing again would
+  // bounce between the page and /auth/refresh for ever (each turn rotating the
+  // refresh token). The visitor gets the sign-in form instead, marked `reauth=1`
+  // so that `/` does not send them back either.
+  const renewOrSignIn = (next: string) => {
+    if (!request.cookies.has(RENEWED_COOKIE)) return redirect(refreshPath(next));
+
+    // No cookie value in the message: the access token is a credential.
+    console.error(
+      '[auth] A session was just renewed but its access token cannot be verified here; ' +
+        'sending the visitor to sign in. Check AUTH_ISSUER and AUTH_JWKS_URL for this ' +
+        "deployment, and that the API's cookie domain covers this host.",
+    );
+    return redirect(`${loginPath(next)}&reauth=1`);
+  };
 
   // 1. Guard: redirect inactive accounts to /suspended (cookie set by the API
   // interceptor). Decided first, before any token is verified.
@@ -64,7 +84,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // `reauth=1` is set by /auth/refresh when the renewal failed. A refusal
     // already cleared the hint, but an unreachable API leaves it, and without
     // this check `/` and `/auth/refresh` would send the visitor back and forth.
-    if (hasSessionHint && searchParams.get('reauth') !== '1') return redirect(refreshPath(next));
+    if (hasSessionHint && searchParams.get('reauth') !== '1') return renewOrSignIn(next);
 
     return NextResponse.next();
   }
@@ -76,7 +96,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (claims) return NextResponse.next();
 
   const target = pathname + search;
-  return redirect(hasSessionHint ? refreshPath(target) : loginPath(target));
+  return hasSessionHint ? renewOrSignIn(target) : redirect(loginPath(target));
 }
 
 export const config = {

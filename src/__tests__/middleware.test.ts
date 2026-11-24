@@ -127,6 +127,92 @@ describe('the root, which is the sign-in page', () => {
   });
 });
 
+// A renewal that succeeds but leaves a token the middleware cannot verify
+// (wrong `AUTH_ISSUER` / `AUTH_JWKS_URL`, cookie not reaching this host) would
+// bounce the visitor between the page and `/auth/refresh` for ever. The refresh
+// page leaves `gl_renewed` behind; seeing it, the middleware gives up renewing.
+describe('a renewal that did not produce a verifiable token', () => {
+  const SECRET = 'not-a-real-token-value';
+  let logged: jest.SpyInstance;
+
+  beforeEach(() => {
+    logged = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    logged.mockRestore();
+  });
+
+  it('shows the sign-in form instead of renewing again', async () => {
+    const res = await middleware(
+      req('/dashboard', { gl_at: SECRET, gl_session: '1', gl_renewed: '1' }),
+    );
+
+    expect(location(res)).toBe('/?next=%2Fdashboard&reauth=1');
+  });
+
+  it('keeps the whole target, query string included', async () =>
+    expect(
+      location(await middleware(req('/projects/p1?tab=2', { gl_session: '1', gl_renewed: '1' }))),
+    ).toBe('/?next=%2Fprojects%2Fp1%3Ftab%3D2&reauth=1'));
+
+  it('names the likely cause once, and never a token', async () => {
+    await middleware(req('/dashboard', { gl_at: SECRET, gl_session: '1', gl_renewed: '1' }));
+
+    expect(logged).toHaveBeenCalledTimes(1);
+    const message = logged.mock.calls[0].map(String).join(' ');
+    expect(message).toMatch(/AUTH_ISSUER/);
+    expect(message).toMatch(/AUTH_JWKS_URL/);
+    expect(message).toMatch(/cookie domain/i);
+    expect(message).not.toContain(SECRET);
+  });
+
+  it('does not bounce the sign-in page back to the renewal either', async () => {
+    const renewed = { gl_session: '1', gl_renewed: '1' };
+
+    expect(location(await middleware(req('/?next=%2Fprojects', renewed)))).toBe(
+      '/?next=%2Fprojects&reauth=1',
+    );
+    expect(location(await middleware(req('/', renewed)))).toBe('/?next=%2Fdashboard&reauth=1');
+    // Already marked: the form is shown, as for any failed renewal.
+    expect(
+      location(await middleware(req('/?next=%2Fprojects&reauth=1', renewed))),
+    ).toBeUndefined();
+  });
+
+  it('is silent when no renewal was on the cards', async () => {
+    verify.mockResolvedValue(CLAIMS);
+    const renewed = { gl_renewed: '1' };
+
+    // A verifiable session, a stranger, a public page, a link page.
+    await middleware(req('/dashboard', { gl_at: 't', gl_session: '1', ...renewed }));
+    await middleware(req('/dashboard', renewed));
+    await middleware(req('/pricing', { gl_session: '1', ...renewed }));
+    await middleware(req('/auth/reset?token=abc', { gl_session: '1', ...renewed }));
+
+    expect(logged).not.toHaveBeenCalled();
+  });
+
+  it('is only about a renewal that just happened', async () => {
+    // Same request without the marker: renewal, as before, and no log.
+    expect(location(await middleware(req('/dashboard', { gl_session: '1' })))).toBe(
+      '/auth/refresh?next=%2Fdashboard',
+    );
+    expect(logged).not.toHaveBeenCalled();
+  });
+
+  it('lets a verifiable session through', async () => {
+    verify.mockResolvedValue(CLAIMS);
+
+    const res = await middleware(
+      req('/dashboard', { gl_at: 't', gl_session: '1', gl_renewed: '1' }),
+    );
+
+    expect(location(res)).toBeUndefined();
+    expect(logged).not.toHaveBeenCalled();
+  });
+});
+
 describe('public pages', () => {
   it.each(['/pricing', '/login', '/suspended', '/auth/forgot', '/auth/refresh'])(
     'lets %s through without a session',

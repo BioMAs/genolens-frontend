@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthCard from '@/components/auth/AuthCard';
+import { RENEWED_COOKIE, RENEWED_COOKIE_MAX_AGE_SECONDS } from '@/utils/auth/constants';
 import { refreshSession } from '@/utils/auth/client';
 import { replaceLocation } from '@/utils/auth/navigation';
 import { loginPath, safeNext } from '@/utils/auth/paths';
@@ -38,6 +39,16 @@ function Restoring() {
   );
 }
 
+/**
+ * Tells the middleware a renewal has just succeeded. If the page we go back to
+ * still finds no verifiable token, it stops sending the visitor here instead of
+ * looping. Short-lived and carrying nothing secret.
+ */
+function markRenewed() {
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${RENEWED_COOKIE}=1; Path=/; Max-Age=${RENEWED_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax${secure}`;
+}
+
 function Renewal() {
   const next = useSearchParams().get('next');
 
@@ -51,6 +62,7 @@ function Renewal() {
       // `next` is re-checked here: the middleware may have passed on an absolute
       // admin URL, and anyone can type a link to this page.
       const destination = safeNext(next);
+      if (renewed) markRenewed();
       // `reauth=1` tells the middleware not to send `/` back here: the API may
       // simply be unreachable, in which case the session hint is still set.
       replaceLocation(renewed ? destination : `${loginPath(destination)}&reauth=1`);
