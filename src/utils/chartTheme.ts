@@ -4,6 +4,7 @@ import { useLayoutEffect, useMemo, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getPalette, type Palette, type PaletteMode } from '@/utils/chartPalettes';
 import { usePaletteMode } from '@/contexts/chartPrefs';
+import { toLegacyColor } from '@/utils/colorContrast';
 import {
   directionColors,
   directionScale,
@@ -163,8 +164,12 @@ export function readChartTheme(root?: HTMLElement | null): ChartTheme {
   if (!el) return FALLBACK[mode];
 
   const computed = getComputedStyle(el);
-  const read = (key: keyof ChartTheme) =>
-    computed.getPropertyValue(VAR_NAMES[key]).trim() || FALLBACK[mode][key];
+  // `toLegacyColor` : les jetons sont ecrits en oklch() (et rendus parfois en lab()), que Plotly
+  // et cytoscape ne lisent pas. Une pile de polices n'est pas une couleur : on n'y touche pas.
+  const read = (key: keyof ChartTheme) => {
+    const raw = computed.getPropertyValue(VAR_NAMES[key]);
+    return (key === 'fontFamily' ? raw.trim() : toLegacyColor(raw)) || FALLBACK[mode][key];
+  };
 
   // Construction explicite plutot que `Object.fromEntries` : ce dernier produit
   // un `{[k: string]: string}` dont TypeScript ne peut pas deduire la forme,

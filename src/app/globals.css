@@ -8,47 +8,88 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   GenoLens V2 — "Skin Stack" Design System (SciLicium)
+   GenoLens V2 — design system « Lentille »
    ------------------------------------------------------------
-   The --sl-teal* / --sl-purple* token names are kept for
-   backwards-compat, but remapped to the redesign palette:
-     --sl-teal*   → emerald  #0f9d6b  (brand · active nav · success)
-     --sl-purple* → indigo   #4f46e5  (primary CTA · links)
-     --sl-violet* → violet   #8b5cf6  (AI / accent)
+   Les couleurs viennent du logo : un degrade lagon -> prune.
+   Les valeurs vivent UNE fois, dans les jetons --gl-* ci-dessous
+   (clair dans :root, sombre dans .dark). Les anciens noms
+   (--sl-*, --n-*, --dc-*, --chart-*, --text-*, --surface*…) restent
+   declares pour que le code qui les reference ne bouge pas, mais ce
+   ne sont plus que des alias :
+     --sl-purple*  -> prune  (action primaire, element courant)
+     --sl-teal*    -> lagon  (marque, succes)
+     --sl-violet*  -> ardoise (IA, jauges)
+   Regles d'usage : la prune marque l'action primaire, l'element
+   courant et la selection, rien d'autre ; up et down different aussi
+   en clarte, jamais rouge contre vert.
    ============================================================ */
 
-/* ---- Brand Tokens ---- */
+/* ---- Jetons Lentille — clair (valeurs : spec 2026-11-24, § 2.1) ---- */
 :root {
-  /* Brand green (emerald) — brand, active nav, success, verdicts */
-  --sl-teal:          #0f9d6b;
-  --sl-teal-dark:     #0f766e;
-  --sl-teal-light:    #e7f7ef;
-  --sl-teal-muted:    #c7f0dc;
-  /* Primary CTA (indigo) */
-  --sl-purple:        #4f46e5;
-  --sl-purple-dark:   #4338ca;
-  --sl-purple-light:  #eef0ff;
-  --sl-purple-muted:  #dce0fb;
-  /* AI / accent (violet) */
-  --sl-violet:        #8b5cf6;
-  --sl-violet-dark:   #7c3aed;
-  --sl-violet-light:  #faf7ff;
-  --sl-violet-muted:  #ece9fb;
+  --gl-paper:        oklch(98.4% 0.005 185);  /* fond d'app */
+  --gl-paper-2:      oklch(96% 0.009 185);    /* surface secondaire */
+  --gl-surface:      oklch(100% 0 0);         /* panneaux */
+  --gl-ink:          oklch(25% 0.05 292);     /* texte principal */
+  --gl-ink-2:        oklch(37% 0.045 292);    /* texte secondaire */
+  --gl-muted:        oklch(47% 0.03 280);     /* legendes */
+  --gl-rule:         oklch(91% 0.011 260);    /* filet leger */
+  --gl-rule-2:       oklch(83% 0.015 260);    /* filet */
+  --gl-lagoon:       oklch(73% 0.083 179);    /* marque, lentille */
+  --gl-lagoon-ink:   oklch(46% 0.08 180);     /* lagon lisible en texte */
+  --gl-lagoon-soft:  oklch(95% 0.025 175);    /* fond lagon */
+  --gl-slate:        oklch(57.3% 0.048 223);  /* ardoise : IA, jauges */
+  --gl-plum:         oklch(40.7% 0.076 290);  /* action primaire, onglet courant */
+  --gl-plum-hover:   oklch(33% 0.08 290);
+  --gl-plum-soft:    oklch(94% 0.02 290);     /* fond de selection */
+  --gl-on-plum:      oklch(99% 0.003 290);    /* texte sur prune */
+  --gl-up:           oklch(57% 0.16 38);      /* genes up */
+  --gl-down:         oklch(47% 0.12 250);     /* genes down */
+  --gl-ns:           oklch(86% 0.01 260);     /* non significatif */
+  --gl-focus:        oklch(50% 0.09 180);     /* anneau de focus */
+}
+
+/* ---- Anciens noms : alias des jetons --gl-* ---- */
+:root {
+  /* Marque (lagon) — marque, succes, verdicts */
+  --sl-teal:          var(--gl-lagoon-ink);
+  --sl-teal-dark:     oklch(38% 0.07 182);
+  --sl-teal-light:    var(--gl-lagoon-soft);
+  --sl-teal-muted:    oklch(88% 0.045 175);
+  /* Action primaire (prune) */
+  --sl-purple:        var(--gl-plum);
+  --sl-purple-dark:   var(--gl-plum-hover);
+  --sl-purple-light:  var(--gl-plum-soft);
+  --sl-purple-muted:  oklch(88% 0.03 290);
+  /* IA / jauges (ardoise) */
+  --sl-violet:        var(--gl-slate);
+  --sl-violet-dark:   oklch(42% 0.05 225);
+  --sl-violet-light:  oklch(96% 0.01 225);
+  --sl-violet-muted:  oklch(90% 0.02 225);
   /* Danger / down-regulated (red) */
   --sl-red:           #ef4444;
   --sl-red-dark:      #dc2626;
   --sl-red-light:     #fdeaea;
   --sl-red-muted:     #fca5a5;
 
-  /* Data / condition & direction palette (used by charts + novel viz) */
+  /* Deux jetons que le code employait sans qu'aucun fichier ne les declare :
+     `var(--sl-amber-light, …)` et `var(--sl-blue)` tombaient sur leur repli
+     ou sur rien du tout. Ils pointent sur les jetons de statut. */
+  --sl-amber-light: var(--warning-soft);
+  --sl-blue:        var(--info-ink);
+
+  /* Data / condition & direction palette (used by charts + novel viz).
+     Les cinq premieres teintes et les --dc-skin-* sont des couleurs de DONNEE
+     (conditions, tissus) : elles ne suivent pas la palette de la chrome. */
   --dc-indigo:  #6366f1;
   --dc-pink:    #ec4899;
   --dc-green:   #10b981;
   --dc-amber:   #f59e0b;
-  --dc-up:      #22c55e;
-  --dc-up-dark: #16a34a;
-  --dc-down:    #ef4444;
-  --dc-down-dark: #dc2626;
+  /* Direction : terre cuite (up) contre bleu acier (down). Le cran -dark est
+     8 points de clarte plus bas que la couleur de base, dans les deux themes. */
+  --dc-up:      var(--gl-up);
+  --dc-up-dark: oklch(49% 0.16 38);
+  --dc-down:    var(--gl-down);
+  --dc-down-dark: oklch(39% 0.12 250);
   --dc-skin-barrier: #0284c7;
   --dc-skin-barrier-fill: #38bdf8;
   --dc-skin-epidermis: #0f9d6b;
@@ -59,19 +100,22 @@
      plancher de chroma, contraste >= 3:1 sur la surface). Ne pas en dériver d'autres teintes. */
   --dd-bar-color: #2a78d6;
 
-  /* Neutral scale — light mode (mockup grays) */
-  --n-0:   #ffffff;
-  --n-25:  #fbfcfe;
-  --n-50:  #f4f5f8;
-  --n-100: #edeff2;
-  --n-200: #e2e5ea;
-  --n-300: #c7ccd4;
-  --n-400: #8b93a0;
-  --n-500: #5b6472;
-  --n-600: #4a5568;
-  --n-700: #2d3748;
-  --n-800: #131629;
-  --n-900: #0b0e1c;
+  /* Echelle neutre — alias des jetons --gl-*. Les crans qui ont un jeton
+     (surface, paper, paper-2, rule, rule-2, muted, ink-2, ink) le suivent donc
+     dans les deux themes ; les quatre crans intermediaires sont des litteraux
+     qui ont leur valeur sombre dans .dark. */
+  --n-0:   var(--gl-surface);
+  --n-25:  var(--gl-paper);
+  --n-50:  var(--gl-paper-2);
+  --n-100: oklch(93.5% 0.01 260);
+  --n-200: var(--gl-rule);
+  --n-300: var(--gl-rule-2);
+  --n-400: oklch(64% 0.02 280);
+  --n-500: var(--gl-muted);
+  --n-600: var(--gl-ink-2);
+  --n-700: oklch(31% 0.045 292);
+  --n-800: var(--gl-ink);
+  --n-900: oklch(19% 0.04 292);
 
   /* App shell dimensions */
   --sidebar-width:   248px;
@@ -84,18 +128,18 @@
      la barre collee en haut : la, il faut bien la compter. */
   --sticky-top:      0px;
 
-  /* Rayons — quatre valeurs, DERIVEES et non choisies.
-     L'ensemble est concentrique : exterieur − retrait = interieur. Un controle
-     (10) pose a 6px dans une carte (16) est geometriquement juste ; un sm (6)
-     a 4px dans un controle (10) aussi. D'ou 10 et non 11 : la relation devient
-     derivable au lieu d'etre memorisee.
+  /* Rayons — trois valeurs de forme (6 / 10 / 14) plus la pilule, DERIVEES et
+     non choisies. L'ensemble est concentrique : exterieur − retrait = interieur.
+     Un controle (10) pose a 4px dans une carte (14) est geometriquement juste ;
+     un sm (6) a 4px dans un controle (10) aussi. La relation est derivable au
+     lieu d'etre memorisee.
      @theme les re-emet sous --radius-* (donc var(--radius-card) resout) et
      fournit rounded-sm / rounded-control / rounded-card / rounded-pill.
-     --radius-panel (14px) est supprime : un cran intermediaire que rien ne
-     justifiait, et que 4 usages seulement portaient. */
+     --radius-panel (14px) a ete supprime quand la carte valait 16 ; la carte
+     vaut desormais 14 et c'est elle qui porte ce cran. */
   --radius-sm-px:       6px;
   --radius-control-px:  10px;
-  --radius-card-px:     16px;
+  --radius-card-px:     14px;
 
   /* Elevation — deux niveaux, pas plus. Au-dela, une application dense
      paraît molle. Regle d'emploi :
@@ -185,9 +229,12 @@
 
      Trois defauts mesures, corriges ici :
 
-     1. --dc-up #22c55e sur blanc donnait 2,28:1, sous le plancher NON TEXTUEL
-        de 3:1. La couleur « sur-exprime », le datum central du produit, etait
-        sous le seuil en theme clair. #16a34a donne 3,30:1.
+     1. L'ancien up (#22c55e) sur blanc donnait 2,28:1, sous le plancher NON
+        TEXTUEL de 3:1. La couleur « sur-exprime », le datum central du produit,
+        etait sous le seuil en theme clair. up et down sont desormais deux
+        jetons --gl-* dont le test de contraste (contrast.test.ts) tient le
+        plancher dans les deux themes, et dont la clarte differe d'au moins
+        8 points : on les distingue sans la teinte.
 
      2. `ns` #d1d5db sur #131720 donnait 12,17:1 : en theme sombre, les genes
         NON SIGNIFICATIFS etaient l'element le plus contraste du nuage de
@@ -197,67 +244,94 @@
      3. `zero` #f7f7f7, le point median des echelles divergentes, faisait un
         trou blanc dans chaque carte de chaleur sombre. Il vaut desormais la
         surface surelevee, donc il y disparait. */
-  --chart-up:    #16a34a;
-  --chart-down:  #dc2626;
-  --chart-ns:    #c7ccd4;
+  --chart-up:    var(--gl-up);
+  --chart-down:  var(--gl-down);
+  --chart-ns:    var(--gl-ns);
   --chart-zero:  #f7f7f7;
 
   /* Accent en ENCRE, distinct de l'accent en APLAT.
-     --sl-purple (#4f46e5) donne 6,29:1 sur blanc mais seulement 2,85:1 sur la
-     surface sombre #131720 — sous le seuil AA de 4,5:1. C'est exactement le
-     piege deja documente pour l'emerald (voir .gl-teal-text) : une valeur
-     concue pour le theme clair, appliquee telle quelle en sombre, rend le
-     texte accentue plus terne que le texte normal a cote.
-     L'aplat, lui, reste #4f46e5 dans les deux themes : le blanc dessus y tient
-     6,29:1. */
-  --accent-ink: var(--sl-purple);
+     Une valeur concue pour le theme clair, appliquee telle quelle en sombre,
+     rend le texte accentue plus terne que le texte normal a cote (voir
+     .gl-teal-text). La prune a donc deux valeurs : sombre en clair, claire en
+     sombre — et c'est la meme que celle de l'aplat, parce que le texte sur
+     l'aplat (--gl-on-plum) s'inverse avec elle. */
+  --accent-ink: var(--gl-plum);
 
-  /* Semantic — light mode */
-  --background:          var(--n-0);
-  --foreground:          var(--n-800);
-  --text-primary:        var(--n-800);
-  --text-secondary:      var(--n-500);
-  /* Pas --n-400 (#8b93a0) : 3,10:1 sur blanc, 2,84:1 sur --app-bg, sous le
-     seuil AA de 4,5:1 — et ce jeton porte le texte secondaire de 350 endroits.
-     #646d7b tient 5,23:1 sur blanc et 4,54:1 sur la surface la plus sombre
-     (--n-100), tout en restant sous --text-secondary (5,98:1) : la hierarchie
-     survit, elle se lit juste. --n-400 reste la teinte des filets et barres. */
-  --text-muted:          #646d7b;
-  --border:              var(--n-100);
-  --border-subtle:       var(--n-100);
-  --border-strong:       var(--n-200);
-  --surface:             var(--n-0);
-  --surface-secondary:   var(--n-50);
-  --surface-raised:      var(--n-0);
-  --hover-overlay:       var(--n-50);
-  --app-bg:              var(--n-50);
-  --sidebar-bg:          var(--n-0);
-  --sidebar-border:      var(--n-100);
-  --topbar-bg:           var(--n-0);
-  --topbar-border:       var(--n-100);
+  /* Semantic — alias des jetons --gl-* */
+  --background:          var(--gl-paper);
+  --foreground:          var(--gl-ink);
+  --text-primary:        var(--gl-ink);
+  --text-secondary:      var(--gl-ink-2);
+  --text-muted:          var(--gl-muted);
+  --border:              var(--gl-rule);
+  --border-subtle:       var(--gl-rule);
+  --border-strong:       var(--gl-rule-2);
+  --surface:             var(--gl-surface);
+  --surface-secondary:   var(--gl-paper-2);
+  --surface-raised:      var(--gl-surface);
+  --hover-overlay:       var(--gl-paper-2);
+  --app-bg:              var(--gl-paper);
+  --sidebar-bg:          var(--gl-surface);
+  --sidebar-border:      var(--gl-rule);
+  --topbar-bg:           var(--gl-surface);
+  --topbar-border:       var(--gl-rule);
 }
 
-/* ---- Dark mode overrides ---- */
+/* ---- Jetons Lentille — sombre ----
+   Le sombre est un jeu de pas CHOISI, pas une inversion automatique du clair :
+   la prune devient claire (76 % de L) et son texte (--gl-on-plum) devient sombre,
+   up et down gardent 11 points de clarte d'ecart, le non-significatif recule. */
 .dark {
-  --n-0:   #0c1018;
-  --n-25:  #131720;
-  --n-50:  #1a1f2e;
-  --n-100: #222838;
-  --n-200: #2d3550;
+  --gl-paper:        oklch(17% 0.012 285);
+  --gl-paper-2:      oklch(21% 0.014 285);
+  --gl-surface:      oklch(20% 0.013 285);
+  --gl-ink:          oklch(95% 0.01 290);
+  --gl-ink-2:        oklch(84% 0.015 290);
+  --gl-muted:        oklch(72% 0.02 280);
+  --gl-rule:         oklch(30% 0.015 285);
+  --gl-rule-2:       oklch(40% 0.018 285);
+  --gl-lagoon:       oklch(78% 0.08 175);
+  --gl-lagoon-ink:   oklch(80% 0.08 178);
+  --gl-lagoon-soft:  oklch(28% 0.04 178);
+  --gl-slate:        oklch(70% 0.04 225);
+  --gl-plum:         oklch(76% 0.075 290);
+  --gl-plum-hover:   oklch(82% 0.07 290);
+  --gl-plum-soft:    oklch(30% 0.045 290);
+  --gl-on-plum:      oklch(20% 0.04 292);
+  --gl-up:           oklch(75% 0.14 45);
+  --gl-down:         oklch(64% 0.12 245);
+  --gl-ns:           oklch(42% 0.015 285);
+  --gl-focus:        oklch(80% 0.08 178);
+}
 
-  --sl-teal-light:   rgba(15, 157, 107, 0.14);
-  --sl-teal-muted:   rgba(15, 157, 107, 0.22);
-  --sl-purple-light: rgba(79, 70, 229, 0.16);
-  --sl-purple-muted: rgba(79, 70, 229, 0.24);
-  --sl-violet-light: rgba(139, 92, 246, 0.14);
-  --sl-violet-muted: rgba(139, 92, 246, 0.22);
+/* ---- Dark mode overrides — les anciens noms qui ont une valeur sombre propre ----
+   Ceux qui sont de simples alias d'un --gl-* (--n-0, --text-primary,
+   --surface…) suivent le jeton ci-dessus sans rien redeclarer ici. */
+.dark {
+  --n-100: oklch(25% 0.015 285);
+  --n-700: oklch(89% 0.012 290);
+  --n-900: oklch(98% 0.005 290);
+
+  /* Le cran « dark » d'une teinte est son cran FORT : plus sombre en clair,
+     plus clair en sombre. --sl-teal-dark n'avait AUCUNE valeur sombre — le
+     texte qui l'employait y etait plus terne que le texte normal a cote. */
+  --sl-teal-dark:    oklch(86% 0.07 178);
+  --sl-teal-muted:   oklch(34% 0.05 178);
+  --sl-purple-muted: oklch(36% 0.05 290);
+  --sl-violet-dark:  oklch(78% 0.04 225);
+  --sl-violet-light: oklch(26% 0.025 225);
+  --sl-violet-muted: oklch(32% 0.03 225);
   --sl-red-light:    rgba(239, 68, 68, 0.12);
   --sl-red-muted:    rgba(239, 68, 68, 0.18);
+
+  /* Le cran -dark de up/down : 8 points de clarte de moins que la base. */
+  --dc-up-dark:   oklch(67% 0.14 45);
+  --dc-down-dark: oklch(56% 0.12 245);
 
   /* Le sombre est un jeu de pas choisi, pas une inversion automatique du clair. */
   --dd-bar-color: #3987e5;
 
-  /* En sombre une ombre portee sur #131720 est invisible : le relief passe
+  /* En sombre une ombre portee sur le fond est invisible : le relief passe
      par un filet interieur, pas par une ombre.
 
      Ce n'est pas un detail. Tant que --elev-1 valait `none`, toute surface
@@ -280,39 +354,15 @@
   --info-ink-hover:    #7dd3fc;
   --info-soft:         rgba(56, 189, 248, 0.14);
 
-  /* Sur fond sombre les directions peuvent reprendre leurs teintes vives :
-     #22c55e y donne 7,87:1, #ef4444 4,77:1. */
-  --chart-up:    #22c55e;
-  --chart-down:  #ef4444;
-  /* 2,38:1 — volontairement bas : le non-significatif doit reculer. */
-  --chart-ns:    #4a5568;
   /* = --surface-raised : le point median se fond dans le panneau. */
-  --chart-zero:  #1c2438;
+  --chart-zero:  var(--surface-raised);
 
-  /* indigo-400 : 6,01:1 sur #131720. indigo-300 monterait a 8,99:1 mais se
-     delave et ne lit plus comme l'accent de la marque. */
-  --accent-ink: #818cf8;
-
-  --background:          #0c1018;
-  --foreground:          #dde4ee;
-  --text-primary:        #dde4ee;
-  --text-secondary:      #8898ae;
-  /* #5a6a82 ne tenait que 2,81:1 sur --surface-raised. #7d8ca3 : 4,53:1 sur
-     la surface la plus claire du theme, 5,58:1 sur le fond ; --text-secondary
-     reste au-dessus (5,26:1). */
-  --text-muted:          #7d8ca3;
-  --border:              #1f2840;
-  --border-subtle:       #171e30;
-  --border-strong:       #2d3550;
-  --surface:             #131720;
-  --surface-secondary:   #171e2c;
-  --surface-raised:      #1c2438;
-  --hover-overlay:       #1c2438;
-  --app-bg:              #0c1018;
-  --sidebar-bg:          #0a0e16;
-  --sidebar-border:      #181f30;
-  --topbar-bg:           #0a0e16;
-  --topbar-border:       #181f30;
+  /* Les deux seuls fonds qui ont un cran de PLUS que la surface : un menu ou un
+     dialogue doit se detacher de la carte sur laquelle il flotte, et un survol
+     de ligne doit se voir sur --gl-surface. Ce ne sont pas des jetons de la
+     spec : ce sont des derives du meme jeu (teinte 285), un cran plus clair. */
+  --surface-raised:      oklch(23% 0.014 285);
+  --hover-overlay:       oklch(24% 0.015 285);
 }
 
 /* ============================================================
@@ -325,7 +375,22 @@
   --font-display: var(--font-dm-sans);
   --font-mono:    var(--font-geist-mono);
 
-  /* Brand colors — static (same light/dark) */
+  /* Lentille — les jetons --gl-* eux-memes, ecrits comme utilitaires :
+     bg-plum, text-plum, bg-plum-soft, text-on-plum, bg-lagoon-soft,
+     text-lagoon-ink, border-lagoon… Ils suivent le theme (le jeton est
+     redefini dans .dark), donc aucune variante `dark:` n'est necessaire.
+     La prune marque l'action primaire, l'element courant et la selection,
+     rien d'autre ; le lagon marque la marque et la lentille. */
+  --color-plum:               var(--gl-plum);
+  --color-plum-hover:         var(--gl-plum-hover);
+  --color-plum-soft:          var(--gl-plum-soft);
+  --color-on-plum:            var(--gl-on-plum);
+  --color-lagoon:             var(--gl-lagoon);
+  --color-lagoon-ink:         var(--gl-lagoon-ink);
+  --color-lagoon-soft:        var(--gl-lagoon-soft);
+
+  /* Brand colors — ce sont des alias des jetons --gl-* et ils suivent donc le
+     theme (le nom « brand-teal » est historique : la teinte est le lagon). */
   --color-brand-teal:         var(--sl-teal);
   --color-brand-teal-dark:    var(--sl-teal-dark);
   --color-brand-teal-light:   var(--sl-teal-light);
@@ -340,7 +405,7 @@
   --color-brand-red-light:    var(--sl-red-light);
 
   /* Backwards-compat aliases used by older components.
-     primary = indigo CTA, secondary/accent = emerald brand. */
+     primary = prune (action primaire), secondary/accent = lagon (marque). */
   --color-brand-primary:      var(--sl-purple);
   --color-brand-secondary:    var(--sl-teal);
   --color-brand-accent:       var(--sl-teal-dark);
@@ -367,7 +432,11 @@
   --color-primary:            var(--text-primary);
   --color-secondary:          var(--text-secondary);
   --color-muted:              var(--text-muted);
-  --color-on-accent:          #ffffff;
+  /* Texte sur un aplat d'accent. Ce n'est plus du blanc en dur : la prune est
+     SOMBRE en clair et CLAIRE en sombre, donc son texte s'inverse avec elle
+     (--gl-on-plum). Le meme jeton porte aussi le texte des aplats de marque
+     et de danger, qui sont sombres en clair et clairs en sombre. */
+  --color-on-accent:          var(--gl-on-plum);
 
   /* Fonds */
   --color-surface:            var(--surface);
@@ -381,15 +450,15 @@
   --color-subtle:             var(--border-subtle);
   --color-strong:             var(--border-strong);
 
-  /* Accent interactif — indigo, le SEUL. Boutons, liens, etats actifs,
-     anneaux de focus. L'emerald n'est jamais interactif. */
+  /* Accent interactif — prune, le SEUL. Boutons, liens, etats actifs.
+     Le lagon n'est jamais interactif. */
   --color-accent:             var(--sl-purple);
   --color-accent-hover:       var(--sl-purple-dark);
   --color-accent-soft:        var(--sl-purple-light);
   --color-accent-ring:        var(--sl-purple-muted);
   --color-accent-ink:         var(--accent-ink);
 
-  /* Marque emerald — marque et succes uniquement */
+  /* Marque lagon — marque et succes uniquement */
   --color-brand:              var(--sl-teal);
   --color-success:            var(--sl-teal-dark);
   --color-success-soft:       var(--sl-teal-light);
@@ -428,7 +497,7 @@
   --color-info-ink-hover:     var(--info-ink-hover);
   --color-info-soft:          var(--info-soft);
 
-  /* Surfaces IA uniquement — le violet est banni de la chrome */
+  /* Surfaces IA uniquement — l'ardoise est reservee a l'IA et aux jauges */
   --color-ai:                 var(--sl-violet);
   --color-ai-soft:            var(--sl-violet-light);
 
@@ -600,12 +669,12 @@ body {
    Selection & Focus
    ============================================================ */
 ::selection {
-  background: rgba(15, 157, 107, 0.20);
+  background: color-mix(in oklch, var(--gl-lagoon) 35%, transparent);
   color: var(--text-primary);
 }
 
-/* Le focus est un etat interactif : il porte l'accent indigo, pas
-   l'emerald de marque. Cf. la regle « un seul accent interactif ». */
+/* Le focus est un etat interactif : il porte l'accent (prune), pas le lagon
+   de marque. Cf. la regle « un seul accent interactif ». */
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--sl-purple);
@@ -702,8 +771,8 @@ body {
    ne restent que les couleurs et l'epaisseur, pour que les deux themes se
    reglent sans toucher au JavaScript.
 
-   Brin A = la marque (emerald), cote des genes up ; brin B = l'encre, cote des
-   genes down. L'indigo n'y figure pas : il reste reserve a ce qui se clique. */
+   Brin A = la marque (lagon), cote des genes up ; brin B = l'encre, cote des
+   genes down. La prune n'y figure pas : elle reste reservee a ce qui se clique. */
 :root {
   --helix-a:     var(--sl-teal);
   --helix-b:     var(--n-700);
@@ -957,16 +1026,13 @@ body {
   background: var(--sl-red-light);
 }
 
-/* Teal text that stays readable on a dark surface. `--sl-teal-dark` is a light-theme value
-   with no dark counterpart, so applying it directly leaves text dimmer than the plain
-   `--text-primary` beside it — which inverts the emphasis on anything marked as current.
-   Same remedy as `.dark .nav-item.active` above, factored out so components can reuse it. */
+/* Teal text that stays readable on a dark surface. `--sl-teal-dark` USED to be a light-theme
+   value with no dark counterpart, so applying it directly left text dimmer than the plain
+   `--text-primary` beside it — which inverted the emphasis on anything marked as current,
+   and this class needed its own `.dark` override. The token now carries a dark value of its
+   own (see the `.dark` block above), so the override is gone: keep it that way. */
 .gl-teal-text {
   color: var(--sl-teal-dark);
-}
-
-.dark .gl-teal-text {
-  color: #34d39e;
 }
 
 /* ── CosmOmics Nova : une figure sur papier ─────────────────────────────────
@@ -1116,7 +1182,7 @@ body {
 /* Status indicators */
 .status-dot          { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.success  { background: var(--sl-teal-dark); }
-.status-dot.warning  { background: #f59e0b; }
+.status-dot.warning  { background: var(--warning-ink); }
 .status-dot.error    { background: var(--sl-red); }
 .status-dot.pending  { background: var(--n-300); }
 

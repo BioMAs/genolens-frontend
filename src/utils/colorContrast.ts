@@ -84,6 +84,68 @@ export function parseColor(value: string): Rgb {
   );
 }
 
+const OKLCH_ALPHA_RE = new RegExp(`/\\s*(${NUM})(%?)\\s*\\)$`);
+/** Forms every colour library reads: nothing to convert. */
+const LEGACY_RE = /^(?:$|#[0-9a-f]{3,8}$|(?:rgba?|hsla?)\(.*\)$|[a-z]+$)/i;
+
+/**
+ * Any CSS colour -> `rgb()` / `rgba()`, by painting one pixel and reading it back. Needs a 2D
+ * canvas, so it gives `''` under jsdom and on the server, and for a value the browser rejects
+ * (an invalid fillStyle assignment is ignored, which the sentinel makes visible).
+ */
+function paintToRgb(css: string): string {
+  if (typeof document === 'undefined') return '';
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return '';
+    const sentinel = '#010203';
+    ctx.fillStyle = sentinel;
+    ctx.fillStyle = css;
+    if (ctx.fillStyle === sentinel) return '';
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+    return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Number((a / 255).toFixed(3))})`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Resolve a colour token to a literal that libraries without CSS Color 4 support can read.
+ *
+ * Plotly (tinycolor) and cytoscape take colour strings they parse themselves, and neither
+ * understands `oklch()`: handed a token's computed value they paint with their own default
+ * instead (white gridlines on a dark surface). `oklch(...)` becomes `rgb(r, g, b)` (or
+ * `rgba(r, g, b, a)` when it carries an alpha); hex, `rgb()`, `hsl()` and keywords are returned
+ * untouched; any other CSS Color 4 form (`lab()`, `color()`…) is converted by the browser, which
+ * needs a canvas. A colour that cannot be read gives `''`, so the caller falls back to its table.
+ * Colours only: never pass it a font stack.
+ */
+export function toLegacyColor(value: string): string {
+  const input = typeof value === 'string' ? value.trim() : '';
+  if (LEGACY_RE.test(input)) return input;
+  // lab(), lch(), oklab(), color(…) : le pipeline CSS (Lightning CSS) reecrit parfois oklch()
+  // en lab(), et c'est alors ce que getComputedStyle rend. Le navigateur sait le convertir.
+  if (!/^oklch\(/i.test(input)) return paintToRgb(input);
+
+  let rgb: Rgb;
+  try {
+    rgb = parseColor(input);
+  } catch {
+    return '';
+  }
+  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => Math.round(clamp01(c) * 255));
+
+  const alpha = OKLCH_ALPHA_RE.exec(input);
+  if (!alpha) return `rgb(${r}, ${g}, ${b})`;
+  const a = clamp01(parseFloat(alpha[1]) / (alpha[2] ? 100 : 1));
+  return `rgba(${r}, ${g}, ${b}, ${Number(a.toFixed(3))})`;
+}
+
 /** WCAG 2.x relative luminance of a colour string. */
 function relativeLuminance(value: string): number {
   const { r, g, b } = parseColor(value);

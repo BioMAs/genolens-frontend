@@ -1,4 +1,4 @@
-import { contrastRatio, parseColor } from '@/utils/colorContrast';
+import { contrastRatio, parseColor, toLegacyColor } from '@/utils/colorContrast';
 
 it('black on white is 21', () => expect(contrastRatio('#000', '#ffffff')).toBeCloseTo(21, 1));
 it('logo plum on white', () => expect(contrastRatio('#494270', '#fff')).toBeCloseTo(9.15, 1));
@@ -69,5 +69,78 @@ describe('contrastRatio', () => {
 
   it('agrees between hex and oklch spellings of the same colour', () => {
     expect(contrastRatio('oklch(0% 0 0)', '#fff')).toBeCloseTo(contrastRatio('#000', '#fff'), 1);
+  });
+});
+
+describe('toLegacyColor', () => {
+  // Plotly (tinycolor) et cytoscape ne lisent pas oklch() : lui donner la valeur
+  // calculee d'un jeton revenait a peindre ses traits et son texte avec la couleur
+  // par defaut de la bibliotheque (des quadrillages blancs en theme sombre).
+  it('writes oklch as an rgb() literal', () => {
+    expect(toLegacyColor('oklch(100% 0 0)')).toBe('rgb(255, 255, 255)');
+    expect(toLegacyColor('oklch(0% 0 0)')).toBe('rgb(0, 0, 0)');
+    expect(toLegacyColor(' oklch(25% 0.05 292) ')).toMatch(/^rgb\(\d{1,3}, \d{1,3}, \d{1,3}\)$/);
+  });
+
+  it('keeps the alpha channel as rgba()', () => {
+    expect(toLegacyColor('oklch(100% 0 0 / 0.5)')).toBe('rgba(255, 255, 255, 0.5)');
+    expect(toLegacyColor('oklch(100% 0 0 / 25%)')).toBe('rgba(255, 255, 255, 0.25)');
+  });
+
+  it('leaves every other form untouched', () => {
+    for (const v of ['#4f46e5', 'rgb(1, 2, 3)', 'rgba(15, 157, 107, 0.2)', 'red', '']) {
+      expect(toLegacyColor(v)).toBe(v);
+    }
+  });
+
+  it('returns an empty string for an oklch it cannot read, so the caller falls back', () => {
+    expect(toLegacyColor('oklch(0.5 0.1 200)')).toBe('');
+  });
+});
+
+describe('toLegacyColor — the other CSS Color 4 spellings', () => {
+  // Le pipeline CSS de Next (Lightning CSS) peut reecrire oklch() en lab() : c'est ce que
+  // getComputedStyle rend alors pour un jeton. On laisse le navigateur le convertir, en peignant
+  // un pixel. jsdom n'a pas de canvas : on en simule un.
+  function stubCanvas(pixel: number[] | null) {
+    let fill = '#010203';
+    const ctx = {
+      get fillStyle() {
+        return fill;
+      },
+      set fillStyle(v: string) {
+        // Comme un vrai canvas : une valeur illisible laisse l'ancienne en place.
+        if (/^(lab|lch|oklab|color)\(/i.test(v) && !v.includes('bogus')) fill = v;
+        else if (/^#[0-9a-f]{6}$/i.test(v)) fill = v;
+      },
+      clearRect: jest.fn(),
+      fillRect: jest.fn(),
+      getImageData: jest.fn(() => ({ data: Uint8ClampedArray.from(pixel ?? [0, 0, 0, 0]) })),
+    };
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue((pixel ? ctx : null) as never);
+  }
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('reads a lab() through a canvas pixel', () => {
+    stubCanvas([24, 29, 40, 255]);
+    expect(toLegacyColor('lab(18.6621% 1.54962 -5.39682)')).toBe('rgb(24, 29, 40)');
+  });
+
+  it('keeps a partial alpha', () => {
+    stubCanvas([24, 29, 40, 128]);
+    expect(toLegacyColor('lab(18.6621% 1.54962 -5.39682 / 0.5)')).toBe('rgba(24, 29, 40, 0.502)');
+  });
+
+  it('gives an empty string for a colour the browser rejects', () => {
+    stubCanvas([24, 29, 40, 255]);
+    expect(toLegacyColor('lab(bogus)')).toBe('');
+  });
+
+  it('gives an empty string when there is no 2d context (jsdom, SSR)', () => {
+    stubCanvas(null);
+    expect(toLegacyColor('lab(18.6621% 1.54962 -5.39682)')).toBe('');
   });
 });

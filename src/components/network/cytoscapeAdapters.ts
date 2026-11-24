@@ -8,6 +8,7 @@
  */
 
 import type { StylesheetJson } from 'cytoscape';
+import { toLegacyColor } from '@/utils/colorContrast';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import type {
   NetworkEdge,
@@ -180,9 +181,10 @@ export function readGraphTheme(root?: HTMLElement | null): GraphTheme {
   if (typeof window === 'undefined') return FALLBACK_THEME;
   const element = root ?? document.documentElement;
   const style = window.getComputedStyle(element);
-  // .trim() is required: a computed custom property keeps the whitespace after the colon.
+  // `toLegacyColor` trims (a computed custom property keeps the whitespace after the colon) and
+  // turns the tokens' oklch() into rgb(), which cytoscape can parse.
   const read = (name: string, fallback: string) =>
-    style.getPropertyValue(name).trim() || fallback;
+    toLegacyColor(style.getPropertyValue(name)) || fallback;
 
   return {
     // `--dc-up` / `--dc-down` sont les anciens jetons de direction : ils ne
