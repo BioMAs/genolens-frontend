@@ -136,7 +136,9 @@ export function toLegacyColor(value: string): string {
   try {
     rgb = parseColor(input);
   } catch {
-    return '';
+    // `oklch(0.57 0.16 38)`, `38deg`, `none`… : CSS valide, mais pas la forme `oklch(L% C H)` que
+    // parseColor sait lire. Le navigateur, lui, la lit : on ne la perd pas en '' silencieux.
+    return paintToRgb(input);
   }
   const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => Math.round(clamp01(c) * 255));
 

@@ -110,7 +110,7 @@ describe('toLegacyColor — the other CSS Color 4 spellings', () => {
       },
       set fillStyle(v: string) {
         // Comme un vrai canvas : une valeur illisible laisse l'ancienne en place.
-        if (/^(lab|lch|oklab|color)\(/i.test(v) && !v.includes('bogus')) fill = v;
+        if (/^(lab|lch|oklab|oklch|color)\(/i.test(v) && !v.includes('bogus')) fill = v;
         else if (/^#[0-9a-f]{6}$/i.test(v)) fill = v;
       },
       clearRect: jest.fn(),
@@ -132,6 +132,22 @@ describe('toLegacyColor — the other CSS Color 4 spellings', () => {
   it('keeps a partial alpha', () => {
     stubCanvas([24, 29, 40, 128]);
     expect(toLegacyColor('lab(18.6621% 1.54962 -5.39682 / 0.5)')).toBe('rgba(24, 29, 40, 0.502)');
+  });
+
+  it('reads the number form oklch(0.57 0.16 38) through the canvas instead of dropping it', () => {
+    // Une ecriture valide en CSS, que parseColor refuse (il exige `L%`) : elle ne doit pas se perdre en
+    // '' silencieux, le navigateur sait la lire. Les jetons du projet sont en `L%`, un jeton venu d'ailleurs
+    // (extension de theme, valeur calculee par un outil) peut ne pas l'etre.
+    stubCanvas([200, 90, 60, 255]);
+    expect(toLegacyColor('oklch(0.57 0.16 38)')).toBe('rgb(200, 90, 60)');
+    expect(toLegacyColor('oklch(57% 0.16 38deg)')).toBe('rgb(200, 90, 60)');
+  });
+
+  it('still gives an empty string for an unreadable oklch when the canvas cannot read it either', () => {
+    stubCanvas(null);
+    expect(toLegacyColor('oklch(0.57 0.16 38)')).toBe('');
+    stubCanvas([200, 90, 60, 255]);
+    expect(toLegacyColor('oklch(bogus)')).toBe('');
   });
 
   it('gives an empty string for a colour the browser rejects', () => {
