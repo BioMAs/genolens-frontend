@@ -5,12 +5,12 @@
  * the call is replayed. The real `authedFetch` runs here over a faked global
  * `fetch`.
  */
-import { TextDecoder as NodeTextDecoder, TextEncoder as NodeTextEncoder } from 'util';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 
 import { useChartAI } from '@/hooks/useChartAI';
+import { installFakeFetch, refreshed, refusal, sseResponse } from '@/test-utils/fetchDoubles';
 
 jest.mock('@/utils/api', () => ({
   __esModule: true,
@@ -19,48 +19,11 @@ jest.mock('@/utils/api', () => ({
 
 const API = 'http://api.example.test/api/v1';
 
-const initialApiUrl = process.env.NEXT_PUBLIC_API_URL;
-const initialFetch = global.fetch;
-const initialTextDecoder = global.TextDecoder;
-const fetchMock = jest.fn();
+const fetchMock = installFakeFetch(API);
 
-function refusal(status: number, body: string) {
-  return {
-    ok: false,
-    status,
-    body: null,
-    text: () => Promise.resolve(body),
-    json: () => Promise.resolve(JSON.parse(body)),
-    clone() {
-      return this;
-    },
-  } as unknown as Response;
-}
-
-function refreshed(): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({ refreshed: true }),
-  } as unknown as Response;
-}
-
-/** A 200 answer streaming the given events as `data:` lines. */
+/** A 200 answer streaming the given events as `data:` lines, one chunk each. */
 function stream(events: Record<string, unknown>[]): Response {
-  const encoder = new NodeTextEncoder();
-  const chunks = events.map((event) => encoder.encode(`data: ${JSON.stringify(event)}\n`));
-  return {
-    ok: true,
-    status: 200,
-    body: {
-      getReader: () => ({
-        read: () =>
-          Promise.resolve(
-            chunks.length ? { done: false, value: chunks.shift() } : { done: true, value: undefined },
-          ),
-      }),
-    },
-  } as unknown as Response;
+  return sseResponse(events.map((event) => `data: ${JSON.stringify(event)}\n`));
 }
 
 function renderPanel() {
@@ -79,21 +42,6 @@ function renderPanel() {
     { wrapper },
   );
 }
-
-beforeEach(() => {
-  process.env.NEXT_PUBLIC_API_URL = API;
-  fetchMock.mockReset();
-  global.fetch = fetchMock as unknown as typeof fetch;
-  // jsdom has no TextDecoder, which the stream reader needs.
-  global.TextDecoder = NodeTextDecoder as unknown as typeof TextDecoder;
-});
-
-afterEach(() => {
-  global.fetch = initialFetch;
-  global.TextDecoder = initialTextDecoder;
-  if (initialApiUrl === undefined) delete process.env.NEXT_PUBLIC_API_URL;
-  else process.env.NEXT_PUBLIC_API_URL = initialApiUrl;
-});
 
 it('streams the interpretation with cookies and the client header, without a token', async () => {
   fetchMock.mockResolvedValueOnce(stream([{ text: 'Genes ' }, { text: 'up' }, { done: true }]));

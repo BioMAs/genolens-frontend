@@ -11,12 +11,12 @@
  * opens; the hook must read the JSON body and surface the quota message,
  * instead of `Chat request failed: 429 – {raw body}`.
  */
-import { TextDecoder as NodeTextDecoder, TextEncoder as NodeTextEncoder } from 'util';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 
 import { useChatAgent } from '@/hooks/useChatAgent';
+import { installFakeFetch, refreshed, refusal, sseResponse } from '@/test-utils/fetchDoubles';
 
 jest.mock('@/utils/api', () => ({
   __esModule: true,
@@ -26,51 +26,7 @@ jest.mock('@/utils/api', () => ({
 const API = 'http://api.example.test/api/v1';
 const QUOTA_MESSAGE = 'You have used all 20 AI requests of this demo account.';
 
-const initialApiUrl = process.env.NEXT_PUBLIC_API_URL;
-const initialFetch = global.fetch;
-const initialTextDecoder = global.TextDecoder;
-const fetchMock = jest.fn();
-
-/** A refused call: what the hook reads is the status and the body text. */
-function refusal(status: number, body: string) {
-  return {
-    ok: false,
-    status,
-    body: null,
-    text: () => Promise.resolve(body),
-    json: () => Promise.resolve(JSON.parse(body)),
-    clone() {
-      return this;
-    },
-  } as unknown as Response;
-}
-
-/** The answer to `POST /auth/refresh`: all `authPost` reads is `ok`, `status` and `json()`. */
-function refreshed(): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({ refreshed: true }),
-  } as unknown as Response;
-}
-
-/** A 200 answer streaming the given SSE frames, one chunk each. */
-function stream(frames: string[]): Response {
-  const encoder = new NodeTextEncoder();
-  const chunks = frames.map((frame) => encoder.encode(frame));
-  return {
-    ok: true,
-    status: 200,
-    body: {
-      getReader: () => ({
-        read: () =>
-          Promise.resolve(
-            chunks.length ? { done: false, value: chunks.shift() } : { done: true, value: undefined },
-          ),
-      }),
-    },
-  } as unknown as Response;
-}
+const fetchMock = installFakeFetch(API);
 
 function renderChat() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -83,24 +39,9 @@ function renderChat() {
   );
 }
 
-beforeEach(() => {
-  process.env.NEXT_PUBLIC_API_URL = API;
-  fetchMock.mockReset();
-  global.fetch = fetchMock as unknown as typeof fetch;
-  // jsdom has no TextDecoder, which the stream reader needs.
-  global.TextDecoder = NodeTextDecoder as unknown as typeof TextDecoder;
-});
-
-afterEach(() => {
-  global.fetch = initialFetch;
-  global.TextDecoder = initialTextDecoder;
-  if (initialApiUrl === undefined) delete process.env.NEXT_PUBLIC_API_URL;
-  else process.env.NEXT_PUBLIC_API_URL = initialApiUrl;
-});
-
 it('streams with cookies and the client header, without a token', async () => {
   fetchMock.mockResolvedValueOnce(
-    stream(['event: token\ndata: {"text":"Hello"}\n\n', 'event: done\ndata: {}\n\n']),
+    sseResponse(['event: token\ndata: {"text":"Hello"}\n\n', 'event: done\ndata: {}\n\n']),
   );
   const { result } = renderChat();
 
@@ -127,7 +68,7 @@ it('renews an expired session before streaming', async () => {
     .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
     .mockResolvedValueOnce(refreshed())
     .mockResolvedValueOnce(
-      stream(['event: token\ndata: {"text":"Back"}\n\n', 'event: done\ndata: {}\n\n']),
+      sseResponse(['event: token\ndata: {"text":"Back"}\n\n', 'event: done\ndata: {}\n\n']),
     );
   const { result } = renderChat();
 
