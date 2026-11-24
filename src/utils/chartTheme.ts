@@ -182,10 +182,17 @@ export function readChartTheme(root?: HTMLElement | null): ChartTheme {
   if (!el) return FALLBACK[mode];
 
   const computed = getComputedStyle(el);
+  // Les COULEURS sont declarees sur :root / .dark, donc lues sur <html>. La POLICE ne l'est pas :
+  // next/font pose `--font-instrument` sur une classe du <body>, et une propriete personnalisee ne
+  // remonte pas vers son parent. Lue sur <html> elle est toujours vide, et la production retomberait
+  // en silence sur la police de repli. Un `root` autre que <html> est deja dans le <body> : il
+  // herite de la variable, on le lit tel quel.
+  const doc = el.ownerDocument;
+  const fontComputed = el === doc?.documentElement && doc.body ? getComputedStyle(doc.body) : computed;
   // `toLegacyColor` : les jetons sont ecrits en oklch() (et rendus parfois en lab()), que Plotly
   // et cytoscape ne lisent pas. Une pile de polices n'est pas une couleur : on n'y touche pas.
   const read = (key: TokenKey) => {
-    const raw = computed.getPropertyValue(VAR_NAMES[key]);
+    const raw = (key === 'fontFamily' ? fontComputed : computed).getPropertyValue(VAR_NAMES[key]);
     return (key === 'fontFamily' ? raw.trim() : toLegacyColor(raw)) || FALLBACK[mode][key];
   };
 
