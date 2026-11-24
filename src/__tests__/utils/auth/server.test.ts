@@ -29,9 +29,19 @@ function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status });
 }
 
+// The server's only log channel. Silenced for the file, and what each test
+// expects of it is asserted: a signed-out visitor must stay quiet, a failure of
+// the API must not.
+let logged: jest.SpyInstance;
+
 beforeEach(() => {
   cookieJar.clear();
   verify.mockReset();
+  logged = jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  logged.mockRestore();
 });
 
 describe('getSessionUser', () => {
@@ -117,6 +127,7 @@ describe('getServerUser', () => {
     fetchMock.mockResolvedValue(json(401, { detail: 'invalid_token' }));
 
     expect(await getServerUser()).toBeNull();
+    expect(logged).not.toHaveBeenCalled();
   });
 
   it('treats an inactive account as signed out', async () => {
@@ -127,13 +138,70 @@ describe('getServerUser', () => {
     );
 
     expect(await getServerUser()).toBeNull();
+    expect(logged).not.toHaveBeenCalled();
   });
 
-  it('does not take the whole app down when the API is unreachable', async () => {
+  it('hands fetch a time limit, so a black-holed API cannot hold every render', async () => {
     cookieJar.set('gl_at', 'tok');
     verify.mockResolvedValue(CLAIMS);
-    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+    fetchMock.mockResolvedValue(json(401, { detail: 'invalid_token' }));
 
-    expect(await getServerUser()).toBeNull();
+    await getServerUser();
+
+    const { signal } = fetchMock.mock.calls[0][1];
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal.aborted).toBe(false);
+  });
+
+  describe('when the API fails rather than refuses', () => {
+    beforeEach(() => {
+      cookieJar.set('gl_at', 'secret-token-value');
+      verify.mockResolvedValue(CLAIMS);
+    });
+
+    it.each([429, 500, 502, 503])(
+      'is signed out, and logged, on a %i (an outage must not pass for anonymous traffic)',
+      async (status) => {
+        fetchMock.mockResolvedValue(json(status, { detail: 'oops' }));
+
+        expect(await getServerUser()).toBeNull();
+        expect(logged).toHaveBeenCalledTimes(1);
+        expect(String(logged.mock.calls[0][0])).toContain(String(status));
+      },
+    );
+
+    it('is signed out, and logged, when the API is unreachable', async () => {
+      const failure = new TypeError('fetch failed');
+      fetchMock.mockRejectedValue(failure);
+
+      expect(await getServerUser()).toBeNull();
+      expect(logged).toHaveBeenCalledTimes(1);
+      expect(logged.mock.calls[0]).toContain(failure);
+    });
+
+    it('is signed out, and logged, when the time limit expires', async () => {
+      const expired = new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+      fetchMock.mockRejectedValue(expired);
+
+      expect(await getServerUser()).toBeNull();
+      expect(logged).toHaveBeenCalledTimes(1);
+    });
+
+    it('is signed out, and logged, on an answer that is not the profile', async () => {
+      fetchMock.mockResolvedValue(new Response('<html>Bad gateway</html>', { status: 200 }));
+
+      expect(await getServerUser()).toBeNull();
+      expect(logged).toHaveBeenCalledTimes(1);
+    });
+
+    it('never writes the access token to the log', async () => {
+      fetchMock.mockResolvedValue(json(500, { detail: 'oops' }));
+      await getServerUser();
+      fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+      await getServerUser();
+
+      expect(logged).toHaveBeenCalledTimes(2);
+      expect(JSON.stringify(logged.mock.calls)).not.toContain('secret-token-value');
+    });
   });
 });
