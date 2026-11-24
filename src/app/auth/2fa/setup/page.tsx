@@ -9,7 +9,7 @@ import AuthCard from '@/components/auth/AuthCard';
 import RecoveryCodesPanel from '@/components/auth/RecoveryCodesPanel';
 import TotpEnrollment from '@/components/auth/TotpEnrollment';
 import { confirmMfaSetup, startMfaSetup, type MfaSecret } from '@/utils/auth/client';
-import { attemptsLeft, authErrorMessage, invalidCodeMessage } from '@/utils/auth/messages';
+import { authErrorMessage, codeRefusal } from '@/utils/auth/messages';
 import { navigate } from '@/utils/auth/navigation';
 import { loginPath, safeNext } from '@/utils/auth/paths';
 
@@ -111,20 +111,9 @@ function Setup() {
       return;
     }
 
-    if (
-      result.detail === 'challenge_expired' ||
-      (result.detail === 'invalid_code' && attemptsLeft(result.body) === 0)
-    ) {
-      setView({ kind: 'stopped', message: authErrorMessage(401, 'challenge_expired') });
-      setBusy(false);
-      return;
-    }
-
-    setError(
-      result.detail === 'invalid_code'
-        ? invalidCodeMessage(result.body)
-        : authErrorMessage(result.status, result.detail),
-    );
+    const { over, message } = codeRefusal(result);
+    if (over) setView({ kind: 'stopped', message });
+    else setError(message);
     setBusy(false);
   };
 

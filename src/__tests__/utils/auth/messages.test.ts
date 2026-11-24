@@ -1,8 +1,7 @@
 import {
   apiErrorDetail,
-  attemptsLeft,
   authErrorMessage,
-  invalidCodeMessage,
+  codeRefusal,
   passwordProblem,
 } from '@/utils/auth/messages';
 
@@ -97,34 +96,62 @@ describe('apiErrorDetail', () => {
   });
 });
 
-describe('attemptsLeft', () => {
-  it('reads the count an invalid_code answer carries', () => {
-    expect(attemptsLeft({ detail: 'invalid_code', attempts_left: 4 })).toBe(4);
-    expect(attemptsLeft({ attempts_left: 0 })).toBe(0);
+describe('codeRefusal', () => {
+  const refusal = (status: number, detail: string | null, extra: Record<string, unknown> = {}) => ({
+    status,
+    detail,
+    body: { detail, ...extra },
   });
 
-  it.each([
-    ['no body', null],
-    ['a body without the count', { detail: 'invalid_code' }],
-    ['a count that is not a number', { attempts_left: '4' }],
-    ['something that is not an object', 'oops'],
-  ])('is null for %s', (_label, body) => {
-    expect(attemptsLeft(body)).toBeNull();
+  it('ends the step when it has expired', () => {
+    expect(codeRefusal(refusal(401, 'challenge_expired'))).toEqual({
+      over: true,
+      message: 'This sign-in step has expired. Sign in again.',
+    });
   });
-});
 
-describe('invalidCodeMessage', () => {
-  it('counts the attempts left', () => {
-    expect(invalidCodeMessage({ attempts_left: 4 })).toBe('Incorrect code. 4 attempts left.');
-    expect(invalidCodeMessage({ attempts_left: 0 })).toBe('Incorrect code. 0 attempts left.');
+  it('ends the step when the last attempt has been used', () => {
+    expect(codeRefusal(refusal(401, 'invalid_code', { attempts_left: 0 }))).toEqual({
+      over: true,
+      message: 'This sign-in step has expired. Sign in again.',
+    });
+  });
+
+  it('counts the attempts left on a wrong code, and the step goes on', () => {
+    expect(codeRefusal(refusal(401, 'invalid_code', { attempts_left: 2 }))).toEqual({
+      over: false,
+      message: 'Incorrect code. 2 attempts left.',
+    });
   });
 
   it('speaks of a single attempt in the singular', () => {
-    expect(invalidCodeMessage({ attempts_left: 1 })).toBe('Incorrect code. 1 attempt left.');
+    expect(codeRefusal(refusal(401, 'invalid_code', { attempts_left: 1 })).message).toBe(
+      'Incorrect code. 1 attempt left.',
+    );
   });
 
-  it('says only that the code is wrong when the API gives no count', () => {
-    expect(invalidCodeMessage(null)).toBe('Incorrect code.');
-    expect(invalidCodeMessage({ detail: 'invalid_code' })).toBe('Incorrect code.');
+  it.each([
+    ['no count', { detail: 'invalid_code' }],
+    ['a count that is not a number', { detail: 'invalid_code', attempts_left: '2' }],
+    ['no body', null],
+  ])('says only that the code is wrong when the API gives %s', (_label, body) => {
+    expect(codeRefusal({ status: 401, detail: 'invalid_code', body })).toEqual({
+      over: false,
+      message: 'Incorrect code.',
+    });
+  });
+
+  it('keeps the step going on a lock-out, with its own words', () => {
+    expect(codeRefusal(refusal(429, 'too_many_attempts'))).toEqual({
+      over: false,
+      message: 'Too many attempts. Wait 15 minutes, or reset your password.',
+    });
+  });
+
+  it('keeps the step going when the API cannot be reached', () => {
+    expect(codeRefusal({ status: 0, detail: null, body: null })).toEqual({
+      over: false,
+      message: 'Cannot reach GenoLens. Check your connection and try again.',
+    });
   });
 });

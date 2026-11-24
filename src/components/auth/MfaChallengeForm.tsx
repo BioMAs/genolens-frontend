@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 import AuthField from '@/components/auth/AuthField';
 import { verifyMfa } from '@/utils/auth/client';
-import { attemptsLeft, authErrorMessage, invalidCodeMessage } from '@/utils/auth/messages';
+import { codeRefusal } from '@/utils/auth/messages';
 
 interface MfaChallengeFormProps {
   /** The code was accepted and the API has set the session cookies. */
@@ -43,17 +43,13 @@ export default function MfaChallengeForm({ onDone, onRestart }: MfaChallengeForm
       return;
     }
 
-    const left = attemptsLeft(result.body);
-    if (result.detail === 'challenge_expired' || (result.detail === 'invalid_code' && left === 0)) {
-      onRestart(authErrorMessage(401, 'challenge_expired'));
+    const { over, message } = codeRefusal(result);
+    if (over) {
+      onRestart(message);
       return;
     }
 
-    setError(
-      result.detail === 'invalid_code'
-        ? invalidCodeMessage(result.body)
-        : authErrorMessage(result.status, result.detail),
-    );
+    setError(message);
     setValue('');
     setLoading(false);
   };

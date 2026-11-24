@@ -35,19 +35,43 @@ export function authErrorMessage(status: number, detail: string | null): string 
 }
 
 /** The `attempts_left` an `invalid_code` answer carries (its parsed body), when it carries one. */
-export function attemptsLeft(body: unknown): number | null {
+function attemptsLeft(body: unknown): number | null {
   const value = (body as { attempts_left?: unknown } | null)?.attempts_left;
   return typeof value === 'number' ? value : null;
 }
 
-/**
- * "Incorrect code. 4 attempts left." The count comes from the API's
- * `attempts_left`; without one, only the first sentence.
- */
-export function invalidCodeMessage(body: unknown): string {
+/** "Incorrect code. 4 attempts left." Without a count from the API, only the first sentence. */
+function invalidCodeMessage(body: unknown): string {
   const left = attemptsLeft(body);
   const message = BY_DETAIL.invalid_code;
   return left === null ? message : `${message} ${left} ${left === 1 ? 'attempt' : 'attempts'} left.`;
+}
+
+/** What a refused auth call carries: the fields of the `ok: false` side of `AuthResult`. */
+interface Refusal {
+  status: number;
+  detail: string | null;
+  body: unknown;
+}
+
+/**
+ * What a refused second-factor code (sign-in or enrolment) means for the step.
+ *
+ * `over`: the step cannot go on, only a new sign-in will do. It has expired
+ * (`challenge_expired`), or this wrong code used the last attempt (the API
+ * answers `attempts_left: 0` and drops the step). Otherwise the visitor stays
+ * where they are and tries again; `message` is what to tell them either way.
+ * One rule, so the two screens that ask for a code cannot disagree on it.
+ */
+export function codeRefusal(refusal: Refusal): { over: boolean; message: string } {
+  const { status, detail, body } = refusal;
+  if (detail === 'challenge_expired' || (detail === 'invalid_code' && attemptsLeft(body) === 0)) {
+    return { over: true, message: authErrorMessage(401, 'challenge_expired') };
+  }
+  return {
+    over: false,
+    message: detail === 'invalid_code' ? invalidCodeMessage(body) : authErrorMessage(status, detail),
+  };
 }
 
 /**
