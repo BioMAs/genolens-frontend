@@ -18,7 +18,7 @@
    ne sont plus que des alias :
      --sl-purple*  -> prune  (action primaire, element courant)
      --sl-teal*    -> lagon  (marque, succes)
-     --sl-violet*  -> ardoise (IA, jauges)
+     --sl-violet*  -> ardoise (IA ; l'encre suit --gl-slate-ink)
    Regles d'usage : la prune marque l'action primaire, l'element
    courant et la selection, rien d'autre ; up et down different aussi
    en clarte, jamais rouge contre vert.
@@ -37,7 +37,8 @@
   --gl-lagoon:       oklch(73% 0.083 179);    /* marque, lentille */
   --gl-lagoon-ink:   oklch(46% 0.08 180);     /* lagon lisible en texte */
   --gl-lagoon-soft:  oklch(95% 0.025 175);    /* fond lagon */
-  --gl-slate:        oklch(57.3% 0.048 223);  /* ardoise : IA, jauges */
+  --gl-slate:        oklch(57.3% 0.048 223);  /* ardoise : aplats, jauges, reperes (3:1) */
+  --gl-slate-ink:    oklch(50% 0.05 225);     /* ardoise lisible en TEXTE (4,5:1) */
   --gl-plum:         oklch(40.7% 0.076 290);  /* action primaire, onglet courant */
   --gl-plum-hover:   oklch(33% 0.08 290);
   --gl-plum-soft:    oklch(94% 0.02 290);     /* fond de selection */
@@ -60,8 +61,11 @@
   --sl-purple-dark:   var(--gl-plum-hover);
   --sl-purple-light:  var(--gl-plum-soft);
   --sl-purple-muted:  oklch(88% 0.03 290);
-  /* IA / jauges (ardoise) */
-  --sl-violet:        var(--gl-slate);
+  /* IA (ardoise). Tout ce qui emploie ce nom le porte en ENCRE (texte et icone d'IA,
+     pastille, libelle « Loading… », tuile de module) : il suit donc --gl-slate-ink, qui
+     tient 4,5:1 ; --gl-slate (57,3 % de L, 4,34:1 sur blanc) reste pour les aplats, les
+     jauges et les reperes, ou 3:1 suffit, et s'ecrit alors tel quel. */
+  --sl-violet:        var(--gl-slate-ink);
   --sl-violet-dark:   oklch(42% 0.05 225);
   --sl-violet-light:  oklch(96% 0.01 225);
   --sl-violet-muted:  oklch(90% 0.02 225);
@@ -294,6 +298,7 @@
   --gl-lagoon-ink:   oklch(80% 0.08 178);
   --gl-lagoon-soft:  oklch(28% 0.04 178);
   --gl-slate:        oklch(70% 0.04 225);
+  --gl-slate-ink:    oklch(76% 0.04 225);
   --gl-plum:         oklch(76% 0.075 290);
   --gl-plum-hover:   oklch(82% 0.07 290);
   --gl-plum-soft:    oklch(30% 0.045 290);
@@ -497,8 +502,11 @@
   --color-info-ink-hover:     var(--info-ink-hover);
   --color-info-soft:          var(--info-soft);
 
-  /* Surfaces IA uniquement — l'ardoise est reservee a l'IA et aux jauges */
-  --color-ai:                 var(--sl-violet);
+  /* Surfaces IA uniquement — l'ardoise est reservee a l'IA et aux jauges.
+     --color-ai n'est employe que comme ENCRE (`text-ai`) et teinte de bordure
+     (`border-ai/25`) : il prend donc l'ardoise lisible. Un aplat d'ardoise s'ecrit
+     avec --gl-slate directement. */
+  --color-ai:                 var(--gl-slate-ink);
   --color-ai-soft:            var(--sl-violet-light);
 
   /* Rayons — quatre, concentriques (cf. :root) */
@@ -673,11 +681,14 @@ body {
   color: var(--text-primary);
 }
 
-/* Le focus est un etat interactif : il porte l'accent (prune), pas le lagon
-   de marque. Cf. la regle « un seul accent interactif ». */
+/* Le focus est un etat, pas un mouvement : l'anneau apparait sans transition.
+   Il a son propre jeton (--gl-focus, lagon fonce en clair, lagon clair en sombre,
+   >= 3:1 sur la surface dans les deux themes) : ce n'est ni la prune, qui marque
+   l'action primaire et la selection, ni --gl-lagoon, trop pale en clair. Largeur et
+   retrait inchanges : 2px de fond, puis 2px de couleur. */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--sl-purple);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--gl-focus);
   border-radius: var(--radius-sm-px);
 }
 

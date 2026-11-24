@@ -85,7 +85,7 @@ const MODES = ['light', 'dark'] as const;
 const GL_TOKENS = [
   '--gl-paper', '--gl-paper-2', '--gl-surface',
   '--gl-ink', '--gl-ink-2', '--gl-muted', '--gl-rule', '--gl-rule-2',
-  '--gl-lagoon', '--gl-lagoon-ink', '--gl-lagoon-soft', '--gl-slate',
+  '--gl-lagoon', '--gl-lagoon-ink', '--gl-lagoon-soft', '--gl-slate', '--gl-slate-ink',
   '--gl-plum', '--gl-plum-hover', '--gl-plum-soft', '--gl-on-plum',
   '--gl-up', '--gl-down', '--gl-ns', '--gl-focus',
 ];
@@ -99,6 +99,9 @@ const PAIRS: Array<[string, string, number]> = [
   ['--gl-on-plum', '--gl-plum', 4.5],
   ['--gl-plum', '--gl-surface', 4.5],
   ['--gl-lagoon-ink', '--gl-surface', 4.5],
+  // L'ardoise en TEXTE : --gl-slate sert aux aplats et aux jauges (3:1 suffit), --gl-slate-ink au texte.
+  ['--gl-slate-ink', '--gl-paper', 4.5],
+  ['--gl-slate-ink', '--gl-surface', 4.5],
   ['--gl-up', '--gl-surface', 3],
   ['--gl-down', '--gl-surface', 3],
   ['--gl-focus', '--gl-surface', 3],
@@ -110,7 +113,7 @@ const lightness = (value: string): number => parseFloat(/^oklch\(\s*([\d.]+)%/i.
 describe.each(MODES)('jetons Lentille — mode %s', (mode) => {
   const tokens = modeTokens(mode);
 
-  it('declare les vingt jetons --gl-*, tous lisibles par parseColor', () => {
+  it('declare les vingt et un jetons --gl-*, tous lisibles par parseColor', () => {
     for (const name of GL_TOKENS) {
       expect(tokens[name]).toBeDefined();
       expect(() => parseColor(tokens[name])).not.toThrow();
@@ -162,6 +165,26 @@ describe('anciens noms — alias des jetons Lentille', () => {
       const tokens = modeTokens(mode);
       expect(contrastRatio(tokens['--sl-teal-dark'], tokens['--surface'])).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("les alias d'ardoise employes comme TEXTE suivent --gl-slate-ink, pas l'aplat --gl-slate", () => {
+    for (const mode of MODES) {
+      const tokens = modeTokens(mode);
+      expect(tokens['--sl-violet']).toBe(tokens['--gl-slate-ink']);
+      // Le texte IA sur sa surface douce (badge, pastille) tient le plancher texte.
+      expect(contrastRatio(tokens['--sl-violet'], tokens['--sl-violet-light'])).toBeGreaterThanOrEqual(4.5);
+    }
+    // `text-ai` / `border-ai` : l'utilitaire @theme n'est employe que comme encre.
+    expect(stripComments(CSS)).toMatch(/--color-ai:\s*var\(--gl-slate-ink\)\s*;/);
+  });
+
+  it("l'anneau de focus utilise --gl-focus (et non plus l'accent)", () => {
+    const rule = /(?:^|\n):focus-visible\s*\{([^}]*)\}/.exec(stripComments(CSS));
+    expect(rule).not.toBeNull();
+    expect(rule![1]).toContain('var(--gl-focus)');
+    expect(rule![1]).not.toContain('--sl-purple');
+    // Etat, pas mouvement : il apparait sans transition.
+    expect(rule![1]).not.toMatch(/transition/);
   });
 
   it('declare les deux jetons jusque-la jamais declares', () => {
