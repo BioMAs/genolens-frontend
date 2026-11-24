@@ -4,19 +4,13 @@ import { useState } from 'react';
 import { AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 import AuthField from '@/components/auth/AuthField';
 import { verifyMfa } from '@/utils/auth/client';
-import { authErrorMessage } from '@/utils/auth/messages';
+import { attemptsLeft, authErrorMessage, invalidCodeMessage } from '@/utils/auth/messages';
 
 interface MfaChallengeFormProps {
   /** The code was accepted and the API has set the session cookies. */
   onDone(): void;
   /** The sign-in cannot go on from here (step expired, attempts used up): start again. */
   onRestart(message: string): void;
-}
-
-/** The `attempts_left` an `invalid_code` answer carries, when it carries one. */
-function attemptsLeft(body: unknown): number | null {
-  const value = (body as { attempts_left?: unknown } | null)?.attempts_left;
-  return typeof value === 'number' ? value : null;
 }
 
 /**
@@ -55,11 +49,10 @@ export default function MfaChallengeForm({ onDone, onRestart }: MfaChallengeForm
       return;
     }
 
-    const message = authErrorMessage(result.status, result.detail);
     setError(
-      result.detail === 'invalid_code' && left !== null
-        ? `${message} ${left} ${left === 1 ? 'attempt' : 'attempts'} left.`
-        : message,
+      result.detail === 'invalid_code'
+        ? invalidCodeMessage(result.body)
+        : authErrorMessage(result.status, result.detail),
     );
     setValue('');
     setLoading(false);

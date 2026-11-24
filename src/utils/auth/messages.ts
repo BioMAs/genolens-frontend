@@ -34,6 +34,22 @@ export function authErrorMessage(status: number, detail: string | null): string 
   return 'Something went wrong. Try again.';
 }
 
+/** The `attempts_left` an `invalid_code` answer carries (its parsed body), when it carries one. */
+export function attemptsLeft(body: unknown): number | null {
+  const value = (body as { attempts_left?: unknown } | null)?.attempts_left;
+  return typeof value === 'number' ? value : null;
+}
+
+/**
+ * "Incorrect code. 4 attempts left." The count comes from the API's
+ * `attempts_left`; without one, only the first sentence.
+ */
+export function invalidCodeMessage(body: unknown): string {
+  const left = attemptsLeft(body);
+  const message = BY_DETAIL.invalid_code;
+  return left === null ? message : `${message} ${left} ${left === 1 ? 'attempt' : 'attempts'} left.`;
+}
+
 /**
  * Length rule for a new password, checked before the call so the visitor is not
  * sent to the network for nothing. Length only: the server also refuses common

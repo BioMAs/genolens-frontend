@@ -1,4 +1,10 @@
-import { apiErrorDetail, authErrorMessage, passwordProblem } from '@/utils/auth/messages';
+import {
+  apiErrorDetail,
+  attemptsLeft,
+  authErrorMessage,
+  invalidCodeMessage,
+  passwordProblem,
+} from '@/utils/auth/messages';
 
 describe('authErrorMessage', () => {
   it.each([
@@ -88,5 +94,37 @@ describe('apiErrorDetail', () => {
     ['a string', 'boom'],
   ])('returns null for %s', (_label, err) => {
     expect(apiErrorDetail(err)).toBeNull();
+  });
+});
+
+describe('attemptsLeft', () => {
+  it('reads the count an invalid_code answer carries', () => {
+    expect(attemptsLeft({ detail: 'invalid_code', attempts_left: 4 })).toBe(4);
+    expect(attemptsLeft({ attempts_left: 0 })).toBe(0);
+  });
+
+  it.each([
+    ['no body', null],
+    ['a body without the count', { detail: 'invalid_code' }],
+    ['a count that is not a number', { attempts_left: '4' }],
+    ['something that is not an object', 'oops'],
+  ])('is null for %s', (_label, body) => {
+    expect(attemptsLeft(body)).toBeNull();
+  });
+});
+
+describe('invalidCodeMessage', () => {
+  it('counts the attempts left', () => {
+    expect(invalidCodeMessage({ attempts_left: 4 })).toBe('Incorrect code. 4 attempts left.');
+    expect(invalidCodeMessage({ attempts_left: 0 })).toBe('Incorrect code. 0 attempts left.');
+  });
+
+  it('speaks of a single attempt in the singular', () => {
+    expect(invalidCodeMessage({ attempts_left: 1 })).toBe('Incorrect code. 1 attempt left.');
+  });
+
+  it('says only that the code is wrong when the API gives no count', () => {
+    expect(invalidCodeMessage(null)).toBe('Incorrect code.');
+    expect(invalidCodeMessage({ detail: 'invalid_code' })).toBe('Incorrect code.');
   });
 });
