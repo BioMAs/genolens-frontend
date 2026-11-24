@@ -12,7 +12,10 @@ import { refusalMessage } from './refusal';
 
 /**
  * New recovery codes, on proof of a code from the authenticator app. The codes
- * live in this component's state only, and are dropped once acknowledged.
+ * are held in this component's state, and dropped once acknowledged. The
+ * mutation that fetched them is reset as soon as it has settled, so its
+ * observer no longer holds the codes (or the code typed) either; the hook's
+ * `gcTime: 0` then drops it from the mutation cache.
  */
 export default function RecoveryCodesBlock() {
   const [code, setCode] = useState('');
@@ -29,14 +32,12 @@ export default function RecoveryCodesBlock() {
       setCodes(result.recovery_codes);
     } catch (err) {
       setError(refusalMessage(err));
+    } finally {
+      regenerate.reset();
     }
   };
 
-  const handleDone = () => {
-    setCodes(null);
-    // The mutation keeps its last answer around: the codes must not outlive the panel.
-    regenerate.reset();
-  };
+  const handleDone = () => setCodes(null);
 
   return (
     <SecurityBlock

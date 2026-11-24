@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import AuthAlert from '@/components/auth/AuthAlert';
 import AuthField from '@/components/auth/AuthField';
-import { MIN_PASSWORD_LENGTH, passwordProblem } from '@/utils/auth/messages';
+import { MIN_PASSWORD_LENGTH, PASSWORDS_DIFFER, passwordProblem } from '@/utils/auth/messages';
 
 interface NewPasswordFormProps {
   submitLabel: string;
@@ -37,7 +37,7 @@ export default function NewPasswordForm({ submitLabel, onSubmit }: NewPasswordFo
       return;
     }
     if (password !== confirm) {
-      setError('Both passwords must match.');
+      setError(PASSWORDS_DIFFER);
       return;
     }
 

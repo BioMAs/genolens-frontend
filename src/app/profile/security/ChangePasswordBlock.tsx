@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import AuthAlert from '@/components/auth/AuthAlert';
 import AuthField from '@/components/auth/AuthField';
 import { useChangePassword } from '@/hooks/useAccountSecurity';
-import { MIN_PASSWORD_LENGTH, passwordProblem } from '@/utils/auth/messages';
+import { MIN_PASSWORD_LENGTH, PASSWORDS_DIFFER, passwordProblem } from '@/utils/auth/messages';
 import SecurityBlock from './SecurityBlock';
 import { refusalMessage } from './refusal';
 
@@ -34,7 +34,7 @@ export default function ChangePasswordBlock() {
       return;
     }
     if (next !== confirm) {
-      setFeedback({ tone: 'error', text: 'Both passwords must match.' });
+      setFeedback({ tone: 'error', text: PASSWORDS_DIFFER });
       return;
     }
 
@@ -49,6 +49,9 @@ export default function ChangePasswordBlock() {
       });
     } catch (err) {
       setFeedback({ tone: 'error', text: refusalMessage(err) });
+    } finally {
+      // The mutation holds both passwords (`variables`) until its observer is reset.
+      change.reset();
     }
   };
 

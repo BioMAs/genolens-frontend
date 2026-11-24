@@ -540,3 +540,74 @@ describe('sessions', () => {
     expect(await sessions.findByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
   });
 });
+
+/**
+ * A mutation keeps what it sent (`variables`: passwords, codes) and what it was
+ * answered (`data`: the new TOTP secret, recovery codes) in the client's mutation
+ * cache for `gcTime`, and on its observer until it is reset. None of it may
+ * outlive the call: the cache is read once the garbage-collection tick has run,
+ * which is why each check waits.
+ */
+describe('secrets', () => {
+  const heldByMutations = () =>
+    JSON.stringify(
+      client
+        .getMutationCache()
+        .getAll()
+        .map((mutation) => ({ variables: mutation.state.variables, data: mutation.state.data })),
+    );
+
+  const expectNoneHeld = (...secrets: string[]) =>
+    waitFor(() => {
+      const held = heldByMutations();
+      for (const secret of secrets) expect(held).not.toContain(secret);
+    });
+
+  it('drops both passwords once the password is changed', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: null, status: 204 });
+
+    await changePassword('current-password-1', 'a-long-new-password');
+    await screen.findByText('Password changed. Your other sessions were signed out.');
+
+    await expectNoneHeld('current-password-1', 'a-long-new-password');
+  });
+
+  it('drops them when the change was refused too', async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(400, 'invalid_password'));
+
+    await changePassword('wrong-current-pw', 'a-long-new-password');
+    await screen.findByRole('alert');
+
+    await expectNoneHeld('wrong-current-pw', 'a-long-new-password');
+  });
+
+  it('drops the code and the new recovery codes once they are on screen', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { recovery_codes: TEN_CODES } });
+
+    await regenerate('123456');
+    await screen.findByTestId('recovery-codes');
+
+    await expectNoneHeld('123456', ...TEN_CODES);
+  });
+
+  it('drops the password, the code and the new key once the key is on screen', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: SECRET });
+
+    await startRotation('my-password-123', '123456');
+    await screen.findByTestId('totp-secret');
+
+    await expectNoneHeld('my-password-123', '123456', SECRET.secret, SECRET.otpauth_uri);
+  });
+
+  it('drops the confirmation code and the new recovery codes at the end of a change of phone', async () => {
+    mockedApi.post
+      .mockResolvedValueOnce({ data: SECRET })
+      .mockResolvedValueOnce({ data: { recovery_codes: TEN_CODES } });
+
+    await startRotation('my-password-123', '123456');
+    await submitCode('654321');
+    await screen.findByTestId('recovery-codes');
+
+    await expectNoneHeld('my-password-123', SECRET.secret, '654321', ...TEN_CODES);
+  });
+});

@@ -17,6 +17,16 @@ import type { MfaSecret } from '@/utils/auth/client';
 
 const SESSIONS_KEY = ['authSessions'] as const;
 
+/**
+ * Four of these mutations carry a secret: a password or code in their variables,
+ * a TOTP secret or recovery codes in their answer. A mutation keeps both in the
+ * client's mutation cache for `gcTime` (5 minutes by default), and on its
+ * observer until `reset()`. They are given `gcTime: 0`, so once nothing observes
+ * them any more they are dropped on the next tick; whoever calls them resets
+ * the observer as soon as the call has settled.
+ */
+const NO_SECRET_KEPT = { gcTime: 0 } as const;
+
 /** The account's open sessions, the current one flagged. */
 export function useAuthSessions() {
   return useQuery({
@@ -53,6 +63,7 @@ export function useRevokeOtherSessions() {
 export function useChangePassword() {
   const queryClient = useQueryClient();
   return useMutation({
+    ...NO_SECRET_KEPT,
     mutationFn: async (input: { current_password: string; new_password: string }) => {
       await api.post('/auth/password/change', input);
     },
@@ -64,6 +75,7 @@ export function useChangePassword() {
 export function useStartMfaRotation() {
   const queryClient = useQueryClient();
   return useMutation({
+    ...NO_SECRET_KEPT,
     mutationFn: async (input: { password: string; code: string }) =>
       (await api.post<MfaSecret>('/auth/mfa/rotate/start', input)).data,
     onSuccess: () => invalidateUserProfile(queryClient),
@@ -77,6 +89,7 @@ export function useStartMfaRotation() {
 export function useConfirmMfaRotation() {
   const queryClient = useQueryClient();
   return useMutation({
+    ...NO_SECRET_KEPT,
     mutationFn: async (code: string) =>
       (await api.post<{ recovery_codes: string[] }>('/auth/mfa/rotate/confirm', { code })).data,
     onSuccess: () => invalidateUserProfile(queryClient),
@@ -87,6 +100,7 @@ export function useConfirmMfaRotation() {
 export function useRegenerateRecoveryCodes() {
   const queryClient = useQueryClient();
   return useMutation({
+    ...NO_SECRET_KEPT,
     mutationFn: async (code: string) =>
       (await api.post<{ recovery_codes: string[] }>('/auth/mfa/recovery-codes/regenerate', { code }))
         .data,

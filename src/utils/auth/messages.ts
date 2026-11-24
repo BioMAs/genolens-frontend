@@ -22,6 +22,9 @@ const BY_DETAIL: Record<string, string> = {
   'password_policy:same_as_email': 'Your password must not be your email address.',
 };
 
+/** What the visitor reads when the two copies of a new password differ. */
+export const PASSWORDS_DIFFER = 'Both passwords must match.';
+
 /**
  * What the visitor reads once a new confirmation link was requested. One
  * sentence for every address: the API accepts them all and says nothing about

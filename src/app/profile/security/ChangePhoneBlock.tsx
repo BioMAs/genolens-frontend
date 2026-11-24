@@ -45,6 +45,9 @@ function StartForm({
       onStarted(await start.mutateAsync({ password, code }));
     } catch (err) {
       setError(refusalMessage(err));
+    } finally {
+      // Password, code and the new secret sit on the mutation until its observer is reset.
+      start.reset();
     }
   };
 
@@ -109,6 +112,9 @@ export default function ChangePhoneBlock() {
       }
       const error = refusalMessage(err);
       setStep((current) => (current.name === 'enroll' ? { ...current, error } : current));
+    } finally {
+      // The recovery codes (or the code typed) sit on the mutation until its observer is reset.
+      confirm.reset();
     }
   };
 
@@ -146,11 +152,7 @@ export default function ChangePhoneBlock() {
           <RecoveryCodesPanel
             codes={step.codes}
             doneLabel="Done"
-            onDone={() => {
-              setStep(FRESH_START);
-              // The mutation keeps its last answer around: the codes must not outlive the panel.
-              confirm.reset();
-            }}
+            onDone={() => setStep(FRESH_START)}
           />
         )}
       </div>
