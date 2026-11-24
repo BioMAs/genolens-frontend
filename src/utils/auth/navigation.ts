@@ -9,3 +9,11 @@
 export function navigate(url: string): void {
   window.location.assign(url);
 }
+
+/**
+ * Same, replacing the current history entry. For a hop the visitor never chose
+ * (the silent renewal): going back must not land on it again.
+ */
+export function replaceLocation(url: string): void {
+  window.location.replace(url);
+}
