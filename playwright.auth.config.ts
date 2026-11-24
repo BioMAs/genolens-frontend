@@ -7,10 +7,14 @@ import * as dotenv from 'dotenv';
  *
  *   npx playwright test -c playwright.auth.config.ts
  *
- * It needs a local backend, Mailpit and the dev server; the prerequisites are
- * written at the top of e2e-local/auth.pw.ts. It creates real accounts, so it
- * only ever talks to a local host: the config refuses anything else. It is not
- * part of CI.
+ * It needs a local backend and Mailpit; the prerequisites are written at the top
+ * of e2e-local/auth.pw.ts. It creates real accounts, so it must only ever reach
+ * local hosts, and three things see to it: this config refuses a test-side URL
+ * (base, API, Mailpit) that is not local; the dev server is always started here,
+ * with the variables below, never reused (a server already running could have been
+ * configured, through its .env.local, for another API: so if :3000 is taken the
+ * run fails at once, stop that server first); and auth.pw.ts aborts any request
+ * of the browser to a non-local API. It is not part of CI.
  *
  * Only `E2E_*` and `MAILPIT_URL` are read from `.env.test.local` (the other
  * suites keep their own variables there, such as a base URL pointing at a
@@ -69,7 +73,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: BASE_URL,
-    reuseExistingServer: true,
+    // Never reuse: a server started elsewhere keeps its own .env.local, while the env below
+    // (which wins over .env files) is what points this one at the local API.
+    reuseExistingServer: false,
     timeout: 180_000,
     env: {
       NEXT_PUBLIC_API_URL: API_URL,

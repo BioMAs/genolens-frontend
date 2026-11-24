@@ -27,7 +27,7 @@ import { freshCode } from './support/totp';
  *        -e MP_SMTP_AUTH_ACCEPT_ANY=1 -e MP_SMTP_AUTH_ALLOW_INSECURE=1 axllent/mailpit
  *    When a port is taken, publish other ones (for example `-p 11025:1025 -p 18025:8025`)
  *    and tell the suite where its API is with `MAILPIT_URL=http://localhost:18025`.
- * 2. The backend (branch feat/local-auth), migrated (`alembic upgrade head`) and started
+ * 2. The backend with the local sign-in, migrated (`alembic upgrade head`) and started
  *    (`uvicorn app.main:app --port 8001`) with, besides its database and Redis:
  *      AUTH_MODE=local  AUTH_LOCAL_ENABLED=true  ENVIRONMENT=development
  *      AUTH_COOKIE_SECURE=false  AUTH_COOKIE_DOMAIN=            (empty: cookies of `localhost`)
@@ -36,9 +36,15 @@ import { freshCode } from './support/totp';
  *      SMTP_HOST=<where Mailpit's SMTP port is: host.docker.internal from a container, localhost otherwise>
  *      SMTP_PORT=1025 (or the published one)  SMTP_TLS=false  SMTP_STARTTLS=false
  *      SMTP_USER=<any>  SMTP_PASSWORD=<any>  EMAIL_FROM_ADDRESS=noreply@example.test
- *    Empty signing and encryption keys are fine in development (they are ephemeral).
- * 3. The dev server, which Playwright starts when nothing listens on :3000, with the
- *    variables set in playwright.auth.config.ts (the API at http://localhost:8001/api/v1).
+ *    Empty signing and encryption keys are fine for a single run (they are ephemeral); see
+ *    "Rate limits" for when fixed ones are needed.
+ * 3. Nothing listening on :3000. Playwright starts the dev server itself (`npm run dev`)
+ *    with AUTH_JWKS_URL, AUTH_ISSUER, NEXT_PUBLIC_API_URL and NEXT_PUBLIC_ADMIN_APP_URL set
+ *    in playwright.auth.config.ts, which win over any .env.local, and it never reuses a
+ *    server already running: if :3000 is taken the run fails at once, so stop your own dev
+ *    server first. Every request the browser makes to a non-local API (a path under
+ *    `/api/v1/` on another host) is aborted and fails the test, so a misconfigured
+ *    environment cannot create accounts anywhere else.
  *
  * Optional: the invitation needs a local SCILICIUM_ADMIN. Sign up and enrol an account,
  * promote it by hand in the throwaway database
@@ -54,9 +60,10 @@ import { freshCode } from './support/totp';
  * "forgot" and "resend" 5/h each, 3 link e-mails/h per address. One run makes 9 sign-in
  * calls (8 without the invitation) against a budget of 10 a minute, and 2 sign-ups: do not
  * sign in by hand meanwhile. A run right after another, or a third within the hour, can
- * answer `too_many_attempts`: restart uvicorn to reset the counters. Do it with fixed
- * AUTH_JWT_PRIVATE_KEYS and AUTH_ENCRYPTION_KEYS (`python -m app.auth.cli generate-keys`):
- * ephemeral keys die with the process, and the second factor of the admin account with them.
+ * answer `too_many_attempts`: restart uvicorn to reset the counters. Across such a restart
+ * the keys must be fixed (AUTH_JWT_PRIVATE_KEYS and AUTH_ENCRYPTION_KEYS, from
+ * `python -m app.auth.cli generate-keys`): ephemeral keys die with the process, and the
+ * second factor of the admin account with them (a single run needs no fixed keys).
  *
  * Authenticator codes are single-use per 30-second step (see support/totp.ts), so a run
  * sometimes waits for the next step.
@@ -85,6 +92,33 @@ interface Account {
   secret: string;
   recoveryCodes: string[];
 }
+
+// Local hosts only: this suite creates accounts. The config checks the URLs of the test side;
+// this covers the browser, whose API is whatever the running Next server was configured with.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const remoteApiCalls: string[] = [];
+
+/** A call to the API (`/api/v1/...`) on a host that is not local. */
+function isRemoteApiCall(url: URL): boolean {
+  return !LOCAL_HOSTS.has(url.hostname) && url.pathname.includes('/api/v1/');
+}
+
+test.beforeEach(async ({ context }) => {
+  remoteApiCalls.length = 0;
+  await context.route(isRemoteApiCall, (route) => {
+    const { origin, pathname } = new URL(route.request().url());
+    remoteApiCalls.push(`${route.request().method()} ${origin}${pathname}`);
+    return route.abort('blockedbyclient');
+  });
+});
+
+test.afterEach(() => {
+  expect(
+    remoteApiCalls,
+    'the browser tried to reach a non-local API (aborted): the dev server is not using the ' +
+      'local API, check NEXT_PUBLIC_API_URL',
+  ).toEqual([]);
+});
 
 // A first visit starts a guided tour whose overlay covers the page (driver.js): mark
 // them seen, as e2e-capture does (keys: src/lib/tours/storage.ts, ids: registry.ts).
