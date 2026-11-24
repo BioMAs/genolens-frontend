@@ -1,0 +1,177 @@
+/**
+ * The chart AI panel streams over `fetch` (interpretation, then follow-up
+ * questions): through `authedFetch`, so the calls carry the session cookies and
+ * the client header, never a token, and an expired session is renewed before
+ * the call is replayed. The real `authedFetch` runs here over a faked global
+ * `fetch`.
+ */
+import { TextDecoder as NodeTextDecoder, TextEncoder as NodeTextEncoder } from 'util';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook } from '@testing-library/react';
+import React from 'react';
+
+import { useChartAI } from '@/hooks/useChartAI';
+
+jest.mock('@/utils/api', () => ({
+  __esModule: true,
+  default: { get: jest.fn(() => Promise.resolve({ data: { messages: [] } })) },
+}));
+
+const API = 'http://api.example.test/api/v1';
+
+const initialApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const initialFetch = global.fetch;
+const initialTextDecoder = global.TextDecoder;
+const fetchMock = jest.fn();
+
+function refusal(status: number, body: string) {
+  return {
+    ok: false,
+    status,
+    body: null,
+    text: () => Promise.resolve(body),
+    json: () => Promise.resolve(JSON.parse(body)),
+    clone() {
+      return this;
+    },
+  } as unknown as Response;
+}
+
+function refreshed(): Response {
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ refreshed: true }),
+  } as unknown as Response;
+}
+
+/** A 200 answer streaming the given events as `data:` lines. */
+function stream(events: Record<string, unknown>[]): Response {
+  const encoder = new NodeTextEncoder();
+  const chunks = events.map((event) => encoder.encode(`data: ${JSON.stringify(event)}\n`));
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      getReader: () => ({
+        read: () =>
+          Promise.resolve(
+            chunks.length ? { done: false, value: chunks.shift() } : { done: true, value: undefined },
+          ),
+      }),
+    },
+  } as unknown as Response;
+}
+
+function renderPanel() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderHook(
+    () =>
+      useChartAI({
+        datasetId: 'd1',
+        chartType: 'volcano',
+        contextKey: 'A_vs_B',
+        context: { threshold: 0.05 },
+      }),
+    { wrapper },
+  );
+}
+
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_API_URL = API;
+  fetchMock.mockReset();
+  global.fetch = fetchMock as unknown as typeof fetch;
+  // jsdom has no TextDecoder, which the stream reader needs.
+  global.TextDecoder = NodeTextDecoder as unknown as typeof TextDecoder;
+});
+
+afterEach(() => {
+  global.fetch = initialFetch;
+  global.TextDecoder = initialTextDecoder;
+  if (initialApiUrl === undefined) delete process.env.NEXT_PUBLIC_API_URL;
+  else process.env.NEXT_PUBLIC_API_URL = initialApiUrl;
+});
+
+it('streams the interpretation with cookies and the client header, without a token', async () => {
+  fetchMock.mockResolvedValueOnce(stream([{ text: 'Genes ' }, { text: 'up' }, { done: true }]));
+  const { result } = renderPanel();
+
+  await act(async () => {
+    await result.current.interpret();
+  });
+
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe(`${API}/datasets/d1/ai/interpret-stream`);
+  expect(init).toMatchObject({ method: 'POST', credentials: 'include' });
+  const headers = init.headers as Headers;
+  expect(headers.get('X-GenoLens-Client')).toBe('web');
+  expect(headers.get('Authorization')).toBeNull();
+
+  expect(result.current.interpretation).toBe('Genes up');
+  expect(result.current.interpretError).toBeNull();
+});
+
+it('renews an expired session, then replays the interpretation once', async () => {
+  fetchMock
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
+    .mockResolvedValueOnce(refreshed())
+    .mockResolvedValueOnce(stream([{ text: 'Renewed' }, { done: true }]));
+  const { result } = renderPanel();
+
+  await act(async () => {
+    await result.current.interpret();
+  });
+
+  expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+    `${API}/datasets/d1/ai/interpret-stream`,
+    `${API}/auth/refresh`,
+    `${API}/datasets/d1/ai/interpret-stream`,
+  ]);
+  expect(result.current.interpretation).toBe('Renewed');
+  expect(result.current.interpretError).toBeNull();
+});
+
+it('renews an expired session before a follow-up question', async () => {
+  fetchMock
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
+    .mockResolvedValueOnce(refreshed())
+    .mockResolvedValueOnce(stream([{ text: 'Because ' }, { text: 'of p53' }, { done: true }]));
+  const { result } = renderPanel();
+
+  let answer: { answer: string } | undefined;
+  await act(async () => {
+    answer = await result.current.ask('Why?');
+  });
+
+  expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+    `${API}/datasets/d1/ai/ask-stream`,
+    `${API}/auth/refresh`,
+    `${API}/datasets/d1/ai/ask-stream`,
+  ]);
+  const replay = fetchMock.mock.calls[2][1];
+  expect(replay.credentials).toBe('include');
+  expect((replay.headers as Headers).get('Authorization')).toBeNull();
+  expect(JSON.parse(replay.body)).toMatchObject({ question: 'Why?', chart_type: 'volcano' });
+  expect(answer).toEqual({ answer: 'Because of p53' });
+});
+
+it('surfaces the refusal, once, when the session cannot be renewed', async () => {
+  fetchMock
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_token' })))
+    .mockResolvedValueOnce(refusal(401, JSON.stringify({ detail: 'invalid_refresh' })));
+  const { result } = renderPanel();
+
+  await act(async () => {
+    await result.current.interpret();
+  });
+
+  expect(fetchMock).toHaveBeenCalledTimes(2); // no replay, no loop
+  expect(result.current.interpretError).toBe(
+    'AI request failed: 401 – {"detail":"invalid_token"}',
+  );
+  expect(result.current.isInterpreting).toBe(false);
+});

@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { createClient } from '@/utils/supabase/client';
+import { authedFetch } from '@/utils/auth/client';
 import { invalidateUserProfile } from '@/hooks/useUserProfile';
 import { aiQuotaMessage, isAiQuotaExhausted } from '@/utils/plan';
 
@@ -60,16 +60,20 @@ class ChatRequestError extends Error {
   }
 }
 
-/** Named-SSE reader: yields {event, data} frames (extends the readSSE pattern). */
+/**
+ * Named-SSE reader: yields {event, data} frames (extends the readSSE pattern).
+ * The session travels in cookies: `authedFetch` sends them and renews an
+ * expired session before replaying the call, so the reader never sees a token.
+ */
 async function* readNamedSSE(
   url: string,
   body: Record<string, unknown>,
-  token?: string,
 ): AsyncGenerator<{ event: string; data: Record<string, unknown> }> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  const response = await authedFetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!response.ok || !response.body) {
     const raw = await response.text().catch(() => '');
     let detail: unknown;
@@ -171,11 +175,9 @@ export function useChatAgent(ctx: SessionContext) {
 
       try {
         const sessionId = await ensureSession();
-        const { data: { session } } = await createClient().auth.getSession();
-        const token = session?.access_token;
         const url = `${apiBase()}/chat/sessions/${sessionId}/message`;
 
-        for await (const { event, data } of readNamedSSE(url, { message: trimmed }, token)) {
+        for await (const { event, data } of readNamedSSE(url, { message: trimmed })) {
           if (event === 'status') {
             patchAssistant((m) => ({ ...m, status: (data.phase as string) ?? m.status }));
           } else if (event === 'tool_call') {

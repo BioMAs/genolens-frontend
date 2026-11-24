@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { createClient } from '@/utils/supabase/client';
+import { authedFetch } from '@/utils/auth/client';
 
 export type ChartType = 'volcano' | 'pca' | 'umap' | 'heatmap' | 'enrichment';
 
@@ -21,18 +21,18 @@ interface UseChartAIOptions {
   enabled?: boolean;
 }
 
-/** Read SSE stream from a POST endpoint and yield each parsed JSON event. */
+/**
+ * Read SSE stream from a POST endpoint and yield each parsed JSON event. The
+ * session travels in cookies: `authedFetch` sends them and renews an expired
+ * session before replaying the call, so the reader never sees a token.
+ */
 async function* readSSE(
   url: string,
   body: Record<string, unknown>,
-  token?: string,
 ): AsyncGenerator<Record<string, unknown>> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(url, {
+  const response = await authedFetch(url, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
@@ -101,10 +101,6 @@ export function useChartAI({
     setInterpretation('');
     setInterpretError(null);
     try {
-      // Retrieve current auth token directly from Supabase session for SSE fetch
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
-
       const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v2').replace(/\/$/, '');
       const url = `${apiBase}/datasets/${datasetId}/ai/interpret-stream`;
 
@@ -114,7 +110,7 @@ export function useChartAI({
         context,
         context_key: contextKey,
         force_regenerate: forceRegenerate,
-      }, token)) {
+      })) {
         if (event.error) {
           throw new Error(event.error as string);
         }
@@ -133,9 +129,6 @@ export function useChartAI({
 
   const askMutation = useMutation({
     mutationFn: async (question: string) => {
-      const { data: { session } } = await createClient().auth.getSession();
-      const token = session?.access_token;
-
       const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v2').replace(/\/$/, '');
       const url = `${apiBase}/datasets/${datasetId}/ai/ask-stream`;
 
@@ -145,7 +138,7 @@ export function useChartAI({
         context_key: contextKey,
         question,
         context,
-      }, token)) {
+      })) {
         if (event.error) throw new Error(event.error as string);
         if (event.text) answer += event.text as string;
         if (event.done) break;

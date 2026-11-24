@@ -91,6 +91,10 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
+  /** Two-factor authentication state, served by /users/me. */
+  mfa_enabled?: boolean;
+  /** Unused recovery codes left; `null` when two-factor authentication is off. */
+  recovery_codes_remaining?: number | null;
   // Quota d'analyses, servi par /users/me (UserSelf). L'unité est l'analyse :
   // une analyse coûte une unité, quel que soit son nombre de contrastes.
   analyses_used_this_month?: number;
