@@ -71,6 +71,8 @@ Les pages de `/auth/*` sont publiques pour le middleware (il ne les protège pas
 
 **Description** : Acceptation d'une invitation : l'invité choisit son mot de passe, puis poursuit vers l'enrôlement de la double authentification ou vers l'étape du code, selon la réponse de l'API.
 
+**Limite connue — autre compte déjà connecté** : si le navigateur a déjà une session ouverte avec un autre compte, accepter l'invitation y **prolonge la session de cet autre compte** au lieu d'ouvrir celle de l'invité. L'étape du code (`/?step=mfa`) est la racine : le middleware y renvoie tout visiteur qui a une session valide vers `next` ou le tableau de bord, sans afficher le formulaire. L'invité doit ouvrir le lien dans une fenêtre de navigation privée, ou se déconnecter d'abord.
+
 ### `GET /auth/verify-email?token=…` — Confirmation de l'adresse
 
 **Fichier** : `src/app/auth/verify-email/page.tsx`  
