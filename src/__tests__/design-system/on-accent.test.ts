@@ -70,6 +70,25 @@ describe('texte sur aplat d’accent (TSX)', () => {
     expect(offenders).toEqual([]);
   });
 
+  /**
+   * Le danger plein s'ecrit `bg-danger-fill` (4,69:1 sous le texte en clair). `bg-danger` est la teinte
+   * de bordure et d'anneau : en aplat sous `text-on-accent` il ne tient que 3,65:1 en clair. Et
+   * `bg-danger-hover` n'existe plus : une classe sans jeton ne peint rien, sans que rien ne le dise.
+   */
+  it('le danger plein passe par bg-danger-fill, et bg-danger-hover n’existe plus', () => {
+    const strings = (src: string) => src.match(/"[^"\n]*"|'[^'\n]*'|`[^`]*`/g) ?? [];
+    const offenders = SOURCES.flatMap((file) =>
+      strings(stripComments(readFileSync(file, 'utf8')))
+        .filter(
+          (lit) =>
+            (/(?<![\w-])bg-danger(?![\w-])/.test(lit) && /(?<![\w-])text-on-accent(?![\w-])/.test(lit)) ||
+            /(?<![\w-])(?:hover:)?bg-danger-hover(?![\w-])/.test(lit),
+        )
+        .map((lit) => `${file}: ${lit.slice(0, 90)}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
   it('toute entree de la liste blanche a une raison', () => {
     for (const [file, why] of Object.entries(ALLOWED)) {
       expect(why.trim().length).toBeGreaterThan(10);

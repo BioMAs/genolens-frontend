@@ -42,7 +42,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   // (onboarding, marque), pas aux actions courantes.
   brand: 'bg-brand text-on-accent hover:bg-success-hover',
 
-  destructive: 'bg-danger text-on-accent hover:bg-danger-hover',
+  destructive: 'bg-danger-fill text-on-accent hover:bg-danger-fill-hover',
 
   // Survol neutre : la bordure se renforce, elle ne change pas de teinte.
   outline: 'border border-line bg-surface text-primary hover:border-strong hover:bg-hover',

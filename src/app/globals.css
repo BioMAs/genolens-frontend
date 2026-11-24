@@ -209,10 +209,25 @@
   --warning-ink-hover: #92400e;
   --success-ink-hover: #166534;
 
-  /* Survol des APLATS pleins, qui portent une encre blanche : ils s'assombrissent
-     dans les DEUX themes, sinon le blanc dessus tombe a 1,7:1 en sombre. */
-  --success-fill-hover: #0d7a54;
+  /* Aplats PLEINS de statut et leur survol. Le texte dessus est --gl-on-plum, qui
+     s'inverse avec le mode (clair en clair, sombre en sombre) : un aplat qui ne
+     s'inverse pas avec lui rend du sombre sur du sombre. Chaque aplat plein a donc
+     une valeur par mode, et son survol le RENFORCE — plus sombre en clair, plus
+     clair en sombre, comme --gl-plum-hover — au lieu de l'adoucir. Mesure
+     (texte --gl-on-plum, repos -> survol, clair puis sombre) :
+       succes     9,35 -> 11,83  |  14,7:1 en sombre (l'ancien survol #0d7a54 : 3,41)
+       avertis.   4,88 ->  6,89  |  10,9:1 en sombre (l'ancien survol #92400e : 2,57)
+       danger     4,69 ->  6,28  |  4,84 -> 6,59 en sombre
+     Le survol du succes derive du lagon (teinte 183) et non plus de l'ancien
+     emeraude (51 % de L, teinte 162) : plus clair et plus vert que l'aplat au repos,
+     il eclaircissait au lieu d'assombrir. */
+  --success-fill-hover: oklch(32% 0.065 183);
   --warning-fill-hover: #92400e;
+  /* Danger plein. --sl-red (#ef4444) ne porte le texte clair qu'a 3,65:1 en clair,
+     et --sl-red-dark (#dc2626) est AUSSI une encre de texte : on ne les detourne pas,
+     l'aplat a ses deux jetons. */
+  --danger-fill:        #dc2626;
+  --danger-fill-hover:  #b91c1c;
 
   /* ── INFO : le quatrieme statut, qui manquait ──────────────────────────────
      Le bleu etait la couleur d'« en cours » et d'« information » dans une
@@ -360,6 +375,13 @@
   --info-ink-hover:    #7dd3fc;
   --info-soft:         rgba(56, 189, 248, 0.14);
 
+  /* Aplats pleins : clairs en sombre, leur texte (--gl-on-plum) est sombre ; le survol
+     s'eclaircit encore. Voir le bloc clair pour les mesures. */
+  --success-fill-hover: oklch(92% 0.055 178);
+  --warning-fill-hover: #fbbf24;
+  --danger-fill:        #ef4444;
+  --danger-fill-hover:  #f87171;
+
   /* = --surface-raised : le point median se fond dans le panneau. */
   --chart-zero:  var(--surface-raised);
 
@@ -446,8 +468,10 @@
   --color-muted:              var(--text-muted);
   /* Texte sur un aplat d'accent. Ce n'est plus du blanc en dur : la prune est
      SOMBRE en clair et CLAIRE en sombre, donc son texte s'inverse avec elle
-     (--gl-on-plum). Le meme jeton porte aussi le texte des aplats de marque
-     et de danger, qui sont sombres en clair et clairs en sombre. */
+     (--gl-on-plum). Le meme jeton porte le texte des aplats de marque (lagon), de
+     succes et d'avertissement, qui suivent la meme inversion, et celui du danger
+     plein, dont les deux jetons (--danger-fill*) sont choisis pour tenir 4,5:1 sous
+     lui dans les deux modes. contrast.test.ts verifie chaque aplat ET chaque survol. */
   --color-on-accent:          var(--gl-on-plum);
 
   /* Fonds */
@@ -488,7 +512,11 @@
      legitimement besoin de rouge, et on pourra diverger sans second
      codemod. */
   --color-danger:             var(--sl-red);
-  --color-danger-hover:       var(--sl-red-dark);
+  /* Aplat plein de danger (bouton destructif, bandeau) et son survol : `bg-danger-fill`.
+     `bg-danger` reste la teinte de BORDURE et d'anneau (`border-danger/30`) ; il ne
+     porte plus de texte clair, --sl-red n'y tenant que 3,65:1 en clair. */
+  --color-danger-fill:        var(--danger-fill);
+  --color-danger-fill-hover:  var(--danger-fill-hover);
   --color-danger-soft:        var(--sl-red-light);
   /* `text-warning` et `border-warning` pointent sur l'ENCRE : l'utilitaire
      porte du texte dans cinq de ses six usages, et --dc-amber y echouait a

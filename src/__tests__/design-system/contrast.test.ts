@@ -107,6 +107,35 @@ const PAIRS: Array<[string, string, number]> = [
   ['--gl-focus', '--gl-surface', 3],
 ];
 
+/**
+ * Les aplats qui portent un texte `text-on-accent` (--gl-on-plum) : [jeton de l'aplat, ce qu'il peint].
+ *
+ * Le piege est la COMPOSITION : --gl-on-plum s'inverse avec la prune (sombre en mode sombre), mais un
+ * aplat de statut ou un cran de survol qui ne s'inverse pas avec lui donne du sombre sur du sombre. Les
+ * paires du dessus ne voient que `jeton / fond` ; celles-ci voient le texte tel qu'il est peint, repos ET
+ * survol, dans les deux modes. 4,5:1 : c'est du texte.
+ */
+const ON_ACCENT_FILLS: Array<[string, string]> = [
+  ['--gl-plum', 'bg-accent, bg-plum'],
+  ['--gl-plum-hover', 'hover:bg-accent-hover, hover:bg-plum-hover'],
+  ['--sl-teal', 'bg-brand (aplat de marque, bouton brand)'],
+  ['--sl-teal-dark', 'bg-success'],
+  ['--success-fill-hover', 'hover:bg-success-hover'],
+  ['--warning-ink', 'bg-warning'],
+  ['--warning-fill-hover', 'hover:bg-warning-hover'],
+  ['--danger-fill', 'bg-danger-fill (bouton destructif, bandeau de licence)'],
+  ['--danger-fill-hover', 'hover:bg-danger-fill-hover'],
+];
+
+/** [aplat au repos, son cran de survol] : le survol RENFORCE l'aplat, dans les deux modes. */
+const FILL_HOVERS: Array<[string, string]> = [
+  ['--gl-plum', '--gl-plum-hover'],
+  ['--sl-teal', '--success-fill-hover'],
+  ['--sl-teal-dark', '--success-fill-hover'],
+  ['--warning-ink', '--warning-fill-hover'],
+  ['--danger-fill', '--danger-fill-hover'],
+];
+
 /** L d'un `oklch(L% C H)`, en points (0-100). */
 const lightness = (value: string): number => parseFloat(/^oklch\(\s*([\d.]+)%/i.exec(value)![1]);
 
@@ -130,6 +159,19 @@ describe.each(MODES)('jetons Lentille — mode %s', (mode) => {
 
   it('up et down different aussi en clarte (au moins 8 points de L)', () => {
     expect(Math.abs(lightness(tokens['--gl-up']) - lightness(tokens['--gl-down']))).toBeGreaterThanOrEqual(8);
+  });
+
+  it.each(ON_ACCENT_FILLS)('texte --gl-on-plum sur l’aplat %s (%s) tient au moins 4,5:1', (fill) => {
+    const ratio = contrastRatio(tokens['--gl-on-plum'], tokens[fill]);
+    expect({ fill, ratio: Number(ratio.toFixed(2)), ok: ratio >= 4.5 }).toMatchObject({ ok: true });
+  });
+
+  it.each(FILL_HOVERS)('le survol de %s (%s) ne perd pas de contraste avec le texte', (rest, hover) => {
+    // En clair l'aplat s'assombrit, en sombre il s'eclaircit : dans les deux cas le texte (qui
+    // s'inverse) y gagne. Un survol qui perd du contraste est un survol qui ne se lit plus.
+    const onRest = contrastRatio(tokens['--gl-on-plum'], tokens[rest]);
+    const onHover = contrastRatio(tokens['--gl-on-plum'], tokens[hover]);
+    expect({ rest, hover, onRest: Number(onRest.toFixed(2)), onHover: Number(onHover.toFixed(2)), ok: onHover >= onRest }).toMatchObject({ ok: true });
   });
 });
 
@@ -193,6 +235,18 @@ describe('anciens noms — alias des jetons Lentille', () => {
       expect(tokens['--sl-amber-light']).toBe(tokens['--warning-soft']);
       expect(tokens['--sl-blue']).toBe(tokens['--info-ink']);
     }
+  });
+
+  it('les utilitaires de statut pointent sur les jetons d’aplat, pas sur une encre de texte', () => {
+    const css = stripComments(CSS);
+    const maps = (utility: string, token: string) =>
+      expect(css).toMatch(new RegExp(`--color-${utility}:\\s*var\\(--${token}\\)\\s*;`));
+    maps('success-hover', 'success-fill-hover');
+    maps('warning-hover', 'warning-fill-hover');
+    maps('danger-fill', 'danger-fill');
+    maps('danger-fill-hover', 'danger-fill-hover');
+    // --sl-red-dark est aussi un TEXTE : il ne doit plus servir de survol d'aplat.
+    expect(css).not.toMatch(/--color-danger-hover\s*:/);
   });
 
   it('le rayon de carte vaut 14px (concentrique : 14 - 4 = 10, 10 - 4 = 6)', () => {
