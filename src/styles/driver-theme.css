@@ -23,7 +23,8 @@
 .driver-popover.genolens-tour .driver-popover-prev-btn,
 .driver-popover.genolens-tour .driver-popover-close-btn {
   background: var(--sl-purple, #6d28d9);
-  color: #ffffff;
+  /* La prune est CLAIRE en mode sombre : son texte s'inverse avec elle (jamais du blanc en dur). */
+  color: var(--gl-on-plum, #ffffff);
   border: none;
   border-radius: 8px;
   text-shadow: none;

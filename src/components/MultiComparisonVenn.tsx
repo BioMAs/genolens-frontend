@@ -425,7 +425,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                           className="rounded-pill border px-2.5 py-1 text-caption font-medium"
                           style={
                             activeCat
-                              ? { background: 'var(--sl-purple)', color: '#fff', borderColor: 'var(--sl-purple)' }
+                              ? { background: 'var(--sl-purple)', color: 'var(--gl-on-plum)', borderColor: 'var(--sl-purple)' }
                               : { background: 'var(--surface)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }
                           }
                         >

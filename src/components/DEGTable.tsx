@@ -483,7 +483,7 @@ export default function DEGTable({ dataset, comparisonName }: DEGTableProps) {
                           background: 'var(--sl-teal)',
                           border: '1px solid var(--sl-teal)',
                           borderRadius: 'var(--radius-control)',
-                          color: '#fff',
+                          color: 'var(--gl-on-plum)',
                         }
                       : controlStyle
                   }

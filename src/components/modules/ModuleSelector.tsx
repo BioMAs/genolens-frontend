@@ -126,7 +126,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
             className="grid h-11 w-11 place-items-center rounded-card transition-all duration-300"
             style={{
               background: active ? color : `color-mix(in oklab, ${color} 12%, var(--surface))`,
-              color: active ? '#fff' : color,
+              color: active ? 'var(--gl-on-plum)' : color,
               transform: active ? 'scale(1.04)' : 'scale(1)',
             }}
           >
@@ -192,7 +192,7 @@ function ModuleCard({ meta, active, readOnly, busy, onToggle, onRequestAccess }:
               className="grid h-4 w-4 flex-none place-items-center rounded-pill transition-all duration-300"
               style={{
                 background: active ? color : 'var(--surface-secondary)',
-                color: active ? '#fff' : 'var(--text-muted)',
+                color: active ? 'var(--gl-on-plum)' : 'var(--text-muted)',
               }}
             >
               <Check className="h-2.5 w-2.5" strokeWidth={3} />

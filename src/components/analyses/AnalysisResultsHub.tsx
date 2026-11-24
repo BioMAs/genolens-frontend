@@ -378,7 +378,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     className="rounded-sm px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
                     style={
                       structureView === v
-                        ? { background: 'var(--sl-teal)', color: '#fff' }
+                        ? { background: 'var(--sl-teal)', color: 'var(--gl-on-plum)' }
                         : { background: 'transparent', color: 'var(--text-secondary)' }
                     }
                   >
