@@ -34,6 +34,15 @@ export const PASSWORDS_DIFFER = 'Both passwords must match.';
 export const RESEND_SENT = "If this address needs confirming, we've sent a new link.";
 
 /**
+ * What the visitor reads on the sign-in page after a renewal of their session
+ * failed while the session itself may still be valid (the API answered 5xx or
+ * 429, or could not be reached): the failure is shown with a way to retry,
+ * rather than a form that looks like a sign-out.
+ */
+export const SESSION_NOT_RESTORED = "We couldn't restore your session.";
+export const TRY_AGAIN = 'Try again';
+
+/**
  * The message for a refused call. A known code wins; otherwise the status
  * decides: 404 is a route the API keeps closed for now (the pre-launch API
  * serves only the admin sign-in), 0 is an API that could not be reached.

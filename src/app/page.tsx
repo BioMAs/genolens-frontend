@@ -1,23 +1,34 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Loader2, Lock } from 'lucide-react';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthCard from '@/components/auth/AuthCard';
+import AuthAlert from '@/components/auth/AuthAlert';
 import AuthField from '@/components/auth/AuthField';
 import MfaChallengeForm from '@/components/auth/MfaChallengeForm';
-import { login, resendVerification, signup } from '@/utils/auth/client';
-import { RESEND_SENT, authErrorMessage, passwordProblem } from '@/utils/auth/messages';
+import { hasSessionHint, login, resendVerification, signup } from '@/utils/auth/client';
+import {
+  RESEND_SENT,
+  SESSION_NOT_RESTORED,
+  TRY_AGAIN,
+  authErrorMessage,
+  passwordProblem,
+} from '@/utils/auth/messages';
 import { navigate } from '@/utils/auth/navigation';
-import { safeNext } from '@/utils/auth/paths';
+import { refreshPath, safeNext } from '@/utils/auth/paths';
 
 type AuthMode = 'signin' | 'signup';
 /** Signing in takes two steps: the password, then a code. */
 type SignInStep = 'password' | 'mfa';
 
 const SIGNUP_SENT = 'Check your inbox — we sent a link to confirm your account.';
+
+// The session hint is a cookie: unknown on the server, read on the client only.
+const subscribeToNothing = () => () => {};
+const noSessionHint = () => false;
 
 /**
  * Sign in and sign up. The API sets the session cookies; this screen only moves
@@ -28,6 +39,14 @@ const SIGNUP_SENT = 'Check your inbox — we sent a link to confirm your account
 function AuthScreen() {
   const params = useSearchParams();
   const next = safeNext(params.get('next'));
+
+  // `reauth=1` with a `next` is where a failed renewal lands (/auth/refresh and the
+  // middleware both pass one); a sign-out the API could not take sends `reauth=1`
+  // alone, and must not offer to restore the session the visitor just left. When
+  // the failure was transient the session hint is still there, and so is the
+  // session: reloading would show the same form, so the visitor is offered a retry.
+  const sessionHint = useSyncExternalStore(subscribeToNothing, hasSessionHint, noSessionHint);
+  const renewalFailed = params.get('reauth') === '1' && params.has('next') && sessionHint;
 
   const [mode, setMode] = useState<AuthMode>('signin');
   // `?step=mfa` is where an accepted invitation lands: the password is set, a code is due.
@@ -189,6 +208,18 @@ function AuthScreen() {
               : 'Start analyzing your RNA-seq data'}
           </p>
         </div>
+
+        {renewalFailed && (
+          <div className="mb-4" data-testid="session-not-restored">
+            <AuthAlert tone="error">
+              {SESSION_NOT_RESTORED}{' '}
+              {/* A full navigation: the renewal page decides where to go next. */}
+              <a href={refreshPath(next)} className="auth-link underline">
+                {TRY_AGAIN}
+              </a>
+            </AuthAlert>
+          </div>
+        )}
 
         <form className="space-y-4" onSubmit={handleSubmit} data-testid="auth-form">
           <AuthField

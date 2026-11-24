@@ -10,7 +10,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Home from '@/app/page';
-import { login, resendVerification, signup, verifyMfa } from '@/utils/auth/client';
+import { hasSessionHint, login, resendVerification, signup, verifyMfa } from '@/utils/auth/client';
 import { navigate } from '@/utils/auth/navigation';
 import { authOk, authRefused } from '@/test-utils/authResults';
 
@@ -20,6 +20,7 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(query),
 }));
 jest.mock('@/utils/auth/client', () => ({
+  hasSessionHint: jest.fn(),
   login: jest.fn(),
   verifyMfa: jest.fn(),
   signup: jest.fn(),
@@ -27,6 +28,7 @@ jest.mock('@/utils/auth/client', () => ({
 }));
 jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
 
+const hintMock = hasSessionHint as jest.MockedFunction<typeof hasSessionHint>;
 const loginMock = login as jest.MockedFunction<typeof login>;
 const verifyMfaMock = verifyMfa as jest.MockedFunction<typeof verifyMfa>;
 const signupMock = signup as jest.MockedFunction<typeof signup>;
@@ -465,5 +467,75 @@ describe('sign up', () => {
     expect(
       screen.queryByRole('button', { name: /resend the confirmation email/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+// A renewal that failed for a transient reason (the API answered 5xx or 429, or could
+// not be reached) lands here as `reauth=1` while the session is in fact still valid.
+// The form alone would strand the visitor, even after a reload: offer to try again.
+describe('a renewal that failed', () => {
+  const NOTICE = /we couldn't restore your session/i;
+
+  it('offers to try again when the session hint survives', () => {
+    search('?next=%2Fprojects%2Fp1%3Ftab%3D2&reauth=1');
+    hintMock.mockReturnValue(true);
+    render(<Home />);
+
+    expect(screen.getByText(NOTICE)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /try again/i })).toHaveAttribute(
+      'href',
+      '/auth/refresh?next=%2Fprojects%2Fp1%3Ftab%3D2',
+    );
+    // The form stays, so the visitor can also sign in.
+    expect(screen.getByTestId('auth-form')).toBeInTheDocument();
+  });
+
+  it('retries towards the admin app when that is where the visitor was going', () => {
+    search('?next=https%3A%2F%2Fadmin.example.test%2Fusers&reauth=1');
+    hintMock.mockReturnValue(true);
+    render(<Home />);
+
+    expect(screen.getByRole('link', { name: /try again/i })).toHaveAttribute(
+      'href',
+      '/auth/refresh?next=https%3A%2F%2Fadmin.example.test%2Fusers',
+    );
+  });
+
+  it('retries towards the dashboard when next is not a safe destination', () => {
+    search('?next=https%3A%2F%2Fevil.test&reauth=1');
+    hintMock.mockReturnValue(true);
+    render(<Home />);
+
+    expect(screen.getByRole('link', { name: /try again/i })).toHaveAttribute(
+      'href',
+      '/auth/refresh?next=%2Fdashboard',
+    );
+  });
+
+  it('says nothing when there is no session left to restore', () => {
+    search('?next=%2Fprojects&reauth=1');
+    hintMock.mockReturnValue(false);
+    render(<Home />);
+
+    expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /try again/i })).not.toBeInTheDocument();
+  });
+
+  it('says nothing on an ordinary visit, whatever the hint', () => {
+    search('?next=%2Fprojects');
+    hintMock.mockReturnValue(true);
+    render(<Home />);
+
+    expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+  });
+
+  // A sign-out the API could not take also lands on `/?reauth=1`, but with no next:
+  // offering to restore the session the visitor just asked to end would be wrong.
+  it('says nothing after a sign-out that could not reach the API (no next)', () => {
+    search('?reauth=1');
+    hintMock.mockReturnValue(true);
+    render(<Home />);
+
+    expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
   });
 });
