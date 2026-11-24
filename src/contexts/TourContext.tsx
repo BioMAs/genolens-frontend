@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import 'driver.js/dist/driver.css';
 import '@/styles/driver-theme.css';
 import { useTheme } from '@/contexts/ThemeContext';
+import { renderedSteps } from '@/lib/tours/anchors';
 import { getTour, tourIdForPathname, type TourId } from '@/lib/tours/registry';
 
 interface TourContextValue {
@@ -36,7 +37,9 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           doneBtnText: 'Done',
           progressText: '{{current}} / {{total}}',
           popoverClass,
-          steps: tour.steps,
+          // Une ancre presente mais invisible (la barre du haut sous 60rem) ferait
+          // poser la bulle dans le coin : l'etape est jouee seulement si elle se voit.
+          steps: renderedSteps(tour.steps),
         });
         driverObj.drive();
       } catch (err) {

@@ -122,6 +122,28 @@ describe('le fil d’Ariane et la mesure des pages', () => {
     expect(crumbRow).not.toContain('1360');
     expect(crumbRow).not.toMatch(/\bmd:px-10\b/);
   });
+
+  /**
+   * La rangee d'onglets du projet est sous le fil d'Ariane et au-dessus de la
+   * meme page : meme mesure, memes gouttieres, donc meme bord gauche. Une rangee a
+   * 1360px / 40px decalerait les onglets de 72px a 1440 par rapport au titre.
+   */
+  it('la rangee d’onglets du projet cite la mesure et la gouttiere de .page-container', () => {
+    const projectRow = readFileSync('src/components/project/ProjectNav.tsx', 'utf8').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    );
+    const body = rule('.page-container');
+    const measure = body.match(/max-width:\s*var\((--[\w-]+)\)/)?.[1];
+    const gutter = body.match(/padding:\s*var\(--[\w-]+\)\s+var\((--[\w-]+)\)/)?.[1];
+    expect(measure).toBeDefined();
+    expect(gutter).toBeDefined();
+
+    expect(projectRow).toContain(`max-w-[var(${measure})]`);
+    expect(projectRow).toContain(`px-[var(${gutter})]`);
+    expect(projectRow).not.toContain('1360');
+    expect(projectRow).not.toMatch(/\bmd:px-10\b/);
+  });
 });
 
 describe('les ancres et les elements colles sous la barre du haut', () => {

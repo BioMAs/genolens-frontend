@@ -22,12 +22,37 @@ describe('tour registry', () => {
     const elements = TOURS.dashboard.steps.map((s) => s.element);
     expect(elements).toContain('[data-tour="nav-workspace"]');
     expect(elements).not.toContain('[data-tour="sidebar-workspace"]');
-    const navStep = TOURS.dashboard.steps.find(
-      (s) => s.element === '[data-tour="nav-workspace"]',
-    );
-    // La barre est en haut : une bulle a droite serait hors de l'ecran.
-    expect(navStep?.popover?.side).toBe('bottom');
-    expect(navStep?.popover?.description).not.toMatch(/side menu/i);
+  });
+
+  it('anchors the project tour on the project tabs, not the removed sidebar', () => {
+    const elements = TOURS['project-overview'].steps.map((s) => s.element);
+    expect(elements).toContain('[data-tour="nav-project"]');
+    expect(elements).not.toContain('[data-tour="sidebar-project"]');
+  });
+
+  it('opens the bubbles of the navigation bars downward and no longer speaks of a side menu', () => {
+    for (const anchorKey of ['nav-workspace', 'nav-project']) {
+      const steps = Object.values(TOURS)
+        .flatMap((t) => t.steps)
+        .filter((s) => s.element === `[data-tour="${anchorKey}"]`);
+      // Garde du garde-fou : sans etape lue, la boucle ne verifierait rien.
+      expect(steps.length).toBeGreaterThan(0);
+      for (const step of steps) {
+        // Les barres sont en haut : une bulle a droite serait hors de l'ecran.
+        expect(step.popover?.side).toBe('bottom');
+        expect(step.popover?.description).not.toMatch(/side ?menu|sidebar/i);
+      }
+    }
+  });
+
+  it('describes the help step as the Help menu, not as a replay button', () => {
+    const help = TOURS.dashboard.steps.find((s) => s.element === '[data-tour="help-button"]');
+    expect(help).toBeDefined();
+    expect(help?.popover?.title).toBe('Help');
+    expect(help?.popover?.description).toMatch(/menu/i);
+    expect(help?.popover?.description).toMatch(/guide/i);
+    expect(help?.popover?.description).toMatch(/documentation/i);
+    expect(help?.popover?.description).not.toMatch(/this button/i);
   });
 
   it('getTour returns the matching definition', () => {
