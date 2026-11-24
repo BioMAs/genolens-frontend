@@ -1,0 +1,59 @@
+/**
+ * What the visitor reads when an auth call is refused. The API answers with a
+ * machine code (`detail`); the words live here, once, so every screen says the
+ * same thing.
+ */
+
+const MIN_PASSWORD_LENGTH = 12;
+const MAX_PASSWORD_LENGTH = 128;
+
+const BY_DETAIL: Record<string, string> = {
+  invalid_credentials: 'Incorrect email or password.',
+  too_many_attempts: 'Too many attempts. Wait 15 minutes, or reset your password.',
+  invalid_code: 'Incorrect code.',
+  challenge_expired: 'This sign-in step has expired. Sign in again.',
+  invalid_token: 'This link is invalid or has expired.',
+  invalid_password: 'Your current password is incorrect.',
+  mfa_not_enabled: 'Two-factor authentication is not turned on for this account.',
+  no_rotation_pending: 'This change of device has expired. Start again.',
+  'password_policy:too_short': `Use at least ${MIN_PASSWORD_LENGTH} characters.`,
+  'password_policy:too_long': `Use at most ${MAX_PASSWORD_LENGTH} characters.`,
+  'password_policy:too_common': 'This password is too common. Choose a less predictable one.',
+  'password_policy:same_as_email': 'Your password must not be your email address.',
+};
+
+/**
+ * The message for a refused call. A known code wins; otherwise the status
+ * decides: 404 is a route the API keeps closed for now (the pre-launch API
+ * serves only the admin sign-in), 0 is an API that could not be reached.
+ */
+export function authErrorMessage(status: number, detail: string | null): string {
+  if (detail !== null && Object.hasOwn(BY_DETAIL, detail)) return BY_DETAIL[detail];
+  if (status === 404) return 'This is not available yet.';
+  if (status === 0) return 'Cannot reach GenoLens. Check your connection and try again.';
+  return 'Something went wrong. Try again.';
+}
+
+/**
+ * Length rule for a new password, checked before the call so the visitor is not
+ * sent to the network for nothing. Length only: the server also refuses common
+ * passwords and the address itself, and has the last word.
+ */
+export function passwordProblem(password: string): string | null {
+  // Code points, not UTF-16 units: the server counts characters.
+  const length = Array.from(password).length;
+  if (length < MIN_PASSWORD_LENGTH) return BY_DETAIL['password_policy:too_short'];
+  if (length > MAX_PASSWORD_LENGTH) return BY_DETAIL['password_policy:too_long'];
+  return null;
+}
+
+/**
+ * The string `detail` of a refused axios call (`err.response.data.detail`), or
+ * null when there is none: no response, no body, or a `detail` that is
+ * structured (`account_inactive`) or a list of validation errors.
+ */
+export function apiErrorDetail(err: unknown): string | null {
+  const detail = (err as { response?: { data?: { detail?: unknown } | null } } | null | undefined)
+    ?.response?.data?.detail;
+  return typeof detail === 'string' ? detail : null;
+}
