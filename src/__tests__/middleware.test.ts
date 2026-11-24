@@ -125,6 +125,65 @@ describe('the root, which is the sign-in page', () => {
       location(await middleware(req('/?next=%2Fprojects&reauth=1', { gl_at: 't', gl_session: '1' }))),
     ).toBe('/projects');
   });
+
+  // A sign-out the API could not take leaves the cookies behind and lands on
+  // `/?reauth=1`, with no `next`: the visitor asked to leave, so they get the form.
+  it('shows the form to a session that asked to leave (reauth=1, no next)', async () => {
+    verify.mockResolvedValue(CLAIMS);
+
+    expect(location(await middleware(req('/?reauth=1', { gl_at: 't', gl_session: '1' })))).toBeUndefined();
+    // Without the marker, a session is still sent on.
+    expect(location(await middleware(req('/', { gl_at: 't', gl_session: '1' })))).toBe('/dashboard');
+  });
+
+  describe('when the admin app cannot verify a token this app accepts', () => {
+    // The admin sends its visitor to /auth/refresh here, which comes back to `/` with
+    // `next=<admin>&reauth=1`. Sending a verified visitor to that `next` would start
+    // the round again, for ever: stop at the dashboard and say why.
+    const FROM_ADMIN = '/?next=https%3A%2F%2Fadmin.example.test%2Fusers&reauth=1';
+    let logged: jest.SpyInstance;
+
+    beforeEach(() => {
+      verify.mockResolvedValue(CLAIMS);
+      logged = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      logged.mockRestore();
+    });
+
+    it('keeps the visitor here instead of sending them back to the admin app', async () => {
+      const res = await middleware(req(FROM_ADMIN, { gl_at: 't', gl_session: '1' }));
+
+      expect(location(res)).toBe('/dashboard');
+    });
+
+    it('names the admin deployment once, and never a token', async () => {
+      await middleware(req(FROM_ADMIN, { gl_at: 'secret-token-value', gl_session: '1' }));
+
+      expect(logged).toHaveBeenCalledTimes(1);
+      const message = logged.mock.calls[0].map(String).join(' ');
+      expect(message).toMatch(/admin/i);
+      expect(message).toMatch(/AUTH_ISSUER/);
+      expect(message).toMatch(/AUTH_JWKS_URL/);
+      expect(message).not.toContain('secret-token-value');
+    });
+
+    it('still sends a first visit from the admin app back (no reauth marker)', async () => {
+      const res = await middleware(
+        req('/?next=https%3A%2F%2Fadmin.example.test%2Fusers', { gl_at: 't' }),
+      );
+
+      expect(res.headers.get('location')).toBe('https://admin.example.test/users');
+      expect(logged).not.toHaveBeenCalled();
+    });
+
+    it('is silent for a relative next', async () => {
+      await middleware(req('/?next=%2Fprojects&reauth=1', { gl_at: 't', gl_session: '1' }));
+
+      expect(logged).not.toHaveBeenCalled();
+    });
+  });
 });
 
 // A renewal that succeeds but leaves a token the middleware cannot verify

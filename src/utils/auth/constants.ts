@@ -17,6 +17,10 @@ export const RENEWED_COOKIE_MAX_AGE_SECONDS = 30;
 export const RENEWAL_LOOP_HINT =
   'Check AUTH_ISSUER and AUTH_JWKS_URL for this deployment, and that the API cookie domain covers this host.';
 
+/** What to check when the admin app keeps bouncing a session this app accepts. */
+export const ADMIN_VERIFICATION_HINT =
+  "Check the admin deployment's AUTH_ISSUER and AUTH_JWKS_URL.";
+
 /** Header the API requires on cookie-authenticated requests (CSRF guard). */
 export const CLIENT_HEADER = 'X-GenoLens-Client';
 export const CLIENT_NAME = 'web';

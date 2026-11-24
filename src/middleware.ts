@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import {
   ACCESS_COOKIE,
+  ADMIN_VERIFICATION_HINT,
+  DEFAULT_AFTER_LOGIN,
   RENEWAL_LOOP_HINT,
   RENEWED_COOKIE,
   SESSION_HINT_COOKIE,
@@ -23,8 +25,9 @@ const LINK_TOKEN_PAGES = new Set(['/auth/reset', '/auth/invite', '/auth/verify-e
  * 1. an account the API flagged as not active goes to `/suspended`;
  * 2. pages opened from an e-mailed link get privacy headers and nothing else;
  * 3. the access token is verified, or there is none;
- * 4. `/` is the sign-in page: a session is sent on, a mere hint is renewed
- *    first, otherwise the form is shown;
+ * 4. `/` is the sign-in page: a session is sent on (not back to the admin app
+ *    that has just failed to verify it), a mere hint is renewed first,
+ *    otherwise the form is shown;
  * 5. any other public page is served;
  * 6. a protected page is served with a session, renewed if the hint survives,
  *    and otherwise replaced by the sign-in page.
@@ -82,8 +85,31 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // 4.
   if (pathname === '/') {
-    const next = safeNext(searchParams.get('next'));
-    if (claims) return redirect(next);
+    const rawNext = searchParams.get('next');
+    const next = safeNext(rawNext);
+    const reauth = searchParams.get('reauth') === '1';
+
+    if (claims) {
+      if (reauth) {
+        // A sign-out the API could not take (it was unreachable) leaves the cookies
+        // in place and lands here with no `next`: the visitor asked to leave, so
+        // the sign-in form is shown rather than the dashboard.
+        if (!rawNext) return NextResponse.next();
+
+        // `reauth=1` came back from /auth/refresh, so whoever sent the visitor
+        // there could not verify the token this app accepts. An absolute `next`
+        // can only be the admin app: following it would start the round again.
+        if (!next.startsWith('/')) {
+          // No cookie value in the message: the access token is a credential.
+          console.error(
+            '[auth] The admin deployment rejected a session this app accepts; not sending ' +
+              `the visitor back to it. ${ADMIN_VERIFICATION_HINT}`,
+          );
+          return redirect(DEFAULT_AFTER_LOGIN);
+        }
+      }
+      return redirect(next);
+    }
 
     // `reauth=1` is set by /auth/refresh when the renewal failed. A refusal
     // already cleared the hint, but an unreachable API leaves it, and without
