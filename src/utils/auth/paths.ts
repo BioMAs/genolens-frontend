@@ -19,13 +19,23 @@ export function isPublicPath(pathname: string): boolean {
 // into the protocol-relative `//x`; any control character is refused.
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 
+// Only a real web origin can be trusted: `new URL(...).origin` is the opaque
+// string "null" for every non-special scheme (`javascript:`, `data:`, and a
+// scheme-less `localhost:3001`, which parses as scheme "localhost:"), so
+// comparing origins without checking the scheme would equate them all.
+function isWebUrl(url: URL): boolean {
+  return url.protocol === 'http:' || url.protocol === 'https:';
+}
+
 // Read at call time (not at import) so a test can set it; `NEXT_PUBLIC_*` is
 // inlined by Next.js only for this literal `process.env.NEXT_PUBLIC_…` form.
+// A misconfigured value (not http(s)) yields no admin origin at all.
 function adminOrigin(): string | null {
   const raw = process.env.NEXT_PUBLIC_ADMIN_APP_URL;
   if (!raw) return null;
   try {
-    return new URL(raw).origin;
+    const url = new URL(raw);
+    return isWebUrl(url) ? url.origin : null;
   } catch {
     return null;
   }
@@ -51,7 +61,7 @@ export function safeNext(raw: string | null | undefined, fallback: string = DEFA
     return fallback;
   }
   const admin = adminOrigin();
-  return admin !== null && url.origin === admin ? url.href : fallback;
+  return admin !== null && isWebUrl(url) && url.origin === admin ? url.href : fallback;
 }
 
 /** The sign-in page (the root), remembering where to go afterwards. */

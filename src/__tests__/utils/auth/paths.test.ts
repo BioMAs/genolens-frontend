@@ -51,6 +51,30 @@ describe('safeNext', () => {
     expect(safeNext(null, '/projects')).toBe('/projects');
   });
 
+  // `new URL('localhost:3001')` parses as a scheme-"localhost:" URL whose origin
+  // is the opaque string "null", shared by javascript:, data: and every other
+  // non-special scheme. A scheme-less admin URL must not turn into "accept them all".
+  it.each(['localhost:3001', 'admin.example.test:3001', 'ftp://admin.example.test', 'not a url'])(
+    'accepts no absolute URL when the admin URL is not http(s) (%s)',
+    (misconfigured) => {
+      process.env.NEXT_PUBLIC_ADMIN_APP_URL = misconfigured;
+      try {
+        for (const hostile of [
+          'javascript:alert(1)',
+          'data:text/html,x',
+          'foo:bar',
+          'localhost:3001',
+          'https://admin.example.test/dashboard',
+        ]) {
+          expect(safeNext(hostile)).toBe('/dashboard');
+        }
+        expect(safeNext('/projects/p1')).toBe('/projects/p1');
+      } finally {
+        process.env.NEXT_PUBLIC_ADMIN_APP_URL = ADMIN_URL;
+      }
+    },
+  );
+
   it('refuses every absolute URL when no admin origin is configured', () => {
     delete process.env.NEXT_PUBLIC_ADMIN_APP_URL;
     try {
