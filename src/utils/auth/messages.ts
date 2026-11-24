@@ -4,7 +4,7 @@
  * same thing.
  */
 
-const MIN_PASSWORD_LENGTH = 12;
+export const MIN_PASSWORD_LENGTH = 12;
 const MAX_PASSWORD_LENGTH = 128;
 
 const BY_DETAIL: Record<string, string> = {
