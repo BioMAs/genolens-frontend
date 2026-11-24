@@ -29,21 +29,29 @@ import { getPalette, type PaletteMode } from '@/utils/chartPalettes';
  *    Maintenir une rampe parallele « pour daltoniens » leur servait la pire des
  *    deux.
  * 2. Le couple de direction violet/vert de `DEGClusteringView` est mesure
- *    3 a 5 fois MOINS distinguable en dichromatie que le vert/rouge du
- *    produit (dE min 0,056 contre 0,222) — et le violet tombe a 2,21:1 sur
- *    panneau sombre, sous le plancher non-textuel de 3:1. Il perd donc sur les
- *    deux axes a la fois : coherence ET accessibilite. Le mode standard rejoint
- *    la convention du produit ; le mode daltonisme prend le bleu/vermillon de
- *    Wong (dE min 0,307, le meilleur des cinq candidats mesures).
+ *    3 a 5 fois MOINS distinguable en dichromatie que le vert/rouge que le
+ *    produit portait alors (dE min 0,056 contre 0,222) — et le violet tombe a
+ *    2,21:1 sur panneau sombre, sous le plancher non-textuel de 3:1. Il perd
+ *    donc sur les deux axes a la fois : coherence ET accessibilite. Le mode
+ *    standard rejoint la convention du produit, aujourd'hui terre cuite contre
+ *    bleu acier (--gl-up / --gl-down, jamais rouge contre vert) ; le mode
+ *    daltonisme prend le bleu/vermillon de Wong (dE min 0,307, le meilleur des
+ *    cinq candidats mesures).
  */
 
 export type ThemeMode = 'light' | 'dark';
 export type ColorStops = [number, string][];
 
 /**
- * Le point median. En clair un gris quasi-blanc ; en sombre la surface du
+ * Le point median. En clair un gris quasi-blanc ; en sombre une surface de
  * panneau, pour que le neutre disparaisse dedans au lieu d'y faire un trou.
- * Les valeurs suivent `--chart-zero`, qu'on ne peut pas lire ici (module pur).
+ *
+ * Ces deux valeurs ne suivent PLUS `--chart-zero` : celui-ci vaut en sombre la
+ * surface elevee de la Lentille (#1c1c23), alors que #1c2438 est l'ancienne
+ * surface bleutee. Elle est gardee telle quelle parce qu'elle alimente les
+ * echelles daltoniennes, figees octet pour octet par les tests ; la remettre
+ * d'aplomb avec le jeton est a trancher avec elles, pas ici. Module pur : il ne
+ * peut pas lire le jeton.
  */
 const ZERO: Record<ThemeMode, string> = { light: '#f7f7f7', dark: '#1c2438' };
 

@@ -266,6 +266,17 @@ describe('anciens noms — alias des jetons Lentille', () => {
     expect(css).not.toMatch(/--color-danger-hover\s*:/);
   });
 
+  it('un symbole de gene n’est pas prune : encre, sans surcharge sombre', () => {
+    // Spec § 2.1 : la prune marque l'action primaire, l'element courant et la selection, rien d'autre.
+    // Un symbole de gene n'est ni l'un ni l'autre ; le traitement est la police mono et l'encre.
+    const css = stripComments(CSS);
+    const rule = /(?:^|\n)\.gene-symbol\s*\{([^}]*)\}/.exec(css);
+    expect(rule).not.toBeNull();
+    expect(rule![1]).toMatch(/color:\s*var\(--text-primary\)/);
+    expect(rule![1]).not.toMatch(/--sl-purple|--sl-teal|--gl-plum|--accent/);
+    expect(css).not.toMatch(/\.dark\s+\.gene-symbol/);
+  });
+
   it('le rayon de carte vaut 14px (concentrique : 14 - 4 = 10, 10 - 4 = 6)', () => {
     expect(readTokens(CSS, ':root')['--radius-card-px']).toBe('14px');
   });

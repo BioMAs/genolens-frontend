@@ -85,8 +85,8 @@ const PALETTES: Record<PaletteMode, Record<ThemeMode, Palette>> = {
   standard: {
     light: {
       // Terre cuite / bleu acier (spec § 2.1, jetons --gl-up / --gl-down) : 4,79:1 et 6,83:1 sur
-      // blanc, au-dessus du plancher de 3:1, et 12 points de clarte OKLCH d'ecart — on les
-      // distingue sans la teinte. Les hex sont l'arrondi, calcule une fois, de l'oklch d'origine.
+      // blanc, au-dessus du plancher de 3:1, et 10 points de clarte OKLCH d'ecart (57 contre 47)
+      // — on les distingue sans la teinte. Les hex sont l'arrondi, calcule une fois, de l'oklch d'origine.
       up: '#c24d25', // oklch(57% 0.16 38)
       down: '#175d9b', // oklch(47% 0.12 250)
       // Volontairement bas (1,53:1) : le non-significatif doit reculer.

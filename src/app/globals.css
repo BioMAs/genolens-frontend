@@ -461,10 +461,12 @@
      Aucun nom ne chevauche deux axes, donc `bg-primary` ou `text-line`
      n'ont pas de sens et personne ne les ecrira.
 
-     NE PAS enregistrer l'echelle --n-* ici : .dark ne redefinit que --n-0
-     a --n-200, les crans --n-300 a --n-900 gardent leurs valeurs claires.
-     Un `text-n-700` produirait du noir sur noir en theme sombre. Les
-     tokens semantiques ci-dessous sont, eux, integralement redefinis. */
+     L'echelle --n-* n'est PAS enregistree ici, et ce n'est plus par prudence
+     contre le noir sur noir : depuis Lentille chacun de ses crans suit le theme
+     (alias d'un jeton --gl-*, ou valeur sombre propre dans .dark ; seul --n-400,
+     un gris moyen, est identique dans les deux modes). Elle reste un nom herite,
+     numerique, qui ne dit ni l'axe ni le role ; les tokens semantiques
+     ci-dessous (text-*, bg-*, border-*) sont ce qu'on ecrit dans le code neuf. */
 
   /* Encre */
   --color-primary:            var(--text-primary);
@@ -1260,15 +1262,15 @@ body {
 .status-dot.error    { background: var(--sl-red); }
 .status-dot.pending  { background: var(--n-300); }
 
-/* Gene / biological entity highlight */
+/* Gene / biological entity highlight. Un symbole de gene n'est ni une action, ni l'element
+   courant, ni une selection : la prune ne le colore donc pas. Il se distingue par la police
+   mono et le poids, en encre, et l'encre suit le theme (pas de surcharge .dark). */
 .gene-symbol {
   font-family: var(--font-geist-mono, monospace);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--sl-purple);
+  color: var(--text-primary);
 }
-
-.dark .gene-symbol { color: var(--sl-teal); }
 
 /* Significance badges (pval, log2fc) */
 .sig-positive { color: var(--sl-teal-dark); font-weight: 600; }

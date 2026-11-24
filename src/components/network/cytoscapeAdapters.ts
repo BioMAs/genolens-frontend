@@ -193,11 +193,10 @@ export function readGraphTheme(root?: HTMLElement | null): GraphTheme {
     toLegacyColor(style.getPropertyValue(name)) || fallback;
 
   return {
-    // `--dc-up` / `--dc-down` sont les anciens jetons de direction : ils ne
-    // varient PAS avec le theme, et `--dc-up` (#22c55e) donne 2,28:1 sur blanc
-    // — sous le plancher non-textuel de 3:1, pour la donnee la plus importante
-    // du produit. `--chart-up` / `--chart-down` sont la paire corrigee, definie
-    // par theme.
+    // `--chart-up` / `--chart-down` font autorite pour les graphiques (chartPalettes.ts). Les
+    // anciens `--dc-up` / `--dc-down` en sont aujourd'hui des alias — tous deux resolvent sur
+    // --gl-up / --gl-down, qui suivent le theme ; l'ancien vert #22c55e (2,28:1 sur blanc, sous
+    // le plancher non-textuel de 3:1) a disparu. On lit la paire chart, la source.
     up: read('--chart-up', FALLBACK_THEME.up),
     down: read('--chart-down', FALLBACK_THEME.down),
     // Pas d'equivalent dans ChartTheme : un graphe pose son libelle SUR le
