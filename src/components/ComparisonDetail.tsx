@@ -69,7 +69,7 @@ interface ComparisonDetailProps {
 /**
  * What every module's `<section>` carries: it is the panel of its tab.
  *
- * Spread after a literal `id="…"` on purpose — `ComparisonSidebarNav.test` reads this file and
+ * Spread after a literal `id="…"` on purpose — `comparisonSections.test` reads this file and
  * matches `<section id="…"` to prove that every catalogue module has a panel here.
  */
 const tabPanel = (panel: ComparisonPanel) => ({

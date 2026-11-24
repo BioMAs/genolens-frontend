@@ -30,7 +30,7 @@ export default function AppFrame({
     <TourProvider>
       {/* Le fil d'Ariane vit ici, au-dessus d'AppShell : celle-ci est un
           composant serveur, donc un nom charge cote page ne peut pas redescendre
-          jusqu'a la TopBar par des props. */}
+          jusqu'a la TopNav par des props. */}
       <BreadcrumbProvider>
         {/* Montee UNE fois, au-dessus des deux coquilles : le raccourci global
             vit avec elle, donc il fonctionne aussi en mode conversation. */}

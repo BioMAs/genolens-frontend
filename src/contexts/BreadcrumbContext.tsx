@@ -8,13 +8,13 @@ import type { Crumb } from '@/lib/navigation/breadcrumbs';
  * qu'elle affiche — « Skin Study » plutot que « Project ».
  *
  * Pourquoi un contexte et pas des props : `AppShell` est un composant SERVEUR
- * et `TopBar` est client, donc un nom charge cote page ne peut pas transiter
+ * et `TopNav` est client, donc un nom charge cote page ne peut pas transiter
  * par la coquille sans faire basculer tout l'arbre cote client.
  *
  * Un portail vers un `#breadcrumb-slot` a ete envisage et ecarte : fragile lors
  * des transitions de route, et sans equivalent au rendu serveur.
  *
- * Sans surcharge, la TopBar retombe sur `resolveBreadcrumb(pathname)`, qui
+ * Sans surcharge, la TopNav retombe sur `resolveBreadcrumb(pathname)`, qui
  * donne toujours une piste correcte. C'est ce repli qui rend la migration
  * possible route par route plutot qu'en un seul lot.
  */
@@ -31,7 +31,7 @@ export function BreadcrumbProvider({ children }: { children: React.ReactNode }) 
   return <BreadcrumbContext.Provider value={value}>{children}</BreadcrumbContext.Provider>;
 }
 
-/** Lu par la TopBar. `null` = pas de surcharge, on retombe sur l'URL. */
+/** Lu par la TopNav. `null` = pas de surcharge, on retombe sur l'URL. */
 export function useBreadcrumbOverride(): Crumb[] | null {
   return React.useContext(BreadcrumbContext)?.override ?? null;
 }
