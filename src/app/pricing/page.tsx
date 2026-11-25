@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
-import { createClient } from '@/utils/supabase/client';
 import api from '@/utils/api';
+import { hasSessionHint } from '@/utils/auth/client';
 import { usePricing } from '@/hooks/usePricing';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { annualDiscountPct, plansOrdered, type Plan } from '@/types/pricing';
@@ -44,21 +44,12 @@ export default function PricingPage() {
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   // The page is public: only a signed-in visitor has a profile to read, and
-  // /users/me answers 401 to an anonymous one. `null` while the check runs.
+  // /users/me answers 401 to an anonymous one. The session is told by the
+  // readable `gl_session` hint, read in an effect so the server render and the
+  // hydration agree; `null` while that has not run.
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   useEffect(() => {
-    let cancelled = false;
-    createClient()
-      .auth.getSession()
-      .then(({ data: { session } }) => {
-        if (!cancelled) setHasSession(!!session);
-      })
-      .catch(() => {
-        if (!cancelled) setHasSession(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    setHasSession(hasSessionHint());
   }, []);
 
   // Current-plan badge: the shared profile query, so arriving from the app

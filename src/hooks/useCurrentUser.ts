@@ -1,8 +1,8 @@
 /**
  * Hook to get the current authenticated user.
  */
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { useMemo } from "react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export interface CurrentUser {
   id: string;
@@ -11,57 +11,23 @@ export interface CurrentUser {
 }
 
 /**
- * Get the current authenticated user from Supabase.
+ * Get the current authenticated user.
+ *
+ * Derived from the shared `/users/me` query: the session lives in httpOnly
+ * cookies the page cannot read, so there is no browser-side session to ask or
+ * to listen to. Nobody (`user: null`) until the profile has been read, and
+ * when it cannot be (signed out, API down).
  */
-export function useCurrentUser() {
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useCurrentUser(): { user: CurrentUser | null; loading: boolean } {
+  const { data: profile, isLoading } = useUserProfile();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.email,
-          });
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch current user:", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const user = useMemo<CurrentUser | null>(
+    () =>
+      profile
+        ? { id: profile.id, email: profile.email, name: profile.full_name || profile.email }
+        : null,
+    [profile],
+  );
 
-    fetchUser();
-
-    // Listen for auth state changes
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.email,
-          });
-        } else {
-          setUser(null);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  return { user, loading };
+  return { user, loading: isLoading };
 }

@@ -1,14 +1,9 @@
-import { createClient } from '@/utils/supabase/server';
+import { getSessionUser } from '@/utils/auth/server';
 import { redirect } from 'next/navigation';
 import AllComparisonsView from '@/components/comparisons/AllComparisonsView';
 
 export default async function ComparisonsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!(await getSessionUser())) {
     redirect('/');
   }
 

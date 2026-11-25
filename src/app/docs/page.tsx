@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
+import { getSessionUser } from '@/utils/auth/server';
 import { buildSearchIndex } from '@/lib/docs';
 import DocsIndex from '@/components/docs/DocsIndex';
 import { PageHeader } from '@/components/ui/page-header';
@@ -15,12 +15,7 @@ export default async function DocsPage() {
   // Même garde que les autres pages de l'application : les guides décrivent
   // les écrans, les modules payants et leurs limites, et s'adressent aux
   // utilisateurs connectés.
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!(await getSessionUser())) {
     redirect('/');
   }
 

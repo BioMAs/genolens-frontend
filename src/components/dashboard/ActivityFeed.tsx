@@ -28,7 +28,7 @@ import { comparisonTitle, formatRelative } from './format';
  * FAMILLE d'action (donnees, analyse, curation, collaboration), la phrase dit
  * le reste ; la couleur n'est donc jamais seule porteuse du sens.
  *
- * `user_id` est l'UUID Supabase de l'auteur : on dit « You » quand c'est
+ * `user_id` est l'UUID de l'auteur : on dit « You » quand c'est
  * l'utilisateur courant, « A collaborator » sinon — l'historique ne porte pas
  * le nom des autres membres.
  */
