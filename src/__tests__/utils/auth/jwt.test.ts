@@ -25,17 +25,25 @@ afterAll(() => {
   else process.env.AUTH_JWKS_URL = initialJwksUrl;
 });
 
-type SignOptions = { iss?: string; aud?: string; exp?: string | number };
+type SignOptions = {
+  iss?: string;
+  aud?: string;
+  exp?: string | number;
+  /** Registered claims to leave out of the token. */
+  omit?: Array<'exp' | 'iat' | 'sub'>;
+};
 
-const sign = (claims: Record<string, unknown>, opts: SignOptions = {}) =>
-  new SignJWT({ sid: 's1', amr: ['pwd', 'otp'], ...claims })
+const sign = (claims: Record<string, unknown>, opts: SignOptions = {}) => {
+  const omit = new Set(opts.omit);
+  const jwt = new SignJWT({ sid: 's1', amr: ['pwd', 'otp'], ...claims })
     .setProtectedHeader({ alg: 'ES256', kid: 'k1' })
-    .setSubject('u1')
     .setIssuer(opts.iss ?? ISS)
-    .setAudience(opts.aud ?? 'genolens')
-    .setIssuedAt()
-    .setExpirationTime(opts.exp ?? '15m')
-    .sign(privateKey);
+    .setAudience(opts.aud ?? 'genolens');
+  if (!omit.has('sub')) jwt.setSubject('u1');
+  if (!omit.has('iat')) jwt.setIssuedAt();
+  if (!omit.has('exp')) jwt.setExpirationTime(opts.exp ?? '15m');
+  return jwt.sign(privateKey);
+};
 
 describe('verifyAccessToken', () => {
   it('returns the claims of a valid token', async () => {
@@ -61,6 +69,10 @@ describe('verifyAccessToken', () => {
     ['no second factor', () => sign({ amr: ['pwd'] })],
     ['no amr claim', () => sign({ amr: undefined })],
     ['no session id', () => sign({ sid: undefined })],
+    // Without `exp` a token would never expire: jose only checks the claims it finds.
+    ['no expiry', () => sign({}, { omit: ['exp'] })],
+    ['no issue time', () => sign({}, { omit: ['iat'] })],
+    ['no subject', () => sign({}, { omit: ['sub'] })],
   ])('refuses a token: %s', async (_, make) => {
     expect(await verifyAccessToken(await make(), keys)).toBeNull();
   });

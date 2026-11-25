@@ -21,10 +21,16 @@ function defaultKeys(): JWTVerifyGetKey | null {
 }
 
 /**
+ * Claims every access token must carry. jose checks `exp` only when it is
+ * present: a token without one would never expire, so its absence is a refusal.
+ */
+const REQUIRED_CLAIMS = ['exp', 'iat', 'sub', 'sid'];
+
+/**
  * Verifies an access token locally (signature, ES256 only, issuer, audience,
- * expiry) and returns its session claims, or `null` for anything wrong: bad or
- * expired token, missing configuration, or a session without a second factor
- * (`amr` must contain `otp` or `recovery`).
+ * expiry, required claims) and returns its session claims, or `null` for
+ * anything wrong: bad, expired or incomplete token, missing configuration, or
+ * a session without a second factor (`amr` must contain `otp` or `recovery`).
  */
 export async function verifyAccessToken(
   token: string,
@@ -41,6 +47,7 @@ export async function verifyAccessToken(
       algorithms: ['ES256'],
       issuer,
       audience: TOKEN_AUDIENCE,
+      requiredClaims: REQUIRED_CLAIMS,
     });
 
     const { sub, sid, amr } = payload;
