@@ -263,6 +263,51 @@ describe('buildAnswers — 4, what it means biologically', () => {
     );
   });
 
+  describe('emphasis marks and identifiers with underscores', () => {
+    const meaningOf = (interpretation: string) => buildAnswers(base({ interpretation })).meaning.text;
+
+    it('keeps an underscore inside a word: comparison names are not emphasis', () => {
+      expect(meaningOf('KO_vs_WT shows a strong response. Next.')).toBe('KO_vs_WT shows a strong response.');
+      expect(meaningOf('Treated_vs_Control and Retinol_vs_Vehicle differ. Next.')).toBe(
+        'Treated_vs_Control and Retinol_vs_Vehicle differ.'
+      );
+    });
+
+    it('keeps the underscore of a gene symbol', () => {
+      expect(meaningOf('HLA_DRB1 and MT_CO1 rise.')).toBe('HLA_DRB1 and MT_CO1 rise.');
+    });
+
+    it('takes a code span verbatim, only the backticks go', () => {
+      expect(meaningOf('`KO_vs_WT` shows a strong response.')).toBe('KO_vs_WT shows a strong response.');
+      expect(meaningOf('Use `_italic_` and `**bold**` literally.')).toBe('Use _italic_ and **bold** literally.');
+    });
+
+    it('strips _italic_ and __bold__ at word boundaries', () => {
+      expect(meaningOf('_italic_ rises.')).toBe('italic rises.');
+      expect(meaningOf('The _barrier_ falls, __fast__.')).toBe('The barrier falls, fast.');
+    });
+
+    it('strips **bold** and *italic*', () => {
+      expect(meaningOf('**bold** rises.')).toBe('bold rises.');
+      expect(meaningOf('The *barrier* falls.')).toBe('The barrier falls.');
+    });
+
+    it('strips emphasis around an identifier without touching its underscores', () => {
+      expect(meaningOf('_KO_vs_WT_ rises.')).toBe('KO_vs_WT rises.');
+      expect(meaningOf('**HLA_DRB1** rises.')).toBe('HLA_DRB1 rises.');
+    });
+
+    it('strips emphasis that wraps a code span, and nested emphasis', () => {
+      expect(meaningOf('**Run `KO_vs_WT` now**.')).toBe('Run KO_vs_WT now.');
+      expect(meaningOf('**bold and *both* here** rises.')).toBe('bold and both here rises.');
+    });
+
+    it('leaves a lone mark that closes nothing as written', () => {
+      expect(meaningOf('Significant at p<0.05* only.')).toBe('Significant at p<0.05* only.');
+      expect(meaningOf('_private and _other stay.')).toBe('_private and _other stay.');
+    });
+  });
+
   it('ends the sentence at ! or ? as well', () => {
     expect(buildAnswers(base({ interpretation: 'Is the barrier lost? Yes.' })).meaning.text).toBe(
       'Is the barrier lost?'

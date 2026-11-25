@@ -103,12 +103,50 @@ const HEADING = /^\s*#/;
 /** Puce, numéro (`1.`, `1)`) ou citation en tête de ligne : sans quoi « 1. » ferait une phrase. */
 const LIST_MARK = /^\s*(?:>\s*)?(?:[-+*]|\d+[.)])\s+/;
 const LINK = /\[([^\]]*)\]\([^)]*\)/g;
-/** Gras, italique, code. */
-const EMPHASIS = /[*_`]+/g;
+/** Un `code span` : ses marques et son contenu, que rien d'autre ne doit toucher. */
+const CODE_SPAN = /`[^`]*`/g;
+/** Gras / italique en `*` : une paire dont l'intérieur ne commence ni ne finit par une espace. */
+const STAR_EMPHASIS = /(\*{1,3})(?=\S)(.*?\S)\1/g;
+/**
+ * Gras / italique en `_` : seulement en bord de mot, comme CommonMark. Le `_` d'ouverture ne suit
+ * pas un caractère de mot et celui de fermeture n'en précède pas un : `KO_vs_WT` et `HLA_DRB1`
+ * sont des identifiants, pas de l'emphase.
+ */
+const UNDERSCORE_EMPHASIS = /(^|\W)(_{1,2})(?=\S)(.*?\S)\2(?!\w)/g;
+/** Un caractère de la zone d'usage privé, qui tient la place d'un code span le temps du traitement. */
+const CODE_SLOT = /[\uE000-\uF8FF]/g;
+const CODE_SLOT_BASE = 0xe000;
 /** Jusqu'au premier `.`, `!` ou `?` suivi d'une espace ou de la fin : « 2.5 fold » ne coupe pas. */
 const SENTENCE = /^[\s\S]*?[.!?](?=\s|$)/;
 /** Ce qu'il reste d'une règle horizontale (`---`) une fois les marques retirées. */
 const HAS_TEXT = /[^\s=-]/;
+
+/**
+ * Un texte Markdown sans ses marques : le gras et l'italique (`*`, `**`, `_`, `__`) comme
+ * délimiteurs seulement, les backticks d'un code span, mais jamais ce que le code contient.
+ *
+ * Les code spans sont mis à l'abri d'abord (un caractère chacun), puis remis tels quels : le
+ * lecteur y trouve ses noms de comparaison (`KO_vs_WT`) et de gènes à l'identique, et une emphase
+ * qui entoure un code span est quand même retirée. Un délimiteur qui ne ferme rien reste littéral.
+ */
+function stripMarkdownMarks(text: string): string {
+  const spans: string[] = [];
+  let current = text.replace(CODE_SPAN, (span) => {
+    spans.push(span.slice(1, -1));
+    return String.fromCharCode(CODE_SLOT_BASE + spans.length - 1);
+  });
+
+  // Emphase imbriquée (`**gras et *italique***`) : on repasse tant que quelque chose tombe.
+  for (let previous = ''; previous !== current; ) {
+    previous = current;
+    current = current.replace(STAR_EMPHASIS, '$2').replace(UNDERSCORE_EMPHASIS, '$1$3');
+  }
+
+  // Un backtick resté seul n'ouvre aucun code span : il disparaît avec les autres marques.
+  return current
+    .replace(/`/g, '')
+    .replace(CODE_SLOT, (slot) => spans[slot.charCodeAt(0) - CODE_SLOT_BASE] ?? slot);
+}
 
 /**
  * La première phrase du premier paragraphe d'un texte Markdown, sans sa mise en forme.
@@ -121,14 +159,12 @@ function firstSentence(markdown: string): string | null {
     .join('\n');
 
   for (const paragraph of body.split(/\n\s*\n/)) {
-    const text = paragraph
+    const joined = paragraph
       .split('\n')
       .map((line) => line.replace(LIST_MARK, ''))
       .join(' ')
-      .replace(LINK, '$1')
-      .replace(EMPHASIS, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+      .replace(LINK, '$1');
+    const text = stripMarkdownMarks(joined).replace(/\s+/g, ' ').trim();
     if (HAS_TEXT.test(text)) return (SENTENCE.exec(text)?.[0] ?? text).trim();
   }
   return null;
