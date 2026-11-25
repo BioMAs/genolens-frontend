@@ -65,6 +65,7 @@ export function OverflowMenu({
 }: OverflowMenuProps) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
@@ -73,8 +74,12 @@ export function OverflowMenu({
     };
     // Escape doit fermer le menu : sans cela un utilisateur au clavier n'a
     // aucun moyen d'en sortir sans deplacer le focus hors du composant.
+    // Le focus revient au declencheur : le menu disparait avec l'entree qui
+    // l'avait, et le clavier repartirait du haut du document.
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      trigger.current?.focus();
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -92,6 +97,7 @@ export function OverflowMenu({
   return (
     <div ref={root} className={cn('relative', className)}>
       <button
+        ref={trigger}
         type="button"
         aria-label={label}
         aria-haspopup="menu"

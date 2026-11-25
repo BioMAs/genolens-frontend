@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import Link from 'next/link';
 import { BookOpen, Route } from 'lucide-react';
 import QuotaDisplay from '@/components/QuotaDisplay';
@@ -25,6 +26,7 @@ import { cn } from '@/lib/cn';
  */
 export default function DrawerNav({ active }: { active: DestinationKey | null }) {
   const { restartCurrentTour, currentTourId } = useTour();
+  const helpId = useId();
 
   // Rangee de 44px : le minimum tactile, et ce tiroir n'existe que sur ecran tactile ou etroit.
   const rowClass =
@@ -49,8 +51,12 @@ export default function DrawerNav({ active }: { active: DestinationKey | null })
         })}
       </nav>
 
-      <div role="group" aria-label="Help" className="flex flex-col gap-1 border-t border-subtle p-3">
-        <p className="eyebrow px-3 pb-1">Help</p>
+      {/* Le groupe est nomme par son intitule visible : un `aria-label` en plus
+          le ferait annoncer deux fois. */}
+      <div role="group" aria-labelledby={helpId} className="flex flex-col gap-1 border-t border-subtle p-3">
+        <p id={helpId} className="eyebrow px-3 pb-1">
+          Help
+        </p>
         {currentTourId && (
           <button type="button" onClick={restartCurrentTour} className={cn(rowClass, restClass)}>
             <Route className="h-4 w-4 shrink-0" aria-hidden />

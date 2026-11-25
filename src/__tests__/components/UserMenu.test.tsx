@@ -86,10 +86,28 @@ describe('UserMenu — compact trigger in the top bar', () => {
     fireEvent.click(trigger());
 
     const menu = screen.getByRole('menu');
-    expect(menu).toHaveClass('top-full');
-    expect(menu).not.toHaveClass('bottom-full');
+    const popover = menu.parentElement as HTMLElement;
+    expect(popover).toHaveClass('top-full');
+    expect(popover).not.toHaveClass('bottom-full');
     expect(trigger()).toHaveAttribute('aria-expanded', 'true');
-    expect(within(menu).getByText('chercheur@example.com')).toBeInTheDocument();
+    expect(within(popover).getByText('chercheur@example.com')).toBeInTheDocument();
+  });
+
+  it('keeps the identity beside the menu, not inside it', () => {
+    // Un role="menu" ne contient que des entrees : un bloc de texte dedans est
+    // annonce comme un element du menu qu'on ne peut pas activer (axe,
+    // aria-required-children).
+    render(<UserMenu user={user} />);
+    fireEvent.click(trigger());
+    expect(within(screen.getByRole('menu')).queryByText('chercheur@example.com')).toBeNull();
+  });
+
+  it('never gets wider than the screen, whatever the e-mail', () => {
+    render(<UserMenu user={user} />);
+    fireEvent.click(trigger());
+    expect((screen.getByRole('menu').parentElement as HTMLElement).className).toMatch(
+      /max-w-\[calc\(100vw-2rem\)\]/,
+    );
   });
 
   it('lists Profile, the theme toggle and Sign out, in that order', () => {

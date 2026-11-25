@@ -154,7 +154,7 @@ export const VIEW_DESCRIPTIONS: Record<ComparisonView, string> = {
 };
 
 /**
- * One icon per screen, kept beside the labels so the hub and the sidebar cannot drift apart.
+ * One icon per screen, kept beside the labels so every place that names a screen shows the same one.
  *
  * A lucide export is a component reference, not JSX or a hook, so this file stays as
  * unit-testable as it was — the catalogue already imports icons the same way.

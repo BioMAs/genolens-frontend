@@ -38,10 +38,17 @@ export default function AppFrame({
         {chatMode ? (
           <ChatModeShell />
         ) : (
-          <AppShell user={user} userRole={userRole}>
-            <LicenseExpiredBanner />
-            <SubscriptionExpiredBanner />
-            <DemoAccountBanner />
+          <AppShell
+            user={user}
+            userRole={userRole}
+            banners={
+              <>
+                <LicenseExpiredBanner />
+                <SubscriptionExpiredBanner />
+                <DemoAccountBanner />
+              </>
+            }
+          >
             {children}
           </AppShell>
         )}

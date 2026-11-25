@@ -92,56 +92,58 @@ export default function UserMenu({
       </button>
 
       {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-50 mt-2 min-w-[14rem] overflow-hidden rounded-card border border-line bg-raised py-1 shadow-elev-2"
-        >
+        // L'identite est A COTE du menu, pas dedans : un role="menu" ne contient
+        // que des entrees (aria-required-children). La largeur est bornee par
+        // l'ecran : un courriel long tronque au lieu de deborder a 375px.
+        <div className="absolute right-0 top-full z-50 mt-2 w-max min-w-[14rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-line bg-raised shadow-elev-2">
           <div className="border-b border-subtle px-3 py-2">
             <p className="truncate text-body-sm font-medium text-primary">{userName}</p>
             <p className="truncate text-caption text-muted">{user.email}</p>
           </div>
 
-          <Link role="menuitem" href="/profile" onClick={() => setOpen(false)} className={itemClass}>
-            <UserIcon className="h-4 w-4 shrink-0" aria-hidden />
-            Profile
-          </Link>
-
-          <button type="button" role="menuitem" onClick={toggleTheme} className={itemClass}>
-            {theme === 'light' ? (
-              <Moon className="h-4 w-4 shrink-0" aria-hidden />
-            ) : (
-              <Sun className="h-4 w-4 shrink-0" aria-hidden />
-            )}
-            {theme === 'light' ? 'Dark theme' : 'Light theme'}
-          </button>
-
-          {isAdmin && (
-            <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className={itemClass}>
-              <Shield className="h-4 w-4 shrink-0" aria-hidden />
-              Admin
+          <div role="menu" aria-label="Account" className="py-1">
+            <Link role="menuitem" href="/profile" onClick={() => setOpen(false)} className={itemClass}>
+              <UserIcon className="h-4 w-4 shrink-0" aria-hidden />
+              Profile
             </Link>
-          )}
 
-          {/* La deconnexion reste un POST vers /auth/signout : un GET
-              deconnecterait l'utilisateur sur simple prefetch du navigateur.
-
-              Pas de `onClick={() => setOpen(false)}` ici, contrairement aux
-              autres entrees : React purge les evenements discrets de facon
-              synchrone, donc le menu — et le <form> avec lui — quitterait le
-              DOM avant que le navigateur ne declenche l'activation du bouton.
-              Un submitter detache n'a plus de form owner : la soumission est
-              abandonnee en silence et le clic ne fait rien. La navigation qui
-              suit le POST ferme le menu de toute facon. */}
-          <form ref={signOutForm} action="/auth/signout" method="post" className="contents">
-            <button
-              type="submit"
-              role="menuitem"
-              className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
-            >
-              <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-              Sign out
+            <button type="button" role="menuitem" onClick={toggleTheme} className={itemClass}>
+              {theme === 'light' ? (
+                <Moon className="h-4 w-4 shrink-0" aria-hidden />
+              ) : (
+                <Sun className="h-4 w-4 shrink-0" aria-hidden />
+              )}
+              {theme === 'light' ? 'Dark theme' : 'Light theme'}
             </button>
-          </form>
+
+            {isAdmin && (
+              <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className={itemClass}>
+                <Shield className="h-4 w-4 shrink-0" aria-hidden />
+                Admin
+              </Link>
+            )}
+
+            {/* La deconnexion reste un POST vers /auth/signout : un GET
+                deconnecterait l'utilisateur sur simple prefetch du navigateur.
+
+                Pas de `onClick={() => setOpen(false)}` ici, contrairement aux
+                autres entrees : React purge les evenements discrets de facon
+                synchrone, donc le menu — et le <form> avec lui — quitterait le
+                DOM avant que le navigateur ne declenche l'activation du bouton.
+                Un submitter detache n'a plus de form owner : la soumission est
+                abandonnee en silence et le clic ne fait rien. La navigation qui
+                suit le POST ferme le menu de toute facon. */}
+            <form ref={signOutForm} action="/auth/signout" method="post" className="contents">
+              <button
+                type="submit"
+                role="menuitem"
+                className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
+              >
+                <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -81,6 +81,17 @@ describe('MobileNavToggle', () => {
     expect(drawer()).toHaveAttribute('data-state', 'closed');
   });
 
+  it('gives the focus back to the toggle when Escape closes it from inside', () => {
+    renderToggle();
+    fireEvent.click(toggle());
+    screen.getByRole('link', { name: 'Projects' }).focus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    // Ferme, le tiroir est `visibility: hidden` : le lien qui avait le focus
+    // n'est plus atteignable, et le focus retomberait sur le document.
+    expect(toggle()).toHaveFocus();
+  });
+
   it('closes when the route changes, so it does not hide the page just opened', () => {
     const { rerender } = renderToggle();
     fireEvent.click(toggle());

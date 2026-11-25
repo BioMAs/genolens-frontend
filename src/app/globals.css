@@ -292,8 +292,6 @@
   --surface-raised:      var(--gl-surface);
   --hover-overlay:       var(--gl-paper-2);
   --app-bg:              var(--gl-paper);
-  --topbar-bg:           var(--gl-surface);
-  --topbar-border:       var(--gl-rule);
 }
 
 /* ---- Jetons Lentille — sombre ----

@@ -251,8 +251,8 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
 
           if (resp.data.status === DatasetStatus.READY) {
             clearInterval(pollInterval);
-            // Invalidate rather than re-fetch by hand: the datasets query is shared with the
-            // sidebar, so one invalidation refreshes both.
+            // Invalidate rather than re-fetch by hand: every screen that reads the project's
+            // datasets shares this query, so one invalidation refreshes them all.
             queryClient.invalidateQueries({ queryKey: ['datasets', 'project', projectId] });
             setReprocessing(false);
           } else if (resp.data.status === DatasetStatus.FAILED) {

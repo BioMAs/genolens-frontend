@@ -69,6 +69,18 @@ describe('AppShell', () => {
     expect(second).toBe(screen.getByRole('heading', { level: 1, name: 'Page title' }));
   });
 
+  it('puts the account banners above the breadcrumb, which stays on the title', () => {
+    render(
+      <AppShell user={USER} userRole={null} banners={<div role="alert">Demo account</div>}>
+        <h1>Page title</h1>
+      </AppShell>,
+    );
+    const [first, second, third] = Array.from(screen.getByRole('main').children) as HTMLElement[];
+    expect(first).toBe(screen.getByRole('alert'));
+    expect(within(second).getByRole('navigation', { name: /breadcrumb/i })).toBeInTheDocument();
+    expect(third).toBe(screen.getByRole('heading', { level: 1, name: 'Page title' }));
+  });
+
   it('hands the user role down to the account menu', () => {
     renderShell('admin');
     fireEvent.click(screen.getByRole('button', { name: /account menu/i }));

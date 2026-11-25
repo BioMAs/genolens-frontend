@@ -85,10 +85,13 @@ describe('HelpMenu — entries', () => {
     expect(screen.queryByRole('menuitem', { name: 'Take the tour' })).not.toBeInTheDocument();
   });
 
-  it('closes on Escape', () => {
+  it('closes on Escape and gives the focus back to the trigger', () => {
     render(<HelpMenu />);
     open();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    // Le menu disparait avec l'element qui avait le focus : sans ce retour, un
+    // utilisateur au clavier repart du haut du document.
+    expect(trigger()).toHaveFocus();
   });
 });

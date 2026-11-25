@@ -5,6 +5,11 @@ import TopNav from './shell/TopNav';
 interface AppShellProps {
   user: User;
   userRole: string | null;
+  /**
+   * Bandeaux de compte (licence, abonnement, demo), AVANT le fil d'Ariane : le
+   * fil se lit avec le titre qu'il situe, un bandeau ne doit pas s'intercaler.
+   */
+  banners?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -32,11 +37,12 @@ interface AppShellProps {
  *
  * `topBarRightSlot` a ete retire : AppFrame ne l'a jamais passe.
  */
-export default function AppShell({ user, userRole, children }: AppShellProps) {
+export default function AppShell({ user, userRole, banners, children }: AppShellProps) {
   return (
     <div className="app-shell">
       <TopNav user={user} userRole={userRole} />
       <main className="app-content">
+        {banners}
         <PageBreadcrumb />
         {children}
       </main>

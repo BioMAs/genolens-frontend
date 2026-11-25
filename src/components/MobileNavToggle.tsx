@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
@@ -27,6 +27,7 @@ export default function MobileNavToggle({ children }: { children: React.ReactNod
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Naviguer ferme le tiroir : sans cela il masquerait la page qu'on vient
   // d'ouvrir, et l'utilisateur devrait le refermer a la main a chaque lien.
@@ -43,8 +44,12 @@ export default function MobileNavToggle({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!open) return;
+    // Ferme, le tiroir est `visibility: hidden` : si le focus y etait, il
+    // retomberait sur le document. Il revient au bouton qui l'a ouvert.
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      toggleRef.current?.focus();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -53,6 +58,7 @@ export default function MobileNavToggle({ children }: { children: React.ReactNod
   return (
     <>
       <button
+        ref={toggleRef}
         type="button"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
