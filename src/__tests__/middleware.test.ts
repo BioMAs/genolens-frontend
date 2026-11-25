@@ -273,7 +273,7 @@ describe('a renewal that did not produce a verifiable token', () => {
 });
 
 describe('public pages', () => {
-  it.each(['/pricing', '/login', '/suspended', '/auth/forgot', '/auth/refresh'])(
+  it.each(['/pricing', '/login', '/suspended', '/auth/forgot', '/auth/refresh', '/auth/local-signout'])(
     'lets %s through without a session',
     async (path) => {
       expect(location(await middleware(req(path)))).toBeUndefined();
@@ -333,6 +333,8 @@ describe('the suspended guard', () => {
     expect(location(await middleware(req('/login', status)))).toBeUndefined();
     expect(location(await middleware(req('/auth/refresh?next=%2Fdashboard', status)))).toBeUndefined();
     expect(location(await middleware(req('/api/anything', status)))).toBeUndefined();
+    // The suspended page offers to sign out, and the sign-out ends here.
+    expect(location(await middleware(req('/auth/local-signout', status)))).toBeUndefined();
   });
 
   it('lets an active account through', async () => {

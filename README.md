@@ -37,6 +37,7 @@ setup:
 NEXT_PUBLIC_API_URL=http://localhost:8001/api/v1
 AUTH_JWKS_URL=http://localhost:8001/api/v1/auth/jwks.json
 AUTH_ISSUER=http://localhost:8001
+AUTH_COOKIE_DOMAIN=
 NEXT_PUBLIC_ADMIN_APP_URL=http://localhost:3001
 ```
 
@@ -44,6 +45,10 @@ NEXT_PUBLIC_ADMIN_APP_URL=http://localhost:3001
 - `AUTH_JWKS_URL` and `AUTH_ISSUER` are read at runtime by the Next server and the
   middleware to verify the session token (`gl_at` cookie) locally: they must match
   the API's public key set and its `iss` claim.
+- `AUTH_COOKIE_DOMAIN` (runtime) must equal the API's: when a sign-out cannot reach
+  the API, `/auth/local-signout` expires `gl_at` and `gl_session` from the Next server,
+  and a browser deletes a cookie only when the Domain matches. Empty for host-only
+  cookies (local development).
 - `NEXT_PUBLIC_ADMIN_APP_URL` is the origin of the admin app, the only absolute URL
   a post-login `?next=` may point to. It is baked into the bundle at build time.
 

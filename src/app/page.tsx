@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Loader2, Lock } from 'lucide-react';
@@ -9,10 +9,21 @@ import AuthCard from '@/components/auth/AuthCard';
 import AuthAlert from '@/components/auth/AuthAlert';
 import AuthField from '@/components/auth/AuthField';
 import MfaChallengeForm from '@/components/auth/MfaChallengeForm';
-import { hasSessionHint, login, resendVerification, signup } from '@/utils/auth/client';
+import {
+  hasSessionHint,
+  isLogoutPending,
+  login,
+  replayPendingLogout,
+  resendVerification,
+  signOut,
+  signup,
+} from '@/utils/auth/client';
 import {
   RESEND_SENT,
   SESSION_NOT_RESTORED,
+  SIGNED_OUT,
+  SIGN_OUT_FAILED,
+  SIGN_OUT_FAILED_REFRESH_COOKIE,
   TRY_AGAIN,
   authErrorMessage,
   passwordProblem,
@@ -26,9 +37,65 @@ type SignInStep = 'password' | 'mfa';
 
 const SIGNUP_SENT = 'Check your inbox — we sent a link to confirm your account.';
 
-// The session hint is a cookie: unknown on the server, read on the client only.
+// The session hint and the pending sign-out are cookies: unknown on the server,
+// read on the client only.
 const subscribeToNothing = () => () => {};
-const noSessionHint = () => false;
+const onServer = () => false;
+
+/**
+ * A sign-out the API could not take is replayed on every load of this page,
+ * until it goes through. Returns whether one is still pending and whether the
+ * replay made on this load has just ended it.
+ */
+function usePendingSignOut(): { pending: boolean; replayed: boolean } {
+  const pending = useSyncExternalStore(subscribeToNothing, isLogoutPending, onServer);
+  const [replayed, setReplayed] = useState(false);
+
+  // Once per load: StrictMode's second effect run would post the logout twice.
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current || !isLogoutPending()) return;
+    started.current = true;
+    void replayPendingLogout().then((done) => {
+      if (done) setReplayed(true);
+    });
+  }, []);
+
+  return { pending, replayed };
+}
+
+/**
+ * The sign-out did not go through: the session lives on at the API. Says so,
+ * and whether this browser at least stopped using it (the web app's server
+ * expired its cookies, so the hint is gone), and offers to sign out again.
+ */
+function SignOutFailedNotice({ localSessionCleared }: { localSessionCleared: boolean }) {
+  const [retrying, setRetrying] = useState(false);
+
+  const retry = () => {
+    setRetrying(true);
+    // `signOut` replaces the page whatever happens: stay busy until then.
+    void signOut();
+  };
+
+  return (
+    <div className="mb-4" data-testid="sign-out-failed">
+      <AuthAlert tone="error">
+        {SIGN_OUT_FAILED}
+        {localSessionCleared && <> {SIGN_OUT_FAILED_REFRESH_COOKIE}</>}{' '}
+        <button
+          type="button"
+          className="auth-link inline-flex items-center gap-1 underline"
+          onClick={retry}
+          disabled={retrying}
+        >
+          {TRY_AGAIN}
+          {retrying && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
+        </button>
+      </AuthAlert>
+    </div>
+  );
+}
 
 /**
  * Sign in and sign up. The API sets the session cookies; this screen only moves
@@ -45,8 +112,14 @@ function AuthScreen() {
   // alone, and must not offer to restore the session the visitor just left. When
   // the failure was transient the session hint is still there, and so is the
   // session: reloading would show the same form, so the visitor is offered a retry.
-  const sessionHint = useSyncExternalStore(subscribeToNothing, hasSessionHint, noSessionHint);
-  const renewalFailed = params.get('reauth') === '1' && params.has('next') && sessionHint;
+  const sessionHint = useSyncExternalStore(subscribeToNothing, hasSessionHint, onServer);
+  const reauth = params.get('reauth') === '1';
+  const renewalFailed = reauth && params.has('next') && sessionHint;
+
+  // `reauth=1` alone is where `signOut` lands when the API could not take it.
+  const pendingSignOut = usePendingSignOut();
+  const signOutFailed = reauth && !params.has('next') && pendingSignOut.pending;
+  const signOutReplayed = reauth && !params.has('next') && pendingSignOut.replayed;
 
   const [mode, setMode] = useState<AuthMode>('signin');
   // `?step=mfa` is where an accepted invitation lands: the password is set, a code is due.
@@ -208,6 +281,14 @@ function AuthScreen() {
               : 'Start analyzing your RNA-seq data'}
           </p>
         </div>
+
+        {signOutFailed && <SignOutFailedNotice localSessionCleared={!sessionHint} />}
+
+        {signOutReplayed && (
+          <div className="mb-4">
+            <AuthAlert tone="ok">{SIGNED_OUT}</AuthAlert>
+          </div>
+        )}
 
         {renewalFailed && (
           <div className="mb-4" data-testid="session-not-restored">

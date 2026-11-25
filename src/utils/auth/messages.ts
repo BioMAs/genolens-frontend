@@ -49,6 +49,20 @@ export const SESSION_NOT_RESTORED = "We couldn't restore your session.";
 export const TRY_AGAIN = 'Try again';
 
 /**
+ * What the visitor reads on the sign-in page after a sign-out the API could not
+ * take (unreachable, 5xx): the session is still valid at the API. When the web
+ * app's server did expire the cookies the pages read, the second sentence says
+ * what is left: the refresh cookie, which only the API host receives.
+ */
+export const SIGN_OUT_FAILED =
+  'We could not sign you out: your session is still active on this device.';
+export const SIGN_OUT_FAILED_REFRESH_COOKIE =
+  'This browser no longer uses it here, but its refresh cookie on the GenoLens API may remain until the next successful sign-out.';
+
+/** Once the sign-out left pending has gone through. */
+export const SIGNED_OUT = 'You are now signed out.';
+
+/**
  * The message for a refused call. A known code wins; otherwise the status
  * decides: 404 is a route the API keeps closed for now (the pre-launch API
  * serves only the admin sign-in), 0 is an API that could not be reached.

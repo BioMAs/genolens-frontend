@@ -20,6 +20,27 @@ export const RENEWED_COOKIE_MAX_AGE_SECONDS = 30;
  */
 export const REFRESH_TIMEOUT_MS = 10_000;
 
+/**
+ * How long a sign-out may wait for the API. A black-holed API would otherwise
+ * leave "Sign out" doing nothing at all; past this it counts as unreachable.
+ */
+export const LOGOUT_TIMEOUT_MS = 10_000;
+
+/**
+ * Left by a sign-out the API could not take (unreachable, 5xx): `1`, nothing
+ * else, so not a credential. The sign-in page replays `POST /auth/logout` while
+ * it is set. It lives as long as a session can (30 days): past that, the
+ * session it stands for has expired anyway.
+ */
+export const LOGOUT_PENDING_COOKIE = 'gl_logout_pending';
+export const LOGOUT_PENDING_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+
+/**
+ * The web app's own route that expires `gl_at` and `gl_session`, so the pages
+ * stop seeing a session even when the API cannot take the sign-out.
+ */
+export const LOCAL_SIGNOUT_PATH = '/auth/local-signout';
+
 /** What to check when a renewal succeeds yet the token still does not verify. */
 export const RENEWAL_LOOP_HINT =
   'Check AUTH_ISSUER and AUTH_JWKS_URL for this deployment, and that the API cookie domain covers this host.';

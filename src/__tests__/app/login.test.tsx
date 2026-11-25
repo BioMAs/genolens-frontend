@@ -10,7 +10,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Home from '@/app/page';
-import { hasSessionHint, login, resendVerification, signup, verifyMfa } from '@/utils/auth/client';
+import {
+  hasSessionHint,
+  isLogoutPending,
+  login,
+  replayPendingLogout,
+  resendVerification,
+  signOut,
+  signup,
+  verifyMfa,
+} from '@/utils/auth/client';
 import { navigate } from '@/utils/auth/navigation';
 import { authOk, authRefused } from '@/test-utils/authResults';
 
@@ -21,6 +30,9 @@ jest.mock('next/navigation', () => ({
 }));
 jest.mock('@/utils/auth/client', () => ({
   hasSessionHint: jest.fn(),
+  isLogoutPending: jest.fn(),
+  replayPendingLogout: jest.fn(),
+  signOut: jest.fn(),
   login: jest.fn(),
   verifyMfa: jest.fn(),
   signup: jest.fn(),
@@ -29,6 +41,9 @@ jest.mock('@/utils/auth/client', () => ({
 jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
 
 const hintMock = hasSessionHint as jest.MockedFunction<typeof hasSessionHint>;
+const pendingMock = isLogoutPending as jest.MockedFunction<typeof isLogoutPending>;
+const replayMock = replayPendingLogout as jest.MockedFunction<typeof replayPendingLogout>;
+const signOutMock = signOut as jest.MockedFunction<typeof signOut>;
 const loginMock = login as jest.MockedFunction<typeof login>;
 const verifyMfaMock = verifyMfa as jest.MockedFunction<typeof verifyMfa>;
 const signupMock = signup as jest.MockedFunction<typeof signup>;
@@ -537,5 +552,113 @@ describe('a renewal that failed', () => {
     render(<Home />);
 
     expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+  });
+});
+
+// A sign-out the API could not take (unreachable, 5xx) lands on `/?reauth=1` with no
+// `next`. The web app's server has expired the cookies the pages read, but the session
+// lives on at the API, with its refresh cookie: the visitor is told so, and offered to
+// try again. A flag remembers the sign-out, and every load of `/` replays it.
+describe('a sign-out the API could not take', () => {
+  const FAILED = /we could not sign you out: your session is still active on this device/i;
+  const REFRESH_COOKIE = /refresh cookie .* may remain until the next successful sign-out/i;
+
+  /** The flag stays set until the replay goes through; `replayed` decides whether it does. */
+  function pendingSignOut(replayed: Promise<boolean> = new Promise(() => {})) {
+    let pending = true;
+    pendingMock.mockImplementation(() => pending);
+    replayMock.mockImplementation(() =>
+      replayed.then((done) => {
+        if (done) pending = false;
+        return done;
+      }),
+    );
+  }
+
+  it('says so, and that the refresh cookie may remain, when the local session is gone', () => {
+    search('?reauth=1');
+    hintMock.mockReturnValue(false);
+    pendingSignOut();
+    render(<Home />);
+
+    const notice = screen.getByTestId('sign-out-failed');
+    expect(notice).toHaveTextContent(FAILED);
+    expect(notice).toHaveTextContent(REFRESH_COOKIE);
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    // The form stays: the visitor can still sign in as someone else.
+    expect(screen.getByTestId('auth-form')).toBeInTheDocument();
+  });
+
+  it('does not claim the browser has let go of a session it still holds', () => {
+    search('?reauth=1');
+    hintMock.mockReturnValue(true);
+    pendingSignOut();
+    render(<Home />);
+
+    const notice = screen.getByTestId('sign-out-failed');
+    expect(notice).toHaveTextContent(FAILED);
+    expect(notice).not.toHaveTextContent(REFRESH_COOKIE);
+  });
+
+  it('runs the sign-out again on "Try again"', async () => {
+    search('?reauth=1');
+    pendingSignOut();
+    signOutMock.mockReturnValue(new Promise(() => {}));
+    render(<Home />);
+
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(signOutMock).toHaveBeenCalledTimes(1);
+    // The page is about to be replaced: no second click meanwhile.
+    expect(screen.getByRole('button', { name: /try again/i })).toBeDisabled();
+  });
+
+  it('replays the sign-out on load, and says when it went through', async () => {
+    search('?reauth=1');
+    pendingSignOut(Promise.resolve(true));
+    render(<Home />);
+
+    expect(await screen.findByText(/you are now signed out/i)).toBeInTheDocument();
+    expect(replayMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('sign-out-failed')).not.toBeInTheDocument();
+  });
+
+  it('keeps the notice when the replay fails too', async () => {
+    search('?reauth=1');
+    pendingSignOut(Promise.resolve(false));
+    render(<Home />);
+
+    await waitFor(() => expect(replayMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId('sign-out-failed')).toHaveTextContent(FAILED);
+    expect(screen.queryByText(/you are now signed out/i)).not.toBeInTheDocument();
+  });
+
+  it('replays a pending sign-out on an ordinary load of the sign-in page, without a notice', async () => {
+    search('');
+    pendingSignOut(Promise.resolve(true));
+    render(<Home />);
+
+    await waitFor(() => expect(replayMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId('sign-out-failed')).not.toBeInTheDocument();
+    expect(screen.queryByText(/you are now signed out/i)).not.toBeInTheDocument();
+  });
+
+  it('replays nothing, and says nothing, when no sign-out is pending', () => {
+    search('?reauth=1');
+    pendingMock.mockReturnValue(false);
+    render(<Home />);
+
+    expect(replayMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('sign-out-failed')).not.toBeInTheDocument();
+  });
+
+  it('leaves a failed renewal (reauth with next) to its own notice', () => {
+    search('?next=%2Fprojects&reauth=1');
+    hintMock.mockReturnValue(true);
+    pendingSignOut();
+    render(<Home />);
+
+    expect(screen.queryByTestId('sign-out-failed')).not.toBeInTheDocument();
+    expect(screen.getByTestId('session-not-restored')).toBeInTheDocument();
   });
 });

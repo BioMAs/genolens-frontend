@@ -1,4 +1,13 @@
-import { CLIENT_HEADER, CLIENT_NAME, REFRESH_TIMEOUT_MS, SESSION_HINT_COOKIE } from './constants';
+import {
+  CLIENT_HEADER,
+  CLIENT_NAME,
+  LOCAL_SIGNOUT_PATH,
+  LOGOUT_PENDING_COOKIE,
+  LOGOUT_PENDING_MAX_AGE_SECONDS,
+  LOGOUT_TIMEOUT_MS,
+  REFRESH_TIMEOUT_MS,
+  SESSION_HINT_COOKIE,
+} from './constants';
 import { SESSION_EXPIRED } from './messages';
 import { navigate } from './navigation';
 import { isPublicPath, loginPath } from './paths';
@@ -87,8 +96,19 @@ export function login(email: string, password: string) {
   return authPost<{ next: MfaStep }>('/login', { email, password });
 }
 
+/**
+ * A sign-in or an enrolment that opens a session also drops a sign-out left
+ * pending: replayed later, it would end this new session, not the one left
+ * behind (whose refresh cookie the new one has just replaced).
+ */
+async function opensSession<T>(call: Promise<AuthResult<T>>): Promise<AuthResult<T>> {
+  const result = await call;
+  if (result.ok) forgetPendingLogout();
+  return result;
+}
+
 export function verifyMfa(input: { code: string } | { recovery_code: string }) {
-  return authPost<{ next: 'app' }>('/mfa/verify', input);
+  return opensSession(authPost<{ next: 'app' }>('/mfa/verify', input));
 }
 
 export function startMfaSetup() {
@@ -96,7 +116,7 @@ export function startMfaSetup() {
 }
 
 export function confirmMfaSetup(code: string) {
-  return authPost<{ recovery_codes: string[] }>('/mfa/setup/confirm', { code });
+  return opensSession(authPost<{ recovery_codes: string[] }>('/mfa/setup/confirm', { code }));
 }
 
 export function signup(email: string, password: string, fullName?: string) {
@@ -207,25 +227,96 @@ export async function authedFetch(url: string, init?: RequestInit): Promise<Resp
   return send();
 }
 
+/** Whether the readable cookie `name` is set to `1`. */
+function hasFlagCookie(name: string): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.split(';').some((cookie) => cookie.trim() === `${name}=1`);
+}
+
 /** `gl_session=1` is the readable hint that a session cookie exists (the real ones are httpOnly). */
 export function hasSessionHint(): boolean {
-  if (typeof document === 'undefined') return false;
-  return document.cookie.split(';').some((cookie) => cookie.trim() === `${SESSION_HINT_COOKIE}=1`);
+  return hasFlagCookie(SESSION_HINT_COOKIE);
+}
+
+/** Whether a sign-out the API could not take is waiting to be replayed (`gl_logout_pending`). */
+export function isLogoutPending(): boolean {
+  return hasFlagCookie(LOGOUT_PENDING_COOKIE);
+}
+
+/** A plain cookie, not sessionStorage: it outlives the tab, as the session it stands for does. */
+function rememberPendingLogout(): void {
+  const secure = window.location.protocol === 'https:' ? '; secure' : '';
+  document.cookie =
+    `${LOGOUT_PENDING_COOKIE}=1; path=/; max-age=${LOGOUT_PENDING_MAX_AGE_SECONDS}; samesite=lax${secure}`;
+}
+
+function forgetPendingLogout(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${LOGOUT_PENDING_COOKIE}=; path=/; max-age=0`;
+}
+
+/** The API did not take the logout: unreachable (status 0, deadline included) or failing (5xx). */
+function logoutUnconfirmed(result: AuthResult<unknown>): boolean {
+  return !result.ok && (result.status === 0 || result.status >= 500);
+}
+
+function postLogout(): Promise<AuthResult<unknown>> {
+  return authPost('/logout', undefined, { signal: AbortSignal.timeout(LOGOUT_TIMEOUT_MS) });
+}
+
+/**
+ * Asks the web app's own server to expire `gl_at` and `gl_session`
+ * (`/auth/local-signout`). Best effort: a failure leaves `/?reauth=1` to the
+ * middleware, which serves the form even to a session it can still verify.
+ */
+async function endLocalSession(): Promise<void> {
+  try {
+    await fetch(LOCAL_SIGNOUT_PATH, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { [CLIENT_HEADER]: CLIENT_NAME },
+      signal: AbortSignal.timeout(LOGOUT_TIMEOUT_MS),
+    });
+  } catch {
+    // Nothing more to do here: the sign-out stays pending and the page says so.
+  }
 }
 
 /**
  * Ends the session. A failed call must not trap the user in a session they
- * asked to leave: the page is left either way, and the full reload empties the
- * React Query cache.
+ * asked to leave, nor leave them believing they are out: the page is left
+ * either way, and the full reload empties the React Query cache.
  *
- * Normally the API has cleared its cookies by then. When it could not be
- * reached or failed (status 0 or 5xx) it may not have, and `/` would send the
- * still-verified visitor straight on to the dashboard as if nothing happened:
- * `reauth=1` (with no `next`) makes the middleware serve the sign-in form.
+ * 1. `POST /auth/logout` ends the session at the API and clears its cookies,
+ *    the API-host refresh cookie included. It may take up to `LOGOUT_TIMEOUT_MS`.
+ * 2. `/auth/local-signout` expires `gl_at` and `gl_session` from the web app's
+ *    server, whatever the API answered: the pages stop seeing the session even
+ *    when the API is down.
+ * 3. When the API could not be reached or failed (status 0 or 5xx), the session
+ *    is still valid there: `gl_logout_pending` remembers to replay the logout
+ *    (the sign-in page does, on every load), and `/?reauth=1` (no `next`) shows
+ *    the form with a notice that the sign-out did not go through.
  */
 export async function signOut(): Promise<void> {
-  const result = await authPost('/logout');
+  const result = await postLogout();
   document.cookie = 'account_status=; path=/; max-age=0';
-  const unconfirmed = !result.ok && (result.status === 0 || result.status >= 500);
+  await endLocalSession();
+
+  const unconfirmed = logoutUnconfirmed(result);
+  if (unconfirmed) rememberPendingLogout();
+  else forgetPendingLogout();
   navigate(unconfirmed ? '/?reauth=1' : '/');
+}
+
+/**
+ * Replays a sign-out left pending: the API ends the session named by the
+ * access cookie, else by the refresh cookie it still holds. `true` once nothing
+ * is pending any more (the API took it, or nothing was pending), `false` when
+ * the API still could not take it.
+ */
+export async function replayPendingLogout(): Promise<boolean> {
+  if (!isLogoutPending()) return true;
+  if (logoutUnconfirmed(await postLogout())) return false;
+  forgetPendingLogout();
+  return true;
 }

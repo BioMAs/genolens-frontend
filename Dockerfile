@@ -36,8 +36,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-# Not set here: AUTH_JWKS_URL and AUTH_ISSUER are read at runtime (server and
-# middleware) and must be provided when the container starts.
+# Not set here: AUTH_JWKS_URL, AUTH_ISSUER and AUTH_COOKIE_DOMAIN are read at
+# runtime (server and middleware) and must be provided when the container starts.
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid 1001 nextjs

@@ -91,9 +91,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
     if (claims) {
       if (reauth) {
-        // A sign-out the API could not take (it was unreachable) leaves the cookies
-        // in place and lands here with no `next`: the visitor asked to leave, so
-        // the sign-in form is shown rather than the dashboard.
+        // A sign-out the API could not take lands here with no `next`. The web
+        // app's server normally expired the cookies by then (/auth/local-signout);
+        // when it could not either, they are still in place: the visitor asked to
+        // leave, so the sign-in form is shown rather than the dashboard.
         if (!rawNext) return NextResponse.next();
 
         // `reauth=1` came back from /auth/refresh, so whoever sent the visitor
