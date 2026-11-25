@@ -82,6 +82,17 @@ export interface GeoImportResponse {
   message: string;
 }
 
+/** A signed-in session of the account, as `GET /auth/sessions` lists it. */
+export interface AuthSessionInfo {
+  id: string;
+  created_at: string;
+  last_used_at: string;
+  ip: string | null;
+  user_agent: string | null;
+  /** The session this very request belongs to. */
+  current: boolean;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -91,6 +102,10 @@ export interface UserProfile {
   ai_tokens_purchased: number;
   ai_tokens_used: number;
   full_name?: string;
+  /** Two-factor authentication state, served by /users/me. */
+  mfa_enabled?: boolean;
+  /** Unused recovery codes left; `null` when two-factor authentication is off. */
+  recovery_codes_remaining?: number | null;
   // Quota d'analyses, servi par /users/me (UserSelf). L'unité est l'analyse :
   // une analyse coûte une unité, quel que soit son nombre de contrastes.
   analyses_used_this_month?: number;

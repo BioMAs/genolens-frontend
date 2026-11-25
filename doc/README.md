@@ -82,8 +82,7 @@ frontend/
 | Recharts | 3.6.0 | Graphiques (line, bar, scatter) |
 | Plotly.js | 3.3.1 | Visualisations scientifiques avancées |
 | D3.js | 7.9.0 | Graphes force-directed, UpSet, Venn |
-| Supabase SSR | 0.8.0 | Auth côté serveur |
-| Supabase JS | 2.88.0 | Auth client & storage |
+| jose | 5.10.0 | Vérification locale du jeton d'accès (JWT ES256), côté serveur et middleware |
 | Axios | 1.13.2 | Client HTTP |
 | Sentry | 8.x | Error tracking |
 | Jest | 30.2.0 | Unit tests |

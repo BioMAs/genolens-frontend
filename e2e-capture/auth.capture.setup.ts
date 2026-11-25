@@ -6,9 +6,15 @@
  * suite CI et cible un ancien libellé de la page de login ("Sign in to
  * GenoLens"). On ne le modifie pas ici pour ne rien casser côté CI.
  *
- * Les identifiants viennent de .env.test.local et ne sont JAMAIS journalisés.
+ * La connexion se fait en deux temps : mot de passe, puis code à 6 chiffres de
+ * l'application d'authentification. Le code est calculé ici à partir du secret
+ * TOTP du compte démo (TEST_USER_TOTP_SECRET), comme le ferait l'application.
+ *
+ * Les identifiants et le secret TOTP viennent de .env.test.local et ne sont
+ * JAMAIS journalisés.
  */
 import { test as setup, expect } from '@playwright/test'
+import { authenticator } from 'otplib'
 import * as path from 'path'
 
 const SESSION_FILE = path.resolve(__dirname, '../playwright/.auth/user.json')
@@ -16,11 +22,22 @@ const SESSION_FILE = path.resolve(__dirname, '../playwright/.auth/user.json')
 setup('authenticate for capture', async ({ page }) => {
   const email = process.env.TEST_USER_EMAIL
   const password = process.env.TEST_USER_PASSWORD
+  // Le secret est saisi tel qu'affiché à l'enrôlement, souvent groupé par blocs.
+  const totpSecret = process.env.TEST_USER_TOTP_SECRET?.replace(/\s+/g, '')
 
   if (!email || !password) {
     throw new Error(
       'TEST_USER_EMAIL / TEST_USER_PASSWORD absents de .env.test.local — ' +
         'impossible de capturer sans le compte démo.'
+    )
+  }
+
+  // La double authentification est obligatoire : sans le secret, la connexion
+  // s'arrêterait à l'étape du code. On échoue d'emblée, sans rien afficher du secret.
+  if (!totpSecret) {
+    throw new Error(
+      'TEST_USER_TOTP_SECRET absent de .env.test.local — la connexion exige ' +
+        "un code d'authentification, impossible de capturer sans le secret TOTP du compte démo."
     )
   }
 
@@ -43,8 +60,20 @@ setup('authenticate for capture', async ({ page }) => {
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: /^sign in$/i }).click()
 
-  // Succès = redirection vers le dashboard. En cas d'échec Supabase, le
-  // formulaire affiche une erreur et l'URL ne change pas : on veut échouer vite.
+  // Étape du code. Si elle n'apparaît pas, soit le mot de passe est refusé (le
+  // formulaire affiche une erreur), soit le compte n'a pas encore de 2FA et
+  // l'API envoie vers l'enrôlement : dans les deux cas on veut échouer vite.
+  const codeField = page.getByTestId('auth-code')
+  await expect(
+    codeField,
+    "L'étape du code n'est pas apparue : mot de passe refusé, ou compte démo sans 2FA enrôlée."
+  ).toBeVisible({ timeout: 30_000 })
+
+  await codeField.fill(authenticator.generate(totpSecret))
+  await page.getByTestId('auth-mfa-submit').click()
+
+  // Succès = redirection vers le dashboard. Si le code est refusé, le
+  // formulaire affiche une erreur et l'URL ne change pas.
   await page.waitForURL(/\/dashboard/, { timeout: 45_000 })
 
   // ── Neutralisation des visites guidées driver.js ────────────────────────

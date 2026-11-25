@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Ban, Clock, ShieldOff, ArrowRight } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 import AuthShell from "@/components/auth/AuthShell";
 import AuthCard from "@/components/auth/AuthCard";
 import { SUPPORT_EMAIL } from "@/lib/contact";
+import { signOut } from "@/utils/auth/client";
 
 type AccountStatus = "suspended" | "cancelled" | "pending" | null;
 
@@ -68,13 +68,6 @@ export default function SuspendedPage() {
       ? { bg: "var(--auth-danger-bg)", fg: "var(--auth-danger)" }
       : { bg: "var(--auth-accent-soft)", fg: "var(--auth-accent)" };
 
-  const signOut = async () => {
-    document.cookie = "account_status=; path=/; max-age=0";
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
   return (
     <AuthShell>
       <AuthCard className="text-center">
@@ -112,7 +105,7 @@ export default function SuspendedPage() {
 
         <button
           type="button"
-          onClick={signOut}
+          onClick={() => void signOut()}
           className="auth-link mt-4 text-body-sm"
           style={{ color: "var(--auth-muted)" }}
         >

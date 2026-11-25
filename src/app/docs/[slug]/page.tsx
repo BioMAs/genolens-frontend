@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { createClient } from '@/utils/supabase/server';
+import { getSessionUser } from '@/utils/auth/server';
 import { getDoc, listDocs } from '@/lib/docs';
 import DocArticle from '@/components/docs/DocArticle';
 
@@ -25,12 +25,7 @@ export async function generateMetadata({
 export default async function DocPage({ params }: { params: Promise<{ slug: string }> }) {
   // Garde avant toute lecture de guide : un visiteur anonyme ne doit ni lire
   // le contenu, ni distinguer un slug existant d'un slug inconnu.
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!(await getSessionUser())) {
     redirect('/');
   }
 

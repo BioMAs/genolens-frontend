@@ -1,9 +1,9 @@
-import { User } from '@supabase/supabase-js';
+import type { AppUser } from '@/utils/auth/types';
 import PageBreadcrumb from './shell/PageBreadcrumb';
 import TopNav from './shell/TopNav';
 
 interface AppShellProps {
-  user: User;
+  user: AppUser;
   userRole: string | null;
   /**
    * Bandeaux de compte (licence, abonnement, demo), AVANT le fil d'Ariane : le

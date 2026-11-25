@@ -12,12 +12,11 @@
     "test:coverage": "jest --coverage",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "e2e:auth": "playwright test -c playwright.auth.config.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^8.0.0",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.88.0",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/d3": "^7.4.3",
@@ -31,10 +30,12 @@
     "driver.js": "^1.3.6",
     "gray-matter": "^4.0.3",
     "html2canvas": "^1.4.1",
+    "jose": "^5.10.0",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
     "plotly.js-dist-min": "^3.3.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
@@ -53,6 +54,7 @@
     "@types/cytoscape": "^3.21.9",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-plotly.js": "^2.6.4",
@@ -61,6 +63,7 @@
     "eslint-config-next": "16.0.10",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "otplib": "^12.0.1",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"

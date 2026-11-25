@@ -1,6 +1,6 @@
 'use client';
 
-import { User } from '@supabase/supabase-js';
+import type { AppUser } from '@/utils/auth/types';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import { TourProvider } from '@/contexts/TourContext';
 import AppShell from '@/components/AppShell';
@@ -20,7 +20,7 @@ export default function AppFrame({
   userRole,
   children,
 }: {
-  user: User;
+  user: AppUser;
   userRole: string | null;
   children: React.ReactNode;
 }) {

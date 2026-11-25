@@ -6,8 +6,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ChatModeProvider } from "@/contexts/ChatModeContext";
 import AppFrame from "@/components/AppFrame";
-import { createClient } from "@/utils/supabase/server";
-import { getUserRole } from "@/utils/getUserRole";
+import { getServerUser } from "@/utils/auth/server";
 import { cn } from '@/lib/cn';
 
 // Trois familles, trois emplois (spec Lentille § 2.2) :
@@ -83,15 +82,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let userRole: string | null = null;
-  if (user) {
-    userRole = await getUserRole(user.id);
-  }
+  const user = await getServerUser();
 
   return (
     // `suppressHydrationWarning` : le script ci-dessous ajoute une classe sur
@@ -112,7 +103,7 @@ export default async function RootLayout({
             <ThemeProvider>
               <ChatModeProvider>
                 {user ? (
-                  <AppFrame user={user} userRole={userRole}>
+                  <AppFrame user={user} userRole={user.role}>
                     {children}
                   </AppFrame>
                 ) : (

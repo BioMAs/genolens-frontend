@@ -1,55 +1,88 @@
 /**
- * Regression : le « Sign out » du menu utilisateur est un `<form method="post">`
- * rendu conditionnellement derriere `{open && ...}`.
+ * Menu du compte de la barre du haut : ouverture, entrees, deconnexion.
  *
- * Le bouton portait un `onClick={() => setOpen(false)}` comme les autres
- * entrees du menu. React purge les evenements discrets de facon synchrone : le
- * menu — et le form avec lui — quittait le DOM avant que le navigateur ne
- * declenche l'activation du submitter. Un submitter detache n'a plus de form
- * owner, donc la soumission etait abandonnee en silence et le bouton ne faisait
- * rien (reproduit dans un vrai navigateur ; jsdom n'implemente pas la
- * soumission, d'ou l'invariant teste ici : le form doit survivre au clic).
+ * La deconnexion ne passe plus par un `<form method="post">` vers une route
+ * Next : le cookie de renouvellement n'est visible que de l'API, donc c'est le
+ * navigateur qui termine la session (`signOut`) et recoit l'effacement des
+ * cookies. Ce test ne verifie que le branchement ; l'appel et la navigation
+ * sont couverts dans `clientBrowser.test.ts`.
  */
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import UserMenu from '@/components/sidebar/UserMenu';
-import type { User } from '@supabase/supabase-js';
+import { signOut } from '@/utils/auth/client';
+import type { AppUser } from '@/utils/auth/types';
 
 const toggleTheme = jest.fn();
 jest.mock('@/contexts/ThemeContext', () => ({
   useTheme: () => ({ theme: 'dark', toggleTheme }),
 }));
 
-const user = { id: 'u1', email: 'chercheur@example.com' } as User;
+jest.mock('@/utils/auth/client', () => ({ signOut: jest.fn() }));
 
-describe('UserMenu — sign out', () => {
-  it('poste vers /auth/signout', () => {
-    render(<UserMenu user={user} />);
-    fireEvent.click(screen.getByRole('button', { name: /chercheur/i }));
+const account: AppUser = {
+  id: 'u1',
+  email: 'lea@example.test',
+  full_name: null,
+  role: 'USER',
+};
 
-    const form = screen.getByRole('menuitem', { name: /sign out/i }).closest('form');
-    expect(form).toHaveAttribute('action', '/auth/signout');
-    expect(form).toHaveAttribute('method', 'post');
+/** Le compte des tests de la barre du haut : ses initiales sont « CH ». */
+const researcher: AppUser = {
+  id: 'u2',
+  email: 'chercheur@example.com',
+  full_name: null,
+  role: 'USER',
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe('UserMenu', () => {
+  it('signs out through the API', async () => {
+    const user = userEvent.setup();
+    render(<UserMenu user={account} />);
+    await user.click(screen.getByRole('button', { name: /lea/i }));
+    await user.click(screen.getByRole('menuitem', { name: /sign out/i }));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it('ne demonte pas le form au clic, sinon la soumission est annulee', () => {
-    render(<UserMenu user={user} />);
-    fireEvent.click(screen.getByRole('button', { name: /chercheur/i }));
+  it('offers sign-out as a button, not a form post to a route', async () => {
+    const user = userEvent.setup();
+    render(<UserMenu user={account} />);
+    await user.click(screen.getByRole('button', { name: /lea/i }));
 
-    const signOut = screen.getByRole('menuitem', { name: /sign out/i });
-    fireEvent.click(signOut);
-
-    expect(screen.getByRole('menuitem', { name: /sign out/i }).closest('form')).toBeInTheDocument();
+    const item = screen.getByRole('menuitem', { name: /sign out/i });
+    expect(item.tagName).toBe('BUTTON');
+    expect(item.closest('form')).toBeNull();
   });
 
-  it('ferme bien le menu depuis les autres entrees', () => {
-    render(<UserMenu user={user} />);
-    fireEvent.click(screen.getByRole('button', { name: /chercheur/i }));
+  it('closes the menu from the other entries', async () => {
+    const user = userEvent.setup();
+    render(<UserMenu user={account} />);
+    await user.click(screen.getByRole('button', { name: /lea/i }));
 
-    fireEvent.click(screen.getByRole('menuitem', { name: /profile/i }));
+    // The profile entry is a link: left alone, jsdom would report a navigation
+    // it does not implement.
+    const profile = screen.getByRole('menuitem', { name: /profile/i });
+    profile.addEventListener('click', (event) => event.preventDefault());
+    await user.click(profile);
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('closes the menu on Escape', async () => {
+    const user = userEvent.setup();
+    render(<UserMenu user={account} />);
+    await user.click(screen.getByRole('button', { name: /lea/i }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 });
-
 
 /**
  * Le menu du compte dans la barre du haut.
@@ -62,7 +95,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
   const trigger = () => screen.getByRole('button', { name: /account menu/i });
 
   it('shows the initials on a plum fill, with the on-accent text, and nothing else', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     expect(trigger()).toHaveTextContent(/^CH$/);
     expect(trigger()).toHaveClass('bg-plum', 'text-on-accent', 'h-9', 'w-9');
     // Le nom et le courriel ne sont plus affiches en permanence.
@@ -70,19 +103,19 @@ describe('UserMenu — compact trigger in the top bar', () => {
   });
 
   it('names the account in its accessible name and announces a menu', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     expect(trigger()).toHaveAccessibleName(/chercheur@example\.com/);
     expect(trigger()).toHaveAttribute('aria-haspopup', 'menu');
     expect(trigger()).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('keeps a 44px hit area around the 36px disc', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     expect(trigger().className).toMatch(/after:-inset-1\b/);
   });
 
   it('opens downward, under the trigger, and says who is signed in', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
 
     const menu = screen.getByRole('menu');
@@ -97,13 +130,13 @@ describe('UserMenu — compact trigger in the top bar', () => {
     // Un role="menu" ne contient que des entrees : un bloc de texte dedans est
     // annonce comme un element du menu qu'on ne peut pas activer (axe,
     // aria-required-children).
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
     expect(within(screen.getByRole('menu')).queryByText('chercheur@example.com')).toBeNull();
   });
 
   it('never gets wider than the screen, whatever the e-mail', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
     expect((screen.getByRole('menu').parentElement as HTMLElement).className).toMatch(
       /max-w-\[calc\(100vw-2rem\)\]/,
@@ -111,7 +144,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
   });
 
   it('lists Profile, the theme toggle and Sign out, in that order', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
 
     const items = screen.getAllByRole('menuitem').map((el) => el.textContent?.trim());
@@ -121,7 +154,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
 
   it('toggles the theme without closing the menu', () => {
     toggleTheme.mockClear();
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
     fireEvent.click(screen.getByRole('menuitem', { name: /light theme/i }));
 
@@ -130,7 +163,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
   });
 
   it('closes on Escape and gives the focus back to the trigger', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
     fireEvent.keyDown(document, { key: 'Escape' });
 
@@ -139,7 +172,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
   });
 
   it('closes on a press outside', () => {
-    render(<UserMenu user={user} />);
+    render(<UserMenu user={researcher} />);
     fireEvent.click(trigger());
     fireEvent.pointerDown(document.body);
 
@@ -149,7 +182,7 @@ describe('UserMenu — compact trigger in the top bar', () => {
 
 describe('UserMenu — Admin entry', () => {
   const open = (role?: string | null) => {
-    render(<UserMenu user={user} userRole={role} />);
+    render(<UserMenu user={researcher} userRole={role} />);
     fireEvent.click(screen.getByRole('button', { name: /account menu/i }));
   };
 

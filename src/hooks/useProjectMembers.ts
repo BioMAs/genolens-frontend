@@ -1,8 +1,8 @@
 /**
  * React Query hooks for Project Members (Collaboration).
  *
- * All calls go through the shared `api` client, which attaches the Supabase
- * access token. These hooks used to call `fetch` with
+ * All calls go through the shared `api` client, which sends the session
+ * cookies. These hooks used to call `fetch` with
  * `localStorage.getItem("token")` — a key nothing ever writes — so every request
  * went out as `Bearer null` and the backend answered 401.
  */

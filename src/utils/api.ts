@@ -1,77 +1,88 @@
 import axios from 'axios';
-import type { Session } from '@supabase/supabase-js';
-import { createClient } from '@/utils/supabase/client';
+import { apiBaseUrl, isSignedOut, redirectToSignIn, refreshSession } from '@/utils/auth/client';
+import { CLIENT_HEADER, CLIENT_NAME } from '@/utils/auth/constants';
+import { navigate } from '@/utils/auth/navigation';
 
-// Sanitize baseURL to prevent double slashes or path duplication issues
-const getBaseUrl = () => {
-  let url = process.env.NEXT_PUBLIC_API_URL || '';
-  // Remove trailing slash if present
-  if (url.endsWith('/')) {
-    url = url.slice(0, -1);
+declare module 'axios' {
+  // The type parameter must match axios's own declaration, used or not.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  interface InternalAxiosRequestConfig<D = any> {
+    /** Set on the replay that follows a session renewal, so it is never replayed twice. */
+    _authRetried?: boolean;
   }
-  // Safe-guard: if somehow the url ends with double /api/v2, fix it (though unlikely)
-  // But more importantly, ensure we don't end up with empty string
-  return url || 'http://localhost:8000/api/v2';
-};
+}
 
+// The session is carried by httpOnly cookies the API sets: the browser sends
+// them (`withCredentials`) and this code never sees a token. The API refuses a
+// cookie-authenticated write that lacks the client header (CSRF guard).
 const api = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: apiBaseUrl(),
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    [CLIENT_HEADER]: CLIENT_NAME,
   },
 });
 
-// Requests fired together (a page mounting a dozen queries) share ONE
-// getSession(). Each call takes supabase-js's navigator lock; a burst of them
-// starved its auto-refresh tick, which logged "Acquiring an exclusive Navigator
-// LockManager lock ... immediately failed". Nothing is cached once it settles:
-// the next request asks again, so a refreshed token is picked up.
-let inflightSession: Promise<Session | null> | null = null;
-
-export function currentSession(): Promise<Session | null> {
-  if (!inflightSession) {
-    inflightSession = createClient()
-      .auth.getSession()
-      .then(({ data }) => data.session)
-      .finally(() => {
-        inflightSession = null;
-      });
-  }
-  return inflightSession;
+/** A Blob's text. `FileReader` rather than `Blob.text()`, which jsdom (the tests) lacks. */
+function readText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
 }
 
-api.interceptors.request.use(async (config) => {
-  try {
-    const session = await currentSession();
-
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+/**
+ * The `detail` of a refusal's body. On a `responseType: 'blob'` call (report and
+ * export downloads) the body arrives as a Blob even for an error, so a 403 is
+ * read out of it: without that the pre-launch "Not authenticated" would go
+ * unrecognised and the session never renewed. A body that is not JSON, or has
+ * no `detail`, yields `undefined`.
+ */
+async function refusalDetail(status: number, data: unknown): Promise<unknown> {
+  let body = data;
+  if (status === 403 && typeof Blob !== 'undefined' && data instanceof Blob) {
+    try {
+      body = JSON.parse(await readText(data));
+    } catch {
+      return undefined;
     }
-  } catch (err) {
-    // Supabase client failed to initialise (e.g. missing NEXT_PUBLIC_SUPABASE_URL env var).
-    // Log the issue but let the request proceed without auth — the backend will return 401/403.
-    console.error('[api] Supabase client error in request interceptor:', err);
   }
-
-  return config;
-});
+  return (body as { detail?: unknown } | null | undefined)?.detail;
+}
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     // Ignore ECONNABORTED errors (request cancellation is normal with React Query)
     if (error.code === 'ECONNABORTED' || error.message === 'Request aborted') {
       return Promise.reject(error);
     }
 
-    if (
-      error.response?.status === 403 &&
-      error.response?.data?.detail?.error === 'account_inactive'
-    ) {
-      const accountStatus = error.response.data.detail.status as string;
+    // The access token lasts minutes: a request met by "signed out" renews the
+    // session (one refresh shared by every request that failed together) and is
+    // replayed once. A refused renewal, or a replay refused again, ends the
+    // session: back to the sign-in page, remembering where the user was.
+    const detail = error.response
+      ? await refusalDetail(error.response.status, error.response.data)
+      : undefined;
+
+    if (error.response && isSignedOut(error.response.status, detail)) {
+      const config = error.config;
+      if (config && !config._authRetried && (await refreshSession())) {
+        return api.request({ ...config, _authRetried: true });
+      }
+      redirectToSignIn();
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 403 && (detail as { error?: unknown } | undefined)?.error === 'account_inactive') {
+      const accountStatus = (detail as { status: string }).status;
       if (typeof document !== 'undefined') {
         document.cookie = `account_status=${accountStatus}; path=/; max-age=3600`;
-        window.location.href = '/suspended';
+        navigate('/suspended');
       }
       return Promise.reject(error);
     }

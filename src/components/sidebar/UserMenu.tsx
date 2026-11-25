@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { User } from '@supabase/supabase-js';
 import { LogOut, Moon, Shield, Sun, UserIcon } from 'lucide-react';
+import SignOutButton from '@/components/auth/SignOutButton';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/cn';
+import type { AppUser } from '@/utils/auth/types';
 
 /**
  * Menu du compte de la barre du haut.
@@ -33,17 +34,16 @@ export default function UserMenu({
   user,
   userRole = null,
 }: {
-  user: User;
+  user: AppUser;
   /** Role renvoye par le serveur. Absent : pas d'entree Admin. */
   userRole?: string | null;
 }) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
-  const signOutForm = React.useRef<HTMLFormElement>(null);
   const { theme, toggleTheme } = useTheme();
 
-  const userName = user.email?.split('@')[0] || 'User';
+  const userName = user.email.split('@')[0] || 'User';
   const initials = userName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'U';
   const isAdmin = userRole?.toLowerCase() === 'admin';
 
@@ -77,7 +77,7 @@ export default function UserMenu({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account menu, ${user.email ?? userName}`}
+        aria-label={`Account menu, ${user.email}`}
         onClick={() => setOpen((v) => !v)}
         // Le pseudo-element porte la zone de clic de 36 a 44px (4px de chaque
         // cote) sans grossir la pastille.
@@ -123,26 +123,17 @@ export default function UserMenu({
               </Link>
             )}
 
-            {/* La deconnexion reste un POST vers /auth/signout : un GET
-                deconnecterait l'utilisateur sur simple prefetch du navigateur.
-
-                Pas de `onClick={() => setOpen(false)}` ici, contrairement aux
-                autres entrees : React purge les evenements discrets de facon
-                synchrone, donc le menu — et le <form> avec lui — quitterait le
-                DOM avant que le navigateur ne declenche l'activation du bouton.
-                Un submitter detache n'a plus de form owner : la soumission est
-                abandonnee en silence et le clic ne fait rien. La navigation qui
-                suit le POST ferme le menu de toute facon. */}
-            <form ref={signOutForm} action="/auth/signout" method="post" className="contents">
-              <button
-                type="submit"
-                role="menuitem"
-                className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
-              >
-                <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-                Sign out
-              </button>
-            </form>
+            {/* La deconnexion est un appel a l'API fait par le navigateur, pas
+                un lien : un GET deconnecterait l'utilisateur sur simple prefetch.
+                Pas de `setOpen(false)` : la page se recharge en entier une fois la
+                session terminee, ce qui ferme le menu de toute facon. */}
+            <SignOutButton
+              role="menuitem"
+              className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
+            >
+              <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+              Sign out
+            </SignOutButton>
           </div>
         </div>
       )}

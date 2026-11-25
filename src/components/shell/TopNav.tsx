@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { User } from '@supabase/supabase-js';
+import type { AppUser } from '@/utils/auth/types';
 import CommandPaletteTrigger from '@/components/command/CommandPaletteTrigger';
 import MobileNavToggle from '@/components/MobileNavToggle';
 import QuotaDisplay from '@/components/QuotaDisplay';
@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn';
 
 interface TopNavProps {
   /** Le menu du compte en a besoin : AppShell, composant serveur, le lui passe. */
-  user: User;
+  user: AppUser;
   /** Role renvoye par le serveur : le menu du compte n'offre « Admin » qu'a un admin. */
   userRole?: string | null;
 }
