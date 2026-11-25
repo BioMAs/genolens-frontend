@@ -7,7 +7,7 @@
  * password or code, so a refusal arrives as an axios error carrying
  * `response.data.detail`. `signOut` and `qrcode` are simulated too.
  */
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -23,6 +23,7 @@ jest.mock('@/utils/api', () => ({
   default: { get: jest.fn(), post: jest.fn(), delete: jest.fn() },
 }));
 jest.mock('@/utils/auth/client', () => ({ signOut: jest.fn() }));
+jest.mock('@/utils/auth/navigation', () => ({ reloadPage: jest.fn() }));
 jest.mock('qrcode', () => ({ __esModule: true, default: { toDataURL: jest.fn() } }));
 
 const mockedApi = api as jest.Mocked<typeof api>;
@@ -98,6 +99,12 @@ function renderSection() {
 }
 
 const block = (name: string) => screen.findByRole('region', { name });
+
+/** The page is left: kept or not by the back/forward cache, it must hold no secret. */
+const leavePage = () =>
+  act(() => {
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+  });
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -284,6 +291,18 @@ describe('recovery codes', () => {
     await waitFor(() => expect(callsTo('/users/me')).toBe(2));
   });
 
+  // The back/forward cache would otherwise keep them on the page it shows again on "Back".
+  it('drops the codes as the page is left', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { recovery_codes: TEN_CODES } });
+    await regenerate('123456');
+    await screen.findByTestId('recovery-codes');
+
+    leavePage();
+
+    expect(screen.queryByTestId('recovery-codes')).not.toBeInTheDocument();
+    expect(screen.queryByText(TEN_CODES[0])).not.toBeInTheDocument();
+  });
+
   it('refuses a wrong code and shows no codes', async () => {
     mockedApi.post.mockRejectedValueOnce(axiosError(400, 'invalid_code'));
 
@@ -304,7 +323,7 @@ describe('changing the phone', () => {
       password: 'my-password-123',
       code: '123456',
     });
-    expect(await screen.findByTestId('totp-secret')).toHaveAttribute('data-secret', SECRET.secret);
+    expect(await screen.findByTestId('totp-secret')).toHaveTextContent('JBSW Y3DP EHPK 3PXP');
   });
 
   it('ends with the new recovery codes, then goes back to the start', async () => {
@@ -407,6 +426,31 @@ describe('changing the phone', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('drops the new key, then the new codes, as the page is left', async () => {
+    mockedApi.post
+      .mockResolvedValueOnce({ data: SECRET })
+      .mockResolvedValueOnce({ data: SECRET })
+      .mockResolvedValueOnce({ data: { recovery_codes: TEN_CODES } });
+    await startRotation('my-password-123', '123456');
+    await screen.findByTestId('totp-secret');
+
+    leavePage();
+
+    const phone = within(screen.getByRole('region', { name: 'Change phone' }));
+    expect(phone.queryByTestId('totp-secret')).not.toBeInTheDocument();
+    expect(phone.getByLabelText('Password')).toHaveValue('');
+
+    await user.type(phone.getByLabelText('Password'), 'my-password-123');
+    await user.type(phone.getByLabelText('Authentication code'), '123456');
+    await user.click(phone.getByRole('button', { name: 'Continue' }));
+    await submitCode('654321');
+    await screen.findByTestId('recovery-codes');
+
+    leavePage();
+
+    expect(screen.queryByTestId('recovery-codes')).not.toBeInTheDocument();
+  });
+
   it('can start again from a fresh form once restarted', async () => {
     mockedApi.post
       .mockResolvedValueOnce({ data: SECRET })
@@ -421,10 +465,7 @@ describe('changing the phone', () => {
     await user.type(phone.getByLabelText('Authentication code'), '123456');
     await user.click(phone.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByTestId('totp-secret')).toHaveAttribute(
-      'data-secret',
-      'KRSXG5CTMVRXEZLU',
-    );
+    expect(await screen.findByTestId('totp-secret')).toHaveTextContent('KRSX G5CT MVRX EZLU');
   });
 });
 

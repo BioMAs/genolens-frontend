@@ -8,13 +8,13 @@
  * simulated.
  */
 import { StrictMode } from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QRCode from 'qrcode';
 
 import MfaSetupPage from '@/app/auth/2fa/setup/page';
 import { confirmMfaSetup, startMfaSetup } from '@/utils/auth/client';
-import { navigate } from '@/utils/auth/navigation';
+import { navigate, reloadPage } from '@/utils/auth/navigation';
 import { authOk, authRefused } from '@/test-utils/authResults';
 
 let query = '';
@@ -26,12 +26,13 @@ jest.mock('@/utils/auth/client', () => ({
   startMfaSetup: jest.fn(),
   confirmMfaSetup: jest.fn(),
 }));
-jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
+jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn(), reloadPage: jest.fn() }));
 jest.mock('qrcode', () => ({ __esModule: true, default: { toDataURL: jest.fn() } }));
 
 const startMock = startMfaSetup as jest.MockedFunction<typeof startMfaSetup>;
 const confirmMock = confirmMfaSetup as jest.MockedFunction<typeof confirmMfaSetup>;
 const assign = navigate as jest.MockedFunction<typeof navigate>;
+const reload = reloadPage as jest.MockedFunction<typeof reloadPage>;
 const toDataURL = QRCode.toDataURL as unknown as jest.Mock;
 
 const search = (value: string) => {
@@ -76,10 +77,7 @@ describe('starting the enrolment', () => {
       </StrictMode>,
     );
 
-    expect(await screen.findByTestId('totp-secret')).toHaveAttribute(
-      'data-secret',
-      'JBSWY3DPEHPK3PXP',
-    );
+    expect(await screen.findByTestId('totp-secret')).toHaveTextContent('JBSW Y3DP EHPK 3PXP');
     expect(startMock).toHaveBeenCalledTimes(1);
   });
 
@@ -247,5 +245,51 @@ describe('confirming the first code', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Cannot reach GenoLens.');
     expect(screen.getByTestId('totp-secret')).toBeInTheDocument();
+  });
+});
+
+// A browser may keep the page it leaves in its back/forward cache and show it again on
+// "Back", secret included: the key and the codes are dropped on the way out, and a page
+// that comes back from that cache is reloaded.
+describe('leaving the page', () => {
+  const pageTransition = (type: 'pagehide' | 'pageshow', persisted: boolean) =>
+    act(() => {
+      window.dispatchEvent(new PageTransitionEvent(type, { persisted }));
+    });
+
+  it('drops the key as the page is left', async () => {
+    startMock.mockResolvedValue(authOk(SECRET));
+    render(<MfaSetupPage />);
+    await screen.findByTestId('totp-secret');
+
+    pageTransition('pagehide', true);
+
+    expect(screen.queryByTestId('totp-secret')).not.toBeInTheDocument();
+    expect(screen.queryByText(/JBSW Y3DP/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /qr code/i })).not.toBeInTheDocument();
+  });
+
+  it('drops the recovery codes as the page is left', async () => {
+    startMock.mockResolvedValue(authOk(SECRET));
+    confirmMock.mockResolvedValue(authOk({ recovery_codes: TEN_CODES }));
+    render(<MfaSetupPage />);
+    await submitCode('123456');
+    await screen.findByTestId('recovery-codes');
+
+    pageTransition('pagehide', true);
+
+    expect(screen.queryByTestId('recovery-codes')).not.toBeInTheDocument();
+    expect(screen.queryByText(TEN_CODES[0])).not.toBeInTheDocument();
+  });
+
+  it('reloads when the page comes back from the back/forward cache', async () => {
+    startMock.mockResolvedValue(authOk(SECRET));
+    render(<MfaSetupPage />);
+    await screen.findByTestId('totp-secret');
+
+    pageTransition('pagehide', true);
+    pageTransition('pageshow', true);
+
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

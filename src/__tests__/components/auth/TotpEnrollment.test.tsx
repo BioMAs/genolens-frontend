@@ -30,8 +30,16 @@ it('shows the key to type by hand, in groups of four', () => {
   renderEnrollment();
 
   const key = screen.getByTestId('totp-secret');
-  expect(key).toHaveAttribute('data-secret', 'JBSWY3DPEHPK3PXP');
   expect(key).toHaveTextContent('JBSW Y3DP EHPK 3PXP');
+});
+
+it('keeps the key in the visible text only, not in an attribute', () => {
+  renderEnrollment();
+
+  const key = screen.getByTestId('totp-secret');
+  for (const { value } of Array.from(key.attributes)) {
+    expect(value).not.toContain(SECRET.secret);
+  }
 });
 
 it('draws the QR code from the otpauth URI, with a text alternative', async () => {

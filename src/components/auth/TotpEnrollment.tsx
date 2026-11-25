@@ -106,7 +106,6 @@ export default function TotpEnrollment({ secret, busy, error, onSubmit }: TotpEn
         <p className="auth-label">Or enter this key</p>
         <code
           data-testid="totp-secret"
-          data-secret={secret.secret}
           className="block select-all break-all rounded-lg px-3.5 py-2.5 text-center font-mono text-[14px] tracking-wider"
           style={{
             background: 'var(--auth-bg)',

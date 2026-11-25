@@ -6,13 +6,15 @@ import { Loader2 } from 'lucide-react';
 import AuthAlert from '@/components/auth/AuthAlert';
 import RecoveryCodesPanel from '@/components/auth/RecoveryCodesPanel';
 import { useRegenerateRecoveryCodes } from '@/hooks/useAccountSecurity';
+import { useForgetOnPageHide } from '@/hooks/useForgetOnPageHide';
 import CodeField from './CodeField';
 import SecurityBlock from './SecurityBlock';
 import { refusalMessage } from './refusal';
 
 /**
  * New recovery codes, on proof of a code from the authenticator app. The codes
- * are held in this component's state, and dropped once acknowledged. The
+ * are held in this component's state, and dropped once acknowledged or when
+ * the page is left (`useForgetOnPageHide`). The
  * mutation that fetched them is reset as soon as it has settled, so its
  * observer no longer holds the codes (or the code typed) either; the hook's
  * `gcTime: 0` then drops it from the mutation cache.
@@ -22,6 +24,9 @@ export default function RecoveryCodesBlock() {
   const [codes, setCodes] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const regenerate = useRegenerateRecoveryCodes();
+
+  // Not left on a page the browser may keep in its back/forward cache.
+  useForgetOnPageHide(() => setCodes(null), codes !== null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

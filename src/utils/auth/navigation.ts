@@ -17,3 +17,8 @@ export function navigate(url: string): void {
 export function replaceLocation(url: string): void {
   window.location.replace(url);
 }
+
+/** Same, reloading the current page: for a page brought back from the back/forward cache. */
+export function reloadPage(): void {
+  window.location.reload();
+}

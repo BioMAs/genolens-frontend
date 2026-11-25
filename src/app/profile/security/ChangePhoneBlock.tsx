@@ -8,6 +8,7 @@ import AuthField from '@/components/auth/AuthField';
 import RecoveryCodesPanel from '@/components/auth/RecoveryCodesPanel';
 import TotpEnrollment from '@/components/auth/TotpEnrollment';
 import { useConfirmMfaRotation, useStartMfaRotation } from '@/hooks/useAccountSecurity';
+import { useForgetOnPageHide } from '@/hooks/useForgetOnPageHide';
 import type { MfaSecret } from '@/utils/auth/client';
 import { apiErrorDetail, authErrorMessage } from '@/utils/auth/messages';
 import CodeField from './CodeField';
@@ -98,6 +99,10 @@ function StartForm({
 export default function ChangePhoneBlock() {
   const [step, setStep] = useState<Step>(FRESH_START);
   const confirm = useConfirmMfaRotation();
+
+  // The new key and codes are not left on a page the browser may keep in its
+  // back/forward cache: leaving starts the change again from the first step.
+  useForgetOnPageHide(() => setStep(FRESH_START), step.name !== 'start');
 
   const handleConfirm = async (code: string) => {
     setStep((current) => (current.name === 'enroll' ? { ...current, error: null } : current));

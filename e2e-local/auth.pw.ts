@@ -243,7 +243,8 @@ async function enrolThroughUi(page: Page): Promise<{ secret: string; recoveryCod
   await expect(page).toHaveURL(/\/auth\/2fa\/setup/);
   const keyShown = page.getByTestId('totp-secret');
   await expect(keyShown).toBeVisible();
-  const secret = await keyShown.getAttribute('data-secret');
+  // Read as the visitor reads it: shown in groups of four, kept in no attribute.
+  const secret = (await keyShown.textContent())?.replace(/\s+/g, '');
   expect(secret, 'the enrolment screen shows the key').toBeTruthy();
 
   await page.locator('#totp-code').fill(await freshCode(secret!));

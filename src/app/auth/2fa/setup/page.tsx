@@ -8,6 +8,7 @@ import AuthShell from '@/components/auth/AuthShell';
 import AuthCard from '@/components/auth/AuthCard';
 import RecoveryCodesPanel from '@/components/auth/RecoveryCodesPanel';
 import TotpEnrollment from '@/components/auth/TotpEnrollment';
+import { useForgetOnPageHide } from '@/hooks/useForgetOnPageHide';
 import { confirmMfaSetup, startMfaSetup, type MfaSecret } from '@/utils/auth/client';
 import { authErrorMessage, codeRefusal } from '@/utils/auth/messages';
 import { navigate } from '@/utils/auth/navigation';
@@ -79,6 +80,13 @@ function Setup() {
   const [view, setView] = useState<View>({ kind: 'starting' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The key and the recovery codes are not left on a page the browser may keep
+  // in its back/forward cache; brought back from it, the page is reloaded.
+  useForgetOnPageHide(
+    () => setView({ kind: 'starting' }),
+    view.kind === 'enrol' || view.kind === 'codes',
+  );
 
   // Once per mount, and not undone by a cleanup: every start replaces the secret
   // the API is waiting on, so StrictMode's second effect run would leave the
