@@ -106,7 +106,7 @@ export default function PreprocessingResults({ qcReport, params }: Preprocessing
       {/* Filtering thresholds */}
       {thresholds && (
         <div className="gl-card p-5">
-          <h3 className="mb-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Filtering thresholds applied</h3>
+          <h3 className="mb-3 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Filtering thresholds applied</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <ThresholdRow label="Min reads / sample" value={thresholds.minReads} />
             <ThresholdRow label="Min genes detected / sample" value={thresholds.minGenes} />

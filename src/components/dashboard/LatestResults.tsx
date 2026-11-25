@@ -5,6 +5,7 @@ import { ChevronRight, GitCompareArrows } from 'lucide-react';
 import { pairKey } from './helix/helixGeometry';
 import { useChartPalette } from '@/utils/chartTheme';
 import { formatRelative, comparisonTitle } from './format';
+import { comparisonHref } from '@/lib/navigation/comparisonHref';
 import type { UserComparisonItem } from '@/hooks/useAllComparisons';
 
 /**
@@ -93,7 +94,7 @@ export default function LatestResults({
               return (
                 <li key={key}>
                   <Link
-                    href={`/projects/${c.project_id}/comparisons/${encodeURIComponent(c.name)}`}
+                    href={comparisonHref(c)}
                     onPointerEnter={() => onActiveKeyChange(key)}
                     onPointerLeave={() => onActiveKeyChange(null)}
                     onFocus={() => onActiveKeyChange(key)}

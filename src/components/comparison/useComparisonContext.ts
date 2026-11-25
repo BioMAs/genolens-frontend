@@ -7,8 +7,8 @@
  * prop-drilled it. Four of those states were already available as React Query hooks or could
  * be, so they are now: `project` and `datasets` are drop-ins, and the samples and the matrix
  * gene map moved to hooks of their own. Pulling `datasets` from `useProjectDatasets` also
- * **deduplicates a fetch** that happened twice per page, since `ComparisonSidebarNav` already
- * called it.
+ * **deduplicates a fetch** that happened twice per page, since the comparison sidebar nav (since
+ * removed) already called it.
  *
  * The resolution chain below is moved **verbatim**. It is not obvious code and it is not
  * supposed to be improved here: the scoping to `analysisId` records a real bug fix (comparisons

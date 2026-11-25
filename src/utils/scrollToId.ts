@@ -8,8 +8,9 @@
  * Returns false when no element carries that id, which is the caller's cue that the target has
  * not mounted yet — switching screens renders it one pass later.
  *
- * Sections set `scroll-mt-*` for the sticky header; `scrollIntoView` honours `scroll-margin-top`,
- * so no offset arithmetic is needed here.
+ * Sections set `scroll-margin-top: calc(var(--sticky-top) + 1rem)` for the sticky top bar;
+ * `scrollIntoView` honours it, so no offset arithmetic is needed here. A literal `scroll-mt-6`
+ * would land the target behind the 64px bar (shell.test.ts refuses it).
  */
 export function scrollToId(id: string): boolean {
   if (typeof window === 'undefined') return false;

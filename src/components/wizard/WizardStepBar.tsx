@@ -40,7 +40,7 @@ export default function WizardStepBar({ currentStep }: WizardStepBarProps) {
                     isDone
                       ? { background: 'var(--sl-teal-light)', borderColor: 'var(--sl-teal-muted)', color: 'var(--sl-teal)' }
                       : isCurrent
-                        ? { background: 'var(--sl-purple)', borderColor: 'var(--sl-purple)', color: '#fff' }
+                        ? { background: 'var(--sl-purple)', borderColor: 'var(--sl-purple)', color: 'var(--gl-on-plum)' }
                         : { background: 'var(--surface)', borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }
                   }
                 >

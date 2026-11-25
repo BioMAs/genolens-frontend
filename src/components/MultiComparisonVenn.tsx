@@ -224,7 +224,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
       {/* Comparison selection */}
       <div className="gl-card p-6">
-        <h3 className="mb-4 font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="mb-4 text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
           Select comparisons ({selectedComparisons.length}/5)
         </h3>
 
@@ -351,7 +351,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
         <div className="gl-card space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {selection.name}
               </h3>
               <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -396,7 +396,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
           {enrichment.status === 'DONE' && (
             <div className="border-t pt-5" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h4 className="font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <h4 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                   Functional enrichment ({(enrichment.result || []).length} terms)
                 </h4>
                 <div className="flex gap-2">
@@ -425,7 +425,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                           className="rounded-pill border px-2.5 py-1 text-caption font-medium"
                           style={
                             activeCat
-                              ? { background: 'var(--sl-purple)', color: '#fff', borderColor: 'var(--sl-purple)' }
+                              ? { background: 'var(--sl-purple)', color: 'var(--gl-on-plum)', borderColor: 'var(--sl-purple)' }
                               : { background: 'var(--surface)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }
                           }
                         >

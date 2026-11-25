@@ -8,6 +8,8 @@
  */
 
 import type { StylesheetJson } from 'cytoscape';
+import { getPalette } from '@/utils/chartPalettes';
+import { toLegacyColor } from '@/utils/colorContrast';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import type {
   NetworkEdge,
@@ -157,10 +159,15 @@ export interface GraphTheme {
   label: string;
 }
 
-/** Valeurs du theme CLAIR, pour le rendu serveur et un DOM indisponible. */
+/**
+ * Valeurs du theme CLAIR, pour le rendu serveur et un DOM indisponible.
+ *
+ * `up` et `down` lisent la palette standard (--gl-up / --gl-down), pour ne pas recopier ses hex : le
+ * repli serveur disait encore vert contre rouge.
+ */
 const FALLBACK_THEME: GraphTheme = {
-  up: '#16a34a',
-  down: '#dc2626',
+  up: getPalette('standard', 'light').up,
+  down: getPalette('standard', 'light').down,
   neutral: '#8b93a0',
   surface: '#ffffff',
   border: '#c7ccd4',
@@ -180,16 +187,16 @@ export function readGraphTheme(root?: HTMLElement | null): GraphTheme {
   if (typeof window === 'undefined') return FALLBACK_THEME;
   const element = root ?? document.documentElement;
   const style = window.getComputedStyle(element);
-  // .trim() is required: a computed custom property keeps the whitespace after the colon.
+  // `toLegacyColor` trims (a computed custom property keeps the whitespace after the colon) and
+  // turns the tokens' oklch() into rgb(), which cytoscape can parse.
   const read = (name: string, fallback: string) =>
-    style.getPropertyValue(name).trim() || fallback;
+    toLegacyColor(style.getPropertyValue(name)) || fallback;
 
   return {
-    // `--dc-up` / `--dc-down` sont les anciens jetons de direction : ils ne
-    // varient PAS avec le theme, et `--dc-up` (#22c55e) donne 2,28:1 sur blanc
-    // — sous le plancher non-textuel de 3:1, pour la donnee la plus importante
-    // du produit. `--chart-up` / `--chart-down` sont la paire corrigee, definie
-    // par theme.
+    // `--chart-up` / `--chart-down` font autorite pour les graphiques (chartPalettes.ts). Les
+    // anciens `--dc-up` / `--dc-down` en sont aujourd'hui des alias — tous deux resolvent sur
+    // --gl-up / --gl-down, qui suivent le theme ; l'ancien vert #22c55e (2,28:1 sur blanc, sous
+    // le plancher non-textuel de 3:1) a disparu. On lit la paire chart, la source.
     up: read('--chart-up', FALLBACK_THEME.up),
     down: read('--chart-down', FALLBACK_THEME.down),
     // Pas d'equivalent dans ChartTheme : un graphe pose son libelle SUR le

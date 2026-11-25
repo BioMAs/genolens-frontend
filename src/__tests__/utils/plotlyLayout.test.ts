@@ -6,6 +6,7 @@ import {
 } from '@/utils/plotlyLayout';
 import type { ModeBarButton } from 'plotly.js';
 import type { ChartTheme } from '@/utils/chartTheme';
+import { getPalette } from '@/utils/chartPalettes';
 
 /**
  * La fabrique de mise en page Plotly.
@@ -43,6 +44,20 @@ describe('buildPlotlyLayout', () => {
     const l = buildPlotlyLayout(THEME);
     expect(Array.isArray(l.colorway)).toBe(true);
     expect((l.hoverlabel as Record<string, unknown>).bgcolor).toBe('#RAISED');
+  });
+
+  it('la palette catégorielle par défaut suit le mode clair / sombre du thème', () => {
+    // Elle etait figee sur la palette CLAIRE : une trace sans couleur propre sortait en tons de
+    // fond blanc sur un panneau sombre.
+    const light = buildPlotlyLayout({ ...THEME, mode: 'light' }).colorway;
+    const dark = buildPlotlyLayout({ ...THEME, mode: 'dark' }).colorway;
+    expect(light).toEqual(getPalette('standard', 'light').categorical);
+    expect(dark).toEqual(getPalette('standard', 'dark').categorical);
+    expect(dark).not.toEqual(light);
+  });
+
+  it('sans mode connu, retombe sur la palette claire', () => {
+    expect(buildPlotlyLayout(THEME).colorway).toEqual(getPalette('standard', 'light').categorical);
   });
 
   it("fusionne un axe en profondeur plutôt que de l'écraser", () => {

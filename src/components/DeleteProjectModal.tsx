@@ -56,7 +56,7 @@ export default function DeleteProjectModal({ project, onClose }: DeleteProjectMo
             {busy ? (
               <>
                 <span
-                  className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-pill animate-spin"
+                  className="h-3.5 w-3.5 border-2 border-on-accent/30 border-t-on-accent rounded-pill animate-spin"
                   aria-hidden
                 />
                 Deleting…

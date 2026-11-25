@@ -195,7 +195,7 @@ export default function MultiSelectionCard({ dataset, comparisonName }: Props) {
   return (
     <div className="space-y-4" data-testid="multi-selection-card">
       <div>
-        <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-body font-semibold" style={{ color: 'var(--text-primary)' }}>
           {selection.genes.length.toLocaleString('en-US')} genes selected
         </h3>
         {selection.label ? (

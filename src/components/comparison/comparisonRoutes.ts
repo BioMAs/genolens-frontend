@@ -154,7 +154,7 @@ export const VIEW_DESCRIPTIONS: Record<ComparisonView, string> = {
 };
 
 /**
- * One icon per screen, kept beside the labels so the hub and the sidebar cannot drift apart.
+ * One icon per screen, kept beside the labels so every place that names a screen shows the same one.
  *
  * A lucide export is a component reference, not JSX or a hook, so this file stays as
  * unit-testable as it was — the catalogue already imports icons the same way.
@@ -199,7 +199,7 @@ export interface LegacyTabTarget {
  * Every `?tab=` value the page ever accepted, and where it goes now.
  *
  * A bookmark must not break. `?tab=` is produced in exactly one place
- * (`ComparisonSidebarNav`) and consumed in one (`ComparisonDetail`), and no e2e spec references
+ * (the comparison sidebar nav, since removed) and consumed in one (`ComparisonDetail`), and no e2e spec references
  * it, so the blast radius is users' saved links — which is precisely what this table protects.
  * Keep it indefinitely; it is fifteen lines.
  *
@@ -267,7 +267,7 @@ export function resolveView(params: URLSearchParams | null | undefined): Compari
  * Build the canonical link to a view, optionally opened on one of its modules.
  *
  * `basePath` must carry no query string — it is the comparison's path, the same value
- * `ComparisonSidebarNav` already passes around. The default view is written bare, mirroring how
+ * the comparison screens already pass around. The default view is written bare, mirroring how
  * the existing tab switcher omits `tab` for its own default.
  */
 export function buildViewHref(

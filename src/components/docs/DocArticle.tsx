@@ -137,7 +137,11 @@ export default function DocArticle({ doc, previous, next }: DocArticleProps) {
           >
             On this page
           </p>
-          <ul className="sticky top-4 space-y-2 border-l pl-3" style={{ borderColor: 'var(--border)' }}>
+          {/* Colle SOUS la barre du haut : `top-4` seul la ferait glisser dessous. */}
+          <ul
+            className="sticky space-y-2 border-l pl-3"
+            style={{ top: 'calc(var(--sticky-top) + 1rem)', borderColor: 'var(--border)' }}
+          >
             {doc.headings.map((heading) => (
               <li key={heading.id} style={{ paddingLeft: heading.depth === 3 ? 10 : 0 }}>
                 <a

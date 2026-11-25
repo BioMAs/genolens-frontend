@@ -328,7 +328,7 @@ export default function ComparisonReportButton({ datasetId, comparisonName }: Pr
           <button
             onClick={handleGenerate}
             className="inline-flex items-center gap-2 rounded-control bg-danger-soft px-4 py-2
- text-body-sm font-medium text-danger-ink transition-colors hover:bg-danger-hover"
+ text-body-sm font-medium text-danger-ink transition-colors hover:bg-danger/20"
           >
             <RefreshCw className="h-4 w-4" />
             Retry Report

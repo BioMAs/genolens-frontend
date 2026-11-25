@@ -16,21 +16,29 @@ import { cn } from '@/lib/cn';
  * /projects. C'est le changement d'arborescence qui ameliore reellement la
  * journee : on passe d'un projet a l'autre sans quitter l'ecran ou l'on est.
  *
+ * Il vit maintenant au-dessus de la rangee d'onglets du projet (`ProjectNav`),
+ * qui lui donne sa largeur par `className`. Le menu s'ouvre sur la largeur de
+ * ce conteneur et NE DOIT PAS etre pose dans un parent a defilement : un
+ * `overflow-x: auto` rognerait aussi le menu, qui est en position absolue.
+ *
  * La requete est partagee avec /projects et le dashboard via React Query, donc
  * elle ne coute rien de plus ici.
  */
 export default function ProjectSwitcher({
   projectId,
   projectLabel,
+  className,
 }: {
   projectId: string;
   projectLabel: string;
+  /** Cadrage par l'appelant : la marge et la largeur dependent d'ou on le pose. */
+  className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
 
-  // La liste n'est demandee qu'a l'ouverture : la sidebar est montee sur chaque
-  // page, un fetch systematique serait un cout permanent pour une action rare.
+  // La liste n'est demandee qu'a l'ouverture : le selecteur est monte sur chaque
+  // page de projet, un fetch systematique serait un cout permanent pour une action rare.
   const { data } = useProjects(
     { page_size: 8, sort_by: 'updated_at', sort_order: 'desc' },
     open,
@@ -54,7 +62,7 @@ export default function ProjectSwitcher({
   }, [open]);
 
   return (
-    <div ref={root} className="relative mx-2">
+    <div ref={root} className={cn('relative mx-2', className)}>
       <button
         type="button"
         aria-haspopup="menu"

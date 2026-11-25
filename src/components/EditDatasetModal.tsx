@@ -196,7 +196,7 @@ export default function EditDatasetModal({ dataset, isOpen, onClose, onSuccess }
                       type="button"
                       onClick={handleDelete}
                       disabled={deleting}
-                      className="inline-flex items-center gap-2 rounded-sm border border-transparent bg-danger px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-sm border border-transparent bg-danger-fill px-3 py-2 text-body-sm font-medium text-on-accent shadow-sm hover:bg-danger-fill-hover focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                       {deleting ? 'Deleting...' : 'Delete Dataset'}

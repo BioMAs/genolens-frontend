@@ -17,9 +17,13 @@ export default function LicenseExpiredBanner() {
     : null;
 
   return (
+    // `sticky` SOUS la barre du haut, pas `fixed` par-dessus : a `top-0` il
+    // recouvrait la marque, la navigation et le menu du compte de la barre
+    // collee. Dans le flux, il reste toujours visible (z-30, sous la barre a
+    // z-40 et sous la palette de commandes et les dialogues a z-[10000]).
     <div
       role="alert"
-      className="fixed top-0 left-0 right-0 z-[9999] bg-danger text-on-accent text-body-sm text-center py-2 px-4 shadow-md"
+      className="sticky top-[var(--topbar-height)] z-30 bg-danger-fill text-on-accent text-body-sm text-center py-2 px-4 shadow-md"
     >
       <span className="font-semibold">License expired</span>
       {expiredAt && <span> on {expiredAt}</span>}

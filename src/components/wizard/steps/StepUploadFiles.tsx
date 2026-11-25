@@ -468,7 +468,7 @@ function UploadCardWithProjectId({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger-hover"
+            className="self-start rounded-sm bg-danger-soft px-3 py-1 text-caption font-medium text-danger-ink hover:bg-danger/20"
           >
             Try a different file
           </button>

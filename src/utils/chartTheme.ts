@@ -2,8 +2,9 @@
 
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getPalette, type Palette, type PaletteMode } from '@/utils/chartPalettes';
+import { getPalette, type Palette, type PaletteMode, type ThemeMode } from '@/utils/chartPalettes';
 import { usePaletteMode } from '@/contexts/chartPrefs';
+import { toLegacyColor } from '@/utils/colorContrast';
 import {
   directionColors,
   directionScale,
@@ -53,7 +54,18 @@ export interface ChartTheme {
   zero: string;
   /** Famille typographique, pour que Plotly cesse de dessiner en Open Sans. */
   fontFamily: string;
+  /**
+   * Le mode clair / sombre dont ces valeurs sont tirees.
+   *
+   * Sert aux choix que les couleurs seules ne portent pas — la palette categorielle par defaut de
+   * `buildPlotlyLayout`. Facultatif : `CHART_VARS` n'a que des chaines `var()`, qui suivent le theme
+   * toutes seules et n'ont donc pas de mode ; un theme litteral sans mode se lit comme clair.
+   */
+  mode?: ThemeMode;
 }
+
+/** Les cles lues dans le DOM : toutes, sauf le mode, qui se deduit de la classe `.dark`. */
+type TokenKey = Exclude<keyof ChartTheme, 'mode'>;
 
 /**
  * Forme `var()` — Recharts, SVG fait main, d3.
@@ -76,7 +88,7 @@ export const CHART_VARS: Readonly<ChartTheme> = Object.freeze({
   down: 'var(--chart-down)',
   ns: 'var(--chart-ns)',
   zero: 'var(--chart-zero)',
-  fontFamily: 'var(--font-dm-sans)',
+  fontFamily: 'var(--font-instrument)',
 });
 
 /**
@@ -90,31 +102,38 @@ export const CHART_VARS: Readonly<ChartTheme> = Object.freeze({
  *   - donner des valeurs deterministes sous jsdom, qui ne resout pas les
  *     proprietes personnalisees declarees dans une feuille de style.
  *
- * Elle doit rester alignee sur globals.css. `scripts/check-chart-tokens.mjs`
- * le verifie.
+ * Elle doit rester alignee sur globals.css. `up`, `down` et `ns` LISENT la
+ * palette (donc `--gl-up` / `--gl-down` / `--gl-ns`, que le test de palette
+ * relit) ; les autres sont les jetons de la Lentille, resolus une fois en hex
+ * dans un navigateur — il n'existe pas de verrou automatique pour eux, il faut
+ * les rafraichir a la main si les jetons de texte, de filet ou de surface bougent.
  */
-const FALLBACK: Record<'light' | 'dark', ChartTheme> = {
+const STANDARD = { light: getPalette('standard', 'light'), dark: getPalette('standard', 'dark') };
+
+const FALLBACK: Record<ThemeMode, ChartTheme> = {
   light: {
-    ink: '#131629', inkMuted: '#646d7b', inkSubtle: '#5b6472',
-    grid: '#edeff2', axis: '#edeff2',
-    surface: '#ffffff', surfaceRaised: '#ffffff', hover: '#f4f5f8',
-    accent: '#4f46e5',
-    accentSoft: '#eef0ff',
-    up: '#16a34a', down: '#dc2626', ns: '#c7ccd4', zero: '#f7f7f7',
-    fontFamily: 'Geist, system-ui, sans-serif',
+    ink: '#221d37', inkMuted: '#57596c', inkSubtle: '#403b56',
+    grid: '#dde2e9', axis: '#dde2e9',
+    surface: '#ffffff', surfaceRaised: '#ffffff', hover: '#ebf4f2',
+    accent: '#494270',
+    accentSoft: '#eae9f8',
+    up: STANDARD.light.up, down: STANDARD.light.down, ns: STANDARD.light.ns, zero: '#f7f7f7',
+    fontFamily: "'Instrument Sans', system-ui, sans-serif",
+    mode: 'light',
   },
   dark: {
-    ink: '#dde4ee', inkMuted: '#7d8ca3', inkSubtle: '#8898ae',
-    grid: '#171e30', axis: '#1f2840',
-    surface: '#131720', surfaceRaised: '#1c2438', hover: '#1c2438',
-    accent: '#4f46e5',
-    accentSoft: 'rgba(79, 70, 229, 0.16)',
-    up: '#22c55e', down: '#ef4444', ns: '#4a5568', zero: '#1c2438',
-    fontFamily: 'Geist, system-ui, sans-serif',
+    ink: '#eeedf5', inkMuted: '#a2a4b1', inkSubtle: '#cac9d4',
+    grid: '#2d2d35', axis: '#2d2d35',
+    surface: '#15151c', surfaceRaised: '#1c1c23', hover: '#1e1e26',
+    accent: '#b0a9de',
+    accentSoft: '#2d2a43',
+    up: STANDARD.dark.up, down: STANDARD.dark.down, ns: STANDARD.dark.ns, zero: '#1c1c23',
+    fontFamily: "'Instrument Sans', system-ui, sans-serif",
+    mode: 'dark',
   },
 };
 
-const VAR_NAMES: Record<keyof ChartTheme, string> = {
+const VAR_NAMES: Record<TokenKey, string> = {
   ink: '--text-primary',
   inkMuted: '--text-muted',
   inkSubtle: '--text-secondary',
@@ -129,7 +148,7 @@ const VAR_NAMES: Record<keyof ChartTheme, string> = {
   down: '--chart-down',
   ns: '--chart-ns',
   zero: '--chart-zero',
-  fontFamily: '--font-dm-sans',
+  fontFamily: '--font-instrument',
 };
 
 /**
@@ -140,7 +159,7 @@ const VAR_NAMES: Record<keyof ChartTheme, string> = {
  * le nuage de volcan rendu en `scattergl`. Renvoyer un objet neuf a chaque
  * rendu provoquerait une re-mise en page a chaque frappe ailleurs dans l'app.
  */
-const cache = new Map<'light' | 'dark', ChartTheme>();
+const cache = new Map<ThemeMode, ChartTheme>();
 
 /** Vide le cache. Utile aux tests, et si les tokens changent a chaud. */
 export function clearChartThemeCache(): void {
@@ -155,7 +174,7 @@ export function clearChartThemeCache(): void {
  */
 export function readChartTheme(root?: HTMLElement | null): ChartTheme {
   const el = root ?? (typeof document === 'undefined' ? null : document.documentElement);
-  const mode: 'light' | 'dark' =
+  const mode: ThemeMode =
     el?.classList.contains('dark') || el?.closest?.('.dark') ? 'dark' : 'light';
 
   const cached = cache.get(mode);
@@ -163,8 +182,19 @@ export function readChartTheme(root?: HTMLElement | null): ChartTheme {
   if (!el) return FALLBACK[mode];
 
   const computed = getComputedStyle(el);
-  const read = (key: keyof ChartTheme) =>
-    computed.getPropertyValue(VAR_NAMES[key]).trim() || FALLBACK[mode][key];
+  // Les COULEURS sont declarees sur :root / .dark, donc lues sur <html>. La POLICE ne l'est pas :
+  // next/font pose `--font-instrument` sur une classe du <body>, et une propriete personnalisee ne
+  // remonte pas vers son parent. Lue sur <html> elle est toujours vide, et la production retomberait
+  // en silence sur la police de repli. Un `root` autre que <html> est deja dans le <body> : il
+  // herite de la variable, on le lit tel quel.
+  const doc = el.ownerDocument;
+  const fontComputed = el === doc?.documentElement && doc.body ? getComputedStyle(doc.body) : computed;
+  // `toLegacyColor` : les jetons sont ecrits en oklch() (et rendus parfois en lab()), que Plotly
+  // et cytoscape ne lisent pas. Une pile de polices n'est pas une couleur : on n'y touche pas.
+  const read = (key: TokenKey) => {
+    const raw = (key === 'fontFamily' ? fontComputed : computed).getPropertyValue(VAR_NAMES[key]);
+    return (key === 'fontFamily' ? raw.trim() : toLegacyColor(raw)) || FALLBACK[mode][key];
+  };
 
   // Construction explicite plutot que `Object.fromEntries` : ce dernier produit
   // un `{[k: string]: string}` dont TypeScript ne peut pas deduire la forme,
@@ -185,6 +215,7 @@ export function readChartTheme(root?: HTMLElement | null): ChartTheme {
     ns: read('ns'),
     zero: read('zero'),
     fontFamily: read('fontFamily'),
+    mode,
   };
 
   cache.set(mode, theme);

@@ -129,6 +129,82 @@ describe('inlineComputedStyles', () => {
     expect(style).not.toContain('var(');
   });
 
+  describe('couleurs servies en oklch()', () => {
+    /**
+     * Les jetons Lentille sont ecrits en oklch(), et un navigateur les sert tels quels (ou en lab()) :
+     * `getComputedStyle` ne rend plus `rgb()`. Figer cette valeur dans le fichier sortait un SVG que
+     * Illustrator, Inkscape et la plupart des visualiseurs ne savent pas peindre — la couleur se
+     * perdait a l'ouverture. L'export doit donc ecrire des litteraux que tout le monde lit.
+     */
+    function serve(painted: Record<string, Record<string, string>>) {
+      jest.spyOn(window, 'getComputedStyle').mockImplementation(
+        (el: Element) =>
+          ({ getPropertyValue: (prop: string) => painted[el.id]?.[prop] ?? '' }) as CSSStyleDeclaration,
+      );
+    }
+
+    /** jsdom n'a pas de canvas : on en simule un, qui « peint » le pixel donne. */
+    function stubCanvas(pixel: number[]) {
+      let fill = '#010203';
+      const ctx = {
+        get fillStyle() {
+          return fill;
+        },
+        set fillStyle(v: string) {
+          if (/^(lab|lch|oklab|oklch|color)\(/i.test(v) || /^#[0-9a-f]{6}$/i.test(v)) fill = v;
+        },
+        clearRect: jest.fn(),
+        fillRect: jest.fn(),
+        getImageData: jest.fn(() => ({ data: Uint8ClampedArray.from(pixel) })),
+      };
+      jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as never);
+    }
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('ecrit fill, stroke et color en rgb(), jamais en oklch()', () => {
+      stubCanvas([23, 93, 155, 255]);
+      serve({
+        bar: {
+          fill: 'oklch(57% 0.16 38)', // forme `L%` : lue sans canvas
+          stroke: 'oklch(0.47 0.12 250)', // forme nombre : lue par le navigateur
+          color: 'oklch(25% 0.05 292 / 0.5)', // avec transparence : rgba()
+        },
+      });
+      const svg = svgWith('<g id="g"><rect id="bar"/></g>');
+      const style = inlineComputedStyles(svg).querySelector('#bar')!.getAttribute('style') ?? '';
+
+      expect(style).not.toContain('oklch');
+      expect(style).toMatch(/fill:rgb\(\d{1,3}, \d{1,3}, \d{1,3}\)/);
+      expect(style).toContain('stroke:rgb(23, 93, 155)');
+      expect(style).toMatch(/color:rgba\(\d{1,3}, \d{1,3}, \d{1,3}, 0\.5\)/);
+    });
+
+    it('ne repete pas sur un enfant la couleur deja posee par son parent', () => {
+      stubCanvas([0, 0, 0, 255]);
+      const same = { fill: 'oklch(57% 0.16 38)' };
+      serve({ g: same, bar: same });
+      const svg = svgWith('<g id="g"><rect id="bar"/></g>');
+      const clone = inlineComputedStyles(svg);
+
+      expect(clone.querySelector('#g')!.getAttribute('style')).toMatch(/fill:rgb\(/);
+      // L'heritage redonne exactement la meme valeur : la redeclarer gonflerait le fichier.
+      expect(clone.querySelector('#bar')!.getAttribute('style') ?? '').not.toContain('fill:');
+    });
+
+    it('garde la valeur d’origine plutot que de perdre la couleur quand rien ne sait la convertir', () => {
+      // Pas de canvas (rendu serveur, jsdom) et une ecriture que parseColor refuse : un viewer moderne
+      // lit encore `oklch(0.57 0.16 38)`, alors qu'une couleur jetee ferait retomber le trace en noir.
+      jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null as never);
+      serve({ bar: { fill: 'oklch(0.57 0.16 38)' } });
+      const svg = svgWith('<g id="g"><rect id="bar"/></g>');
+
+      expect(inlineComputedStyles(svg).querySelector('#bar')!.getAttribute('style')).toContain(
+        'fill:oklch(0.57 0.16 38)',
+      );
+    });
+  });
+
   it('conserve la structure du graphique', () => {
     const svg = svgWith('<g class="layer"><rect/><text>a</text></g>');
     const clone = inlineComputedStyles(svg);

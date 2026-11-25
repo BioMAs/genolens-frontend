@@ -9,11 +9,13 @@ import {
   CornerDownLeft,
   Dna,
   FolderKanban,
+  GitCompareArrows,
   Minus,
   Search,
   Settings2,
 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
+import { useAllComparisons } from '@/hooks/useAllComparisons';
 import { useGeneSearch } from '@/hooks/useGeneSearch';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useChartPrefs, toggleColorblind } from '@/contexts/chartPrefs';
@@ -21,6 +23,7 @@ import { useTour } from '@/contexts/TourContext';
 import {
   buildCommands,
   buildGeneCommands,
+  comparisonCommands,
   filterCommands,
   flattenCommands,
   type Command,
@@ -83,6 +86,12 @@ function CommandPaletteDialog() {
   // donc jamais sur un ecran ou la palette est fermee. C'est une fonction
   // occasionnelle, elle ne doit pas couter une requete a chaque page.
   const { data: projectsData } = useProjects({}, true);
+  // Meme raison pour les comparaisons : une requete a l'ouverture, puis le cache
+  // (2 min) sert les ouvertures suivantes. La recherche se fait ICI, sur la
+  // liste, et non cote serveur : le serveur ne connait ni la forme lisible du nom
+  // ni le mot « comparison », et une requete par pause de frappe lui ferait
+  // recalculer toute la liste a chaque fois.
+  const { data: comparisonsData } = useAllComparisons(COMPARISON_LOOKUP);
 
   const trimmed = query.trim();
   const geneSearchActive = trimmed.length >= GENE_QUERY_MIN_LENGTH;
@@ -114,6 +123,7 @@ function CommandPaletteDialog() {
   const groups = useMemo<CommandGroup[]>(() => {
     const base = buildCommands({
       projects: (projectsData?.items ?? []).map((p) => ({ id: p.id, name: p.name })),
+      comparisons: comparisonCommands(comparisonsData?.comparisons ?? [], query),
       actions: {
         theme,
         toggleTheme,
@@ -130,8 +140,8 @@ function CommandPaletteDialog() {
     // cas ou l'utilisateur sait deja exactement ce qu'il veut.
     return [{ heading: 'Genes', items: buildGeneCommands(geneHits) }, ...filtered];
   }, [
-    projectsData, theme, toggleTheme, colorblind, currentTourId, restartCurrentTour,
-    query, geneHits,
+    projectsData, comparisonsData, theme, toggleTheme, colorblind, currentTourId,
+    restartCurrentTour, query, geneHits,
   ]);
 
   const flat = useMemo(() => flattenCommands(groups), [groups]);
@@ -201,6 +211,7 @@ function CommandPaletteDialog() {
   const ICONS: Record<Command['kind'], React.ReactNode> = {
     navigate: <ArrowRight className="h-4 w-4" aria-hidden />,
     project: <FolderKanban className="h-4 w-4" aria-hidden />,
+    comparison: <GitCompareArrows className="h-4 w-4" aria-hidden />,
     gene: <Dna className="h-4 w-4" aria-hidden />,
     action: <Settings2 className="h-4 w-4" aria-hidden />,
   };
@@ -244,7 +255,7 @@ function CommandPaletteDialog() {
               // l'utilisateur ne regarde plus.
               setCursor(0);
             }}
-            placeholder="Search genes, projects, screens and settings…"
+            placeholder="Search genes, projects, comparisons, screens and settings…"
             aria-label="Search commands"
             aria-controls="command-palette-list"
             className="h-11 w-full bg-transparent text-body text-primary placeholder:text-muted focus:outline-none"
@@ -304,7 +315,11 @@ function CommandPaletteDialog() {
                       <span className="min-w-0 flex-1 truncate text-body-sm">{item.label}</span>
                       {item.direction && <Direction direction={item.direction} />}
                       {item.hint && (
-                        <span className="shrink-0 truncate text-caption text-muted">{item.hint}</span>
+                        // Plafonnee : un nom de projet long ne doit pas ecraser le
+                        // nom de la comparaison a cote sur un ecran etroit.
+                        <span className="max-w-[45%] shrink-0 truncate text-caption text-muted">
+                          {item.hint}
+                        </span>
                       )}
                       {active && <CornerDownLeft className="h-3.5 w-3.5 shrink-0" aria-hidden />}
                     </button>
@@ -324,6 +339,13 @@ const GENE_QUERY_MIN_LENGTH = 2;
 /** Autant de lignes que la palette en montre sans defiler. */
 const GENE_RESULT_LIMIT = 6;
 const GENE_SEARCH_DEBOUNCE_MS = 200;
+/**
+ * Les comparaisons parmi lesquelles on cherche : les 100 plus recentes, le
+ * maximum que le backend accepte en une page. Une constante de module : un objet
+ * recree a chaque rendu serait relu comme un filtre different par la cle de
+ * cache.
+ */
+const COMPARISON_LOOKUP = { page_size: 100, sort_by: 'updated_at', sort_order: 'desc' } as const;
 
 type GeneStatus = 'idle' | 'searching' | 'results' | 'empty' | 'error';
 

@@ -1,10 +1,15 @@
 import type { AppUser } from '@/utils/auth/types';
-import Sidebar from './Sidebar';
-import TopBar from './TopBar';
+import PageBreadcrumb from './shell/PageBreadcrumb';
+import TopNav from './shell/TopNav';
 
 interface AppShellProps {
   user: AppUser;
   userRole: string | null;
+  /**
+   * Bandeaux de compte (licence, abonnement, demo), AVANT le fil d'Ariane : le
+   * fil se lit avec le titre qu'il situe, un bandeau ne doit pas s'intercaler.
+   */
+  banners?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -13,25 +18,34 @@ interface AppShellProps {
  *
  * Composant SERVEUR : ni hooks ni API client. C'est ce qui oblige le fil
  * d'Ariane a passer par un contexte plutot que par des props — un nom de projet
- * charge cote page ne peut pas redescendre jusqu'a la TopBar, qui est cliente.
+ * charge cote page ne peut pas redescendre jusqu'a `PageBreadcrumb`, qui est
+ * client.
  *
- *   ┌──────────────┬────────────────────────────────────┐
- *   │              │  TopBar (56px) — fil d'Ariane      │
- *   │   Sidebar    ├────────────────────────────────────┤
- *   │   (248px)    │  app-content (defile)              │
- *   │              │  {children}                        │
- *   └──────────────┴────────────────────────────────────┘
+ *   ┌────────────────────────────────────────────────────┐
+ *   │  TopNav (sticky, 64px) — marque, destinations,     │
+ *   │  recherche, aide, compte                           │
+ *   ├────────────────────────────────────────────────────┤
+ *   │  main.app-content                                  │
+ *   │    PageBreadcrumb        ← premiere ligne          │
+ *   │    {children}                                      │
+ *   └────────────────────────────────────────────────────┘
+ *
+ * Le DOCUMENT defile, a toutes les largeurs : la barre est collee en haut et le
+ * contenu passe dessous. Il n'y a plus de conteneur de defilement interne, donc
+ * `--sticky-top` (ou colle un element sous la barre) vaut partout
+ * `--topbar-height`.
  *
  * `topBarRightSlot` a ete retire : AppFrame ne l'a jamais passe.
  */
-export default function AppShell({ user, userRole, children }: AppShellProps) {
+export default function AppShell({ user, userRole, banners, children }: AppShellProps) {
   return (
     <div className="app-shell">
-      <Sidebar user={user} userRole={userRole} />
-      <div className="app-main">
-        <TopBar />
-        <main className="app-content">{children}</main>
-      </div>
+      <TopNav user={user} userRole={userRole} />
+      <main className="app-content">
+        {banners}
+        <PageBreadcrumb />
+        {children}
+      </main>
     </div>
   );
 }

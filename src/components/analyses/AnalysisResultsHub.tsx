@@ -334,7 +334,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </section>
 
         {/* ── Comparisons (primary results) ── */}
-        <section id="module-comparisons" className="scroll-mt-6">
+        <section id="module-comparisons" className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
           <SectionHeader
             title="Comparisons"
             subtitle={`${analysisComparisons.length} differential-expression comparison${analysisComparisons.length !== 1 ? 's' : ''} in this analysis`}
@@ -349,7 +349,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
 
         {/* ── DEG patterns (expression trajectories across all conditions) ── */}
         {matrixDataset && degSources.length > 0 && scienceUnlocked && (
-          <section id="module-patterns" className="scroll-mt-6">
+          <section id="module-patterns" className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
             <SectionHeader
               title="DEG patterns"
               subtitle="Significant DEGs (union across comparisons) clustered by expression trajectory across the analysis' conditions"
@@ -364,7 +364,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         )}
 
         {/* ── Sample structure (PCA / UMAP) ── */}
-        <section id="module-structure" className="scroll-mt-6">
+        <section id="module-structure" className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
           <SectionHeader
             title="Sample structure"
             subtitle="How samples relate to each other, computed from the normalized matrix"
@@ -378,7 +378,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
                     className="rounded-sm px-3 py-1.5 text-caption font-semibold uppercase tracking-wide transition-colors"
                     style={
                       structureView === v
-                        ? { background: 'var(--sl-teal)', color: '#fff' }
+                        ? { background: 'var(--sl-teal)', color: 'var(--gl-on-plum)' }
                         : { background: 'transparent', color: 'var(--text-secondary)' }
                     }
                   >
@@ -402,7 +402,7 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         </section>
 
         {/* ── Quality control ── */}
-        <section id="module-qc" className="scroll-mt-6">
+        <section id="module-qc" className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
           <SectionHeader title="Quality control" subtitle="Preprocessing & filtering applied before analysis" />
           <PreprocessingResults qcReport={qcReport} params={analysis.params} />
         </section>
@@ -410,11 +410,11 @@ export default function AnalysisResultsHub({ projectId, analysisId }: Props) {
         {/* ── Parameters (collapsible) ── */}
         <details
           id="module-params"
-          className="gl-card p-5 scroll-mt-6"
+          className="gl-card p-5 scroll-mt-[calc(var(--sticky-top)+1rem)]"
           open={paramsOpen}
           onToggle={(e) => setParamsOpen((e.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <summary className="cursor-pointer text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Analysis parameters
           </summary>
           <div className="mt-4">
@@ -480,7 +480,7 @@ function ModuleCard({
           <ArrowUpRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-muted)' }} />
         )}
       </div>
-      <h3 className="mt-3 font-display text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      <h3 className="mt-3 text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       <p className="mt-1 text-caption leading-snug" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       {(disabled ? disabledHint : metric) && (
         <div

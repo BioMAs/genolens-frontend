@@ -40,11 +40,32 @@ interface OverflowMenuProps {
    * partagee, ce qui est la seule raison de ne pas ecrire un second composant.
    */
   icon?: React.ReactNode;
+  /**
+   * Classes du declencheur, fusionnees APRES les siennes (`cn` arbitre les
+   * conflits : la derniere gagne). Le menu d'aide de la barre du haut s'en sert
+   * pour un bouton fantome de 36px a zone de clic de 44px, la ou le defaut est
+   * une tuile bordee de 32px.
+   */
+  triggerClassName?: string;
+  /**
+   * Attributs `data-*` du declencheur. Une visite guidee (driver.js) ancre ses
+   * etapes sur `data-tour` ; l'ancre doit etre sur l'element PRESENT au repos,
+   * donc le declencheur et non une entree du menu, qui n'existe que menu ouvert.
+   */
+  triggerData?: Record<`data-${string}`, string>;
 }
 
-export function OverflowMenu({ items, label = 'More actions', className, icon }: OverflowMenuProps) {
+export function OverflowMenu({
+  items,
+  label = 'More actions',
+  className,
+  icon,
+  triggerClassName,
+  triggerData,
+}: OverflowMenuProps) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
@@ -53,8 +74,12 @@ export function OverflowMenu({ items, label = 'More actions', className, icon }:
     };
     // Escape doit fermer le menu : sans cela un utilisateur au clavier n'a
     // aucun moyen d'en sortir sans deplacer le focus hors du composant.
+    // Le focus revient au declencheur : le menu disparait avec l'entree qui
+    // l'avait, et le clavier repartirait du haut du document.
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      trigger.current?.focus();
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -72,6 +97,7 @@ export function OverflowMenu({ items, label = 'More actions', className, icon }:
   return (
     <div ref={root} className={cn('relative', className)}>
       <button
+        ref={trigger}
         type="button"
         aria-label={label}
         aria-haspopup="menu"
@@ -82,7 +108,9 @@ export function OverflowMenu({ items, label = 'More actions', className, icon }:
           'border border-line bg-surface text-secondary transition-colors',
           'hover:border-strong hover:bg-hover',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+          triggerClassName,
         )}
+        {...triggerData}
       >
         {icon ?? <MoreHorizontal className="h-4 w-4" />}
       </button>

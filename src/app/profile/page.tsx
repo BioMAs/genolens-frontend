@@ -40,7 +40,7 @@ export default async function ProfilePage() {
         crumbs={[{ label: 'Profile' }]}
         meta={
           <span className="inline-flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent-soft font-display text-body-sm text-accent-ink">
+            <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent-soft text-body-sm text-accent-ink">
               {initials}
             </span>
             <span className="text-body-sm text-secondary">{user.email}</span>

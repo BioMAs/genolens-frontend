@@ -64,7 +64,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-display text-body font-semibold" style={{ color: 'var(--text-primary)' }}>Jump back in</h3>
+        <h3 className="text-body font-semibold" style={{ color: 'var(--text-primary)' }}>Jump back in</h3>
         <span className="text-micro" style={{ color: 'var(--text-muted)' }}>Your last result — go straight to what matters</span>
       </div>
 
@@ -85,7 +85,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
               <span className="text-micro" style={{ color: 'var(--text-muted)' }}>Enrichment ready</span>
             )}
           </div>
-          <div className="font-display text-body font-semibold leading-[1.3] tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-body font-semibold leading-[1.3] tracking-[-0.3px]" style={{ color: 'var(--text-primary)' }}>
             {title}
           </div>
 
@@ -136,7 +136,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
           </div>
           {hasNova ? (
             <>
-              <div className="font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+              <div className="text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
                 {evidence!.headline}
               </div>
               {evidence!.detail && (
@@ -164,7 +164,7 @@ export default function JumpBackInCard({ projectId }: { projectId: string }) {
             </>
           ) : (
             <>
-              <div className="font-display text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
+              <div className="text-body-sm font-semibold leading-[1.35]" style={{ color: 'var(--text-primary)' }}>
                 {comp.deg_total.toLocaleString()} differentially expressed genes
               </div>
               <div className="mt-2 flex flex-wrap gap-2">

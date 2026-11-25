@@ -53,7 +53,7 @@ function ModuleBody({ module }: { module: ComparisonModule }) {
   return (
     <>
       <h3
-        className="mt-3 font-display text-body-sm font-semibold"
+        className="mt-3 text-body-sm font-semibold"
         style={{ color: 'var(--text-primary)' }}
       >
         {module.title}

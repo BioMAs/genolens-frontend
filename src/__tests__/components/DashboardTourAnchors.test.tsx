@@ -3,9 +3,9 @@
 import { TOURS } from '@/lib/tours/registry';
 
 describe('dashboard tour anchors', () => {
-  it('references only the keys we render in Dashboard/Sidebar', () => {
+  it('references only the keys we render in Dashboard/TopNav', () => {
     const rendered = new Set([
-      'sidebar-workspace',
+      'nav-workspace',
       'dashboard-welcome',
       'dashboard-kpis',
       'dashboard-plan',

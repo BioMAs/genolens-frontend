@@ -117,7 +117,6 @@ export default function ProportionalVenn({ setGenes, selectedName, onSelect }: P
             x={c.labelPos.x}
             y={c.labelPos.y}
             textAnchor={c.labelPos.anchor}
-            className="font-display"
             fontSize={13}
             fontWeight={700}
             fill="var(--text-primary)"
@@ -145,7 +144,6 @@ export default function ProportionalVenn({ setGenes, selectedName, onSelect }: P
               x={r.x}
               y={r.big ? r.y + 2 : r.y + 1}
               textAnchor="middle"
-              className="font-display"
               fontSize={r.big ? 20 : 15}
               fontWeight={700}
               // La pastille « tous » est remplie en `--text-primary` : presque

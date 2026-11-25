@@ -109,7 +109,9 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         ) : analyses.unlimited ? (
           <>
             <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
-              ∞
+              {/* Le glyphe ∞ n'est pas dans le sous-ensemble Newsreader embarque : sans cela, il
+                  tomberait sur une police systeme de repli, d'un autre poids. */}
+              <span className="font-sans">∞</span>
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Unlimited analyses
@@ -122,7 +124,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
               style={{ color: VALUE_COLOR[tone] }}
             >
               {analyses.remaining}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {analyses.max}
               </span>
             </p>
@@ -161,7 +163,9 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         ) : projects.unlimited ? (
           <>
             <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
-              ∞
+              {/* Le glyphe ∞ n'est pas dans le sous-ensemble Newsreader embarque : sans cela, il
+                  tomberait sur une police systeme de repli, d'un autre poids. */}
+              <span className="font-sans">∞</span>
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               {projects.used} owned, no cap
@@ -171,7 +175,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
           <>
             <p className="mt-1 font-display text-heading tabular-nums" style={{ color: 'var(--text-primary)' }}>
               {projects.used}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {projects.max}
               </span>
             </p>
@@ -201,7 +205,9 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
         ) : ai.unlimited ? (
           <>
             <p className="mt-1 font-display text-heading" style={{ color: 'var(--sl-teal)' }}>
-              ∞
+              {/* Le glyphe ∞ n'est pas dans le sous-ensemble Newsreader embarque : sans cela, il
+                  tomberait sur une police systeme de repli, d'un autre poids. */}
+              <span className="font-sans">∞</span>
             </p>
             <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
               Unlimited on this plan
@@ -214,7 +220,7 @@ export default function QuotaMeters({ layout = 'row' }: QuotaMetersProps) {
               style={{ color: VALUE_COLOR[aiTone] }}
             >
               {ai.credits}{' '}
-              <span className="text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-sans text-body-sm font-normal" style={{ color: 'var(--text-muted)' }}>
                 of {ai.max}
               </span>
             </p>

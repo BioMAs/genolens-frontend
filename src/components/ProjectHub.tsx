@@ -413,7 +413,7 @@ function ComparisonCard({
     <div className="gl-card gl-card-interactive flex items-center justify-between gap-4 p-4">
       <div>
         <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span className="font-display text-body-sm font-semibold text-primary">
+          <span className="text-body-sm font-semibold text-primary">
             {name}
           </span>
           <Chip icon={<Activity className="h-3 w-3" />}>DEG</Chip>

@@ -181,8 +181,8 @@ export default function ExportMenu({
   const baseStyles = "inline-flex items-center gap-2 font-medium rounded-control transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2";
   
   const variantStyles = {
-    default: "bg-brand-primary text-white hover:bg-brand-primary/90",
-    outline: "border border-strong bg-white text-secondary hover:bg-surface-2",
+    default: "bg-brand-primary text-on-accent hover:bg-brand-primary/90",
+    outline: "border border-strong bg-surface text-secondary hover:bg-surface-2",
     ghost: "text-secondary hover:bg-surface-2",
   };
   

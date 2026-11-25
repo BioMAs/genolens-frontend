@@ -26,6 +26,7 @@
  * le filigrane du PNG. Les deux viennent de `utils/demoWatermark`.
  */
 
+import { toLegacyColor } from '@/utils/colorContrast';
 import { stampCanvas, svgWatermarkMarkup } from '@/utils/demoWatermark';
 
 /**
@@ -47,8 +48,15 @@ const PAINTED = [
 ] as const;
 
 /**
+ * Les proprietes de PAINTED qui portent une couleur. Les jetons sont ecrits en oklch() : un navigateur
+ * les sert tels quels (ou en lab()), et un fichier qui en porte est illisible hors du navigateur
+ * (Illustrator, Inkscape, la plupart des visualiseurs). Elles sortent donc en rgb().
+ */
+const COLOR_PROPS: ReadonlySet<string> = new Set(['fill', 'stroke', 'color']);
+
+/**
  * Pile de repli, appliquee APRES la famille resolue. Un SVG ouvert sur une
- * machine qui n'a pas Geist doit rester lisible plutot que de tomber sur la
+ * machine qui n'a pas Instrument Sans doit rester lisible plutot que de tomber sur la
  * police par defaut du visualiseur.
  */
 const FALLBACK_STACK = 'system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif';
@@ -112,12 +120,27 @@ export function buildStandaloneSvg(opts: {
 /**
  * Clone le graphique en figeant son style calcule.
  *
- * `getComputedStyle` rend la valeur RESOLUE — `rgb(26, 130, 127)` la ou l'auteur
+ * `getComputedStyle` rend la valeur RESOLUE — `oklch(0.57 0.16 38)` la ou l'auteur
  * a ecrit `var(--chart-up)`. C'est ce qui fait de cette fonction le pont entre
- * les jetons du produit et un fichier qui n'a plus de document.
+ * les jetons du produit et un fichier qui n'a plus de document. Les couleurs sont
+ * ensuite ecrites en `rgb()` (`toLegacyColor`) : les jetons sont en oklch(), que
+ * le fichier exporte doit pouvoir s'ouvrir sans.
  */
 export function inlineComputedStyles(source: SVGSVGElement): SVGSVGElement {
   const clone = source.cloneNode(true) as SVGSVGElement;
+  // Un graphique n'emploie que quelques couleurs, repetees sur des milliers de noeuds : la conversion
+  // (parfois un pixel peint sur un canvas) ne se paie qu'une fois par valeur distincte.
+  const legacy = new Map<string, string>();
+  const toRgb = (value: string): string => {
+    let rgb = legacy.get(value);
+    if (rgb === undefined) {
+      // Une couleur qu'aucun convertisseur ne sait lire reste telle quelle : un viewer moderne la lit
+      // encore, alors qu'une declaration jetee ferait retomber le trace en noir.
+      rgb = toLegacyColor(value) || value;
+      legacy.set(value, rgb);
+    }
+    return rgb;
+  };
   const originals = [source, ...Array.from(source.querySelectorAll<Element>('*'))];
   const copies = [clone, ...Array.from(clone.querySelectorAll<Element>('*'))];
 
@@ -150,8 +173,10 @@ export function inlineComputedStyles(source: SVGSVGElement): SVGSVGElement {
       // `var()` non resolu signifie que le jeton n'existe pas : le laisser
       // passer produirait un attribut invalide, donc on le jette.
       if (!value || value === 'none' || value.includes('var(')) continue;
+      // Comparee a l'heritage AVANT conversion : les deux valeurs brutes sont comparables, et la
+      // conversion ne se paie que pour ce qui est effectivement ecrit.
       if (inherited && inherited.getPropertyValue(prop) === value) continue;
-      declarations.push(`${prop}:${value}`);
+      declarations.push(`${prop}:${COLOR_PROPS.has(prop) ? toRgb(value) : value}`);
     }
     /**
      * Le clone a herite l'attribut `style` d'origine, qui peut contenir des

@@ -23,12 +23,12 @@ export const TOURS: Record<TourId, TourDefinition> = {
         },
       },
       {
-        element: anchor('sidebar-workspace'),
+        element: anchor('nav-workspace'),
         popover: {
           title: 'Navigation',
           description:
-            'Reach your dashboard, projects, comparisons and tools from this side menu.',
-          side: 'right',
+            'Reach your home page, your projects and the tools from this bar at the top.',
+          side: 'bottom',
           align: 'start',
         },
       },
@@ -73,9 +73,9 @@ export const TOURS: Record<TourId, TourDefinition> = {
       {
         element: anchor('help-button'),
         popover: {
-          title: 'Replay the guide',
+          title: 'Help',
           description:
-            'This button restarts the guide for the page you are on.',
+            'Open this menu to replay the guide for the page you are on, or to read the documentation.',
           side: 'bottom',
           align: 'end',
         },
@@ -87,12 +87,13 @@ export const TOURS: Record<TourId, TourDefinition> = {
     version: 1,
     steps: [
       {
-        element: anchor('sidebar-project'),
+        element: anchor('nav-project'),
         popover: {
           title: 'Project sections',
           description:
-            'Move between the overview, setup, analyses and multi-comparison.',
-          side: 'right',
+            'Use these tabs to move between the overview, setup, analyses and multi-comparison.',
+          // La rangee d'onglets est en haut de la page : une bulle a droite en sortirait.
+          side: 'bottom',
           align: 'start',
         },
       },

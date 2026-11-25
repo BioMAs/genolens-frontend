@@ -1,4 +1,4 @@
-import type { PaletteMode } from '@/utils/chartPalettes';
+import { getPalette, type PaletteMode } from '@/utils/chartPalettes';
 
 /**
  * Les echelles continues et discretes des graphiques.
@@ -29,21 +29,29 @@ import type { PaletteMode } from '@/utils/chartPalettes';
  *    Maintenir une rampe parallele « pour daltoniens » leur servait la pire des
  *    deux.
  * 2. Le couple de direction violet/vert de `DEGClusteringView` est mesure
- *    3 a 5 fois MOINS distinguable en dichromatie que le vert/rouge du
- *    produit (dE min 0,056 contre 0,222) — et le violet tombe a 2,21:1 sur
- *    panneau sombre, sous le plancher non-textuel de 3:1. Il perd donc sur les
- *    deux axes a la fois : coherence ET accessibilite. Le mode standard rejoint
- *    la convention du produit ; le mode daltonisme prend le bleu/vermillon de
- *    Wong (dE min 0,307, le meilleur des cinq candidats mesures).
+ *    3 a 5 fois MOINS distinguable en dichromatie que le vert/rouge que le
+ *    produit portait alors (dE min 0,056 contre 0,222) — et le violet tombe a
+ *    2,21:1 sur panneau sombre, sous le plancher non-textuel de 3:1. Il perd
+ *    donc sur les deux axes a la fois : coherence ET accessibilite. Le mode
+ *    standard rejoint la convention du produit, aujourd'hui terre cuite contre
+ *    bleu acier (--gl-up / --gl-down, jamais rouge contre vert) ; le mode
+ *    daltonisme prend le bleu/vermillon de Wong (dE min 0,307, le meilleur des
+ *    cinq candidats mesures).
  */
 
 export type ThemeMode = 'light' | 'dark';
 export type ColorStops = [number, string][];
 
 /**
- * Le point median. En clair un gris quasi-blanc ; en sombre la surface du
+ * Le point median. En clair un gris quasi-blanc ; en sombre une surface de
  * panneau, pour que le neutre disparaisse dedans au lieu d'y faire un trou.
- * Les valeurs suivent `--chart-zero`, qu'on ne peut pas lire ici (module pur).
+ *
+ * Ces deux valeurs ne suivent PLUS `--chart-zero` : celui-ci vaut en sombre la
+ * surface elevee de la Lentille (#1c1c23), alors que #1c2438 est l'ancienne
+ * surface bleutee. Elle est gardee telle quelle parce qu'elle alimente les
+ * echelles daltoniennes, figees octet pour octet par les tests ; la remettre
+ * d'aplomb avec le jeton est a trancher avec elles, pas ici. Module pur : il ne
+ * peut pas lire le jeton.
  */
 const ZERO: Record<ThemeMode, string> = { light: '#f7f7f7', dark: '#1c2438' };
 
@@ -96,28 +104,49 @@ const DIVERGING: Record<PaletteMode, Record<ThemeMode, ColorStops>> = {
  * Divergente du log2FC — distincte de la precedente a dessein : un ecran qui
  * montre expression ET log2FC cote a cote doit pouvoir dire lequel il regarde.
  *
- * ⚠️ En mode standard, magenta/vert mesure dE 0,068 en deutéranopie : les deux
- * bouts sont pratiquement confondus. C'est le defaut que la bascule daltonisme
- * existe pour corriger, et c'est pourquoi elle est desormais globale et
- * persistee plutot que privee a chaque graphique.
+ * C'est l'echelle de DIRECTION continue : le negatif est `down`, le positif est
+ * `up`, les deux bouts de la palette standard (terre cuite en haut, bleu acier
+ * en bas, spec § 2.1 — « jamais rouge contre vert »). Elle etait magenta/vert,
+ * soit du vert pour le sur-exprime, et mesurait dE 0,068 en deuteranopie.
+ *
+ * Les paliers intermediaires sont des fondus lineaires du bout vers le neutre,
+ * donc la clarte s'eloigne du milieu de facon monotone. Le neutre est le gris
+ * quasi-blanc en clair et, en sombre, la surface du panneau (`--gl-surface`,
+ * oklch(20% 0.013 285)) : le zero y disparait au lieu d'y faire un trou.
  */
+const LOGFC_DARK_NEUTRAL = '#15151c';
+
+function logFCStandard(theme: ThemeMode, neutral: string): ColorStops {
+  const { down, up } = getPalette('standard', theme);
+  return [
+    [0.0, down], [0.25, mixColors(down, neutral, 0.5)], [0.4, mixColors(down, neutral, 0.8)],
+    [0.5, neutral],
+    [0.6, mixColors(up, neutral, 0.8)], [0.75, mixColors(up, neutral, 0.5)], [1.0, up],
+  ];
+}
+
 const LOGFC: Record<PaletteMode, Record<ThemeMode, ColorStops>> = {
   standard: {
-    light: [
-      [0.0, '#c51b7d'], [0.25, '#e9a3c9'], [0.4, '#fde0ef'], [0.5, ZERO.light],
-      [0.6, '#e6f5d0'], [0.75, '#a1d76a'], [1.0, '#4d9221'],
-    ],
-    dark: [
-      [0.0, '#e074b4'], [0.25, '#a83e84'], [0.4, '#6b2a55'], [0.5, ZERO.dark],
-      [0.6, '#2f5a2a'], [0.75, '#5a9a3f'], [1.0, '#9ed669'],
-    ],
+    light: logFCStandard('light', ZERO.light),
+    dark: logFCStandard('dark', LOGFC_DARK_NEUTRAL),
   },
   colorblind: DIVERGING.colorblind,
 };
 
-/** Direction discrete : deux bandes franches, DOWN puis UP, sans degrade. */
+/**
+ * Direction discrete : deux bandes franches, DOWN puis UP, sans degrade.
+ *
+ * En mode standard elle LIT la palette (terre cuite / bleu acier, spec § 2.1) au lieu de recopier
+ * ses hex : le volcan, les tableaux GO / GSEA et les legendes ne peuvent plus diverger. C'etait deja
+ * une recopie (`#dc2626` / `#16a34a`), et elle disait rouge contre vert.
+ */
+const standardDirection = (theme: ThemeMode): [string, string] => {
+  const { down, up } = getPalette('standard', theme);
+  return [down, up];
+};
+
 const DIRECTION: Record<PaletteMode, Record<ThemeMode, [string, string]>> = {
-  standard: { light: ['#dc2626', '#16a34a'], dark: ['#ef4444', '#22c55e'] },
+  standard: { light: standardDirection('light'), dark: standardDirection('dark') },
   colorblind: { light: ['#0072B2', '#D55E00'], dark: ['#5fb4e8', '#f09460'] },
 };
 

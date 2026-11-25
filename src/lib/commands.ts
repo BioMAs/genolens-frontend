@@ -9,9 +9,13 @@
  */
 
 import { PARAM_GENE } from '@/components/comparison/explorerUrl';
+import { comparisonTitle } from '@/components/dashboard/format';
+import { comparisonHref } from '@/lib/navigation/comparisonHref';
+import { DESTINATIONS, type DestinationKey } from '@/lib/navigation/destinations';
+import type { UserComparisonItem } from '@/hooks/useAllComparisons';
 import type { GeneSearchResult } from '@/types/gene-search';
 
-export type CommandKind = 'navigate' | 'project' | 'gene' | 'action';
+export type CommandKind = 'navigate' | 'project' | 'comparison' | 'gene' | 'action';
 
 /** Sens de variation d'un gene dans une comparaison, tel que l'ingestion l'a classe. */
 export type GeneDirection = 'up' | 'down' | 'ns';
@@ -35,13 +39,31 @@ export interface CommandGroup {
   items: Command[];
 }
 
-/** Les routes de premier niveau, celles que la barre laterale expose. */
+/**
+ * Mots-cles des destinations de la barre du haut. Le libelle et l'adresse ne
+ * sont PAS repetes ici : ils viennent de `DESTINATIONS`, parce qu'une route
+ * retiree de la navigation doit disparaitre d'ici du meme coup. Le `Record`
+ * force a en ecrire pour toute destination ajoutee.
+ */
+const DESTINATION_KEYWORDS: Record<DestinationKey, string[]> = {
+  home: ['dashboard', 'accueil', 'start'],
+  projects: ['projets', 'datasets', 'studies'],
+  tools: ['ontology', 'power analysis', 'outils'],
+};
+
+/**
+ * « Go to » : les trois destinations de la barre du haut, puis le profil, qui
+ * vit dans le menu du compte. Ni la liste globale des comparaisons (ses lignes
+ * sont des resultats de recherche, voir `comparisonCommands`) ni la
+ * documentation (menu d'aide) : les proposer ici les ferait reapparaitre par
+ * la fenetre apres que la navigation les a retirees.
+ */
 const ROUTES: Array<{ href: string; label: string; keywords: string[] }> = [
-  { href: '/dashboard', label: 'Dashboard', keywords: ['home', 'accueil', 'start'] },
-  { href: '/projects', label: 'Projects', keywords: ['projets', 'datasets', 'studies'] },
-  { href: '/comparisons', label: 'Comparisons', keywords: ['deg', 'contrast', 'comparaisons'] },
-  { href: '/tools', label: 'Tools', keywords: ['ontology', 'power analysis', 'outils'] },
-  { href: '/docs', label: 'Documentation', keywords: ['help', 'guide', 'aide', 'docs'] },
+  ...DESTINATIONS.map((d) => ({
+    href: d.href,
+    label: d.label,
+    keywords: DESTINATION_KEYWORDS[d.key],
+  })),
   { href: '/profile', label: 'Profile & plan', keywords: ['account', 'billing', 'compte', 'quota'] },
 ];
 
@@ -60,9 +82,11 @@ export interface ProjectLike {
 
 export function buildCommands(opts: {
   projects: ProjectLike[];
+  /** Deja classees et plafonnees : voir `comparisonCommands`. */
+  comparisons?: Command[];
   actions: CommandActions;
 }): CommandGroup[] {
-  const { projects, actions } = opts;
+  const { projects, comparisons = [], actions } = opts;
 
   const groups: CommandGroup[] = [
     {
@@ -90,6 +114,10 @@ export function buildCommands(opts: {
         keywords: ['project', 'projet'],
       })),
     });
+  }
+
+  if (comparisons.length) {
+    groups.push({ heading: 'Comparisons', items: comparisons });
   }
 
   const actionItems: Command[] = [
@@ -145,26 +173,93 @@ export function scoreCommand(command: Command, query: string): number | null {
   return null;
 }
 
+/**
+ * Filtre et ordonne UNE liste : le classement des projets, des comparaisons et
+ * de chaque groupe passe par la, pour qu'il n'y en ait qu'un.
+ */
+function rankCommands(items: Command[], query: string): Command[] {
+  return items
+    .map((item) => ({ item, score: scoreCommand(item, query) }))
+    .filter((s): s is { item: Command; score: number } => s.score !== null)
+    // Tri STABLE sur le score seul : a score egal, l'ordre de declaration
+    // est conserve, et c'est lui qui porte la hierarchie du produit.
+    .sort((a, b) => b.score - a.score)
+    .map((s) => s.item);
+}
+
 /** Filtre et ordonne, en preservant les groupes et en jetant ceux qui se vident. */
 export function filterCommands(groups: CommandGroup[], query: string): CommandGroup[] {
   if (!query.trim()) return groups;
   return groups
-    .map((group) => ({
-      heading: group.heading,
-      items: group.items
-        .map((item) => ({ item, score: scoreCommand(item, query) }))
-        .filter((s): s is { item: Command; score: number } => s.score !== null)
-        // Tri STABLE sur le score seul : a score egal, l'ordre de declaration
-        // est conserve, et c'est lui qui porte la hierarchie du produit.
-        .sort((a, b) => b.score - a.score)
-        .map((s) => s.item),
-    }))
+    .map((group) => ({ heading: group.heading, items: rankCommands(group.items, query) }))
     .filter((group) => group.items.length > 0);
 }
 
 /** La liste a plat, dans l'ordre d'affichage — c'est elle que le clavier parcourt. */
 export function flattenCommands(groups: CommandGroup[]): Command[] {
   return groups.flatMap((g) => g.items);
+}
+
+/**
+ * Ce que la palette sait d'une comparaison. `ComparisonSummary` ne suffit pas :
+ * il ne porte ni le projet ni son nom, donc ni l'adresse ni la precision. C'est
+ * la ligne de la liste transversale (`UserComparisonItem`) qu'il faut.
+ */
+export type ComparisonLike = Pick<
+  UserComparisonItem,
+  'name' | 'project_id' | 'project_name' | 'dataset_id'
+>;
+
+/** Autant de lignes que la palette en montre sans defiler, comme pour les genes. */
+export const COMPARISON_RESULT_LIMIT = 6;
+
+/**
+ * La liste complete des comparaisons, en fin de groupe. La palette ne cherche
+ * que dans les 100 plus recentes (le maximum d'une page) : au-dela, c'est cette
+ * liste qui retrouve une comparaison, et elle a quitte la barre du haut.
+ */
+const ALL_COMPARISONS: Command = {
+  id: 'route:/comparisons',
+  label: 'All comparisons',
+  kind: 'navigate',
+  href: '/comparisons',
+  keywords: ['comparisons', 'comparaisons', 'deg', 'contrasts', 'results'],
+};
+
+/**
+ * Les comparaisons que la palette propose pour une requete : six au plus, classees
+ * comme les projets (prefixe, puis sous-chaine, puis mot-cle ; a egalite, l'ordre
+ * recu — la plus recente d'abord).
+ *
+ * Le libelle est le NOM, tel que le backend le donne, comme sur les lignes de
+ * gene (« TP53 · Drug_vs_Vehicle · Liver ») : la meme comparaison ne s'ecrit pas
+ * de deux facons dans la meme liste. La forme lisible du tableau de bord
+ * (« Drug vs Vehicle ») et le nom du projet restent des mots-cles, donc
+ * trouvables sans etre affiches. Le projet va aussi en precision : deux projets
+ * ont souvent une comparaison du meme nom, et sans lui les deux lignes seraient
+ * identiques.
+ *
+ * Requete vide : les six premieres, soit les plus recentes — de quoi y revenir
+ * sans rien taper, comme la liste des projets. Le groupe se ferme sur la liste
+ * complete (`ALL_COMPARISONS`) des qu'il existe une comparaison, et l'ensemble
+ * est reclasse pour que `filterCommands` n'en change pas l'ordre.
+ */
+export function comparisonCommands(comparisons: ComparisonLike[], query: string): Command[] {
+  if (!comparisons.length) return [];
+  const items: Command[] = comparisons.map((c) => ({
+    id: `comparison:${c.project_id}:${c.dataset_id}:${c.name}`,
+    label: c.name,
+    hint: c.project_name,
+    kind: 'comparison' as const,
+    href: comparisonHref(c),
+    // `comparison` permet de les lister sans en connaitre une seule, comme
+    // `project` pour les projets.
+    keywords: [comparisonTitle(c.name), c.project_name, 'comparison', 'comparaison'],
+  }));
+  return rankCommands(
+    [...rankCommands(items, query).slice(0, COMPARISON_RESULT_LIMIT), ALL_COMPARISONS],
+    query,
+  );
 }
 
 /**
