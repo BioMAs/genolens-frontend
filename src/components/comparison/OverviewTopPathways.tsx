@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import {
   Bar,
   BarChart,
@@ -10,8 +10,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import api from '@/utils/api';
 import type { Dataset } from '@/types';
+import {
+  TOP_PATHWAYS_PADJ_MAX as PADJ_MAX,
+  useTopPathways,
+  type TopPathway,
+} from '@/hooks/useTopPathways';
 import { CHART_AXIS } from '@/components/charts/rechartsDefaults';
 import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 
@@ -24,17 +28,10 @@ interface Props {
   maxTerms?: number;
 }
 
-interface Pathway {
-  id: string;
-  name: string;
-  padj: number;
+interface Pathway extends TopPathway {
   score: number;
-  geneCount: number;
-  category?: string;
-  regulation?: string;
 }
 
-const PADJ_MAX = 0.05;
 /* Indigo, the pathway colour across the app (--sl-purple). Recharts writes it
    into a `fill` attribute, so the token is resolved by the browser. */
 const BAR_COLOR = 'var(--sl-purple)';
@@ -80,68 +77,22 @@ export default function OverviewTopPathways({
   onOpenEnrichment,
   maxTerms = 8,
 }: Props) {
-  const [pathways, setPathways] = useState<Pathway[]>([]);
-  const [loading, setLoading] = useState(!!enrichmentDataset);
-  const [failed, setFailed] = useState(false);
+  const { pathways: top, isLoading: loading, isError: failed } = useTopPathways(
+    enrichmentDataset?.id,
+    comparisonName,
+    maxTerms
+  );
 
-  useEffect(() => {
-    if (!enrichmentDataset) {
-      setPathways([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setFailed(false);
-
-    (async () => {
-      try {
-        const res = await api.get(
-          `/datasets/${enrichmentDataset.id}/enrichment-pathways/${encodeURIComponent(comparisonName)}`,
-          {
-            params: {
-              regulation: 'ALL',
-              page: 1,
-              page_size: 100,
-              padj_max: PADJ_MAX,
-              sort_by: 'padj',
-              sort_order: 'asc',
-            },
-          }
-        );
-        if (cancelled) return;
-
-        const rows: Record<string, unknown>[] = res.data?.pathways ?? [];
-        const parsed = rows
-          .map((row): Pathway => {
-            const padj = Number(row.padj ?? row.pvalue ?? 1);
-            return {
-              id: row.pathway_id ? String(row.pathway_id) : '',
-              name: row.pathway_name ? String(row.pathway_name) : String(row.description ?? '—'),
-              padj,
-              // -log10(padj): higher bar = stronger evidence. Floored so a padj
-              // of 0 (rounded down by the backend) stays plottable.
-              score: padj > 0 ? -Math.log10(padj) : 30,
-              geneCount: Number(row.gene_count ?? 0),
-              category: row.category ? String(row.category) : undefined,
-              regulation: row.regulation ? String(row.regulation) : undefined,
-            };
-          })
-          .filter((p) => Number.isFinite(p.score) && p.padj <= PADJ_MAX)
-          .slice(0, maxTerms);
-
-        setPathways(parsed);
-      } catch {
-        if (!cancelled) setFailed(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [enrichmentDataset, comparisonName, maxTerms]);
+  const pathways = useMemo<Pathway[]>(
+    () =>
+      (top ?? []).map((p) => ({
+        ...p,
+        // -log10(padj): higher bar = stronger evidence. Floored so a padj
+        // of 0 (rounded down by the backend) stays plottable.
+        score: p.padj > 0 ? -Math.log10(p.padj) : 30,
+      })),
+    [top]
+  );
 
   const isEmpty = !enrichmentDataset || failed || pathways.length === 0;
   const state: ChartState = loading ? 'loading' : isEmpty ? 'empty' : 'ready';
