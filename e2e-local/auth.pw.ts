@@ -20,6 +20,15 @@ import { freshCode } from './support/totp';
  * Not part of CI. It creates real accounts (`e2e-<timestamp>-<name>@example.com`)
  * in whatever database the backend points at: use a throwaway one.
  *
+ * Why `@example.com` and not `@example.test`: the API validates addresses with
+ * email-validator (pydantic `EmailStr`), which refuses the special-use domains
+ * (`.test`, `.local`, `.localhost`, `.invalid`...) unless
+ * `email_validator.TEST_ENVIRONMENT = True`, a switch only the backend's pytest
+ * fixtures turn on. Rather than patch the API for the bench, the suite uses
+ * `example.com`: reserved by RFC 2606, so nothing real can receive it, and accepted
+ * by the validator as it ships (no deliverability check). Every address the bench
+ * signs up (the optional admin account below included) must pass that validator.
+ *
  * Prerequisites
  * -------------
  * 1. Mailpit, to read the e-mails (pin the image version when you run it):
@@ -38,7 +47,12 @@ import { freshCode } from './support/totp';
  *      SMTP_USER=<any>  SMTP_PASSWORD=<any>  EMAIL_FROM_ADDRESS=noreply@example.test
  *    Empty signing and encryption keys are fine for a single run (they are ephemeral); see
  *    "Rate limits" for when fixed ones are needed.
- * 3. Nothing listening on :3000. Playwright starts the dev server itself (`npm run dev`)
+ * 3. A freshly started API for every full run: restart uvicorn between two runs. Its
+ *    per-IP limits are counted in the process's memory outside production (Redis only
+ *    when ENVIRONMENT=production), so a restart is the only reset, and a run spends a
+ *    good part of them: 2 of the 5 sign-ups an hour, 1 of the 5 "forgot" an hour, 9 of
+ *    the 10 sign-ins a minute (details under "Rate limits").
+ * 4. Nothing listening on :3000. Playwright starts the dev server itself (`npm run dev`)
  *    with AUTH_JWKS_URL, AUTH_ISSUER, NEXT_PUBLIC_API_URL and NEXT_PUBLIC_ADMIN_APP_URL set
  *    in playwright.auth.config.ts, which win over any .env.local, and it never reuses a
  *    server already running: if :3000 is taken the run fails at once, so stop your own dev
@@ -58,12 +72,14 @@ import { freshCode } from './support/totp';
  * -----------
  * They are real (in memory, per IP, outside production): sign-in 10/min and 50/h, sign-up,
  * "forgot" and "resend" 5/h each, 3 link e-mails/h per address. One run makes 9 sign-in
- * calls (8 without the invitation) against a budget of 10 a minute, and 2 sign-ups: do not
- * sign in by hand meanwhile. A run right after another, or a third within the hour, can
- * answer `too_many_attempts`: restart uvicorn to reset the counters. Across such a restart
- * the keys must be fixed (AUTH_JWT_PRIVATE_KEYS and AUTH_ENCRYPTION_KEYS, from
- * `python -m app.auth.cli generate-keys`): ephemeral keys die with the process, and the
- * second factor of the admin account with them (a single run needs no fixed keys).
+ * calls (8 without the invitation) against a budget of 10 a minute, 2 sign-ups and 1
+ * "forgot": do not sign in, sign up or ask for a reset by hand meanwhile. A run right
+ * after another, or a third within the hour, answers `too_many_attempts`: hence the
+ * restart of uvicorn between full runs (prerequisite 3), which resets the counters.
+ * Across such a restart the keys must be fixed (AUTH_JWT_PRIVATE_KEYS and
+ * AUTH_ENCRYPTION_KEYS, from `python -m app.auth.cli generate-keys`): ephemeral keys die
+ * with the process, and the second factor of the admin account with them (a single run
+ * needs no fixed keys).
  *
  * Authenticator codes are single-use per 30-second step (see support/totp.ts), so a run
  * sometimes waits for the next step.
