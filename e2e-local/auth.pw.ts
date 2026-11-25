@@ -208,9 +208,19 @@ async function signedIn(page: Page, account: Account): Promise<void> {
 
 // ---- through the screens ---------------------------------------------------------------------
 
+/**
+ * The sign-in screen is told by its form, not by its "Welcome back" heading: the
+ * dashboard greets a signed-in user with the same words, so the heading alone would
+ * also pass for a session that was never left.
+ */
+async function expectSignInForm(page: Page): Promise<void> {
+  await expect(page).toHaveURL((url) => url.pathname === '/');
+  await expect(page.getByTestId('auth-email')).toBeVisible();
+}
+
 async function openSignIn(page: Page): Promise<void> {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  await expectSignInForm(page);
   // The form is client-rendered: typing before the page is interactive would be lost.
   await page.waitForLoadState('networkidle');
 }
@@ -264,11 +274,14 @@ async function enrolThroughUi(page: Page): Promise<{ secret: string; recoveryCod
   return { secret: secret!, recoveryCodes };
 }
 
-/** From the sidebar's account menu; ends on the sign-in screen. */
+/** From the sidebar's account menu; ends on the sign-in screen, the sign-out taken by the API. */
 async function signOutThroughUi(page: Page, email: string): Promise<void> {
   await page.locator('button[aria-haspopup="menu"]').filter({ hasText: email }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
-  await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  await expectSignInForm(page);
+  // `/?reauth=1` would be a sign-out the API did not take.
+  await expect(page).toHaveURL((url) => !url.searchParams.has('reauth'));
+  await expect(page.getByTestId('sign-out-failed')).toHaveCount(0);
 }
 
 // ---- scenarios ----------------------------------------------------------------------------------
