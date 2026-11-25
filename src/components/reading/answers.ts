@@ -53,10 +53,16 @@ function list(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
+/** `1284` devient `1,284` : les milliers se lisent d'un coup d'œil sur de vrais comptages. */
+const formatCount = (n: number): string => n.toLocaleString('en-US');
+
 function counts({ summary, tested }: AnswersInput): Answer {
   if (!summary) return { text: 'Counting genes…', by: 'pending' };
-  const changed = `${summary.up} up and ${summary.down} down`;
-  return { text: tested === null ? changed : `${changed}, of ${tested} genes tested`, by: 'data' };
+  const changed = `${formatCount(summary.up)} up and ${formatCount(summary.down)} down`;
+  return {
+    text: tested === null ? changed : `${changed}, of ${formatCount(tested)} genes tested`,
+    by: 'data',
+  };
 }
 
 function genes({ topUp, topDown }: AnswersInput): Answer {
@@ -67,6 +73,18 @@ function genes({ topUp, topDown }: AnswersInput): Answer {
   return { text: halves.length > 0 ? halves.join('; ') : 'No gene passes the thresholds', by: 'data' };
 }
 
+/**
+ * Le nom d'une voie en milieu de phrase : l'initiale passe en minuscule, mais seulement quand la
+ * deuxième lettre est une minuscule (`Cell cycle` donne `cell cycle`). Un sigle (`DNA repair`), un
+ * symbole à chiffre (`p53 signalling`) ou une capitale isolée (`T cell activation`) restent tels
+ * quels : un `toLowerCase()` complet les abîmerait, et le reste du nom n'est jamais touché.
+ */
+function lowerInitial(name: string): string {
+  const second = name.charAt(1);
+  const secondIsLower = second !== '' && second !== second.toUpperCase();
+  return secondIsLower ? name.charAt(0).toLowerCase() + name.slice(1) : name;
+}
+
 function processes({ pathways }: AnswersInput): Answer {
   if (pathways === null) return { text: 'No enrichment file for this comparison', by: 'data' };
   if (pathways.length === 0) return { text: 'No process is enriched at these thresholds', by: 'data' };
@@ -74,7 +92,7 @@ function processes({ pathways }: AnswersInput): Answer {
   // Les voies arrivent triées par l'appelant : la première de chaque sens est la plus forte.
   const pu = pathways.find((p) => p.direction === 'up');
   const pd = pathways.find((p) => p.direction === 'down');
-  if (pu && pd) return { text: `${pu.name} rises; ${pd.name.toLowerCase()} falls`, by: 'data' };
+  if (pu && pd) return { text: `${pu.name} rises; ${lowerInitial(pd.name)} falls`, by: 'data' };
   if (pu) return { text: `${pu.name} rises`, by: 'data' };
   if (pd) return { text: `${pd.name} falls`, by: 'data' };
   // Enrichissement « tous les DEG » : aucune voie n'a de sens.
@@ -124,6 +142,9 @@ function meaning({ interpretation }: AnswersInput): Answer {
 }
 
 function applications({ access, claims }: AnswersInput): Answer {
+  // Avant l'arrivée du profil tous les drapeaux sont faux : afficher le verrou ici l'annoncerait à
+  // quelqu'un qui a le module. On attend plutôt de savoir.
+  if (!access.loaded) return { text: 'Checking your modules…', by: 'pending' };
   if (!access.skin) return { text: 'Skin claims need the CosmOmics module', by: 'data' };
   if (claims === null) return { text: 'No skin claim data for this comparison', by: 'data' };
 

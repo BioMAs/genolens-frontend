@@ -22,7 +22,7 @@ const QUESTIONS = [
 const MENTION = 'Written by the model from answers 1 to 3';
 
 const answers = (over: Partial<Record<AnswerKey, Answer>> = {}): Record<AnswerKey, Answer> => ({
-  counts: { text: '274 up and 181 down, of 20000 genes tested', by: 'data' },
+  counts: { text: '274 up and 181 down, of 20,000 genes tested', by: 'data' },
   genes: { text: 'IL6 and PTGS2 rise most; KRT1 falls most', by: 'data' },
   processes: { text: 'Inflammatory response rises; epidermis development falls', by: 'data' },
   meaning: { text: 'Inflammation rises while the barrier falls.', by: 'model' },

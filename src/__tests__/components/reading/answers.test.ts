@@ -59,9 +59,28 @@ const base = (over: Partial<AnswersInput> = {}): AnswersInput => ({
 describe('buildAnswers — 1, how many genes change', () => {
   it('counts up and down against the genes tested', () => {
     expect(buildAnswers(base()).counts).toEqual({
-      text: '274 up and 181 down, of 20000 genes tested',
+      text: '274 up and 181 down, of 20,000 genes tested',
       by: 'data',
     });
+  });
+
+  it('groups thousands with a comma, on up, down and tested alike', () => {
+    const summary = { up: 1284, down: 902, ns: 17000, significant: 2186, total: 19186 };
+    expect(buildAnswers(base({ summary, tested: 20000 })).counts.text).toBe(
+      '1,284 up and 902 down, of 20,000 genes tested'
+    );
+    expect(buildAnswers(base({ summary, tested: null })).counts.text).toBe('1,284 up and 902 down');
+    const huge = { up: 1234567, down: 1000, ns: 0, significant: 1235567, total: 1235567 };
+    expect(buildAnswers(base({ summary: huge, tested: 1500000 })).counts.text).toBe(
+      '1,234,567 up and 1,000 down, of 1,500,000 genes tested'
+    );
+  });
+
+  it('leaves numbers under a thousand alone', () => {
+    const summary = { up: 999, down: 0, ns: 1, significant: 999, total: 1000 };
+    expect(buildAnswers(base({ summary, tested: 999 })).counts.text).toBe(
+      '999 up and 0 down, of 999 genes tested'
+    );
   });
 
   it('drops the tested part when it is unknown', () => {
@@ -70,8 +89,11 @@ describe('buildAnswers — 1, how many genes change', () => {
 
   it('never takes the genes tested from the significance summary', () => {
     // `total` (19455) is what the volcano drew, not what was tested.
-    expect(buildAnswers(base({ tested: 20000 })).counts.text).not.toContain('19455');
-    expect(buildAnswers(base({ tested: null })).counts.text).not.toContain('19455');
+    for (const tested of [20000, null]) {
+      const text = buildAnswers(base({ tested })).counts.text;
+      expect(text).not.toContain('19455');
+      expect(text).not.toContain('19,455');
+    }
   });
 
   it('is pending while the summary is not there yet', () => {
@@ -129,6 +151,32 @@ describe('buildAnswers — 3, which processes move', () => {
       text: 'Inflammatory response rises; epidermis development falls',
       by: 'data',
     });
+  });
+
+  it('lowers the initial only when the second letter is lower case', () => {
+    const fall = (name: string) =>
+      buildAnswers(base({ pathways: [pathway('Interferon signaling', 'up'), pathway(name, 'down')] }))
+        .processes.text;
+    expect(fall('Cell cycle')).toBe('Interferon signaling rises; cell cycle falls');
+    expect(fall('Wnt signaling')).toBe('Interferon signaling rises; wnt signaling falls');
+    // An acronym, a gene symbol with a digit, a single capital before a space: all left as written.
+    expect(fall('DNA repair')).toBe('Interferon signaling rises; DNA repair falls');
+    expect(fall('TNF signaling')).toBe('Interferon signaling rises; TNF signaling falls');
+    expect(fall('p53 signalling')).toBe('Interferon signaling rises; p53 signalling falls');
+    expect(fall('T cell activation')).toBe('Interferon signaling rises; T cell activation falls');
+    expect(fall('NF-kappaB signaling')).toBe('Interferon signaling rises; NF-kappaB signaling falls');
+  });
+
+  it('leaves the rest of the name untouched when it lowers the initial', () => {
+    const pathways = [pathway('Interferon signaling', 'up'), pathway('Response to IL-6 and TNF', 'down')];
+    expect(buildAnswers(base({ pathways })).processes.text).toBe(
+      'Interferon signaling rises; response to IL-6 and TNF falls'
+    );
+  });
+
+  it('never touches the name of a half that stands alone', () => {
+    expect(buildAnswers(base({ pathways: [pathway('Cell cycle', 'down')] })).processes.text).toBe('Cell cycle falls');
+    expect(buildAnswers(base({ pathways: [pathway('DNA repair', 'down')] })).processes.text).toBe('DNA repair falls');
   });
 
   it('takes the first of each direction in the order it is given', () => {
@@ -247,6 +295,31 @@ describe('buildAnswers — 4, what it means biologically', () => {
 });
 
 describe('buildAnswers — 5, what you can apply it to', () => {
+  it('waits for the profile before saying anything about the module', () => {
+    const waiting = { ...access, skin: false, loaded: false };
+    expect(buildAnswers(base({ access: waiting, claims: [claim('Barrier')] })).applications).toEqual({
+      text: 'Checking your modules…',
+      by: 'pending',
+    });
+  });
+
+  it('never shows the lock text before the profile is known, whatever the claims are', () => {
+    const waiting = { ...access, skin: false, loaded: false };
+    for (const claims of [null, [], [claim('Barrier')]]) {
+      expect(buildAnswers(base({ access: waiting, claims })).applications.text).not.toMatch(/need the CosmOmics/);
+    }
+  });
+
+  it('keeps waiting even if a stale skin flag is already on', () => {
+    const waiting = { ...access, skin: true, loaded: false };
+    expect(buildAnswers(base({ access: waiting })).applications.by).toBe('pending');
+  });
+
+  it('shows the lock text once the profile is known and the module is off', () => {
+    const locked = { ...access, skin: false, loaded: true };
+    expect(buildAnswers(base({ access: locked })).applications.text).toBe('Skin claims need the CosmOmics module');
+  });
+
   it('asks for the CosmOmics module when the skin lock is on', () => {
     const locked = base({ access: { ...access, skin: false }, claims: [claim('Barrier')] });
     expect(buildAnswers(locked).applications).toEqual({
