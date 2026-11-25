@@ -3,9 +3,10 @@
  * accept an invitation (`/auth/invite`), confirm an address
  * (`/auth/verify-email`), plus `/auth/forgot` that sends the reset link.
  *
- * The token rides in the query string. It is read once, at mount, and taken
- * out of the address bar; nothing is sent to the API before the visitor acts
- * (a link scanner that merely opens the page must not confirm anything).
+ * The token rides in the fragment, or in the query string of a link sent
+ * before it moved there. It is read once, at mount, and taken out of the
+ * address bar; nothing is sent to the API before the visitor acts (a link
+ * scanner that merely opens the page must not confirm anything).
  *
  * The auth client and the navigation seam are simulated. jsdom cannot stub
  * `window.location`, so each test sets the URL with the real
@@ -74,7 +75,19 @@ async function typePasswords(submit: RegExp | string, password: string, confirm:
 }
 
 describe('useLinkToken', () => {
-  it('hands back the token and takes it out of the address bar', () => {
+  it('hands back the token of the fragment and takes it out of the address bar', () => {
+    setLocation('/auth/reset?other=1#a=1&token=abc');
+
+    const { result } = renderHook(() => useLinkToken());
+
+    expect(result.current).toBe('abc');
+    expect(replaceState).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/reset');
+    expect(window.location.hash).toBe('');
+    expect(window.location.search).toBe('');
+  });
+
+  it('still reads a link sent with the token in the query string', () => {
     setLocation('/auth/reset?token=abc&other=1#frag');
 
     const { result } = renderHook(() => useLinkToken());
@@ -83,27 +96,60 @@ describe('useLinkToken', () => {
     expect(replaceState).toHaveBeenCalledTimes(1);
     expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/reset');
     expect(window.location.search).toBe('');
+    expect(window.location.hash).toBe('');
   });
 
-  it('answers null for a link without a token, and leaves the URL alone', () => {
-    setLocation('/auth/reset');
+  it('prefers the fragment when both carry a token, and removes both', () => {
+    setLocation('/auth/reset?token=from-query#token=from-fragment');
 
     const { result } = renderHook(() => useLinkToken());
 
-    expect(result.current).toBeNull();
-    expect(replaceState).not.toHaveBeenCalled();
+    expect(result.current).toBe('from-fragment');
+    expect(window.location.href).not.toContain('from-');
   });
 
-  it('treats an empty token as no token', () => {
-    setLocation('/auth/reset?token=');
+  it('decodes a URL-encoded token', () => {
+    setLocation('/auth/reset#token=a%2Bb%2Fc%3D');
 
     const { result } = renderHook(() => useLinkToken());
 
-    expect(result.current).toBeNull();
+    expect(result.current).toBe('a+b/c=');
+  });
+
+  it.each(['/auth/reset', '/auth/reset#top', '/auth/reset?tab=2#tokens=1'])(
+    'answers null for a link without a token (%s), and leaves the URL alone',
+    (url) => {
+      setLocation(url);
+
+      const { result } = renderHook(() => useLinkToken());
+
+      expect(result.current).toBeNull();
+      expect(replaceState).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['/auth/reset#token=', '/auth/reset?token=', '/auth/reset?token=#token='])(
+    'treats an empty token as no token (%s)',
+    (url) => {
+      setLocation(url);
+
+      const { result } = renderHook(() => useLinkToken());
+
+      expect(result.current).toBeNull();
+    },
+  );
+
+  it('falls back to the query string when the fragment token is empty', () => {
+    setLocation('/auth/reset?token=abc#token=');
+
+    const { result } = renderHook(() => useLinkToken());
+
+    expect(result.current).toBe('abc');
+    expect(window.location.href).not.toContain('abc');
   });
 
   it('keeps the token when React runs the effect twice (StrictMode)', () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
 
     const { result } = renderHook(() => useLinkToken(), { wrapper: StrictMode });
 
@@ -114,17 +160,23 @@ describe('useLinkToken', () => {
 });
 
 describe('/auth/reset', () => {
-  it('reads the token once and removes it from the address bar', () => {
-    setLocation('/auth/reset?token=abc');
+  it.each(['/auth/reset#token=abc', '/auth/reset?token=abc'])(
+    'reads the token of %s once and removes it from the address bar',
+    async (url) => {
+      setLocation(url);
+      resetMock.mockResolvedValue(authOk(null, 204));
+      render(<ResetPage />);
 
-    render(<ResetPage />);
+      expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/reset');
+      expect(window.location.href).not.toContain('abc');
 
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/reset');
-    expect(window.location.href).not.toContain('abc');
-  });
+      await typePasswords(/update password/i, PASSWORD, PASSWORD);
+      expect(resetMock).toHaveBeenCalledWith('abc', PASSWORD);
+    },
+  );
 
   it('resets the password and asks to sign in', async () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
     resetMock.mockResolvedValue(authOk(null, 204));
     render(<ResetPage />);
 
@@ -143,7 +195,7 @@ describe('/auth/reset', () => {
   });
 
   it('refuses mismatched passwords without calling the API', async () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
     render(<ResetPage />);
 
     await typePasswords(/update password/i, PASSWORD, 'another-long-pass');
@@ -153,7 +205,7 @@ describe('/auth/reset', () => {
   });
 
   it('refuses a password that is too short without calling the API', async () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
     render(<ResetPage />);
 
     await typePasswords(/update password/i, 'too-short', 'too-short');
@@ -163,7 +215,7 @@ describe('/auth/reset', () => {
   });
 
   it('shows the API reason for a refused password and lets the visitor try again', async () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
     resetMock.mockResolvedValueOnce(authRefused(400, 'password_policy:too_common'));
     resetMock.mockResolvedValueOnce(authOk(null, 204));
     render(<ResetPage />);
@@ -181,7 +233,7 @@ describe('/auth/reset', () => {
   });
 
   it('sends a dead link to the request page', async () => {
-    setLocation('/auth/reset?token=old');
+    setLocation('/auth/reset#token=old');
     resetMock.mockResolvedValue(authRefused(400, 'invalid_token'));
     render(<ResetPage />);
 
@@ -209,7 +261,7 @@ describe('/auth/reset', () => {
   });
 
   it('works under StrictMode: the form is shown, not the dead link', async () => {
-    setLocation('/auth/reset?token=abc');
+    setLocation('/auth/reset#token=abc');
     resetMock.mockResolvedValue(authOk(null, 204));
     render(
       <StrictMode>
@@ -225,7 +277,7 @@ describe('/auth/reset', () => {
 
 describe('/auth/invite', () => {
   it('continues an invitation to the enrolment', async () => {
-    setLocation('/auth/invite?token=inv');
+    setLocation('/auth/invite#token=inv');
     inviteMock.mockResolvedValue(authOk({ next: 'mfa_setup' as const }));
     render(<InvitePage />);
 
@@ -236,7 +288,7 @@ describe('/auth/invite', () => {
   });
 
   it('continues an invitation of an account that already has a second factor to the code step', async () => {
-    setLocation('/auth/invite?token=inv');
+    setLocation('/auth/invite#token=inv');
     inviteMock.mockResolvedValue(authOk({ next: 'mfa' as const }));
     render(<InvitePage />);
 
@@ -245,16 +297,24 @@ describe('/auth/invite', () => {
     await waitFor(() => expect(assign).toHaveBeenCalledWith('/?step=mfa'));
   });
 
-  it('removes the token from the address bar', () => {
-    setLocation('/auth/invite?token=inv');
+  it.each(['/auth/invite#token=inv', '/auth/invite?token=inv'])(
+    'removes the token of %s from the address bar and keeps it for the form',
+    async (url) => {
+      setLocation(url);
+      inviteMock.mockResolvedValue(authOk({ next: 'mfa_setup' as const }));
+      render(<InvitePage />);
 
-    render(<InvitePage />);
+      expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/invite');
+      expect(window.location.hash).toBe('');
+      expect(window.location.search).toBe('');
 
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/invite');
-  });
+      await typePasswords(/set password/i, PASSWORD, PASSWORD);
+      expect(inviteMock).toHaveBeenCalledWith('inv', PASSWORD);
+    },
+  );
 
   it('refuses mismatched passwords without calling the API', async () => {
-    setLocation('/auth/invite?token=inv');
+    setLocation('/auth/invite#token=inv');
     render(<InvitePage />);
 
     await typePasswords(/set password/i, PASSWORD, 'another-long-pass');
@@ -265,7 +325,7 @@ describe('/auth/invite', () => {
   });
 
   it('shows the API reason for a refused password and stays on the page', async () => {
-    setLocation('/auth/invite?token=inv');
+    setLocation('/auth/invite#token=inv');
     inviteMock.mockResolvedValue(authRefused(400, 'password_policy:too_common'));
     render(<InvitePage />);
 
@@ -277,7 +337,7 @@ describe('/auth/invite', () => {
   });
 
   it('says so when the invitation is no longer valid', async () => {
-    setLocation('/auth/invite?token=old');
+    setLocation('/auth/invite#token=old');
     inviteMock.mockResolvedValue(authRefused(400, 'invalid_token'));
     render(<InvitePage />);
 
@@ -303,7 +363,7 @@ describe('/auth/verify-email', () => {
   const confirmButton = () => screen.getByRole('button', { name: /confirm my email address/i });
 
   it('confirms an address only on click', async () => {
-    setLocation('/auth/verify-email?token=v');
+    setLocation('/auth/verify-email#token=v');
     verifyMock.mockResolvedValue(authOk(null, 204));
     render(<VerifyEmailPage />);
 
@@ -319,17 +379,25 @@ describe('/auth/verify-email', () => {
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/');
   });
 
-  it('removes the token from the address bar without using it', () => {
-    setLocation('/auth/verify-email?token=v');
+  it.each(['/auth/verify-email#token=v', '/auth/verify-email?token=v'])(
+    'removes the token of %s from the address bar without using it',
+    async (url) => {
+      setLocation(url);
+      verifyMock.mockResolvedValue(authOk(null, 204));
+      render(<VerifyEmailPage />);
 
-    render(<VerifyEmailPage />);
+      expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/verify-email');
+      expect(window.location.hash).toBe('');
+      expect(window.location.search).toBe('');
+      expect(verifyMock).not.toHaveBeenCalled();
 
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/auth/verify-email');
-    expect(verifyMock).not.toHaveBeenCalled();
-  });
+      await user.click(confirmButton());
+      expect(verifyMock).toHaveBeenCalledWith('v');
+    },
+  );
 
   it('offers a new link when the old one is dead', async () => {
-    setLocation('/auth/verify-email?token=v');
+    setLocation('/auth/verify-email#token=v');
     verifyMock.mockResolvedValue(authRefused(400, 'invalid_token'));
     resendMock.mockResolvedValue(authOk({ status: 'accepted' as const }, 202));
     render(<VerifyEmailPage />);
@@ -375,7 +443,7 @@ describe('/auth/verify-email', () => {
   });
 
   it('keeps the button for another try when the API cannot be reached', async () => {
-    setLocation('/auth/verify-email?token=v');
+    setLocation('/auth/verify-email#token=v');
     verifyMock.mockResolvedValueOnce(authRefused(0, null));
     verifyMock.mockResolvedValueOnce(authOk(null, 204));
     render(<VerifyEmailPage />);

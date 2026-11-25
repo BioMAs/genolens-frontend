@@ -21,6 +21,16 @@ describe('scrubTokenParam', () => {
     [`/auth/reset?Token=${SECRET}&token=${SECRET}`, '/auth/reset'],
     // A valueless key is dropped too.
     ['/auth/reset?token', '/auth/reset'],
+    // In the fragment, where links carry it now.
+    [`https://app.example.test/auth/reset#token=${SECRET}`, 'https://app.example.test/auth/reset'],
+    [`/auth/invite#token=${SECRET}`, '/auth/invite'],
+    [`/auth/reset#a=1&token=${SECRET}`, '/auth/reset#a=1'],
+    [`/auth/reset#token=${SECRET}&b=2`, '/auth/reset#b=2'],
+    [`/auth/reset?a=1#token=${SECRET}`, '/auth/reset?a=1'],
+    [`/auth/reset?token=${SECRET}#token=${SECRET}`, '/auth/reset'],
+    [`/auth/reset#%74oken=${SECRET}`, '/auth/reset'],
+    // `location.hash` on its own.
+    [`#token=${SECRET}`, ''],
   ])('strips the token from %s', (input, expected) => {
     const result = scrubTokenParam(input);
 
@@ -35,6 +45,9 @@ describe('scrubTokenParam', () => {
     '/auth/forgot?',
     '',
     'GET /auth/reset',
+    '/auth/reset#top',
+    '/auth/reset#tokens=2&mytoken=1',
+    '/projects/p1?tab=2#',
   ])('leaves %s as it is', (input) => {
     expect(scrubTokenParam(input)).toBe(input);
   });
@@ -118,6 +131,26 @@ describe('scrubTokens', () => {
     expect(result.breadcrumbs[0].data).toEqual({ from: URL_CLEAN, to: '/dashboard' });
     expect(result.breadcrumbs[1].data).toEqual({ from: '/', to: URL_CLEAN });
     expect(result.breadcrumbs[2].data).toEqual({ url: '/api/x?a=1', method: 'GET' });
+  });
+
+  it('cleans a link whose token rides in the fragment', () => {
+    const inFragment = `https://app.example.test/auth/reset#token=${SECRET}`;
+    const transaction = {
+      type: 'transaction',
+      request: { url: inFragment },
+      contexts: {
+        trace: { data: { url: inFragment, 'http.fragment': `#token=${SECRET}`, 'url.fragment': `token=${SECRET}` } },
+      },
+      // What `useLinkToken` leaves behind when it cleans the address bar.
+      breadcrumbs: [{ category: 'navigation', data: { from: '/auth/reset#token=' + SECRET, to: '/auth/reset' } }],
+    };
+
+    const result = scrubTokens(transaction);
+
+    expectClean(result);
+    expect(result.request.url).toBe(URL_CLEAN);
+    expect(result.contexts.trace.data).toEqual({ url: URL_CLEAN, 'http.fragment': '#', 'url.fragment': '' });
+    expect(result.breadcrumbs[0].data).toEqual({ from: '/auth/reset', to: '/auth/reset' });
   });
 
   it('cleans a single breadcrumb, as beforeBreadcrumb hands it over', () => {

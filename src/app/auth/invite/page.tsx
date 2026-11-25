@@ -44,7 +44,7 @@ function InviteFlow({ token }: { token: string }) {
   return <NewPasswordForm submitLabel="Set password" onSubmit={submit} />;
 }
 
-/** Opened from the invitation e-mail: `/auth/invite?token=…`. */
+/** Opened from the invitation e-mail: `/auth/invite#token=…`. */
 export default function InvitePage() {
   return (
     <LinkTokenPage title="Choose your password" dead={<DeadLink />}>
