@@ -1,12 +1,14 @@
 /**
- * Keeps the one-time token of an e-mailed link (`/auth/reset?token=…`,
- * `/auth/invite?token=…`, `/auth/verify-email?token=…`) out of Sentry.
+ * Keeps the one-time token of an e-mailed link (`/auth/reset#token=…`,
+ * `/auth/invite#token=…`, `/auth/verify-email#token=…`, or `?token=…` in links
+ * sent before the token moved to the fragment) out of Sentry.
  *
  * `useLinkToken` takes the token out of the address bar once the page has
  * mounted, but a pageload transaction, an error raised on the way in and the
- * breadcrumbs have by then recorded `location.href`. The token is a credential
- * until it is used, so every event, transaction and breadcrumb is scrubbed
- * before it leaves the browser (or the server that rendered the page).
+ * breadcrumbs have by then recorded `location.href`, fragment included. The
+ * token is a credential until it is used, so every event, transaction and
+ * breadcrumb is scrubbed before it leaves the browser (or the server that
+ * rendered the page).
  *
  * Pure and framework-free: the three Sentry configs hand it to `beforeSend`,
  * `beforeSendTransaction` and `beforeBreadcrumb`.
@@ -26,34 +28,51 @@ function isTokenKey(raw: string): boolean {
   return key.toLowerCase() === TOKEN_PARAM;
 }
 
-/** The query string without its `token` pairs, or `null` when it had none (nothing to rewrite). */
+/**
+ * A query string or a fragment without its `token` pairs, or `null` when it
+ * had none (nothing to rewrite).
+ */
 function withoutTokenPairs(query: string): string | null {
   const pairs = query.split('&');
   const kept = pairs.filter((pair) => !isTokenKey(pair.split('=')[0]));
   return kept.length === pairs.length ? null : kept.join('&');
 }
 
-/**
- * The URL without its `token` query parameter. Works on absolute and relative
- * URLs, keeps every other parameter and the fragment as written, and returns
- * the string untouched when there is no such parameter.
- */
-export function scrubTokenParam(url: string): string {
-  const queryAt = url.indexOf('?');
-  const hashAt = url.indexOf('#');
-  // No query, or a `?` that sits inside the fragment.
-  if (queryAt === -1 || (hashAt !== -1 && hashAt < queryAt)) return url;
-
-  const end = hashAt === -1 ? url.length : hashAt;
-  const query = withoutTokenPairs(url.slice(queryAt + 1, end));
-  if (query === null) return url;
-  return url.slice(0, queryAt) + (query ? `?${query}` : '') + url.slice(end);
+/** What comes before the fragment, without the `token` pairs of its query string. */
+function scrubBeforeFragment(head: string): string {
+  const queryAt = head.indexOf('?');
+  if (queryAt === -1) return head;
+  const query = withoutTokenPairs(head.slice(queryAt + 1));
+  if (query === null) return head;
+  return head.slice(0, queryAt) + (query ? `?${query}` : '');
 }
 
-/** A value held under a key such as `query_string`, `http.query` or `url.query`. */
+/** A fragment (`#…`) without its `token` pairs, dropped altogether when nothing else is left. */
+function scrubFragment(hash: string): string {
+  const fragment = withoutTokenPairs(hash.slice(1));
+  if (fragment === null) return hash;
+  return fragment ? `#${fragment}` : '';
+}
+
+/**
+ * The URL without its `token` parameter, in the query string and in the
+ * fragment. Works on absolute and relative URLs, keeps every other parameter
+ * and fragment as written, and returns the string untouched when there is no
+ * such parameter.
+ */
+export function scrubTokenParam(url: string): string {
+  const hashAt = url.indexOf('#');
+  if (hashAt === -1) return scrubBeforeFragment(url);
+  return scrubBeforeFragment(url.slice(0, hashAt)) + scrubFragment(url.slice(hashAt));
+}
+
+/**
+ * A value held under a key such as `query_string`, `http.query`, `url.query`
+ * or `http.fragment`.
+ */
 function scrubQuery(value: unknown): unknown {
   if (typeof value === 'string') {
-    const lead = value.startsWith('?') ? '?' : '';
+    const lead = value.startsWith('?') || value.startsWith('#') ? value[0] : '';
     const query = withoutTokenPairs(value.slice(lead.length));
     return query === null ? value : lead + query;
   }
@@ -64,7 +83,7 @@ function scrubQuery(value: unknown): unknown {
   return value;
 }
 
-const isQueryKey = (key: string) => key === 'query_string' || /query$/i.test(key);
+const isQueryKey = (key: string) => key === 'query_string' || /(query|fragment)$/i.test(key);
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) return false;
@@ -88,10 +107,11 @@ function scrubValue(value: unknown, depth: number): unknown {
 }
 
 /**
- * A copy of a Sentry event, transaction or breadcrumb with the `token` query
- * parameter removed from every URL it holds: `request.url`, the query string,
- * the referrer, the transaction name, tags, span descriptions, navigation
- * breadcrumbs (`from`, `to`), fetch breadcrumbs (`url`). The input is not changed.
+ * A copy of a Sentry event, transaction or breadcrumb with the `token`
+ * parameter removed from every URL it holds, query string and fragment alike:
+ * `request.url`, the query string, the referrer, the transaction name, tags,
+ * span descriptions and data, navigation breadcrumbs (`from`, `to`), fetch
+ * breadcrumbs (`url`). The input is not changed.
  */
 export function scrubTokens<T>(value: T): T {
   return scrubValue(value, 0) as T;

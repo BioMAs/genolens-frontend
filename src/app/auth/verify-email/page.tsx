@@ -76,7 +76,7 @@ function VerifyFlow({ token }: { token: string }) {
   );
 }
 
-/** Opened from the sign-up e-mail: `/auth/verify-email?token=…`. */
+/** Opened from the sign-up e-mail: `/auth/verify-email#token=…`. */
 export default function VerifyEmailPage() {
   return (
     <LinkTokenPage title="Confirm your email address" dead={<DeadLink />}>

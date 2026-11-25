@@ -12,8 +12,9 @@ import { verifyAccessToken } from '@/utils/auth/jwt';
 import { isPublicPath, loginPath, reauthLoginPath, refreshPath, safeNext } from '@/utils/auth/paths';
 
 /**
- * Pages opened from an e-mailed link: the token rides in the URL, so it must
- * not leak through `Referer` nor sit in a shared cache.
+ * Pages opened from an e-mailed link: the token rides in the URL (in the
+ * fragment, or in the query string of a link sent before the token moved
+ * there), so it must not leak through `Referer` nor sit in a shared cache.
  */
 const LINK_TOKEN_PAGES = new Set(['/auth/reset', '/auth/invite', '/auth/verify-email']);
 

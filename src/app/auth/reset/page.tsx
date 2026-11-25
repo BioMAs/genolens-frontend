@@ -49,7 +49,7 @@ function ResetFlow({ token }: { token: string }) {
   return <NewPasswordForm submitLabel="Update password" onSubmit={submit} />;
 }
 
-/** Opened from the e-mailed link: `/auth/reset?token=…`. */
+/** Opened from the e-mailed link: `/auth/reset#token=…`. */
 export default function ResetPasswordPage() {
   return (
     <LinkTokenPage title="Choose a new password" dead={<DeadLink />}>
