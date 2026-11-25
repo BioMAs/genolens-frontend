@@ -16,27 +16,26 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-const getUser = jest.fn();
-
-jest.mock('@/utils/supabase/server', () => ({
-  createClient: jest.fn(async () => ({ auth: { getUser } })),
-}));
+jest.mock('@/utils/auth/server', () => ({ getSessionUser: jest.fn() }));
 
 import { redirect } from 'next/navigation';
+import { getSessionUser } from '@/utils/auth/server';
+
+const session = getSessionUser as jest.MockedFunction<typeof getSessionUser>;
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
 it('redirects an anonymous visitor to the landing page', async () => {
-  getUser.mockResolvedValue({ data: { user: null } });
+  session.mockResolvedValue(null);
 
   await expect(DocsPage()).rejects.toThrow('NEXT_REDIRECT');
   expect(redirect).toHaveBeenCalledWith('/');
 });
 
 it('renders the index for a signed-in user', async () => {
-  getUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+  session.mockResolvedValue({ sub: 'u1', sid: 's1', amr: ['pwd', 'otp'] });
 
   await expect(DocsPage()).resolves.toBeTruthy();
   expect(redirect).not.toHaveBeenCalled();

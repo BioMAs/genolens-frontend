@@ -24,17 +24,17 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-const getUser = jest.fn();
-
-jest.mock('@/utils/supabase/server', () => ({
-  createClient: jest.fn(async () => ({ auth: { getUser } })),
-}));
+jest.mock('@/utils/auth/server', () => ({ getSessionUser: jest.fn() }));
 
 import { notFound, redirect } from 'next/navigation';
+import { getSessionUser } from '@/utils/auth/server';
+
+const session = getSessionUser as jest.MockedFunction<typeof getSessionUser>;
+const SIGNED_IN = { sub: 'u1', sid: 's1', amr: ['pwd', 'otp'] };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  getUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+  session.mockResolvedValue(SIGNED_IN);
 });
 
 it('calls notFound for a slug with no matching guide', async () => {
@@ -45,7 +45,7 @@ it('calls notFound for a slug with no matching guide', async () => {
 });
 
 it('redirects an anonymous visitor instead of serving the guide', async () => {
-  getUser.mockResolvedValue({ data: { user: null } });
+  session.mockResolvedValue(null);
 
   await expect(DocPage({ params: Promise.resolve({ slug: 'gsea' }) })).rejects.toThrow(
     'NEXT_REDIRECT'

@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { User } from '@supabase/supabase-js';
 import { ChevronsUpDown, LogOut, Moon, Sun, UserIcon } from 'lucide-react';
+import SignOutButton from '@/components/auth/SignOutButton';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/cn';
+import type { AppUser } from '@/utils/auth/types';
 
 /**
  * Menu utilisateur du pied de sidebar.
@@ -20,13 +21,12 @@ import { cn } from '@/lib/cn';
  * pose sur une interface de donnees » que le commentaire de
  * DashboardWelcomeBanner condamne deja.
  */
-export default function UserMenu({ user }: { user: User }) {
+export default function UserMenu({ user }: { user: AppUser }) {
   const [open, setOpen] = React.useState(false);
   const root = React.useRef<HTMLDivElement>(null);
-  const signOutForm = React.useRef<HTMLFormElement>(null);
   const { theme, toggleTheme } = useTheme();
 
-  const userName = user.email?.split('@')[0] || 'User';
+  const userName = user.email.split('@')[0] || 'User';
   const initials = userName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'U';
 
   React.useEffect(() => {
@@ -91,26 +91,17 @@ export default function UserMenu({ user }: { user: User }) {
             {theme === 'light' ? 'Dark theme' : 'Light theme'}
           </button>
 
-          {/* La deconnexion reste un POST vers /auth/signout : un GET
-              deconnecterait l'utilisateur sur simple prefetch du navigateur.
-
-              Pas de `onClick={() => setOpen(false)}` ici, contrairement aux
-              autres entrees : React purge les evenements discrets de facon
-              synchrone, donc le menu — et le <form> avec lui — quitterait le
-              DOM avant que le navigateur ne declenche l'activation du bouton.
-              Un submitter detache n'a plus de form owner : la soumission est
-              abandonnee en silence et le clic ne fait rien. La navigation qui
-              suit le POST ferme le menu de toute facon. */}
-          <form ref={signOutForm} action="/auth/signout" method="post" className="contents">
-            <button
-              type="submit"
-              role="menuitem"
-              className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
-            >
-              <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-              Sign out
-            </button>
-          </form>
+          {/* La deconnexion est un appel a l'API fait par le navigateur, pas
+              un lien : un GET deconnecterait l'utilisateur sur simple prefetch.
+              Pas de `setOpen(false)` : la page se recharge en entier une fois la
+              session terminee, ce qui ferme le menu de toute facon. */}
+          <SignOutButton
+            role="menuitem"
+            className={cn(itemClass, 'border-t border-subtle text-danger hover:bg-danger-soft')}
+          >
+            <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+            Sign out
+          </SignOutButton>
         </div>
       )}
     </div>

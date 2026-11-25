@@ -10,7 +10,7 @@ Modern, interactive dashboard for the Genolens bioinformatics platform.
 - **Components**: [shadcn/ui](https://ui.shadcn.com/) (Radix UI)
 - **Visualization**: Recharts, Plotly.js (via react-plotly.js)
 - **Data Fetching**: React Query (TanStack Query)
-- **Auth**: Supabase Auth helpers for Next.js
+- **Auth**: self-hosted, cookie-based session issued by the Genolens API, with mandatory two-factor (TOTP) authentication
 
 ## 🛠 Prerequisites
 
@@ -30,13 +30,32 @@ yarn install
 
 ### 2. Environment Variables
 
-Create a `.env.local` file based on the example (or required variables):
+Copy `.env.local.example` to `.env.local`. The variables that matter for a local
+setup:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v2
+NEXT_PUBLIC_API_URL=http://localhost:8001/api/v1
+AUTH_JWKS_URL=http://localhost:8001/api/v1/auth/jwks.json
+AUTH_ISSUER=http://localhost:8001
+AUTH_COOKIE_DOMAIN=
+NEXT_PUBLIC_ADMIN_APP_URL=http://localhost:3001
 ```
+
+- `NEXT_PUBLIC_API_URL` is the backend API, with its version prefix.
+- `AUTH_JWKS_URL` and `AUTH_ISSUER` are read at runtime by the Next server and the
+  middleware to verify the session token (`gl_at` cookie) locally: they must match
+  the API's public key set and its `iss` claim.
+- `AUTH_COOKIE_DOMAIN` (runtime) must equal the API's: when a sign-out cannot reach
+  the API, `/auth/local-signout` expires `gl_at` and `gl_session` from the Next server,
+  and a browser deletes a cookie only when the Domain matches. Empty for host-only
+  cookies (local development).
+- `NEXT_PUBLIC_ADMIN_APP_URL` is the origin of the admin app, the only absolute URL
+  a post-login `?next=` may point to. It is baked into the bundle at build time.
+
+The backend sets the session cookies. Locally, with no cookie domain configured, they
+belong to `localhost` and are shared between the ports 3000 (this app), 3001 (admin)
+and 8001 (API). Signing in takes a password and then a 6-digit code from an
+authenticator app; an account without a second factor is sent to enrol one.
 
 ### 3. Running Development Server
 

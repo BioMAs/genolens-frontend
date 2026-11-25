@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { User } from '@supabase/supabase-js';
 import { useProject } from '@/hooks/useProjects';
 import {
   LayoutDashboard,
@@ -24,9 +23,10 @@ import { useScientificModule } from '@/hooks/useAddOnModules';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { canUseMultiComparison, PLAN_GATE_COPY } from '@/utils/plan';
 import { cn } from '@/lib/cn';
+import type { AppUser } from '@/utils/auth/types';
 
 interface SidebarProps {
-  user: User;
+  user: AppUser;
   userRole: string | null;
 }
 

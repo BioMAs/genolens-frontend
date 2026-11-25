@@ -20,8 +20,6 @@ import EnrichmentRadarPlot from '@/components/EnrichmentRadarPlot';
 import AIChartAssistant from '@/components/AIChartAssistant';
 
 jest.mock('@/utils/api');
-// Only called when the user starts an AI stream, never on mount.
-jest.mock('@/utils/supabase/client', () => ({ createClient: jest.fn() }));
 
 const mockApi = api as jest.Mocked<typeof api>;
 

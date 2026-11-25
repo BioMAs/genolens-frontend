@@ -55,10 +55,15 @@ frontend/
 │   │   ├── DEGTable.test.tsx
 │   │   └── ...
 │   ├── utils/__mocks__/          # Mocks pour les tests
-│   │   ├── api.ts              # Mock du client API
-│   │   └── supabase.ts         # Mock de Supabase
-│   └── __tests__/                # Tests généraux
+│   │   └── api.ts              # Mock du client API
+│   ├── test-utils/               # Doublures partagées (ce ne sont pas des tests)
+│   │   ├── authResults.ts      # authOk / authRefused : résultats des appels d'auth
+│   │   ├── fetchDoubles.ts     # fetch global simulé (flux SSE, renouvellement)
+│   │   └── downloads.ts        # Fichiers remis au navigateur
+│   └── __tests__/                # Tests généraux (app, middleware, utils/auth...)
 ```
+
+Les doublures de `src/test-utils/` ne s'appellent pas `use*` et vivent hors de `__tests__` : Jest ne doit pas les prendre pour des tests, et la règle de lint des hooks ne doit pas les prendre pour des hooks.
 
 ### Pattern de test pour les hooks
 
@@ -138,23 +143,46 @@ import api from '@/utils/__mocks__/api';
 });
 ```
 
-### Mock de Supabase
+### Tests de l'authentification
 
-```typescript
-// utils/__mocks__/supabase.ts
-export const createClient = jest.fn(() => ({
-  auth: {
-    getUser: jest.fn().mockResolvedValue({ data: { user: mockUser } }),
-    getSession: jest.fn().mockResolvedValue({ data: { session: mockSession } }),
-    signInWithPassword: jest.fn().mockResolvedValue({ error: null }),
-    signUp: jest.fn().mockResolvedValue({ error: null }),
-  },
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  single: jest.fn().mockResolvedValue({ data: mockData }),
-}));
+L'authentification n'a pas de client tiers à simuler : la session est portée par des cookies que l'API pose, et le code passe par trois points d'entrée que les tests remplacent.
+
+**1. Les appels d'avant session** (`login`, `verifyMfa`, `signup`, `forgotPassword`...) viennent de `@/utils/auth/client` et retournent un `AuthResult` : un refus est une valeur, pas une exception. Un test de page mocke le module et scénarise les réponses avec `authOk` et `authRefused` de `@/test-utils/authResults` :
+
+```tsx
+import { login } from '@/utils/auth/client';
+import { authOk, authRefused } from '@/test-utils/authResults';
+
+jest.mock('@/utils/auth/client', () => ({ login: jest.fn(), verifyMfa: jest.fn() }));
+
+const loginMock = login as jest.MockedFunction<typeof login>;
+
+loginMock.mockResolvedValueOnce(authOk({ next: 'mfa' }));
+// Un refus de l'API, avec ce que son corps porte en plus du code :
+loginMock.mockResolvedValueOnce(authRefused(401, 'invalid_credentials'));
+// Un code refusé : `attempts_left` rejoint le corps
+verifyMfaMock.mockResolvedValueOnce(authRefused(401, 'invalid_code', { attempts_left: 2 }));
+// API injoignable : statut 0 et `detail` nul
+loginMock.mockResolvedValueOnce(authRefused(0, null));
 ```
+
+**2. La navigation complète** passe par `@/utils/auth/navigation` (`navigate`, `replaceLocation`). jsdom 26 ne sait ni observer ni suivre `window.location.assign`, et `window.location` ne peut pas y être remplacé : les tests mockent donc ce module et vérifient ses appels, jamais `window.location` :
+
+```tsx
+import { navigate } from '@/utils/auth/navigation';
+
+jest.mock('@/utils/auth/navigation', () => ({ navigate: jest.fn() }));
+
+expect(navigate).toHaveBeenCalledWith('/dashboard');
+```
+
+**3. Le transport** a deux doublures. L'instance axios (`src/utils/api.ts`) se teste avec un adaptateur `jest.fn` à la place du réseau, `refreshSession` et `navigate` remplacés (voir `src/__tests__/utils/api.test.ts`). Pour le code qui appelle `fetch` (les flux SSE du chat IA passent par `authedFetch`), `installFakeFetch` de `@/test-utils/fetchDoubles` remplace le `fetch` global le temps de chaque test et fournit les réponses (`refusal`, `refreshed`, `sseResponse`) : le vrai `authedFetch` s'exécute dessus, ce qui prouve qu'une session est renouvelée et l'appel rejoué.
+
+**Le middleware et la vérification du jeton** tournent hors DOM (`/** @jest-environment node */` en tête de fichier) :
+- `src/__tests__/middleware.test.ts` simule `verifyAccessToken` : ce qui est testé, c'est la décision et son ordre (session, renouvellement, connexion, `reauth=1`, `safeNext`).
+- `src/__tests__/utils/auth/jwt.test.ts` signe de vrais jetons ES256 avec `jose` (`generateKeyPair`, `createLocalJWKSet`) et vérifie signature, `iss`, `aud`, expiration et `amr`.
+
+Les valeurs de test restent fictives : adresses en `@example.test`, origines `https://…example.test`, jamais de vrai compte ni de secret.
 
 ---
 
@@ -202,6 +230,35 @@ frontend/
 │   └── ...
 ```
 
+### Se connecter dans un test E2E
+
+La connexion se fait en deux étapes : e-mail et mot de passe, puis un code à 6 chiffres de l'application d'authentification (la double authentification est obligatoire). Un test E2E calcule ce code à partir du secret TOTP du compte de test, avec `otplib` (v12, en dépendance de développement) :
+
+```typescript
+// e2e/helpers.ts
+import { expect, type Page } from '@playwright/test';
+import { authenticator } from 'otplib';
+
+export async function signIn(page: Page) {
+  const secret = process.env.TEST_USER_TOTP_SECRET;
+  if (!secret) throw new Error('TEST_USER_TOTP_SECRET absent de .env.test.local');
+
+  await page.goto('/');
+  await page.getByTestId('auth-email').fill(process.env.TEST_USER_EMAIL!);
+  await page.getByTestId('auth-password').fill(process.env.TEST_USER_PASSWORD!);
+  await page.getByTestId('auth-submit').click(); // étape du mot de passe
+
+  await page.getByTestId('auth-code').fill(authenticator.generate(secret));
+  await page.getByTestId('auth-mfa-submit').click(); // étape du code
+
+  await expect(page).toHaveURL(/\/dashboard/);
+}
+```
+
+Les identifiants de test (`TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `TEST_USER_TOTP_SECRET`) sont lus dans `.env.test.local` (modèle : `.env.test.local.example`), jamais versionnés ni journalisés. `e2e-capture/auth.capture.setup.ts` fait exactement cela pour les captures commerciales et échoue d'emblée, avec un message clair, si le secret TOTP est absent ; le compte doit déjà avoir enrôlé sa double authentification (sinon la connexion mène à `/auth/2fa/setup` et l'étape du code n'apparaît pas).
+
+Le secret TOTP est la clé en base32 affichée à l'enrôlement.
+
 ### Exemple de test E2E
 
 ```typescript
@@ -218,13 +275,9 @@ test.describe('Authentication', () => {
   });
 
   test('should login successfully', async ({ page }) => {
-    await page.goto('/');
-    
-    await page.getByLabel('Email address').fill('test@example.com');
-    await page.getByLabel('Password').fill('password123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    
-    await expect(page).toHaveURL('/dashboard');
+    await signIn(page); // voir « Se connecter dans un test E2E »
+
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });
 
@@ -232,10 +285,7 @@ test.describe('Authentication', () => {
 test.describe('Projects', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
-    await page.goto('/login');
-    await page.getByLabel('Email').fill('test@example.com');
-    await page.getByLabel('Password').fill('password123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await signIn(page);
   });
 
   test('should create a new project', async ({ page }) => {
@@ -269,10 +319,7 @@ import { test as base } from '@playwright/test';
 export const test = base.extend({
   // Préparer un utilisateur de test
   user: async ({ page }, use) => {
-    await page.goto('/login');
-    await page.getByLabel('Email').fill('test@example.com');
-    await page.getByLabel('Password').fill('password123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await signIn(page);
     await use(null); // No return value needed
   },
 
@@ -465,11 +512,11 @@ expect(result.current.data).toBeDefined();
 ### 4. Mock uniquement ce qui est nécessaire
 
 ```tsx
-// Ne pas mock tout Supabase, juste les appels nécessaires
-jest.spyOn(supabase.auth, 'getUser').mockResolvedValue({
-  data: { user: mockUser },
-  error: null,
-});
+// Ne pas remplacer tout le module d'auth : garder le vrai code, ne simuler que l'appel réseau
+jest.mock('@/utils/auth/client', () => ({
+  ...jest.requireActual('@/utils/auth/client'),
+  refreshSession: jest.fn(),
+}));
 ```
 
 ---

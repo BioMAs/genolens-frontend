@@ -1,9 +1,9 @@
-import { User } from '@supabase/supabase-js';
+import type { AppUser } from '@/utils/auth/types';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 
 interface AppShellProps {
-  user: User;
+  user: AppUser;
   userRole: string | null;
   children: React.ReactNode;
 }
