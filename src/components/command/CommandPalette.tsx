@@ -315,7 +315,11 @@ function CommandPaletteDialog() {
                       <span className="min-w-0 flex-1 truncate text-body-sm">{item.label}</span>
                       {item.direction && <Direction direction={item.direction} />}
                       {item.hint && (
-                        <span className="shrink-0 truncate text-caption text-muted">{item.hint}</span>
+                        // Plafonnee : un nom de projet long ne doit pas ecraser le
+                        // nom de la comparaison a cote sur un ecran etroit.
+                        <span className="max-w-[45%] shrink-0 truncate text-caption text-muted">
+                          {item.hint}
+                        </span>
                       )}
                       {active && <CornerDownLeft className="h-3.5 w-3.5 shrink-0" aria-hidden />}
                     </button>

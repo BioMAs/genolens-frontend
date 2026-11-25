@@ -266,17 +266,43 @@ describe('comparaisons', () => {
     expect(new Set(twins.map((c) => c.id)).size).toBe(2);
   });
 
+  /** Les lignes de comparaison, sans le lien vers la liste complete. */
+  const onlyComparisons = (commands: ReturnType<typeof comparisonCommands>) =>
+    commands.filter((c) => c.kind === 'comparison');
+
   it('en rend six au plus', () => {
     const many = Array.from({ length: 20 }, (_, i) => comparison(`Contrast_${i}_vs_Ctrl`));
-    expect(comparisonCommands(many, 'contrast')).toHaveLength(6);
-    expect(comparisonCommands(many, '')).toHaveLength(6);
+    expect(onlyComparisons(comparisonCommands(many, 'contrast'))).toHaveLength(6);
+    expect(onlyComparisons(comparisonCommands(many, ''))).toHaveLength(6);
   });
 
   it('garde l’ordre recu quand la requete est vide, comme pour les projets', () => {
     // Le hook les donne de la plus recente a la plus ancienne : c'est ce que la
     // palette montre avant toute frappe.
     const names = ['C_vs_D', 'A_vs_B', 'E_vs_F'];
-    expect(comparisonCommands(names.map((n) => comparison(n)), '  ').map((c) => c.label)).toEqual(names);
+    expect(
+      onlyComparisons(comparisonCommands(names.map((n) => comparison(n)), '  ')).map((c) => c.label),
+    ).toEqual(names);
+  });
+
+  it('ferme le groupe sur la liste complete, avant toute frappe', () => {
+    // La palette ne cherche que dans les 100 plus recentes : au-dela, c'est la
+    // liste complete qui retrouve une comparaison. Elle a quitte la barre du
+    // haut, la palette doit donc y mener.
+    const commands = comparisonCommands([LESIONAL, RETINOL], '');
+    expect(commands.at(-1)).toMatchObject({ label: 'All comparisons', href: '/comparisons' });
+  });
+
+  it('trouve la liste complete par son nom, meme quand aucune comparaison ne correspond', () => {
+    for (const q of ['all comp', 'comparaisons', 'deg']) {
+      expect(comparisonCommands([LESIONAL], q).map((c) => c.href)).toContain('/comparisons');
+    }
+    expect(comparisonCommands([LESIONAL], 'lesional').map((c) => c.href)).not.toContain('/comparisons');
+  });
+
+  it('ne mene pas a une liste vide', () => {
+    expect(comparisonCommands([], '')).toEqual([]);
+    expect(comparisonCommands([], 'all comparisons')).toEqual([]);
   });
 
   it('classe un prefixe avant une sous-chaine, comme les projets', () => {
@@ -292,7 +318,7 @@ describe('comparaisons', () => {
   it('trouve par projet, par titre lisible et par le mot « comparison »', () => {
     expect(comparisonCommands([LESIONAL, RETINOL], 'skin atlas')).toHaveLength(2);
     expect(comparisonCommands([LESIONAL], 'lesional vs non')).toHaveLength(1);
-    expect(comparisonCommands([LESIONAL, RETINOL], 'comparison')).toHaveLength(2);
+    expect(onlyComparisons(comparisonCommands([LESIONAL, RETINOL], 'comparison'))).toHaveLength(2);
     expect(comparisonCommands([LESIONAL, RETINOL], 'zzzz')).toEqual([]);
   });
 

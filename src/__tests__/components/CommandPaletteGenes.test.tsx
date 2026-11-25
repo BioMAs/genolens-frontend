@@ -315,10 +315,14 @@ describe('comparaisons', () => {
     expect(push).toHaveBeenCalledWith('/projects/p-skin/comparisons/Retinol_vs_Vehicle');
   });
 
-  it('propose les dernieres comparaisons avant toute frappe, six au plus', () => {
+  it('propose les dernieres comparaisons avant toute frappe, six au plus, puis la liste complete', () => {
     comparisons = Array.from({ length: 10 }, (_, i) => comparison(`Contrast_${i}_vs_Ctrl`));
     render(<CommandPalette />);
-    expect(comparisonOptions()).toHaveLength(6);
+    const options = comparisonOptions();
+    expect(options).toHaveLength(7);
+    expect(options[6]).toHaveTextContent('All comparisons');
+    fireEvent.click(options[6]);
+    expect(push).toHaveBeenCalledWith('/comparisons');
   });
 
   it('range le groupe entre « Go to » et les actions', () => {

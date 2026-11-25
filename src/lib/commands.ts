@@ -214,6 +214,19 @@ export type ComparisonLike = Pick<
 export const COMPARISON_RESULT_LIMIT = 6;
 
 /**
+ * La liste complete des comparaisons, en fin de groupe. La palette ne cherche
+ * que dans les 100 plus recentes (le maximum d'une page) : au-dela, c'est cette
+ * liste qui retrouve une comparaison, et elle a quitte la barre du haut.
+ */
+const ALL_COMPARISONS: Command = {
+  id: 'route:/comparisons',
+  label: 'All comparisons',
+  kind: 'navigate',
+  href: '/comparisons',
+  keywords: ['comparisons', 'comparaisons', 'deg', 'contrasts', 'results'],
+};
+
+/**
  * Les comparaisons que la palette propose pour une requete : six au plus, classees
  * comme les projets (prefixe, puis sous-chaine, puis mot-cle ; a egalite, l'ordre
  * recu — la plus recente d'abord).
@@ -227,9 +240,12 @@ export const COMPARISON_RESULT_LIMIT = 6;
  * identiques.
  *
  * Requete vide : les six premieres, soit les plus recentes — de quoi y revenir
- * sans rien taper, comme la liste des projets.
+ * sans rien taper, comme la liste des projets. Le groupe se ferme sur la liste
+ * complete (`ALL_COMPARISONS`) des qu'il existe une comparaison, et l'ensemble
+ * est reclasse pour que `filterCommands` n'en change pas l'ordre.
  */
 export function comparisonCommands(comparisons: ComparisonLike[], query: string): Command[] {
+  if (!comparisons.length) return [];
   const items: Command[] = comparisons.map((c) => ({
     id: `comparison:${c.project_id}:${c.dataset_id}:${c.name}`,
     label: c.name,
@@ -240,7 +256,10 @@ export function comparisonCommands(comparisons: ComparisonLike[], query: string)
     // `project` pour les projets.
     keywords: [comparisonTitle(c.name), c.project_name, 'comparison', 'comparaison'],
   }));
-  return rankCommands(items, query).slice(0, COMPARISON_RESULT_LIMIT);
+  return rankCommands(
+    [...rankCommands(items, query).slice(0, COMPARISON_RESULT_LIMIT), ALL_COMPARISONS],
+    query,
+  );
 }
 
 /**
