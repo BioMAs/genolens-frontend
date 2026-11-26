@@ -154,6 +154,14 @@ describe('genes', () => {
     );
   });
 
+  // La lecture ouvre la fiche du gène sur `?gene=` : le lien n'emporte plus les anciens écrans.
+  it('ouvre la fiche dans la lecture, sans ancien écran ni module', () => {
+    const href = geneHref({ ...hit, comparison_name: 'UVB 24 h + active' });
+    expect(href).toContain('/comparisons/UVB%2024%20h%20%2B%20active?');
+    expect(href).toContain('gene=ENSG00000141510');
+    expect(href).not.toMatch(/[?&](view|panel|tab)=/);
+  });
+
   it('classe le sens de variation, et tout ce qui n’est ni UP ni DOWN en NS', () => {
     expect(geneDirection('UP')).toBe('up');
     expect(geneDirection('down')).toBe('down');
