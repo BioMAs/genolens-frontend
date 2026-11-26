@@ -16,6 +16,7 @@ import { useIntersectionEnrichment, EnrichmentRow } from '@/hooks/useIntersectio
 import { Button } from '@/components/ui/button';
 import { ConditionPill } from '@/components/ui/condition-pill';
 import ProportionalVenn, { VennRegion } from '@/components/viz/ProportionalVenn';
+import { DEFAULT_THRESHOLDS, isDefaultThresholds, type VolcanoThresholds } from '@/utils/volcano';
 
 // @upsetjs ships generic component signatures that current @types/react flags as
 // invalid JSX elements (a type-only mismatch). Cast to a plain FC with the props
@@ -46,6 +47,11 @@ interface MultiComparisonVennProps {
   projectId: string;
   pathDatasetId: string;
   comparisons: ComparisonRef[];
+  /**
+   * Les seuils de l'étude (`useStudyThresholds`) : ceux que l'analyse envoie, et que la page
+   * montre sans les rendre modifiables — le réglage se fait dans la page de lecture.
+   */
+  thresholds: VolcanoThresholds;
 }
 
 interface ApiErrorShape {
@@ -68,7 +74,11 @@ interface Selection {
   genes: string[];
 }
 
-export default function MultiComparisonVenn({ pathDatasetId, comparisons: availableComparisons }: MultiComparisonVennProps) {
+export default function MultiComparisonVenn({
+  pathDatasetId,
+  comparisons: availableComparisons,
+  thresholds,
+}: MultiComparisonVennProps) {
   /**
    * La palette des conditions listait `--sl-violet` en cinquieme position : le
    * violet est reserve aux surfaces IA, une condition d'echantillon n'en est
@@ -82,6 +92,11 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [category, setCategory] = useState<string>('ALL');
+
+  // `degCount` est ce que l'ingestion a stocké, aux seuils d'ingestion. Une fois l'étude resserrée,
+  // le Venn se calcule à d'autres valeurs : la carte dit de quel compte il s'agit, au lieu de le
+  // laisser passer pour un compte fait aux seuils affichés près du bouton.
+  const tightened = !isDefaultThresholds(thresholds);
 
   const enrichment = useIntersectionEnrichment(pathDatasetId);
 
@@ -114,8 +129,8 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
 
       const response = await api.post(`/datasets/${pathDatasetId}/venn-analysis`, {
         comparison_refs: selectedRefs,
-        padj_threshold: 0.05,
-        logfc_threshold: 0.58,
+        padj_threshold: thresholds.padj,
+        logfc_threshold: thresholds.logfc,
       });
       setVennData(response.data);
     } catch (err: unknown) {
@@ -250,8 +265,16 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
                   <div className="break-words text-body-sm font-medium" style={{ color: 'var(--text-primary)' }} title={comp.label}>
                     {comp.label}
                   </div>
-                  <div className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                    {comp.degCount} DEGs
+                  <div
+                    className="text-caption"
+                    style={{ color: 'var(--text-muted)' }}
+                    title={
+                      tightened
+                        ? `padj < ${DEFAULT_THRESHOLDS.padj}, |log2FC| > ${DEFAULT_THRESHOLDS.logfc}`
+                        : undefined
+                    }
+                  >
+                    {`${comp.degCount} DEGs${tightened ? ' at ingestion' : ''}`}
                   </div>
                 </div>
               </label>
@@ -268,7 +291,7 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
           </div>
         )}
 
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button onClick={fetchVennData} disabled={selectedComparisons.length < 2 || loading}>
             {loading ? 'Analyzing…' : 'Generate analysis'}
           </Button>
@@ -285,6 +308,15 @@ export default function MultiComparisonVenn({ pathDatasetId, comparisons: availa
               Clear selection
             </Button>
           )}
+          {/* Les seuils de l'étude, en lecture seule : une seule source, réglée dans la page de
+              lecture d'une comparaison (« Thresholds »). */}
+          <p
+            className="text-caption"
+            style={{ color: 'var(--text-muted)' }}
+            title="Set once per study, from the Thresholds control of a comparison page."
+          >
+            {`Thresholds: padj < ${thresholds.padj}, |log2FC| > ${thresholds.logfc}`}
+          </p>
         </div>
       </div>
 

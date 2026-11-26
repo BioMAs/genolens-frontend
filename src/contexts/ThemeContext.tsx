@@ -19,7 +19,9 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * Thème résolu depuis les sources du navigateur.
+ * Thème résolu depuis le navigateur : sombre SEULEMENT si l'utilisateur l'a
+ * choisi (`localStorage.theme === 'dark'`). Le fond est blanc par défaut ; la
+ * préférence `prefers-color-scheme` du système n'est volontairement plus lue.
  *
  * ⚠️ Cette règle est écrite DEUX fois, et c'est inévitable : le script inline
  * du layout (`src/app/layout.tsx`, `THEME_BOOT_SCRIPT`) doit l'appliquer avant
@@ -29,19 +31,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
  * l'hydratation cesse de correspondre à l'état de React.
  */
 function resolveTheme(): Theme {
-  const saved = localStorage.getItem('theme');
-  if (saved === 'light' || saved === 'dark') return saved;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
 }
 
 // ── Le thème comme source externe ───────────────────────────────────────────
 //
-// `localStorage` et `prefers-color-scheme` sont un état hors de React :
-// `useSyncExternalStore` est fait pour ça, et c'est lui qui rend le premier
-// rendu client identique à celui du serveur. Un `useState` initialisé depuis
-// ces sources rendait « dark » au premier rendu client là où le serveur avait
-// rendu « light », et React signalait l'écart d'hydratation sur le bouton de
-// thème de la sidebar, sur chaque page authentifiée.
+// `localStorage` est un état hors de React : `useSyncExternalStore` est fait
+// pour ça, et c'est lui qui rend le premier rendu client identique à celui du
+// serveur. Un `useState` initialisé depuis cette source rendait « dark » au
+// premier rendu client là où le serveur avait rendu « light », et React
+// signalait l'écart d'hydratation sur le bouton de thème de la sidebar, sur
+// chaque page authentifiée.
 
 const listeners = new Set<() => void>();
 
@@ -51,18 +51,15 @@ function emit() {
 
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
-  const media = window.matchMedia('(prefers-color-scheme: dark)');
-  // Une préférence système qui change, ou un autre onglet qui bascule le
-  // thème : les deux doivent se refléter ici.
+  // Un autre onglet qui bascule le thème doit se refléter ici. La préférence
+  // système ne compte plus : plus de `matchMedia` à écouter.
   const onStorage = (event: StorageEvent) => {
     if (event.key === 'theme') onChange();
   };
-  media.addEventListener('change', onChange);
   window.addEventListener('storage', onStorage);
 
   return () => {
     listeners.delete(onChange);
-    media.removeEventListener('change', onChange);
     window.removeEventListener('storage', onStorage);
   };
 }

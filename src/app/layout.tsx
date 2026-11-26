@@ -50,6 +50,9 @@ const plexMono = IBM_Plex_Mono({
  * `ThemeProvider`, donc APRÈS le premier rendu : un utilisateur en thème
  * sombre voyait un flash de thème clair à chaque chargement complet.
  *
+ * Règle : sombre SEULEMENT si l'utilisateur l'a choisi (`localStorage.theme`
+ * vaut `dark`) ; le système n'est pas consulté, le fond est blanc par défaut.
+ *
  * Ce script s'exécute pendant l'analyse du document, avant que quoi que ce
  * soit ne soit peint. Il duplique volontairement la règle de `resolveTheme`
  * (`src/contexts/ThemeContext.tsx`) : il tourne avant React, il ne peut pas
@@ -61,10 +64,7 @@ const plexMono = IBM_Plex_Mono({
  */
 const THEME_BOOT_SCRIPT = `
 try {
-  var saved = localStorage.getItem('theme');
-  var dark = saved === 'dark' ||
-    (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  if (dark) document.documentElement.classList.add('dark');
+  if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
 } catch (e) {}
 `;
 

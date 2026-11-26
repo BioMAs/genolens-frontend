@@ -8,6 +8,7 @@ import {
   readThresholds,
   thresholdsAreImplicit,
   thresholdsMatchUrl,
+  urlCarriesThresholds,
   urlMatchesState,
   writeExplorerState,
   writeThresholds,
@@ -53,6 +54,29 @@ describe('readThresholds', () => {
 
   it('keeps a padj usable when the URL says zero', () => {
     expect(readThresholds(params('padj=0')).padj).toBeGreaterThan(0);
+  });
+});
+
+describe('urlCarriesThresholds', () => {
+  it('is true for a URL that names either threshold', () => {
+    expect(urlCarriesThresholds(params('padj=0.01'))).toBe(true);
+    expect(urlCarriesThresholds(params('lfc=1'))).toBe(true);
+    expect(urlCarriesThresholds(params('gene=IL6&padj=0.01&lfc=1'))).toBe(true);
+  });
+
+  it('is true for a value the clamp will pull back onto the default, it is still the link\'s word', () => {
+    expect(urlCarriesThresholds(params('padj=0.5'))).toBe(true);
+  });
+
+  it('is false for a URL that says nothing about them', () => {
+    expect(urlCarriesThresholds(params(''))).toBe(false);
+    expect(urlCarriesThresholds(params('gene=IL6&focus=volcano'))).toBe(false);
+    expect(urlCarriesThresholds(null)).toBe(false);
+    expect(urlCarriesThresholds(undefined)).toBe(false);
+  });
+
+  it('is false for a value nobody can read', () => {
+    expect(urlCarriesThresholds(params('padj=abc&lfc='))).toBe(false);
   });
 });
 

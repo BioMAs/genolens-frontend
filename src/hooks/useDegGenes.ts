@@ -156,6 +156,29 @@ export function toDegExportRow(row: DegGeneRow) {
   };
 }
 
+/**
+ * Les p-values de chaque méthode, pour la comparaison, en CSV : le fichier que l'ancien écran
+ * proposait à côté du tableau (`ComparisonDetail.downloadDegStats`, dont la requête et le nom de
+ * fichier sont repris tels quels). Appelée au clic ; un échec se journalise et ne jette pas, le
+ * bouton n'a rien d'autre à dire.
+ */
+export async function downloadDegStats(datasetId: string, comparisonName: string): Promise<void> {
+  try {
+    const response = await api.get(`/datasets/${datasetId}/deg-stats/export`, {
+      params: { comparison: comparisonName },
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `deg_stats_${comparisonName}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('DEG stats download failed', e);
+  }
+}
+
 export const DEG_EXPORT_COLUMNS = [
   'gene_id',
   'gene_symbol',

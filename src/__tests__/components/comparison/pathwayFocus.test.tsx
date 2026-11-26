@@ -72,6 +72,28 @@ describe('tier 1 — focusing a pathway', () => {
     expect(result.current.term).toBeNull();
   });
 
+  // R40 : la voie porte le padj de la ligne d'où elle vient. Deux lignes du même identifiant (tous
+  // les DEG, hausse seule) n'ont ni le même padj ni les mêmes gènes : la seconde remplace la
+  // première, sinon la fiche garderait les chiffres de l'ancienne ligne.
+  it('replaces the term when the same id comes back with another adjusted p or other genes', () => {
+    const { result } = renderHook(useBoth, { wrapper });
+
+    act(() => result.current.actions.focusTerm({ ...TERM, padj: 0.001 }));
+    act(() => result.current.actions.focusTerm({ ...TERM, padj: 0.03 }));
+    expect(result.current.term?.padj).toBe(0.03);
+
+    act(() => result.current.actions.focusTerm({ ...TERM, padj: 0.03, genes: ['A'] }));
+    expect(result.current.term?.genes).toEqual(['A']);
+  });
+
+  it('tells two terms without an identifier apart by their name', () => {
+    const { result } = renderHook(useBoth, { wrapper });
+
+    act(() => result.current.actions.focusTerm({ ...TERM, id: '', name: 'One' }));
+    act(() => result.current.actions.focusTerm({ ...TERM, id: '', name: 'Two' }));
+    expect(result.current.term?.name).toBe('Two');
+  });
+
   it('preserves identity when the same term is focused again', () => {
     const { result } = renderHook(useBoth, { wrapper });
 

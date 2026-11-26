@@ -10,12 +10,18 @@ import { buildPlotlyLayout, withDemoImageExport } from '@/utils/plotlyLayout';
 import { useIsDemoAccount } from '@/hooks/useIsDemoAccount';
 import ChartCard, { type ChartState } from '@/components/charts/ChartCard';
 import { cn } from '@/lib/cn';
+import { DEFAULT_THRESHOLDS, type VolcanoThresholds } from '@/utils/volcano';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface DEGBarChartProps {
   dataset: Dataset;
   comparisonName: string;
+  /**
+   * Les seuils auxquels on compte un gène haut ou bas : ceux de la page de lecture. Sans eux, ceux
+   * de l'ingestion — `padj < 0.05` et `|log2FC| > 0.58` — comme avant, comparés strictement.
+   */
+  thresholds?: VolcanoThresholds;
 }
 
 type TopN = 5 | 10 | 15 | 20;
@@ -29,7 +35,14 @@ interface DEGGene {
 
 type QueryRow = Record<string, unknown>;
 
-export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProps) {
+export default function DEGBarChart({
+  dataset,
+  comparisonName,
+  thresholds = DEFAULT_THRESHOLDS,
+}: DEGBarChartProps) {
+  // Les deux nombres, pas l'objet : un appelant qui en fabrique un à chaque rendu ne doit pas
+  // relancer la requête.
+  const { padj: padjThreshold, logfc: logfcThreshold } = thresholds;
   const chartTheme = useChartTheme();
   const isDemo = useIsDemoAccount();
   const [topN, setTopN] = useState<TopN>(10);
@@ -99,9 +112,6 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
           return;
         }
 
-        const PADJ_THRESHOLD = 0.05;
-        const LOGFC_THRESHOLD = 0.58; // ~1.5 fold-change
-
         // Check for contrast column (precomputed up/down labels)
         const contrastCol = `contrast:${comparisonName}`;
         const hasContrastCol = columns.includes(contrastCol);
@@ -123,8 +133,8 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
             if (label === 'UP') direction = 'up';
             else if (label === 'DOWN') direction = 'down';
           } else {
-            if (padj < PADJ_THRESHOLD && logFC > LOGFC_THRESHOLD) direction = 'up';
-            else if (padj < PADJ_THRESHOLD && logFC < -LOGFC_THRESHOLD) direction = 'down';
+            if (padj < padjThreshold && logFC > logfcThreshold) direction = 'up';
+            else if (padj < padjThreshold && logFC < -logfcThreshold) direction = 'down';
           }
 
           if (direction === 'up') upGenes.push({ name, logFC, padj, direction });
@@ -145,7 +155,7 @@ export default function DEGBarChart({ dataset, comparisonName }: DEGBarChartProp
     };
 
     fetchDEGs();
-  }, [dataset, comparisonName]);
+  }, [dataset, comparisonName, padjThreshold, logfcThreshold]);
 
   const upGenes = genes.filter((g) => g.direction === 'up').slice(0, topN);
   const downGenes = genes.filter((g) => g.direction === 'down').slice(0, topN);

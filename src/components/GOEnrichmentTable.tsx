@@ -232,7 +232,8 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
 
   return (
     <div className="space-y-4">
-      {/* Gene hover tooltip portal */}
+      {/* Gene hover tooltip portal. Above the dialogs (z-[10000]): the table also lives in the
+          reading's full-screen focus view, and a portaled tooltip below it would never show. */}
       {canUsePortal && hoveredGene && (() => {
         const info = degGeneMap?.[hoveredGene.gene.toUpperCase()];
         if (!info) return null;
@@ -240,7 +241,7 @@ export default function GOEnrichmentTable({ terms, onTermSelect, projectId, degG
         const isDown = info.regulation === 'DOWN';
         return createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-xs"
+            className="fixed z-[10001] pointer-events-none bg-raised rounded-card shadow-elev-2 p-3 text-caption max-w-xs"
             style={{ left: hoveredGene.x + 12, top: hoveredGene.y - 8 }}
           >
             <div className="font-semibold text-primary">{hoveredGene.gene}</div>

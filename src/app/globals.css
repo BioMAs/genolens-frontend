@@ -26,7 +26,7 @@
 
 /* ---- Jetons Lentille — clair (valeurs : spec 2026-11-24, § 2.1) ---- */
 :root {
-  --gl-paper:        oklch(98.4% 0.005 185);  /* fond d'app */
+  --gl-paper:        oklch(100% 0 0);         /* fond d'app : blanc (#fff) ; le sombre n'existe que sur choix (.dark) */
   --gl-paper-2:      oklch(96% 0.009 185);    /* surface secondaire */
   --gl-surface:      oklch(100% 0 0);         /* panneaux */
   --gl-ink:          oklch(25% 0.05 292);     /* texte principal */

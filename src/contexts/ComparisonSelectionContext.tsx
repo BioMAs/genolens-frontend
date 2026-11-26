@@ -39,11 +39,12 @@ import {
   readFocusedGene,
   readGeneListId,
   readThresholds,
+  urlCarriesThresholds,
   urlMatchesState,
   writeExplorerState,
 } from '@/components/comparison/explorerUrl';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { clampThresholds, type VolcanoThresholds } from '@/utils/volcano';
+import { clampThresholds, DEFAULT_THRESHOLDS, type VolcanoThresholds } from '@/utils/volcano';
 
 /** How long to wait after the last edit before touching the URL. */
 const URL_WRITE_DEBOUNCE_MS = 250;
@@ -92,6 +93,12 @@ export interface FocusedTerm {
   id: string;
   name: string;
   genes: string[];
+  /**
+   * The adjusted p of the row the term was picked from, when that row gave one. The sheet prints it
+   * as the process's FDR: looking it up by id elsewhere would find another enrichment's row (all
+   * DEGs, when the row was the up-only one) or none at all.
+   */
+  padj?: number | null;
 }
 
 const EMPTY_SELECTION: ComparisonSelection = {
@@ -100,14 +107,24 @@ const EMPTY_SELECTION: ComparisonSelection = {
   source: 'url',
 };
 
+/**
+ * Who fixed the current thresholds. `'default'`: nobody — the ingestion thresholds or the study
+ * setting, which the study setting may still replace. `'url'`: a link that names a threshold, which
+ * does not give way. `'user'`: a gesture by the reader, which does not either, and the only one
+ * that is saved back to the study setting.
+ */
+type ThresholdsOrigin = 'default' | 'url' | 'user';
+
 interface State {
   thresholds: VolcanoThresholds;
+  thresholdsOrigin: ThresholdsOrigin;
   selection: ComparisonSelection;
   focusedTerm: FocusedTerm | null;
 }
 
 type Action =
   | { type: 'setThresholds'; value: Partial<VolcanoThresholds> }
+  | { type: 'adoptThresholds'; value: VolcanoThresholds }
   | { type: 'selectGenes'; genes: string[]; source: SelectionSource; label?: string }
   | { type: 'selectGeneList'; listId: string; name: string; genes: string[] }
   | { type: 'toggleGene'; gene: string; source: SelectionSource }
@@ -147,12 +164,33 @@ function dedupeGenes(genes: string[]): string[] {
 const sameGenes = (a: string[], b: string[]) =>
   a.length === b.length && a.every((gene, i) => gene === b[i]);
 
+/**
+ * The same row of the same enrichment. The id alone is not enough: the all-DEG and up-only rows of
+ * one term share it with another padj and another gene list, and a term without an id would match
+ * every other one.
+ */
+const sameTerm = (a: FocusedTerm, b: FocusedTerm) =>
+  a.id === b.id &&
+  a.name === b.name &&
+  (a.padj ?? null) === (b.padj ?? null) &&
+  sameGenes(a.genes, b.genes);
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'setThresholds': {
       const next = clampThresholds({ ...state.thresholds, ...action.value });
       // Preserve object identity when nothing moved, so memoised consumers do not re-render on
       // a slider that resolved back to the value it already had.
+      if (next.padj === state.thresholds.padj && next.logfc === state.thresholds.logfc) {
+        return state;
+      }
+      return { ...state, thresholds: next, thresholdsOrigin: 'user' };
+    }
+    case 'adoptThresholds': {
+      // The link and the reader come before the study: a setting that arrives late, or that
+      // changes while reading, undoes neither.
+      if (state.thresholdsOrigin !== 'default') return state;
+      const next = clampThresholds(action.value);
       if (next.padj === state.thresholds.padj && next.logfc === state.thresholds.logfc) {
         return state;
       }
@@ -236,8 +274,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, selection: EMPTY_SELECTION };
     }
     case 'focusTerm': {
-      if (state.focusedTerm?.id === action.term?.id) return state;
-      return { ...state, focusedTerm: action.term };
+      const { focusedTerm } = state;
+      const { term } = action;
+      // Identity kept when nothing moved, null to null included.
+      if (focusedTerm === term || (focusedTerm && term && sameTerm(focusedTerm, term))) return state;
+      return { ...state, focusedTerm: term };
     }
     default:
       return state;
@@ -250,15 +291,42 @@ const PendingGeneListContext = createContext<string | null>(null);
 const FocusedTermContext = createContext<FocusedTerm | null | undefined>(undefined);
 const ActionsContext = createContext<ComparisonActions | null>(null);
 
-export function ComparisonSelectionProvider({ children }: { children: ReactNode }) {
+export interface ComparisonSelectionProviderProps {
+  children: ReactNode;
+  /**
+   * The study's setting, when there is one. The URL keeps priority: when it names no threshold,
+   * the provider starts from these (clamped like any other) and adopts them if they arrive after
+   * mount — the setting is read from the browser, so after hydration — as long as the reader has
+   * not changed the thresholds.
+   */
+  initialThresholds?: VolcanoThresholds;
+  /**
+   * Called with the thresholds the page reads, each time the reader changes them through the
+   * actions (`ThresholdControl`, wherever it is mounted). Never for what comes from the URL or the
+   * study setting: opening a shared link must not rewrite the opener's own setting.
+   */
+  onThresholdsEdited?: (thresholds: VolcanoThresholds) => void;
+}
+
+export function ComparisonSelectionProvider({
+  children,
+  initialThresholds,
+  onThresholdsEdited,
+}: ComparisonSelectionProviderProps) {
   const searchParams = useSearchParams();
 
   // Read the URL at first render rather than in an effect, so a cold deep link paints the right
   // screen immediately instead of flashing the defaults.
-  const [state, dispatch] = useReducer(reducer, undefined, () => {
+  const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const gene = readFocusedGene(searchParams);
+    const fromUrl = urlCarriesThresholds(searchParams);
     return {
-      thresholds: readThresholds(searchParams),
+      // A URL that names a threshold is a shared link: it wins whole, the other threshold being
+      // the ingestion one. Otherwise, the study setting, if it is already there.
+      thresholds: fromUrl
+        ? readThresholds(searchParams)
+        : clampThresholds(initialThresholds ?? DEFAULT_THRESHOLDS),
+      thresholdsOrigin: fromUrl ? 'url' : 'default',
       focusedTerm: null,
       selection: gene
         ? { genes: [gene], focusedGene: gene, source: 'url' as SelectionSource }
@@ -286,6 +354,22 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
     }),
     []
   );
+
+  // A study setting that arrives (or changes) after mount. At mount itself the reducer finds it
+  // already adopted and does not move.
+  useEffect(() => {
+    if (initialThresholds) dispatch({ type: 'adoptThresholds', value: initialThresholds });
+  }, [initialThresholds]);
+
+  // The callback is read through a ref: a new function identity must not replay the write.
+  const editedRef = useRef(onThresholdsEdited);
+  useEffect(() => {
+    editedRef.current = onThresholdsEdited;
+  });
+  const edited = state.thresholdsOrigin === 'user';
+  useEffect(() => {
+    if (edited) editedRef.current?.(state.thresholds);
+  }, [edited, state.thresholds]);
 
   useExplorerUrlSync(state.thresholds, state.selection);
 

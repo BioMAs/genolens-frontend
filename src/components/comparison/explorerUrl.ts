@@ -55,6 +55,22 @@ export function readThresholds(params: URLSearchParams | null | undefined): Volc
 }
 
 /**
+ * True when a URL names at least one usable threshold, `?padj=` or `?lfc=`.
+ *
+ * `readThresholds` cannot tell this from a URL that says nothing — both come back clamped to
+ * numbers. The provider needs the difference: a link that names a threshold is a shared view and
+ * wins over the reader's own study setting, while a bare URL (or a mangled `?padj=abc`, which
+ * informs nobody) leaves the setting in charge.
+ */
+export function urlCarriesThresholds(params: URLSearchParams | null | undefined): boolean {
+  if (!params) return false;
+  return (
+    parseNumeric(params.get(PARAM_PADJ)) !== undefined ||
+    parseNumeric(params.get(PARAM_LOGFC)) !== undefined
+  );
+}
+
+/**
  * Apply thresholds to a copy of `params`, deleting each one that sits at its default.
  *
  * Returns a new `URLSearchParams`; the input is never mutated, so callers can compare the
