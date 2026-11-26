@@ -24,6 +24,7 @@ import { DEG_EXPORT_COLUMNS } from '@/hooks/useDegGenes';
 const mockRendered: string[] = [];
 let mockExportProps: Record<string, unknown> | null = null;
 const mockFetchAllDegGenes = jest.fn();
+const mockDownloadDegStats = jest.fn();
 const mockRequest = jest.fn();
 
 function mockStub(testId: string) {
@@ -94,6 +95,7 @@ jest.mock('@/components/SignatureScorePanel', () => ({
 jest.mock('@/hooks/useDegGenes', () => ({
   ...jest.requireActual('@/hooks/useDegGenes'),
   fetchAllDegGenes: (...args: unknown[]) => mockFetchAllDegGenes(...args),
+  downloadDegStats: (...args: unknown[]) => mockDownloadDegStats(...args),
 }));
 
 let mockRequested: string[] = [];
@@ -216,6 +218,7 @@ beforeEach(() => {
   mockRequested = [];
   mockRequest.mockReset();
   mockFetchAllDegGenes.mockReset();
+  mockDownloadDegStats.mockReset();
 });
 
 describe('FocusDialog — the table of views', () => {
@@ -522,6 +525,26 @@ describe('FocusDialog — the gene table export', () => {
         regulation: 'up',
       },
     ]);
+  });
+
+  it('offers the per-method p-values CSV next to the export menu', () => {
+    renderFocus({ kind: 'table' });
+    const button = screen.getByRole('button', { name: 'Per-method p-values (.csv)' });
+    expect(button).toBeInTheDocument();
+    // Same group as the full-table export: both are ways to take the table away.
+    expect(button.parentElement).toContainElement(screen.getByTestId('export-menu'));
+  });
+
+  it('downloads the per-method p-values of the stored comparison on click', async () => {
+    renderFocus({ kind: 'table' });
+    await userEvent.click(screen.getByRole('button', { name: 'Per-method p-values (.csv)' }));
+    expect(mockDownloadDegStats).toHaveBeenCalledTimes(1);
+    expect(mockDownloadDegStats).toHaveBeenCalledWith('deg-1', 'KO_vs_WT');
+  });
+
+  it('does not offer it in the other views', () => {
+    renderFocus({ kind: 'volcano' });
+    expect(screen.queryByRole('button', { name: 'Per-method p-values (.csv)' })).not.toBeInTheDocument();
   });
 
   it('states the thresholds the export uses', () => {

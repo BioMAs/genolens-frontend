@@ -1,12 +1,19 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { Download } from 'lucide-react';
+import { buttonClasses } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import type { Dataset, Project } from '@/types';
 import type { ComparisonContext } from '@/components/comparison/useComparisonContext';
 import type { ModuleAccess } from '@/hooks/useModuleAccess';
 import type { ModuleId } from '@/components/modules/ModuleSelector';
-import { DEG_EXPORT_COLUMNS, fetchAllDegGenes, toDegExportRow } from '@/hooks/useDegGenes';
+import {
+  DEG_EXPORT_COLUMNS,
+  downloadDegStats,
+  fetchAllDegGenes,
+  toDegExportRow,
+} from '@/hooks/useDegGenes';
 import { useFocusedTerm, useThresholds } from '@/contexts/ComparisonSelectionContext';
 import VolcanoPanel from '@/components/comparison/explorer/VolcanoPanel';
 import ThresholdControl from '@/components/comparison/explorer/ThresholdControl';
@@ -79,7 +86,10 @@ const sampleIdsOf = ({ samples }: FocusContext) =>
 const conditionsOf = ({ sampleConditionMap }: FocusContext) =>
   Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined;
 
-/** Le tableau des gènes et son export : les mêmes lignes que l'ancien panneau d'exports. */
+/**
+ * Le tableau des gènes et ses deux exports, comme l'ancien panneau d'exports : tous les DEG au
+ * seuil courant, et les p-values de chaque méthode.
+ */
 function TableView({ context }: { context: FocusContext }) {
   const { degDataset, actualComparisonName } = context;
   const thresholds = useThresholds();
@@ -90,18 +100,28 @@ function TableView({ context }: { context: FocusContext }) {
           Every differentially expressed gene of this comparison at the current thresholds (padj ≤{' '}
           {thresholds.padj}, |log2FC| ≥ {thresholds.logfc}).
         </p>
-        <ExportMenu
-          fetchData={async () =>
-            (await fetchAllDegGenes(degDataset.id, actualComparisonName, thresholds)).map(
-              toDegExportRow
-            )
-          }
-          filename={`${actualComparisonName}_all_DEGs`}
-          formats={['csv', 'json']}
-          csvColumns={DEG_EXPORT_COLUMNS}
-          variant="outline"
-          size="sm"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportMenu
+            fetchData={async () =>
+              (await fetchAllDegGenes(degDataset.id, actualComparisonName, thresholds)).map(
+                toDegExportRow
+              )
+            }
+            filename={`${actualComparisonName}_all_DEGs`}
+            formats={['csv', 'json']}
+            csvColumns={DEG_EXPORT_COLUMNS}
+            variant="outline"
+            size="sm"
+          />
+          <button
+            type="button"
+            className={buttonClasses({ variant: 'outline', size: 'sm' })}
+            onClick={() => downloadDegStats(degDataset.id, actualComparisonName)}
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            Per-method p-values (.csv)
+          </button>
+        </div>
       </div>
       {/* Pas d'`overflow-hidden` : il rognerait les menus « Columns » et d'export du tableau. */}
       <div className="rounded-control bg-surface">
