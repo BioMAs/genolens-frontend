@@ -26,13 +26,17 @@ import { cn } from '@/lib/cn';
  * `overflow-hidden` y est sinon coupee ou repositionnee.
  */
 
-export type DialogSize = 'sm' | 'md' | 'lg' | 'xl';
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 const SIZES: Record<DialogSize, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
+  // Plein ecran : toute la hauteur visible (dvh, pas vh) et aucun plafond de largeur. Le voile
+  // garde son `p-4`, d'ou les 2rem retranches ; c'est ce que les vues agrandies de la lecture
+  // demandent, pour des graphiques et des tables qui ne tiennent pas dans 56rem.
+  full: 'h-[calc(100dvh-2rem)] max-w-none',
 };
 
 const FOCUSABLE = [

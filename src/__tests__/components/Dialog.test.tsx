@@ -101,4 +101,12 @@ describe('Dialog', () => {
     await userEvent.keyboard('{Escape}');
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('prend tout l ecran en taille full, sans plafond de largeur', () => {
+    render(<Dialog open onClose={jest.fn()} title="Heatmap" size="full" />);
+    const panel = screen.getByRole('dialog', { name: 'Heatmap' });
+    // Pleine hauteur visible (dvh, pas vh : la barre d'adresse mobile) et aucune largeur max.
+    expect(panel).toHaveClass('h-[calc(100dvh-2rem)]', 'max-w-none');
+    expect(panel).not.toHaveClass('max-w-4xl');
+  });
 });

@@ -192,6 +192,13 @@ describe.each(MODES)('jetons Lentille — mode %s', (mode) => {
   });
 });
 
+describe('fond de page', () => {
+  it('le papier clair est blanc', () => {
+    // Le fond d'application est blanc ; le sombre n'existe que sur choix explicite (`.dark`).
+    expect(modeTokens('light')['--gl-paper']).toMatch(/^(#fff(fff)?|oklch\(100% 0 0\))$/i);
+  });
+});
+
 describe('anciens noms — alias des jetons Lentille', () => {
   /** Les noms que le code TSX reference encore : ils ne sont pas renommes, seulement re-branches. */
   const ALIASES = [

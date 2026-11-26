@@ -58,7 +58,8 @@ export const VIEW_PARAM = 'view';
 /** The open module of a screen — its tab. */
 export const PANEL_PARAM = 'panel';
 
-const PANELS: readonly ComparisonPanel[] = [
+/** Every named panel, in catalogue order. Exported so coverage tests can be driven by the list itself. */
+export const COMPARISON_PANELS: readonly ComparisonPanel[] = [
   'summary',
   'genes',
   'heatmap',
@@ -88,7 +89,7 @@ const PANEL_ALIASES: Partial<Record<string, ComparisonPanel>> = {
 };
 
 export function isComparisonPanel(value: unknown): value is ComparisonPanel {
-  return typeof value === 'string' && (PANELS as readonly string[]).includes(value);
+  return typeof value === 'string' && (COMPARISON_PANELS as readonly string[]).includes(value);
 }
 
 function toPanel(value: string | null | undefined): ComparisonPanel | null {

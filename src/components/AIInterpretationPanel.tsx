@@ -24,6 +24,7 @@ import {
     UPGRADE_HREF,
 } from '@/utils/plan';
 import { invalidateUserProfile, useUserProfile } from '@/hooks/useUserProfile';
+import { savedInterpretationKey } from '@/hooks/useSavedInterpretation';
 import { cn } from '@/lib/cn';
 import { SUPPORT_EMAIL } from '@/lib/contact';
 
@@ -180,6 +181,10 @@ export default function AIInterpretationPanel({ datasetId, comparisonName }: AII
             setData(response.data);
             // A real LLM call consumed one AI request: refresh the counters.
             invalidateUserProfile(queryClient);
+            // The reading page's answer 4 reads the saved text: it must see this one.
+            queryClient.invalidateQueries({
+                queryKey: savedInterpretationKey(datasetId, comparisonName),
+            });
         } catch (err: unknown) {
             console.error('AI interpretation error:', err);
             const status = (err as ApiError).response?.status;
