@@ -31,6 +31,11 @@ export interface AnswersInput {
   summary: SignificanceSummary | null;
   /** Gènes testés (lignes de la table de résultats) ; `null` quand on ne le sait pas. */
   tested: number | null;
+  /**
+   * La lecture du nuage du volcano a échoué. Ne vaut que tant que `summary` est `null` : des
+   * comptes déjà là restent affichés après un rafraîchissement raté.
+   */
+  countsFailed?: boolean;
   topUp: string[];
   topDown: string[];
   /** `null` : pas de fichier d'enrichissement ; `[]` : un fichier, aucune voie à ce seuil. */
@@ -47,9 +52,13 @@ export interface AnswersInput {
   pathwaysFailed?: boolean;
   /** La lecture IA, en Markdown ; `null` tant qu'elle n'est pas écrite. */
   interpretation: string | null;
+  /** La lecture enregistrée est en route : `null` ne veut pas encore dire « pas écrite ». */
+  interpretationLoading?: boolean;
   access: ModuleAccess;
   /** `null` : pas de données d'allégations pour cette comparaison. */
   claims: NovaClaim[] | null;
+  /** Les allégations sont en route (module débloqué) : `null` ne veut pas encore dire « aucune ». */
+  claimsLoading?: boolean;
 }
 
 /** Une allégation est « supported » quand elle est cohérente (≥ 0,5) et a au moins un sous-groupe pour. */
@@ -69,7 +78,14 @@ function list(items: string[]): string {
  */
 export const formatCount = (n: number): string => n.toLocaleString('en-US');
 
-function counts({ summary, tested }: AnswersInput): Answer {
+/**
+ * Le nuage du volcano n'a pas pu être lu : les réponses 1 et 2 et leurs deux chapitres le disent
+ * avec cette phrase, plutôt que de compter sans fin ou d'affirmer qu'aucun gène ne passe.
+ */
+export const COUNTS_LOAD_FAILED = 'Gene counts could not be loaded.';
+
+function counts({ summary, tested, countsFailed }: AnswersInput): Answer {
+  if (!summary && countsFailed) return { text: COUNTS_LOAD_FAILED, by: 'data' };
   if (!summary) return { text: 'Counting genes…', by: 'pending' };
   const changed = `${formatCount(summary.up)} up and ${formatCount(summary.down)} down`;
   return {
@@ -78,9 +94,11 @@ function counts({ summary, tested }: AnswersInput): Answer {
   };
 }
 
-function genes({ summary, topUp, topDown }: AnswersInput): Answer {
+function genes({ summary, topUp, topDown, countsFailed }: AnswersInput): Answer {
   // Les gènes et les comptes sortent du même nuage : tant qu'il n'est pas là (`summary` nul), les
-  // deux listes sont vides et « aucun gène ne passe » serait faux.
+  // deux listes sont vides et « aucun gène ne passe » serait faux. S'il a échoué, la réponse 1 et
+  // celle-ci disent la même chose.
+  if (!summary && countsFailed) return { text: COUNTS_LOAD_FAILED, by: 'data' };
   if (!summary) return { text: 'Ranking genes…', by: 'pending' };
   // Le verbe s'accorde avec le nombre de gènes : « KRT1 falls », « KRT1 and LCE1A fall ».
   const halves: string[] = [];
@@ -143,8 +161,14 @@ const UNDERSCORE_EMPHASIS = /(^|\W)(_{1,2})(?=\S)(.*?\S)\2(?!\w)/g;
 /** Un caractère de la zone d'usage privé, qui tient la place d'un code span le temps du traitement. */
 const CODE_SLOT = /[\uE000-\uF8FF]/g;
 const CODE_SLOT_BASE = 0xe000;
-/** Jusqu'au premier `.`, `!` ou `?` suivi d'une espace ou de la fin : « 2.5 fold » ne coupe pas. */
-const SENTENCE = /^[\s\S]*?[.!?](?=\s|$)/;
+/** Une fin de phrase possible : `.`, `!` ou `?` suivi d'une espace ou de la fin (« 2.5 fold » ne coupe pas). */
+const SENTENCE_END = /[.!?](?=\s|$)/g;
+/**
+ * Ce qui précède un point qui ne finit PAS la phrase : une abréviation courante d'un texte
+ * scientifique, en mot entier, quelle que soit sa casse. « KO vs. WT », « e.g. IL6 »,
+ * « Smith et al. found » ; « canvas. » finit bien sa phrase.
+ */
+const ABBREVIATION_BEFORE = /(?:^|\W)(?:vs|e\.g|i\.e|et al|cf|fig|approx)$/i;
 /** Ce qu'il reste d'une règle horizontale (`---`) une fois les marques retirées. */
 const HAS_TEXT = /[^\s=-]/;
 
@@ -175,6 +199,16 @@ function stripMarkdownMarks(text: string): string {
     .replace(CODE_SLOT, (slot) => spans[slot.charCodeAt(0) - CODE_SLOT_BASE] ?? slot);
 }
 
+/** Le texte jusqu'à sa première vraie fin de phrase, ou tout le texte s'il n'en a pas. */
+function upToFirstEnd(text: string): string {
+  for (const match of text.matchAll(SENTENCE_END)) {
+    const before = text.slice(0, match.index);
+    if (match[0] === '.' && ABBREVIATION_BEFORE.test(before)) continue;
+    return text.slice(0, match.index + 1);
+  }
+  return text;
+}
+
 /**
  * La première phrase du premier paragraphe d'un texte Markdown, sans sa mise en forme.
  * Les titres sont ignorés ; `null` quand il ne reste aucun texte.
@@ -192,23 +226,28 @@ function firstSentence(markdown: string): string | null {
       .join(' ')
       .replace(LINK, '$1');
     const text = stripMarkdownMarks(joined).replace(/\s+/g, ' ').trim();
-    if (HAS_TEXT.test(text)) return (SENTENCE.exec(text)?.[0] ?? text).trim();
+    if (HAS_TEXT.test(text)) return upToFirstEnd(text).trim();
   }
   return null;
 }
 
-function meaning({ interpretation }: AnswersInput): Answer {
+function meaning({ interpretation, interpretationLoading, access }: AnswersInput): Answer {
+  // Le profil d'abord : sans lui, on ne sait ni si la lecture est permise ni si elle a été lue.
+  if (!access.loaded) return { text: 'Loading the reading…', by: 'pending' };
+  if (!access.ai) return { text: 'The AI reading is not in your plan', by: 'data' };
+  if (interpretationLoading) return { text: 'Loading the reading…', by: 'pending' };
   const sentence = interpretation === null ? null : firstSentence(interpretation);
   return sentence
     ? { text: sentence, by: 'model' }
     : { text: 'Not written yet: open question 4 to write it', by: 'pending' };
 }
 
-function applications({ access, claims }: AnswersInput): Answer {
+function applications({ access, claims, claimsLoading }: AnswersInput): Answer {
   // Avant l'arrivée du profil tous les drapeaux sont faux : afficher le verrou ici l'annoncerait à
   // quelqu'un qui a le module. On attend plutôt de savoir.
   if (!access.loaded) return { text: 'Checking your modules…', by: 'pending' };
   if (!access.skin) return { text: 'Skin claims need the CosmOmics module', by: 'data' };
+  if (claimsLoading) return { text: 'Reading skin claims…', by: 'pending' };
   if (claims === null) return { text: 'No skin claim data for this comparison', by: 'data' };
 
   const names = claims.filter(isClaimSupported).map((claim) => claim.name);

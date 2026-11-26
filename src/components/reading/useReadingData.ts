@@ -45,6 +45,8 @@ interface ReadingDataInput {
 export interface ReadingData {
   /** Up / down aux seuils de la page ; `null` tant que le nuage n'est pas là. */
   summary: SignificanceSummary | null;
+  /** Le nuage du volcano n'a pas pu être lu (et aucun décompte n'est là) : réponses 1, 2 et chapitre 1. */
+  countsFailed: boolean;
   /** Gènes testés ; `null` quand on ne le sait pas. */
   tested: number | null;
   answers: Record<AnswerKey, Answer>;
@@ -98,12 +100,14 @@ export function useReadingData({
   // Zéro gène testé n'est pas une donnée : `ComparisonSynthesis` taisait déjà ce membre de phrase.
   const tested = testedCount !== undefined && testedCount > 0 ? testedCount : null;
 
-  const { up, down } = useTopGenes(degDataset.id, actualComparisonName);
+  const { up, down, isError: volcanoError } = useTopGenes(degDataset.id, actualComparisonName);
+  // Même nuage que `summary` : l'échec ne compte que tant qu'aucun décompte n'est là.
+  const countsFailed = summary === null && volcanoError;
   const { pathways, isError: pathwaysError } = useTopPathways(
     enrichmentDataset?.id,
     actualComparisonName
   );
-  const { text: interpretation } = useSavedInterpretation(
+  const { text: interpretation, isLoading: interpretationLoading } = useSavedInterpretation(
     degDataset.id,
     actualComparisonName,
     access.ai
@@ -118,6 +122,7 @@ export function useReadingData({
       buildAnswers({
         summary,
         tested,
+        countsFailed,
         topUp: up.slice(0, TOP_UP_NAMED).map((point) => point.gene),
         topDown: down.slice(0, TOP_DOWN_NAMED).map((point) => point.gene),
         pathways,
@@ -126,22 +131,28 @@ export function useReadingData({
         pathwaysPending: !!enrichmentDataset && pathways === null,
         pathwaysFailed: !!enrichmentDataset && pathways === null && pathwaysError,
         interpretation,
+        interpretationLoading,
         access,
         claims,
+        // Le module débloqué seulement : sans lui, rien n'est demandé, donc rien n'est en route.
+        claimsLoading: access.skin && nova.isLoading,
       }),
     [
       summary,
       tested,
+      countsFailed,
       up,
       down,
       pathways,
       pathwaysError,
       enrichmentDataset,
       interpretation,
+      interpretationLoading,
       access,
       claims,
+      nova.isLoading,
     ]
   );
 
-  return { summary, tested, answers };
+  return { summary, countsFailed, tested, answers };
 }

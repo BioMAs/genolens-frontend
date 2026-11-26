@@ -45,6 +45,28 @@ describe('useModuleAccess', () => {
     expect(accessFor(undefined)).toEqual(NOTHING);
   });
 
+  // Comme l'ancienne page : un profil qui ne vient pas verrouille tout, il ne fait pas attendre
+  // sans fin. Sans cela, les vues gardées et la réponse 5 tournaient à jamais sur « Loading… ».
+  it("tient un profil en échec pour arrivé, et verrouille tout", () => {
+    mockUseUserProfile.mockReturnValue({
+      data: undefined,
+      isError: true,
+    } as ReturnType<typeof useUserProfile>);
+    expect(renderHook(() => useModuleAccess()).result.current).toEqual({ ...NOTHING, loaded: true });
+  });
+
+  it("garde un profil déjà lu quand un rafraîchissement échoue", () => {
+    mockUseUserProfile.mockReturnValue({
+      data: { ...BASE, has_cosmetics_module: true },
+      isError: true,
+    } as ReturnType<typeof useUserProfile>);
+    expect(renderHook(() => useModuleAccess()).result.current).toEqual({
+      ...NOTHING,
+      loaded: true,
+      skin: true,
+    });
+  });
+
   it('rend loaded dès que le profil est là', () => {
     expect(accessFor({}).loaded).toBe(true);
   });

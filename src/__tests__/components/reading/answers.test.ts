@@ -7,6 +7,7 @@
  */
 import {
   buildAnswers,
+  COUNTS_LOAD_FAILED,
   ENRICHMENT_LOAD_FAILED,
   isClaimSupported,
   NO_ENRICHMENT_FILE,
@@ -114,6 +115,21 @@ describe('buildAnswers — 1, how many genes change', () => {
     });
   });
 
+  it('says the counts could not be loaded when the volcano read failed', () => {
+    expect(COUNTS_LOAD_FAILED).toBe('Gene counts could not be loaded.');
+    expect(buildAnswers(base({ summary: null, countsFailed: true })).counts).toEqual({
+      text: COUNTS_LOAD_FAILED,
+      by: 'data',
+    });
+  });
+
+  it('keeps counts that are there, even after a failed refresh of the volcano', () => {
+    expect(buildAnswers(base({ countsFailed: true })).counts).toEqual({
+      text: '274 up and 181 down, of 20,000 genes tested',
+      by: 'data',
+    });
+  });
+
   it('still says so when nothing changes', () => {
     const summary = { up: 0, down: 0, ns: 100, significant: 0, total: 100 };
     expect(buildAnswers(base({ summary, tested: 100 })).counts.text).toBe(
@@ -162,6 +178,14 @@ describe('buildAnswers — 2, which genes matter most', () => {
       text: 'Ranking genes…',
       by: 'pending',
     });
+  });
+
+  // Same cloud as the counts: when its read fails, answer 2 says so with answer 1's sentence,
+  // rather than ranking forever or claiming that no gene passes.
+  it('says the counts could not be loaded when the volcano read failed', () => {
+    expect(
+      buildAnswers(base({ summary: null, topUp: [], topDown: [], countsFailed: true })).genes
+    ).toEqual({ text: COUNTS_LOAD_FAILED, by: 'data' });
   });
 });
 
@@ -397,6 +421,38 @@ describe('buildAnswers — 4, what it means biologically', () => {
     );
   });
 
+  describe('abbreviations do not end the sentence', () => {
+    it.each([
+      ['KO vs. WT shows a strong inflammatory signal. Next.', 'KO vs. WT shows a strong inflammatory signal.'],
+      ['e.g. IL6 and TNF rise together. Next.', 'e.g. IL6 and TNF rise together.'],
+      ['Smith et al. found the same shift. Next.', 'Smith et al. found the same shift.'],
+      ['The response, i.e. the barrier, is lost. Next.', 'The response, i.e. the barrier, is lost.'],
+      ['The barrier falls (cf. Fig. 2) as expected. Next.', 'The barrier falls (cf. Fig. 2) as expected.'],
+      ['IL6 rises approx. four fold here. Next.', 'IL6 rises approx. four fold here.'],
+    ])('reads %j to its real end', (interpretation, sentence) => {
+      expect(buildAnswers(base({ interpretation })).meaning.text).toBe(sentence);
+    });
+
+    it('ignores the case of the abbreviation', () => {
+      expect(
+        buildAnswers(base({ interpretation: 'E.g. IL6 rises. KO VS. WT differs. Next.' })).meaning.text
+      ).toBe('E.g. IL6 rises.');
+      expect(buildAnswers(base({ interpretation: 'KO Vs. WT differs. Next.' })).meaning.text).toBe(
+        'KO Vs. WT differs.'
+      );
+      expect(buildAnswers(base({ interpretation: 'Smith ET AL. agree. Next.' })).meaning.text).toBe(
+        'Smith ET AL. agree.'
+      );
+    });
+
+    it('still ends on a word that merely ends like an abbreviation', () => {
+      // « canvas. » finit par « vas », pas par le mot « vs ».
+      expect(buildAnswers(base({ interpretation: 'A blank canvas. Next.' })).meaning.text).toBe(
+        'A blank canvas.'
+      );
+    });
+  });
+
   it('reads a numbered or bulleted first paragraph as its text, not as "1."', () => {
     expect(buildAnswers(base({ interpretation: '1. The barrier is lost. 2. Next.' })).meaning.text).toBe(
       'The barrier is lost.'
@@ -407,7 +463,50 @@ describe('buildAnswers — 4, what it means biologically', () => {
   });
 });
 
+describe('buildAnswers — 4, loading and plan states', () => {
+  it('waits while the profile is not known', () => {
+    const waiting = { ...access, ai: false, loaded: false };
+    expect(buildAnswers(base({ access: waiting, interpretation: null })).meaning).toEqual({
+      text: 'Loading the reading…',
+      by: 'pending',
+    });
+  });
+
+  it('waits while the saved reading is loading, instead of saying it is not written', () => {
+    expect(buildAnswers(base({ interpretation: null, interpretationLoading: true })).meaning).toEqual({
+      text: 'Loading the reading…',
+      by: 'pending',
+    });
+  });
+
+  it('says the AI reading is not in the plan once the profile says so', () => {
+    const noAi = { ...access, ai: false, loaded: true };
+    expect(buildAnswers(base({ access: noAi, interpretation: null })).meaning).toEqual({
+      text: 'The AI reading is not in your plan',
+      by: 'data',
+    });
+  });
+
+  it('reads the saved text once both have arrived', () => {
+    expect(buildAnswers(base({ interpretationLoading: false })).meaning.by).toBe('model');
+  });
+});
+
 describe('buildAnswers — 5, what you can apply it to', () => {
+  it('waits while the claims of an unlocked module are being read', () => {
+    expect(buildAnswers(base({ claims: null, claimsLoading: true })).applications).toEqual({
+      text: 'Reading skin claims…',
+      by: 'pending',
+    });
+  });
+
+  it('shows the lock, not the loading text, without the module', () => {
+    const locked = { ...access, skin: false, loaded: true };
+    expect(
+      buildAnswers(base({ access: locked, claims: null, claimsLoading: true })).applications.text
+    ).toBe('Skin claims need the CosmOmics module');
+  });
+
   it('waits for the profile before saying anything about the module', () => {
     const waiting = { ...access, skin: false, loaded: false };
     expect(buildAnswers(base({ access: waiting, claims: [claim('Barrier')] })).applications).toEqual({

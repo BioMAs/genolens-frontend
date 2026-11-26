@@ -17,6 +17,9 @@
  *
  * Tant que le profil n'est pas arrivé, tout est `false` et `loaded` aussi : la page peut ainsi
  * ne pas afficher un verrou à quelqu'un qui a le module (même convention que `useAddOnModules`).
+ *
+ * Un profil en échec compte comme arrivé, sans aucun module : tout est verrouillé, comme
+ * l'ancienne page le faisait, au lieu de laisser les vues gardées attendre sans fin.
  */
 
 import { useMemo } from 'react';
@@ -42,11 +45,14 @@ const NOT_LOADED: ModuleAccess = {
   loaded: false,
 };
 
+/** Le profil n'a pas pu être lu : on le sait, et on ne débloque rien. */
+const FAILED: ModuleAccess = { ...NOT_LOADED, loaded: true };
+
 export function useModuleAccess(): ModuleAccess {
-  const { data: profile } = useUserProfile();
+  const { data: profile, isError } = useUserProfile();
 
   return useMemo(() => {
-    if (!profile) return NOT_LOADED;
+    if (!profile) return isError ? FAILED : NOT_LOADED;
 
     const privileged = isPrivilegedRole(profile.role);
     return {
@@ -57,5 +63,5 @@ export function useModuleAccess(): ModuleAccess {
       ai: canUseAI(profile),
       loaded: true,
     };
-  }, [profile]);
+  }, [profile, isError]);
 }

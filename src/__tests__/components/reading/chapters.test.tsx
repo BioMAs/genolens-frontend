@@ -18,6 +18,7 @@ import GenesChapter from '@/components/reading/chapters/GenesChapter';
 import ProcessesChapter from '@/components/reading/chapters/ProcessesChapter';
 import MeaningChapter from '@/components/reading/chapters/MeaningChapter';
 import {
+  COUNTS_LOAD_FAILED,
   ENRICHMENT_LOAD_FAILED,
   NO_ENRICHMENT_FILE,
   NO_PROCESS_ENRICHED,
@@ -118,7 +119,7 @@ const noop = () => {};
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false });
+  mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: false });
   mockUseTopPathways.mockReturnValue({ pathways: [], isLoading: false, isError: false });
 });
 
@@ -228,6 +229,13 @@ describe('CountsChapter', () => {
     expect(screen.queryByText(/genes tested/)).not.toBeInTheDocument();
   });
 
+  it('says the counts could not be loaded when the volcano read failed, not that it is counting', () => {
+    renderCounts({ summary: null, failed: true });
+    expect(screen.getByText(COUNTS_LOAD_FAILED)).toBeInTheDocument();
+    expect(screen.queryByText('Counting genes…')).not.toBeInTheDocument();
+    expect(screen.queryByText(/genes tested/)).not.toBeInTheDocument();
+  });
+
   it('mounts the existing volcano on the DEG dataset and the comparison', () => {
     renderCounts();
     const props = JSON.parse(screen.getByTestId('volcano-panel').getAttribute('data-props') ?? '{}');
@@ -244,7 +252,7 @@ describe('GenesChapter', () => {
     renderIn(<GenesChapter datasetId="deg-1" comparisonName="KO_vs_WT" onOpenFocus={onOpenFocus} />);
 
   beforeEach(() => {
-    mockUseTopGenes.mockReturnValue({ up, down, isLoading: false });
+    mockUseTopGenes.mockReturnValue({ up, down, isLoading: false, isError: false });
   });
 
   it('is the second question, verbatim, and reads the top genes of its dataset and comparison', () => {
@@ -273,6 +281,7 @@ describe('GenesChapter', () => {
       up: [point('IL6', 3.456, 1.234e-9), point('CXCL8', 2, 0.0123)],
       down: [point('KRT1', -2.5, 0)],
       isLoading: false,
+      isError: false,
     });
     renderGenes();
     const rising = screen.getByRole('table', { name: 'Rising most' });
@@ -297,14 +306,14 @@ describe('GenesChapter', () => {
   });
 
   it('says so when nothing passes the thresholds, instead of two empty tables', () => {
-    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false });
+    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: false });
     renderGenes();
     expect(screen.getByText('No gene passes the thresholds')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('keeps the side that has genes when only one of them is empty', () => {
-    mockUseTopGenes.mockReturnValue({ up, down: [], isLoading: false });
+    mockUseTopGenes.mockReturnValue({ up, down: [], isLoading: false, isError: false });
     renderGenes();
     expect(screen.getByRole('table', { name: 'Rising most' })).toBeInTheDocument();
     expect(screen.queryByRole('table', { name: 'Falling most' })).not.toBeInTheDocument();
@@ -312,10 +321,18 @@ describe('GenesChapter', () => {
   });
 
   it('shows a loading status while the volcano cloud is not there yet, not the empty message', () => {
-    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: true });
+    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: true, isError: false });
     renderGenes();
     expect(screen.getByRole('status')).toHaveTextContent('Loading…');
     expect(screen.queryByText('No gene passes the thresholds')).not.toBeInTheDocument();
+  });
+
+  it('says the counts could not be loaded when the volcano read failed, not that no gene passes', () => {
+    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: true });
+    renderGenes();
+    expect(screen.getByText(COUNTS_LOAD_FAILED)).toBeInTheDocument();
+    expect(screen.queryByText('No gene passes the thresholds')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
   });
 });
 
@@ -460,7 +477,7 @@ describe('the actions open the focus views', () => {
   const up = [point('IL6', 3, 1e-9)];
 
   const renderChapterFor = (label: string, onOpenFocus: (kind: FocusKind) => void) => {
-    mockUseTopGenes.mockReturnValue({ up, down: [], isLoading: false });
+    mockUseTopGenes.mockReturnValue({ up, down: [], isLoading: false, isError: false });
     mockUseTopPathways.mockReturnValue({
       pathways: [pathway('Inflammatory response', 1e-8, 'up')],
       isLoading: false,
@@ -505,7 +522,7 @@ describe('the actions open the focus views', () => {
   });
 
   it('keeps the action when there is nothing to draw: the focus view says why', () => {
-    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false });
+    mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: false });
     mockUseTopPathways.mockReturnValue({ pathways: null, isLoading: false, isError: false });
     renderIn(
       <>

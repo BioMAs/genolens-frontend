@@ -151,11 +151,28 @@ describe('useTopGenes', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
+  it("dit l'échec du nuage par isError, sans le prendre pour une liste vide qui charge", async () => {
+    mockApi.get.mockRejectedValue(new Error('500'));
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useTopGenes('ds-err', 'T_vs_C'), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current).toMatchObject({ up: [], down: [], isLoading: false, isError: true });
+  });
+
+  it("garde isError faux quand le nuage est arrivé", async () => {
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useTopGenes('ds-1', 'T_vs_C'), { wrapper });
+
+    await waitFor(() => expect(result.current.up.length).toBeGreaterThan(0));
+    expect(result.current.isError).toBe(false);
+  });
+
   it("n'appelle rien sans comparaison", () => {
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useTopGenes('ds-1', ''), { wrapper });
 
     expect(mockApi.get).not.toHaveBeenCalled();
-    expect(result.current).toMatchObject({ up: [], down: [], isLoading: false });
+    expect(result.current).toMatchObject({ up: [], down: [], isLoading: false, isError: false });
   });
 });

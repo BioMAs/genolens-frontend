@@ -6,13 +6,15 @@ import { cn } from '@/lib/cn';
 import VolcanoPanel from '@/components/comparison/explorer/VolcanoPanel';
 import type { Dataset } from '@/types';
 import type { SignificanceSummary } from '@/utils/volcano';
-import { formatCount } from '../answers';
+import { COUNTS_LOAD_FAILED, formatCount } from '../answers';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
 interface CountsChapterProps {
   /** `null` tant que le nuage du volcano n'est pas calculé. */
   summary: SignificanceSummary | null;
+  /** Le nuage n'a pas pu être lu : la phrase de la réponse 1 remplace « Counting genes… ». */
+  failed?: boolean;
   /** Gènes testés ; `null` quand on ne le sait pas. Jamais `summary.total`, que le serveur ne définit pas ainsi partout. */
   tested: number | null;
   degDataset: Dataset;
@@ -51,6 +53,7 @@ function Count({ direction, value }: { direction: keyof typeof COUNT; value: num
  */
 export default function CountsChapter({
   summary,
+  failed = false,
   tested,
   degDataset,
   comparisonName,
@@ -75,6 +78,8 @@ export default function CountsChapter({
             <p className="pb-0.5 text-body-sm text-secondary">{formatCount(tested)} genes tested</p>
           )}
         </div>
+      ) : failed ? (
+        <p className="text-body-sm text-secondary">{COUNTS_LOAD_FAILED}</p>
       ) : (
         <p role="status" className="text-body-sm text-muted">
           Counting genes…

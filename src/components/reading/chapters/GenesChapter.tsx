@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import { useComparisonActions } from '@/contexts/ComparisonSelectionContext';
 import { useTopGenes } from '@/hooks/useTopGenes';
 import type { VolcanoPoint } from '@/utils/volcano';
+import { COUNTS_LOAD_FAILED } from '../answers';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
@@ -112,7 +113,7 @@ function GeneTable({
  * seul côté est vide, l'autre reste affiché : « aucun gène ne baisse » est une information.
  */
 export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }: GenesChapterProps) {
-  const { up, down, isLoading } = useTopGenes(datasetId, comparisonName);
+  const { up, down, isLoading, isError } = useTopGenes(datasetId, comparisonName);
   const { setFocusedGene } = useComparisonActions();
 
   let body;
@@ -122,6 +123,9 @@ export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }:
         Loading…
       </p>
     );
+  } else if (isError) {
+    // Le nuage n'a pas pu être lu : la phrase des réponses 1 et 2, pas « aucun gène ne passe ».
+    body = <p className="text-body-sm text-secondary">{COUNTS_LOAD_FAILED}</p>;
   } else if (up.length === 0 && down.length === 0) {
     body = <p className="text-body-sm text-secondary">No gene passes the thresholds</p>;
   } else {

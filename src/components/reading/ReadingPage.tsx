@@ -168,7 +168,7 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
   const { decodedName, actualComparisonName, enrichmentDataset, matrixDataset, samples, geneMap } =
     context;
   const access = useModuleAccess();
-  const { summary, tested, answers } = useReadingData({
+  const { summary, countsFailed, tested, answers } = useReadingData({
     degDataset,
     enrichmentDataset,
     decodedName,
@@ -287,6 +287,7 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
 
           <CountsChapter
             summary={summary}
+            failed={countsFailed}
             tested={tested}
             degDataset={degDataset}
             comparisonName={actualComparisonName}

@@ -272,27 +272,29 @@ const countsAt = (thresholds: VolcanoThresholds) => {
 
 const setLocation = (url: string) => window.history.replaceState(null, '', url);
 
-const volcano = (points: VolcanoPoint[] | null) =>
+const volcano = (points: VolcanoPoint[] | null, failed = false) =>
   ({
     data: points ? { points } : undefined,
-    isLoading: points === null,
-    isError: false,
+    isLoading: points === null && !failed,
+    isError: failed,
   }) as unknown as ReturnType<typeof useVolcanoPoints>;
 
 function renderReading({
   access = allAccess,
   points = fixturePoints,
+  volcanoFailed = false,
   context = {},
   analysisId,
 }: {
   access?: ModuleAccess;
   points?: VolcanoPoint[] | null;
+  volcanoFailed?: boolean;
   context?: Record<string, unknown>;
   analysisId?: string;
 } = {}) {
   mockAccess.mockReturnValue(access);
   mockContext.mockReturnValue({ ...CONTEXT, ...context });
-  jest.mocked(useVolcanoPoints).mockReturnValue(volcano(points));
+  jest.mocked(useVolcanoPoints).mockReturnValue(volcano(points, volcanoFailed));
 
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -562,14 +564,51 @@ describe('ReadingPage — the answers', () => {
       error: null,
     } as unknown as ReturnType<typeof useCosmOmicsNova>);
 
-    renderReading({ access: { ...allAccess, ai: false } });
+    renderReading({ access: allAccess });
 
     expect(screen.getByText('The barrier is reinforced.')).toBeInTheDocument();
     expect(screen.getByText('Barrier claim supported')).toBeInTheDocument();
-    expect(jest.mocked(useSavedInterpretation)).toHaveBeenCalledWith('deg-1', 'KO_vs_WT', false);
+    expect(jest.mocked(useSavedInterpretation)).toHaveBeenCalledWith('deg-1', 'KO_vs_WT', true);
     // La page et la partie Skin claims lisent la même requête : mêmes arguments, une seule entrée de cache.
     const novaCalls = jest.mocked(useCosmOmicsNova).mock.calls.map((c) => JSON.stringify(c));
     expect(new Set(novaCalls)).toEqual(new Set([JSON.stringify(['deg-1', 'KO_vs_WT', true])]));
+  });
+
+  it('asks for no saved reading without the AI, and says it is not in the plan', () => {
+    renderReading({ access: { ...allAccess, ai: false } });
+    for (const call of jest.mocked(useSavedInterpretation).mock.calls) expect(call[2]).toBe(false);
+    const answers = within(screen.getByRole('region', { name: 'Answers' }));
+    expect(answers.getByText('The AI reading is not in your plan')).toBeInTheDocument();
+  });
+
+  it('waits for the saved reading and for the claims instead of stating an absence', () => {
+    jest.mocked(useSavedInterpretation).mockReturnValue({ text: null, isLoading: true });
+    jest
+      .mocked(useCosmOmicsNova)
+      .mockReturnValue({ data: undefined, isLoading: true, error: null } as unknown as ReturnType<
+        typeof useCosmOmicsNova
+      >);
+    renderReading();
+    const answers = within(screen.getByRole('region', { name: 'Answers' }));
+    expect(answers.getByText('Loading the reading…')).toBeInTheDocument();
+    expect(answers.getByText('Reading skin claims…')).toBeInTheDocument();
+    expect(answers.queryByText(/^Not written yet/)).not.toBeInTheDocument();
+    expect(answers.queryByText('No skin claim data for this comparison')).not.toBeInTheDocument();
+  });
+
+  it('says the gene counts could not be loaded when the volcano read fails, in answers and chapters', () => {
+    renderReading({ points: null, volcanoFailed: true });
+    const answers = within(screen.getByRole('region', { name: 'Answers' }));
+    // Réponses 1 et 2.
+    expect(answers.getAllByText('Gene counts could not be loaded.')).toHaveLength(2);
+    expect(answers.queryByText('Counting genes…')).not.toBeInTheDocument();
+    expect(answers.queryByText('Ranking genes…')).not.toBeInTheDocument();
+    // Chapitres 1 et 2.
+    const counts = within(screen.getByRole('region', { name: 'How many genes change?' }));
+    const genes = within(screen.getByRole('region', { name: 'Which genes matter most?' }));
+    expect(counts.getByText('Gene counts could not be loaded.')).toBeInTheDocument();
+    expect(genes.getByText('Gene counts could not be loaded.')).toBeInTheDocument();
+    expect(genes.queryByText('No gene passes the thresholds')).not.toBeInTheDocument();
   });
 
   it('asks for no claim without the CosmOmics module', () => {

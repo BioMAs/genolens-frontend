@@ -26,13 +26,18 @@ export interface TopGenes {
   /** Sous-exprimés (`x < 0`), du plus significatif au moins significatif. */
   down: VolcanoPoint[];
   isLoading: boolean;
+  /**
+   * Le nuage n'a pas pu être lu, et aucune copie antérieure n'est là pour le remplacer : les
+   * deux listes vides ne veulent alors dire ni « en route » ni « aucun gène ne passe ».
+   */
+  isError: boolean;
 }
 
 const rank = (a: VolcanoPoint, b: VolcanoPoint) => a.padj - b.padj || Math.abs(b.x) - Math.abs(a.x);
 
 export function useTopGenes(datasetId: string, comparisonName: string, n: number = 8): TopGenes {
   const thresholds = useThresholds();
-  const { data, isLoading } = useVolcanoPoints(datasetId, comparisonName);
+  const { data, isLoading, isError } = useVolcanoPoints(datasetId, comparisonName);
 
   const points = data?.points;
 
@@ -51,5 +56,6 @@ export function useTopGenes(datasetId: string, comparisonName: string, n: number
     return { up: ups.sort(rank).slice(0, n), down: downs.sort(rank).slice(0, n) };
   }, [points, thresholds, n]);
 
-  return { up, down, isLoading };
+  // Un rafraîchissement raté garde les points déjà là : ce n'est pas un échec à montrer.
+  return { up, down, isLoading, isError: isError && !points };
 }
