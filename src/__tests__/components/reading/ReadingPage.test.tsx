@@ -14,14 +14,16 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ReadingPage, { LAST_READING_KEY } from '@/components/reading/ReadingPage';
 import { formatCount } from '@/components/reading/answers';
 import { FOCUS_TITLES } from '@/components/reading/FocusDialog';
+import ThresholdsDialog from '@/components/reading/ThresholdsDialog';
 import { FOCUS_KINDS, partDomId, READING_PARTS, type FocusKind } from '@/components/reading/readingRoutes';
 import {
   useComparisonActions,
   usePendingGeneListId,
+  useThresholdControl,
 } from '@/contexts/ComparisonSelectionContext';
 import type { ModuleAccess } from '@/hooks/useModuleAccess';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
@@ -115,12 +117,35 @@ function mockStub(testId: string) {
   };
 }
 
-/** L'en-tête, réduit à ses propriétés et au bouton qui ouvre la mise en page du rapport. */
+/**
+ * L'en-tête, réduit à ses propriétés, au bouton qui ouvre la mise en page du rapport et à celui qui
+ * ouvre la vraie boîte des seuils (le contrôle qu'elle porte est un témoin, voir plus bas).
+ */
 function MockReadingHeader(props: Record<string, unknown>) {
+  const [thresholdsOpen, setThresholdsOpen] = useState(false);
   return (
     <div data-testid="reading-header" data-props={JSON.stringify(props)}>
       <button type="button" onClick={props.onOpenReportLayout as () => void}>
         Report layout
+      </button>
+      <button type="button" onClick={() => setThresholdsOpen(true)}>
+        Open thresholds
+      </button>
+      <ThresholdsDialog open={thresholdsOpen} onClose={() => setThresholdsOpen(false)} />
+    </div>
+  );
+}
+
+/**
+ * Le contrôle des seuils, réduit au geste qu'il fait : `setThresholds`, par le même hook que le
+ * vrai. Un seul bouton, qui resserre les deux seuils.
+ */
+function MockThresholdControl() {
+  const [, setThresholds] = useThresholdControl();
+  return (
+    <div data-testid="threshold-control">
+      <button type="button" onClick={() => setThresholds({ padj: 0.01, logfc: 1 })}>
+        Tighten thresholds
       </button>
     </div>
   );
@@ -214,7 +239,7 @@ jest.mock('@/components/comparison/explorer/VolcanoPanel', () => ({
 }));
 jest.mock('@/components/comparison/explorer/ThresholdControl', () => ({
   __esModule: true,
-  default: mockStub('threshold-control'),
+  default: MockThresholdControl,
 }));
 jest.mock('@/components/AIInterpretationPanel', () => ({
   __esModule: true,
@@ -1401,6 +1426,101 @@ describe('ReadingPage — header and deep links', () => {
       analysisId: 'a1',
       globalDatasetId: 'deg-9',
     });
+  });
+});
+
+// ── les seuils de l'étude ────────────────────────────────────────────────────────────
+// Un réglage par projet, gardé dans le navigateur. La page le lit quand l'URL ne dit rien, le
+// remplace quand le lecteur change les seuils (boîte ou vue agrandie), et n'y touche ni pour ce
+// que l'URL lui impose ni pour ce qu'elle vient de lire.
+describe('ReadingPage — the study thresholds', () => {
+  const STUDY_KEY = 'gl-thresholds:p1';
+
+  /** Des gènes que le seuil de |log2FC| départage : 2 up et 2 down à 0.58, 1 et 1 à 1. */
+  const POINTS = [
+    point('A', 2, 0.001),
+    point('B', 0.8, 0.001),
+    point('C', -0.8, 0.001),
+    point('D', -2, 0.001),
+  ];
+  const AT_INGESTION = '2 up and 2 down, of 20,000 genes tested';
+  const AT_TIGHTENED = '1 up and 1 down, of 20,000 genes tested';
+
+  const store = (value: VolcanoThresholds) =>
+    window.localStorage.setItem(STUDY_KEY, JSON.stringify(value));
+  const stored = () => JSON.parse(window.localStorage.getItem(STUDY_KEY) ?? 'null');
+
+  it('reads the study setting when the URL carries no thresholds', () => {
+    store({ padj: 0.05, logfc: 1 });
+    renderReading({ points: POINTS });
+    expect(screen.getByText(AT_TIGHTENED)).toBeInTheDocument();
+  });
+
+  it('answers at the ingestion thresholds for a study nobody tightened', () => {
+    renderReading({ points: POINTS });
+    expect(screen.getByText(AT_INGESTION)).toBeInTheDocument();
+  });
+
+  it('keeps the URL over the study setting, and leaves the setting as it was', () => {
+    store({ padj: 0.05, logfc: 1 });
+    setLocation(`${PATH}?padj=0.01`);
+    renderReading({ points: POINTS });
+    expect(screen.getByText(AT_INGESTION)).toBeInTheDocument();
+    expect(stored()).toEqual({ padj: 0.05, logfc: 1 });
+  });
+
+  it('does not save thresholds that come from the URL', () => {
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+    setLocation(`${PATH}?padj=0.01&lfc=1`);
+    renderReading({ points: POINTS });
+    expect(screen.getByText(AT_TIGHTENED)).toBeInTheDocument();
+    expect(window.localStorage.getItem(STUDY_KEY)).toBeNull();
+    expect(setItem).not.toHaveBeenCalledWith(STUDY_KEY, expect.anything());
+    setItem.mockRestore();
+  });
+
+  it('does not rewrite the study setting it has just adopted', () => {
+    store({ padj: 0.05, logfc: 1 });
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+    renderReading({ points: POINTS });
+    expect(setItem).not.toHaveBeenCalledWith(STUDY_KEY, expect.anything());
+    setItem.mockRestore();
+  });
+
+  it('saves the study setting when the reader changes the thresholds in the volcano view', async () => {
+    const user = userEvent.setup();
+    setLocation(`${PATH}?focus=volcano`);
+    renderReading({ points: POINTS });
+    expect(window.localStorage.getItem(STUDY_KEY)).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Tighten thresholds' }));
+
+    expect(stored()).toEqual({ padj: 0.01, logfc: 1 });
+  });
+
+  it('saves the study setting when the reader changes the thresholds in the Thresholds dialog', async () => {
+    const user = userEvent.setup();
+    renderReading({ points: POINTS });
+
+    await user.click(screen.getByRole('button', { name: 'Open thresholds' }));
+    const dialog = screen.getByRole('dialog', { name: 'Thresholds' });
+    await user.click(within(dialog).getByRole('button', { name: 'Tighten thresholds' }));
+
+    expect(stored()).toEqual({ padj: 0.01, logfc: 1 });
+    expect(screen.getByText(AT_TIGHTENED)).toBeInTheDocument();
+  });
+
+  it('gives the next reading of the study the setting the reader chose', async () => {
+    const user = userEvent.setup();
+    setLocation(`${PATH}?focus=volcano`);
+    const first = renderReading({ points: POINTS });
+    await user.click(screen.getByRole('button', { name: 'Tighten thresholds' }));
+    first.unmount();
+
+    setLocation(PATH);
+    renderReading({ points: POINTS });
+
+    expect(screen.getByText(AT_TIGHTENED)).toBeInTheDocument();
   });
 });
 

@@ -39,11 +39,12 @@ import {
   readFocusedGene,
   readGeneListId,
   readThresholds,
+  urlCarriesThresholds,
   urlMatchesState,
   writeExplorerState,
 } from '@/components/comparison/explorerUrl';
 import { normalizeGeneKey } from '@/utils/geneKeys';
-import { clampThresholds, type VolcanoThresholds } from '@/utils/volcano';
+import { clampThresholds, DEFAULT_THRESHOLDS, type VolcanoThresholds } from '@/utils/volcano';
 
 /** How long to wait after the last edit before touching the URL. */
 const URL_WRITE_DEBOUNCE_MS = 250;
@@ -106,14 +107,23 @@ const EMPTY_SELECTION: ComparisonSelection = {
   source: 'url',
 };
 
+/**
+ * Qui a fixé les seuils courants. `'default'` : personne — les seuils d'ingestion ou le réglage
+ * d'étude, que l'étude peut encore remplacer. `'url'` : un lien qui nomme un seuil, qui ne cède pas
+ * la place. `'user'` : un geste du lecteur, qui non plus, et le seul que le réglage d'étude garde.
+ */
+type ThresholdsOrigin = 'default' | 'url' | 'user';
+
 interface State {
   thresholds: VolcanoThresholds;
+  thresholdsOrigin: ThresholdsOrigin;
   selection: ComparisonSelection;
   focusedTerm: FocusedTerm | null;
 }
 
 type Action =
   | { type: 'setThresholds'; value: Partial<VolcanoThresholds> }
+  | { type: 'adoptThresholds'; value: VolcanoThresholds }
   | { type: 'selectGenes'; genes: string[]; source: SelectionSource; label?: string }
   | { type: 'selectGeneList'; listId: string; name: string; genes: string[] }
   | { type: 'toggleGene'; gene: string; source: SelectionSource }
@@ -170,6 +180,16 @@ function reducer(state: State, action: Action): State {
       const next = clampThresholds({ ...state.thresholds, ...action.value });
       // Preserve object identity when nothing moved, so memoised consumers do not re-render on
       // a slider that resolved back to the value it already had.
+      if (next.padj === state.thresholds.padj && next.logfc === state.thresholds.logfc) {
+        return state;
+      }
+      return { ...state, thresholds: next, thresholdsOrigin: 'user' };
+    }
+    case 'adoptThresholds': {
+      // Le lien et le lecteur passent avant l'étude : un réglage qui arrive tard, ou qui change
+      // pendant la lecture, ne défait ni l'un ni l'autre.
+      if (state.thresholdsOrigin !== 'default') return state;
+      const next = clampThresholds(action.value);
       if (next.padj === state.thresholds.padj && next.logfc === state.thresholds.logfc) {
         return state;
       }
@@ -270,15 +290,42 @@ const PendingGeneListContext = createContext<string | null>(null);
 const FocusedTermContext = createContext<FocusedTerm | null | undefined>(undefined);
 const ActionsContext = createContext<ComparisonActions | null>(null);
 
-export function ComparisonSelectionProvider({ children }: { children: ReactNode }) {
+export interface ComparisonSelectionProviderProps {
+  children: ReactNode;
+  /**
+   * Le réglage de l'étude, quand il y en a un. L'URL garde la priorité : s'il manque, le
+   * fournisseur part de ces seuils (bornés comme les autres) et les reprend s'ils arrivent après
+   * le montage — le réglage est lu dans le navigateur, donc après l'hydratation —, tant que le
+   * lecteur ne les a pas changés.
+   */
+  initialThresholds?: VolcanoThresholds;
+  /**
+   * Appelé avec les seuils que la page lit, chaque fois que le lecteur les change par les actions
+   * (`ThresholdControl`, où qu'il soit monté). Jamais pour ce qui vient de l'URL ou du réglage
+   * d'étude : ouvrir un lien partagé ne doit pas réécrire le réglage de celui qui l'ouvre.
+   */
+  onThresholdsEdited?: (thresholds: VolcanoThresholds) => void;
+}
+
+export function ComparisonSelectionProvider({
+  children,
+  initialThresholds,
+  onThresholdsEdited,
+}: ComparisonSelectionProviderProps) {
   const searchParams = useSearchParams();
 
   // Read the URL at first render rather than in an effect, so a cold deep link paints the right
   // screen immediately instead of flashing the defaults.
-  const [state, dispatch] = useReducer(reducer, undefined, () => {
+  const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const gene = readFocusedGene(searchParams);
+    const fromUrl = urlCarriesThresholds(searchParams);
     return {
-      thresholds: readThresholds(searchParams),
+      // Une URL qui nomme un seuil est un lien partagé : elle l'emporte en entier, l'autre seuil
+      // étant celui de l'ingestion. Sinon, le réglage d'étude, s'il est déjà là.
+      thresholds: fromUrl
+        ? readThresholds(searchParams)
+        : clampThresholds(initialThresholds ?? DEFAULT_THRESHOLDS),
+      thresholdsOrigin: fromUrl ? 'url' : 'default',
       focusedTerm: null,
       selection: gene
         ? { genes: [gene], focusedGene: gene, source: 'url' as SelectionSource }
@@ -306,6 +353,22 @@ export function ComparisonSelectionProvider({ children }: { children: ReactNode 
     }),
     []
   );
+
+  // Un réglage d'étude qui arrive (ou change) après le montage. Au montage même, le réducteur le
+  // trouve déjà adopté et ne bouge pas.
+  useEffect(() => {
+    if (initialThresholds) dispatch({ type: 'adoptThresholds', value: initialThresholds });
+  }, [initialThresholds]);
+
+  // Le rappel est lu dans une ref : changer de fonction ne doit pas rejouer l'écriture.
+  const editedRef = useRef(onThresholdsEdited);
+  useEffect(() => {
+    editedRef.current = onThresholdsEdited;
+  });
+  const edited = state.thresholdsOrigin === 'user';
+  useEffect(() => {
+    if (edited) editedRef.current?.(state.thresholds);
+  }, [edited, state.thresholds]);
 
   useExplorerUrlSync(state.thresholds, state.selection);
 

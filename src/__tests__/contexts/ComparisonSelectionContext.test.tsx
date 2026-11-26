@@ -448,3 +448,146 @@ describe('selectGeneList', () => {
     expect(result.current.selection).toBe(before);
   });
 });
+
+// ── les seuils de l'étude ────────────────────────────────────────────────────────────────
+// Le fournisseur reçoit le réglage d'étude (`initialThresholds`) ; l'URL garde la priorité, et ce
+// qui vient de l'URL ou de l'étude ne se réécrit jamais comme un geste de l'utilisateur.
+describe('study thresholds', () => {
+  const STUDY = { padj: 0.001, logfc: 2 };
+
+  let study: typeof STUDY | undefined;
+  const onEdited = jest.fn();
+
+  // Le fournisseur relit ces variables à chaque rendu : `rerender()` joue « l'étude change ».
+  const studyWrapper = ({ children }: { children: ReactNode }) => (
+    <ComparisonSelectionProvider initialThresholds={study} onThresholdsEdited={onEdited}>
+      {children}
+    </ComparisonSelectionProvider>
+  );
+
+  beforeEach(() => {
+    study = undefined;
+    onEdited.mockClear();
+  });
+
+  it('adopts the study setting on the very first render when the URL says nothing', () => {
+    study = STUDY;
+    const { result } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    expect(result.current).toEqual(STUDY);
+  });
+
+  it('clamps a study setting looser than ingestion', () => {
+    study = { padj: 0.5, logfc: 0.1 };
+    const { result } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    expect(result.current).toEqual(DEFAULT_THRESHOLDS);
+  });
+
+  it('keeps the URL over the study setting', () => {
+    setUrl('padj=0.01&lfc=1');
+    study = STUDY;
+    const { result } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    expect(result.current).toEqual({ padj: 0.01, logfc: 1 });
+  });
+
+  // Une URL qui ne nomme qu'un seuil est tout de même un lien partagé : l'autre seuil est celui de
+  // l'ingestion, pas celui du lecteur — le lien montre ce que son auteur voyait.
+  it('keeps the URL over the study setting when it names only one threshold', () => {
+    setUrl('lfc=1');
+    study = STUDY;
+    const { result } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    expect(result.current).toEqual({ padj: DEFAULT_THRESHOLDS.padj, logfc: 1 });
+  });
+
+  it('adopts the study setting when it arrives after the first render', () => {
+    const { result, rerender } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    expect(result.current).toEqual(DEFAULT_THRESHOLDS);
+
+    study = STUDY;
+    rerender();
+
+    expect(result.current).toEqual(STUDY);
+  });
+
+  it('follows the study setting when it changes again before the user touches anything', () => {
+    study = STUDY;
+    const { result, rerender } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+
+    study = { padj: 0.01, logfc: 1 };
+    rerender();
+
+    expect(result.current).toEqual({ padj: 0.01, logfc: 1 });
+  });
+
+  it('does not adopt a late study setting over a URL that carried thresholds', () => {
+    setUrl('padj=0.01');
+    const { result, rerender } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+
+    study = STUDY;
+    rerender();
+
+    expect(result.current).toEqual({ padj: 0.01, logfc: DEFAULT_THRESHOLDS.logfc });
+  });
+
+  it('does not adopt a late study setting over a change the user made', () => {
+    const { result, rerender } = renderHook(() => useThresholdControl(), { wrapper: studyWrapper });
+
+    act(() => result.current[1]({ padj: 0.01 }));
+    study = STUDY;
+    rerender();
+
+    expect(result.current[0]).toEqual({ padj: 0.01, logfc: DEFAULT_THRESHOLDS.logfc });
+  });
+
+  it('reports a change the user makes, as the clamped pair the page now reads', () => {
+    study = STUDY;
+    const { result } = renderHook(() => useThresholdControl(), { wrapper: studyWrapper });
+
+    act(() => result.current[1]({ padj: 0.01 }));
+    expect(onEdited).toHaveBeenLastCalledWith({ padj: 0.01, logfc: 2 });
+
+    act(() => result.current[1]({ logfc: 0.1 }));
+    expect(onEdited).toHaveBeenLastCalledWith({ padj: 0.01, logfc: DEFAULT_THRESHOLDS.logfc });
+    expect(onEdited).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports nothing for a gesture that moves nothing', () => {
+    const { result } = renderHook(() => useThresholdControl(), { wrapper: studyWrapper });
+
+    act(() => result.current[1]({ padj: DEFAULT_THRESHOLDS.padj }));
+    act(() => result.current[1]({ padj: 0.9 }));
+
+    expect(onEdited).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing for thresholds that come from the study or from the URL', () => {
+    study = STUDY;
+    const { rerender } = renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    study = { padj: 0.01, logfc: 1 };
+    rerender();
+    act(() => jest.advanceTimersByTime(300));
+    expect(onEdited).not.toHaveBeenCalled();
+
+    setUrl('padj=0.001&lfc=2');
+    renderHook(() => useThresholds(), { wrapper: studyWrapper });
+    act(() => jest.advanceTimersByTime(300));
+    expect(onEdited).not.toHaveBeenCalled();
+  });
+
+  it('does not report again when the study echoes the change back as its new setting', () => {
+    const { result, rerender } = renderHook(() => useThresholdControl(), { wrapper: studyWrapper });
+
+    act(() => result.current[1]({ padj: 0.01 }));
+    study = { padj: 0.01, logfc: DEFAULT_THRESHOLDS.logfc };
+    rerender();
+
+    expect(onEdited).toHaveBeenCalledTimes(1);
+  });
+
+  it('works without a study: no setting and no callback are both fine', () => {
+    const { result } = renderHook(() => useThresholdControl(), { wrapper });
+
+    act(() => result.current[1]({ padj: 0.01 }));
+
+    expect(result.current[0].padj).toBe(0.01);
+  });
+});

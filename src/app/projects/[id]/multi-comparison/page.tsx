@@ -11,6 +11,7 @@ import MultiComparisonVenn, { ComparisonRef } from '@/components/MultiComparison
 import { buildComparisonRefs } from '@/lib/comparisonRefs';
 import { PageHeader } from '@/components/ui/page-header';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useStudyThresholds } from '@/hooks/useStudyThresholds';
 import { canUseMultiComparison, PAID_PLANS_LABEL, UPGRADE_HREF } from '@/utils/plan';
 
 export default function MultiComparisonPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +26,8 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
   const [error, setError] = useState<string | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  // Les seuils de l'étude, réglés dans la page de lecture ; ici on les suit, on ne les change pas.
+  const [thresholds] = useStudyThresholds(projectId);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +152,7 @@ export default function MultiComparisonPage({ params }: { params: Promise<{ id: 
           projectId={projectId}
           pathDatasetId={pathDatasetId}
           comparisons={comparisons}
+          thresholds={thresholds}
         />
     </div>
   );

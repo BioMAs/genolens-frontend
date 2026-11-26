@@ -52,6 +52,7 @@ import type { ComparisonSamples } from '@/hooks/useComparisonSamples';
 import { useLocationHash } from '@/hooks/useLocationHash';
 import { useModuleAccess } from '@/hooks/useModuleAccess';
 import { useReprocessDeg } from '@/hooks/useReprocessDeg';
+import { useStudyThresholds } from '@/hooks/useStudyThresholds';
 import { normalizeGeneKey } from '@/utils/geneKeys';
 import FocusDialog, { type FocusContext } from './FocusDialog';
 import GeneSheet from './GeneSheet';
@@ -154,10 +155,20 @@ function useUrlGeneArrival(urlGene: string | null, focusedGene: string | null) {
 /**
  * Le fournisseur de sélection enveloppe tout, la vue agrandie comprise : seuils, gène regardé et
  * voie regardée sont ceux de la page, et `useExplorerUrlSync` y garde `?padj=`, `?lfc=`, `?gene=`.
+ *
+ * **Les seuils sont ceux de l'étude** (`useStudyThresholds`) : sans `?padj=` ni `?lfc=` dans
+ * l'URL, la page part du réglage du projet, et tout changement que le lecteur fait — dans la boîte
+ * des seuils comme dans la vue agrandie du volcano, c'est le même contrôle — le remplace, pour
+ * cette page comme pour les suivantes et pour le Venn. Ce qui vient de l'URL, ou que la page vient
+ * de lire dans le réglage, n'y est jamais réécrit.
  */
 export default function ReadingPage(props: ReadingPageProps) {
+  const [studyThresholds, saveStudyThresholds] = useStudyThresholds(props.projectId);
   return (
-    <ComparisonSelectionProvider>
+    <ComparisonSelectionProvider
+      initialThresholds={studyThresholds}
+      onThresholdsEdited={saveStudyThresholds}
+    >
       <ReadingResolver {...props} />
     </ComparisonSelectionProvider>
   );

@@ -162,7 +162,7 @@ describe('ReadingHeader — the thresholds chip', () => {
     const dialog = screen.getByRole('dialog', { name: 'Thresholds' });
     expect(
       // Les processus suivent le seuil du fichier d'enrichissement, pas celui-ci.
-      within(dialog).getByText('One setting for every count and chart on this page.')
+      within(dialog).getByText('One setting for every count and chart of this study, kept in this browser.')
     ).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Adjusted p-value threshold')).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Absolute log2 fold change threshold')).toBeInTheDocument();
