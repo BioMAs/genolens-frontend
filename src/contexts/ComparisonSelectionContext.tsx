@@ -92,6 +92,12 @@ export interface FocusedTerm {
   id: string;
   name: string;
   genes: string[];
+  /**
+   * The adjusted p of the row the term was picked from, when that row gave one. The sheet prints it
+   * as the process's FDR: looking it up by id elsewhere would find another enrichment's row (all
+   * DEGs, when the row was the up-only one) or none at all.
+   */
+  padj?: number | null;
 }
 
 const EMPTY_SELECTION: ComparisonSelection = {
@@ -146,6 +152,17 @@ function dedupeGenes(genes: string[]): string[] {
 
 const sameGenes = (a: string[], b: string[]) =>
   a.length === b.length && a.every((gene, i) => gene === b[i]);
+
+/**
+ * The same row of the same enrichment. The id alone is not enough: the all-DEG and up-only rows of
+ * one term share it with another padj and another gene list, and a term without an id would match
+ * every other one.
+ */
+const sameTerm = (a: FocusedTerm, b: FocusedTerm) =>
+  a.id === b.id &&
+  a.name === b.name &&
+  (a.padj ?? null) === (b.padj ?? null) &&
+  sameGenes(a.genes, b.genes);
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -236,8 +253,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, selection: EMPTY_SELECTION };
     }
     case 'focusTerm': {
-      if (state.focusedTerm?.id === action.term?.id) return state;
-      return { ...state, focusedTerm: action.term };
+      const { focusedTerm } = state;
+      const { term } = action;
+      // Identity kept when nothing moved, null to null included.
+      if (focusedTerm === term || (focusedTerm && term && sameTerm(focusedTerm, term))) return state;
+      return { ...state, focusedTerm: term };
     }
     default:
       return state;

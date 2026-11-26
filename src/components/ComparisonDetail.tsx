@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/utils/api';
 import { DatasetStatus } from '@/types';
-import { ArrowLeft, Database, Download } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useChatMode } from '@/contexts/ChatModeContext';
 import { useQueryClient } from '@tanstack/react-query';
 import DEGBarChart from './DEGBarChart';
@@ -34,6 +34,7 @@ import OverviewTopPathways from './comparison/OverviewTopPathways';
 import { buildComparisonModules, groupModulesByView } from './comparison/comparisonModules';
 import { useComparisonContext } from './comparison/useComparisonContext';
 import ComparisonHeader from './comparison/ComparisonHeader';
+import NoMatrix from './comparison/NoMatrix';
 import { SegmentedControl } from '@/components/ui/tabs';
 import { buttonClasses } from '@/components/ui/button';
 import ModuleTabs, { MODULE_TABS_ID, moduleTabId } from './comparison/ModuleTabs';
@@ -849,20 +850,6 @@ function ComparisonDetailInner({ projectId, comparisonName, analysisId }: Compar
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/** A module that needs the expression matrix, on a project without one. */
-function NoMatrix({ purpose }: { purpose: string }) {
-  return (
-    <div className="py-16 text-center">
-      <Database className="mx-auto mb-4 h-12 w-12 text-muted" aria-hidden />
-      <h3 className="mb-2 text-title font-medium text-primary">No expression matrix</h3>
-      <p className="mx-auto max-w-sm text-body-sm text-secondary">
-        {purpose} requires an expression matrix (count matrix). Upload a dataset of type
-        &quot;Expression Matrix&quot; to enable it.
-      </p>
     </div>
   );
 }

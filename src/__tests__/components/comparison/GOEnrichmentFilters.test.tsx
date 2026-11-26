@@ -22,15 +22,29 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 
 jest.mock('@/utils/api');
 
+const mockFocusTerm = jest.fn();
 jest.mock('@/contexts/ComparisonSelectionContext', () => ({
-  useComparisonActions: () => ({ focusTerm: jest.fn() }),
+  useComparisonActions: () => ({ focusTerm: mockFocusTerm }),
 }));
 
 jest.mock('@/components/GOEnrichmentTable', () => {
-  const Stub = ({ terms }: { terms: Array<{ go_id: string; go_name: string }> }) => (
+  type StubTerm = { go_id: string; go_name: string };
+  // Chaque ligne est un bouton, comme le nom du terme dans la vraie table : un clic donne le terme
+  // de la ligne à `onTermSelect`.
+  const Stub = ({
+    terms,
+    onTermSelect,
+  }: {
+    terms: StubTerm[];
+    onTermSelect?: (term: StubTerm) => void;
+  }) => (
     <ul data-testid="enrichment-rows">
       {terms.map((t) => (
-        <li key={t.go_id}>{t.go_name}</li>
+        <li key={t.go_id}>
+          <button type="button" onClick={() => onTermSelect?.(t)}>
+            {t.go_name}
+          </button>
+        </li>
       ))}
     </ul>
   );
@@ -92,7 +106,20 @@ const rows = () => within(screen.getByTestId('enrichment-rows')).getAllByRole('l
 
 beforeEach(() => {
   mockGet.mockReset();
+  mockFocusTerm.mockReset();
   mockApi();
+});
+
+// R40 : un clic sur une ligne de la table donne à la fiche du processus le FDR de CETTE ligne.
+describe('focusing a term from the table', () => {
+  it('carries the FDR of the row that was clicked', async () => {
+    const user = await renderPanel();
+    await user.click(screen.getByRole('button', { name: 'Mid term' }));
+    expect(mockFocusTerm).toHaveBeenCalledTimes(1);
+    expect(mockFocusTerm).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'GO:2', name: 'Mid term', padj: 0.02 })
+    );
+  });
 });
 
 describe('what "All DEGs" shows', () => {

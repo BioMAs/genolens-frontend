@@ -1,4 +1,4 @@
-import ComparisonDetail from '@/components/ComparisonDetail';
+import ReadingPage from '@/components/reading/ReadingPage';
 
 export default async function AnalysisComparisonPage({
   params,
@@ -7,7 +7,7 @@ export default async function AnalysisComparisonPage({
 }) {
   const { id, analysisId, comparisonName } = await params;
   return (
-    <ComparisonDetail
+    <ReadingPage
       projectId={id}
       analysisId={analysisId}
       comparisonName={comparisonName}

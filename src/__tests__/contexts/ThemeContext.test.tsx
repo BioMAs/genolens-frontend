@@ -22,6 +22,7 @@
  */
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
 import React from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
@@ -118,7 +119,9 @@ it('adopte le theme stocke', () => {
   expect(screen.getByTestId('probe')).toHaveTextContent('dark');
 });
 
-it('suit la preference systeme quand rien n\'est stocke', () => {
+it('reste en clair quand le systeme prefere le sombre et que rien n\'est stocke', () => {
+  // Le sombre ne s'obtient que sur choix explicite : la preference du systeme
+  // ne compte plus, le fond de l'application est blanc par defaut.
   mockPrefersDark(true);
 
   render(
@@ -127,7 +130,21 @@ it('suit la preference systeme quand rien n\'est stocke', () => {
     </ThemeProvider>
   );
 
-  expect(screen.getByTestId('probe')).toHaveTextContent('dark');
+  expect(screen.getByTestId('probe')).toHaveTextContent('light');
+  expect(document.documentElement.classList.contains('dark')).toBe(false);
+});
+
+it('reste en clair quand le systeme prefere le sombre et que le clair est stocke', () => {
+  mockPrefersDark(true);
+  localStorage.setItem('theme', 'light');
+
+  render(
+    <ThemeProvider>
+      <ThemedButton />
+    </ThemeProvider>
+  );
+
+  expect(screen.getByTestId('probe')).toHaveTextContent('light');
 });
 
 it('reste en clair quand rien n\'est stocke et que le systeme est clair', () => {
@@ -172,4 +189,47 @@ it('ne touche pas a la classe lors de la premiere passe', () => {
   );
 
   expect(document.documentElement.classList.contains('dark')).toBe(true);
+});
+
+// ── le script inline du layout : la meme regle, avant React ────────────────
+
+describe('THEME_BOOT_SCRIPT (layout.tsx)', () => {
+  // Le script ne peut pas etre importe (un layout n'exporte que ce que Next
+  // autorise) : on lit sa source et on l'execute tel quel, pour que la regle
+  // dupliquee dans `resolveTheme` ne puisse pas deriver sans que ce test le voie.
+  const source = readFileSync('src/app/layout.tsx', 'utf8');
+  const script = /const THEME_BOOT_SCRIPT = `([\s\S]*?)`;/.exec(source)?.[1];
+
+  function runBootScript() {
+    new Function(script as string)();
+  }
+
+  it('est bien extrait de layout.tsx', () => {
+    expect(script).toBeDefined();
+  });
+
+  it('ne pose pas la classe quand le systeme prefere le sombre et que rien n\'est stocke', () => {
+    mockPrefersDark(true);
+
+    runBootScript();
+
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('ne pose pas la classe quand le systeme prefere le sombre et que le clair est stocke', () => {
+    mockPrefersDark(true);
+    localStorage.setItem('theme', 'light');
+
+    runBootScript();
+
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('pose la classe seulement quand l\'utilisateur a enregistre le sombre', () => {
+    localStorage.setItem('theme', 'dark');
+
+    runBootScript();
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
 });

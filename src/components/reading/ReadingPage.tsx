@@ -1,0 +1,474 @@
+'use client';
+
+/**
+ * La lecture d'une comparaison : une page qui se lit de haut en bas.
+ *
+ * L'en-tête, puis deux colonnes à partir de 75 rem : le menu des parties à gauche, la lecture à
+ * droite (les cinq réponses, puis un chapitre par question). Les outils lourds s'ouvrent dans la
+ * vue agrandie, jamais dans la page.
+ *
+ * **L'URL est l'état.** La partie et la vue agrandie se lisent dans l'URL à chaque rendu
+ * (`resolveReadingTarget`), anciennes formes comprises : un lien froid peint la bonne vue dès sa
+ * première image. À l'arrivée, l'URL est réécrite une fois dans sa forme canonique
+ * (`readingLocation`), la page défile jusqu'à la partie nommée — et y revient tant que les
+ * chapitres au-dessus se chargent (`useArrivalScroll`) —, et ouvrir ou fermer une vue agrandie
+ * écrit ou retire `?focus=`. Toujours `replaceState` : naviguer dans une lecture n'empile pas
+ * d'entrées d'historique, et `useSearchParams` suit (Next ≥ 14.1).
+ *
+ * Un lien `?geneList=` ouvre le volcano, une fois la liste sélectionnée : c'est là que la carte
+ * de sélection la décrit.
+ *
+ * **La fiche** (`InspectorSheet`) montre tout d'un gène ou d'un processus. Elle se monte d'après
+ * l'état partagé, jamais d'un état à elle : un gène regardé (`focusedGene`, que `?gene=` écrit
+ * aussi à l'arrivée, et que ⌘K change ensuite : `useUrlGeneArrival`) ouvre la fiche du gène, sinon
+ * une voie regardée (`focusedTerm`) ouvre celle du processus — le gène l'emporte, une seule fiche à
+ * la fois. Le gène regardé d'une sélection de plusieurs gènes n'a pas de fiche (Maj/Cmd-clic
+ * construit une sélection). La fermer lâche les deux. Elle est non modale sur la page et modale
+ * au-dessus d'une vue agrandie, d'où `modal={focus !== null}` ; seule la vue volcano n'en reçoit
+ * pas, sa carte de sélection tient lieu de fiche.
+ *
+ * Remplace `ComparisonDetail`, qui reste dans le dépôt jusqu'au lot de nettoyage. Ses états de
+ * chargement, d'erreur et d'absence sont repris tels quels.
+ */
+
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import type { Dataset, Project } from '@/types';
+import {
+  ComparisonSelectionProvider,
+  useComparisonActions,
+  useFocusedTerm,
+  useSelection,
+} from '@/contexts/ComparisonSelectionContext';
+import {
+  useComparisonContext,
+  type ComparisonContext,
+} from '@/components/comparison/useComparisonContext';
+import GeneListDeepLink from '@/components/comparison/explorer/GeneListDeepLink';
+import { readFocusedGene, readGeneListId } from '@/components/comparison/explorerUrl';
+import type { ComparisonSamples } from '@/hooks/useComparisonSamples';
+import { useLocationHash } from '@/hooks/useLocationHash';
+import { useModuleAccess } from '@/hooks/useModuleAccess';
+import { useReprocessDeg } from '@/hooks/useReprocessDeg';
+import { normalizeGeneKey } from '@/utils/geneKeys';
+import FocusDialog, { type FocusContext } from './FocusDialog';
+import GeneSheet from './GeneSheet';
+import InspectorSheet from './InspectorSheet';
+import ProcessSheet from './ProcessSheet';
+import ReadingHeader, { type ReadingConditions } from './ReadingHeader';
+import ReadingMenu from './ReadingMenu';
+import ReadingSpine from './ReadingSpine';
+import CountsChapter from './chapters/CountsChapter';
+import GenesChapter from './chapters/GenesChapter';
+import ProcessesChapter from './chapters/ProcessesChapter';
+import MeaningChapter from './chapters/MeaningChapter';
+import ApplicationsChapter from './chapters/ApplicationsChapter';
+import { useActivePart } from './useActivePart';
+import { useArrivalScroll } from './useArrivalScroll';
+import { useReadingData } from './useReadingData';
+import {
+  partDomId,
+  READING_PARTS,
+  readingLocation,
+  resolveReadingTarget,
+  type FocusKind,
+  type ReadingPart,
+} from './readingRoutes';
+
+/**
+ * La dernière lecture, que l'accueil reprendra (lot 5) : `{ projectId, comparisonName, at }`, plus
+ * `analysisId` quand la comparaison est lue dans une analyse, pour que le lien de reprise y ramène.
+ */
+export const LAST_READING_KEY = 'gl-last-reading';
+
+/** L'ancre de l'en-tête : un ancien `?report=1` y amène le lecteur, au bouton du rapport. */
+const HEADER_ID = 'reading-header';
+
+interface ReadingPageProps {
+  projectId: string;
+  /** Le nom de la comparaison tel que la route le porte, encodé. */
+  comparisonName: string;
+  analysisId?: string;
+}
+
+/** Les parties suivies par le menu, dans l'ordre de la page. */
+const PART_IDS: readonly ReadingPart[] = READING_PARTS.map((p) => p.id);
+const ANSWERS_LABEL = READING_PARTS.find((p) => p.id === 'answers')?.label ?? 'Answers';
+
+/** Un lien de partie est une ancre de la page : la requête (seuils, gène, focus) reste. */
+const hrefFor = (part: ReadingPart) => `#${partDomId(part)}`;
+
+/** Réécrit l'URL sans rechargement ni entrée d'historique, si elle change. */
+function replaceLocation(search: string, hash: string) {
+  const { pathname } = window.location;
+  const next = `${pathname}${search}${hash}`;
+  if (next !== `${pathname}${window.location.search}${window.location.hash}`) {
+    window.history.replaceState(null, '', next);
+  }
+}
+
+/**
+ * Les deux conditions et leurs effectifs, comme `ComparisonSynthesis` les comptait : les deux
+ * moitiés du nom (`KO_vs_WT`) et les échantillons de chacune. Rien quand un côté n'en a aucun :
+ * « KO (3 samples) against WT (0) » ne décrirait pas ce qui a été comparé.
+ */
+function conditionsOf({ conditions, conditionMap }: ComparisonSamples): ReadingConditions | null {
+  if (!conditions) return null;
+  const values = Object.values(conditionMap);
+  const count = (condition: string) => values.filter((value) => value === condition).length;
+  const na = count(conditions.left);
+  const nb = count(conditions.right);
+  return na > 0 && nb > 0 ? { a: conditions.left, na, b: conditions.right, nb } : null;
+}
+
+/**
+ * Un `?gene=` qui change pendant que la page reste : ⌘K sur un gène de la comparaison qu'on lit
+ * pousse le même chemin avec une autre requête, et Next garde alors l'état de la page — le
+ * fournisseur ne lit `?gene=` qu'à son premier rendu. La fiche s'ouvre donc d'ici, comme à
+ * l'arrivée (`selectGenes(…, 'url')`).
+ *
+ * **La décision vient de l'URL seule** : on retient la valeur précédente de `?gene=` dans une ref
+ * et on ne réagit qu'à une transition vers un gène autre. Comparée à l'état, une URL pas encore
+ * réécrite (l'écriture est différée) rouvrirait la fiche que le lecteur vient de fermer. L'état ne
+ * sert qu'à ne pas rejouer l'écho de notre propre écriture : l'URL prend le gène regardé, et le
+ * resélectionner réduirait une sélection de plusieurs gènes à ce seul gène.
+ */
+function useUrlGeneArrival(urlGene: string | null, focusedGene: string | null) {
+  const { selectGenes } = useComparisonActions();
+  const previous = useRef(urlGene);
+  const focusedRef = useRef(focusedGene);
+  useEffect(() => {
+    focusedRef.current = focusedGene;
+  });
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = urlGene;
+    if (urlGene === null || urlGene === before) return;
+    if (normalizeGeneKey(focusedRef.current) === normalizeGeneKey(urlGene)) return;
+    selectGenes([urlGene], 'url');
+  }, [urlGene, selectGenes]);
+}
+
+/**
+ * Le fournisseur de sélection enveloppe tout, la vue agrandie comprise : seuils, gène regardé et
+ * voie regardée sont ceux de la page, et `useExplorerUrlSync` y garde `?padj=`, `?lfc=`, `?gene=`.
+ */
+export default function ReadingPage(props: ReadingPageProps) {
+  return (
+    <ComparisonSelectionProvider>
+      <ReadingResolver {...props} />
+    </ComparisonSelectionProvider>
+  );
+}
+
+/** Résout la comparaison ; les états d'attente et d'échec sont ceux de `ComparisonDetail`. */
+function ReadingResolver({ projectId, comparisonName, analysisId }: ReadingPageProps) {
+  const searchParams = useSearchParams();
+  const globalDatasetId = searchParams.get('datasetId');
+  const context = useComparisonContext({ projectId, comparisonName, analysisId, globalDatasetId });
+  const { project, degDataset } = context;
+
+  if (context.isLoading) {
+    return <div className="p-8 text-center text-body-sm text-muted">Loading…</div>;
+  }
+  if (context.isError) {
+    return (
+      <div className="p-8 text-center text-body-sm text-muted">Failed to load comparison details.</div>
+    );
+  }
+  if (!project) {
+    return <div className="p-8 text-center text-body-sm text-muted">Project not found</div>;
+  }
+  if (!degDataset) {
+    return (
+      <div className="py-8">
+        <div className="page-container">
+          <Link
+            href={analysisId ? `/projects/${projectId}/analyses/${analysisId}` : `/projects/${projectId}`}
+            className="mb-4 inline-flex items-center text-body-sm text-secondary hover:text-primary"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" /> {analysisId ? 'Back to Analysis' : 'Back to Project'}
+          </Link>
+          <div className="mt-4 rounded-sm bg-warning-soft p-4">
+            <p className="text-warning-ink">
+              No Differential Expression (DEG) dataset found for this comparison.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Reading
+      projectId={projectId}
+      analysisId={analysisId}
+      globalDatasetId={globalDatasetId}
+      context={context}
+      project={project}
+      degDataset={degDataset}
+    />
+  );
+}
+
+interface ReadingProps {
+  projectId: string;
+  analysisId?: string;
+  globalDatasetId: string | null;
+  context: ComparisonContext;
+  /** Résolus : la lecture n'est montée qu'une fois la comparaison trouvée. */
+  project: Project;
+  degDataset: Dataset;
+}
+
+function Reading({ projectId, analysisId, globalDatasetId, context, project, degDataset }: ReadingProps) {
+  const { decodedName, actualComparisonName, enrichmentDataset, matrixDataset, samples, geneMap } =
+    context;
+  const access = useModuleAccess();
+  const { summary, countsFailed, tested, answers } = useReadingData({
+    degDataset,
+    enrichmentDataset,
+    decodedName,
+    actualComparisonName,
+    globalDatasetId,
+    access,
+  });
+  const reprocess = useReprocessDeg(degDataset.id, projectId);
+  const active = useActivePart(PART_IDS);
+  const answersHeadingId = useId();
+  const readingRef = useRef<HTMLDivElement>(null);
+
+  // Dérivée au rendu, jamais recopiée : la vue agrandie ouverte EST celle que l'URL nomme.
+  const searchParams = useSearchParams();
+  const hash = useLocationHash();
+  const { focus } = resolveReadingTarget(searchParams, hash);
+
+  // Ce qui change de forme au-dessus d'une partie quand une donnée arrive : les cinq réponses
+  // suivent chacune la source de leur chapitre, et le profil pose ou retire les verrous.
+  const layoutKey = [
+    access.loaded,
+    tested,
+    ...Object.values(answers).map((answer) => answer.text),
+  ].join('\u0001');
+  const arrive = useArrivalScroll(layoutKey, readingRef);
+
+  // L'arrivée, une fois : l'URL canonique, puis le défilement. Ici et non dans `ReadingResolver`,
+  // pour que la partie visée soit dans la page quand on y défile.
+  useEffect(() => {
+    const current = new URLSearchParams(window.location.search);
+    const target = resolveReadingTarget(current, window.location.hash);
+    const { search, hash: nextHash } = readingLocation(target, current);
+    replaceLocation(search, nextHash);
+
+    if (target.report) {
+      // Un ancien `?report=1`, lu une dernière fois. `ComparisonReportButton` garde son ouverture
+      // dans un état interne, sans prop pour la commander, et sans le module de personnalisation
+      // son clic lance directement la génération : un lien ne doit pas déclencher un calcul. On
+      // amène donc le lecteur au bouton, dans l'en-tête, plutôt que d'ouvrir le rapport.
+      arrive(HEADER_ID);
+    } else if (target.part !== 'answers') {
+      arrive(partDomId(target.part));
+    }
+  }, [arrive]);
+
+  // Retenue pour l'accueil ; un stockage bloqué (navigation privée, réglages) n'empêche pas de lire.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        LAST_READING_KEY,
+        JSON.stringify({
+          projectId,
+          comparisonName: actualComparisonName,
+          ...(analysisId ? { analysisId } : {}),
+          at: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // Rien à faire : l'accueil ne proposera simplement pas de reprendre cette lecture.
+    }
+  }, [projectId, actualComparisonName, analysisId]);
+
+  /** Ouvre ou ferme une vue agrandie : seul `?focus=` change, la partie et le reste demeurent. */
+  const setFocus = useCallback((kind: FocusKind | null) => {
+    const current = new URLSearchParams(window.location.search);
+    const target = resolveReadingTarget(current, window.location.hash);
+    const { search, hash: nextHash } = readingLocation({ ...target, focus: kind }, current);
+    replaceLocation(search, nextHash);
+  }, []);
+  const openFocus = useCallback((kind: FocusKind) => setFocus(kind), [setFocus]);
+
+  // La fiche : le gène regardé l'emporte sur la voie regardée, et la fermer lâche les deux.
+  const { setFocusedGene, focusTerm } = useComparisonActions();
+  const closeSheet = useCallback(() => {
+    setFocusedGene(null);
+    focusTerm(null);
+  }, [setFocusedGene, focusTerm]);
+
+  // Fermer la vue volcano lâche aussi le gène et la voie regardés : on y a pointé un gène, sa carte
+  // de sélection le décrivait, et la fiche (non ouverte tant que le volcano l'est) surgirait sinon à
+  // la fermeture. La sélection elle-même, multi-gènes comprise, reste.
+  const closeFocus = useCallback(() => {
+    if (focus === 'volcano') closeSheet();
+    setFocus(null);
+  }, [focus, closeSheet, setFocus]);
+  const openReportLayout = useCallback(() => setFocus('report'), [setFocus]);
+
+  // Un lien `?geneList=` : une fois la liste résolue dans la sélection (par `GeneListDeepLink`), le
+  // volcano s'ouvre, une seule fois, pour la montrer — sauf si le lien nommait déjà une vue.
+  const { listId: selectedListId, focusedGene, genes: selectedGenes } = useSelection();
+  const focusedTerm = useFocusedTerm();
+  useUrlGeneArrival(readFocusedGene(searchParams), focusedGene);
+  const [arrivalListId] = useState(() => readGeneListId(searchParams));
+  const listShown = useRef(false);
+  useEffect(() => {
+    if (listShown.current || !arrivalListId || selectedListId !== arrivalListId) return;
+    listShown.current = true;
+    const current = resolveReadingTarget(new URLSearchParams(window.location.search), window.location.hash);
+    if (current.focus === null) setFocus('volcano');
+  }, [arrivalListId, selectedListId, setFocus]);
+
+  // La fiche d'un gène ne s'ouvre que pour un gène seul : Maj/Cmd-clic ajoute des gènes à une
+  // sélection, et une fiche modale à chaque ajout couvrirait la table (le clic suivant tomberait sur
+  // son voile). Le gène regardé d'une sélection de plusieurs gènes n'a donc pas de fiche.
+  const sheetGene = focusedGene && selectedGenes.length <= 1 ? focusedGene : null;
+
+  // Pas de fiche par-dessus la vue volcano : sa carte de sélection montre déjà le gène ou la
+  // sélection pointés, et une fiche modale à chaque point cliqué la doublerait. Les autres vues
+  // agrandies gardent la fiche, modale au-dessus d'elles.
+  const sheetOpen = (!!sheetGene || !!focusedTerm) && focus !== 'volcano';
+
+  // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
+  const locked = access.loaded
+    ? { targets: !access.targets, skin: !access.skin, signature: !access.science }
+    : {};
+
+  const focusContext = useMemo<FocusContext>(
+    () => ({
+      projectId,
+      project,
+      degDataset,
+      enrichmentDataset,
+      matrixDataset,
+      actualComparisonName,
+      samples,
+      geneMap,
+      sampleConditionMap: samples.conditionMap,
+      reprocess,
+    }),
+    [
+      projectId,
+      project,
+      degDataset,
+      enrichmentDataset,
+      matrixDataset,
+      actualComparisonName,
+      samples,
+      geneMap,
+      reprocess,
+    ]
+  );
+
+  return (
+    <div className="page-container">
+      <div id={HEADER_ID} className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
+        <ReadingHeader
+          projectId={projectId}
+          project={project}
+          decodedName={decodedName}
+          actualComparisonName={actualComparisonName}
+          analysisId={analysisId}
+          conditions={conditionsOf(samples)}
+          access={access}
+          degDatasetId={degDataset.id}
+          onOpenReportLayout={openReportLayout}
+        />
+      </div>
+
+      {/* Résout un lien `?geneList=` dans la sélection partagée. Ne rend rien. */}
+      <GeneListDeepLink projectId={projectId} />
+
+      {/* Sous 75 rem, une colonne, et le menu flotte en bas à droite : la marge du bas lui laisse la
+          place de ne rien couvrir en fin de page. Dès 75 rem, deux colonnes ; celle du menu, un
+          élément de grille étiré, court sur toute la hauteur de la lecture, et c'est dans elle que
+          le menu colle. */}
+      <div className="mt-8 pb-16 min-[75rem]:grid min-[75rem]:grid-cols-[minmax(0,12.5rem)_minmax(0,1fr)] min-[75rem]:gap-x-12 min-[75rem]:pb-0">
+        <div>
+          <ReadingMenu active={active} locked={locked} hrefFor={hrefFor} />
+        </div>
+
+        <div ref={readingRef} className="min-w-0 space-y-12">
+          <section
+            id={partDomId('answers')}
+            aria-labelledby={answersHeadingId}
+            className="scroll-mt-[calc(var(--sticky-top)+1rem)]"
+          >
+            <h2 id={answersHeadingId} className="sr-only">
+              {ANSWERS_LABEL}
+            </h2>
+            <ReadingSpine answers={answers} hrefFor={hrefFor} />
+          </section>
+
+          <CountsChapter
+            summary={summary}
+            failed={countsFailed}
+            tested={tested}
+            degDataset={degDataset}
+            comparisonName={actualComparisonName}
+            onOpenFocus={openFocus}
+          />
+          <GenesChapter
+            datasetId={degDataset.id}
+            comparisonName={actualComparisonName}
+            onOpenFocus={openFocus}
+          />
+          <ProcessesChapter
+            enrichmentDatasetId={enrichmentDataset?.id}
+            comparisonName={actualComparisonName}
+            access={access}
+            onOpenFocus={openFocus}
+          />
+          <MeaningChapter datasetId={degDataset.id} comparisonName={actualComparisonName} />
+          <ApplicationsChapter
+            degDatasetId={degDataset.id}
+            comparisonName={actualComparisonName}
+            access={access}
+            onOpenFocus={openFocus}
+          />
+        </div>
+      </div>
+
+      <FocusDialog kind={focus} context={focusContext} access={access} onClose={closeFocus} />
+
+      {/* Après la vue agrandie : les effets suivent l'ordre de l'arbre, si bien que la fiche prend le
+          focus de la boîte qu'elle recouvre, et non l'inverse. */}
+      <InspectorSheet
+        title={sheetGene ? (geneMap.nameByGene[sheetGene] ?? sheetGene) : (focusedTerm?.name ?? '')}
+        // Le sujet, que le titre ne change pas en se résolvant (accession → symbole) : le focus et
+        // le défilement de la fiche le suivent.
+        subject={
+          sheetGene
+            ? `gene:${sheetGene}`
+            : focusedTerm
+              ? `term:${focusedTerm.id || focusedTerm.name}`
+              : undefined
+        }
+        open={sheetOpen}
+        onClose={closeSheet}
+        modal={focus !== null}
+      >
+        {sheetGene ? (
+          <GeneSheet symbol={sheetGene} projectId={projectId} context={focusContext} />
+        ) : focusedTerm ? (
+          <ProcessSheet
+            term={focusedTerm}
+            context={focusContext}
+            onOpenFocus={openFocus}
+            onClose={closeSheet}
+          />
+        ) : null}
+      </InspectorSheet>
+    </div>
+  );
+}
