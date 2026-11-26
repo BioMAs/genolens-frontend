@@ -267,14 +267,27 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     replaceLocation(search, nextHash);
   }, []);
   const openFocus = useCallback((kind: FocusKind) => setFocus(kind), [setFocus]);
-  const closeFocus = useCallback(() => setFocus(null), [setFocus]);
+
+  // La fiche : le gène regardé l'emporte sur la voie regardée, et la fermer lâche les deux.
+  const { setFocusedGene, focusTerm } = useComparisonActions();
+  const closeSheet = useCallback(() => {
+    setFocusedGene(null);
+    focusTerm(null);
+  }, [setFocusedGene, focusTerm]);
+
+  // Fermer la vue volcano lâche aussi le gène et la voie regardés : on y a pointé un gène, sa carte
+  // de sélection le décrivait, et la fiche (non ouverte tant que le volcano l'est) surgirait sinon à
+  // la fermeture. La sélection elle-même, multi-gènes comprise, reste.
+  const closeFocus = useCallback(() => {
+    if (focus === 'volcano') closeSheet();
+    setFocus(null);
+  }, [focus, closeSheet, setFocus]);
   const openReportLayout = useCallback(() => setFocus('report'), [setFocus]);
 
   // Un lien `?geneList=` : une fois la liste résolue dans la sélection (par `GeneListDeepLink`), le
   // volcano s'ouvre, une seule fois, pour la montrer — sauf si le lien nommait déjà une vue.
   const { listId: selectedListId, focusedGene } = useSelection();
   const focusedTerm = useFocusedTerm();
-  const { setFocusedGene, focusTerm } = useComparisonActions();
   const [arrivalListId] = useState(() => readGeneListId(searchParams));
   const listShown = useRef(false);
   useEffect(() => {
@@ -284,15 +297,10 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     if (current.focus === null) setFocus('volcano');
   }, [arrivalListId, selectedListId, setFocus]);
 
-  // La fiche : le gène regardé l'emporte sur la voie regardée, et la fermer lâche les deux. Pas de
-  // fiche par-dessus la vue volcano : sa carte de sélection montre déjà le gène ou la sélection
-  // pointés, et une fiche modale à chaque point cliqué la doublerait. Les autres vues agrandies
-  // gardent la fiche, modale au-dessus d'elles.
+  // Pas de fiche par-dessus la vue volcano : sa carte de sélection montre déjà le gène ou la
+  // sélection pointés, et une fiche modale à chaque point cliqué la doublerait. Les autres vues
+  // agrandies gardent la fiche, modale au-dessus d'elles.
   const sheetOpen = (!!focusedGene || !!focusedTerm) && focus !== 'volcano';
-  const closeSheet = useCallback(() => {
-    setFocusedGene(null);
-    focusTerm(null);
-  }, [setFocusedGene, focusTerm]);
 
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const locked = access.loaded

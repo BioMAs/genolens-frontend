@@ -15,7 +15,8 @@
  * `aria-modal` et retient Tab, comme la boîte qu'elle recouvre. Un clic sur le voile la ferme.
  *
  * **Le focus ne reste pas dans le vide.** Il revient à l'élément qui l'a ouverte quand elle se
- * ferme — ou, si cet élément est derrière une vue agrandie, à cette vue. Et il rentre dans la fiche
+ * ferme — ou, si cet élément est derrière une vue agrandie, à cette vue — pourvu qu'il soit tombé
+ * sur le corps de la page. Et il rentre dans la fiche
  * quand son contenu change sous le lecteur (le gène cliqué dans la fiche d'un processus disparaît
  * avec elle) ou quand elle devient modale.
  *
@@ -42,18 +43,29 @@ interface InspectorSheetProps {
  * Rend le focus là où le lecteur l'avait : l'élément qui a ouvert la fiche, s'il est encore là et
  * qu'aucune vue agrandie ne le recouvre ; sinon cette vue. La fiche elle-même (`panel`) n'est pas
  * une vue : elle peut encore être dans le DOM, quand le mode strict de React rejoue l'effet.
+ *
+ * **Un tick plus tard, et seulement si le focus est tombé sur le corps.** Quand la fiche se ferme
+ * parce qu'une vue s'ouvre (le volcano la masque), cette fermeture et le montage de la boîte de la
+ * vue ont lieu dans le même rendu : rendre le focus tout de suite le poserait sur la boîte toute
+ * fraîche, qui retiendrait alors son propre panneau comme point de retour et laisserait tomber le
+ * focus sur le corps à sa fermeture. Un tick plus tard, la boîte a pris son focus et le sien est
+ * resté au bon endroit ; et un élément qui a reçu le focus entre-temps (un clic ailleurs) le garde.
  */
 function restoreFocus(opener: HTMLElement | null, panel: HTMLElement | null) {
-  const dialogs = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]')
-  ).filter((dialog) => dialog !== panel);
-  const under = dialogs.length > 0 ? dialogs[dialogs.length - 1] : null;
-  const usable = opener && opener !== document.body && opener.isConnected;
-  if (usable && (!under || under.contains(opener))) {
-    opener.focus();
-  } else if (under) {
-    under.focus();
-  }
+  setTimeout(() => {
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
+    const dialogs = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]')
+    ).filter((dialog) => dialog !== panel);
+    const under = dialogs.length > 0 ? dialogs[dialogs.length - 1] : null;
+    const usable = opener && opener !== document.body && opener.isConnected;
+    if (usable && (!under || under.contains(opener))) {
+      opener.focus();
+    } else if (under) {
+      under.focus();
+    }
+  }, 0);
 }
 
 export default function InspectorSheet({ title, open, onClose, modal = false, children }: InspectorSheetProps) {

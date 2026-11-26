@@ -78,6 +78,31 @@ describe('InspectorSheet — the frame', () => {
     expect(opener).toHaveFocus();
   });
 
+  it('does not take the focus back from an element that already has it when the sheet closes', async () => {
+    function Page() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open IL6
+          </button>
+          <button type="button" onClick={() => setOpen(false)}>
+            Elsewhere
+          </button>
+          <InspectorSheet title="IL6" open={open} onClose={() => setOpen(false)}>
+            <p>Body</p>
+          </InspectorSheet>
+        </div>
+      );
+    }
+    render(<Page />);
+    await userEvent.click(screen.getByRole('button', { name: 'Open IL6' }));
+    const elsewhere = screen.getByRole('button', { name: 'Elsewhere' });
+    await userEvent.click(elsewhere);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(elsewhere).toHaveFocus();
+  });
+
   it('closes with its close button, and gives the focus back too', async () => {
     render(<Page />);
     const opener = screen.getByRole('button', { name: 'Open IL6' });

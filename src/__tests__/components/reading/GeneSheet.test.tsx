@@ -128,9 +128,16 @@ describe('GeneSheet — the detail card', () => {
 });
 
 describe('GeneSheet — across this study', () => {
-  it('asks the gene search for the gene, fifty results at most', () => {
+  // Le serveur coupe à la limite AVANT de filtrer sur le projet : sans `projectId` dans la requête,
+  // les lignes de ce projet pouvaient tomber hors des cinquante et la fiche écrire un vide faux.
+  it('asks the gene search for the gene in this project, fifty results at most', () => {
     renderSheet('IL6');
-    expect(mockUseGeneSearch).toHaveBeenCalledWith({ query: 'IL6', limit: 50, enabled: true });
+    expect(mockUseGeneSearch).toHaveBeenCalledWith({
+      query: 'IL6',
+      projectId: 'p1',
+      limit: 50,
+      enabled: true,
+    });
   });
 
   it('keeps only the exact results of this project, one row per comparison', () => {
@@ -228,6 +235,60 @@ describe('GeneSheet — across this study', () => {
     expect(current).toHaveAttribute('aria-current', 'true');
     expect(current.className).toContain('bg-plum-soft');
     expect(other).not.toHaveAttribute('aria-current');
+  });
+
+  describe('one row per comparison', () => {
+    const rowsOf = () => within(across()).getAllByRole('row').slice(1);
+
+    it('collapses a comparison several analyses carry into one row, the most significant', () => {
+      search([
+        result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-a', analysis_id: 'a', analysis_name: 'First', log_fc: 1, padj: 0.02 }),
+        result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-b', analysis_id: 'b', analysis_name: 'Second', log_fc: 3, padj: 0.0004 }),
+        result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-c', analysis_id: 'c', analysis_name: 'Third', log_fc: -2, padj: 0.3 }),
+      ]);
+      renderSheet();
+      const rows = rowsOf();
+      expect(rows).toHaveLength(1);
+      expect(within(rows[0]).getByText('+3.00')).toBeInTheDocument();
+      expect(within(rows[0]).getByText('4.0e-4')).toBeInTheDocument();
+    });
+
+    it('keeps the row of the dataset being read, even when another one is more significant', () => {
+      search([
+        result({ comparison_name: 'KO_vs_WT', dataset_id: 'deg-9', log_fc: 5, padj: 1e-9 }),
+        result({ comparison_name: 'KO_vs_WT', dataset_id: 'deg-1', log_fc: 2, padj: 0.03 }),
+      ]);
+      renderSheet();
+      const rows = rowsOf();
+      expect(rows).toHaveLength(1);
+      expect(within(rows[0]).getByText('+2.00')).toBeInTheDocument();
+      expect(within(rows[0]).getByText('0.030')).toBeInTheDocument();
+      expect(within(rows[0]).queryByText('+5.00')).not.toBeInTheDocument();
+    });
+
+    it('puts a missing adjusted p after a real one when it has to choose', () => {
+      search([
+        result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-a', log_fc: 4, padj: null }),
+        result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-b', log_fc: 1, padj: 0.04 }),
+      ]);
+      renderSheet();
+      expect(within(rowsOf()[0]).getByText('+1.00')).toBeInTheDocument();
+    });
+
+    it('does not repeat a row, nor a React key, for one symbol under two gene ids', () => {
+      const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+      search([
+        result({ comparison_name: 'KO_vs_WT', gene_id: 'ENSG00000136244', dataset_id: 'deg-1', padj: 0.001 }),
+        result({ comparison_name: 'KO_vs_WT', gene_id: 'IL6', dataset_id: 'deg-1', padj: 0.002 }),
+        result({ comparison_name: 'OTHER', gene_id: 'ENSG00000136244', dataset_id: 'deg-2' }),
+        result({ comparison_name: 'OTHER', gene_id: 'IL6', dataset_id: 'deg-2' }),
+      ]);
+      renderSheet();
+      expect(rowsOf()).toHaveLength(2);
+      const keyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes('same key'));
+      expect(keyWarnings).toHaveLength(0);
+      errors.mockRestore();
+    });
   });
 
   it('says it is looking while the search runs, and that it failed when it did', () => {

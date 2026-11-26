@@ -48,11 +48,34 @@ const DATABASES: ReadonlyArray<{ label: string; href: (symbol: string) => string
   { label: 'UniProt', href: (s) => `https://www.uniprot.org/uniprotkb?query=gene:${encodeURIComponent(s)}` },
 ];
 
-/** Un résultat par comparaison, dans l'ordre des noms : une liste qui ne bouge pas d'une ouverture à l'autre. */
-function acrossRows(results: GeneSearchResult[] | undefined, projectId: string): GeneSearchResult[] {
-  return (results ?? [])
-    .filter((row) => row.project_id === projectId && row.exact)
-    .sort((a, b) => a.comparison_name.localeCompare(b.comparison_name));
+/**
+ * Un résultat par comparaison, dans l'ordre des noms : une liste qui ne bouge pas d'une ouverture
+ * à l'autre. La recherche rend une ligne par jeu de données et par gène : un même nom de
+ * comparaison revient quand plusieurs analyses la portent. On garde celle du jeu qu'on lit, sinon
+ * la plus significative (un padj absent passe en dernier), et on n'affiche jamais deux lignes
+ * pour un nom.
+ */
+function acrossRows(
+  results: GeneSearchResult[] | undefined,
+  projectId: string,
+  currentDatasetId: string
+): GeneSearchResult[] {
+  const better = (a: GeneSearchResult, b: GeneSearchResult): boolean => {
+    const aCurrent = a.dataset_id === currentDatasetId;
+    if (aCurrent !== (b.dataset_id === currentDatasetId)) return aCurrent;
+    if (a.padj === null) return false;
+    return b.padj === null || a.padj < b.padj;
+  };
+
+  const byName = new Map<string, GeneSearchResult>();
+  for (const row of results ?? []) {
+    // Le serveur filtre déjà sur le projet (avant sa limite) ; ce filtre-ci et `exact` sont le
+    // filet : jamais une ligne d'un autre projet, jamais `IL6R` pour `IL6`.
+    if (row.project_id !== projectId || !row.exact) continue;
+    const kept = byName.get(row.comparison_name);
+    if (!kept || better(row, kept)) byName.set(row.comparison_name, row);
+  }
+  return Array.from(byName.values()).sort((a, b) => a.comparison_name.localeCompare(b.comparison_name));
 }
 
 /** Une barre depuis le zéro de la piste : à droite pour une hausse, à gauche pour une baisse. */
@@ -82,12 +105,19 @@ function AcrossBody({
   context: FocusContext;
 }) {
   const { degDataset, actualComparisonName } = context;
+  // `projectId` part dans la requête : le serveur trie par exactitude et padj puis coupe à la limite
+  // AVANT de filtrer, si bien que les lignes de ce projet pouvaient tomber hors des cinquante et la
+  // fiche écrire un vide faux.
   const { data, isLoading, isError } = useGeneSearch({
     query: symbol,
+    projectId,
     limit: ACROSS_LIMIT,
     enabled: !!symbol,
   });
-  const rows = useMemo(() => acrossRows(data?.results, projectId), [data?.results, projectId]);
+  const rows = useMemo(
+    () => acrossRows(data?.results, projectId, degDataset.id),
+    [data?.results, projectId, degDataset.id]
+  );
   const scale = Math.max(BAR_MIN_SCALE, ...rows.map((row) => Math.abs(row.log_fc ?? 0)));
 
   let body;
@@ -122,11 +152,12 @@ function AcrossBody({
         </thead>
         <tbody className="divide-y divide-subtle">
           {rows.map((row) => {
-            const current =
-              row.dataset_id === degDataset.id && row.comparison_name === actualComparisonName;
+            // Une ligne par nom : c'est la ligne de la comparaison qu'on lit, quelle que soit la
+            // ligne gardée pour ce nom.
+            const current = row.comparison_name === actualComparisonName;
             return (
               <tr
-                key={`${row.dataset_id}|${row.comparison_name}`}
+                key={`${row.comparison_name}|${row.dataset_id}|${row.gene_id}`}
                 aria-current={current ? 'true' : undefined}
                 className={cn(current && 'bg-plum-soft')}
               >

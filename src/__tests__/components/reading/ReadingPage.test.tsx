@@ -689,7 +689,12 @@ describe('ReadingPage — the sheet', () => {
   it('reads the other comparisons of the project for the gene it shows', async () => {
     setLocation(`${PATH}?gene=IL6`);
     renderReading();
-    expect(useGeneSearch).toHaveBeenCalledWith({ query: 'IL6', limit: 50, enabled: true });
+    expect(useGeneSearch).toHaveBeenCalledWith({
+      query: 'IL6',
+      projectId: 'p1',
+      limit: 50,
+      enabled: true,
+    });
   });
 
   it('opens the process sheet on a bar of the processes, named after it', async () => {
@@ -763,8 +768,26 @@ describe('ReadingPage — the sheet', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  // R35 : l'ouverture d'une vue sous une fiche ouverte ne doit pas faire perdre le focus. La fermeture
+  // de la fiche (cachée par le volcano) rendait le focus à la boîte fraîchement montée, qui retenait
+  // alors son propre panneau comme point de retour : à la fermeture, le focus tombait sur le corps.
+  it('gives the focus back to the button that opened the volcano, with a sheet open under it', async () => {
+    const user = userEvent.setup();
+    setLocation(`${PATH}?gene=IL6`);
+    renderReading();
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    const opener = screen.getByRole('button', { name: 'Open the volcano' });
+    await user.click(opener);
+    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+
   // R31 : la vue volcano a sa propre carte de sélection, la fiche ne la double pas.
   describe('over the volcano view', () => {
+    const LIST_ID = '0a1b2c3d-0000-4000-8000-000000000001';
+
     it('opens no sheet for a gene picked while the volcano is open: its selection card shows it', async () => {
       const user = userEvent.setup();
       setLocation(`${PATH}?focus=volcano`);
@@ -791,6 +814,64 @@ describe('ReadingPage — the sheet', () => {
       renderReading();
       expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
       expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+    });
+
+    // R34 : la vue volcano porte la fiche de ce qu'on y pointe ; la fermer lâche le gène (et la
+    // voie) regardés, sinon la fiche surgirait à la fermeture. La sélection multi-gènes reste.
+    it('does not pop the sheet open when the volcano closes after a pick', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=volcano`);
+      renderReading();
+      const view = within(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' }));
+      await user.click(view.getByRole('button', { name: 'Pick IL6 on the volcano' }));
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('lets go of the gene of a ?gene= link when the volcano closes', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=volcano&gene=IL6`);
+      renderReading();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await waitFor(() => expect(window.location.search).not.toContain('gene='));
+    });
+
+    it('lets go of the process in focus too, when the volcano opened over its sheet', async () => {
+      withProcess();
+      const user = userEvent.setup();
+      renderReading();
+      await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+      expect(screen.getByRole('dialog', { name: 'Inflammatory response' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Open the volcano' }));
+      expect(screen.queryByRole('dialog', { name: 'Inflammatory response' })).not.toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('keeps a multi-gene selection when the volcano closes', async () => {
+      mockGeneList = { id: LIST_ID, name: 'Saved list', genes: ['IL6', 'KRT1'] };
+      setLocation(`${PATH}?geneList=${LIST_ID}`);
+      const user = userEvent.setup();
+      renderReading();
+      expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // L'URL suit la sélection avec un délai : si la liste avait été lâchée, `geneList=` partirait.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      });
+      expect(window.location.search).toContain(`geneList=${LIST_ID}`);
+    });
+
+    it('does not let go of the gene when another view closes', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table&gene=IL6`);
+      renderReading();
+      // La fiche modale se ferme d'abord, et lâche le gène : la vue, elle, reste.
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Genes, KO_vs_WT' })).toBeInTheDocument();
     });
 
     it('hides a sheet that is open when the volcano opens over it', async () => {
