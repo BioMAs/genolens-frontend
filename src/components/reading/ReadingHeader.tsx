@@ -100,7 +100,7 @@ export default function ReadingHeader({
             onClick={() => setThresholdsOpen(true)}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-            {`Thresholds: padj < ${padj}, |log2FC| ≥ ${logfc}`}
+            {`Thresholds: padj < ${padj}, |log2FC| > ${logfc}`}
           </Button>
         }
         actions={

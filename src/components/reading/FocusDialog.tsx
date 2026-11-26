@@ -98,7 +98,7 @@ function TableView({ context }: { context: FocusContext }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-body-sm text-secondary">
           Every differentially expressed gene of this comparison at the current thresholds (padj ≤{' '}
-          {thresholds.padj}, |log2FC| ≥ {thresholds.logfc}).
+          {thresholds.padj}, |log2FC| &gt; {thresholds.logfc}).
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <ExportMenu

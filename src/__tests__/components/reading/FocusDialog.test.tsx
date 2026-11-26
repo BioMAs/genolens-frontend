@@ -551,6 +551,6 @@ describe('FocusDialog — the gene table export', () => {
     renderFocus({ kind: 'table' });
     const note = screen.getByText(/at the current thresholds/);
     expect(note).toHaveTextContent(`padj ≤ ${DEFAULT_THRESHOLDS.padj}`);
-    expect(note).toHaveTextContent(`|log2FC| ≥ ${DEFAULT_THRESHOLDS.logfc}`);
+    expect(note).toHaveTextContent(`|log2FC| > ${DEFAULT_THRESHOLDS.logfc}`);
   });
 });

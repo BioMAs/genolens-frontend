@@ -130,7 +130,7 @@ describe('ReadingHeader — the breadcrumb', () => {
 describe('ReadingHeader — the thresholds chip', () => {
   it('prints the thresholds of the page', () => {
     renderHeader();
-    expect(chip().textContent).toBe('Thresholds: padj < 0.05, |log2FC| ≥ 0.58');
+    expect(chip().textContent).toBe('Thresholds: padj < 0.05, |log2FC| > 0.58');
   });
 
   it('is a button that announces a dialog, and does not submit a form', () => {
@@ -142,7 +142,7 @@ describe('ReadingHeader — the thresholds chip', () => {
   it('follows the thresholds when they change elsewhere', async () => {
     renderHeader({}, <SetThresholds />);
     await userEvent.click(screen.getByRole('button', { name: 'set from outside' }));
-    expect(chip().textContent).toBe('Thresholds: padj < 0.001, |log2FC| ≥ 1');
+    expect(chip().textContent).toBe('Thresholds: padj < 0.001, |log2FC| > 1');
   });
 
   it('opens no dialog until it is clicked', () => {
@@ -173,7 +173,7 @@ describe('ReadingHeader — the thresholds chip', () => {
       '1.5'
     );
 
-    expect(chip().textContent).toBe('Thresholds: padj < 0.01, |log2FC| ≥ 1.5');
+    expect(chip().textContent).toBe('Thresholds: padj < 0.01, |log2FC| > 1.5');
   });
 
   it('closes with Escape and with the close button, and gives the focus back to the chip', async () => {
