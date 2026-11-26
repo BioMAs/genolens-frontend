@@ -161,19 +161,40 @@ describe('ProcessSheet — what the process is', () => {
     expect(screen.getByText('1 gene')).toBeInTheDocument();
   });
 
-  it('reads the FDR of the process from the enriched pathways of the comparison', () => {
-    renderSheet();
-    expect(useTopPathways).toHaveBeenCalledWith('enr-1', 'KO_vs_WT');
+  // R40 : le FDR est celui de la ligne d'où la voie vient (la barre du chapitre, la ligne de la
+  // table), porté par la voie regardée. Le chercher par identifiant parmi les sept premières voies
+  // « tous les DEG » imprimait le FDR d'un autre enrichissement quand la ligne était celle d'un
+  // sens (hausse, baisse), et rien pour une voie hors des sept.
+  it('prints the FDR the focused process carries', () => {
+    renderSheet({ term: { ...term, padj: 3.2e-8 } });
     expect(screen.getByText(/FDR/)).toHaveTextContent('FDR 3.2e-8');
   });
 
-  it('gives no FDR, and does not invent one, for a process the chapter does not rank', () => {
-    jest.mocked(useTopPathways).mockReturnValue({
-      pathways: [pathway({ id: 'GO:other' })],
-      isLoading: false,
-      isError: false,
-    });
+  it('prints the FDR of the row it came from, not the one of the same id in the top pathways', () => {
+    // Le chapitre classe cet identifiant à 3,2e-8 ; la ligne d'où la voie vient, à 0,03.
+    renderSheet({ term: { ...term, padj: 0.03 } });
+    expect(screen.getByText(/FDR/)).toHaveTextContent('FDR 0.030');
+    expect(screen.queryByText(/3\.2e-8/)).not.toBeInTheDocument();
+  });
+
+  it('reads no top pathway at all', () => {
+    renderSheet({ term: { ...term, padj: 0.03 } });
+    expect(useTopPathways).not.toHaveBeenCalled();
+  });
+
+  it('prints the FDR of a process the chapter does not rank, as long as its row gave one', () => {
+    renderSheet({ term: { ...term, id: 'GO:other', padj: 0.04 } });
+    expect(screen.getByText(/FDR/)).toHaveTextContent('FDR 0.040');
+  });
+
+  it('gives no FDR, and does not invent one, for a process that carries none', () => {
+    // Le chapitre classe l'identifiant : le trouver par là serait inventer un FDR pour cette ligne.
     renderSheet();
+    expect(screen.queryByText(/FDR/)).not.toBeInTheDocument();
+  });
+
+  it('gives no FDR for a null one either', () => {
+    renderSheet({ term: { ...term, padj: null } });
     expect(screen.queryByText(/FDR/)).not.toBeInTheDocument();
   });
 

@@ -723,6 +723,15 @@ describe('ReadingPage — the sheet', () => {
     expect(window.location.search).not.toContain('focus=');
   });
 
+  it('prints on the process sheet the FDR of the bar it was opened from', async () => {
+    withProcess();
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+    const sheet = screen.getByRole('dialog', { name: 'Inflammatory response' });
+    expect(within(sheet).getByText(/FDR/)).toHaveTextContent('FDR 1.0e-8');
+  });
+
   it('swaps the process for a gene sheet when a gene of the process is clicked', async () => {
     withProcess();
     const user = userEvent.setup();

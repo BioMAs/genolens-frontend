@@ -107,9 +107,9 @@ export default function ProcessesChapter({
   // fois et le gène l'emporte sur la voie : sans lâcher le gène regardé, la fiche de ce gène
   // resterait là et le clic ne montrerait rien. Les gènes de la voie ne deviennent la sélection que
   // par « Select these genes », dans la fiche.
-  const pick = ({ id, name, genes }: TopPathway) => {
+  const pick = ({ id, name, genes, padj }: TopPathway) => {
     setFocusedGene(null);
-    focusTerm({ id, name, genes });
+    focusTerm({ id, name, genes, padj });
   };
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const gseaLocked = access.loaded && !access.science;

@@ -9,10 +9,11 @@
  * fait des gènes du processus la sélection, nommée d'après lui, et ouvre le volcano où la carte
  * multi-gènes la décrit — la fiche se ferme alors, le volcano la remplace.
  *
- * **Le FDR** vient des voies que le chapitre des processus a déjà lues (`useTopPathways`, le même
- * cache, aucune requête de plus). La voie regardée porte son identifiant, son nom et ses gènes
- * (`FocusedTerm`) mais pas son padj : un processus que le chapitre ne classe pas (au-delà de
- * 0,05, ou vu depuis la table complète) n'a donc pas de FDR ici, et on ne l'invente pas.
+ * **Le FDR** est celui de la ligne d'où la voie vient : la barre du chapitre ou la ligne de la table
+ * complète le posent sur la voie regardée (`FocusedTerm.padj`), et la fiche l'imprime tel quel. On
+ * ne le cherche pas par identifiant parmi les voies du chapitre : ce serait le FDR d'un autre
+ * enrichissement quand la ligne est celle d'un sens (hausse, baisse), et rien pour une voie hors
+ * du classement. Une voie sans padj n'en montre pas, et on ne l'invente pas.
  *
  * **La jointure.** Les gènes d'un processus sont des symboles ; le volcano nomme les siens par
  * identifiant ou par symbole selon le jeu. On les rapproche par `buildGeneIndex`, qui connaît les
@@ -25,7 +26,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { useComparisonActions, type FocusedTerm } from '@/contexts/ComparisonSelectionContext';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
-import { useTopPathways } from '@/hooks/useTopPathways';
 import { buildGeneIndex, normalizeGeneKey } from '@/utils/geneKeys';
 import type { VolcanoPoint } from '@/utils/volcano';
 import type { FocusContext } from './FocusDialog';
@@ -57,12 +57,11 @@ function byPadj(a: GeneRow, b: GeneRow): number {
 }
 
 export default function ProcessSheet({ term, context, onOpenFocus, onClose }: ProcessSheetProps) {
-  const { degDataset, enrichmentDataset, actualComparisonName, geneMap } = context;
+  const { degDataset, actualComparisonName, geneMap } = context;
   const { selectGenes, setFocusedGene } = useComparisonActions();
 
   const { data: cloud, isLoading, isError } = useVolcanoPoints(degDataset.id, actualComparisonName);
-  const { pathways } = useTopPathways(enrichmentDataset?.id, actualComparisonName);
-  const fdr = term.id ? pathways?.find((pathway) => pathway.id === term.id)?.padj : undefined;
+  const fdr = term.padj ?? undefined;
 
   const rows = useMemo<GeneRow[]>(() => {
     const byId = new Map<string, VolcanoPoint>();

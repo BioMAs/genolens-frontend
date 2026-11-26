@@ -431,7 +431,8 @@ describe('ProcessesChapter', () => {
     expect(widths[1]).toBeLessThan(100);
   });
 
-  it('focuses the process on a click, with its id, its name and its genes', async () => {
+  // R40 : la voie regardée porte le padj de la barre cliquée, la fiche l'imprime tel quel.
+  it('focuses the process on a click, with its id, its name, its genes and its adjusted p', async () => {
     renderProcesses();
     expect(probe().term).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: /Epidermis development/ }));
@@ -439,6 +440,7 @@ describe('ProcessesChapter', () => {
       id: 'GO:Epidermis development',
       name: 'Epidermis development',
       genes: ['KRT1', 'LCE1A'],
+      padj: 1e-4,
     });
   });
 
@@ -452,6 +454,7 @@ describe('ProcessesChapter', () => {
       id: 'GO:Inflammatory response',
       name: 'Inflammatory response',
       genes: ['IL6', 'CXCL8'],
+      padj: 1e-8,
     });
     expect(probe().selection.genes).toEqual([]);
     expect(onOpenFocus).not.toHaveBeenCalled();

@@ -582,6 +582,8 @@ export default function GOEnrichmentAnalysis({ dataset, comparisonName, enrichme
                       id: term.go_id,
                       name: term.go_name,
                       genes: term.study_genes ?? [],
+                      // Le FDR de CETTE ligne : la fiche du processus l'imprime tel quel.
+                      padj: term.fdr,
                     })
                   }
                 />
