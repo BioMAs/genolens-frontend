@@ -11,7 +11,7 @@
  * seuils (lus dans l'URL par le vrai `ComparisonSelectionProvider`) sont donc calculés pour de
  * vrai. Les modules lourds et l'en-tête sont des témoins qui affichent leurs propriétés.
  */
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -25,7 +25,8 @@ import {
 } from '@/contexts/ComparisonSelectionContext';
 import type { ModuleAccess } from '@/hooks/useModuleAccess';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
-import { useTopPathways } from '@/hooks/useTopPathways';
+import { useGeneSearch } from '@/hooks/useGeneSearch';
+import { useTopPathways, type TopPathway } from '@/hooks/useTopPathways';
 import { useSavedInterpretation } from '@/hooks/useSavedInterpretation';
 import { useCosmOmicsNova } from '@/hooks/useCosmOmicsNova';
 import api from '@/utils/api';
@@ -97,6 +98,7 @@ jest.mock('@/hooks/useTopPathways', () => ({
   ...jest.requireActual('@/hooks/useTopPathways'),
   useTopPathways: jest.fn(),
 }));
+jest.mock('@/hooks/useGeneSearch', () => ({ useGeneSearch: jest.fn() }));
 jest.mock('@/hooks/useSavedInterpretation', () => ({
   ...jest.requireActual('@/hooks/useSavedInterpretation'),
   useSavedInterpretation: jest.fn(),
@@ -150,6 +152,10 @@ jest.mock('@/components/comparison/explorer/GeneListDeepLink', () => ({
 jest.mock('@/components/comparison/explorer/SelectionCard', () => ({
   __esModule: true,
   default: mockStub('selection-card'),
+}));
+jest.mock('@/components/comparison/explorer/GeneDetailCard', () => ({
+  __esModule: true,
+  default: mockStub('gene-detail-card'),
 }));
 jest.mock('@/components/report/ReportCustomizationPanel', () => ({
   __esModule: true,
@@ -381,6 +387,11 @@ beforeEach(() => {
     scrolled.push(this);
   };
   jest.mocked(useTopPathways).mockReturnValue({ pathways: [], isLoading: false, isError: false });
+  jest.mocked(useGeneSearch).mockReturnValue({
+    data: { results: [], total: 0, query: '' },
+    isLoading: false,
+    isError: false,
+  } as unknown as ReturnType<typeof useGeneSearch>);
   jest.mocked(useSavedInterpretation).mockReturnValue({ text: null, isLoading: false });
   jest
     .mocked(useCosmOmicsNova)
@@ -565,15 +576,6 @@ describe('ReadingPage — the selection', () => {
   /** Une liste enregistrée : son id a la forme que `readGeneListId` accepte. */
   const LIST_ID = '0a1b2c3d-0000-4000-8000-000000000001';
 
-  it('opens the volcano, with the selection card, on a gene of the top genes', async () => {
-    const user = userEvent.setup();
-    renderReading();
-    const genes = within(screen.getByRole('region', { name: 'Which genes matter most?' }));
-    await user.click(genes.getByRole('button', { name: 'IL6' }));
-    expect(window.location.search).toContain('focus=volcano');
-    const dialog = screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' });
-    expect(within(dialog).getByTestId('selection-card')).toBeInTheDocument();
-  });
 
   it('opens the volcano once a ?geneList= link has selected its genes', () => {
     mockGeneList = { id: LIST_ID, name: 'Saved list', genes: ['IL6', 'KRT1'] };
@@ -596,6 +598,137 @@ describe('ReadingPage — the selection', () => {
     renderReading();
     expect(screen.getByRole('dialog', { name: 'Heatmap, KO_vs_WT' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Volcano, KO_vs_WT' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ReadingPage — the sheet', () => {
+  const genesRegion = () => within(screen.getByRole('region', { name: 'Which genes matter most?' }));
+  const processesRegion = () => within(screen.getByRole('region', { name: 'Which processes move?' }));
+
+  const INFLAMMATION: TopPathway = {
+    id: 'GO:0006954',
+    name: 'Inflammatory response',
+    padj: 1e-8,
+    geneCount: 2,
+    genes: ['IL6', 'KRT1'],
+    direction: 'up',
+  };
+  const withProcess = () =>
+    jest
+      .mocked(useTopPathways)
+      .mockReturnValue({ pathways: [INFLAMMATION], isLoading: false, isError: false });
+
+  it('opens the gene sheet on a gene of the top genes, not the volcano', async () => {
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(genesRegion().getByRole('button', { name: 'IL6' }));
+    const sheet = screen.getByRole('dialog', { name: 'IL6' });
+    expect(within(sheet).getByTestId('gene-detail-card')).toBeInTheDocument();
+    expect(propsOf('gene-detail-card')).toMatchObject({ gene: 'IL6', comparisonName: 'KO_vs_WT' });
+    expect(window.location.search).not.toContain('focus=');
+    expect(screen.queryByRole('dialog', { name: 'Volcano, KO_vs_WT' })).not.toBeInTheDocument();
+  });
+
+  it('opens on load for a ?gene= link, on that gene', () => {
+    setLocation(`${PATH}?gene=IL6`);
+    renderReading();
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    expect(propsOf('gene-detail-card').gene).toBe('IL6');
+  });
+
+  it('is not there without a gene or a process in focus', () => {
+    renderReading();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes on Escape, hands the focus back to the gene that opened it, and drops ?gene=', async () => {
+    const user = userEvent.setup();
+    renderReading();
+    const gene = genesRegion().getByRole('button', { name: 'IL6' });
+    await user.click(gene);
+    await waitFor(() => expect(window.location.search).toContain('gene=IL6'));
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(gene).toHaveFocus();
+    await waitFor(() => expect(window.location.search).not.toContain('gene='));
+  });
+
+  it('reads the other comparisons of the project for the gene it shows', async () => {
+    setLocation(`${PATH}?gene=IL6`);
+    renderReading();
+    expect(useGeneSearch).toHaveBeenCalledWith({ query: 'IL6', limit: 50, enabled: true });
+  });
+
+  it('opens the process sheet on a bar of the processes, named after it', async () => {
+    withProcess();
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+    const sheet = screen.getByRole('dialog', { name: 'Inflammatory response' });
+    expect(within(sheet).getByText('GO:0006954')).toBeInTheDocument();
+    expect(within(sheet).getByText('2 genes')).toBeInTheDocument();
+    expect(window.location.search).not.toContain('focus=');
+  });
+
+  it('swaps the process for a gene sheet when a gene of the process is clicked', async () => {
+    withProcess();
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+    const sheet = screen.getByRole('dialog', { name: 'Inflammatory response' });
+    await user.click(within(sheet).getByRole('button', { name: 'IL6' }));
+    expect(screen.queryByRole('dialog', { name: 'Inflammatory response' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    // Une seule fiche à la fois, et le focus reste dans elle.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toHaveFocus();
+  });
+
+  it('selects the genes of the process, closes the sheet and opens the volcano with them', async () => {
+    withProcess();
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+    await user.click(screen.getByRole('button', { name: 'Select these genes' }));
+    expect(screen.queryByRole('dialog', { name: 'Inflammatory response' })).not.toBeInTheDocument();
+    expect(window.location.search).toContain('focus=volcano');
+    const dialog = screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' });
+    expect(within(dialog).getByTestId('selection-card')).toBeInTheDocument();
+    // La sélection nommée d'après la voie : c'est elle que la carte multi-gènes décrit.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
+
+  it('closes the process sheet on Escape, and hands the focus back to the bar that opened it', async () => {
+    withProcess();
+    const user = userEvent.setup();
+    renderReading();
+    const bar = processesRegion().getByRole('button', { name: /Inflammatory response/ });
+    await user.click(bar);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(bar).toHaveFocus();
+  });
+
+  it('is modal above a focus view: the view stays, Escape closes the sheet first and the view next', async () => {
+    const user = userEvent.setup();
+    setLocation(`${PATH}?gene=IL6`);
+    renderReading();
+    // Non modale tant que rien n'est agrandi : la page reste atteignable.
+    expect(screen.getByRole('dialog', { name: 'IL6' })).not.toHaveAttribute('aria-modal', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Open the volcano' }));
+    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+    const sheet = screen.getByRole('dialog', { name: 'IL6' });
+    expect(sheet).toHaveAttribute('aria-modal', 'true');
+    expect(sheet).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
 

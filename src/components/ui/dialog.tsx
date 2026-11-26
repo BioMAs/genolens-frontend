@@ -39,7 +39,8 @@ const SIZES: Record<DialogSize, string> = {
   full: 'h-[calc(100dvh-2rem)] max-w-none',
 };
 
-const FOCUSABLE = [
+/** Ce que Tab peut atteindre : la fiche de la lecture boucle sur la meme liste que la modale. */
+export const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
   'input:not([disabled]):not([type="hidden"])',

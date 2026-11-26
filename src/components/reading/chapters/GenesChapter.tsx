@@ -8,6 +8,7 @@ import { useTopGenes } from '@/hooks/useTopGenes';
 import type { VolcanoPoint } from '@/utils/volcano';
 import { COUNTS_LOAD_FAILED } from '../answers';
 import ChapterTools, { type ChapterTool } from '../ChapterTools';
+import { formatLog2fc, formatPadj } from '../formatStats';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
@@ -15,20 +16,6 @@ interface GenesChapterProps {
   datasetId: string;
   comparisonName: string;
   onOpenFocus: (kind: FocusKind) => void;
-}
-
-/** `+3.46` / `−2.50` : le signe est écrit, le moins est le vrai (U+2212), pas un trait d'union. */
-function formatLog2fc(x: number): string {
-  return `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
-}
-
-/**
- * Le padj d'un gène du classement : exponentiel quand il est petit, décimal sinon. Un padj que le
- * serveur a arrondi à zéro reste `0`, pas `0.0e+0`.
- */
-function formatPadj(padj: number): string {
-  if (padj === 0) return '0';
-  return padj < 0.001 ? padj.toExponential(1) : padj.toFixed(3);
 }
 
 /** L'autre vue des gènes, sous les deux tableaux. */
@@ -111,9 +98,9 @@ function GeneTable({
  * La liste vient de `useTopGenes`, qui trie le nuage du volcano déjà en cache aux seuils de la
  * page : elle ne peut pas contredire le volcano ni les comptes. Un symbole est un bouton qui
  * sélectionne le gène (`selectGenes`, comme un clic dans la table) et le donne à regarder
- * (`setFocusedGene`), puis ouvre le volcano, où la carte de sélection le décrit — jusqu'à ce que
- * la fiche gène du lot 2 prenne ce clic. Le tableau complet et ses téléchargements sont dans la
- * vue agrandie ; le réseau d'interactions, dans la rangée discrète sous les tableaux.
+ * (`setFocusedGene`) : la fiche gène s'ouvre alors, montée par la page d'après ce gène regardé.
+ * Le tableau complet et ses téléchargements sont dans la vue agrandie ; le réseau d'interactions,
+ * dans la rangée discrète sous les tableaux.
  *
  * Tant que le nuage n'est pas là on dit qu'on charge, on n'écrit pas « aucun gène ». Quand un
  * seul côté est vide, l'autre reste affiché : « aucun gène ne baisse » est une information.
@@ -122,10 +109,10 @@ export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }:
   const { up, down, isLoading, isError } = useTopGenes(datasetId, comparisonName);
   const { selectGenes, setFocusedGene } = useComparisonActions();
 
+  // La fiche gène s'ouvre d'après `focusedGene` (la page la monte) : aucune vue agrandie ici.
   const pick = (gene: string) => {
     selectGenes([gene], 'table');
     setFocusedGene(gene);
-    onOpenFocus('volcano');
   };
 
   let body;

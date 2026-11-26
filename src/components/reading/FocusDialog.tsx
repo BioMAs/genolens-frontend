@@ -92,10 +92,11 @@ interface FocusView {
 /**
  * Les mêmes listes que `ComparisonDetail` passait à ses panneaux : un échantillon absent est
  * `undefined`, pas un tableau vide, que les panneaux traiteraient comme « aucun échantillon ».
+ * Exportées : la fiche d'un gène câble `GeneDetailCard` avec les mêmes listes que le volcano.
  */
-const sampleIdsOf = ({ samples }: FocusContext) =>
+export const sampleIdsOf = ({ samples }: FocusContext) =>
   samples.sampleIds.length > 0 ? samples.sampleIds : undefined;
-const conditionsOf = ({ sampleConditionMap }: FocusContext) =>
+export const conditionsOf = ({ sampleConditionMap }: FocusContext) =>
   Object.keys(sampleConditionMap).length > 0 ? sampleConditionMap : undefined;
 
 /**

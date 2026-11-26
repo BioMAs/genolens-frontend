@@ -83,12 +83,10 @@ function ProcessRow({
  * plus forte à la plus faible, longueur = `-log10 padj`.
  *
  * Les voies viennent de `useTopPathways` (le cache du dataset d'enrichissement, aucun calcul).
- * Un clic sur une barre donne la voie à regarder à `focusTerm` avec ses gènes : le reste de la
- * page, et la vue agrandie du score de signature, partent de cette voie. Ses gènes deviennent
- * aussi la sélection, nommée d'après elle, et le volcano s'ouvre pour les montrer. La liste
- * complète et la table sont dans la vue agrandie « Every process » ; le GSEA a sa propre vue,
- * dans la rangée discrète sous les barres, avec un cadenas quand le plan ne l'inclut pas (et
- * seulement une fois le profil connu, comme le menu).
+ * Un clic sur une barre donne la voie à regarder à `focusTerm` avec ses gènes, et la fiche du
+ * processus s'ouvre. La liste complète et la table sont dans la vue agrandie « Every process » ;
+ * le GSEA a sa propre vue, dans la rangée discrète sous les barres, avec un cadenas quand le plan
+ * ne l'inclut pas (et seulement une fois le profil connu, comme le menu).
  *
  * Quand il n'y a rien à classer le chapitre dit la même phrase que la réponse 3 de la colonne
  * vertébrale (`NO_ENRICHMENT_FILE`, `NO_PROCESS_ENRICHED`) : la réponse et sa preuve ne se
@@ -103,12 +101,15 @@ export default function ProcessesChapter({
   onOpenFocus,
 }: ProcessesChapterProps) {
   const { pathways, isLoading, isError } = useTopPathways(enrichmentDatasetId, comparisonName);
-  const { focusTerm, selectGenes } = useComparisonActions();
+  const { focusTerm, setFocusedGene } = useComparisonActions();
 
+  // La fiche du processus s'ouvre d'après la voie regardée (la page la monte). Une seule fiche à la
+  // fois et le gène l'emporte sur la voie : sans lâcher le gène regardé, la fiche de ce gène
+  // resterait là et le clic ne montrerait rien. Les gènes de la voie ne deviennent la sélection que
+  // par « Select these genes », dans la fiche.
   const pick = ({ id, name, genes }: TopPathway) => {
+    setFocusedGene(null);
     focusTerm({ id, name, genes });
-    selectGenes(genes, 'pathway', name);
-    onOpenFocus('volcano');
   };
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const gseaLocked = access.loaded && !access.science;

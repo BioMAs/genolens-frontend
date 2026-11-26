@@ -18,6 +18,12 @@
  * Un lien `?geneList=` ouvre le volcano, une fois la liste sélectionnée : c'est là que la carte
  * de sélection la décrit.
  *
+ * **La fiche** (`InspectorSheet`) montre tout d'un gène ou d'un processus. Elle se monte d'après
+ * l'état partagé, jamais d'un état à elle : un gène regardé (`focusedGene`, que `?gene=` écrit
+ * aussi à l'arrivée) ouvre la fiche du gène, sinon une voie regardée (`focusedTerm`) ouvre celle du
+ * processus — le gène l'emporte, une seule fiche à la fois. La fermer lâche les deux. Elle est
+ * non modale sur la page et modale au-dessus d'une vue agrandie, d'où `modal={focus !== null}`.
+ *
  * Remplace `ComparisonDetail`, qui reste dans le dépôt jusqu'au lot de nettoyage. Ses états de
  * chargement, d'erreur et d'absence sont repris tels quels.
  */
@@ -27,7 +33,12 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { Dataset, Project } from '@/types';
-import { ComparisonSelectionProvider, useSelection } from '@/contexts/ComparisonSelectionContext';
+import {
+  ComparisonSelectionProvider,
+  useComparisonActions,
+  useFocusedTerm,
+  useSelection,
+} from '@/contexts/ComparisonSelectionContext';
 import {
   useComparisonContext,
   type ComparisonContext,
@@ -39,6 +50,9 @@ import { useLocationHash } from '@/hooks/useLocationHash';
 import { useModuleAccess } from '@/hooks/useModuleAccess';
 import { useReprocessDeg } from '@/hooks/useReprocessDeg';
 import FocusDialog, { type FocusContext } from './FocusDialog';
+import GeneSheet from './GeneSheet';
+import InspectorSheet from './InspectorSheet';
+import ProcessSheet from './ProcessSheet';
 import ReadingHeader, { type ReadingConditions } from './ReadingHeader';
 import ReadingMenu from './ReadingMenu';
 import ReadingSpine from './ReadingSpine';
@@ -257,7 +271,9 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
 
   // Un lien `?geneList=` : une fois la liste résolue dans la sélection (par `GeneListDeepLink`), le
   // volcano s'ouvre, une seule fois, pour la montrer — sauf si le lien nommait déjà une vue.
-  const { listId: selectedListId } = useSelection();
+  const { listId: selectedListId, focusedGene } = useSelection();
+  const focusedTerm = useFocusedTerm();
+  const { setFocusedGene, focusTerm } = useComparisonActions();
   const [arrivalListId] = useState(() => readGeneListId(searchParams));
   const listShown = useRef(false);
   useEffect(() => {
@@ -266,6 +282,12 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     const current = resolveReadingTarget(new URLSearchParams(window.location.search), window.location.hash);
     if (current.focus === null) setFocus('volcano');
   }, [arrivalListId, selectedListId, setFocus]);
+
+  // La fiche : le gène regardé l'emporte sur la voie regardée, et la fermer lâche les deux.
+  const closeSheet = useCallback(() => {
+    setFocusedGene(null);
+    focusTerm(null);
+  }, [setFocusedGene, focusTerm]);
 
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const locked = access.loaded
@@ -368,6 +390,26 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
       </div>
 
       <FocusDialog kind={focus} context={focusContext} access={access} onClose={closeFocus} />
+
+      {/* Après la vue agrandie : les effets suivent l'ordre de l'arbre, si bien que la fiche prend le
+          focus de la boîte qu'elle recouvre, et non l'inverse. */}
+      <InspectorSheet
+        title={focusedGene ? (geneMap.nameByGene[focusedGene] ?? focusedGene) : (focusedTerm?.name ?? '')}
+        open={!!focusedGene || !!focusedTerm}
+        onClose={closeSheet}
+        modal={focus !== null}
+      >
+        {focusedGene ? (
+          <GeneSheet symbol={focusedGene} projectId={projectId} context={focusContext} />
+        ) : focusedTerm ? (
+          <ProcessSheet
+            term={focusedTerm}
+            context={focusContext}
+            onOpenFocus={openFocus}
+            onClose={closeSheet}
+          />
+        ) : null}
+      </InspectorSheet>
     </div>
   );
 }

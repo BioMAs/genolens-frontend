@@ -319,16 +319,15 @@ describe('GenesChapter', () => {
     expect(probe().focusedGene).toBe('DN2');
   });
 
-  // Jusqu'à la fiche gène du lot 2 : le gène cliqué devient la sélection, et le volcano, où la
-  // carte de sélection le décrit, s'ouvre.
-  it('selects the clicked gene, as a table pick, and opens the volcano where the selection shows', async () => {
+  // La fiche gène (lot 2) a pris ce clic : le gène devient la sélection et le gène regardé, et la
+  // page monte la fiche d'après `focusedGene`. Aucune vue agrandie ne s'ouvre plus.
+  it('selects the clicked gene, as a table pick, and gives it to the sheet without opening a view', async () => {
     const onOpenFocus = jest.fn();
     renderGenes(onOpenFocus);
     await userEvent.click(screen.getByRole('button', { name: 'UP3' }));
     expect(probe().selection).toEqual({ genes: ['UP3'], source: 'table', label: null });
     expect(probe().focusedGene).toBe('UP3');
-    expect(onOpenFocus).toHaveBeenCalledTimes(1);
-    expect(onOpenFocus).toHaveBeenCalledWith('volcano');
+    expect(onOpenFocus).not.toHaveBeenCalled();
   });
 
   it('says so when nothing passes the thresholds, instead of two empty tables', () => {
@@ -443,7 +442,9 @@ describe('ProcessesChapter', () => {
     });
   });
 
-  it('selects the genes of the clicked process, named after it, and opens the volcano', async () => {
+  // La fiche processus (lot 2) a pris ce clic : la voie est regardée, la page monte sa fiche. Ses
+  // gènes ne deviennent la sélection que par « Select these genes », dans la fiche.
+  it('focuses the clicked process for the sheet, selects nothing and opens no view', async () => {
     const onOpenFocus = jest.fn();
     renderProcesses({}, onOpenFocus);
     await userEvent.click(screen.getByRole('button', { name: /Inflammatory response/ }));
@@ -452,13 +453,28 @@ describe('ProcessesChapter', () => {
       name: 'Inflammatory response',
       genes: ['IL6', 'CXCL8'],
     });
-    expect(probe().selection).toEqual({
-      genes: ['IL6', 'CXCL8'],
-      source: 'pathway',
-      label: 'Inflammatory response',
-    });
-    expect(onOpenFocus).toHaveBeenCalledTimes(1);
-    expect(onOpenFocus).toHaveBeenCalledWith('volcano');
+    expect(probe().selection.genes).toEqual([]);
+    expect(onOpenFocus).not.toHaveBeenCalled();
+  });
+
+  it('takes the sheet back from a gene in focus: one sheet at a time, and the gene wins over a term', async () => {
+    mockUseTopGenes.mockReturnValue({ up: [point('UP3', 3, 1e-9)], down: [], isLoading: false, isError: false });
+    renderIn(
+      <>
+        <GenesChapter datasetId="deg-1" comparisonName="KO_vs_WT" onOpenFocus={noop} />
+        <ProcessesChapter
+          enrichmentDatasetId="enr-1"
+          comparisonName="KO_vs_WT"
+          access={allAccess}
+          onOpenFocus={noop}
+        />
+      </>
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'UP3' }));
+    expect(probe().focusedGene).toBe('UP3');
+    await userEvent.click(screen.getByRole('button', { name: /Inflammatory response/ }));
+    expect(probe().focusedGene).toBeNull();
+    expect(probe().term.name).toBe('Inflammatory response');
   });
 
   it('explains a missing enrichment file with the sentence of answer 3', () => {
