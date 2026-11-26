@@ -153,6 +153,15 @@ describe('buildAnswers — 2, which genes matter most', () => {
       by: 'data',
     });
   });
+
+  // The top genes and the counts are read from the same volcano cloud: while it loads, both ends
+  // are empty, and "no gene passes" would be a false statement on the page's first frame.
+  it('waits for the volcano cloud instead of saying that no gene passes', () => {
+    expect(buildAnswers(base({ summary: null, topUp: [], topDown: [] })).genes).toEqual({
+      text: 'Ranking genes…',
+      by: 'pending',
+    });
+  });
 });
 
 describe('buildAnswers — 3, which processes move', () => {
@@ -224,6 +233,23 @@ describe('buildAnswers — 3, which processes move', () => {
   it('says no process is enriched when the list is empty', () => {
     expect(buildAnswers(base({ pathways: [] })).processes.text).toBe(
       'No process is enriched at these thresholds'
+    );
+  });
+
+  // An enrichment file whose pathways have not arrived is not "no enrichment file".
+  it('waits for the pathways of an enrichment file instead of saying there is none', () => {
+    expect(buildAnswers(base({ pathways: null, pathwaysPending: true })).processes).toEqual({
+      text: 'Ranking processes…',
+      by: 'pending',
+    });
+  });
+
+  it('only waits while there are no pathways to read', () => {
+    expect(buildAnswers(base({ pathways: [], pathwaysPending: true })).processes.text).toBe(
+      NO_PROCESS_ENRICHED
+    );
+    expect(buildAnswers(base({ pathways: null, pathwaysPending: false })).processes.text).toBe(
+      NO_ENRICHMENT_FILE
     );
   });
 

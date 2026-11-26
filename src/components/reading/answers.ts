@@ -35,6 +35,11 @@ export interface AnswersInput {
   topDown: string[];
   /** `null` : pas de fichier d'enrichissement ; `[]` : un fichier, aucune voie à ce seuil. */
   pathways: TopPathway[] | null;
+  /**
+   * Un fichier d'enrichissement existe mais ses voies ne sont pas là (en route, ou en échec) :
+   * `pathways` vaut alors `null` sans vouloir dire « pas de fichier », et la réponse attend.
+   */
+  pathwaysPending?: boolean;
   /** La lecture IA, en Markdown ; `null` tant qu'elle n'est pas écrite. */
   interpretation: string | null;
   access: ModuleAccess;
@@ -68,7 +73,10 @@ function counts({ summary, tested }: AnswersInput): Answer {
   };
 }
 
-function genes({ topUp, topDown }: AnswersInput): Answer {
+function genes({ summary, topUp, topDown }: AnswersInput): Answer {
+  // Les gènes et les comptes sortent du même nuage : tant qu'il n'est pas là (`summary` nul), les
+  // deux listes sont vides et « aucun gène ne passe » serait faux.
+  if (!summary) return { text: 'Ranking genes…', by: 'pending' };
   // Le verbe s'accorde avec le nombre de gènes : « KRT1 falls », « KRT1 and LCE1A fall ».
   const halves: string[] = [];
   if (topUp.length > 0) halves.push(`${list(topUp)} ${topUp.length === 1 ? 'rises' : 'rise'} most`);
@@ -95,7 +103,8 @@ function lowerInitial(name: string): string {
 export const NO_ENRICHMENT_FILE = 'No enrichment file for this comparison';
 export const NO_PROCESS_ENRICHED = 'No process is enriched at these thresholds';
 
-function processes({ pathways }: AnswersInput): Answer {
+function processes({ pathways, pathwaysPending }: AnswersInput): Answer {
+  if (pathways === null && pathwaysPending) return { text: 'Ranking processes…', by: 'pending' };
   if (pathways === null) return { text: NO_ENRICHMENT_FILE, by: 'data' };
   if (pathways.length === 0) return { text: NO_PROCESS_ENRICHED, by: 'data' };
 
