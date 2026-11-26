@@ -175,6 +175,36 @@ describe('GeneSheet — across this study', () => {
     );
   });
 
+  // R38 : le lien d'une ligne doit mener à CE jeu de données. Sans `analysis_id`, la route de projet
+  // prend le premier jeu prêt de ce nom, d'une autre analyse peut-être : la ligne montrerait des
+  // chiffres, la page en ouvrirait d'autres. Même règle que le lien de ⌘K (`geneHref`).
+  it('links a comparison of an analysis to the reading inside that analysis', () => {
+    search([
+      result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-b', analysis_id: 'b', analysis_name: 'Second' }),
+      result({ comparison_name: 'Drug 10µM vs control', dataset_id: 'deg-c', analysis_id: 'c', analysis_name: 'Third' }),
+    ]);
+    renderSheet('IL6');
+    expect(within(across()).getByRole('link', { name: 'DRUG_vs_CTRL' })).toHaveAttribute(
+      'href',
+      '/projects/p1/analyses/b/comparisons/DRUG_vs_CTRL?gene=IL6'
+    );
+    expect(within(across()).getByRole('link', { name: 'Drug 10µM vs control' })).toHaveAttribute(
+      'href',
+      `/projects/p1/analyses/c/comparisons/${encodeURIComponent('Drug 10µM vs control')}?gene=IL6`
+    );
+  });
+
+  it("carries the row's own gene key, not the one the sheet was opened with", () => {
+    // La fiche s'ouvre sous le symbole, la ligne de cet autre jeu de données nomme le gène par son
+    // accession : c'est la clé que la page d'arrivée retrouve dans ses DEG.
+    search([result({ gene_id: 'ENSG00000136244', gene_symbol: 'IL6', comparison_name: 'OTHER', dataset_id: 'deg-2' })]);
+    renderSheet('IL6');
+    expect(within(across()).getByRole('link', { name: 'OTHER' })).toHaveAttribute(
+      'href',
+      '/projects/p1/comparisons/OTHER?gene=ENSG00000136244'
+    );
+  });
+
   it('encodes a gene key that is not a plain symbol', () => {
     search([result({ gene_id: 'HLA-DRB1/2', comparison_name: 'KO_vs_WT' })]);
     renderSheet('HLA-DRB1/2');
@@ -266,6 +296,60 @@ describe('GeneSheet — across this study', () => {
       expect(within(rows[0]).queryByText('+5.00')).not.toBeInTheDocument();
     });
 
+    // R38 : l'ordre est le jeu lu, puis une ligne de l'analyse lue, puis le padj le plus bas — pour
+    // que les chiffres de la ligne et la page où son lien mène soient ceux du même jeu de données.
+    describe('when two analyses carry the same comparison name', () => {
+      /** La fiche d'un gène, dans la lecture d'une comparaison de l'analyse nommée. */
+      const inAnalysis = (analysisId: string) =>
+        render(
+          <GeneSheet
+            symbol="IL6"
+            projectId="p1"
+            context={{
+              ...context,
+              degDataset: { ...context.degDataset, dataset_metadata: { analysis_id: analysisId } },
+            }}
+          />
+        );
+
+      it('keeps the row of the analysis being read, even when the other one is more significant', () => {
+        search([
+          result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-a', analysis_id: 'a', log_fc: 1, padj: 0.02 }),
+          result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-b', analysis_id: 'b', log_fc: 3, padj: 0.0004 }),
+        ]);
+        inAnalysis('a');
+        const rows = rowsOf();
+        expect(rows).toHaveLength(1);
+        expect(within(rows[0]).getByText('+1.00')).toBeInTheDocument();
+        expect(within(rows[0]).queryByText('+3.00')).not.toBeInTheDocument();
+        // Les chiffres et le lien sont du même jeu de données.
+        expect(within(rows[0]).getByRole('link')).toHaveAttribute(
+          'href',
+          '/projects/p1/analyses/a/comparisons/DRUG_vs_CTRL?gene=IL6'
+        );
+      });
+
+      it('still prefers the dataset being read to a row of its analysis', () => {
+        search([
+          result({ comparison_name: 'KO_vs_WT', dataset_id: 'deg-x', analysis_id: 'a', log_fc: 5, padj: 1e-9 }),
+          result({ comparison_name: 'KO_vs_WT', dataset_id: 'deg-1', analysis_id: 'a', log_fc: 2, padj: 0.03 }),
+        ]);
+        inAnalysis('a');
+        const rows = rowsOf();
+        expect(rows).toHaveLength(1);
+        expect(within(rows[0]).getByText('+2.00')).toBeInTheDocument();
+      });
+
+      it('falls back to the most significant row when no row belongs to the analysis being read', () => {
+        search([
+          result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-b', analysis_id: 'b', log_fc: 1, padj: 0.02 }),
+          result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-c', analysis_id: 'c', log_fc: 3, padj: 0.0004 }),
+        ]);
+        inAnalysis('a');
+        expect(within(rowsOf()[0]).getByText('+3.00')).toBeInTheDocument();
+      });
+    });
+
     it('puts a missing adjusted p after a real one when it has to choose', () => {
       search([
         result({ comparison_name: 'DRUG_vs_CTRL', dataset_id: 'deg-a', log_fc: 4, padj: null }),
@@ -288,6 +372,27 @@ describe('GeneSheet — across this study', () => {
       const keyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes('same key'));
       expect(keyWarnings).toHaveLength(0);
       errors.mockRestore();
+    });
+  });
+
+  // R44 : la recherche coupe à cinquante, les moins significatives disparaîtraient sans un mot et se
+  // liraient « pas dans cette étude ».
+  describe('when the search is cut at its limit', () => {
+    const many = (count: number) =>
+      Array.from({ length: count }, (_, i) => result({ comparison_name: `C${i}`, dataset_id: `d${i}` }));
+
+    it('says the list shows the most significant results, under the table', () => {
+      search(many(50));
+      renderSheet();
+      const note = within(across()).getByText('Showing the 50 most significant results.');
+      const table = within(across()).getByRole('table');
+      expect(table.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('says nothing when the search returned fewer results than its limit', () => {
+      search(many(49));
+      renderSheet();
+      expect(within(across()).queryByText(/most significant results/)).not.toBeInTheDocument();
     });
   });
 
