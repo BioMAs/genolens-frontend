@@ -45,11 +45,12 @@ import {
   type ComparisonContext,
 } from '@/components/comparison/useComparisonContext';
 import GeneListDeepLink from '@/components/comparison/explorer/GeneListDeepLink';
-import { readGeneListId } from '@/components/comparison/explorerUrl';
+import { readFocusedGene, readGeneListId } from '@/components/comparison/explorerUrl';
 import type { ComparisonSamples } from '@/hooks/useComparisonSamples';
 import { useLocationHash } from '@/hooks/useLocationHash';
 import { useModuleAccess } from '@/hooks/useModuleAccess';
 import { useReprocessDeg } from '@/hooks/useReprocessDeg';
+import { normalizeGeneKey } from '@/utils/geneKeys';
 import FocusDialog, { type FocusContext } from './FocusDialog';
 import GeneSheet from './GeneSheet';
 import InspectorSheet from './InspectorSheet';
@@ -118,6 +119,34 @@ function conditionsOf({ conditions, conditionMap }: ComparisonSamples): ReadingC
   const na = count(conditions.left);
   const nb = count(conditions.right);
   return na > 0 && nb > 0 ? { a: conditions.left, na, b: conditions.right, nb } : null;
+}
+
+/**
+ * Un `?gene=` qui change pendant que la page reste : ⌘K sur un gène de la comparaison qu'on lit
+ * pousse le même chemin avec une autre requête, et Next garde alors l'état de la page — le
+ * fournisseur ne lit `?gene=` qu'à son premier rendu. La fiche s'ouvre donc d'ici, comme à
+ * l'arrivée (`selectGenes(…, 'url')`).
+ *
+ * **La décision vient de l'URL seule** : on retient la valeur précédente de `?gene=` dans une ref
+ * et on ne réagit qu'à une transition vers un gène autre. Comparée à l'état, une URL pas encore
+ * réécrite (l'écriture est différée) rouvrirait la fiche que le lecteur vient de fermer. L'état ne
+ * sert qu'à ne pas rejouer l'écho de notre propre écriture : l'URL prend le gène regardé, et le
+ * resélectionner réduirait une sélection de plusieurs gènes à ce seul gène.
+ */
+function useUrlGeneArrival(urlGene: string | null, focusedGene: string | null) {
+  const { selectGenes } = useComparisonActions();
+  const previous = useRef(urlGene);
+  const focusedRef = useRef(focusedGene);
+  useEffect(() => {
+    focusedRef.current = focusedGene;
+  });
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = urlGene;
+    if (urlGene === null || urlGene === before) return;
+    if (normalizeGeneKey(focusedRef.current) === normalizeGeneKey(urlGene)) return;
+    selectGenes([urlGene], 'url');
+  }, [urlGene, selectGenes]);
 }
 
 /**
@@ -286,8 +315,9 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
 
   // Un lien `?geneList=` : une fois la liste résolue dans la sélection (par `GeneListDeepLink`), le
   // volcano s'ouvre, une seule fois, pour la montrer — sauf si le lien nommait déjà une vue.
-  const { listId: selectedListId, focusedGene } = useSelection();
+  const { listId: selectedListId, focusedGene, genes: selectedGenes } = useSelection();
   const focusedTerm = useFocusedTerm();
+  useUrlGeneArrival(readFocusedGene(searchParams), focusedGene);
   const [arrivalListId] = useState(() => readGeneListId(searchParams));
   const listShown = useRef(false);
   useEffect(() => {
@@ -297,10 +327,15 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     if (current.focus === null) setFocus('volcano');
   }, [arrivalListId, selectedListId, setFocus]);
 
+  // La fiche d'un gène ne s'ouvre que pour un gène seul : Maj/Cmd-clic ajoute des gènes à une
+  // sélection, et une fiche modale à chaque ajout couvrirait la table (le clic suivant tomberait sur
+  // son voile). Le gène regardé d'une sélection de plusieurs gènes n'a donc pas de fiche.
+  const sheetGene = focusedGene && selectedGenes.length <= 1 ? focusedGene : null;
+
   // Pas de fiche par-dessus la vue volcano : sa carte de sélection montre déjà le gène ou la
   // sélection pointés, et une fiche modale à chaque point cliqué la doublerait. Les autres vues
   // agrandies gardent la fiche, modale au-dessus d'elles.
-  const sheetOpen = (!!focusedGene || !!focusedTerm) && focus !== 'volcano';
+  const sheetOpen = (!!sheetGene || !!focusedTerm) && focus !== 'volcano';
 
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const locked = access.loaded
@@ -407,13 +442,13 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
       {/* Après la vue agrandie : les effets suivent l'ordre de l'arbre, si bien que la fiche prend le
           focus de la boîte qu'elle recouvre, et non l'inverse. */}
       <InspectorSheet
-        title={focusedGene ? (geneMap.nameByGene[focusedGene] ?? focusedGene) : (focusedTerm?.name ?? '')}
+        title={sheetGene ? (geneMap.nameByGene[sheetGene] ?? sheetGene) : (focusedTerm?.name ?? '')}
         open={sheetOpen}
         onClose={closeSheet}
         modal={focus !== null}
       >
-        {focusedGene ? (
-          <GeneSheet symbol={focusedGene} projectId={projectId} context={focusContext} />
+        {sheetGene ? (
+          <GeneSheet symbol={sheetGene} projectId={projectId} context={focusContext} />
         ) : focusedTerm ? (
           <ProcessSheet
             term={focusedTerm}

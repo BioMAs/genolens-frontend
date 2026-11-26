@@ -169,8 +169,23 @@ function MockPicker({
 function MockVolcanoPanel(props: Record<string, unknown>) {
   return <MockPicker testId="volcano-panel" label="Pick IL6 on the volcano" source="volcano" props={props} />;
 }
+/**
+ * La table des gènes : le clic simple (`selectGenes`) et le geste Maj/Cmd-clic (`toggleGene`), les
+ * deux appels que `DEGTable` fait sur une ligne.
+ */
 function MockDegTable(props: Record<string, unknown>) {
-  return <MockPicker testId="deg-table" label="Pick IL6 in the table" source="table" props={props} />;
+  const { toggleGene } = useComparisonActions();
+  return (
+    <>
+      <MockPicker testId="deg-table" label="Pick IL6 in the table" source="table" props={props} />
+      <button type="button" onClick={() => toggleGene('IL6', 'table')}>
+        Toggle IL6 in the table
+      </button>
+      <button type="button" onClick={() => toggleGene('KRT1', 'table')}>
+        Toggle KRT1 in the table
+      </button>
+    </>
+  );
 }
 
 jest.mock('@/components/reading/ReadingHeader', () => ({
@@ -766,6 +781,109 @@ describe('ReadingPage — the sheet', () => {
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  // R37 : ⌘K sur un gène de la comparaison qu'on lit pousse le MÊME chemin avec `?gene=` ; Next garde
+  // l'état de la page quand seule la requête change, le fournisseur ne relit donc pas l'URL. La
+  // page suit la valeur de `?gene=` dans l'URL (la précédente est retenue dans une ref, jamais
+  // comparée à l'état : l'écriture différée de l'URL rouvrirait une fiche que le lecteur vient de
+  // fermer).
+  describe('a ?gene= that changes while the page stays (⌘K on the comparison being read)', () => {
+    it('opens the sheet of the gene the URL now names', () => {
+      renderReading();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      act(() => setLocation(`${PATH}?gene=IL6`));
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+      expect(propsOf('gene-detail-card').gene).toBe('IL6');
+    });
+
+    it('swaps the sheet when the URL names another gene', () => {
+      setLocation(`${PATH}?gene=IL6`);
+      renderReading();
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+      act(() => setLocation(`${PATH}?gene=KRT1`));
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'KRT1' })).toBeInTheDocument();
+      expect(propsOf('gene-detail-card').gene).toBe('KRT1');
+    });
+
+    it('does not reopen a sheet the reader closed when the URL is rewritten with the same gene', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?gene=IL6`);
+      renderReading();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // L'écriture différée n'a pas encore retiré `?gene=` : une réécriture qui garde le même gène
+      // (un seuil qui bouge) ne change pas la valeur de l'URL, la fiche ne revient pas.
+      act(() => setLocation(`${PATH}?gene=IL6&padj=0.04`));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('opens the sheet again for a gene named after the URL let go of the first one', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?gene=IL6`);
+      renderReading();
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(window.location.search).not.toContain('gene='));
+      act(() => setLocation(`${PATH}?gene=IL6`));
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    });
+
+    // L'écriture différée de l'URL met `?gene=` au gène regardé : ce n'est pas une navigation, et la
+    // rejouer comme telle réduirait une sélection de plusieurs gènes au seul gène regardé.
+    it('does not take the echo of its own URL write for a navigation', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table`);
+      renderReading();
+      await user.click(screen.getByRole('button', { name: 'Toggle IL6 in the table' }));
+      await user.click(screen.getByRole('button', { name: 'Toggle KRT1 in the table' }));
+      await waitFor(() => expect(window.location.search).toContain('gene=KRT1'));
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+      // Deux gènes sélectionnés : aucune fiche, ni avant l'écho ni après.
+      expect(screen.queryByRole('dialog', { name: /^(IL6|KRT1)$/ })).not.toBeInTheDocument();
+    });
+  });
+
+  // R41 (étend R31) : la fiche d'un gène ne s'ouvre que pour un gène seul. Maj/Cmd-clic construit une
+  // sélection : à chaque gène ajouté, une fiche modale et son voile couvriraient la table.
+  describe('building a selection with the toggle gesture', () => {
+    it('opens the sheet for the first gene, then none once the selection holds two', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table`);
+      renderReading();
+      await user.click(screen.getByRole('button', { name: 'Toggle IL6 in the table' }));
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Toggle KRT1 in the table' }));
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'KRT1' })).not.toBeInTheDocument();
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      expect(screen.getByRole('dialog', { name: 'Genes, KO_vs_WT' })).toBeInTheDocument();
+    });
+
+    it('opens no sheet for a gene added after the first one was closed', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table`);
+      renderReading();
+      await user.click(screen.getByRole('button', { name: 'Toggle IL6 in the table' }));
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+      // La sélection garde IL6 : en ajouter un autre en fait deux, et la fiche ne revient pas.
+      await user.click(screen.getByRole('button', { name: 'Toggle KRT1 in the table' }));
+      expect(screen.queryByRole('dialog', { name: /^(IL6|KRT1)$/ })).not.toBeInTheDocument();
+    });
+
+    it('still opens the sheet for a plain click on a gene, whatever was selected before', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table`);
+      renderReading();
+      await user.click(screen.getByRole('button', { name: 'Toggle IL6 in the table' }));
+      await user.click(screen.getByRole('button', { name: 'Toggle KRT1 in the table' }));
+      expect(screen.queryByRole('dialog', { name: /^(IL6|KRT1)$/ })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Pick IL6 in the table' }));
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    });
   });
 
   // R35 : l'ouverture d'une vue sous une fiche ouverte ne doit pas faire perdre le focus. La fermeture
