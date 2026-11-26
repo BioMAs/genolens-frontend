@@ -846,6 +846,56 @@ describe('ReadingPage — the sheet', () => {
     });
   });
 
+  // R39 : « Select these genes » ferme la fiche, qui lâche la voie regardée, puis le volcano se ferme :
+  // la voie ne survit que comme la sélection nommée d'après elle. La vue du score de signature
+  // doit y puiser, sinon le chemin « voie → score de signature » de la lecture précédente est perdu.
+  describe('from a process to the signature score', () => {
+    const selectProcessThenCloseVolcano = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+      await user.click(screen.getByRole('button', { name: 'Select these genes' }));
+      expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    };
+
+    it('seeds the signature view with the genes of the process that was selected, once the volcano is closed', async () => {
+      withProcess();
+      const user = userEvent.setup();
+      renderReading();
+      await selectProcessThenCloseVolcano(user);
+      await user.click(screen.getByRole('button', { name: 'Score samples' }));
+      const view = screen.getByRole('dialog', { name: 'Signature score, KO_vs_WT' });
+      expect(within(view).getByTestId('signature-score-panel')).toBeInTheDocument();
+      expect(propsOf('signature-score-panel')).toMatchObject({
+        initialGenes: ['IL6', 'KRT1'],
+        initialLabel: 'Inflammatory response',
+      });
+    });
+
+    it('seeds nothing from a selection that did not come from a process', async () => {
+      const user = userEvent.setup();
+      renderReading();
+      await user.click(genesRegion().getByRole('button', { name: 'IL6' }));
+      await user.keyboard('{Escape}');
+      await user.click(screen.getByRole('button', { name: 'Score samples' }));
+      const props = propsOf('signature-score-panel');
+      expect(props.initialGenes).toBeUndefined();
+      expect(props.initialLabel).toBeUndefined();
+    });
+
+    it('still seeds it from the process in focus when its sheet is open under the view', async () => {
+      withProcess();
+      const user = userEvent.setup();
+      renderReading();
+      await user.click(processesRegion().getByRole('button', { name: /Inflammatory response/ }));
+      await user.click(screen.getByRole('button', { name: 'Score samples' }));
+      expect(propsOf('signature-score-panel')).toMatchObject({
+        initialGenes: ['IL6', 'KRT1'],
+        initialLabel: 'Inflammatory response',
+      });
+    });
+  });
+
   // R41 (étend R31) : la fiche d'un gène ne s'ouvre que pour un gène seul. Maj/Cmd-clic construit une
   // sélection : à chaque gène ajouté, une fiche modale et son voile couvriraient la table.
   describe('building a selection with the toggle gesture', () => {

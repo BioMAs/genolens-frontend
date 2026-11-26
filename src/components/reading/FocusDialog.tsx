@@ -16,7 +16,7 @@ import {
   fetchAllDegGenes,
   toDegExportRow,
 } from '@/hooks/useDegGenes';
-import { useFocusedTerm, useThresholds } from '@/contexts/ComparisonSelectionContext';
+import { useFocusedTerm, useSelection, useThresholds } from '@/contexts/ComparisonSelectionContext';
 import VolcanoPanel from '@/components/comparison/explorer/VolcanoPanel';
 import SelectionCard from '@/components/comparison/explorer/SelectionCard';
 import ThresholdControl from '@/components/comparison/explorer/ThresholdControl';
@@ -167,17 +167,31 @@ function MethodsView({ context }: { context: FocusContext }) {
   );
 }
 
-/** Le score de signature, ouvert sur la voie que le lecteur regardait, s'il y en avait une. */
+/**
+ * Le score de signature, ouvert sur la voie que le lecteur regardait, s'il y en avait une.
+ *
+ * La voie regardée, d'abord : la fiche du processus est encore là. Sinon la sélection que « Select
+ * these genes » a faite d'après une voie (`source: 'pathway'`, nommée d'après elle) : la fiche se
+ * ferme à ce geste et lâche la voie, mais la sélection survit à la fermeture du volcano. Sans elle
+ * le chemin « voie → score de signature » serait perdu. Toute autre sélection (un lasso, un clic)
+ * ne préremplit rien.
+ */
 function SignatureView({ context, matrixDataset }: { context: FocusContext; matrixDataset: Dataset }) {
   const focusedTerm = useFocusedTerm();
+  const selection = useSelection();
+  const seed =
+    focusedTerm ??
+    (selection.source === 'pathway' && selection.genes.length > 0
+      ? { genes: selection.genes, name: selection.label }
+      : null);
   return (
     <SignatureScorePanel
       projectId={context.projectId}
       matrixDatasetId={matrixDataset.id}
       samples={sampleIdsOf(context)}
       sampleConditionMap={conditionsOf(context)}
-      initialGenes={focusedTerm?.genes}
-      initialLabel={focusedTerm?.name}
+      initialGenes={seed?.genes}
+      initialLabel={seed?.name}
     />
   );
 }
