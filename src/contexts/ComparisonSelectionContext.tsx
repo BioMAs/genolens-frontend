@@ -108,9 +108,10 @@ const EMPTY_SELECTION: ComparisonSelection = {
 };
 
 /**
- * Qui a fixé les seuils courants. `'default'` : personne — les seuils d'ingestion ou le réglage
- * d'étude, que l'étude peut encore remplacer. `'url'` : un lien qui nomme un seuil, qui ne cède pas
- * la place. `'user'` : un geste du lecteur, qui non plus, et le seul que le réglage d'étude garde.
+ * Who fixed the current thresholds. `'default'`: nobody — the ingestion thresholds or the study
+ * setting, which the study setting may still replace. `'url'`: a link that names a threshold, which
+ * does not give way. `'user'`: a gesture by the reader, which does not either, and the only one
+ * that is saved back to the study setting.
  */
 type ThresholdsOrigin = 'default' | 'url' | 'user';
 
@@ -186,8 +187,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, thresholds: next, thresholdsOrigin: 'user' };
     }
     case 'adoptThresholds': {
-      // Le lien et le lecteur passent avant l'étude : un réglage qui arrive tard, ou qui change
-      // pendant la lecture, ne défait ni l'un ni l'autre.
+      // The link and the reader come before the study: a setting that arrives late, or that
+      // changes while reading, undoes neither.
       if (state.thresholdsOrigin !== 'default') return state;
       const next = clampThresholds(action.value);
       if (next.padj === state.thresholds.padj && next.logfc === state.thresholds.logfc) {
@@ -293,16 +294,16 @@ const ActionsContext = createContext<ComparisonActions | null>(null);
 export interface ComparisonSelectionProviderProps {
   children: ReactNode;
   /**
-   * Le réglage de l'étude, quand il y en a un. L'URL garde la priorité : s'il manque, le
-   * fournisseur part de ces seuils (bornés comme les autres) et les reprend s'ils arrivent après
-   * le montage — le réglage est lu dans le navigateur, donc après l'hydratation —, tant que le
-   * lecteur ne les a pas changés.
+   * The study's setting, when there is one. The URL keeps priority: when it names no threshold,
+   * the provider starts from these (clamped like any other) and adopts them if they arrive after
+   * mount — the setting is read from the browser, so after hydration — as long as the reader has
+   * not changed the thresholds.
    */
   initialThresholds?: VolcanoThresholds;
   /**
-   * Appelé avec les seuils que la page lit, chaque fois que le lecteur les change par les actions
-   * (`ThresholdControl`, où qu'il soit monté). Jamais pour ce qui vient de l'URL ou du réglage
-   * d'étude : ouvrir un lien partagé ne doit pas réécrire le réglage de celui qui l'ouvre.
+   * Called with the thresholds the page reads, each time the reader changes them through the
+   * actions (`ThresholdControl`, wherever it is mounted). Never for what comes from the URL or the
+   * study setting: opening a shared link must not rewrite the opener's own setting.
    */
   onThresholdsEdited?: (thresholds: VolcanoThresholds) => void;
 }
@@ -320,8 +321,8 @@ export function ComparisonSelectionProvider({
     const gene = readFocusedGene(searchParams);
     const fromUrl = urlCarriesThresholds(searchParams);
     return {
-      // Une URL qui nomme un seuil est un lien partagé : elle l'emporte en entier, l'autre seuil
-      // étant celui de l'ingestion. Sinon, le réglage d'étude, s'il est déjà là.
+      // A URL that names a threshold is a shared link: it wins whole, the other threshold being
+      // the ingestion one. Otherwise, the study setting, if it is already there.
       thresholds: fromUrl
         ? readThresholds(searchParams)
         : clampThresholds(initialThresholds ?? DEFAULT_THRESHOLDS),
@@ -354,13 +355,13 @@ export function ComparisonSelectionProvider({
     []
   );
 
-  // Un réglage d'étude qui arrive (ou change) après le montage. Au montage même, le réducteur le
-  // trouve déjà adopté et ne bouge pas.
+  // A study setting that arrives (or changes) after mount. At mount itself the reducer finds it
+  // already adopted and does not move.
   useEffect(() => {
     if (initialThresholds) dispatch({ type: 'adoptThresholds', value: initialThresholds });
   }, [initialThresholds]);
 
-  // Le rappel est lu dans une ref : changer de fonction ne doit pas rejouer l'écriture.
+  // The callback is read through a ref: a new function identity must not replay the write.
   const editedRef = useRef(onThresholdsEdited);
   useEffect(() => {
     editedRef.current = onThresholdsEdited;

@@ -449,16 +449,16 @@ describe('selectGeneList', () => {
   });
 });
 
-// ── les seuils de l'étude ────────────────────────────────────────────────────────────────
-// Le fournisseur reçoit le réglage d'étude (`initialThresholds`) ; l'URL garde la priorité, et ce
-// qui vient de l'URL ou de l'étude ne se réécrit jamais comme un geste de l'utilisateur.
+// ── the study's thresholds ───────────────────────────────────────────────────────────────
+// The provider receives the study setting (`initialThresholds`); the URL keeps priority, and what
+// comes from the URL or the study is never written back as if it were a gesture by the reader.
 describe('study thresholds', () => {
   const STUDY = { padj: 0.001, logfc: 2 };
 
   let study: typeof STUDY | undefined;
   const onEdited = jest.fn();
 
-  // Le fournisseur relit ces variables à chaque rendu : `rerender()` joue « l'étude change ».
+  // The provider rereads these variables on every render: `rerender()` plays "the study changes".
   const studyWrapper = ({ children }: { children: ReactNode }) => (
     <ComparisonSelectionProvider initialThresholds={study} onThresholdsEdited={onEdited}>
       {children}
@@ -489,8 +489,8 @@ describe('study thresholds', () => {
     expect(result.current).toEqual({ padj: 0.01, logfc: 1 });
   });
 
-  // Une URL qui ne nomme qu'un seuil est tout de même un lien partagé : l'autre seuil est celui de
-  // l'ingestion, pas celui du lecteur — le lien montre ce que son auteur voyait.
+  // A URL that names only one threshold is still a shared link: the other threshold is the
+  // ingestion one, not the reader's — the link shows what its author saw.
   it('keeps the URL over the study setting when it names only one threshold', () => {
     setUrl('lfc=1');
     study = STUDY;

@@ -16,7 +16,7 @@ import { useIntersectionEnrichment, EnrichmentRow } from '@/hooks/useIntersectio
 import { Button } from '@/components/ui/button';
 import { ConditionPill } from '@/components/ui/condition-pill';
 import ProportionalVenn, { VennRegion } from '@/components/viz/ProportionalVenn';
-import type { VolcanoThresholds } from '@/utils/volcano';
+import { DEFAULT_THRESHOLDS, isDefaultThresholds, type VolcanoThresholds } from '@/utils/volcano';
 
 // @upsetjs ships generic component signatures that current @types/react flags as
 // invalid JSX elements (a type-only mismatch). Cast to a plain FC with the props
@@ -92,6 +92,11 @@ export default function MultiComparisonVenn({
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [category, setCategory] = useState<string>('ALL');
+
+  // `degCount` est ce que l'ingestion a stocké, aux seuils d'ingestion. Une fois l'étude resserrée,
+  // le Venn se calcule à d'autres valeurs : la carte dit de quel compte il s'agit, au lieu de le
+  // laisser passer pour un compte fait aux seuils affichés près du bouton.
+  const tightened = !isDefaultThresholds(thresholds);
 
   const enrichment = useIntersectionEnrichment(pathDatasetId);
 
@@ -260,8 +265,16 @@ export default function MultiComparisonVenn({
                   <div className="break-words text-body-sm font-medium" style={{ color: 'var(--text-primary)' }} title={comp.label}>
                     {comp.label}
                   </div>
-                  <div className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                    {comp.degCount} DEGs
+                  <div
+                    className="text-caption"
+                    style={{ color: 'var(--text-muted)' }}
+                    title={
+                      tightened
+                        ? `padj < ${DEFAULT_THRESHOLDS.padj}, |log2FC| > ${DEFAULT_THRESHOLDS.logfc}`
+                        : undefined
+                    }
+                  >
+                    {`${comp.degCount} DEGs${tightened ? ' at ingestion' : ''}`}
                   </div>
                 </div>
               </label>

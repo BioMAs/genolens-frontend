@@ -104,6 +104,34 @@ describe('MultiComparisonVenn thresholds', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 
+  it('leaves the comparison cards as they were at the ingestion thresholds', () => {
+    renderVenn(DEFAULT_THRESHOLDS);
+
+    const card = screen.getByText('120 DEGs');
+    expect(card).toBeInTheDocument();
+    expect(card).not.toHaveAttribute('title');
+    expect(screen.getByText('80 DEGs')).toBeInTheDocument();
+    expect(screen.queryByText(/at ingestion/)).not.toBeInTheDocument();
+  });
+
+  it('says the card counts are the ingestion ones once the study is tightened', () => {
+    renderVenn({ padj: 0.01, logfc: 1 });
+
+    const card = screen.getByText('120 DEGs at ingestion');
+    expect(card).toHaveAttribute('title', 'padj < 0.05, |log2FC| > 0.58');
+    expect(screen.getByText('80 DEGs at ingestion')).toHaveAttribute(
+      'title',
+      'padj < 0.05, |log2FC| > 0.58'
+    );
+    expect(screen.queryByText('120 DEGs')).not.toBeInTheDocument();
+  });
+
+  it('is tightened on one threshold alone', () => {
+    renderVenn({ padj: DEFAULT_THRESHOLDS.padj, logfc: 1 });
+
+    expect(screen.getByText('120 DEGs at ingestion')).toBeInTheDocument();
+  });
+
   it('follows the study when its thresholds change', () => {
     const { rerender } = renderVenn({ padj: 0.01, logfc: 1 });
     rerender(
