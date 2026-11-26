@@ -17,7 +17,11 @@ import CountsChapter from '@/components/reading/chapters/CountsChapter';
 import GenesChapter from '@/components/reading/chapters/GenesChapter';
 import ProcessesChapter from '@/components/reading/chapters/ProcessesChapter';
 import MeaningChapter from '@/components/reading/chapters/MeaningChapter';
-import { NO_ENRICHMENT_FILE, NO_PROCESS_ENRICHED } from '@/components/reading/answers';
+import {
+  ENRICHMENT_LOAD_FAILED,
+  NO_ENRICHMENT_FILE,
+  NO_PROCESS_ENRICHED,
+} from '@/components/reading/answers';
 import { partDomId, type FocusKind } from '@/components/reading/readingRoutes';
 import { useTopGenes } from '@/hooks/useTopGenes';
 import { useTopPathways, type TopPathway } from '@/hooks/useTopPathways';
@@ -421,6 +425,8 @@ describe('ProcessesChapter', () => {
     mockUseTopPathways.mockReturnValue({ pathways: null, isLoading: false, isError: true });
     renderProcesses();
     expect(screen.getByText('Enrichment results could not be loaded.')).toBeInTheDocument();
+    // La même phrase que la réponse 3 : une seule constante pour les deux.
+    expect(screen.getByText(ENRICHMENT_LOAD_FAILED)).toBeInTheDocument();
     expect(screen.queryByText(NO_ENRICHMENT_FILE)).not.toBeInTheDocument();
   });
 

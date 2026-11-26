@@ -40,6 +40,11 @@ export interface AnswersInput {
    * `pathways` vaut alors `null` sans vouloir dire « pas de fichier », et la réponse attend.
    */
   pathwaysPending?: boolean;
+  /**
+   * La lecture des voies de ce fichier a échoué : ni « pas de fichier », ni « en route ». Prime
+   * sur `pathwaysPending`, et ne vaut que tant que `pathways` est `null`.
+   */
+  pathwaysFailed?: boolean;
   /** La lecture IA, en Markdown ; `null` tant qu'elle n'est pas écrite. */
   interpretation: string | null;
   access: ModuleAccess;
@@ -102,8 +107,11 @@ function lowerInitial(name: string): string {
  */
 export const NO_ENRICHMENT_FILE = 'No enrichment file for this comparison';
 export const NO_PROCESS_ENRICHED = 'No process is enriched at these thresholds';
+/** Un fichier existe mais ses voies n'ont pas pu être lues : la réponse 3 et le chapitre le disent pareil. */
+export const ENRICHMENT_LOAD_FAILED = 'Enrichment results could not be loaded.';
 
-function processes({ pathways, pathwaysPending }: AnswersInput): Answer {
+function processes({ pathways, pathwaysPending, pathwaysFailed }: AnswersInput): Answer {
+  if (pathways === null && pathwaysFailed) return { text: ENRICHMENT_LOAD_FAILED, by: 'data' };
   if (pathways === null && pathwaysPending) return { text: 'Ranking processes…', by: 'pending' };
   if (pathways === null) return { text: NO_ENRICHMENT_FILE, by: 'data' };
   if (pathways.length === 0) return { text: NO_PROCESS_ENRICHED, by: 'data' };

@@ -591,6 +591,15 @@ describe('ReadingPage — the answers', () => {
     expect(answers.queryByText('No enrichment file for this comparison')).not.toBeInTheDocument();
   });
 
+  it('says the enrichment could not be loaded when its read fails, not that it is still loading', () => {
+    jest.mocked(useTopPathways).mockReturnValue({ pathways: null, isLoading: false, isError: true });
+    renderReading();
+    const answers = within(screen.getByRole('region', { name: 'Answers' }));
+    expect(answers.getByText('Enrichment results could not be loaded.')).toBeInTheDocument();
+    expect(answers.queryByText('Ranking processes…')).not.toBeInTheDocument();
+    expect(answers.queryByText('No enrichment file for this comparison')).not.toBeInTheDocument();
+  });
+
   it('says there is no enrichment file only when there is none', () => {
     jest.mocked(useTopPathways).mockReturnValue({ pathways: null, isLoading: false, isError: false });
     renderReading({ context: { enrichmentDataset: undefined } });

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { useComparisonActions } from '@/contexts/ComparisonSelectionContext';
 import { useTopPathways, type TopPathway } from '@/hooks/useTopPathways';
-import { NO_ENRICHMENT_FILE, NO_PROCESS_ENRICHED } from '../answers';
+import { ENRICHMENT_LOAD_FAILED, NO_ENRICHMENT_FILE, NO_PROCESS_ENRICHED } from '../answers';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
@@ -85,8 +85,9 @@ function ProcessRow({
  *
  * Quand il n'y a rien à classer le chapitre dit la même phrase que la réponse 3 de la colonne
  * vertébrale (`NO_ENRICHMENT_FILE`, `NO_PROCESS_ENRICHED`) : la réponse et sa preuve ne se
- * contredisent pas. Un échec de lecture n'est PAS pris pour un fichier absent, et le bouton reste
- * là dans tous les cas : la vue agrandie dit ce qui manque.
+ * contredisent pas. Un échec de lecture n'est PAS pris pour un fichier absent : il se dit avec
+ * `ENRICHMENT_LOAD_FAILED`, la phrase de la réponse 3 aussi. Le bouton reste là dans tous les cas :
+ * la vue agrandie dit ce qui manque.
  */
 export default function ProcessesChapter({
   enrichmentDatasetId,
@@ -125,7 +126,7 @@ export default function ProcessesChapter({
       </p>
     );
   } else if (isError) {
-    body = <p className="text-body-sm text-secondary">Enrichment results could not be loaded.</p>;
+    body = <p className="text-body-sm text-secondary">{ENRICHMENT_LOAD_FAILED}</p>;
   } else {
     body = <p className="text-body-sm text-secondary">{NO_ENRICHMENT_FILE}</p>;
   }

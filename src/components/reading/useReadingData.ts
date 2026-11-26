@@ -99,7 +99,10 @@ export function useReadingData({
   const tested = testedCount !== undefined && testedCount > 0 ? testedCount : null;
 
   const { up, down } = useTopGenes(degDataset.id, actualComparisonName);
-  const { pathways } = useTopPathways(enrichmentDataset?.id, actualComparisonName);
+  const { pathways, isError: pathwaysError } = useTopPathways(
+    enrichmentDataset?.id,
+    actualComparisonName
+  );
   const { text: interpretation } = useSavedInterpretation(
     degDataset.id,
     actualComparisonName,
@@ -118,13 +121,26 @@ export function useReadingData({
         topUp: up.slice(0, TOP_UP_NAMED).map((point) => point.gene),
         topDown: down.slice(0, TOP_DOWN_NAMED).map((point) => point.gene),
         pathways,
-        // Un fichier rattaché dont les voies ne sont pas là n'est pas « aucun fichier ».
+        // Un fichier rattaché dont les voies ne sont pas là n'est pas « aucun fichier » : elles
+        // arrivent, ou leur lecture a échoué, et la réponse dit lequel.
         pathwaysPending: !!enrichmentDataset && pathways === null,
+        pathwaysFailed: !!enrichmentDataset && pathways === null && pathwaysError,
         interpretation,
         access,
         claims,
       }),
-    [summary, tested, up, down, pathways, enrichmentDataset, interpretation, access, claims]
+    [
+      summary,
+      tested,
+      up,
+      down,
+      pathways,
+      pathwaysError,
+      enrichmentDataset,
+      interpretation,
+      access,
+      claims,
+    ]
   );
 
   return { summary, tested, answers };

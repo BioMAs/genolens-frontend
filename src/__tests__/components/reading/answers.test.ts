@@ -7,6 +7,7 @@
  */
 import {
   buildAnswers,
+  ENRICHMENT_LOAD_FAILED,
   isClaimSupported,
   NO_ENRICHMENT_FILE,
   NO_PROCESS_ENRICHED,
@@ -242,6 +243,30 @@ describe('buildAnswers — 3, which processes move', () => {
       text: 'Ranking processes…',
       by: 'pending',
     });
+  });
+
+  // A failed read is neither "no file" nor "still loading": the answer says it, with the
+  // Processes chapter's own sentence.
+  it('says the enrichment could not be loaded when its read failed', () => {
+    expect(ENRICHMENT_LOAD_FAILED).toBe('Enrichment results could not be loaded.');
+    expect(buildAnswers(base({ pathways: null, pathwaysFailed: true })).processes).toEqual({
+      text: ENRICHMENT_LOAD_FAILED,
+      by: 'data',
+    });
+  });
+
+  it('does not stay on the loading text once the read has failed', () => {
+    const answer = buildAnswers(
+      base({ pathways: null, pathwaysPending: true, pathwaysFailed: true })
+    ).processes;
+    expect(answer.text).toBe(ENRICHMENT_LOAD_FAILED);
+  });
+
+  it('keeps showing pathways that are there, even after a failed refresh', () => {
+    const pathways = [pathway('Inflammatory response', 'up')];
+    expect(buildAnswers(base({ pathways, pathwaysFailed: true })).processes.text).toBe(
+      'Inflammatory response rises'
+    );
   });
 
   it('only waits while there are no pathways to read', () => {
