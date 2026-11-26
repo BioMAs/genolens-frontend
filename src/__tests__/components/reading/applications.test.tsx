@@ -287,6 +287,20 @@ describe('ApplicationsChapter — skin claims, unlocked', () => {
     expect(screen.getByTestId('cosmomics-nova')).toHaveAttribute('data-selected', 'Barrier');
   });
 
+  it('puts the claim buttons on the nova paper, like the figure, the card and the legend', () => {
+    renderApplications();
+    // Leurs encres sont fixes (palette de la nova) : hors du papier clair, elles se liraient mal en sombre.
+    const list = screen.getByRole('list', { name: 'Claims' });
+    expect(list.closest('.nova-paper')).not.toBeNull();
+    for (const element of [
+      screen.getByTestId('cosmomics-nova'),
+      screen.getByTestId('claim-card'),
+      screen.getByTestId('nova-legend'),
+    ]) {
+      expect(element.closest('.nova-paper')).not.toBeNull();
+    }
+  });
+
   it('keeps one card open at a time, and the legend under the nova', () => {
     renderApplications();
     expect(screen.getAllByTestId('claim-card')).toHaveLength(1);

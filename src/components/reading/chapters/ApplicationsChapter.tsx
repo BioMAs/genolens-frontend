@@ -124,7 +124,10 @@ function SkinNova({ data, seed }: { data: CosmOmicsNovaData; seed: string }) {
 
   return (
     <div className="space-y-4">
-      <NovaClaimList claims={data.claims} selected={selected.name} onSelect={setPicked} />
+      {/* Les encres des boutons sont fixes (palette de la nova) : sur le papier clair, comme le reste. */}
+      <div className="nova-paper rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] px-4 py-3">
+        <NovaClaimList claims={data.claims} selected={selected.name} onSelect={setPicked} />
+      </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <figure className="nova-paper m-0 min-w-0 rounded-card border border-[var(--nova-line)] bg-[var(--nova-paper)] p-2 sm:p-4">
           <CosmOmicsNova
