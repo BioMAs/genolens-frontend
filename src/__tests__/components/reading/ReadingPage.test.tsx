@@ -141,6 +141,38 @@ function MockGeneListDeepLink(props: Record<string, unknown>) {
   return <div data-testid="gene-list-deep-link" data-props={JSON.stringify(props)} />;
 }
 
+/**
+ * Une vue agrandie où l'on peut pointer un gène, comme un point du volcano ou une ligne de la table :
+ * le même appel `selectGenes` que ces modules font, sans leur dessin. Des déclarations de fonction,
+ * hissées : les fabriques de `jest.mock` tournent avant les `const` du fichier.
+ */
+function MockPicker({
+  testId,
+  label,
+  source,
+  props,
+}: {
+  testId: string;
+  label: string;
+  source: 'volcano' | 'table';
+  props: Record<string, unknown>;
+}) {
+  const { selectGenes } = useComparisonActions();
+  return (
+    <div data-testid={testId} data-props={JSON.stringify(props)}>
+      <button type="button" onClick={() => selectGenes(['IL6'], source)}>
+        {label}
+      </button>
+    </div>
+  );
+}
+function MockVolcanoPanel(props: Record<string, unknown>) {
+  return <MockPicker testId="volcano-panel" label="Pick IL6 on the volcano" source="volcano" props={props} />;
+}
+function MockDegTable(props: Record<string, unknown>) {
+  return <MockPicker testId="deg-table" label="Pick IL6 in the table" source="table" props={props} />;
+}
+
 jest.mock('@/components/reading/ReadingHeader', () => ({
   __esModule: true,
   default: MockReadingHeader,
@@ -163,7 +195,7 @@ jest.mock('@/components/report/ReportCustomizationPanel', () => ({
 }));
 jest.mock('@/components/comparison/explorer/VolcanoPanel', () => ({
   __esModule: true,
-  default: mockStub('volcano-panel'),
+  default: MockVolcanoPanel,
 }));
 jest.mock('@/components/comparison/explorer/ThresholdControl', () => ({
   __esModule: true,
@@ -173,7 +205,7 @@ jest.mock('@/components/AIInterpretationPanel', () => ({
   __esModule: true,
   default: mockStub('ai-interpretation-panel'),
 }));
-jest.mock('@/components/DEGTable', () => ({ __esModule: true, default: mockStub('deg-table') }));
+jest.mock('@/components/DEGTable', () => ({ __esModule: true, default: MockDegTable }));
 jest.mock('@/components/ExportMenu', () => ({ __esModule: true, default: mockStub('export-menu') }));
 jest.mock('@/components/comparison/explorer/HeatmapSection', () => ({
   __esModule: true,
@@ -717,18 +749,59 @@ describe('ReadingPage — the sheet', () => {
     // Non modale tant que rien n'est agrandi : la page reste atteignable.
     expect(screen.getByRole('dialog', { name: 'IL6' })).not.toHaveAttribute('aria-modal', 'true');
 
-    await user.click(screen.getByRole('button', { name: 'Open the volcano' }));
-    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'All genes' }));
+    expect(screen.getByRole('dialog', { name: 'Genes, KO_vs_WT' })).toBeInTheDocument();
     const sheet = screen.getByRole('dialog', { name: 'IL6' });
     expect(sheet).toHaveAttribute('aria-modal', 'true');
     expect(sheet).toHaveFocus();
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Genes, KO_vs_WT' })).toBeInTheDocument();
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  // R31 : la vue volcano a sa propre carte de sélection, la fiche ne la double pas.
+  describe('over the volcano view', () => {
+    it('opens no sheet for a gene picked while the volcano is open: its selection card shows it', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=volcano`);
+      renderReading();
+      // Le chapitre des comptes monte aussi un volcano : on pointe celui de la vue agrandie.
+      const view = within(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' }));
+      await user.click(view.getByRole('button', { name: 'Pick IL6 on the volcano' }));
+      expect(view.getByTestId('selection-card')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
+
+    it('opens the sheet, modal on top, for the same pick in another view', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?focus=table`);
+      renderReading();
+      await user.click(screen.getByRole('button', { name: 'Pick IL6 in the table' }));
+      expect(screen.getByRole('dialog', { name: 'Genes, KO_vs_WT' })).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toHaveAttribute('aria-modal', 'true');
+    });
+
+    it('opens no sheet for a ?gene= link that names the volcano', () => {
+      setLocation(`${PATH}?focus=volcano&gene=IL6`);
+      renderReading();
+      expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+    });
+
+    it('hides a sheet that is open when the volcano opens over it', async () => {
+      const user = userEvent.setup();
+      setLocation(`${PATH}?gene=IL6`);
+      renderReading();
+      expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Open the volcano' }));
+      expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'IL6' })).not.toBeInTheDocument();
+    });
   });
 });
 
