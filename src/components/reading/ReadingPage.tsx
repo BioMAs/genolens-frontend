@@ -20,10 +20,12 @@
  *
  * **La fiche** (`InspectorSheet`) montre tout d'un gène ou d'un processus. Elle se monte d'après
  * l'état partagé, jamais d'un état à elle : un gène regardé (`focusedGene`, que `?gene=` écrit
- * aussi à l'arrivée) ouvre la fiche du gène, sinon une voie regardée (`focusedTerm`) ouvre celle du
- * processus — le gène l'emporte, une seule fiche à la fois. La fermer lâche les deux. Elle est
- * non modale sur la page et modale au-dessus d'une vue agrandie, d'où `modal={focus !== null}` ;
- * seule la vue volcano n'en reçoit pas, sa carte de sélection tient lieu de fiche.
+ * aussi à l'arrivée, et que ⌘K change ensuite : `useUrlGeneArrival`) ouvre la fiche du gène, sinon
+ * une voie regardée (`focusedTerm`) ouvre celle du processus — le gène l'emporte, une seule fiche à
+ * la fois. Le gène regardé d'une sélection de plusieurs gènes n'a pas de fiche (Maj/Cmd-clic
+ * construit une sélection). La fermer lâche les deux. Elle est non modale sur la page et modale
+ * au-dessus d'une vue agrandie, d'où `modal={focus !== null}` ; seule la vue volcano n'en reçoit
+ * pas, sa carte de sélection tient lieu de fiche.
  *
  * Remplace `ComparisonDetail`, qui reste dans le dépôt jusqu'au lot de nettoyage. Ses états de
  * chargement, d'erreur et d'absence sont repris tels quels.
