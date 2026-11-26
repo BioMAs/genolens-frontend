@@ -88,7 +88,15 @@ describe('avec un enrichissement', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.pathways).toEqual([
-      { id: 'GO:1', name: 'Alpha', padj: 0.001, geneCount: 12, category: 'GO:BP', direction: null },
+      {
+        id: 'GO:1',
+        name: 'Alpha',
+        padj: 0.001,
+        geneCount: 12,
+        genes: ['IL6', 'PTGS2'],
+        category: 'GO:BP',
+        direction: null,
+      },
     ]);
   });
 
@@ -151,6 +159,24 @@ describe('avec un enrichissement', () => {
       ['Described only', 0, 0],
       ['—', 0.01, 0],
     ]);
+  });
+
+  it('rend les gènes de la voie, [] quand la ligne n’en porte pas ou quand ce n’est pas une liste', async () => {
+    mockApi.get.mockResolvedValue({
+      data: {
+        pathways: [
+          row('GO:1', 'With genes', 0.001, { genes: ['IL6', 'TNF', '', 7, null] }),
+          { pathway_id: 'GO:2', pathway_name: 'No field', padj: 0.002 },
+          row('GO:3', 'Not a list', 0.003, { genes: 'IL6,TNF' }),
+        ],
+      },
+    });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useTopPathways('enr-1', 'T_vs_C'), { wrapper });
+
+    await waitFor(() => expect(result.current.pathways).not.toBeNull());
+    // Seuls les symboles (du texte non vide) sont gardés.
+    expect(result.current.pathways!.map((p) => p.genes)).toEqual([['IL6', 'TNF'], [], []]);
   });
 
   it('rend [] et non null quand aucune voie ne passe le seuil', async () => {
@@ -221,7 +247,7 @@ describe('cohabitation avec useGeneToPathways', () => {
 
     // Chacun a sa forme : brute (avec `genes`) d'un côté, analysée de l'autre.
     expect(result.current.top.pathways).toEqual([
-      { id: 'GO:1', name: 'Alpha', padj: 0.001, geneCount: 12, direction: null },
+      { id: 'GO:1', name: 'Alpha', padj: 0.001, geneCount: 12, genes: ['IL6', 'PTGS2'], direction: null },
     ]);
     expect(result.current.gene.data).toHaveLength(2);
     expect(result.current.gene.index.get('IL6')?.map((p) => p.id)).toEqual(['GO:1', 'GO:9']);

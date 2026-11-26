@@ -8,6 +8,8 @@
 import {
   buildAnswers,
   isClaimSupported,
+  NO_ENRICHMENT_FILE,
+  NO_PROCESS_ENRICHED,
   type AnswersInput,
 } from '@/components/reading/answers';
 import type { TopPathway } from '@/hooks/useTopPathways';
@@ -39,7 +41,15 @@ const pathway = (
   name: string,
   direction: TopPathway['direction'],
   over: Partial<TopPathway> = {}
-): TopPathway => ({ id: `GO:${name}`, name, padj: 0.001, geneCount: 12, direction, ...over });
+): TopPathway => ({
+  id: `GO:${name}`,
+  name,
+  padj: 0.001,
+  geneCount: 12,
+  genes: [],
+  direction,
+  ...over,
+});
 
 const base = (over: Partial<AnswersInput> = {}): AnswersInput => ({
   summary: { up: 274, down: 181, ns: 19000, significant: 455, total: 19455 },
@@ -215,6 +225,13 @@ describe('buildAnswers — 3, which processes move', () => {
     expect(buildAnswers(base({ pathways: [] })).processes.text).toBe(
       'No process is enriched at these thresholds'
     );
+  });
+
+  it('exports those two sentences, so the Processes chapter says exactly the same thing', () => {
+    expect(NO_ENRICHMENT_FILE).toBe('No enrichment file for this comparison');
+    expect(NO_PROCESS_ENRICHED).toBe('No process is enriched at these thresholds');
+    expect(buildAnswers(base({ pathways: null })).processes.text).toBe(NO_ENRICHMENT_FILE);
+    expect(buildAnswers(base({ pathways: [] })).processes.text).toBe(NO_PROCESS_ENRICHED);
   });
 
   it('is data in every branch', () => {

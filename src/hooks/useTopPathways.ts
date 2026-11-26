@@ -29,6 +29,12 @@ export interface TopPathway {
   name: string;
   padj: number;
   geneCount: number;
+  /**
+   * Les symboles des gènes de la voie, tels que l'endpoint les sert (`genes`, le champ que
+   * `useGeneToPathways` lit aussi) ; `[]` quand la ligne n'en porte pas. C'est ce qu'un clic sur
+   * la voie passe à `focusTerm`.
+   */
+  genes: string[];
   /** Sens de la voie d'après `regulation` ; `null` pour l'enrichissement « tous les DEG ». */
   direction: 'up' | 'down' | null;
   category?: string;
@@ -44,12 +50,18 @@ function toDirection(regulation: unknown): TopPathway['direction'] {
   return null;
 }
 
+function toGenes(genes: unknown): string[] {
+  if (!Array.isArray(genes)) return [];
+  return genes.filter((gene): gene is string => typeof gene === 'string' && gene !== '');
+}
+
 function parsePathway(row: Record<string, unknown>): TopPathway {
   return {
     id: row.pathway_id ? String(row.pathway_id) : '',
     name: row.pathway_name ? String(row.pathway_name) : String(row.description ?? '—'),
     padj: Number(row.padj ?? row.pvalue ?? 1),
     geneCount: Number(row.gene_count ?? 0),
+    genes: toGenes(row.genes),
     direction: toDirection(row.regulation),
     ...(row.category ? { category: String(row.category) } : {}),
   };

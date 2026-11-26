@@ -53,8 +53,11 @@ function list(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-/** `1284` devient `1,284` : les milliers se lisent d'un coup d'œil sur de vrais comptages. */
-const formatCount = (n: number): string => n.toLocaleString('en-US');
+/**
+ * `1284` devient `1,284` : les milliers se lisent d'un coup d'œil sur de vrais comptages.
+ * Exportée pour que le chapitre des comptes écrive les nombres comme la réponse 1.
+ */
+export const formatCount = (n: number): string => n.toLocaleString('en-US');
 
 function counts({ summary, tested }: AnswersInput): Answer {
   if (!summary) return { text: 'Counting genes…', by: 'pending' };
@@ -85,9 +88,16 @@ function lowerInitial(name: string): string {
   return secondIsLower ? name.charAt(0).toLowerCase() + name.slice(1) : name;
 }
 
+/**
+ * Les deux phrases de la réponse 3 quand il n'y a rien à classer. Exportées : le chapitre des
+ * processus les redit mot pour mot, la réponse et sa preuve ne se contredisent pas.
+ */
+export const NO_ENRICHMENT_FILE = 'No enrichment file for this comparison';
+export const NO_PROCESS_ENRICHED = 'No process is enriched at these thresholds';
+
 function processes({ pathways }: AnswersInput): Answer {
-  if (pathways === null) return { text: 'No enrichment file for this comparison', by: 'data' };
-  if (pathways.length === 0) return { text: 'No process is enriched at these thresholds', by: 'data' };
+  if (pathways === null) return { text: NO_ENRICHMENT_FILE, by: 'data' };
+  if (pathways.length === 0) return { text: NO_PROCESS_ENRICHED, by: 'data' };
 
   // Les voies arrivent triées par l'appelant : la première de chaque sens est la plus forte.
   const pu = pathways.find((p) => p.direction === 'up');
