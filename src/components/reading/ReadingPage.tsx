@@ -10,28 +10,34 @@
  * **L'URL est l'état.** La partie et la vue agrandie se lisent dans l'URL à chaque rendu
  * (`resolveReadingTarget`), anciennes formes comprises : un lien froid peint la bonne vue dès sa
  * première image. À l'arrivée, l'URL est réécrite une fois dans sa forme canonique
- * (`readingLocation`), la page défile jusqu'à la partie nommée, et ouvrir ou fermer une vue
- * agrandie écrit ou retire `?focus=`. Toujours `replaceState` : naviguer dans une lecture n'empile
- * pas d'entrées d'historique, et `useSearchParams` suit (Next ≥ 14.1).
+ * (`readingLocation`), la page défile jusqu'à la partie nommée — et y revient tant que les
+ * chapitres au-dessus se chargent (`useArrivalScroll`) —, et ouvrir ou fermer une vue agrandie
+ * écrit ou retire `?focus=`. Toujours `replaceState` : naviguer dans une lecture n'empile pas
+ * d'entrées d'historique, et `useSearchParams` suit (Next ≥ 14.1).
+ *
+ * Un lien `?geneList=` ouvre le volcano, une fois la liste sélectionnée : c'est là que la carte
+ * de sélection la décrit.
  *
  * Remplace `ComparisonDetail`, qui reste dans le dépôt jusqu'au lot de nettoyage. Ses états de
  * chargement, d'erreur et d'absence sont repris tels quels.
  */
 
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { Dataset, Project } from '@/types';
-import { ComparisonSelectionProvider } from '@/contexts/ComparisonSelectionContext';
+import { ComparisonSelectionProvider, useSelection } from '@/contexts/ComparisonSelectionContext';
 import {
   useComparisonContext,
   type ComparisonContext,
 } from '@/components/comparison/useComparisonContext';
 import GeneListDeepLink from '@/components/comparison/explorer/GeneListDeepLink';
+import { readGeneListId } from '@/components/comparison/explorerUrl';
 import type { ComparisonSamples } from '@/hooks/useComparisonSamples';
 import { useLocationHash } from '@/hooks/useLocationHash';
 import { useModuleAccess } from '@/hooks/useModuleAccess';
+import { useReprocessDeg } from '@/hooks/useReprocessDeg';
 import FocusDialog, { type FocusContext } from './FocusDialog';
 import ReadingHeader, { type ReadingConditions } from './ReadingHeader';
 import ReadingMenu from './ReadingMenu';
@@ -42,6 +48,7 @@ import ProcessesChapter from './chapters/ProcessesChapter';
 import MeaningChapter from './chapters/MeaningChapter';
 import ApplicationsChapter from './chapters/ApplicationsChapter';
 import { useActivePart } from './useActivePart';
+import { useArrivalScroll } from './useArrivalScroll';
 import { useReadingData } from './useReadingData';
 import {
   partDomId,
@@ -52,8 +59,14 @@ import {
   type ReadingPart,
 } from './readingRoutes';
 
-/** La dernière lecture, que l'accueil reprendra (lot 5) : `{ projectId, comparisonName, at }`. */
+/**
+ * La dernière lecture, que l'accueil reprendra (lot 5) : `{ projectId, comparisonName, at }`, plus
+ * `analysisId` quand la comparaison est lue dans une analyse, pour que le lien de reprise y ramène.
+ */
 export const LAST_READING_KEY = 'gl-last-reading';
+
+/** L'ancre de l'en-tête : un ancien `?report=1` y amène le lecteur, au bouton du rapport. */
+const HEADER_ID = 'reading-header';
 
 interface ReadingPageProps {
   projectId: string;
@@ -176,14 +189,24 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     globalDatasetId,
     access,
   });
+  const reprocess = useReprocessDeg(degDataset.id, projectId);
   const active = useActivePart(PART_IDS);
   const answersHeadingId = useId();
-  const headerRef = useRef<HTMLDivElement>(null);
+  const readingRef = useRef<HTMLDivElement>(null);
 
   // Dérivée au rendu, jamais recopiée : la vue agrandie ouverte EST celle que l'URL nomme.
   const searchParams = useSearchParams();
   const hash = useLocationHash();
   const { focus } = resolveReadingTarget(searchParams, hash);
+
+  // Ce qui change de forme au-dessus d'une partie quand une donnée arrive : les cinq réponses
+  // suivent chacune la source de leur chapitre, et le profil pose ou retire les verrous.
+  const layoutKey = [
+    access.loaded,
+    tested,
+    ...Object.values(answers).map((answer) => answer.text),
+  ].join('\u0001');
+  const arrive = useArrivalScroll(layoutKey, readingRef);
 
   // L'arrivée, une fois : l'URL canonique, puis le défilement. Ici et non dans `ReadingResolver`,
   // pour que la partie visée soit dans la page quand on y défile.
@@ -194,27 +217,32 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
     replaceLocation(search, nextHash);
 
     if (target.report) {
-      // `ComparisonReportButton` garde son ouverture dans un état interne, sans prop pour la
-      // commander, et sans le module de personnalisation son clic lance directement la
-      // génération : un lien ne doit pas déclencher un calcul. On amène donc le lecteur au bouton,
-      // dans l'en-tête, plutôt que d'ouvrir le rapport à sa place.
-      headerRef.current?.scrollIntoView();
+      // Un ancien `?report=1`, lu une dernière fois. `ComparisonReportButton` garde son ouverture
+      // dans un état interne, sans prop pour la commander, et sans le module de personnalisation
+      // son clic lance directement la génération : un lien ne doit pas déclencher un calcul. On
+      // amène donc le lecteur au bouton, dans l'en-tête, plutôt que d'ouvrir le rapport.
+      arrive(HEADER_ID);
     } else if (target.part !== 'answers') {
-      document.getElementById(partDomId(target.part))?.scrollIntoView();
+      arrive(partDomId(target.part));
     }
-  }, []);
+  }, [arrive]);
 
   // Retenue pour l'accueil ; un stockage bloqué (navigation privée, réglages) n'empêche pas de lire.
   useEffect(() => {
     try {
       window.localStorage.setItem(
         LAST_READING_KEY,
-        JSON.stringify({ projectId, comparisonName: actualComparisonName, at: new Date().toISOString() })
+        JSON.stringify({
+          projectId,
+          comparisonName: actualComparisonName,
+          ...(analysisId ? { analysisId } : {}),
+          at: new Date().toISOString(),
+        })
       );
     } catch {
       // Rien à faire : l'accueil ne proposera simplement pas de reprendre cette lecture.
     }
-  }, [projectId, actualComparisonName]);
+  }, [projectId, actualComparisonName, analysisId]);
 
   /** Ouvre ou ferme une vue agrandie : seul `?focus=` change, la partie et le reste demeurent. */
   const setFocus = useCallback((kind: FocusKind | null) => {
@@ -225,6 +253,19 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
   }, []);
   const openFocus = useCallback((kind: FocusKind) => setFocus(kind), [setFocus]);
   const closeFocus = useCallback(() => setFocus(null), [setFocus]);
+  const openReportLayout = useCallback(() => setFocus('report'), [setFocus]);
+
+  // Un lien `?geneList=` : une fois la liste résolue dans la sélection (par `GeneListDeepLink`), le
+  // volcano s'ouvre, une seule fois, pour la montrer — sauf si le lien nommait déjà une vue.
+  const { listId: selectedListId } = useSelection();
+  const [arrivalListId] = useState(() => readGeneListId(searchParams));
+  const listShown = useRef(false);
+  useEffect(() => {
+    if (listShown.current || !arrivalListId || selectedListId !== arrivalListId) return;
+    listShown.current = true;
+    const current = resolveReadingTarget(new URLSearchParams(window.location.search), window.location.hash);
+    if (current.focus === null) setFocus('volcano');
+  }, [arrivalListId, selectedListId, setFocus]);
 
   // Pas de cadenas tant que le profil n'est pas arrivé : tous les drapeaux sont faux d'ici là.
   const locked = access.loaded
@@ -242,13 +283,24 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
       samples,
       geneMap,
       sampleConditionMap: samples.conditionMap,
+      reprocess,
     }),
-    [projectId, project, degDataset, enrichmentDataset, matrixDataset, actualComparisonName, samples, geneMap]
+    [
+      projectId,
+      project,
+      degDataset,
+      enrichmentDataset,
+      matrixDataset,
+      actualComparisonName,
+      samples,
+      geneMap,
+      reprocess,
+    ]
   );
 
   return (
     <div className="page-container">
-      <div ref={headerRef} className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
+      <div id={HEADER_ID} className="scroll-mt-[calc(var(--sticky-top)+1rem)]">
         <ReadingHeader
           projectId={projectId}
           project={project}
@@ -258,6 +310,7 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
           conditions={conditionsOf(samples)}
           access={access}
           degDatasetId={degDataset.id}
+          onOpenReportLayout={openReportLayout}
         />
       </div>
 
@@ -273,7 +326,7 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
           <ReadingMenu active={active} locked={locked} hrefFor={hrefFor} />
         </div>
 
-        <div className="min-w-0 space-y-12">
+        <div ref={readingRef} className="min-w-0 space-y-12">
           <section
             id={partDomId('answers')}
             aria-labelledby={answersHeadingId}
@@ -301,6 +354,7 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
           <ProcessesChapter
             enrichmentDatasetId={enrichmentDataset?.id}
             comparisonName={actualComparisonName}
+            access={access}
             onOpenFocus={openFocus}
           />
           <MeaningChapter datasetId={degDataset.id} comparisonName={actualComparisonName} />

@@ -12,7 +12,7 @@ import type { ModuleId } from '@/components/modules/ModuleSelector';
  * ne se dise pas de deux façons.
  */
 export const LOCKED_COPY: Record<
-  'gsea' | 'signature' | 'targets' | 'claims',
+  'gsea' | 'signature' | 'targets' | 'claims' | 'report',
   { title: string; body: string }
 > = {
   gsea: {
@@ -31,10 +31,17 @@ export const LOCKED_COPY: Record<
     title: 'Skin claims need the CosmOmics module',
     body: 'Reads this comparison against cosmetic claims and shows which pathways support or contradict each one. Your plan does not include it.',
   },
+  report: {
+    title: 'Report layout needs the reporting module',
+    body: 'Brands the PDF report with your logo, colours and cover pages. Your plan does not include it.',
+  },
 };
 
 interface LockedPartProps {
-  /** Le module à demander : `claim` (peau), `drugdiscovery` (cibles), `science` (GSEA, signature). */
+  /**
+   * Le module à demander : `claim` (peau), `drugdiscovery` (cibles), `science` (GSEA, signature),
+   * `reporting` (mise en page du rapport).
+   */
   module: ModuleId;
   title: string;
   body: string;

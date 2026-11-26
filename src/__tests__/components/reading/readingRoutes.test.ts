@@ -11,6 +11,7 @@ import {
   type ComparisonPanel,
 } from '@/components/comparison/comparisonRoutes';
 import {
+  FOCUS_KINDS,
   partDomId,
   READING_PARTS,
   readingHref,
@@ -40,7 +41,8 @@ const EXPECTED: Record<ComparisonPanel, ReadingTarget> = {
   cosmetics: { part: 'skin', focus: null, report: false },
   signature: { part: 'signature', focus: null, report: false },
   exports: { part: 'genes', focus: 'table', report: false },
-  report: { part: 'answers', focus: null, report: true },
+  // L'éditeur de mise en page du rapport : l'ancien onglet « Report » avait ce module.
+  report: { part: 'answers', focus: 'report', report: false },
 };
 
 describe('the reading parts', () => {
@@ -141,17 +143,21 @@ describe('legacy URLs', () => {
   });
 
   it.each([
-    ['view=explorer', 'answers', false],
-    ['view=comprendre', 'meaning', false],
-    ['view=appliquer', 'targets', false],
-    ['view=outils', 'targets', false],
-    ['view=partager', 'answers', true],
-  ] as const)('sends the bare screen %s to %s (report: %s)', (query, part, report) => {
-    expect(resolveReadingTarget(params(query), '')).toEqual({ part, focus: null, report });
+    ['view=explorer', 'answers', null],
+    ['view=comprendre', 'meaning', null],
+    ['view=appliquer', 'targets', null],
+    ['view=outils', 'targets', null],
+    ['view=partager', 'answers', 'report'],
+  ] as const)('sends the bare screen %s to %s (focus: %s)', (query, part, focus) => {
+    expect(resolveReadingTarget(params(query), '')).toEqual({ part, focus, report: false });
   });
 
-  it('opens the report for the old Share screen', () =>
-    expect(resolveReadingTarget(params('view=partager'), '').report).toBe(true));
+  it('opens the report layout for the old Share screen, not the report scroll', () =>
+    expect(resolveReadingTarget(params('view=partager'), '')).toEqual({
+      part: 'answers',
+      focus: 'report',
+      report: false,
+    }));
 
   it('defaults to the answers', () =>
     expect(resolveReadingTarget(new URLSearchParams(), '')).toEqual({
@@ -224,30 +230,27 @@ describe('the canonical form', () => {
       report: false,
     }));
 
+  it('has thirteen focus views, the report layout among them', () => {
+    expect(FOCUS_KINDS).toHaveLength(13);
+    expect(FOCUS_KINDS).toContain('report');
+  });
+
   it('reads every part and every focus it writes', () => {
-    const focuses: FocusKind[] = [
-      'volcano',
-      'table',
-      'heatmap',
-      'methods',
-      'lookup',
-      'charts',
-      'processes',
-      'gsea',
-      'network',
-      'targets',
-      'claims',
-      'signature',
-    ];
+    const focuses: FocusKind[] = [...FOCUS_KINDS];
     for (const { id } of READING_PARTS) {
       for (const focus of [null, ...focuses]) {
         const target: ReadingTarget = { part: id, focus, report: false };
         const { search, hash } = readingLocation(target, params(''));
         expect(resolveReadingTarget(params(search), hash)).toEqual(target);
       }
-      const withReport: ReadingTarget = { part: id, focus: null, report: true };
-      const { search, hash } = readingLocation(withReport, params(''));
-      expect(resolveReadingTarget(params(search), hash)).toEqual(withReport);
+    }
+  });
+
+  // `?report=1` reste lu, pour les liens qui le portent, mais plus rien ne l'écrit.
+  it('reads ?report=1 but never writes it back', () => {
+    for (const { id } of READING_PARTS) {
+      const { search } = readingLocation({ part: id, focus: null, report: true }, params(''));
+      expect(search).toBe('');
     }
   });
 });
@@ -280,13 +283,13 @@ describe('readingLocation', () => {
       hash: '#part-genes',
     }));
 
-  it('appends focus, then report, after the kept state', () =>
+  it('appends the focus after the kept state, and never the report', () =>
     expect(
       readingLocation(
         { part: 'targets', focus: 'targets', report: true },
         params('padj=0.01')
       )
-    ).toEqual({ search: '?padj=0.01&focus=targets&report=1', hash: '#part-targets' }));
+    ).toEqual({ search: '?padj=0.01&focus=targets', hash: '#part-targets' }));
 
   it('writes no fragment for the answers, and an empty search when nothing remains', () =>
     expect(

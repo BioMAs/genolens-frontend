@@ -63,6 +63,10 @@ function SetThresholds() {
   );
 }
 
+const mockOpenReportLayout = jest.fn();
+
+beforeEach(() => mockOpenReportLayout.mockReset());
+
 function renderHeader(
   props: Partial<React.ComponentProps<typeof ReadingHeader>> = {},
   extra?: ReactNode
@@ -77,6 +81,7 @@ function renderHeader(
           conditions={conditions}
           access={access}
           degDatasetId="deg-1"
+          onOpenReportLayout={mockOpenReportLayout}
           {...props}
         />
         {extra}
@@ -156,7 +161,8 @@ describe('ReadingHeader — the thresholds chip', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Thresholds' });
     expect(
-      within(dialog).getByText('One setting for every count, chart and process on this page.')
+      // Les processus suivent le seuil du fichier d'enrichissement, pas celui-ci.
+      within(dialog).getByText('One setting for every count and chart on this page.')
     ).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Adjusted p-value threshold')).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Absolute log2 fold change threshold')).toBeInTheDocument();
@@ -229,5 +235,20 @@ describe('ReadingHeader — the actions', () => {
       access: { skin: false, targets: false, science: false, report: false, ai: false, loaded: false },
     });
     expect(screen.queryByTestId('report-button')).toBeNull();
+  });
+
+  it('puts a quiet Report layout button next to the report, which opens the layout editor', async () => {
+    renderHeader();
+    const layout = screen.getByRole('button', { name: 'Report layout' });
+    const report = screen.getByRole('button', { name: 'Report' });
+    expect(layout.compareDocumentPosition(report) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(layout.className).not.toMatch(/\bborder\b|bg-accent/);
+    await userEvent.click(layout);
+    expect(mockOpenReportLayout).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no Report layout button without the report module, nor before the profile', () => {
+    renderHeader({ access: { ...access, report: false } });
+    expect(screen.queryByRole('button', { name: 'Report layout' })).toBeNull();
   });
 });

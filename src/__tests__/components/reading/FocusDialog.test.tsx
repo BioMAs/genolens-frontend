@@ -26,6 +26,7 @@ let mockExportProps: Record<string, unknown> | null = null;
 const mockFetchAllDegGenes = jest.fn();
 const mockDownloadDegStats = jest.fn();
 const mockRequest = jest.fn();
+const mockReprocessStart = jest.fn();
 
 function mockStub(testId: string) {
   return function Stub(props: Record<string, unknown>) {
@@ -37,6 +38,14 @@ function mockStub(testId: string) {
 jest.mock('@/components/comparison/explorer/VolcanoPanel', () => ({
   __esModule: true,
   default: mockStub('volcano-panel'),
+}));
+jest.mock('@/components/comparison/explorer/SelectionCard', () => ({
+  __esModule: true,
+  default: mockStub('selection-card'),
+}));
+jest.mock('@/components/report/ReportCustomizationPanel', () => ({
+  __esModule: true,
+  default: mockStub('report-customization-panel'),
 }));
 jest.mock('@/components/comparison/explorer/ThresholdControl', () => ({
   __esModule: true,
@@ -146,6 +155,7 @@ const withMatrix: FocusContext = {
   },
   sampleConditionMap: { s1: 'KO', s2: 'KO', s3: 'WT', s4: 'WT' },
   geneMap: { genes: ['G1', 'G2'], nameByGene: { G1: 'TP53', G2: 'MYC' } },
+  reprocess: { reprocessing: false, error: null, start: mockReprocessStart },
 };
 
 const withoutMatrix: FocusContext = {
@@ -188,6 +198,7 @@ const FOCUS_KIND_COMPONENTS: ReadonlyArray<readonly [FocusKind, string]> = [
   ['targets', 'drug-discovery-panel'],
   ['claims', 'cosmomics-panel'],
   ['signature', 'signature-score-panel'],
+  ['report', 'report-customization-panel'],
 ];
 
 function renderFocus({
@@ -217,6 +228,7 @@ beforeEach(() => {
   mockExportProps = null;
   mockRequested = [];
   mockRequest.mockReset();
+  mockReprocessStart.mockReset();
   mockFetchAllDegGenes.mockReset();
   mockDownloadDegStats.mockReset();
 });
@@ -277,6 +289,7 @@ describe('FocusDialog — the frame', () => {
       targets: 'Drug targets',
       claims: 'Skin claims',
       signature: 'Signature score',
+      report: 'Report layout',
     });
   });
 
@@ -299,13 +312,21 @@ describe('FocusDialog — the frame', () => {
 
 describe('FocusDialog — locked views', () => {
   const LOCKED: ReadonlyArray<
-    readonly [FocusKind, 'gsea' | 'signature' | 'targets' | 'claims', keyof ModuleAccess, string, string]
+    readonly [FocusKind, keyof typeof LOCKED_COPY, keyof ModuleAccess, string, string]
   > = [
     ['gsea', 'gsea', 'science', 'science', 'gsea-analysis'],
     ['signature', 'signature', 'science', 'science', 'signature-score-panel'],
     ['targets', 'targets', 'targets', 'drugdiscovery', 'drug-discovery-panel'],
     ['claims', 'claims', 'skin', 'claim', 'cosmomics-panel'],
+    ['report', 'report', 'report', 'reporting', 'report-customization-panel'],
   ];
+
+  it('says what the report layout needs, in the words of the ruling', () => {
+    expect(LOCKED_COPY.report).toEqual({
+      title: 'Report layout needs the reporting module',
+      body: 'Brands the PDF report with your logo, colours and cover pages. Your plan does not include it.',
+    });
+  });
 
   it('renders the locked block for gsea without the scientific module', () => {
     renderFocus({ kind: 'gsea', access: { ...allAccess, science: false } });
@@ -414,6 +435,37 @@ describe('FocusDialog — the props each module gets', () => {
   it('gives the volcano, the methods and the table the DEG dataset and the stored comparison key', () => {
     renderFocus({ kind: 'volcano' });
     expect(propsOf('volcano-panel')).toEqual({ dataset: degDataset, comparisonName: 'KO_vs_WT' });
+  });
+
+  it('mounts the selection card beside the volcano, with the props ComparisonDetail gave it', () => {
+    renderFocus({ kind: 'volcano' });
+    expect(propsOf('selection-card')).toEqual({
+      dataset: degDataset,
+      comparisonName: 'KO_vs_WT',
+      matrixDataset,
+      enrichmentDataset,
+      sampleIds: ['s1', 's2', 's3', 's4'],
+      conditionBySample: { s1: 'KO', s2: 'KO', s3: 'WT', s4: 'WT' },
+      geneNameMap: { G1: 'TP53', G2: 'MYC' },
+    });
+    const volcano = screen.getByTestId('volcano-panel');
+    const card = screen.getByTestId('selection-card');
+    // Côte à côte : le volcano, puis la carte, dans la même grille.
+    expect(volcano.parentElement).toBe(card.parentElement);
+    expect(volcano.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('leaves the samples out of the selection card when the comparison has none', () => {
+    renderFocus({ kind: 'volcano', context: withoutMatrix });
+    const props = propsOf('selection-card');
+    expect(props).not.toHaveProperty('sampleIds');
+    expect(props).not.toHaveProperty('conditionBySample');
+    expect(props).not.toHaveProperty('matrixDataset');
+  });
+
+  it('mounts the report layout editor as it is, with no props', () => {
+    renderFocus({ kind: 'report' });
+    expect(propsOf('report-customization-panel')).toEqual({});
   });
 
   it('gives the methods panel the dataset id, as ComparisonDetail does', () => {
@@ -552,5 +604,49 @@ describe('FocusDialog — the gene table export', () => {
     const note = screen.getByText(/at the current thresholds/);
     expect(note).toHaveTextContent(`padj < ${DEFAULT_THRESHOLDS.padj}`);
     expect(note).toHaveTextContent(`|log2FC| > ${DEFAULT_THRESHOLDS.logfc}`);
+  });
+});
+
+describe('FocusDialog — reprocessing from the methods view', () => {
+  it('offers Reprocess DEG above the method statistics', () => {
+    renderFocus({ kind: 'methods' });
+    const button = screen.getByRole('button', { name: 'Reprocess DEG' });
+    const panel = screen.getByTestId('method-stats-panel');
+    expect(button.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Discret : pas d'aplat d'accent.
+    expect(button.className).not.toMatch(/bg-accent/);
+  });
+
+  it('starts the reprocessing on a click', async () => {
+    renderFocus({ kind: 'methods' });
+    await userEvent.click(screen.getByRole('button', { name: 'Reprocess DEG' }));
+    expect(mockReprocessStart).toHaveBeenCalledTimes(1);
+  });
+
+  it('says it is reprocessing, and does not start a second one', async () => {
+    renderFocus({
+      kind: 'methods',
+      context: { ...withMatrix, reprocess: { reprocessing: true, error: null, start: mockReprocessStart } },
+    });
+    const button = screen.getByRole('button', { name: 'Reprocessing…' });
+    expect(button).toBeDisabled();
+    await userEvent.click(button);
+    expect(mockReprocessStart).not.toHaveBeenCalled();
+  });
+
+  it('shows the error of the last reprocessing', () => {
+    renderFocus({
+      kind: 'methods',
+      context: {
+        ...withMatrix,
+        reprocess: { reprocessing: false, error: 'Heatmap regeneration failed', start: mockReprocessStart },
+      },
+    });
+    expect(screen.getByText('Heatmap regeneration failed')).toBeInTheDocument();
+  });
+
+  it('is only in the methods view', () => {
+    renderFocus({ kind: 'volcano' });
+    expect(screen.queryByRole('button', { name: 'Reprocess DEG' })).not.toBeInTheDocument();
   });
 });

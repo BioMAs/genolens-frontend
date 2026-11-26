@@ -8,11 +8,14 @@
  *   - une phrase qui dit CE QUI est comparé — les deux conditions et leurs effectifs ;
  *   - la pastille des seuils, qui dit à quelles valeurs tout ce qui suit est compté et ouvre le
  *     dialogue qui les change ;
- *   - le rapport, seule action visible : c'est ce que l'on emporte de cette page.
+ *   - le rapport, seule action marquée : c'est ce que l'on emporte de cette page. À côté, un
+ *     bouton discret « Report layout » ouvre l'éditeur de mise en page (la vue agrandie
+ *     `report`), que l'ancien onglet « Report » montait ; les deux suivent le même verrou.
  *
  * Ce qui n'y est plus, par rapport à `ComparisonHeader` : le bouton « AI Assistant » (la lecture
- * IA est un chapitre de la page) et le menu « Reprocess DEG », qui part dans le volet « Method and
- * quality » de l'étude — un recalcul rare et long n'a pas sa place à côté de l'action d'arrivée.
+ * IA est un chapitre de la page) et le menu « Reprocess DEG », qui vit dans la vue agrandie
+ * « Methods » jusqu'à ce que le lot 4 le range dans l'étude — un recalcul rare et long n'a pas sa
+ * place à côté de l'action d'arrivée.
  * Les trois métadonnées (projet, date, calcul en cours) tombent aussi : le fil d'Ariane dit déjà
  * le projet, et la page n'attend plus de statistiques pour s'afficher.
  */
@@ -52,6 +55,8 @@ interface Props {
   actualComparisonName?: string;
   /** Présent quand la comparaison est lue dans une analyse : le fil d'Ariane y ramène. */
   analysisId?: string;
+  /** Ouvre l'éditeur de mise en page du rapport (la vue agrandie `report`). */
+  onOpenReportLayout: () => void;
 }
 
 export default function ReadingHeader({
@@ -63,6 +68,7 @@ export default function ReadingHeader({
   degDatasetId,
   actualComparisonName,
   analysisId,
+  onOpenReportLayout,
 }: Props) {
   const { padj, logfc } = useThresholds();
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
@@ -103,8 +109,19 @@ export default function ReadingHeader({
             {`Thresholds: padj < ${padj}, |log2FC| > ${logfc}`}
           </Button>
         }
-        actions={
-          showReport
+        actions={[
+          ...(access.report
+            ? [
+                {
+                  node: (
+                    <Button variant="ghost" size="sm" aria-haspopup="dialog" onClick={onOpenReportLayout}>
+                      Report layout
+                    </Button>
+                  ),
+                },
+              ]
+            : []),
+          ...(showReport
             ? [
                 {
                   node: (
@@ -115,8 +132,8 @@ export default function ReadingHeader({
                   ),
                 },
               ]
-            : []
-        }
+            : []),
+        ]}
       />
       <ThresholdsDialog open={thresholdsOpen} onClose={() => setThresholdsOpen(false)} />
     </>

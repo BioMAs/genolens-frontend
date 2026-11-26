@@ -37,6 +37,12 @@ describe('every old panel link lands somewhere true', () => {
     expect(broken).toEqual([]);
   });
 
+  it('opens the report layout editor for the old report tab and the old Share screen', () => {
+    expect(landing('report').focus).toBe('report');
+    expect(resolveReadingTarget(new URLSearchParams({ view: 'partager' }), '').focus).toBe('report');
+    expect(FOCUS_KEYS.has('report')).toBe(true);
+  });
+
   it('opens a focus view the dialog has for the GSEA fragment of the enrichment', () => {
     const { part, focus } = landing('enrichment', '#gsea');
     expect(PARTS.has(part)).toBe(true);

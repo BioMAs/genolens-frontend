@@ -11,12 +11,18 @@
  * seuils (lus dans l'URL par le vrai `ComparisonSelectionProvider`) sont donc calculés pour de
  * vrai. Les modules lourds et l'en-tête sont des témoins qui affichent leurs propriétés.
  */
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import ReadingPage, { LAST_READING_KEY } from '@/components/reading/ReadingPage';
 import { formatCount } from '@/components/reading/answers';
-import { partDomId, READING_PARTS } from '@/components/reading/readingRoutes';
+import { FOCUS_TITLES } from '@/components/reading/FocusDialog';
+import { FOCUS_KINDS, partDomId, READING_PARTS, type FocusKind } from '@/components/reading/readingRoutes';
+import {
+  useComparisonActions,
+  usePendingGeneListId,
+} from '@/contexts/ComparisonSelectionContext';
 import type { ModuleAccess } from '@/hooks/useModuleAccess';
 import { useVolcanoPoints } from '@/hooks/useVisualizations';
 import { useTopPathways } from '@/hooks/useTopPathways';
@@ -107,13 +113,47 @@ function mockStub(testId: string) {
   };
 }
 
+/** L'en-tête, réduit à ses propriétés et au bouton qui ouvre la mise en page du rapport. */
+function MockReadingHeader(props: Record<string, unknown>) {
+  return (
+    <div data-testid="reading-header" data-props={JSON.stringify(props)}>
+      <button type="button" onClick={props.onOpenReportLayout as () => void}>
+        Report layout
+      </button>
+    </div>
+  );
+}
+
+/** La liste qu'un lien `?geneList=` résout, ou `null` tant qu'elle n'est pas arrivée. */
+let mockGeneList: { id: string; name: string; genes: string[] } | null = null;
+
+/** Résout `?geneList=` comme le vrai composant, sans l'API : la liste est `mockGeneList`. */
+function MockGeneListDeepLink(props: Record<string, unknown>) {
+  const pending = usePendingGeneListId();
+  const { selectGeneList } = useComparisonActions();
+  useEffect(() => {
+    if (pending && mockGeneList?.id === pending) {
+      selectGeneList(mockGeneList.id, mockGeneList.name, mockGeneList.genes);
+    }
+  }, [pending, selectGeneList]);
+  return <div data-testid="gene-list-deep-link" data-props={JSON.stringify(props)} />;
+}
+
 jest.mock('@/components/reading/ReadingHeader', () => ({
   __esModule: true,
-  default: mockStub('reading-header'),
+  default: MockReadingHeader,
 }));
 jest.mock('@/components/comparison/explorer/GeneListDeepLink', () => ({
   __esModule: true,
-  default: mockStub('gene-list-deep-link'),
+  default: MockGeneListDeepLink,
+}));
+jest.mock('@/components/comparison/explorer/SelectionCard', () => ({
+  __esModule: true,
+  default: mockStub('selection-card'),
+}));
+jest.mock('@/components/report/ReportCustomizationPanel', () => ({
+  __esModule: true,
+  default: mockStub('report-customization-panel'),
 }));
 jest.mock('@/components/comparison/explorer/VolcanoPanel', () => ({
   __esModule: true,
@@ -297,11 +337,15 @@ function renderReading({
   jest.mocked(useVolcanoPoints).mockReturnValue(volcano(points, volcanoFailed));
 
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const tree = () => (
     <QueryClientProvider client={client}>
       <ReadingPage projectId="p1" comparisonName="KO_vs_WT" analysisId={analysisId} />
     </QueryClientProvider>
   );
+  const result = render(tree());
+  /** Rend la page à nouveau, avec ce que les simulations rendent maintenant. */
+  const refresh = () => result.rerender(tree());
+  return { ...result, refresh };
 }
 
 const propsOf = (testId: string): Record<string, unknown> =>
@@ -331,6 +375,7 @@ beforeEach(() => {
   mockUrlListeners.clear();
   setLocation(PATH);
   window.localStorage.clear();
+  mockGeneList = null;
   scrolled = [];
   Element.prototype.scrollIntoView = function (this: Element) {
     scrolled.push(this);
@@ -388,12 +433,193 @@ describe('ReadingPage — the arrival URL', () => {
     expect(window.location.hash).toBe('#part-genes');
   });
 
-  it('brings the report button into view for an old Share link', () => {
+  it('opens the report layout editor for an old Share link', () => {
     setLocation(`${PATH}?view=partager`);
     renderReading();
-    expect(window.location.search).toBe('?report=1');
+    expect(window.location.search).toBe('?focus=report');
+    const dialog = screen.getByRole('dialog', { name: 'Report layout, KO_vs_WT' });
+    expect(within(dialog).getByTestId('report-customization-panel')).toBeInTheDocument();
+  });
+
+  it('opens the report layout editor for an old report tab, locked without the module', () => {
+    setLocation(`${PATH}?panel=report`);
+    renderReading({ access: { ...allAccess, report: false } });
+    const dialog = screen.getByRole('dialog', { name: 'Report layout, KO_vs_WT' });
+    expect(within(dialog).queryByTestId('report-customization-panel')).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('heading', { name: 'Report layout needs the reporting module' })
+    ).toBeInTheDocument();
+  });
+
+  it('still brings the report button into view for ?report=1, then drops it from the URL', () => {
+    setLocation(`${PATH}?padj=0.01&report=1`);
+    renderReading();
+    expect(window.location.search).toBe('?padj=0.01');
     expect(scrolled).toHaveLength(1);
     expect(within(scrolled[0] as HTMLElement).getByTestId('reading-header')).toBeInTheDocument();
+  });
+});
+
+describe('ReadingPage — the arrival scroll survives late content', () => {
+  it('lands on a low part again once the chapters above have loaded', () => {
+    setLocation(`${PATH}#part-skin`);
+    const { refresh } = renderReading({ points: null });
+    const skin = document.getElementById(partDomId('skin'));
+    expect(scrolled).toEqual([skin]);
+
+    // Le volcano arrive : les comptes et les gènes prennent leur hauteur au-dessus de la partie.
+    jest.mocked(useVolcanoPoints).mockReturnValue(volcano(fixturePoints));
+    refresh();
+    expect(scrolled).toEqual([skin, skin]);
+  });
+
+  it('lets go of the part as soon as the reader moves', () => {
+    setLocation(`${PATH}#part-skin`);
+    const { refresh } = renderReading({ points: null });
+    expect(scrolled).toHaveLength(1);
+
+    fireEvent.wheel(window);
+    jest.mocked(useVolcanoPoints).mockReturnValue(volcano(fixturePoints));
+    refresh();
+    expect(scrolled).toHaveLength(1);
+  });
+
+  it('follows the layout as it grows, where the browser can watch it', () => {
+    const callbacks: Array<() => void> = [];
+    const original = (window as { ResizeObserver?: unknown }).ResizeObserver;
+    (window as { ResizeObserver?: unknown }).ResizeObserver = class {
+      constructor(callback: () => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    try {
+      setLocation(`${PATH}#part-meaning`);
+      renderReading();
+      const meaning = document.getElementById(partDomId('meaning'));
+      expect(scrolled).toEqual([meaning]);
+
+      act(() => callbacks.forEach((callback) => callback()));
+      expect(scrolled).toEqual([meaning, meaning]);
+
+      fireEvent.keyDown(document.body, { key: 'ArrowDown' });
+      act(() => callbacks.forEach((callback) => callback()));
+      expect(scrolled).toHaveLength(2);
+    } finally {
+      (window as { ResizeObserver?: unknown }).ResizeObserver = original;
+    }
+  });
+
+  it('does not scroll on late content when the URL named no part', () => {
+    const { refresh } = renderReading({ points: null });
+    jest.mocked(useVolcanoPoints).mockReturnValue(volcano(fixturePoints));
+    refresh();
+    expect(scrolled).toEqual([]);
+  });
+});
+
+describe('ReadingPage — every tool has a way in', () => {
+  /** Le bouton visible de la page qui ouvre chaque vue agrandie. */
+  const WAY_IN: Record<FocusKind, string> = {
+    volcano: 'Open the volcano',
+    heatmap: 'Heatmap',
+    methods: 'Method statistics',
+    charts: 'Custom charts',
+    lookup: 'Database lookup',
+    table: 'All genes',
+    network: 'Interaction network',
+    processes: 'Every process',
+    gsea: 'GSEA',
+    targets: 'Rank targets',
+    claims: 'Evidence table',
+    signature: 'Score samples',
+    report: 'Report layout',
+  };
+
+  it('lists a way in for every focus view', () => {
+    expect(Object.keys(WAY_IN).sort()).toEqual([...FOCUS_KINDS].sort());
+  });
+
+  it.each(Object.entries(WAY_IN))('opens %s from the %s button of the page', async (kind, name) => {
+    const user = userEvent.setup();
+    renderReading();
+    await user.click(screen.getByRole('button', { name }));
+    expect(window.location.search).toBe(`?focus=${kind}`);
+    expect(
+      screen.getByRole('dialog', { name: `${FOCUS_TITLES[kind as FocusKind]}, KO_vs_WT` })
+    ).toBeInTheDocument();
+  });
+
+  it('offers GSEA with a padlock when the plan does not include it, and opens the locked view', async () => {
+    const user = userEvent.setup();
+    renderReading({ access: { ...allAccess, science: false } });
+    await user.click(screen.getByRole('button', { name: 'GSEA, not in your plan' }));
+    const dialog = screen.getByRole('dialog', { name: 'GSEA, KO_vs_WT' });
+    expect(within(dialog).getByRole('heading', { name: 'GSEA needs the scientific module' })).toBeInTheDocument();
+  });
+});
+
+describe('ReadingPage — the selection', () => {
+  /** Une liste enregistrée : son id a la forme que `readGeneListId` accepte. */
+  const LIST_ID = '0a1b2c3d-0000-4000-8000-000000000001';
+
+  it('opens the volcano, with the selection card, on a gene of the top genes', async () => {
+    const user = userEvent.setup();
+    renderReading();
+    const genes = within(screen.getByRole('region', { name: 'Which genes matter most?' }));
+    await user.click(genes.getByRole('button', { name: 'IL6' }));
+    expect(window.location.search).toContain('focus=volcano');
+    const dialog = screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' });
+    expect(within(dialog).getByTestId('selection-card')).toBeInTheDocument();
+  });
+
+  it('opens the volcano once a ?geneList= link has selected its genes', () => {
+    mockGeneList = { id: LIST_ID, name: 'Saved list', genes: ['IL6', 'KRT1'] };
+    setLocation(`${PATH}?geneList=${LIST_ID}`);
+    renderReading();
+    expect(screen.getByRole('dialog', { name: 'Volcano, KO_vs_WT' })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get('focus')).toBe('volcano');
+    expect(new URLSearchParams(window.location.search).get('geneList')).toBe(LIST_ID);
+  });
+
+  it('waits for the list: nothing opens while it has not resolved', () => {
+    setLocation(`${PATH}?geneList=${LIST_ID}`);
+    renderReading();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('leaves a focus view the link names in place', () => {
+    mockGeneList = { id: LIST_ID, name: 'Saved list', genes: ['IL6'] };
+    setLocation(`${PATH}?geneList=${LIST_ID}&focus=heatmap`);
+    renderReading();
+    expect(screen.getByRole('dialog', { name: 'Heatmap, KO_vs_WT' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Volcano, KO_vs_WT' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ReadingPage — reprocessing', () => {
+  it('reprocesses the DEG dataset from the methods view', async () => {
+    jest.mocked(api.post).mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    setLocation(`${PATH}?focus=methods`);
+    renderReading();
+    const dialog = within(screen.getByRole('dialog', { name: 'Methods, KO_vs_WT' }));
+    await user.click(dialog.getByRole('button', { name: 'Reprocess DEG' }));
+    expect(api.post).toHaveBeenCalledWith('/datasets/deg-1/reprocess');
+    expect(dialog.getByRole('button', { name: 'Reprocessing…' })).toBeDisabled();
+  });
+
+  it('remembers the reprocessing when the methods view is closed and opened again', async () => {
+    jest.mocked(api.post).mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    setLocation(`${PATH}?focus=methods`);
+    renderReading();
+    await user.click(screen.getByRole('button', { name: 'Reprocess DEG' }));
+    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('button', { name: 'Method statistics' }));
+    expect(screen.getByRole('button', { name: 'Reprocessing…' })).toBeDisabled();
   });
 });
 
@@ -702,6 +928,17 @@ describe('ReadingPage — the last reading', () => {
     expect(LAST_READING_KEY).toBe('gl-last-reading');
     expect(saved).toEqual({ projectId: 'p1', comparisonName: 'KO_vs_WT', at: expect.any(String) });
     expect(new Date(saved.at).toISOString()).toBe(saved.at);
+  });
+
+  it('remembers the analysis too, when the comparison is read inside one', () => {
+    renderReading({ analysisId: 'a1' });
+    const saved = JSON.parse(window.localStorage.getItem(LAST_READING_KEY) ?? 'null');
+    expect(saved).toEqual({
+      projectId: 'p1',
+      comparisonName: 'KO_vs_WT',
+      analysisId: 'a1',
+      at: expect.any(String),
+    });
   });
 
   it('still reads when the storage is blocked', () => {

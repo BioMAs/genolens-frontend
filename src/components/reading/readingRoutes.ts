@@ -11,8 +11,10 @@
  *
  * **Two forms are read, one is written.**
  *
- * - The canonical form, written by `readingLocation`: `#part-<id>` for the part in view,
- *   `?focus=<kind>` for an open focus view, `?report=1` for the report.
+ * - The canonical form, written by `readingLocation`: `#part-<id>` for the part in view and
+ *   `?focus=<kind>` for an open focus view. `?report=1` (bring the report button into view) is
+ *   still read, for links that carry it, but nothing writes it any more: the old report tab and
+ *   Share screen now open the `report` focus view, the report layout editor.
  * - The old form (`?view=`, `?panel=`, `?tab=`, the `#gsea` and scrolling-layout fragments),
  *   read only, through `resolveRequestedPanel` and `resolveView` — their rules are not copied here.
  *
@@ -85,6 +87,7 @@ export const FOCUS_KINDS = [
   'targets',
   'claims',
   'signature',
+  'report',
 ] as const;
 
 export type FocusKind = (typeof FOCUS_KINDS)[number];
@@ -93,6 +96,7 @@ export type FocusKind = (typeof FOCUS_KINDS)[number];
 export interface ReadingTarget {
   part: ReadingPart;
   focus: FocusKind | null;
+  /** `?report=1`: read only, never written. The arrival brings the report button into view. */
   report: boolean;
 }
 
@@ -145,20 +149,21 @@ const PANEL_TARGETS: Record<ComparisonPanel, ReadingTarget> = {
   cosmetics: target('skin'),
   signature: target('signature'),
   exports: target('genes', 'table'),
-  report: target('answers', null, true),
+  report: target('answers', 'report'),
 };
 
 /**
  * Where an old screen lands when its URL names no panel.
  *
  * `appliquer` opens on the first application; `partager` has no part of its own any more, only
- * the report. `outils` never reaches here: `resolveView` already folds it into `appliquer`.
+ * the report layout editor it used to show. `outils` never reaches here: `resolveView` already
+ * folds it into `appliquer`.
  */
 const VIEW_TARGETS: Record<ComparisonView, ReadingTarget> = {
   explorer: target('answers'),
   comprendre: target('meaning'),
   appliquer: target('targets'),
-  partager: target('answers', null, true),
+  partager: target('answers', 'report'),
 };
 
 function resolveLegacyTarget(params: URLSearchParams, hash: string): ReadingTarget {
@@ -195,10 +200,11 @@ export function resolveReadingTarget(params: URLSearchParams, hash: string): Rea
 /**
  * The canonical URL of a target, as a `search` and a `hash` ready for `history.replaceState`.
  *
- * No `view`, `panel` or `tab`: the old form is never written. Only the explorer state the reader
- * set (`KEPT_PARAMS`) is carried over from `current`, in its original order, so moving between
- * parts keeps the thresholds and the open gene; anything else in the URL is dropped. `search` is
- * `''`, not `'?'`, when nothing remains, and the answers carry no fragment.
+ * No `view`, `panel` or `tab`: the old form is never written, and neither is `?report=1`, which
+ * is read once on arrival and then dropped. Only the explorer state the reader set
+ * (`KEPT_PARAMS`) is carried over from `current`, in its original order, so moving between parts
+ * keeps the thresholds and the open gene; anything else in the URL is dropped. `search` is `''`,
+ * not `'?'`, when nothing remains, and the answers carry no fragment.
  */
 export function readingLocation(
   nextTarget: ReadingTarget,
@@ -209,7 +215,6 @@ export function readingLocation(
     if (KEPT_PARAMS.includes(key)) next.append(key, value);
   });
   if (nextTarget.focus) next.set(FOCUS_PARAM, nextTarget.focus);
-  if (nextTarget.report) next.set(REPORT_PARAM, '1');
 
   const query = next.toString();
   return {

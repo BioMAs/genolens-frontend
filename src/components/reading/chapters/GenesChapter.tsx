@@ -7,6 +7,7 @@ import { useComparisonActions } from '@/contexts/ComparisonSelectionContext';
 import { useTopGenes } from '@/hooks/useTopGenes';
 import type { VolcanoPoint } from '@/utils/volcano';
 import { COUNTS_LOAD_FAILED } from '../answers';
+import ChapterTools, { type ChapterTool } from '../ChapterTools';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
@@ -29,6 +30,9 @@ function formatPadj(padj: number): string {
   if (padj === 0) return '0';
   return padj < 0.001 ? padj.toExponential(1) : padj.toFixed(3);
 }
+
+/** L'autre vue des gènes, sous les deux tableaux. */
+const TOOLS: ReadonlyArray<ChapterTool> = [{ label: 'Interaction network', focus: 'network' }];
 
 const SIDE = {
   up: { Icon: ArrowUp, title: 'Rising most', empty: 'No gene rises at these thresholds', fc: 'text-up-strong' },
@@ -106,15 +110,23 @@ function GeneTable({
  *
  * La liste vient de `useTopGenes`, qui trie le nuage du volcano déjà en cache aux seuils de la
  * page : elle ne peut pas contredire le volcano ni les comptes. Un symbole est un bouton qui
- * donne le gène à regarder (`setFocusedGene`) ; le tableau complet et ses téléchargements sont
- * dans la vue agrandie.
+ * sélectionne le gène (`selectGenes`, comme un clic dans la table) et le donne à regarder
+ * (`setFocusedGene`), puis ouvre le volcano, où la carte de sélection le décrit — jusqu'à ce que
+ * la fiche gène du lot 2 prenne ce clic. Le tableau complet et ses téléchargements sont dans la
+ * vue agrandie ; le réseau d'interactions, dans la rangée discrète sous les tableaux.
  *
  * Tant que le nuage n'est pas là on dit qu'on charge, on n'écrit pas « aucun gène ». Quand un
  * seul côté est vide, l'autre reste affiché : « aucun gène ne baisse » est une information.
  */
 export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }: GenesChapterProps) {
   const { up, down, isLoading, isError } = useTopGenes(datasetId, comparisonName);
-  const { setFocusedGene } = useComparisonActions();
+  const { selectGenes, setFocusedGene } = useComparisonActions();
+
+  const pick = (gene: string) => {
+    selectGenes([gene], 'table');
+    setFocusedGene(gene);
+    onOpenFocus('volcano');
+  };
 
   let body;
   if (isLoading) {
@@ -131,8 +143,8 @@ export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }:
   } else {
     body = (
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
-        <GeneTable side="up" genes={up} onPick={setFocusedGene} />
-        <GeneTable side="down" genes={down} onPick={setFocusedGene} />
+        <GeneTable side="up" genes={up} onPick={pick} />
+        <GeneTable side="down" genes={down} onPick={pick} />
       </div>
     );
   }
@@ -149,6 +161,7 @@ export default function GenesChapter({ datasetId, comparisonName, onOpenFocus }:
       }
     >
       {body}
+      <ChapterTools label="More views of the genes" tools={TOOLS} onOpenFocus={onOpenFocus} />
     </ReadingChapter>
   );
 }

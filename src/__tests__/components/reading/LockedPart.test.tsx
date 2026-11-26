@@ -127,6 +127,10 @@ describe('LOCKED_COPY', () => {
         title: 'Skin claims need the CosmOmics module',
         body: 'Reads this comparison against cosmetic claims and shows which pathways support or contradict each one. Your plan does not include it.',
       },
+      report: {
+        title: 'Report layout needs the reporting module',
+        body: 'Brands the PDF report with your logo, colours and cover pages. Your plan does not include it.',
+      },
     });
   });
 });

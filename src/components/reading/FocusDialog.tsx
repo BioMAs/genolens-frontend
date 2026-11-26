@@ -1,12 +1,14 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Download } from 'lucide-react';
-import { buttonClasses } from '@/components/ui/button';
+import { Download, RefreshCw } from 'lucide-react';
+import { Button, buttonClasses } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
 import { Dialog } from '@/components/ui/dialog';
 import type { Dataset, Project } from '@/types';
 import type { ComparisonContext } from '@/components/comparison/useComparisonContext';
 import type { ModuleAccess } from '@/hooks/useModuleAccess';
+import type { ReprocessDeg } from '@/hooks/useReprocessDeg';
 import type { ModuleId } from '@/components/modules/ModuleSelector';
 import {
   DEG_EXPORT_COLUMNS,
@@ -16,6 +18,7 @@ import {
 } from '@/hooks/useDegGenes';
 import { useFocusedTerm, useThresholds } from '@/contexts/ComparisonSelectionContext';
 import VolcanoPanel from '@/components/comparison/explorer/VolcanoPanel';
+import SelectionCard from '@/components/comparison/explorer/SelectionCard';
 import ThresholdControl from '@/components/comparison/explorer/ThresholdControl';
 import HeatmapSection from '@/components/comparison/explorer/HeatmapSection';
 import NoMatrix from '@/components/comparison/NoMatrix';
@@ -30,6 +33,7 @@ import PPINetworkSection from '@/components/network/PPINetworkSection';
 import DrugDiscoveryComparisonPanel from '@/components/tools/dd/DrugDiscoveryComparisonPanel';
 import CosmOmicsPanel from '@/components/cosmomics/CosmOmicsPanel';
 import SignatureScorePanel from '@/components/SignatureScorePanel';
+import ReportCustomizationPanel from '@/components/report/ReportCustomizationPanel';
 import LockedPart, { LOCKED_COPY } from './LockedPart';
 import type { FocusKind } from './readingRoutes';
 
@@ -40,6 +44,8 @@ import type { FocusKind } from './readingRoutes';
  * `ReadingPage` la construit une fois. Un `degDataset` et un `project` définis : la page ne monte
  * pas la lecture tant que la comparaison n'est pas résolue. `sampleConditionMap` est
  * `samples.conditionMap`, passée à part parce que c'est sous ce nom que les modules la reçoivent.
+ * `reprocess` est le retraitement DEG de la page, que la vue « Methods » porte jusqu'au lot 4 :
+ * son état vit dans la page, si bien que fermer la vue ne l'oublie pas.
  */
 export interface FocusContext
   extends Pick<
@@ -50,6 +56,7 @@ export interface FocusContext
   project: Project;
   degDataset: Dataset;
   sampleConditionMap: Record<string, string>;
+  reprocess: ReprocessDeg;
 }
 
 /** Le titre de chaque vue ; la boîte y ajoute le nom de la comparaison. */
@@ -66,6 +73,7 @@ export const FOCUS_TITLES: Record<FocusKind, string> = {
   targets: 'Drug targets',
   claims: 'Skin claims',
   signature: 'Signature score',
+  report: 'Report layout',
 };
 
 interface FocusView {
@@ -73,7 +81,11 @@ interface FocusView {
    * Le module que le plan doit inclure : le drapeau d'`access` à lire, le module à demander, et le
    * texte du bloc verrouillé. Absent pour une vue qu'aucun module ne garde.
    */
-  lock?: { flag: 'science' | 'targets' | 'skin'; module: ModuleId; copy: keyof typeof LOCKED_COPY };
+  lock?: {
+    flag: 'science' | 'targets' | 'skin' | 'report';
+    module: ModuleId;
+    copy: keyof typeof LOCKED_COPY;
+  };
   render: (context: FocusContext) => ReactNode;
 }
 
@@ -131,6 +143,29 @@ function TableView({ context }: { context: FocusContext }) {
   );
 }
 
+/**
+ * Les statistiques par méthode, et au-dessus le retraitement DEG que l'en-tête de l'ancienne page
+ * offrait dans son menu : un bouton discret, qui dit quand il tourne et n'en lance pas un second.
+ */
+function MethodsView({ context }: { context: FocusContext }) {
+  const { degDataset, actualComparisonName, reprocess } = context;
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="ghost" size="sm" disabled={reprocess.reprocessing} onClick={reprocess.start}>
+          <RefreshCw
+            className={cn('h-3.5 w-3.5', reprocess.reprocessing && 'animate-spin motion-reduce:animate-none')}
+            aria-hidden
+          />
+          {reprocess.reprocessing ? 'Reprocessing…' : 'Reprocess DEG'}
+        </Button>
+        {reprocess.error && <p className="text-body-sm text-danger">{reprocess.error}</p>}
+      </div>
+      <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
+    </div>
+  );
+}
+
 /** Le score de signature, ouvert sur la voie que le lecteur regardait, s'il y en avait une. */
 function SignatureView({ context, matrixDataset }: { context: FocusContext; matrixDataset: Dataset }) {
   const focusedTerm = useFocusedTerm();
@@ -154,11 +189,24 @@ function SignatureView({ context, matrixDataset }: { context: FocusContext; matr
  * `deg_genes.comparison_name`.
  */
 export const FOCUS_VIEWS: Record<FocusKind, FocusView> = {
+  // La carte de sélection à côté du nuage, comme dans l'ancien Explore : un gène ou une voie
+  // cliqués dans la page y arrivent décrits, avec ses outils (fiche, liste, export).
   volcano: {
-    render: ({ degDataset, actualComparisonName }) => (
+    render: (context) => (
       <div className="space-y-4">
         <ThresholdControl />
-        <VolcanoPanel dataset={degDataset} comparisonName={actualComparisonName} />
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <VolcanoPanel dataset={context.degDataset} comparisonName={context.actualComparisonName} />
+          <SelectionCard
+            dataset={context.degDataset}
+            comparisonName={context.actualComparisonName}
+            matrixDataset={context.matrixDataset}
+            enrichmentDataset={context.enrichmentDataset}
+            sampleIds={sampleIdsOf(context)}
+            conditionBySample={conditionsOf(context)}
+            geneNameMap={context.geneMap.nameByGene}
+          />
+        </div>
       </div>
     ),
   },
@@ -180,9 +228,7 @@ export const FOCUS_VIEWS: Record<FocusKind, FocusView> = {
       ),
   },
   methods: {
-    render: ({ degDataset, actualComparisonName }) => (
-      <MethodStatsPanel datasetId={degDataset.id} comparisonName={actualComparisonName} />
-    ),
+    render: (context) => <MethodsView context={context} />,
   },
   lookup: {
     render: () => <StringEnrichmentPanel />,
@@ -245,6 +291,12 @@ export const FOCUS_VIEWS: Record<FocusKind, FocusView> = {
         <NoMatrix purpose="Signature scoring" />
       ),
   },
+  // L'éditeur de mise en page du rapport, tel que l'onglet « Report » de l'ancienne page le
+  // montait : sans propriété, il lit et écrit les réglages du compte.
+  report: {
+    lock: { flag: 'report', module: 'reporting', copy: 'report' },
+    render: () => <ReportCustomizationPanel />,
+  },
 };
 
 interface FocusDialogProps {
@@ -258,7 +310,7 @@ interface FocusDialogProps {
 /**
  * La vue agrandie : un module de la comparaison, en plein écran, au-dessus de la lecture.
  *
- * Les douze vues montent les composants de l'ancienne page, inchangés. Seule règle propre à ce
+ * Les treize vues montent les composants de l'ancienne page, inchangés. Seule règle propre à ce
  * fichier : le verrou. Une vue que le plan n'inclut pas rend `LockedPart` **à la place** du
  * module, qui n'est donc pas monté — ni demandé au serveur, ni rendu, même flouté. Et tant que le
  * profil n'est pas arrivé (`access.loaded`), une vue gardée n'affiche ni l'un ni l'autre : un

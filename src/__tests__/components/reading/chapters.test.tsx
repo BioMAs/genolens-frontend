@@ -31,6 +31,7 @@ import {
   useFocusedTerm,
   useSelection,
 } from '@/contexts/ComparisonSelectionContext';
+import type { ModuleAccess } from '@/hooks/useModuleAccess';
 import type { VolcanoPoint, SignificanceSummary } from '@/utils/volcano';
 import { DatasetStatus, DatasetType, type Dataset } from '@/types';
 
@@ -94,12 +95,25 @@ const pathway = (
   ...over,
 });
 
+const allAccess: ModuleAccess = {
+  skin: true,
+  targets: true,
+  science: true,
+  report: true,
+  ai: true,
+  loaded: true,
+};
+
 /** Lit l'état partagé que les chapitres écrivent. */
 function Probe() {
-  const { focusedGene } = useSelection();
+  const { focusedGene, genes, source, label } = useSelection();
   const term = useFocusedTerm();
   // Pas un `<output>` : son rôle implicite est `status`, que les chapitres utilisent aussi.
-  return <div data-testid="probe">{JSON.stringify({ focusedGene, term })}</div>;
+  return (
+    <div data-testid="probe">
+      {JSON.stringify({ focusedGene, term, selection: { genes, source, label: label ?? null } })}
+    </div>
+  );
 }
 const probe = () => JSON.parse(screen.getByTestId('probe').textContent ?? '{}');
 
@@ -305,6 +319,18 @@ describe('GenesChapter', () => {
     expect(probe().focusedGene).toBe('DN2');
   });
 
+  // Jusqu'à la fiche gène du lot 2 : le gène cliqué devient la sélection, et le volcano, où la
+  // carte de sélection le décrit, s'ouvre.
+  it('selects the clicked gene, as a table pick, and opens the volcano where the selection shows', async () => {
+    const onOpenFocus = jest.fn();
+    renderGenes(onOpenFocus);
+    await userEvent.click(screen.getByRole('button', { name: 'UP3' }));
+    expect(probe().selection).toEqual({ genes: ['UP3'], source: 'table', label: null });
+    expect(probe().focusedGene).toBe('UP3');
+    expect(onOpenFocus).toHaveBeenCalledTimes(1);
+    expect(onOpenFocus).toHaveBeenCalledWith('volcano');
+  });
+
   it('says so when nothing passes the thresholds, instead of two empty tables', () => {
     mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: false });
     renderGenes();
@@ -351,6 +377,7 @@ describe('ProcessesChapter', () => {
       <ProcessesChapter
         enrichmentDatasetId="enr-1"
         comparisonName="KO_vs_WT"
+        access={allAccess}
         onOpenFocus={onOpenFocus}
         {...over}
       />
@@ -416,6 +443,24 @@ describe('ProcessesChapter', () => {
     });
   });
 
+  it('selects the genes of the clicked process, named after it, and opens the volcano', async () => {
+    const onOpenFocus = jest.fn();
+    renderProcesses({}, onOpenFocus);
+    await userEvent.click(screen.getByRole('button', { name: /Inflammatory response/ }));
+    expect(probe().term).toEqual({
+      id: 'GO:Inflammatory response',
+      name: 'Inflammatory response',
+      genes: ['IL6', 'CXCL8'],
+    });
+    expect(probe().selection).toEqual({
+      genes: ['IL6', 'CXCL8'],
+      source: 'pathway',
+      label: 'Inflammatory response',
+    });
+    expect(onOpenFocus).toHaveBeenCalledTimes(1);
+    expect(onOpenFocus).toHaveBeenCalledWith('volcano');
+  });
+
   it('explains a missing enrichment file with the sentence of answer 3', () => {
     mockUseTopPathways.mockReturnValue({ pathways: null, isLoading: false, isError: false });
     renderProcesses();
@@ -476,15 +521,21 @@ describe('MeaningChapter', () => {
 describe('the actions open the focus views', () => {
   const up = [point('IL6', 3, 1e-9)];
 
-  const renderChapterFor = (label: string, onOpenFocus: (kind: FocusKind) => void) => {
+  type Chapter = 'counts' | 'genes' | 'processes';
+
+  const renderChapter = (
+    chapter: Chapter,
+    onOpenFocus: (kind: FocusKind) => void,
+    access: ModuleAccess = allAccess
+  ) => {
     mockUseTopGenes.mockReturnValue({ up, down: [], isLoading: false, isError: false });
     mockUseTopPathways.mockReturnValue({
       pathways: [pathway('Inflammatory response', 1e-8, 'up')],
       isLoading: false,
       isError: false,
     });
-    switch (label) {
-      case 'Open the volcano':
+    switch (chapter) {
+      case 'counts':
         return renderIn(
           <CountsChapter
             summary={summary}
@@ -494,7 +545,7 @@ describe('the actions open the focus views', () => {
             onOpenFocus={onOpenFocus}
           />
         );
-      case 'All genes':
+      case 'genes':
         return renderIn(
           <GenesChapter datasetId="deg-1" comparisonName="KO_vs_WT" onOpenFocus={onOpenFocus} />
         );
@@ -503,34 +554,98 @@ describe('the actions open the focus views', () => {
           <ProcessesChapter
             enrichmentDatasetId="enr-1"
             comparisonName="KO_vs_WT"
+            access={access}
             onOpenFocus={onOpenFocus}
           />
         );
     }
   };
 
+  // Chaque outil de l'ancienne page a une entrée visible : aucun n'est joignable par l'URL seule.
   it.each([
-    ['Open the volcano', 'volcano'],
-    ['All genes', 'table'],
-    ['Every process, GSEA', 'processes'],
-  ])('%s opens the %s focus', async (label, kind) => {
+    ['counts', 'Open the volcano', 'volcano'],
+    ['counts', 'Heatmap', 'heatmap'],
+    ['counts', 'Method statistics', 'methods'],
+    ['counts', 'Custom charts', 'charts'],
+    ['counts', 'Database lookup', 'lookup'],
+    ['genes', 'All genes', 'table'],
+    ['genes', 'Interaction network', 'network'],
+    ['processes', 'Every process', 'processes'],
+    ['processes', 'GSEA', 'gsea'],
+  ] as const)('the %s chapter: %s opens the %s focus', async (chapter, label, kind) => {
     const onOpenFocus = jest.fn();
-    renderChapterFor(label, onOpenFocus);
+    renderChapter(chapter, onOpenFocus);
     await userEvent.click(screen.getByRole('button', { name: label }));
     expect(onOpenFocus).toHaveBeenCalledTimes(1);
     expect(onOpenFocus).toHaveBeenCalledWith(kind);
   });
 
-  it('keeps the action when there is nothing to draw: the focus view says why', () => {
+  it.each([
+    ['counts', 'How many genes change?', 'Open the volcano', 'More views of the counts', ['Heatmap', 'Method statistics', 'Custom charts', 'Database lookup']],
+    ['genes', 'Which genes matter most?', 'All genes', 'More views of the genes', ['Interaction network']],
+    ['processes', 'Which processes move?', 'Every process', 'More views of the processes', ['GSEA']],
+  ] as const)(
+    'the %s chapter keeps one primary action in its header and its other tools in a quiet row below',
+    (chapter, title, primary, group, tools) => {
+      renderChapter(chapter, noop);
+      const section = screen.getByRole('region', { name: title });
+      const header = section.querySelector('header') as HTMLElement;
+      expect(within(header).getAllByRole('button').map((b) => b.textContent)).toEqual([primary]);
+      const row = within(section).getByRole('group', { name: group });
+      expect(within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([...tools]);
+      // Discrets : aucune bordure ni aplat, la seule action marquée reste celle de l'en-tête.
+      for (const button of within(row).getAllByRole('button')) {
+        expect(button.className).not.toMatch(/\bborder\b|bg-accent|bg-surface\b/);
+      }
+    }
+  );
+
+  it('puts the quiet row of the counts under the volcano', () => {
+    renderChapter('counts', noop);
+    const volcano = screen.getByTestId('volcano-panel');
+    const row = screen.getByRole('group', { name: 'More views of the counts' });
+    expect(volcano.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('marks GSEA with a lock when the plan does not include it, and still opens it', async () => {
+    const onOpenFocus = jest.fn();
+    renderChapter('processes', onOpenFocus, { ...allAccess, science: false });
+    const gsea = screen.getByRole('button', { name: 'GSEA, not in your plan' });
+    expect(gsea.querySelector('svg')).not.toBeNull();
+    expect(within(gsea).getByText(', not in your plan')).toHaveClass('sr-only');
+    // La vue agrandie montre le bloc verrouillé et le moyen de demander l'accès.
+    await userEvent.click(gsea);
+    expect(onOpenFocus).toHaveBeenCalledWith('gsea');
+  });
+
+  it('shows no lock on GSEA with the module, nor while the profile is loading', () => {
+    renderChapter('processes', noop, allAccess);
+    expect(screen.getByRole('button', { name: 'GSEA' }).querySelector('svg')).toBeNull();
+    expect(screen.queryByText(/not in your plan/)).not.toBeInTheDocument();
+  });
+
+  it('shows no lock on GSEA before the profile is known', () => {
+    renderChapter('processes', noop, { ...allAccess, science: false, loaded: false });
+    expect(screen.getByRole('button', { name: 'GSEA' })).toBeInTheDocument();
+    expect(screen.queryByText(/not in your plan/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the actions when there is nothing to draw: the focus view says why', () => {
     mockUseTopGenes.mockReturnValue({ up: [], down: [], isLoading: false, isError: false });
     mockUseTopPathways.mockReturnValue({ pathways: null, isLoading: false, isError: false });
     renderIn(
       <>
         <GenesChapter datasetId="deg-1" comparisonName="KO_vs_WT" onOpenFocus={noop} />
-        <ProcessesChapter enrichmentDatasetId={undefined} comparisonName="KO_vs_WT" onOpenFocus={noop} />
+        <ProcessesChapter
+          enrichmentDatasetId={undefined}
+          comparisonName="KO_vs_WT"
+          access={allAccess}
+          onOpenFocus={noop}
+        />
       </>
     );
-    expect(screen.getByRole('button', { name: 'All genes' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Every process, GSEA' })).toBeInTheDocument();
+    for (const name of ['All genes', 'Interaction network', 'Every process', 'GSEA']) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
   });
 });

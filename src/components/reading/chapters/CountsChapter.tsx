@@ -7,6 +7,7 @@ import VolcanoPanel from '@/components/comparison/explorer/VolcanoPanel';
 import type { Dataset } from '@/types';
 import type { SignificanceSummary } from '@/utils/volcano';
 import { COUNTS_LOAD_FAILED, formatCount } from '../answers';
+import ChapterTools, { type ChapterTool } from '../ChapterTools';
 import ReadingChapter from '../ReadingChapter';
 import type { FocusKind } from '../readingRoutes';
 
@@ -21,6 +22,14 @@ interface CountsChapterProps {
   comparisonName: string;
   onOpenFocus: (kind: FocusKind) => void;
 }
+
+/** Les autres vues des comptes, sous le volcano : chacune monte un outil de l'ancienne page. */
+const TOOLS: ReadonlyArray<ChapterTool> = [
+  { label: 'Heatmap', focus: 'heatmap' },
+  { label: 'Method statistics', focus: 'methods' },
+  { label: 'Custom charts', focus: 'charts' },
+  { label: 'Database lookup', focus: 'lookup' },
+];
 
 /** La couleur dit le sens, la flèche et le mot le disent aussi : jamais la couleur seule. */
 const COUNT = {
@@ -44,7 +53,8 @@ function Count({ direction, value }: { direction: keyof typeof COUNT; value: num
 
 /**
  * Chapitre 1, « How many genes change? » : deux grands chiffres (up, down), le nombre de gènes
- * testés, puis le volcano existant, inchangé.
+ * testés, puis le volcano existant, inchangé, et sous lui la rangée discrète des autres vues
+ * (heatmap, statistiques des méthodes, graphiques libres, recherche en base).
  *
  * Tout arrive de la page, qui calcule `summary` et `tested` une seule fois pour la réponse de la
  * colonne vertébrale et pour ce chapitre : les deux ne peuvent pas se contredire. Sans `summary`
@@ -86,6 +96,7 @@ export default function CountsChapter({
         </p>
       )}
       <VolcanoPanel dataset={degDataset} comparisonName={comparisonName} />
+      <ChapterTools label="More views of the counts" tools={TOOLS} onOpenFocus={onOpenFocus} />
     </ReadingChapter>
   );
 }
