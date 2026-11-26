@@ -20,6 +20,16 @@
  * quand son contenu change sous le lecteur (le gène cliqué dans la fiche d'un processus disparaît
  * avec elle) ou quand elle devient modale.
  *
+ * **Le sujet, pas le titre.** Le focus rentre dans la fiche quand son SUJET change (`subject` : un
+ * gène, un processus), jamais quand seul le titre change : une accession (`ENSG…`) devient un
+ * symbole quand la carte des gènes arrive, c'est le même sujet, et le lecteur qui a cliqué dans la
+ * page entre-temps ne se fait pas reprendre le focus. Le corps défilant est clé sur le sujet : un
+ * autre gène ou processus s'ouvre en haut de la fiche, pas là où la précédente en était restée.
+ *
+ * **⌘K passe au-dessus.** La palette de commandes est à `z-[10003]`, au-dessus du voile et du
+ * panneau modaux, et ses touches (Échap, Tab) sont les siennes : la fiche modale, qui les prend en
+ * capture, les lui laisse (`data-command-palette`).
+ *
  * Rendue dans un portail : un conteneur `transform` ou `overflow-hidden` de la page la couperait.
  */
 
@@ -32,6 +42,11 @@ import { FOCUSABLE } from '@/components/ui/dialog';
 interface InspectorSheetProps {
   /** Le nom du gène ou du processus : titre visible et nom accessible de la fiche. */
   title: string;
+  /**
+   * Ce dont la fiche parle, sous une forme qui ne change pas quand le titre se résout (la clé du
+   * gène, l'identifiant du processus). Le focus et le défilement la suivent. Le titre, à défaut.
+   */
+  subject?: string;
   open: boolean;
   onClose: () => void;
   /** Vrai quand une vue agrandie est ouverte : la fiche passe au-dessus et retient le focus. */
@@ -68,9 +83,17 @@ function restoreFocus(opener: HTMLElement | null, panel: HTMLElement | null) {
   }, 0);
 }
 
-export default function InspectorSheet({ title, open, onClose, modal = false, children }: InspectorSheetProps) {
+export default function InspectorSheet({
+  title,
+  subject,
+  open,
+  onClose,
+  modal = false,
+  children,
+}: InspectorSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const subjectKey = subject ?? title;
 
   // `onClose` change à chaque rendu du parent : le lire par ref évite de rejouer les effets.
   const onCloseRef = useRef(onClose);
@@ -87,13 +110,13 @@ export default function InspectorSheet({ title, open, onClose, modal = false, ch
     return () => restoreFocus(opener, panel);
   }, [open]);
 
-  // Le focus entre dans la fiche à l'ouverture, quand elle devient modale et quand son contenu
-  // change (un autre titre) — sauf s'il y est déjà.
+  // Le focus entre dans la fiche à l'ouverture, quand elle devient modale et quand son sujet
+  // change (un autre gène ou processus, pas un titre qui se résout) — sauf s'il y est déjà.
   useEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
     if (panel && !panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
-  }, [open, modal, title]);
+  }, [open, modal, subjectKey]);
 
   // Les touches. Échap : dans la fiche, nulle part, ou n'importe où quand elle est modale ; sur la
   // page, un contrôle qui a déjà traité la touche (`defaultPrevented`) ou qui a le focus la garde.
@@ -106,6 +129,8 @@ export default function InspectorSheet({ title, open, onClose, modal = false, ch
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
+      // ⌘K ouvert par-dessus la fiche : Échap le ferme lui, et son Tab reste chez lui.
+      if (event.target instanceof Element && event.target.closest('[data-command-palette]')) return;
       const panel = panelRef.current;
       const active = document.activeElement;
 
@@ -178,7 +203,13 @@ export default function InspectorSheet({ title, open, onClose, modal = false, ch
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div
+          key={subjectKey}
+          data-testid="sheet-body"
+          className="min-h-0 flex-1 overflow-y-auto px-5 py-4"
+        >
+          {children}
+        </div>
       </div>
     </>,
     document.body

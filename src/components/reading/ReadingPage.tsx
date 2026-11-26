@@ -443,6 +443,15 @@ function Reading({ projectId, analysisId, globalDatasetId, context, project, deg
           focus de la boîte qu'elle recouvre, et non l'inverse. */}
       <InspectorSheet
         title={sheetGene ? (geneMap.nameByGene[sheetGene] ?? sheetGene) : (focusedTerm?.name ?? '')}
+        // Le sujet, que le titre ne change pas en se résolvant (accession → symbole) : le focus et
+        // le défilement de la fiche le suivent.
+        subject={
+          sheetGene
+            ? `gene:${sheetGene}`
+            : focusedTerm
+              ? `term:${focusedTerm.id || focusedTerm.name}`
+              : undefined
+        }
         open={sheetOpen}
         onClose={closeSheet}
         modal={focus !== null}

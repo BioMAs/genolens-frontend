@@ -220,11 +220,14 @@ function CommandPaletteDialog() {
 
   return (
     <div
-      /* z-10000 et non z-100 : le bandeau de licence monte a z-9999, et une
-         modale recouverte par une banniere n'est plus une modale. Il n'existe
-         pas d'echelle de z-index dans le produit — c'est une dette, et cette
-         valeur la rend visible plutot que de la repartir. */
-      className="fixed inset-0 z-[10000] flex items-start justify-center p-4 pt-[12vh]"
+      /* z-10003 et non z-100 : le bandeau de licence monte a z-9999, et une
+         modale recouverte par une banniere n'est plus une modale. Les boites
+         (`ui/dialog`) sont a z-10000 ; la fiche de la lecture, modale au-dessus
+         d'une vue agrandie, a z-10001 (voile) et z-10002 (panneau) : ⌘K s'ouvre
+         PAR-DESSUS, sinon la palette tiendrait le focus sous le voile. Il
+         n'existe pas d'echelle de z-index dans le produit — c'est une dette, et
+         ces valeurs la rendent visible plutot que de la repartir. */
+      className="fixed inset-0 z-[10003] flex items-start justify-center p-4 pt-[12vh]"
       role="presentation"
     >
       {/* Le voile porte LUI-MEME la fermeture : place sur le conteneur, le
@@ -240,6 +243,8 @@ function CommandPaletteDialog() {
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
+        // La fiche modale de la lecture laisse a la palette les touches qui y naissent (Echap, Tab).
+        data-command-palette
         onKeyDown={onKeyDown}
         className="relative w-full max-w-xl overflow-hidden rounded-card bg-raised shadow-elev-2"
       >

@@ -683,6 +683,25 @@ describe('ReadingPage — the sheet', () => {
     expect(propsOf('gene-detail-card').gene).toBe('IL6');
   });
 
+  // R42 : la carte des gènes arrive après la page ; le titre de la fiche passe de l'accession au
+  // symbole, c'est le même gène, et le focus qu'on a mis ailleurs n'est pas repris.
+  it('does not take the focus back when the symbol of its gene resolves late', () => {
+    const accession = 'ENSG00000136244';
+    setLocation(`${PATH}?gene=${accession}`);
+    const { refresh } = renderReading({ context: { geneMap: { genes: [accession], nameByGene: {} } } });
+    expect(screen.getByRole('dialog', { name: accession })).toHaveFocus();
+    const elsewhere = screen.getByRole('button', { name: 'All genes' });
+    elsewhere.focus();
+
+    mockContext.mockReturnValue({
+      ...CONTEXT,
+      geneMap: { genes: [accession], nameByGene: { [accession]: 'IL6' } },
+    });
+    refresh();
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    expect(elsewhere).toHaveFocus();
+  });
+
   it('is not there without a gene or a process in focus', () => {
     renderReading();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

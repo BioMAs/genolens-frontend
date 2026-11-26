@@ -162,6 +162,88 @@ describe('InspectorSheet — the frame', () => {
   });
 });
 
+// R42 : le focus suit le SUJET de la fiche (un gène, un processus), pas son titre. Une accession
+// (`ENSG…`) devient un symbole quand la carte des gènes arrive : c'est le même sujet, et le lecteur
+// qui a cliqué dans la page ou ouvert ⌘K entre-temps ne se fait pas reprendre le focus.
+describe('InspectorSheet — the subject', () => {
+  /** Une fiche dont le titre se résout, ou dont le sujet change, à la demande. */
+  function Subject() {
+    const [title, setTitle] = useState('ENSG00000136244');
+    const [subject, setSubject] = useState('gene:ENSG00000136244');
+    return (
+      <div>
+        <button type="button" onClick={() => setTitle('IL6')}>
+          Resolve the symbol
+        </button>
+        <button type="button" onClick={() => setSubject('gene:ENSG00000125538')}>
+          Another gene
+        </button>
+        <InspectorSheet title={title} subject={subject} open onClose={() => {}}>
+          <p>Body of {subject}</p>
+        </InspectorSheet>
+      </div>
+    );
+  }
+
+  it('does not take the focus back when only the title changes: same subject, the symbol resolved', async () => {
+    render(<Subject />);
+    expect(screen.getByRole('dialog', { name: 'ENSG00000136244' })).toHaveFocus();
+    const elsewhere = screen.getByRole('button', { name: 'Resolve the symbol' });
+    await userEvent.click(elsewhere);
+    expect(screen.getByRole('dialog', { name: 'IL6' })).toBeInTheDocument();
+    expect(elsewhere).toHaveFocus();
+  });
+
+  it('puts the focus back in the sheet when the subject changes', async () => {
+    render(<Subject />);
+    await userEvent.click(screen.getByRole('button', { name: 'Another gene' }));
+    expect(screen.getByRole('dialog', { name: 'ENSG00000136244' })).toHaveFocus();
+  });
+
+  it('falls back to the title as the subject when none is given', async () => {
+    function Titled() {
+      const [title, setTitle] = useState('Process');
+      return (
+        <div>
+          <button type="button" onClick={() => setTitle('Gene')}>
+            Swap
+          </button>
+          <InspectorSheet title={title} open onClose={() => {}}>
+            <p>Body</p>
+          </InspectorSheet>
+        </div>
+      );
+    }
+    render(<Titled />);
+    await userEvent.click(screen.getByRole('button', { name: 'Swap' }));
+    expect(screen.getByRole('dialog', { name: 'Gene' })).toHaveFocus();
+  });
+
+  // R45 : la fiche d'un processus qu'on a fait défiler, puis un gène cliqué dedans : la nouvelle fiche
+  // s'ouvre en haut, pas au milieu de la carte.
+  describe('the scroll body', () => {
+    it('is a new one for a new subject, so the sheet opens at the top', async () => {
+      render(<Subject />);
+      const before = screen.getByTestId('sheet-body');
+      before.scrollTop = 240;
+      await userEvent.click(screen.getByRole('button', { name: 'Another gene' }));
+      const after = screen.getByTestId('sheet-body');
+      expect(after).not.toBe(before);
+      expect(after.scrollTop).toBe(0);
+      expect(after).toHaveTextContent('gene:ENSG00000125538');
+    });
+
+    it('is kept when only the title changes, so a late symbol does not rewind the reader', async () => {
+      render(<Subject />);
+      const before = screen.getByTestId('sheet-body');
+      before.scrollTop = 240;
+      await userEvent.click(screen.getByRole('button', { name: 'Resolve the symbol' }));
+      expect(screen.getByTestId('sheet-body')).toBe(before);
+      expect(before.scrollTop).toBe(240);
+    });
+  });
+});
+
 describe('InspectorSheet — above a focus view', () => {
   it('becomes a modal: aria-modal, a veil, and a higher layer than the full-screen dialog', async () => {
     render(<Page modal initiallyOpen />);
